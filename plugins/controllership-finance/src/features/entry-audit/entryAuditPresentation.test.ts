@@ -10,6 +10,7 @@ import {
   entryAuditPreviousPeriodLabel,
   entryAuditPreviousPeriodRange,
   entryAuditTabResource,
+  formatAnalysisScope,
   formatBranchLabel,
   formatBranches,
   formatDifference,
@@ -17,6 +18,7 @@ import {
   formatDocumentTypes,
   formatEntryAuditChartDay,
   formatMoneyBRL,
+  formatMoneyBRLForKpi,
   formatNoteSeries,
   formatPeriodLabel,
   formatTheme,
@@ -52,6 +54,18 @@ describe("entryAuditPresentation", () => {
     expect(formatBranchLabel("02")).toBe("Filial 02");
     expect(formatBranches(["01", "02"])).toBe("Filiais 01 e 02");
     expect(formatBranches(["01", "02", "03"])).toBe("Filiais 01, 02, 03");
+    const opts = [
+      { code: "01", state: "SC" },
+      { code: "02", state: "ES" },
+    ];
+    expect(formatAnalysisScope(["01", "02"], ["nfe", "cte"], opts)).toBe(
+      "Filiais 01 (SC) e 02 (ES) · NF-e e CT-e",
+    );
+    // BFF persiste sorted(set) → ["cte","nfe"]; escopo deve seguir ordem canônica.
+    expect(formatAnalysisScope(["01", "02"], ["cte", "nfe"], opts)).toBe(
+      "Filiais 01 (SC) e 02 (ES) · NF-e e CT-e",
+    );
+    expect(formatAnalysisScope(["01"], ["cte"], opts)).toBe("Filial 01 (SC) · CT-e");
   });
 
   it("formata dinheiro e diferença (código → —)", () => {
@@ -61,6 +75,12 @@ describe("entryAuditPresentation", () => {
     expect(formatDifference(1, "CST")).toBe("—");
     expect(formatDifference(1, "cfop")).toBe("—");
     expect(formatDifference(null)).toBe("—");
+    const compact = formatMoneyBRLForKpi(1_060_126.08);
+    expect(compact.display).toBe("R$ 1,06 mi");
+    expect(compact.title).toMatch(/R\$\s*1\.060\.126,08/);
+    const small = formatMoneyBRLForKpi(170);
+    expect(small.display).toMatch(/R\$\s*170,00/);
+    expect(small.title).toBe(small.display);
   });
 
   it("mapeia tons de severidade e status", () => {

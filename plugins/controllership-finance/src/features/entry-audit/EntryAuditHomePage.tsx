@@ -57,6 +57,8 @@ const ANALYSIS_SORT_WHITELIST = new Set([
   "date_to",
   "status",
   "finished_at",
+  "branches",
+  "document_types",
 ]);
 
 const HISTORY_PAGE_SIZE = 10;
@@ -270,11 +272,13 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
       {
         key: "branches",
         header: "Filiais",
+        sortable: true,
         render: (row) => formatBranches(row.branches, branchOptions),
       },
       {
-        key: "types",
+        key: "document_types",
         header: "Tipos",
+        sortable: true,
         render: (row) => formatDocumentTypes(row.document_types),
       },
       {
@@ -352,7 +356,7 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
           embedded
           ariaLabel="Período, filiais, tipos e execução da auditoria"
         >
-          <div className="cf-filters-grid">
+          <div className="cf-filters-grid cf-filters-grid--with-action">
             <CfDateField
               id="entry-audit-from"
               label="De"
@@ -386,25 +390,25 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
               selectedValues={documentTypes}
               onChange={setDocumentTypes}
             />
+            <div className="cf-filters-grid__actions">
+              <CfActionButton
+                type="button"
+                variant="primary"
+                onClick={create}
+                disabled={creating}
+                softDisabled
+                title={CF_HELP.entryAudit.create}
+              >
+                <span className="cf-action-with-icon">
+                  {ENTRY_AUDIT_ACTION_ICONS.play}
+                  {creating ? "Executando…" : "Executar auditoria"}
+                </span>
+              </CfActionButton>
+            </div>
           </div>
           {createError ? (
             <CfStateBanner variant="error">{createError}</CfStateBanner>
           ) : null}
-          <div className="cf-filters-grid__actions">
-            <CfActionButton
-              type="button"
-              variant="primary"
-              onClick={create}
-              disabled={creating}
-              softDisabled
-              title={CF_HELP.entryAudit.create}
-            >
-              <span className="cf-action-with-icon">
-                {ENTRY_AUDIT_ACTION_ICONS.play}
-                {creating ? "Executando…" : "Executar auditoria"}
-              </span>
-            </CfActionButton>
-          </div>
         </CfFilterBarShell>
       </CfPageHero>
 

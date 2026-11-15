@@ -533,6 +533,23 @@ export function createDashboardCommandPalette() {
 
 export const TABLE_PAGE_SIZE_OPTIONS = [25, 50, 100];
 
+/** Espelho mínimo de dataTableBemClasses do kit (AC-ENT-1 / sentenceHeadersWrap). */
+export function dataTableBemClasses(prefix: string) {
+  return {
+    wrapSection: `${prefix}-table-wrap`,
+    wrapEmbedded: `${prefix}-table-wrap--embedded`,
+    sentenceHeadersWrap: `${prefix}-table-wrap--sentence-headers`,
+    table: `${prefix}-table`,
+    sortableColumn: `${prefix}-table__col--sortable`,
+    sortButton: `${prefix}-table__sort-button`,
+    sortButtonActive: `${prefix}-table__sort-button--active`,
+    sortIndicator: `${prefix}-table__sort-indicator`,
+    headerLabel: `${prefix}-table__header-label`,
+    headerText: `${prefix}-table__header-text`,
+    headerHelp: `${prefix}-table__header-help`,
+  };
+}
+
 export function createDashboardPaginationKit() {
   function Pagination(props: {
     page?: number;

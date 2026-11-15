@@ -186,9 +186,83 @@ export function formatBranches(
   return `Filiais ${codes.join(", ")}`;
 }
 
+/** Escopo do hero da análise: «Filiais 01 (SC) e 02 (ES) · NF-e e CT-e» (AC-KPI-4). */
+export function formatAnalysisScope(
+  branches: string[],
+  documentTypes: string[],
+  options?: Array<{ code: string; name?: string | null; state?: string | null }>,
+): string {
+  const branchPart = formatBranchesWithState(branches, options);
+  const typesPart = formatDocumentTypesJoined(documentTypes);
+  return [branchPart, typesPart].filter(Boolean).join(" · ");
+}
+
+function formatBranchesWithState(
+  codes: string[],
+  options?: Array<{ code: string; name?: string | null; state?: string | null }>,
+): string {
+  if (!codes.length) return "";
+  const parts = codes.map((code) => {
+    const state = options?.find((option) => option.code === code)?.state?.trim();
+    return state ? `${code} (${state})` : code;
+  });
+  if (parts.length === 1) return `Filial ${parts[0]}`;
+  if (parts.length === 2) return `Filiais ${parts[0]} e ${parts[1]}`;
+  const head = parts.slice(0, -1).join(", ");
+  return `Filiais ${head} e ${parts[parts.length - 1]}`;
+}
+
+/** Ordem canônica BFF (`DOCUMENT_TYPES`) — NF-e antes de CT-e (AC-KPI-4). */
+const DOCUMENT_TYPE_ORDER = ["nfe", "cte"] as const;
+
+function sortDocumentTypesCanonical(types: string[]): string[] {
+  const rank = new Map(
+    DOCUMENT_TYPE_ORDER.map((code, index) => [code, index]),
+  );
+  return [...types].sort((a, b) => {
+    const ra = rank.get(a.toLowerCase() as (typeof DOCUMENT_TYPE_ORDER)[number]);
+    const rb = rank.get(b.toLowerCase() as (typeof DOCUMENT_TYPE_ORDER)[number]);
+    if (ra !== undefined && rb !== undefined) return ra - rb;
+    if (ra !== undefined) return -1;
+    if (rb !== undefined) return 1;
+    return a.localeCompare(b, "pt-BR");
+  });
+}
+
+function formatDocumentTypesJoined(types: string[]): string {
+  if (!types.length) return "";
+  const labels = sortDocumentTypesCanonical(types).map(formatDocumentType);
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} e ${labels[1]}`;
+  return `${labels.slice(0, -1).join(", ")} e ${labels[labels.length - 1]}`;
+}
+
 export function formatMoneyBRL(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/**
+ * Valor de KPI monetário: compacto a partir de 1 milhão («R$ 1,06 mi»)
+ * para não quebrar no cartão; `title` guarda o valor completo (AC-KPI-1).
+ */
+export function formatMoneyBRLForKpi(value: number | null | undefined): {
+  display: string;
+  title: string;
+} {
+  const full = formatMoneyBRL(value);
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return { display: full, title: full };
+  }
+  if (Math.abs(value) < 1_000_000) {
+    return { display: full, title: full };
+  }
+  const millions = value / 1_000_000;
+  const compact = millions.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return { display: `R$ ${compact} mi`, title: full };
 }
 
 /**

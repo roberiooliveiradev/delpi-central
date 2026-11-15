@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   createDashboardDataTableKit,
   createDashboardPaginationKit,
+  dataTableBemClasses,
   TABLE_PAGE_SIZE_OPTIONS,
   type DashboardDataTableSectionProps,
   type DataTableColumn,
@@ -73,6 +74,7 @@ const LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
 
+const cfTableClassNames = dataTableBemClasses(UI_PREFIX);
 const kit = createDashboardDataTableKit({
   prefix: UI_PREFIX,
   labels: LABELS,
@@ -83,6 +85,16 @@ const kit = createDashboardDataTableKit({
   useLoadingProgress,
   useTrackedSingleFetchProgress,
   defaultPageSize: 50,
+  // AC-ENT-1 / padrão Comercial: cabeçalhos em sentence case em todas as tabelas.
+  tableClassNames: {
+    ...cfTableClassNames,
+    wrapSection: [cfTableClassNames.wrapSection, cfTableClassNames.sentenceHeadersWrap]
+      .filter(Boolean)
+      .join(" "),
+    wrapEmbedded: [cfTableClassNames.wrapEmbedded, cfTableClassNames.sentenceHeadersWrap]
+      .filter(Boolean)
+      .join(" "),
+  },
 });
 
 const KitDataTableSection = kit.DataTableSection;

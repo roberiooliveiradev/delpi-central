@@ -347,6 +347,17 @@
   justify-content: flex-end;
 }
 
+/* AC-ENT-3: barra (Tabela/Cards, itens, Fonte, Colunas) em uma linha ≥1024. */
+@media (min-width: 1024px) {
+  .dashboard-controllership-finance .cf-table-toolbar,
+  .dashboard-controllership-finance .cf-table-toolbar .delpi-ui-table-toolbar__search-group,
+  .dashboard-controllership-finance .cf-table-toolbar .delpi-ui-table-toolbar__extra,
+  .dashboard-controllership-finance .cf-table-toolbar .cf-table-toolbar__search-group,
+  .dashboard-controllership-finance .cf-table-toolbar .cf-table-toolbar__extra {
+    flex-wrap: nowrap;
+  }
+}
+
 /* Em telas estreitas a toolbar ocupa a linha inteira sob o título —
    o kit já pede width:100% no pageSize, mas um item flex de largura
    auto a deixava sem referência e comprimia os controles. */
@@ -613,6 +624,11 @@
   align-items: end;
 }
 
+/* AC-ENT-2: botão na linha dos campos ≥1024; abaixo, largura total. */
+.dashboard-controllership-finance .cf-filters-grid--with-action {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
 .dashboard-controllership-finance .cf-filters-grid__actions {
   display: flex;
   flex-wrap: wrap;
@@ -620,16 +636,35 @@
   align-items: center;
 }
 
-@media (max-width: 1024px) {
-  .dashboard-controllership-finance .cf-filters-grid {
+@media (max-width: 1023px) {
+  .dashboard-controllership-finance .cf-filters-grid,
+  .dashboard-controllership-finance .cf-filters-grid--with-action {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-controllership-finance .cf-filters-grid--with-action .cf-filters-grid__actions {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-controllership-finance .cf-filters-grid {
+  .dashboard-controllership-finance .cf-filters-grid,
+  .dashboard-controllership-finance .cf-filters-grid--with-action {
     grid-template-columns: 1fr;
   }
+}
+
+/*
+ * AC-ENT-2: uma moldura — PageHero já é o card; FilterBar embedded dentro
+ * do hero fica flush (sem segunda caixa com borda).
+ */
+.dashboard-controllership-finance .delpi-ui-page-hero .delpi-ui-filter-bar:not(.delpi-ui-card),
+.dashboard-controllership-finance .cf-page-hero .cf-filter-bar:not(.delpi-ui-card) {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  margin-bottom: 0;
 }
 
 /* UI review — grade de SectionCards de gráficos (A4 / G8). */
@@ -742,6 +777,50 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--cf-grid-gap, 16px);
+  align-items: stretch;
+}
+
+.dashboard-controllership-finance .cf-kpi-grid > .delpi-ui-kpi-card,
+.dashboard-controllership-finance .cf-kpi-grid > .cf-kpi-card,
+.dashboard-controllership-finance .cf-kpi-money-wrap {
+  min-width: 0;
+  height: 100%;
+}
+
+.dashboard-controllership-finance .cf-kpi-money-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-controllership-finance .cf-kpi-money-wrap > .delpi-ui-kpi-card,
+.dashboard-controllership-finance .cf-kpi-money-wrap > .cf-kpi-card {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* AC-KPI-1/2: valor e título em uma linha (sem quebra de «R$ …,08»). */
+.dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-value,
+.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+.dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-title,
+.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__label {
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* AC-KPI-3: aviso único abaixo da faixa. */
+.dashboard-controllership-finance .cf-kpi-previous-hint {
+  margin: 0;
+  font-size: var(--cf-font-sm, 13px);
+  color: var(--cf-text-muted, var(--text-muted, #64748b));
 }
 
 @media (max-width: 1280px) {

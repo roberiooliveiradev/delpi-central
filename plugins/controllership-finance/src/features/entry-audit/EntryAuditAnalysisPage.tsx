@@ -73,11 +73,11 @@ import {
   formatEntryAuditChartDay,
   formatAuditStatus,
   entryAuditFieldLabel,
+  formatAnalysisScope,
   formatBranchLabel,
   formatDifference,
   formatOccurrenceValue,
-  formatDocumentType,
-  formatMoneyBRL,
+  formatMoneyBRLForKpi,
   formatNoteSeries,
   formatPeriodLabel,
   formatTheme,
@@ -631,12 +631,13 @@ export function EntryAuditAnalysisPage({
     }
   };
 
-  const metaParts = [
-    analysis.branches
-      .map((code) => formatBranchLabel(code, branchOptions))
-      .join(" · "),
-    analysis.document_types.map(formatDocumentType).join(" · "),
-  ].filter(Boolean);
+  const scopeLabel = formatAnalysisScope(
+    analysis.branches,
+    analysis.document_types,
+    branchOptions,
+  );
+  const grossKpi = formatMoneyBRLForKpi(kpis.gross_checked);
+  const highDiffKpi = formatMoneyBRLForKpi(kpis.high_difference);
 
   return (
     <section
@@ -685,7 +686,7 @@ export function EntryAuditAnalysisPage({
             hint={CF_HELP.entryAudit.analysis}
           />
         }
-        description={metaParts.join(" · ")}
+        description={scopeLabel}
         badge={
           <CfStatusBadge
             label={formatAuditStatus(analysis.status)}
@@ -717,7 +718,7 @@ export function EntryAuditAnalysisPage({
               </span>
             </CfActionButton>
             <CfActionButton
-              variant="ghost"
+              variant="default"
               onClick={goEntry}
               title={CF_HELP.entryAudit.newAnalysis}
             >
@@ -756,11 +757,7 @@ export function EntryAuditAnalysisPage({
       >
         <CfMetricKpiCard
           label="Notas conferidas"
-          titleHint={
-            hasPrevious
-              ? CF_HELP.entryAudit.kpiDocuments
-              : `${CF_HELP.entryAudit.kpiDocuments} ${noPreviousHint}.`
-          }
+          titleHint={CF_HELP.entryAudit.kpiDocuments}
           value={String(kpis.documents)}
           icon={kpiIcon(<FileText size={22} strokeWidth={1.75} aria-hidden />)}
           hint={
@@ -768,30 +765,29 @@ export function EntryAuditAnalysisPage({
               <CfTrendDelta
                 value={trendPct(kpis.documents, previous.documents)}
               />
-            ) : (
-              noPreviousHint
-            )
+            ) : undefined
           }
         />
-        <CfMetricKpiCard
-          label="Valor conferido"
-          titleHint={
-            hasPrevious
-              ? CF_HELP.entryAudit.kpiGross
-              : `${CF_HELP.entryAudit.kpiGross} ${noPreviousHint}.`
+        <div
+          className="cf-kpi-money-wrap"
+          title={
+            grossKpi.title !== grossKpi.display ? grossKpi.title : undefined
           }
-          value={formatMoneyBRL(kpis.gross_checked)}
-          icon={kpiIcon(<Wallet size={22} strokeWidth={1.75} aria-hidden />)}
-          hint={
-            hasPrevious ? (
-              <CfTrendDelta
-                value={trendPct(kpis.gross_checked, previous.gross_checked)}
-              />
-            ) : (
-              noPreviousHint
-            )
-          }
-        />
+        >
+          <CfMetricKpiCard
+            label="Valor conferido"
+            titleHint={CF_HELP.entryAudit.kpiGross}
+            value={grossKpi.display}
+            icon={kpiIcon(<Wallet size={22} strokeWidth={1.75} aria-hidden />)}
+            hint={
+              hasPrevious ? (
+                <CfTrendDelta
+                  value={trendPct(kpis.gross_checked, previous.gross_checked)}
+                />
+              ) : undefined
+            }
+          />
+        </div>
         <CfMetricKpiCard
           label="Ocorrências pendentes"
           titleHint={CF_HELP.entryAudit.kpiPending}
@@ -822,20 +818,27 @@ export function EntryAuditAnalysisPage({
           hint={
             hasPrevious ? (
               <CfTrendDelta value={trendPct(kpis.high, previous.high)} />
-            ) : (
-              noPreviousHint
-            )
+            ) : undefined
           }
         />
-        <CfMetricKpiCard
-          label="Diferença nas Altas"
-          titleHint={CF_HELP.entryAudit.kpiHighDiff}
-          value={formatMoneyBRL(kpis.high_difference)}
-          icon={kpiIcon(
-            <GitCompare size={22} strokeWidth={1.75} aria-hidden />,
-          )}
-          tone={kpis.high_difference ? "negative" : "default"}
-        />
+        <div
+          className="cf-kpi-money-wrap"
+          title={
+            highDiffKpi.title !== highDiffKpi.display
+              ? highDiffKpi.title
+              : undefined
+          }
+        >
+          <CfMetricKpiCard
+            label="Diferença nas Altas"
+            titleHint={CF_HELP.entryAudit.kpiHighDiff}
+            value={highDiffKpi.display}
+            icon={kpiIcon(
+              <GitCompare size={22} strokeWidth={1.75} aria-hidden />,
+            )}
+            tone={kpis.high_difference ? "negative" : "default"}
+          />
+        </div>
         <CfMetricKpiCard
           label="Sem par em aberto"
           titleHint={CF_HELP.entryAudit.kpiUnmatched}
@@ -851,6 +854,11 @@ export function EntryAuditAnalysisPage({
           }
         />
       </div>
+      {!hasPrevious ? (
+        <p className="cf-kpi-previous-hint" role="note">
+          {noPreviousHint}
+        </p>
+      ) : null}
 
       <div className="cf-analysis-charts">
         <div className="cf-analysis-panorama-row">
