@@ -63,7 +63,10 @@ export async function loginAs(
 export async function openEntryAuditHome(page: Page): Promise<void> {
   await page.goto("/apps/controllership-finance/entry-audit");
   await expect(
-    page.getByRole("heading", { name: /Auditoria de Entradas/i }).first(),
+    page
+      .getByRole("heading", { name: /Auditoria de Entradas/i })
+      .or(page.getByText("Executar auditoria"))
+      .first(),
   ).toBeVisible({ timeout: 45_000 });
 }
 

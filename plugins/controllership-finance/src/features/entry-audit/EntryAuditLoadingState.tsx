@@ -8,7 +8,7 @@ import {
 type PathItem = {
   id: string;
   label: string;
-  href?: string;
+  href: string;
   onNavigate?: () => void;
 };
 
@@ -21,6 +21,7 @@ export function EntryAuditLoadingState({
   current,
   title,
   hint,
+  back,
   eyebrow = "Notas fiscais",
   description = "Carregando indicadores e tabelas…",
 }: {
@@ -28,6 +29,7 @@ export function EntryAuditLoadingState({
   current: string;
   title: string;
   hint: string;
+  back: { label: string; href: string; onNavigate?: () => void };
   eyebrow?: string;
   description?: string;
 }) {
@@ -36,6 +38,16 @@ export function EntryAuditLoadingState({
       <CfPagePath
         ariaLabel="Caminho da página"
         size="sm"
+        back={{
+          label: back.label,
+          href: back.href,
+          onNavigate: back.onNavigate
+            ? (event: { preventDefault: () => void }) => {
+                event.preventDefault();
+                back.onNavigate?.();
+              }
+            : undefined,
+        }}
         items={pathItems.map((item) => ({
           id: item.id,
           label: item.label,

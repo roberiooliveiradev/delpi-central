@@ -245,16 +245,15 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
       <CfPagePath
         ariaLabel="Caminho da página"
         size="sm"
-        items={[
-          {
-            id: "home",
-            label: "Início",
-            href: basePath,
-            onNavigate: (event: { preventDefault: () => void }) => {
-              event.preventDefault();
-              navigatePluginPath(basePath);
-            },
+        back={{
+          label: "Início",
+          href: basePath,
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            navigatePluginPath(basePath);
           },
+        }}
+        items={[
           {
             id: "notas",
             label: "Notas fiscais",

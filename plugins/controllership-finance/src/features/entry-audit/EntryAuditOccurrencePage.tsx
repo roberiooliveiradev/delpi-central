@@ -130,8 +130,8 @@ export function EntryAuditOccurrencePage({
   if (!occurrence || !period) {
     return (
       <EntryAuditLoadingState
+        back={{ label: "Início", href: basePath, onNavigate: goHome }}
         pathItems={[
-          { id: "home", label: "Início", href: basePath, onNavigate: goHome },
           {
             id: "entry",
             label: "Auditoria de Entradas",
@@ -163,16 +163,15 @@ export function EntryAuditOccurrencePage({
       <CfPagePath
         ariaLabel="Caminho da página"
         size="sm"
-        items={[
-          {
-            id: "home",
-            label: "Início",
-            href: basePath,
-            onNavigate: (event: { preventDefault: () => void }) => {
-              event.preventDefault();
-              goHome();
-            },
+        back={{
+          label: "Início",
+          href: basePath,
+          onNavigate: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            goHome();
           },
+        }}
+        items={[
           {
             id: "notas",
             label: "Notas fiscais",
