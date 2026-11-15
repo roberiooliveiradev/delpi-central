@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** — [trilha de execução](./track.md) |
+| Status | **DONE** (H0–H6) — [trilha de execução](./track.md) · HEAD `b82e373f55` |
 | Doc | 170 |
 | Produto | Portal Controladoria & Finanças (MFE + BFF) |
 | Referência | Portal Comercial (`plugins/commercial`, `commercial-api`) |
