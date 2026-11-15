@@ -248,3 +248,13 @@ command -v tunnel-client || true
 | 2026-11-14 | Inventário real recebido do operador, analisado e sanitizado para o GitHub público | `HOST_BASELINE_PARTIAL` |
 | 2026-11-14 | Precondições para P1: conta isolada, nenhuma permissão Docker, sem shell genérico | `SECURITY_DESIGN_REQUIRED` |
 | 2026-11-14 | Acesso remoto MCP, instalação do túnel, deploy e testes autenticados | `NOT_DONE` |
+
+
+## 12. Complemento do inventário e decisão de reuso (2026-11-14)
+
+- Host: Ubuntu 24.04.4 LTS, 16 CPUs lógicas; 135 contêineres em execução. Filtros Docker `health=unhealthy` e `health=starting` sem retornos. Isso não prova saúde de todos os containers (muitos sem healthcheck).
+- Checkout de produção: `HEAD=aeba1d71314747a05cc13f11e95ec9054f7ebe5b`; referência `origin/main` local = `eed8351fed4658b8dbcf8528d3851feec71a3a89`. Essas referências não provam estado remoto atual. O arquivo `shared/delpi_auth.egg-info/SOURCES.txt` permanece modificado (uma linha adicionada), então não fazer reset/restore/pull/deploy automático.
+- `command -v tunnel-client` não retornou executável no PATH. Não há comprovação de instalação do túnel.
+- Novo reuse gate: `it-portal-api/collectors/linux_host` e a API autenticada GET `/servers/{server_id}/observations/latest` já implementam coleta/consulta de observações com RBAC. Reusar; não duplicar coletor e não conceder Docker socket ao MCP. Instalação/execução automática do coletor e presença de observações no banco ainda exigem read-back de produção.
+- Candidato P1: PR #185, 4 ferramentas MCP somente leitura e testes estáticos propostos. Estado **CODE_CANDIDATE / TEST_NOT_RUN / NOT_DEPLOYED**; revisão Git implantada permanece **not_available**, nunca inferida do GitHub HEAD.
+- Gate P1 pendente: checkout+testes com dependências, revisão de segurança, observação real, escolha de transporte, Keycloak/Core permissions, smoke autenticado ChatGPT. Nenhum deploy autorizado nesta etapa.
