@@ -58,3 +58,11 @@ COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
+
+# Non-attested local development target. This bypasses the OCI revision
+# gate by design: dirty local WIP must never claim an approved release SHA.
+FROM nginx:alpine AS development
+COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
+COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
