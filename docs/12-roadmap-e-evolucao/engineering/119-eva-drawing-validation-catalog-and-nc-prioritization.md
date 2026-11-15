@@ -5350,3 +5350,55 @@ conector após refresh/discovery.
 (schema/enum/runtime) → **`G17_PASS_WITH_RESIDUAL`** —
 ChatGPT E2E pendente de ação do owner; homologações de domínio
 (LMP impressa, 8000×8001, marco OV) seguem `OWNER_PENDING`.
+
+
+### 94.20 E1/VAL-01 — Plano aprovado: tabela de estrutura do desenho, descrição MP/PI e quantidades por base (8 etapas)
+
+**TASK_ID:** \`EVA-E1-VAL01-G18-DRAWING-TABLE-MP-PI-DESCRIPTION-QUANTITY-VALIDATION-01\`  
+**DATA:** 2026-11-15 | **Origem:** owner DELPI + Coordination | **Status:** \`PLANNED / IMPLEMENTATION_AUTHORIZED_IN_BOUNDED_SCOPE / ENGINEERING_ACCEPTANCE_PENDING\`  
+**Escopo:** E1/VAL-01 exclusivamente (backend Engineering API → EVA → MCP/ChatGPT), sem tela/MFE, sem E2–E7, sem alteração de TOTVS, BOM, desenho oficial ou permissões. Não autoriza deploy produtivo ou novo OCR automaticamente.
+
+#### 94.20.1 Motivo, dados reais e fronteiras
+
+O owner determina que a EVA confronte **código + descrição do PI**, **letra/posição + código + descrição da MP**, **quantidade unitária no desenho**, **consumo bruto TOTVS em sua unidade/base**, **hierarquia pai-filho** e **revisão/efetividade**. O desenho **90263680.pdf** (1 página, tabela de estrutura com PI no bloco esquerdo e MP/itens A–F no direito) é o caso de referência. PDF recebido no chat não é automaticamente o mesmo artefato da biblioteca: comparar identidade/hash e revisão; não transformar OCR ou leitura visual do chat em fonte oficial.
+
+**Evidências do contrato corrente (EVA real, 2026-11-15):**
+- \`read(product.structure,ref=90263680, max_depth=10)\`: raiz PA \`90263680\`, unidade \`MI\`; **4 PI em N1 e 8 ocorrências MP em N2**, total 12 ocorrências, 10 códigos distintos; terminais \`10080136\` e isoladores \`10090010\` aparecem sob os PI \`50233507\` e \`50233508\` (multiplicidade deve ser preservada). BOM \`bom_validity.filter=current\`, \`reference=server_date\` — efetividade histórica da revisão impressa não demonstrada.
+- PI \`50213206\`: \`CB18BRAN-00512/10/10-0000-0000\` (5021); PI \`50213207\`: \`CB18PRET-00512/10/10-0000-0000\`; PI \`50233507\`: \`CB18MARR-00152/10/06-0000-3610\` (5023); PI \`50233508\`: \`CB18MABR-00242/10/06-0000-3610\` — **descrições oficiais atuais**.
+- Na imagem do PDF do usuário, as descrições parecem iniciar \`CA18\` e os PI 50233507/08 parecem terminar em \`0110\`; os códigos de MP e comprimentos 512/152/242 mm são legíveis visualmente. Registrar \`DRAWING_OBSERVED_CANDIDATE\` até leitura reproduzível do documento de mesma identidade; possível diferença histórica ou de revisão; **não declarar NC final**.
+- \`analyze(product.drawing_analysis,product_code=90263680)\` retornou \`drawing_analysis.v3\`, \`no_text_layer\`, 0 ocorrências visuais, \`component_table_detected=false\`, \`INCONCLUSIVE\`; **porém recuperou 12 \`bom_occurrences\` oficiais com \`occurrence_id, component_code, component_description, parent_code, depth, quantity_raw, unit_raw\`** e checou descrição cadastral MP/PI somente contra padrão/cadastro, não contra texto do desenho.
+- \`analyze(product.drawing_understanding,product_code=90263680,existing_only=true)\` retornou \`404 no_existing_result\`: não foi criado job OCR; executar novo OCR somente com autorização operacional e resource admission.
+- O motor atual já prevê \`component_table.rows[].fields.{item,quantity,component_code,description}\`, \`description_candidate\` em \`understanding_object_mapper.py\` e comparação por ocorrência em \`bom_structure_comparator.py\`; reusar e inventariar lacunas antes de qualquer abstração.
+- Referência normativa governada do owner API DELPI: \`api-delpi/docs/api/padroes-totvs/codigos-intermediarios-pi.md\` (famílias 50xx; CA/PVC, CB/EPR, cores, comprimento mm, decape E/D, terminais/isoladores por posição). O documento de origem é resumo normativo; validar aplicabilidade/revisão com Engenharia. Não fazer dependência runtime do Chat legado.
+
+#### 94.20.2 Matriz das oito etapas — requisitos e aceite
+
+| # | Etapa E1 autorizada | Requisito/saída candidata e critérios de aceite |
+|---|---|---|
+| **1** | **PI do desenho: código + descrição** | Extrair da tabela esquerda cada código \`50xx\`, descrição completa literal (pontuação, zeros, CA/CB, sufixos), página, bloco, linha, bbox, PDF SHA e revisão; associação \`PI↔células da direita\` explícita ou \`UNKNOWN\`. **AC01:** 4 PI do 90263680 como quatro entidades distintas, sem copiar descrição do TOTVS para o campo observado. |
+| **2** | **MP subordinadas: letra + código + descrição** | Extrair cada ocorrência A–F sob o PI correto: \`item_label\`, \`component_code\`, \`component_description\` do PDF, quantidade e evidência; mesma letra/código em PI diferentes é ocorrência distinta. **AC02:** 8 ocorrências MP, terminais/isoladores repetidos por pai preservados, nenhuma deduplicação destrutiva; texto ausente \`UNKNOWN\`. |
+| **3** | **Hierarquia e multiplicidade** | Relacionar PA→4 PI→8 MP por evidência de agrupamento/linha mesclada/âncora, com \`parent_code\`, \`occurrence_key\`, \`depth\`, origem da associação e \`association_status\`. **AC03:** árvore/ledger completo, inclusive PI 50233507/08 e letras C/D reutilizadas; não promover ligação inferida a fato. |
+| **4** | **Proveniência documental e rastreio de extração** | Entregar por campo \`raw/normalized\`, página, linha, bbox, fonte OCR/token/text layer, score de percepção, \`document_sha256\`, versão/revisão e limites; distinguir \`UNREADABLE\`, \`NOT_EXTRACTED\`, \`AMBIGUOUS\` e ausente real só se houver cobertura comprovada. **AC04:** sem truncamento silencioso ou perda de identidade; PDF usuário × PDF biblioteca verificados antes de comparar. |
+| **5** | **Consulta oficial por códigos** | Por código identificado, obter \`product.detail\` e BOM \`product.structure\` via API DELPI governada; campos \`official_code, official_description, type, group_code, parent, quantity_raw, unit_raw, secondary_unit, factor, validity\` quando oficiais. **AC05:** lado \`DRAWING_OBSERVED\` e \`TOTVS_OFFICIAL\` separados; resultados de fonte indisponível/AuthZ negada tipados; sem acesso direto SB1/SG1 pela EVA. |
+| **6** | **Descrição literal + normativa MP/PI** | Primeiro comparar por código e texto literal normalizado conservador; depois decodificar PI 50xx (tipo CA/CB, bitola, cor, comprimento, decapes, terminais/isoladores por posição) e validar contra MP oficiais e norma owner; avaliar descrição MP pelos padrões oficiais pertinentes. **AC06:** diferença \`CA\`×\`CB\` e \`0110\`×\`3610\` de 90263680 torna-se **finding candidato com valores e evidência**, nunca \`PASS\` só porque o cadastro respeita formato; tratar revisão divergente como \`TO_VERIFY\`. |
+| **7** | **Normalização de quantidade** | Preservar \`drawing_quantity\` (ocorrências por unidade) separado de \`BOM_quantity\` (consumo por base); registrar unidade do PA/PI (\`MI\`), da MP (\`MT/PC\`), base/fator/tolerância/perdas se oficialmente ratificados, \`normalized_per_PA\`, método e uncertainty. **AC07:** no 90263680, 512 MT/MI ↔ 512 mm por unidade, 152/242 MT/MI ↔ mm e 1000 PC/MI ↔ 1 PC **somente sob base MI=1000 e unidade/consumo comparáveis aprovados**; \`QTD=1\` de cabo no desenho pode ser 1 ocorrência e não 1 metro; sem regra owner \`NOT_COMPARABLE\`. |
+| **8** | **Motor de divergências e relatório E2E** | Compor por ocorrência atributos \`code, description, pi_semantics, quantity, unit, parent_relation, revision_effectiveness\`, cada qual \`MATCH/DIFFERENT_CANDIDATE/CONFLICT_PROVEN/UNKNOWN/NOT_COMPARABLE/NOT_CHECKED\`, fonte e next action; produzir resumo por PI e global com cobertura/recall/false-alarm evidenciados. **AC08:** PDF 90263680 revela diferenças candidatas nas quatro descrições PI, não cria NC sem homologação; casos de controle positivos/negativos, no OCR autorun, autorização/live AuthZ, testes e verificador independente. |
+
+**Obrigatório em toda ocorrência:** \`document_identity, drawing_pi_code, drawing_pi_description, item_label, drawing_mp_code, drawing_mp_description, drawing_qty, official_pi_code/description, official_mp_code/description, official_parent, bom_qty/unit, quantity_basis, effective_revision/date, source_refs, association_state, check_results\`; tipos/nomes são proposta contratual, aplicar Abstraction Gate e preservar compatibilidade antes de criar campos novos.
+
+#### 94.20.3 Modelo de execução e fronteiras
+
+\`PDF fonte → OCR/percepção governada → linhas e relações candidatas → consultas READ oficiais → comparabilidade → validações determinísticas → relatório candidato → revisão Engenharia\`.
+
+- **Primeiro inventariar e reutilizar** \`drawing_understanding\`, \`understanding_object_mapper\`, \`drawing_investigation\`, \`bom_structure_comparator\`, \`drawing_analysis.v3\`, \`product.structure\`, documentação Norma PI 50xx; não criar ferramenta MCP, pipeline paralelo ou frontend.
+- **Contrato antes do diff:** owner, consumer, schema aditivo, erros, AuthN/AuthZ live, idempotência, volumetria, compatibilidade e provenance. Troca de owner/source-of-truth ou nova autoridade → \`ARCHITECTURE_DECISION_REQUIRED\`.
+- **Ground truth:** PDF 90263680 com anotação por Engenharia para CA/CB, sufixos, linhas e hierarquia; corpus diverso e holdout para evitar overfit. PDF recebido no chat serve como hipótese visual, não baseline testável até ser disponibilizado/identificado no ambiente do executor.
+- **Revisão:** PDF carimbo REV 00 (domínio \`ENGINEERING_DRAWING\`), cadastro PA \`current_revision=002\` (domínio \`CLIENT_TOTVS\`); comparação temporal de BOM current/server_date com desenho 2023 não se torna \`CONFLICT_PROVEN\` sem contrato de efetividade.
+- **Verificação independente:** seguir agent-kit/verifier oficial; \`RQ/AC → implementação menor diff → testes no SHA → verificador com relatório de evidências → correções até PASS ou bloqueio fundamentado → residual search → ledger/Doc119/Issue131\`. Falha ambiental do verificador = \`INCONCLUSIVE\`, não PASS; separar falha preexistente de regressão pelo SHA e baseline. Não aprovar por autodeclaração do executor.
+- **Gates:** \`CODE_PASS\` não equivale a \`DRAWING_EXTRACTION_PASS\`, \`MCP_E2E_PASS\`, \`ENGINEERING_HOMOLOGATED\` ou \`DEPLOY_PASS\`. Sem autorização explícita para novo OCR pesado, deploy produtivo ou escrita de dados. Reaproveitar resultados existentes e fixtures aprovadas nos testes.
+
+#### 94.20.4 Aceite e relatório de execução
+
+**Saída obrigatória:** \`BASE_HEAD, EVALUATED_SHA, FINAL_HEAD, ORIGIN_MAIN, PUSH_VERIFIED, GIT_STATUS; AC01..AC08; CONTRACTS_REUSED, CONTRACT_CHANGES, PDF_SHA, DRAWING_REVISION, BOM_EFFECTIVITY; 4_PI/8_MP ledger; DESCRIPTION_FINDINGS, QUANTITY_COMPARABILITY; TESTS_UNIT/INTEGRATION/NEGATIVE/HOLDOUT/AUTHZ, VERIFIER_RUN/VERDICT/SHA, RESIDUAL_SEARCH, DOCS/ISSUE, OCR_EXECUTIONS, DEPLOY_EXECUTED, OWNER_APPROVAL, BLOCKERS, NEXT_BOUNDED_STEP\`.
+
+**Estados:** \`E1_G18_CODE_PASS\`, \`E1_G18_PASS_WITH_RESIDUAL\`, \`E1_G18_REWORK_REQUIRED\`, \`E1_G18_OWNER_BLOCKED\`. **Não fechar \`VAL01_COMPLETED\`** até thresholds, GT, generalização e homologação técnica ampla. E2–E7 permanecem congeladas.
