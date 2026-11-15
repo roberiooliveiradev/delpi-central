@@ -18,6 +18,8 @@ export type SectionRouteItem = {
   unpinLabel?: string;
   /** Pin omitted only when onPinClick is undefined (not based on kind). */
   kind?: "navigate" | "create";
+  /** Tooltip nativo do botão (ex.: link externo que abre outro app). */
+  title?: string;
 };
 export type SectionRouteCardClassNames = {
   root: string;
@@ -145,6 +147,7 @@ export function SectionRouteCard({
                   disabled={route.disabled}
                   onClick={route.onClick}
                   aria-label={routeAria}
+                  title={route.title}
                 >
                   {route.icon ? (
                     <span className={classNames.routeIcon} aria-hidden={true}>

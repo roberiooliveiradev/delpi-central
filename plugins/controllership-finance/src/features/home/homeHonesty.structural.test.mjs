@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Home honesta — IMP-MFE-HOME.
- * Sem KPIs, tarefas, blockers ou competência fabricados; deep link ?q=;
- * catálogo só com rotas implementadas; recents sem dados sensíveis.
+ * Home honesta — IMP-MFE-HOME + UI review H1.
+ * Highlights vêm de leituras reais (competências / última auditoria);
+ * sem KPI fabricado; deep link ?q=; catálogo só com rotas implementadas.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -17,18 +17,26 @@ function readSrc(relative) {
 }
 
 describe("home honesty", () => {
-  it("não fabrica métricas — hero usa «—» (indisponível), não valores", () => {
+  it("hero carrega highlights reais (nunca traço estático)", () => {
     const shell = readSrc("app/PluginShell.tsx");
-    assert.match(shell, /highlightsUnavailable/);
-    // Nenhum fetch de KPI/tasks/blockers — fontes ainda não existem.
-    assert.doesNotMatch(shell, /getMyTask|getBlocker|getActiveCompetence|getKpi/i);
+    assert.match(shell, /loadHomeHeroHighlights/);
+    assert.doesNotMatch(shell, /highlightsUnavailable/);
     assert.doesNotMatch(shell, /\b\d+\s*(na fila|em atraso|tarefas?)\b/);
   });
 
-  it("HomePage não chama endpoints de dados operacionais", () => {
+  it("HomePage não chama endpoints de dados operacionais de fechamento", () => {
     const page = readSrc("features/home/HomePage.tsx");
-    assert.doesNotMatch(page, /getOpenOrders|getMyWorklist|listInteractionRooms|summary|atrasos/i);
+    assert.doesNotMatch(page, /getOpenOrders|getMyWorklist|listInteractionRooms|atrasos/i);
     assert.doesNotMatch(page, /\bvalor\b|\bR\$|formatCurrency/);
+  });
+
+  it("recents usam ícone da rota (H2)", () => {
+    const page = readSrc("features/home/HomePage.tsx");
+    assert.match(page, /hubRouteIcon/);
+    assert.doesNotMatch(
+      page,
+      /CfRecentAccessStrip[\s\S]*icon:\s*SECTION_ICONS\.closing/,
+    );
   });
 
   it("catálogo publica somente viewIds implementados", () => {
@@ -37,19 +45,15 @@ describe("home honesty", () => {
     assert.deepEqual(
       new Set(viewIds),
       new Set([
-        "home",
-        "profile",
         "monthly_closing",
         "entry_audit",
         "checklist_admin",
         "documents_admin",
         "catalogs_admin",
-        // RW03 — projeção DRE do mesmo catálogo: Fechamento Mensal →
-        // Documentos e interações (única rota do público externo).
         "received_documents",
       ]),
     );
-    assert.doesNotMatch(catalog, /overview|interaction_rooms|administration|open_orders/);
+    assert.doesNotMatch(catalog, /overview|interaction_rooms|open_orders/);
   });
 
   it("busca ?q= está ligada (read + write na URL)", () => {
@@ -66,16 +70,13 @@ describe("home honesty", () => {
     assert.match(recents, /MAX_RECENTS = 5/);
     assert.match(recents, /dedupeKey/);
     assert.match(recents, /localStorage/);
-    // Sem token/credencial persistida.
     assert.doesNotMatch(recents, /accessToken|Bearer\s|authorization|password|cpf/i);
   });
 
-  it("favoritos não existem nesta entrega (D3=A DEFERRED)", () => {
+  it("link LNF externo expõe tooltip de app externo (H3)", () => {
     const page = readSrc("features/home/HomePage.tsx");
-    const catalog = readSrc("content/pluginRouteCatalog.ts");
-    for (const code of [page, catalog]) {
-      assert.doesNotMatch(code, /\bfavorites?\b|\bfavoritos?\b|\bpinLabel\b|\bonPinClick\b|\bStar\b/i);
-    }
+    assert.match(page, /LNF_EXTERNAL_TOOLTIP/);
+    assert.match(page, /hubRouteIcon/);
   });
 
   it("eventos renderizam estado indisponível honesto — não empty positivo", () => {

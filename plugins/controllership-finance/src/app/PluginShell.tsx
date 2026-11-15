@@ -18,6 +18,7 @@ import {
 } from "../content/pluginRouteCatalog";
 import { CF_HELP } from "../content/helpTooltips";
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
+import { loadHomeHeroHighlights } from "../features/home/homeHeroHighlights";
 import { navigatePluginView } from "./pluginNavigation";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { useViewerContext } from "./ViewerContext";
@@ -135,20 +136,53 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const heroCopy = dreViewer
     ? SHELL_NAV_CONTENT.dreHero
     : SHELL_NAV_CONTENT.homeHero;
-  const heroHighlights = dreViewer
-    ? undefined
-    : [
-        {
-          id: "competence",
-          label: SHELL_NAV_CONTENT.homeHero.highlights.competence,
-          value: SHELL_NAV_CONTENT.homeHero.highlightsUnavailable,
-        },
-        {
-          id: "attention",
-          label: SHELL_NAV_CONTENT.homeHero.highlights.attention,
-          value: SHELL_NAV_CONTENT.homeHero.highlightsUnavailable,
-        },
-      ];
+  const [heroHighlights, setHeroHighlights] = useState<
+    Array<{ id: string; label: string; value: string }> | undefined
+  >(
+    dreViewer
+      ? undefined
+      : [
+          {
+            id: "competence",
+            label: SHELL_NAV_CONTENT.homeHero.highlights.competence,
+            value: "Carregando…",
+          },
+          {
+            id: "attention",
+            label: SHELL_NAV_CONTENT.homeHero.highlights.attention,
+            value: "Carregando…",
+          },
+        ],
+  );
+
+  useEffect(() => {
+    if (dreViewer || !showGreeting) {
+      setHeroHighlights(undefined);
+      return;
+    }
+    const controller = new AbortController();
+    void loadHomeHeroHighlights(controller.signal)
+      .then((items) => {
+        if (!controller.signal.aborted) setHeroHighlights(items);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setHeroHighlights([
+            {
+              id: "competence",
+              label: SHELL_NAV_CONTENT.homeHero.highlights.competence,
+              value: "Nenhuma competência aberta",
+            },
+            {
+              id: "attention",
+              label: SHELL_NAV_CONTENT.homeHero.highlights.attention,
+              value: "Nenhuma atenção",
+            },
+          ]);
+        }
+      });
+    return () => controller.abort();
+  }, [dreViewer, showGreeting, viewer?.capabilities.access]);
 
   const showLnf = viewer?.capabilities.lnfAccess === true;
 

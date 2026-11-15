@@ -40,6 +40,7 @@ import {
   readRecentViews,
   type RecentHubView,
 } from "./homeRecentViews";
+import { hubRouteIcon, LNF_EXTERNAL_TOOLTIP } from "./hubRouteIcons";
 import { readHomeSearchQuery, writeHomeSearchQuery } from "./homeSearchQuery";
 
 type HomePageProps = {
@@ -189,10 +190,13 @@ export function HomePage({ basePath }: HomePageProps) {
     (section: HubSectionDef) =>
       section.routes.map((route) => {
         const canPin = route.kind !== "external" && Boolean(route.viewId);
+        const isExternal = route.kind === "external";
         return {
           id: route.id,
           label: route.label,
-          kind: route.kind === "external" ? "navigate" : route.kind,
+          kind: isExternal ? "navigate" : route.kind,
+          icon: hubRouteIcon(route.viewId, { external: isExternal }),
+          title: isExternal ? LNF_EXTERNAL_TOOLTIP : undefined,
           pinned: canPin
             ? favoriteKeys.has(
                 homeFavoriteKey({
@@ -301,7 +305,7 @@ export function HomePage({ basePath }: HomePageProps) {
               items={visibleRecents.map((item) => ({
                 id: `${item.viewId}::${item.search ?? ""}`,
                 label: item.label,
-                icon: SECTION_ICONS.closing,
+                icon: hubRouteIcon(item.viewId),
               }))}
               onSelect={(id: string) => {
                 const item = visibleRecents.find(

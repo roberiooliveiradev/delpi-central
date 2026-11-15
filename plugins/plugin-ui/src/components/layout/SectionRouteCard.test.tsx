@@ -178,4 +178,26 @@ describe("SectionRouteCard", () => {
     );
     expect(buttons).toHaveLength(2);
   });
+
+  it("propaga title opcional no botão da rota (link externo)", () => {
+    render(
+      <SectionRouteCard
+        classNames={sectionRouteCardBemClasses("cm")}
+        title="Notas fiscais"
+        routes={[
+          {
+            id: "lnf",
+            label: "Lançamento de notas fiscais",
+            title: "Abre o app Lançamento de Notas Fiscais",
+            onClick: () => undefined,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Lançamento de notas fiscais" })
+        .getAttribute("title"),
+    ).toBe("Abre o app Lançamento de Notas Fiscais");
+  });
 });
