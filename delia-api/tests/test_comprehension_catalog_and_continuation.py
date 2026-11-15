@@ -195,6 +195,26 @@ def test_comprehension_catalog_block_untrusted_metadata():
             assert json.loads(block.splitlines()[0]) is not None
 
 
+def test_comprehension_catalog_preserves_field_vocabulary():
+    """FRONT-A-R5: the selector FIELD vocabulary the owner publishes in
+    its description (e.g. "process: .../q/...") is contract text the
+    comprehension needs to declare required_args/required_scope with
+    real fields — a truncation that drops it forces invented fields
+    like params.name instead of the declared params.q."""
+    long_desc = (
+        "Read business items from the alpha owner. " + "x" * 500 +
+        " Search accepts only entity-declared fields "
+        "(process: filial_id/setor_id/status/q/page/page_size) — "
+        "unsupported fields are rejected INVALID_FIELD."
+    )
+    block = _comprehension_catalog_block(
+        [_catalog_entry(description=long_desc)]
+    )
+    assert block is not None
+    assert "entity-declared fields" in block
+    assert "setor_id/status/q" in block
+
+
 def test_two_agent_comprehension_receives_catalog_vocabulary():
     """FRONT-A-I1: inside the variant-B comprehension run the model
     request carries the bounded catalog vocabulary while the surface

@@ -697,8 +697,13 @@ def _declared_container_only(declared: object) -> bool:
     return False
 
 
-_COMPREHENSION_CATALOG_DESC_LIMIT = 400
-_COMPREHENSION_CATALOG_BLOCK_LIMIT = 4000
+# Descriptions carry the owner-published selector FIELD vocabulary
+# (e.g. "process: filial_id/.../q/page") the comprehension needs to
+# declare required_args/required_scope with real fields — a tighter
+# bound silently drops it and forces invented fields (INT2_A2:
+# params.name vs the declared params.q).
+_COMPREHENSION_CATALOG_DESC_LIMIT = 1400
+_COMPREHENSION_CATALOG_BLOCK_LIMIT = 12000
 
 
 def _comprehension_catalog_block(live_catalog: object) -> str | None:
