@@ -196,3 +196,11 @@ def test_core_unavailable_and_bad_payload_are_safe():
         return {"id": "user-001", "permissions": "linux_ops.deploy.prepare"}
     with pytest.raises(EvidenceReadError, match="CORE_PERMISSIONS_INVALID"):
         core_run(core_reader(bad))
+
+
+def test_github_vendor_json_media_type_supported():
+    def reply(request):
+        response = httpx.Response(200, json=payload(request))
+        response.headers["content-type"] = "application/vnd.github+json; charset=utf-8"
+        return response
+    assert run(reader(reply)).branch_contains_commit is True
