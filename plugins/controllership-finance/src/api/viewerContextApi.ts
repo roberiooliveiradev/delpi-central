@@ -6,6 +6,9 @@ export type ViewerCapabilities = {
   /** DRE-019-RW03 — única capability da experiência DRE (Home DRE +
    * Documentos e interações); não implica `access`. */
   accessDre: boolean;
+  /** Home-hub H1 — mesma regra de entrada do app LNF (permissões efetivas
+   * do Core); aditivo, sem permission nova no Portal. */
+  lnfAccess: boolean;
 };
 
 export type ViewerContext = {
@@ -39,6 +42,7 @@ export async function getViewerContext(options?: {
       access: Boolean(data?.capabilities?.access),
       manage: Boolean(data?.capabilities?.manage),
       accessDre: Boolean(data?.capabilities?.accessDre),
+      lnfAccess: Boolean(data?.capabilities?.lnfAccess),
     },
   };
 }

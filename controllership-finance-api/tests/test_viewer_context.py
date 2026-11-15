@@ -21,6 +21,7 @@ ACCESS = "controllership-finance.access"
 MANAGE = "controllership-finance.manage"
 READ_DOCS = "controllership-finance.closing-documents.read"
 ACCESS_DRE = "controllership-finance.access.dre"
+LNF_ACCESS = "lancamento-notas-fiscais.access"
 
 TOKEN = "viewer-test-token"
 
@@ -113,6 +114,7 @@ def test_viewer_context_human_with_access_returns_200(_auth_pipeline):
             "access": True,
             "manage": False,
             "accessDre": False,
+            "lnfAccess": False,
         },
     }
 
@@ -125,6 +127,7 @@ def test_viewer_context_access_plus_manage(_auth_pipeline):
         "access": True,
         "manage": True,
         "accessDre": False,
+        "lnfAccess": False,
     }
 
 
@@ -145,6 +148,7 @@ def test_viewer_context_dre_capability_only(_auth_pipeline):
         "access": False,
         "manage": False,
         "accessDre": True,
+        "lnfAccess": False,
     }
 
 
@@ -158,7 +162,28 @@ def test_viewer_context_dre_plus_legacy_stale_grant(_auth_pipeline):
         "access": False,
         "manage": False,
         "accessDre": True,
+        "lnfAccess": False,
     }
+
+
+def test_viewer_context_lnf_access_when_core_grants_lnf(_auth_pipeline):
+    """H1: lnfAccess espelha a porta de entrada do app LNF (sem permission nova)."""
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS, LNF_ACCESS])
+    response = _get(_client())
+    assert response.status_code == 200
+    assert response.json()["data"]["capabilities"] == {
+        "access": True,
+        "manage": False,
+        "accessDre": False,
+        "lnfAccess": True,
+    }
+
+
+def test_viewer_context_without_lnf_permission_reports_false(_auth_pipeline):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _get(_client())
+    assert response.status_code == 200
+    assert response.json()["data"]["capabilities"]["lnfAccess"] is False
 
 
 def test_viewer_context_manage_only_is_forbidden(_auth_pipeline):
@@ -303,6 +328,7 @@ def test_viewer_context_human_superadmin_gets_manage_capability(_auth_pipeline):
         "access": True,
         "manage": True,
         "accessDre": True,
+        "lnfAccess": True,
     }
 
 

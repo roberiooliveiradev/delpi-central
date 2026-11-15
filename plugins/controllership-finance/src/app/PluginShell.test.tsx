@@ -4,7 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const viewerState = {
   viewer: null as {
     firstName: string | null;
-    capabilities: { access: boolean; manage: boolean; accessDre: boolean };
+    capabilities: {
+      access: boolean;
+      manage: boolean;
+      accessDre: boolean;
+      lnfAccess: boolean;
+    };
   } | null,
   loading: false,
   errorStatus: null as number | null,
@@ -41,7 +46,7 @@ describe("PluginShell", () => {
   it("renderiza topbar canônica somente com rotas implementadas", () => {
     viewerState.viewer = {
       firstName: "Ana",
-      capabilities: { access: true, manage: false, accessDre: false },
+      capabilities: { access: true, manage: false, accessDre: false, lnfAccess: false },
     };
     renderShell();
     expect(screen.getByText("Início")).toBeTruthy();
@@ -63,7 +68,7 @@ describe("PluginShell", () => {
   it("saudação usa o primeiro nome do viewer-context", () => {
     viewerState.viewer = {
       firstName: "Ana",
-      capabilities: { access: true, manage: false, accessDre: false },
+      capabilities: { access: true, manage: false, accessDre: false, lnfAccess: false },
     };
     renderShell();
     expect(screen.getByText("Olá, Ana")).toBeTruthy();
@@ -78,7 +83,7 @@ describe("PluginShell", () => {
   it("Ctrl+K abre a paleta de comandos", () => {
     viewerState.viewer = {
       firstName: "Ana",
-      capabilities: { access: true, manage: false, accessDre: false },
+      capabilities: { access: true, manage: false, accessDre: false, lnfAccess: false },
     };
     renderShell();
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -89,7 +94,7 @@ describe("PluginShell", () => {
   it("gatilho de busca na topbar abre a paleta", () => {
     viewerState.viewer = {
       firstName: "Ana",
-      capabilities: { access: true, manage: false, accessDre: false },
+      capabilities: { access: true, manage: false, accessDre: false, lnfAccess: false },
     };
     renderShell();
     fireEvent.click(
@@ -101,7 +106,7 @@ describe("PluginShell", () => {
   it("viewer somente-DRE vê a MESMA top bar com «Início» (RW04)", () => {
     viewerState.viewer = {
       firstName: "Bruno",
-      capabilities: { access: false, manage: false, accessDre: true },
+      capabilities: { access: false, manage: false, accessDre: true, lnfAccess: false },
     };
     renderShell("home");
     // Exatamente um item «Início» — o mesmo da experiência interna.
@@ -117,7 +122,7 @@ describe("PluginShell", () => {
   it("viewer com access + accessDre não vê Início duplicado", () => {
     viewerState.viewer = {
       firstName: "Ana",
-      capabilities: { access: true, manage: false, accessDre: true },
+      capabilities: { access: true, manage: false, accessDre: true, lnfAccess: false },
     };
     renderShell();
     expect(screen.getAllByText("Início")).toHaveLength(1);

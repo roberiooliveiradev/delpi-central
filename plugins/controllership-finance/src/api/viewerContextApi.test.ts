@@ -27,6 +27,7 @@ describe("viewerContextApi", () => {
           access: true,
           manage: false,
           accessDre: false,
+          lnfAccess: false,
         },
       }),
     );
@@ -38,6 +39,7 @@ describe("viewerContextApi", () => {
         access: true,
         manage: false,
         accessDre: false,
+        lnfAccess: false,
       },
     });
     const url = fetchMock.mock.calls[0][0] as string;
@@ -56,6 +58,7 @@ describe("viewerContextApi", () => {
         access: false,
         manage: false,
         accessDre: false,
+        lnfAccess: false,
       },
     });
   });
@@ -68,6 +71,7 @@ describe("viewerContextApi", () => {
           access: false,
           manage: false,
           accessDre: true,
+          lnfAccess: false,
         },
       }),
     );
@@ -76,7 +80,24 @@ describe("viewerContextApi", () => {
       access: false,
       manage: false,
       accessDre: true,
+      lnfAccess: false,
     });
+  });
+
+  it("propaga lnfAccess aditivo do viewer-context", async () => {
+    fetchMock.mockResolvedValueOnce(
+      okEnvelope({
+        firstName: "Ana",
+        capabilities: {
+          access: true,
+          manage: false,
+          accessDre: false,
+          lnfAccess: true,
+        },
+      }),
+    );
+    const ctx = await getViewerContext();
+    expect(ctx.capabilities.lnfAccess).toBe(true);
   });
 
   it("propaga ApiError com status 403", async () => {

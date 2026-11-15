@@ -4,7 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const viewerState = {
   viewer: null as {
     firstName: string | null;
-    capabilities: { access: boolean; manage: boolean; accessDre: boolean };
+    capabilities: {
+      access: boolean;
+      manage: boolean;
+      accessDre: boolean;
+      lnfAccess: boolean;
+    };
   } | null,
   loading: true,
   errorStatus: null as number | null,
@@ -30,7 +35,12 @@ afterEach(() => {
 
 function setViewer(
   firstName: string | null,
-  capabilities: { access: boolean; manage: boolean; accessDre: boolean },
+  capabilities: {
+    access: boolean;
+    manage: boolean;
+    accessDre: boolean;
+    lnfAccess: boolean;
+  },
 ) {
   viewerState.viewer = { firstName, capabilities };
   viewerState.loading = false;
@@ -44,7 +54,7 @@ describe("HomePage", () => {
   });
 
   it("renderiza o hub com ACCESS — catálogo, busca e eventos honestos", async () => {
-    setViewer("Ana", { access: true, manage: false, accessDre: false });
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     render(<HomePage basePath="/apps/controllership-finance" />);
     expect(screen.getByText("Caminhos e funcionalidades")).toBeTruthy();
     expect(screen.getByText("Eventos e interações")).toBeTruthy();
@@ -79,7 +89,7 @@ describe("HomePage", () => {
   });
 
   it("busca ?q= filtra o catálogo", async () => {
-    setViewer("Ana", { access: true, manage: false, accessDre: false });
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     window.history.replaceState(
       null,
       "",
@@ -94,7 +104,7 @@ describe("HomePage", () => {
   });
 
   it("busca sem resultado mostra estado vazio honesto", async () => {
-    setViewer("Ana", { access: true, manage: false, accessDre: false });
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     window.history.replaceState(
       null,
       "",
@@ -107,7 +117,12 @@ describe("HomePage", () => {
   });
 
   it("usuário somente-DRE vê a MESMA Home com somente Fechamento Mensal (RW04)", async () => {
-    setViewer("Bruno", { access: false, manage: false, accessDre: true });
+    setViewer("Bruno", {
+      access: false,
+      manage: false,
+      accessDre: true,
+      lnfAccess: false,
+    });
     render(<HomePage basePath="/apps/controllership-finance" />);
     expect(screen.getByText("Caminhos e funcionalidades")).toBeTruthy();
     // Único módulo autorizado: Central de Fechamento → Fechamento Mensal.
@@ -123,7 +138,7 @@ describe("HomePage", () => {
   });
 
   it("usuário interno não vê a seção DRE duplicada", async () => {
-    setViewer("Ana", { access: true, manage: false, accessDre: false });
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     render(<HomePage basePath="/apps/controllership-finance" />);
     expect(screen.getByText("Fechamento mensal")).toBeTruthy();
     // «Fechamento Mensal» (rótulo da rota DRE) não aparece para o interno.
@@ -131,7 +146,7 @@ describe("HomePage", () => {
   });
 
   it("últimos acessos registra a visita à home", async () => {
-    setViewer("Ana", { access: true, manage: false, accessDre: false });
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     render(<HomePage basePath="/apps/controllership-finance" />);
     await waitFor(() =>
       expect(screen.getByText("Últimos acessos")).toBeTruthy(),

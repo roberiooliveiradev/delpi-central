@@ -27,6 +27,7 @@ const viewerCaps = vi.hoisted(() => ({
   access: true,
   manage: false,
   accessDre: false,
+  lnfAccess: false,
 }));
 
 vi.mock("../../api/packagesApi", () => ({

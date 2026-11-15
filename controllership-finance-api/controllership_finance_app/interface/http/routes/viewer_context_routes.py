@@ -14,6 +14,9 @@ Contrato congelado IMP-MFE-HOME (doc 45 §14.1; decisões D1=A e D2=A):
   continua em cada rota);
 - ``manage`` não implica ``access``; capabilities DRE não implicam
   ``access``;
+- ``capabilities.lnfAccess`` é aditivo (home-hub H1): mesma regra de
+  entrada do app LNF via ``has_lnf_clara_entry`` / permissões efetivas
+  do Core — sem permission nova no Portal;
 - ``rbac_unavailable`` (Core indisponível sem snapshot válido) falha fechado
   com 503 — nunca converte indisponibilidade em autorização local;
 - leitura adere à política D1: o middleware já aplica stale ≤900s para
@@ -29,6 +32,7 @@ from controllership_finance_app.config import settings
 from delpi_auth.authz_core import has_permission
 
 from controllership_finance_app.core.responses import ok
+from controllership_finance_app.interface.http.authz import has_lnf_clara_entry
 
 ACCESS_PERMISSION = "controllership-finance.access"
 MANAGE_PERMISSION = "controllership-finance.manage"
@@ -84,6 +88,7 @@ def get_viewer_context(request: Request):
                 "access": has_permission(user, ACCESS_PERMISSION),
                 "manage": is_superadmin or MANAGE_PERMISSION in permissions,
                 "accessDre": has_permission(user, DRE_ACCESS_PERMISSION),
+                "lnfAccess": has_lnf_clara_entry(user),
             },
         },
         operation_id="get_viewer_context",
