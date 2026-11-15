@@ -557,6 +557,17 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 
 **Proximo passo unico:** checar CI, coletar diagnostico no primeiro Windows piloto em HML com relatorio tratado como nao confiavel, escolher estrategia de chaves TPM RSA/mTLS ou Ed25519 com ancoragem externa comprovavel e validar fluxo end-to-end antes de emitir credenciais.
 
+## 2026-11-14 | G2-S4-S2b-P4 | CI de diagnostico Windows aprovado
+
+**Objetivo:** consolidar evidencias dos testes automatizados apos publicar o diagnostico local.
+**Arquivos alterados:** somente README, diario e runbook P4; sem alteracoes no runtime ou scripts.
+**Commit/issue:** [codigo 83f039320ba5](https://github.com/roberiooliveiradev/delpi-central/commit/83f039320ba5eadce138fc4dd80534782d7a2fa5); issue #179.
+**Testes e evidencias:** [API, teste Windows PS em ambiente CI Linux e PostgreSQL SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659712038); [Architecture Enforcement SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659711990); [Cursor Rules Governance SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659711987). `CANDIDATE` continua sem attestation ou autorizacao.
+**Estado de producao:** nenhum deploy, flag habilitada, agente instalado, Keycloak alterado ou acesso remoto liberado.
+**Risco e limitacoes:** o smoke PowerShell em Linux e pytest nao substituem piloto Windows/TPM/UEFI real ou verificacao de assinatura de chave hardware-backed.
+**Rollback:** reverter script/validador em novo commit se regressao, mantendo V009..V015 intocadas.
+**Proximo passo unico:** aprovar workstation HML e avaliar suporte real a TPM, Secure Boot e cadeia de confianca de chave, sem enrolment ate revisao privada.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

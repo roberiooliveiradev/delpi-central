@@ -47,3 +47,10 @@ CI executa tambem `Test-ItPortalWorkstationTrustReadiness.ps1` com pwsh, parser 
 Nenhum estado de banco ou Windows e modificado; rollback e reverter apenas scripts, validador, testes e docs. Proximo passo: confirmar pipeline verde, obter inventario de capacidades do equipamento piloto HML e escolher protocolo attestation de chave aprovado, nunca usar apenas sinal de TPM/Secure Boot para aprovar identidades. G0-SEC continua bloqueado.
 
 [Roadmap](README.md) | [Seguranca](SECURITY-GATES.md) | [P3](G2-S4-S2B-P3-SIGNED-CONSUMPTION.md) | [Issue #179](https://github.com/roberiooliveiradev/delpi-central/issues/179)
+
+## Resultado do CI da entrega (14/11/2026)
+
+- [API/Python/PowerShell/PostgreSQL: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659712038)
+- [Architecture Enforcement: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659711990)
+- [Cursor Rules Governance: SUCCESS](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43659711987)
+- Código publicado no commit `83f039320ba5`. Esses testes em CI **não são** evidência de hardware Windows ou chave TPM atestada.
