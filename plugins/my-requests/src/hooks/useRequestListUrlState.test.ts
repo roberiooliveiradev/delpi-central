@@ -14,6 +14,7 @@ const DEFAULTS: RequestListFiltersState = {
   mineScope: "",
   sort: "",
   page: 1,
+  pageSize: 20,
 };
 
 describe("useRequestListUrlState — serialização", () => {
@@ -30,6 +31,7 @@ describe("useRequestListUrlState — serialização", () => {
       mineScope: "assigned_to_me",
       sort: "status:asc,created_at:desc",
       page: 3,
+      pageSize: 20,
     });
     const params = new URLSearchParams(search.slice(1));
     expect(params.get("q")).toBe("nota");
@@ -39,6 +41,16 @@ describe("useRequestListUrlState — serialização", () => {
     expect(params.get("mine_scope")).toBe("assigned_to_me");
     expect(params.get("sort")).toBe("status:asc,created_at:desc");
     expect(params.get("page")).toBe("3");
+    expect(params.get("page_size")).toBeNull();
+  });
+
+  it("page_size entra na URL só quando difere do default e volta no parse", () => {
+    const search = requestListFiltersToSearch({ ...DEFAULTS, pageSize: 50 });
+    const params = new URLSearchParams(search.slice(1));
+    expect(params.get("page_size")).toBe("50");
+    expect(
+      requestListFiltersFromSearch(search, DEFAULTS).pageSize,
+    ).toBe(50);
   });
 
   it("round-trip preserva filtros e página", () => {
@@ -50,6 +62,7 @@ describe("useRequestListUrlState — serialização", () => {
       mineScope: "completed_by_me",
       sort: "created_at:asc",
       page: 2,
+      pageSize: 50,
     };
     expect(
       requestListFiltersFromSearch(
@@ -81,6 +94,17 @@ describe("useRequestListUrlState — parse defensivo", () => {
   it("page inválida/zero/negativa cai para 1", () => {
     for (const raw of ["?page=abc", "?page=0", "?page=-3"]) {
       expect(requestListFiltersFromSearch(raw, DEFAULTS).page).toBe(1);
+    }
+  });
+
+  it("page_size fora das opções cai no default", () => {
+    for (const raw of ["?page_size=abc", "?page_size=13", "?page_size=999"]) {
+      expect(requestListFiltersFromSearch(raw, DEFAULTS).pageSize).toBe(20);
+    }
+    for (const size of [10, 50, 100]) {
+      expect(
+        requestListFiltersFromSearch(`?page_size=${size}`, DEFAULTS).pageSize,
+      ).toBe(size);
     }
   });
 

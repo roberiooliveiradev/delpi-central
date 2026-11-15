@@ -449,6 +449,11 @@ declare module "@delpi/plugin-ui/index" {
     key: string;
     header: string;
     render: (row: T) => ReactNode;
+    /** Exibe o affordance de ordenação no cabeçalho (só com onSortChange). */
+    sortable?: boolean;
+    align?: "left" | "right" | "center";
+    className?: string;
+    sortValue?: (row: T) => string | number | boolean | null | undefined;
   };
 
   export type DataTableProps<T> = {
@@ -1819,6 +1824,8 @@ declare module "@delpi/plugin-ui/index" {
     pageSize: number;
     total: number;
     onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    pageSizeOptions?: readonly number[];
   };
 
   export type ServerSortConfig = {
@@ -1853,6 +1860,9 @@ declare module "@delpi/plugin-ui/index" {
     serverSearch?: ServerSearchConfig;
     toolbarExtra?: ReactNode;
     toolbarLeading?: ReactNode;
+    toolbarPortalTarget?: HTMLElement | null;
+    toolbarLayout?: "default" | "hero";
+    toolbarExtraPlacement?: "before" | "after";
     toolbarFilters?: ReactNode;
     columnPreferencesKey?: string;
     defaultColumnVisibility?: Record<string, boolean>;
@@ -1861,8 +1871,33 @@ declare module "@delpi/plugin-ui/index" {
     renderCard?: (row: T) => ReactNode;
     onRowClick?: (row: T) => void;
     hidePaginationWhenSinglePage?: boolean;
+    /** Seção sem card externo — a grade fica direta na página. */
+    embedded?: boolean;
     unframed?: boolean;
   };
+
+  export type PagePathLink = {
+    label: string;
+    href: string;
+    onNavigate?: (event: { preventDefault(): void }) => void;
+  };
+
+  export type PagePathItem = PagePathLink & { id: string };
+
+  export type DashboardPagePathProps = {
+    back: PagePathLink;
+    items?: PagePathItem[];
+    current: string;
+    maxVisibleItems?: number;
+    size?: "sm" | "md";
+    ariaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardPagePath(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardPagePathProps>;
 
   export type PaginationLabels = {
     navigationAriaLabel: string;

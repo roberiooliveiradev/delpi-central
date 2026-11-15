@@ -6,6 +6,7 @@ import {
   PRC_TYPE_CODE,
   REQUESTS_SORT_FIELDS,
   defaultSortLevels,
+  headerSortDirection,
   parseListSortLevels,
   serializeListSortLevels,
   sortCatalogForSource,
@@ -35,12 +36,17 @@ describe("requestListSort — fonte efetiva e catálogos", () => {
     ]);
   });
 
-  it("tipo PRC → catálogo da Engineering API (1 nível)", () => {
+  it("tipo PRC → mescla ainda é por Data (1 nível, campo comparável)", () => {
     expect(sourceForTypeCode(PRC_TYPE_CODE)).toBe("prc");
     const catalog = sortCatalogForSource("prc");
     expect(catalog.maxLevels).toBe(1);
-    expect(catalog.fields.map((f) => f.value)).toContain("createdAt");
-    expect(catalog.fields).toEqual(PRC_SORT_FIELDS);
+    /* A fila PRC continua mesclada com requests-api — o merge só é
+     * honesto pelo campo comparável (created_at), não pelos campos
+     * exclusivos do contrato PRC. */
+    expect(catalog.fields).toEqual(MERGED_SORT_FIELDS);
+    /* O catálogo PRC completo fica exportado para uma futura lista
+     * PRC isolada — não usado no merge unificado. */
+    expect(PRC_SORT_FIELDS.length).toBeGreaterThan(1);
   });
 
   it("o catálogo requests-api cobre exatamente a whitelist do backend", () => {
@@ -102,8 +108,24 @@ describe("requestListSort — parse/serialize", () => {
     expect(defaultSortLevels("merged")).toEqual([
       { field: "created_at", direction: "desc" },
     ]);
+    /* fonte prc também usa created_at — campo aceito pelo requests-api
+     * e equivalente ao createdAt da Engineering API no merge. */
     expect(defaultSortLevels("prc")).toEqual([
-      { field: "createdAt", direction: "desc" },
+      { field: "created_at", direction: "desc" },
     ]);
+  });
+});
+
+describe("headerSortDirection — convenção do primeiro clique", () => {
+  it("campos de data (`*_at`) começam descendentes", () => {
+    expect(headerSortDirection("created_at")).toBe("desc");
+    expect(headerSortDirection("updated_at")).toBe("desc");
+  });
+
+  it("texto/códigos começam ascendentes", () => {
+    expect(headerSortDirection("status")).toBe("asc");
+    expect(headerSortDirection("type_code")).toBe("asc");
+    expect(headerSortDirection("branch")).toBe("asc");
+    expect(headerSortDirection("request_number")).toBe("asc");
   });
 });

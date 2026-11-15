@@ -62,6 +62,7 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   mineScope: "",
   sort: "",
   page: 1,
+  pageSize: REQUEST_LIST_PAGE_SIZE,
 };
 
 /* Janela de merge honesta: para compor a página N unificada por data,
@@ -134,12 +135,15 @@ export function MinePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortCatalog]);
 
-  const applySort = useCallback(() => {
-    patchFilters({
-      sort: serializeListSortLevels(sortLevels),
-      page: 1,
-    });
-  }, [sortLevels, patchFilters]);
+  /* Aplicação atômica: o nível a gravar vem por extenso — header e
+   * popover convergem para o mesmo commit, sem closure sobre draft. */
+  const applySort = useCallback(
+    (levels: DashboardSortLevel[]) => {
+      setSortLevels(levels);
+      patchFilters({ sort: serializeListSortLevels(levels), page: 1 });
+    },
+    [patchFilters],
+  );
 
   const sortSummary = useMemo(() => {
     const first = appliedLevels[0];
@@ -263,7 +267,7 @@ export function MinePage() {
     setPrcError(null);
 
     const windowSize = Math.min(
-      filters.page * REQUEST_LIST_PAGE_SIZE,
+      filters.page * filters.pageSize,
       MERGE_WINDOW_MAX,
     );
     /* typeCode: `raw-material-creation` é o tipo requests-api equivalente
@@ -353,8 +357,8 @@ export function MinePage() {
         }
 
         const merged = mergeUnifiedRows(reqRows, prcRows, primary.direction);
-        const start = (filters.page - 1) * REQUEST_LIST_PAGE_SIZE;
-        setRows(merged.slice(start, start + REQUEST_LIST_PAGE_SIZE));
+        const start = (filters.page - 1) * filters.pageSize;
+        setRows(merged.slice(start, start + filters.pageSize));
         setTotal(reqTotal + prcTotal);
       })
       .finally(() => {
@@ -496,7 +500,6 @@ export function MinePage() {
   return (
     <AppShell>
       <RequestListShell
-        eyebrow="Início / Minhas solicitações"
         title="Minhas solicitações"
         description="Acompanhe as solicitações que você abriu — serviços gerais e casos de cadastro de produto (PRC) no mesmo lugar."
         count={`${total} ${total === 1 ? "solicitação" : "solicitações"}`}
@@ -523,9 +526,10 @@ export function MinePage() {
         sectionHint={MY_REQUESTS_HELP_TOOLTIPS.mine.section}
         searchHint="Busca no número, tipo e assunto das suas solicitações."
         page={filters.page}
-        pageSize={REQUEST_LIST_PAGE_SIZE}
+        pageSize={filters.pageSize}
         total={total}
         onPageChange={(page) => patchFilters({ page })}
+        onPageSizeChange={(pageSize) => patchFilters({ pageSize, page: 1 })}
         search={filters.q}
         onSearchCommit={(value) => patchFilters({ q: value.trim(), page: 1 })}
         chips={statusChips(filters.status, (value) =>

@@ -51,6 +51,7 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   mineScope: "",
   sort: "",
   page: 1,
+  pageSize: REQUEST_LIST_PAGE_SIZE,
 };
 
 const QUEUE_COLUMN_PREFS_KEY = "my-requests.work-queue.columns.v1";
@@ -104,9 +105,15 @@ export function WorkQueuePage() {
     useState<DashboardSortLevel[]>(appliedLevels);
   useEffect(() => setSortLevels(appliedLevels), [appliedLevels]);
 
-  const applySort = useCallback(() => {
-    patchFilters({ sort: serializeListSortLevels(sortLevels), page: 1 });
-  }, [sortLevels, patchFilters]);
+  /* Aplicação atômica: o nível a gravar vem por extenso — header e
+   * popover convergem para o mesmo commit, sem closure sobre draft. */
+  const applySort = useCallback(
+    (levels: DashboardSortLevel[]) => {
+      setSortLevels(levels);
+      patchFilters({ sort: serializeListSortLevels(levels), page: 1 });
+    },
+    [patchFilters],
+  );
 
   const sortSummary = useMemo(() => {
     const first = appliedLevels[0];
@@ -251,7 +258,7 @@ export function WorkQueuePage() {
     listWorkQueue({
       signal: ac.signal,
       page: filters.page,
-      pageSize: REQUEST_LIST_PAGE_SIZE,
+      pageSize: filters.pageSize,
       typeCode: filters.typeCode || undefined,
       status: filters.status || undefined,
       branch: filters.branch || undefined,
@@ -413,7 +420,6 @@ export function WorkQueuePage() {
   return (
     <AppShell>
       <RequestListShell
-        eyebrow="Início / Minhas solicitações"
         title="Fila de trabalho"
         description="Solicitações abertas aos processadores — filtre por escopo, tipo, status e filial."
         count={`${total} ${total === 1 ? "pendência" : "pendências"}`}
@@ -428,9 +434,10 @@ export function WorkQueuePage() {
         sectionHint={MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}
         searchHint="Busca no número, assunto e solicitante da fila."
         page={filters.page}
-        pageSize={REQUEST_LIST_PAGE_SIZE}
+        pageSize={filters.pageSize}
         total={total}
         onPageChange={(page) => patchFilters({ page })}
+        onPageSizeChange={(pageSize) => patchFilters({ pageSize, page: 1 })}
         search={filters.q}
         onSearchCommit={(value) => patchFilters({ q: value.trim(), page: 1 })}
         chips={statusChips(filters.status, (value) =>

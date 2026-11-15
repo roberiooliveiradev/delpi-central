@@ -9,7 +9,7 @@ import { usePersistedViewLayout } from "../../hooks/usePersistedViewLayout";
 import { useTableColumnVisibility } from "../../hooks/useTableColumnVisibility";
 import { useTableFontSize } from "../../hooks/useTableFontSize";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { tryResolveCreatePortal } from "../../utils/resolveCreatePortal";
 import { useClientPagination } from "../../utils/useClientPagination";
 import { HelpTooltip } from "../help/HelpTooltip";
@@ -176,6 +176,21 @@ export type DataTableSectionProps<T> = {
    * únicos desta seção (sem duplicar UI). Opt-in e retrocompatível.
    */
   toolbarPortalTarget?: HTMLElement | null;
+  /**
+   * `"hero"` reorganiza visualmente a mesma toolbar para o padrão de
+   * listagens com hero: busca dominante em linha própria, ações em
+   * seguida e grupo Tabela/Cards + `toolbarLeading` na última faixa.
+   * Combina com `toolbarPortalTarget`, mas também funciona inline.
+   * Opt-in e retrocompatível (`"default"` mantém a ordem histórica).
+   */
+  toolbarLayout?: "default" | "hero";
+  /**
+   * Posição de `toolbarExtra` em relação aos extras nativos (export,
+   * fonte, Colunas). `"before"` antecipa os controles do consumidor —
+   * padrão hero: Filtros/Ordenar antes de Colunas. `"after"` preserva
+   * a ordem histórica (nativos primeiro). Opt-in e retrocompatível.
+   */
+  toolbarExtraPlacement?: "before" | "after";
   /**
    * Layout do wrap da tabela interna — `"scroll"` transforma a área da
    * tabela em região flexível com header fixo (parent flex column com
@@ -370,6 +385,8 @@ export function DataTableSection<T>({
   toolbarExtra,
   toolbarLeading,
   toolbarPortalTarget,
+  toolbarLayout = "default",
+  toolbarExtraPlacement = "after",
   tableLayout,
   hidePaginationWhenSinglePage = false,
   toolbarFilters,
@@ -603,21 +620,28 @@ export function DataTableSection<T>({
   const resolvedEmpty = emptyMessage ?? labels.emptyMessage;
 
   const viewToggle = viewLayoutEnabled ? (
-    <SegmentToggle
-      prefix={uiPrefix}
-      size="sm"
-      ariaLabel={DEFAULT_VIEW_LAYOUT_LABELS.ariaLabel}
-      idPrefix={`${uiPrefix}-datatable-layout`}
-      value={layout}
-      onChange={setLayout}
-      options={[
-        { value: "table", label: DEFAULT_VIEW_LAYOUT_LABELS.table },
-        { value: "cards", label: DEFAULT_VIEW_LAYOUT_LABELS.cards },
-      ]}
-    />
+    <div
+      className={delpiUiClass(
+        `${uiPrefix}-table-toolbar__view-toggle`,
+        "delpi-ui-table-toolbar__view-toggle",
+      )}
+    >
+      <SegmentToggle
+        prefix={uiPrefix}
+        size="sm"
+        ariaLabel={DEFAULT_VIEW_LAYOUT_LABELS.ariaLabel}
+        idPrefix={`${uiPrefix}-datatable-layout`}
+        value={layout}
+        onChange={setLayout}
+        options={[
+          { value: "table", label: DEFAULT_VIEW_LAYOUT_LABELS.table },
+          { value: "cards", label: DEFAULT_VIEW_LAYOUT_LABELS.cards },
+        ]}
+      />
+    </div>
   ) : null;
 
-  const nativeToolbarExtra = (
+  const nativeExtras = (
     <>
       {excelExportEnabled && excelExport ? (
         <ExcelExportButton
@@ -650,9 +674,21 @@ export function DataTableSection<T>({
           labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
         />
       ) : null}
-      {toolbarExtra}
     </>
   );
+
+  const nativeToolbarExtra =
+    toolbarExtraPlacement === "before" ? (
+      <>
+        {toolbarExtra}
+        {nativeExtras}
+      </>
+    ) : (
+      <>
+        {nativeExtras}
+        {toolbarExtra}
+      </>
+    );
 
   const hasToolbarExtra =
     excelExportEnabled ||
@@ -660,8 +696,13 @@ export function DataTableSection<T>({
     columnVisibilityEnabled ||
     Boolean(toolbarExtra);
 
+  const toolbarClass =
+    toolbarLayout === "hero"
+      ? withBemModifier(sectionClassNames.toolbar, "hero")
+      : sectionClassNames.toolbar;
+
   const toolbarNode = showToolbar ? (
-    <div className={sectionClassNames.toolbar}>
+    <div className={toolbarClass}>
       {viewToggle || toolbarLeading ? (
         <div className={sectionClassNames.searchGroup}>
           {viewToggle}

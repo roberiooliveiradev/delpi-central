@@ -54,7 +54,7 @@ describe("MinePage — tabela unificada requests-api + PRC", () => {
   it("faz merge honesto por data com janela das duas APIs paginadas", () => {
     expect(domain).toContain("mergeUnifiedRows");
     expect(src).toContain("MERGE_WINDOW_MAX");
-    expect(src).toContain("filters.page * REQUEST_LIST_PAGE_SIZE");
+    expect(src).toContain("filters.page * filters.pageSize");
     /* Ambas as chamadas usam page=1 + pageSize=janela — nunca concatena
      * páginas parciais declarando total falso. */
     expect(src).toContain("page: 1,");

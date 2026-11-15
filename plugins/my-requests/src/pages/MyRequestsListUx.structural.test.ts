@@ -65,6 +65,58 @@ describe("Shell compartilhado — componentes do kit, não locais", () => {
   });
 });
 
+describe("Hero × grade — controles dentro do hero, sem card redundante", () => {
+  it("toolbar da seção renderiza no body do hero via portal do kit", () => {
+    expect(shell).toContain("toolbarPortalTarget");
+    expect(shell).toContain("setToolbarHost");
+    expect(shell).toContain("delpi-ui-list-toolbar-host");
+    expect(shell).toContain('toolbarLayout="hero"');
+    /* mesma instância — nunca controles duplicados na página */
+    expect(mrUi).not.toContain("TableColumnVisibilityMenu(");
+  });
+
+  it("grade embedded logo após o hero — sem card externo duplicado", () => {
+    expect(shell).toContain("embedded");
+    /* chips migram para a faixa do hero (toolbarLeading), não toolbarFilters */
+    expect(shell).toContain("toolbarLeading");
+    expect(shell).not.toContain("toolbarFilters");
+  });
+
+  it("caminho clicável acima do hero (PagePath do kit)", () => {
+    expect(shell).toContain("MyRequestsPagePath");
+    expect(shell).toContain('label: "Início"');
+    expect(mrUi).toContain("createDashboardPagePath");
+  });
+
+  it("só colunas do contrato ganham affordance de sort", () => {
+    expect(shell).toContain("sortable: true");
+    expect(shell).toContain("columnSortMap[column.key]");
+  });
+});
+
+describe("Header-sort — aplicação atômica, sem closure sobre estado antigo", () => {
+  it("clique aplica o novo nível por extenso (regressão UX-V2-HEADER-01)", () => {
+    expect(shell).toContain("sort.onApply([{ field, direction }])");
+    /* proibido o padrão setState + apply no mesmo tick */
+    expect(shell).not.toMatch(
+      /sort\.onChange\(\[[^\]]*\]\);\s*\n?\s*sort\.onApply\(\)/,
+    );
+  });
+
+  it("direção segue o estado aplicado + convenção *_at desc / texto asc", () => {
+    expect(shell).toContain("sortKey === columnKey");
+    expect(shell).toContain("headerSortDirection");
+    expect(sortDomain).toContain('field.endsWith("_at")');
+  });
+
+  it("applySort nas páginas recebe os níveis explicitamente", () => {
+    expect(mine).toMatch(/applySort[\s\S]{0,200}\(levels: DashboardSortLevel\[\]\)/);
+    expect(mine).toContain("patchFilters({ sort: serializeListSortLevels(levels), page: 1 })");
+    expect(queue).toMatch(/applySort[\s\S]{0,200}\(levels: DashboardSortLevel\[\]\)/);
+    expect(queue).toContain("patchFilters({ sort: serializeListSortLevels(levels), page: 1 })");
+  });
+});
+
 describe("MinePage — merge honesto e contratos multi-fonte", () => {
   it("usa o shell e o estado de URL (não useState solto para filtros)", () => {
     expect(mine).toContain("useRequestListUrlState");
@@ -124,6 +176,14 @@ describe("URL state — deep link e back/forward", () => {
     expect(urlHook).toContain("popstate");
     expect(urlHook).toContain("replace: true");
     expect(urlHook).toContain("navigateMyRequestsPath");
+  });
+
+  it("itens por página é controle real — estado + contrato page_size", () => {
+    expect(urlHook).toContain("page_size");
+    expect(mine).toContain("onPageSizeChange");
+    expect(queue).toContain("onPageSizeChange");
+    expect(mine).toContain("pageSize={filters.pageSize}");
+    expect(queue).toContain("pageSize={filters.pageSize}");
   });
 });
 

@@ -16,6 +16,8 @@ export type RequestListFiltersState = {
   /** Ordenação serializada `field:dir[,field:dir]` (requests-api) — "" = padrão. */
   sort: string;
   page: number;
+  /** Itens por página — default REQUEST_LIST_PAGE_SIZE (omitido da URL). */
+  pageSize: number;
 };
 
 export const WORK_QUEUE_MINE_SCOPE_OPTIONS: Array<{

@@ -1,16 +1,17 @@
 /**
  * Composição canônica das listas Minhas / Fila de trabalho —
  * paridade com Meus Chamados de TI usando apenas componentes do kit:
- * hero compacto (título, descrição, contagem, Atualizar, ação),
- * chips rápidos, DataTableSection (busca + ordenação no header +
- * Colunas + Tabela|Cards + paginação server-side), e os popovers
- * compartilhados de Filtros/Ordenar na mesma toolbar.
+ * PagePath clicável, hero compacto (título, descrição, contagem,
+ * Atualizar, ação) com a toolbar da grade via `toolbarPortalTarget`
+ * (mesma instância/estado do DataTableSection — busca dominante,
+ * Filtros, Ordenar, Colunas, itens/página, chips, Tabela|Cards) e a
+ * grade `embedded` logo abaixo, sem card externo redundante.
  *
  * O domínio (merge, contratos, colunas, cards) fica nas páginas.
  */
 
 import { ArrowUpDown, ListFilter, RefreshCw } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActionButton,
   HintAction,
@@ -27,10 +28,16 @@ import { MyRequestsDataTableSection } from "../ui/dataTableUi";
 
 import { REQUEST_LIST_SEARCH_DEBOUNCE_MS } from "../content/requestListFilters";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { headerSortDirection } from "../domain/requestListSort";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../hooks/myRequestsNavigation";
 import {
   MyRequestsFilterRulesBuilder,
   MyRequestsListToolbarPopover,
   MyRequestsPageHero,
+  MyRequestsPagePath,
   MyRequestsScopeChipBar,
   MyRequestsSortLevelsBuilder,
 } from "../ui/mrUi";
@@ -43,7 +50,13 @@ export type RequestListSortConfig = {
   /** Teto de níveis que o contrato suporta (1..3). */
   maxLevels: number;
   onChange: (levels: DashboardSortLevel[]) => void;
-  onApply: () => void;
+  /**
+   * Aplica níveis — atômico: o chamador informa o estado a gravar
+   * (header passa o novo nível; o popover passa o draft). Nunca
+   * `onChange` + `onApply()` no mesmo tick — o apply fecharia sobre
+   * o estado anterior.
+   */
+  onApply: (levels: DashboardSortLevel[]) => void;
   /** Rótulo resumido no gatilho (ex.: "Data"). */
   summaryLabel?: string;
 };
@@ -85,6 +98,7 @@ export type RequestListShellProps<Row> = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 
   /** Busca committed — o shell faz o debounce/Enter. */
   search: string;
@@ -129,6 +143,7 @@ export function RequestListShell<Row extends object>({
   pageSize,
   total,
   onPageChange,
+  onPageSizeChange,
   search,
   onSearchCommit,
   chips,
@@ -145,6 +160,9 @@ export function RequestListShell<Row extends object>({
 }: RequestListShellProps<Row>) {
   const [searchDraft, setSearchDraft] = useState(search);
   const debounceRef = useRef<number | null>(null);
+  /* Host da toolbar no body do hero — a MESMA toolbar da seção é
+   * renderizada via portal (instância/estado únicos do kit). */
+  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
 
   useEffect(() => setSearchDraft(search), [search]);
 
@@ -169,8 +187,36 @@ export function RequestListShell<Row extends object>({
     [],
   );
 
+  /* Apenas colunas presentes no contrato exibem affordance de sort —
+   * nunca um botão falso onde o backend não ordena. */
+  const sortableColumns = useMemo(
+    () =>
+      columnSortMap
+        ? columns.map((column) =>
+            columnSortMap[column.key] ? { ...column, sortable: true } : column,
+          )
+        : columns,
+    [columns, columnSortMap],
+  );
+
   return (
     <>
+      <MyRequestsPagePath
+        back={{ label: "Início", href: "/" }}
+        items={[
+          {
+            id: "module",
+            label: "Minhas solicitações",
+            href: myRequestsPath("mine"),
+            onNavigate: (event: { preventDefault(): void }) => {
+              event.preventDefault();
+              navigateMyRequestsPath(myRequestsPath("mine"));
+            },
+          },
+        ]}
+        current={title}
+      />
+
       <MyRequestsPageHero
         eyebrow={eyebrow}
         title={
@@ -199,7 +245,13 @@ export function RequestListShell<Row extends object>({
             {heroAction}
           </>
         }
-      />
+      >
+        <div
+          ref={setToolbarHost}
+          className="delpi-ui-list-toolbar-host"
+          data-testid="request-list-toolbar-host"
+        />
+      </MyRequestsPageHero>
 
       {error ? (
         <div className="my-requests-list-error" role="alert">
@@ -209,8 +261,9 @@ export function RequestListShell<Row extends object>({
 
       <MyRequestsDataTableSection
         title=""
+        embedded
         hideRecordsCount
-        columns={columns}
+        columns={sortableColumns}
         rows={rows}
         rowKey={rowKey}
         loading={loading}
@@ -218,7 +271,16 @@ export function RequestListShell<Row extends object>({
         serverSearch={{ value: searchDraft, onChange: handleSearch }}
         searchPlaceholder={searchPlaceholder}
         searchHint={searchHint}
-        serverPagination={{ page, pageSize, total, onPageChange }}
+        serverPagination={{
+          page,
+          pageSize,
+          total,
+          onPageChange,
+          onPageSizeChange,
+        }}
+        toolbarPortalTarget={toolbarHost}
+        toolbarLayout="hero"
+        toolbarExtraPlacement="before"
         serverSort={
           columnSortMap && sort
             ? {
@@ -227,13 +289,16 @@ export function RequestListShell<Row extends object>({
                 onSortChange: (columnKey) => {
                   const field = columnSortMap[columnKey];
                   if (!field) return;
-                  const current = sort.levels[0];
                   const direction =
-                    current?.field === field && current.direction === "desc"
-                      ? "asc"
-                      : "desc";
-                  sort.onChange([{ field, direction }]);
-                  sort.onApply();
+                    sortKey === columnKey
+                      ? sortDirection === "asc"
+                        ? "desc"
+                        : "asc"
+                      : headerSortDirection(field);
+                  /* Aplicação atômica — o novo nível vai por extenso;
+                   * setState + apply no mesmo tick aplicaria o estado
+                   * anterior por closure (regressão UX-V2-HEADER-01). */
+                  sort.onApply([{ field, direction }]);
                 },
               }
             : undefined
@@ -297,7 +362,7 @@ export function RequestListShell<Row extends object>({
                       maxLevels={sort.maxLevels}
                       onChange={sort.onChange}
                       onApply={() => {
-                        sort.onApply();
+                        sort.onApply(sort.levels);
                         close();
                       }}
                     />
@@ -307,7 +372,7 @@ export function RequestListShell<Row extends object>({
             ) : null}
           </>
         }
-        toolbarFilters={
+        toolbarLeading={
           chips && chips.length ? (
             <HintAction
               hint={MY_REQUESTS_HELP_TOOLTIPS.listUi.statusChips}

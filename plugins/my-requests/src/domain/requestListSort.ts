@@ -29,7 +29,10 @@ export const REQUESTS_SORT_FIELDS: readonly DashboardSortFieldOption[] = [
   { value: "branch", label: "Filial" },
 ];
 
-/** Campos ordenáveis do contrato PRC (`sortBy`/`sortDir`, 1 nível). */
+/** Campos ordenáveis do contrato PRC (`sortBy`/`sortDir`, 1 nível).
+ *  Reservado ao dia em que a lista PRC ficar isolada — na lista
+ *  unificada o merge só é honesto pelo campo comparável (Data), por
+ *  isso `sortCatalogForSource("prc")` também reduz ao conjunto mesclado. */
 export const PRC_SORT_FIELDS: readonly DashboardSortFieldOption[] = [
   { value: "createdAt", label: "Data" },
   { value: "requestType", label: "Tipo" },
@@ -53,21 +56,23 @@ export function sortCatalogForSource(source: RequestListSource): {
   fields: readonly DashboardSortFieldOption[];
   maxLevels: number;
 } {
-  if (source === "prc") return { fields: PRC_SORT_FIELDS, maxLevels: 1 };
   if (source === "requests")
     return { fields: REQUESTS_SORT_FIELDS, maxLevels: 3 };
   return { fields: MERGED_SORT_FIELDS, maxLevels: 1 };
 }
 
 export function defaultSortLevels(
-  source: RequestListSource,
+  _source: RequestListSource,
 ): DashboardSortLevel[] {
-  return [
-    {
-      field: source === "prc" ? "createdAt" : "created_at",
-      direction: "desc",
-    },
-  ];
+  return [{ field: "created_at", direction: "desc" }];
+}
+
+/**
+ * Primeira direção ao clicar um cabeçalho — convenção do Helpdesk:
+ * campos de data (`*_at`) começam descendentes; texto/códigos, asc.
+ */
+export function headerSortDirection(field: string): "asc" | "desc" {
+  return field.endsWith("_at") ? "desc" : "asc";
 }
 
 /** `field:dir,field:dir` → níveis (campos fora do catálogo são ignorados). */

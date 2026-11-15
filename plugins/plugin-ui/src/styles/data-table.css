@@ -862,6 +862,68 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   margin-bottom: 12px;
 }
 
+/**
+ * Host externo (`toolbarPortalTarget`) dentro do hero da página —
+ * a toolbar real da seção chega via portal; o host só a acomoda.
+ */
+.delpi-ui-list-toolbar-host {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-list-toolbar-host > .delpi-ui-table-toolbar {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+
+/**
+ * `toolbarLayout="hero"` — mesma toolbar, ordem de hero:
+ * busca dominante (linha cheia) → extras (Filtros/Ordenar/Colunas)
+ * + itens/página → Tabela|Cards + toolbarLeading (chips) por último.
+ * Elementos mantêm a mesma instância — só `order` muda.
+ */
+.delpi-ui-table-toolbar--hero {
+  row-gap: 10px;
+}
+
+/* Busca em linha própria, largura total (dominante como no Helpdesk). */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__search-group:has(.delpi-ui-table-search) {
+  order: -3;
+  flex: 1 1 100%;
+  white-space: normal;
+}
+
+.delpi-ui-table-toolbar--hero .delpi-ui-table-search {
+  flex: 1 1 auto;
+  max-width: none;
+}
+
+/* Extras do consumidor + nativos antes do seletor de itens/página. */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__extra {
+  order: -2;
+  margin-left: 0;
+}
+
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-page-size {
+  order: -1;
+}
+
+/* Última faixa: toolbarLeading (chips) à esquerda, Tabela|Cards à direita. */
+.delpi-ui-table-toolbar--hero
+  > .delpi-ui-table-toolbar__search-group:not(:has(.delpi-ui-table-search)) {
+  order: 0;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  white-space: normal;
+  justify-content: space-between;
+}
+
+.delpi-ui-table-toolbar--hero .delpi-ui-table-toolbar__view-toggle {
+  order: 2;
+  margin-left: auto;
+}
+
 /** FilterBar / formulários de filtro — linha dedicada abaixo da toolbar nativa. */
 .delpi-ui-table-section__toolbar-filters {
   width: 100%;
@@ -1104,6 +1166,12 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
 .delpi-ui-table-section > .delpi-ui-table-wrap--section {
   border: none;
   border-radius: 0;
+}
+
+/* `embedded` remove o card da seção — o wrap volta a delimitar a grade. */
+.delpi-ui-table-section--embedded > .delpi-ui-table-wrap--section {
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: var(--delpi-ui-control-radius, 12px);
 }
 
 .delpi-ui-detail-card table.delpi-ui-table th {

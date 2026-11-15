@@ -19,6 +19,7 @@ import {
   createDashboardNavigationCard,
   createDashboardPageHeader,
   createDashboardPageHero,
+  createDashboardPagePath,
   createDashboardProgressTracker,
   createDashboardRoomConversationShell,
   createDashboardScopeChipBar,
@@ -93,6 +94,12 @@ export function MyRequestsPageHero(
 
 export const MyRequestsScopeChipBar = createDashboardScopeChipBar({
   prefix: MR_UI_PREFIX,
+});
+
+/** Caminho clicável acima do hero — Início / módulo / página (kit). */
+export const MyRequestsPagePath = createDashboardPagePath({
+  prefix: MR_UI_PREFIX,
+  portalScopeClassName: MR_PORTAL_SCOPE,
 });
 
 export const MyRequestsRecordCard = createDashboardDataRecordCard({

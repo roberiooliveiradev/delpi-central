@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { RequestListFiltersState } from "../content/requestListFilters";
+import {
+  REQUEST_LIST_PAGE_SIZE,
+  type RequestListFiltersState,
+} from "../content/requestListFilters";
 import { navigateMyRequestsPath } from "./myRequestsNavigation";
 
 const MINE_SCOPES = new Set(["", "completed_by_me", "assigned_to_me"]);
+/* Espelha TABLE_PAGE_SIZE_OPTIONS do kit — o seletor da toolbar. */
+const PAGE_SIZE_OPTIONS = new Set([10, 20, 50, 100]);
 
 /** Serializa filtros para query string (apenas valores não-default). */
 export function requestListFiltersToSearch(
@@ -17,6 +22,9 @@ export function requestListFiltersToSearch(
   if (filters.mineScope) params.set("mine_scope", filters.mineScope);
   if (filters.sort) params.set("sort", filters.sort);
   if (filters.page > 1) params.set("page", String(filters.page));
+  if (filters.pageSize !== REQUEST_LIST_PAGE_SIZE) {
+    params.set("page_size", String(filters.pageSize));
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
@@ -29,6 +37,7 @@ export function requestListFiltersFromSearch(
   const params = new URLSearchParams(search || "");
   const scope = params.get("mine_scope") ?? "";
   const page = Number.parseInt(params.get("page") || "1", 10);
+  const pageSize = Number.parseInt(params.get("page_size") || "", 10);
   return {
     ...defaults,
     q: params.get("q") ?? defaults.q,
@@ -40,6 +49,7 @@ export function requestListFiltersFromSearch(
       : defaults.mineScope,
     sort: params.get("sort") ?? defaults.sort,
     page: Number.isFinite(page) && page > 0 ? page : 1,
+    pageSize: PAGE_SIZE_OPTIONS.has(pageSize) ? pageSize : defaults.pageSize,
   };
 }
 
