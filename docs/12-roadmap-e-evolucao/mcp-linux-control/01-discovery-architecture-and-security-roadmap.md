@@ -309,3 +309,20 @@ Amostra de saida `systemctl list-timers` e `systemctl show` do `srv-api`, recebi
 **Proximo gate seguro:** Portal de TI autenticado > Servidores > srv-api > Observacoes/ultima coleta. Registrar apenas `observed_at`, `presentation_status`, `source`, resumo `sections_status` e `run_id` se apropriado; nao compartilhar payload integral, IPs ou secrets. Exigir status de coleta recente e consistente com disparo do timer. Se houver observacao, validar se status Docker `partial/unavailable` e esperado para conta sem grupo `docker`. Nao conceder privilegios adicionais para artificialmente completar o snapshot.
 
 **Estado:** `COLLECTOR_TIMER_PASS`, `COLLECTOR_PROCESS_EXIT_PASS`, `OBSERVATION_PERSISTENCE_NOT_VERIFIED`, `LINUX_OPS_MCP_NOT_DEPLOYED`.
+
+
+## 15. Autorizacao do owner e PR P1-R2 (2026-11-14)
+
+**Decisao explicita do operador:** confirma que a coleta automatica Linux ja funciona e autoriza avancar. Nao repetir a comprovacao da ingestao como prerequisito de desenvolvimento. **Limite de evidencia:** validacao declarada pelo operador; nao representa conectividade MCP ou autenticacao ChatGPT.
+
+**Implementacao proposta em PR #186 (P1-R2), sem deploy:**
+
+- Runtime Python isolado, usuario sem privilegios, imagem/Compose canonico sob profile opt-in `linux-ops` (nenhuma porta publicada, nenhum bind host, nenhum socket Docker, filesystem read-only, recursos limitados e health local).
+- Autorizacao por usuario humano com `mcp:tools` e resource audience exata, Core RBAC com `force_refresh=True` em cada chamada; negacao se Core indisponivel ou subject divergente.
+- Projecoes de inventario limitadas ao server_id do srv-api, sem dados de rede ou secrets, com stale/partial explicitos.
+- Pipeline GitHub Actions dedicado: suite unit/negative tests, import MCP/tool inventory, Docker build. Status `CI_PENDING`, nao afirmar PASS antes de conferir o workflow.
+- Configuracao externa OAuth Keycloak, gateway/tunnel e runtime produtivo **nao executados**. Profile opcional nao e autorizacao para publicar.
+
+**Proxima sequencia:** CI/review P1-R2 -> opcao de transporte (Tunnel ou gateway) -> provisionamento OAuth dedicado com audience e callback reais -> smoke autenticado /mcp -> so depois classificar P1 `RUNTIME_VERIFIED`. Nunca fazer `git pull` destrutivo no checkout sujo, nem rebuild global de producao.
+
+**Rastreamento:** PR #185 (codigo P1 ja merged na main), PR #186 (endurecimento/runtime pendente), PR #184 (documentacao em revisao). Nenhum deploy ou alteracao no `srv-api` realizado pelo assistente nesta etapa.
