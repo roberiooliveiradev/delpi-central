@@ -11,15 +11,24 @@ import {
   CfActionButton,
   CfDetailCard,
   CfPageHero,
+  CfPagePath,
   CfResolutionStatusCell,
   CfStateBanner,
+  CfTimeline,
   CfTitleWithHelp,
 } from "../../app/controllershipFinanceUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
+import { EntryAuditLoadingState } from "./EntryAuditLoadingState";
+import { EntryAuditSeverityBadge } from "./EntryAuditSeverityBadge";
 import {
+  ENTRY_AUDIT_ACTION_ICONS,
   displayValue,
   entryAuditOccurrenceClaraPrompt,
+  formatDifference,
+  formatNoteSeries,
+  formatPeriodLabel,
+  formatTheme,
 } from "./entryAuditPresentation";
 
 export function EntryAuditOccurrencePage({
@@ -36,6 +45,9 @@ export function EntryAuditOccurrencePage({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [copiedHint, setCopiedHint] = useState("");
+  const [confirmAction, setConfirmAction] = useState<"resolve" | "reopen" | null>(
+    null,
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -66,6 +78,9 @@ export function EntryAuditOccurrencePage({
     );
   };
 
+  const goHome = () => navigatePluginPath(basePath);
+  const goEntry = () => navigatePluginPath(`${basePath}/entry-audit`);
+
   const toggleStatus = async () => {
     if (!occurrence) return;
     setBusy(true);
@@ -74,6 +89,7 @@ export function EntryAuditOccurrencePage({
       const action = occurrence.status === "resolved" ? "reopen" : "resolve";
       await setEntryAuditOccurrenceStatus(occurrence.stable_key, action);
       setOccurrence(await getEntryAuditOccurrence(analysisId, occurrenceKey));
+      setConfirmAction(null);
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "Falha ao atualizar ocorrência.",
@@ -101,31 +117,111 @@ export function EntryAuditOccurrencePage({
   };
 
   if (error && !occurrence) {
-    return <CfStateBanner variant="error">{error}</CfStateBanner>;
+    return (
+      <CfStateBanner variant="error">
+        {error}
+        <CfActionButton variant="ghost" onClick={back}>
+          Voltar para a análise
+        </CfActionButton>
+      </CfStateBanner>
+    );
   }
-  if (!occurrence) return <p aria-live="polite">Carregando ocorrência…</p>;
+
+  if (!occurrence || !period) {
+    return (
+      <EntryAuditLoadingState
+        pathItems={[
+          { id: "home", label: "Início", href: basePath, onNavigate: goHome },
+          {
+            id: "entry",
+            label: "Auditoria de Entradas",
+            href: `${basePath}/entry-audit`,
+            onNavigate: goEntry,
+          },
+          {
+            id: "analysis",
+            label: "Análise",
+            href: `${basePath}/entry-audit/analyses/${encodeURIComponent(analysisId)}`,
+            onNavigate: back,
+          },
+        ]}
+        current="Ocorrência"
+        title="Ocorrência"
+        hint={CF_HELP.entryAudit.detail}
+      />
+    );
+  }
 
   const xmlHref = occurrence.links?.xml
     ? entryAuditDownloadUrl(occurrence.links.xml)
     : null;
+  const periodLabel = formatPeriodLabel(period.from, period.to);
+  const isResolved = occurrence.status === "resolved";
 
   return (
     <section className="cf-page-stack" aria-label="Detalhe da ocorrência">
+      <CfPagePath
+        ariaLabel="Caminho da página"
+        size="sm"
+        items={[
+          {
+            id: "home",
+            label: "Início",
+            href: basePath,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goHome();
+            },
+          },
+          {
+            id: "notas",
+            label: "Notas fiscais",
+            href: basePath,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goHome();
+            },
+          },
+          {
+            id: "entry",
+            label: "Auditoria de Entradas",
+            href: `${basePath}/entry-audit`,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goEntry();
+            },
+          },
+          {
+            id: "analysis",
+            label: `Análise ${periodLabel}`,
+            href: `${basePath}/entry-audit/analyses/${encodeURIComponent(analysisId)}`,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              back();
+            },
+          },
+        ]}
+        current="Ocorrência"
+      />
+
       <CfPageHero
-        eyebrow="Auditoria de Entradas"
+        eyebrow="Notas fiscais"
         title={
           <CfTitleWithHelp
             title={occurrence.title || "Ocorrência"}
             hint={CF_HELP.entryAudit.detail}
           />
         }
-        description={`Documento ${displayValue(occurrence.document_number)} · ${displayValue(occurrence.supplier_name)}`}
+        description={`Documento ${formatNoteSeries(occurrence.document_number, occurrence.series)} · ${displayValue(occurrence.supplier_name)}`}
+        badge={<EntryAuditSeverityBadge severity={occurrence.severity} />}
         actions={
           <>
             <CfActionButton variant="ghost" onClick={copyForClara}>
               Copiar pergunta para a CLARA
             </CfActionButton>
-            <CfActionButton onClick={back}>Voltar para a análise</CfActionButton>
+            <CfActionButton variant="ghost" onClick={back}>
+              Voltar para a análise
+            </CfActionButton>
           </>
         }
       />
@@ -133,26 +229,58 @@ export function EntryAuditOccurrencePage({
 
       {error ? <CfStateBanner variant="error">{error}</CfStateBanner> : null}
 
+      {confirmAction ? (
+        <CfStateBanner variant="default">
+          {confirmAction === "resolve"
+            ? "Confirmar marcar como resolvida?"
+            : "Confirmar reabrir a ocorrência?"}
+          <CfActionButton
+            variant="primary"
+            disabled={busy}
+            softDisabled
+            onClick={toggleStatus}
+          >
+            Confirmar
+          </CfActionButton>
+          <CfActionButton
+            variant="ghost"
+            onClick={() => setConfirmAction(null)}
+          >
+            Cancelar
+          </CfActionButton>
+        </CfStateBanner>
+      ) : null}
+
       <CfDetailCard
         title="Tratamento"
         headerActions={
           <CfResolutionStatusCell
             variant="full"
-            status={occurrence.status === "resolved" ? "resolved" : "open"}
+            status={isResolved ? "resolved" : "open"}
             pending={busy}
-            onResolve={occurrence.status === "resolved" ? undefined : toggleStatus}
-            onReopen={occurrence.status === "resolved" ? toggleStatus : undefined}
+            onResolve={
+              isResolved
+                ? undefined
+                : () => setConfirmAction("resolve")
+            }
+            onReopen={
+              isResolved ? () => setConfirmAction("reopen") : undefined
+            }
           />
         }
       >
         <dl>
           <dt>Severidade</dt>
-          <dd>{displayValue(occurrence.severity)}</dd>
+          <dd>
+            <EntryAuditSeverityBadge severity={occurrence.severity} />
+          </dd>
           <dt>Tema</dt>
-          <dd>{displayValue(occurrence.theme)}</dd>
+          <dd>{formatTheme(occurrence.theme)}</dd>
+          <dt>Regra</dt>
+          <dd>{displayValue(occurrence.rule_name ?? occurrence.title)}</dd>
           <dt>Por que ocorreu</dt>
           <dd>{displayValue(occurrence.why)}</dd>
-          <dt>Ação sugerida</dt>
+          <dt>O que fazer</dt>
           <dd>{displayValue(occurrence.action)}</dd>
           {occurrence.clara_suggestion ? (
             <>
@@ -165,6 +293,14 @@ export function EntryAuditOccurrencePage({
 
       <CfDetailCard title="Comparação">
         <dl>
+          <dt>Nota/Série</dt>
+          <dd>
+            {formatNoteSeries(occurrence.document_number, occurrence.series)}
+          </dd>
+          <dt>Fornecedor</dt>
+          <dd>{displayValue(occurrence.supplier_name)}</dd>
+          <dt>TES</dt>
+          <dd>{displayValue(occurrence.tes)}</dd>
           <dt>Campo</dt>
           <dd>{displayValue(occurrence.field_label ?? occurrence.field)}</dd>
           <dt>Protheus</dt>
@@ -172,14 +308,15 @@ export function EntryAuditOccurrencePage({
           <dt>XML</dt>
           <dd>{displayValue(occurrence.xml_value)}</dd>
           <dt>Diferença</dt>
-          <dd>{displayValue(occurrence.difference)}</dd>
-          <dt>TES</dt>
-          <dd>{displayValue(occurrence.tes)}</dd>
+          <dd>{formatDifference(occurrence.difference, occurrence.field)}</dd>
         </dl>
         {xmlHref ? (
-          <a href={xmlHref} download>
-            Baixar XML
-          </a>
+          <CfActionButton href={xmlHref} title="Baixar XML desta ocorrência">
+            <span className="cf-action-with-icon">
+              {ENTRY_AUDIT_ACTION_ICONS.xml}
+              Baixar XML
+            </span>
+          </CfActionButton>
         ) : (
           <p>XML não disponível para esta ocorrência.</p>
         )}
@@ -187,17 +324,17 @@ export function EntryAuditOccurrencePage({
 
       <CfDetailCard title="Histórico">
         {occurrence.history?.length ? (
-          <ol>
-            {occurrence.history.map((event, index) => (
-              <li key={`${event.event}-${event.at ?? index}`}>
-                <strong>{displayValue(event.event)}</strong>
-                {event.actor ? ` · ${event.actor}` : ""}
-                {event.at
-                  ? ` · ${new Date(event.at).toLocaleString("pt-BR")}`
-                  : ""}
-              </li>
-            ))}
-          </ol>
+          <CfTimeline
+            items={occurrence.history.map((event, index) => ({
+              id: `${event.event}-${event.at ?? index}`,
+              title: displayValue(event.event),
+              occurredAt: event.at,
+              timeLabel: event.at
+                ? new Date(event.at).toLocaleString("pt-BR")
+                : undefined,
+              meta: event.actor || undefined,
+            }))}
+          />
         ) : (
           <p>Sem eventos registrados.</p>
         )}
