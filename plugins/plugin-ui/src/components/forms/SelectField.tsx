@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
@@ -98,7 +98,9 @@ export function SelectControl({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const focusOnOpenRef = useRef<"first" | "last" | null>(null);
   const generatedId = useId();
   const fieldId = id ?? generatedId;
   const listId = `${fieldId}-list`;
@@ -145,9 +147,80 @@ export function SelectControl({
     setQuery("");
   };
 
+  const closePanelAndFocusTrigger = () => {
+    closePanel();
+    triggerRef.current?.focus();
+  };
+
+  const optionButtons = () =>
+    Array.from(
+      panelRef.current?.querySelectorAll<HTMLButtonElement>(
+        'ul[role="listbox"] button',
+      ) ?? [],
+    );
+
+  const focusOption = (index: number) => {
+    const buttons = optionButtons();
+    if (!buttons.length) return;
+    const clamped = Math.max(0, Math.min(index, buttons.length - 1));
+    buttons[clamped]?.focus();
+  };
+
+  /* Foco na 1ª/última opção quando o painel abre por teclado
+   * (ArrowDown/ArrowUp no trigger) — o painel é portal no body,
+   * logo Tab a partir do trigger não alcança as opções. */
+  useEffect(() => {
+    if (!open || !focusOnOpenRef.current) return;
+    focusOption(focusOnOpenRef.current === "first" ? 0 : Infinity);
+    focusOnOpenRef.current = null;
+  }, [open]);
+
+  const onTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!open) {
+        focusOnOpenRef.current = event.key === "ArrowUp" ? "last" : "first";
+        setOpen(true);
+      } else {
+        focusOption(event.key === "ArrowUp" ? Infinity : 0);
+      }
+    }
+  };
+
+  const onOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const buttons = optionButtons();
+    const index = buttons.indexOf(event.currentTarget);
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      focusOption(index + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      focusOption(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusOption(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusOption(buttons.length - 1);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closePanelAndFocusTrigger();
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      closePanelAndFocusTrigger();
+    }
+  };
+
+  const onOptionClick = (optionValue: string) => {
+    onChange(optionValue);
+    closePanelAndFocusTrigger();
+  };
+
   return (
     <div className={rootClass} ref={wrapperRef} {...preserveAttrProps}>
       <button
+        ref={triggerRef}
         id={fieldId}
         type="button"
         className={classNames.trigger}
@@ -160,6 +233,7 @@ export function SelectControl({
         onMouseDown={(event) => {
           if (preserveTextEditFocusAttr) event.preventDefault();
         }}
+        onKeyDown={onTriggerKeyDown}
         onClick={() => {
           setOpen((current) => {
             if (current) setQuery("");
@@ -206,10 +280,8 @@ export function SelectControl({
                 onMouseDown={(event) => {
                   if (preserveTextEditFocusAttr) event.preventDefault();
                 }}
-                onClick={() => {
-                  onChange("");
-                  closePanel();
-                }}
+                onKeyDown={onOptionKeyDown}
+                onClick={() => onOptionClick("")}
               >
                 {emptyLabel}
               </button>
@@ -232,10 +304,8 @@ export function SelectControl({
                   onMouseDown={(event) => {
                     if (preserveTextEditFocusAttr) event.preventDefault();
                   }}
-                  onClick={() => {
-                    onChange(option.value);
-                    closePanel();
-                  }}
+                  onKeyDown={onOptionKeyDown}
+                  onClick={() => onOptionClick(option.value)}
                 >
                   {option.label}
                 </button>

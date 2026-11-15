@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   expectNoFailures,
   loginAsDev,
+  selectKitOption,
   trackForbiddenApiCalls,
   trackPageErrors,
 } from "../helpers";
@@ -91,8 +92,8 @@ test("P0-02 — comparação V1×V2 do 30190123: «Sem dado» para campos não o
     page.getByRole("heading", { name: "Comparar versões" }),
   ).toBeVisible({ timeout: 20_000 });
 
-  await page.getByLabel("Versão de origem").selectOption("1");
-  await page.getByLabel("Versão de destino").selectOption("2");
+  await selectKitOption(page, "Versão de origem", "V1");
+  await selectKitOption(page, "Versão de destino", "V2");
   await page
     .getByRole("button", { name: "Comparar versões" })
     .click();
@@ -278,6 +279,85 @@ test("UX — tema escuro + zoom 200% + teclado na área de produtos", async ({
     (url) => !url.search.includes("area=products"),
     { timeout: 15_000 },
   );
+
+  await expectNoFailures(pageErrors, forbidden);
+});
+
+test("G4 — seletor de versões do kit: painel ancorado, teclado e Escape", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-select-${name}-${testInfo.project.name}.png`,
+    });
+
+  await openProductDetail(page, "30190123");
+  await page.getByRole("tab", { name: "Versões" }).click();
+  await page.waitForURL(/tab=versions/, { timeout: 10_000 });
+
+  const heading = page.getByRole("heading", { name: "Comparar versões" });
+  await expect(heading).toBeVisible({ timeout: 20_000 });
+
+  /* Abertura por mouse — painel ancorado ao campo, sem cobrir o
+   * título da seção e dentro da viewport (posicionamento do kit). */
+  const fromTrigger = page.getByLabel("Versão de origem", {
+    exact: true,
+  });
+  await expect(fromTrigger).toBeVisible();
+  await fromTrigger.click();
+  const listbox = page.getByRole("listbox").last();
+  await expect(listbox).toBeVisible();
+  await shot("open");
+
+  const [panelBox, headingBox, triggerBox] = await Promise.all([
+    listbox.boundingBox(),
+    heading.boundingBox(),
+    fromTrigger.boundingBox(),
+  ]);
+  expect(panelBox).not.toBeNull();
+  expect(headingBox).not.toBeNull();
+  expect(triggerBox).not.toBeNull();
+  const overlapsHeading =
+    panelBox!.x < headingBox!.x + headingBox!.width &&
+    panelBox!.x + panelBox!.width > headingBox!.x &&
+    panelBox!.y < headingBox!.y + headingBox!.height &&
+    panelBox!.y + panelBox!.height > headingBox!.y;
+  expect(overlapsHeading, "painel cobre o título da seção").toBe(false);
+  const vw = await page.evaluate(() => window.innerWidth);
+  expect(panelBox!.x).toBeGreaterThanOrEqual(0);
+  expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(vw + 1);
+  const anchored =
+    Math.abs(panelBox!.y - (triggerBox!.y + triggerBox!.height)) < 24 ||
+    Math.abs(triggerBox!.y - (panelBox!.y + panelBox!.height)) < 24;
+  expect(anchored, "painel desconectado do campo").toBe(true);
+
+  /* Escape fecha o painel. */
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(fromTrigger).toBeVisible();
+
+  /* Teclado: ArrowDown abre focando a 1ª opção; Enter seleciona e
+   * devolve o foco ao trigger. */
+  await fromTrigger.focus();
+  await page.keyboard.press("ArrowDown");
+  const kbList = page.getByRole("listbox").last();
+  await expect(kbList).toBeVisible();
+  await expect(
+    kbList.getByRole("button", { name: "V1", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(fromTrigger).toContainText("V1");
+
+  /* Destino + comparação server-side preservadas. */
+  await selectKitOption(page, "Versão de destino", "V2");
+  await page.getByRole("button", { name: "Comparar versões" }).click();
+  await expect(
+    page.getByRole("columnheader", { name: /Antes \(V/ }).first(),
+  ).toBeVisible({ timeout: 20_000 });
+  await shot("compared");
 
   await expectNoFailures(pageErrors, forbidden);
 });

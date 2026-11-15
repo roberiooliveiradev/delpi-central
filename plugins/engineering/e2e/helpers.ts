@@ -72,3 +72,18 @@ export async function expectNoFailures(
   expect(forbiddenCalls, "chamadas diretas à api-delpi pelo MFE").toEqual([]);
   expect(pageErrors, "pageerrors uncaught").toEqual([]);
 }
+
+/** Select rico do kit (SelectControl: trigger <button> + painel
+ * ancorado portal com role=listbox; opções são <button>). Abre o
+ * trigger associado ao label e clica na opção exata. */
+export async function selectKitOption(
+  page: Page,
+  label: string,
+  option: string,
+): Promise<void> {
+  await page.getByLabel(label, { exact: true }).click();
+  const listbox = page.getByRole("listbox").last();
+  await listbox
+    .getByRole("button", { name: option, exact: true })
+    .click();
+}

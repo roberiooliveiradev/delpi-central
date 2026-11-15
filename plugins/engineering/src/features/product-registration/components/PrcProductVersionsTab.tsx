@@ -10,7 +10,7 @@ import {
   EngineeringActionButton,
   EngineeringDetailCard,
   EngineeringLoadingActivityCard,
-  EngineeringSelectField,
+  EngineeringSearchableSelect,
   EngineeringStateBanner,
 } from "../../../ui/engineeringUi";
 import {
@@ -299,25 +299,25 @@ export function PrcProductVersionsTab({
         ) : (
           <>
             <div className="engineering-prc__compare-controls">
-              <EngineeringSelectField
+              <EngineeringSearchableSelect
                 id="prc-compare-from"
                 label={PRC_PRODUCTS_COPY.compareFrom}
                 value={String(fromRev)}
                 onChange={(v) => setFromRev(v ? Number(v) : "")}
-                options={[
-                  { value: "", label: "Selecione" },
-                  ...revOptions,
-                ]}
+                options={revOptions}
+                placeholder="Selecione"
+                allowEmpty
+                emptyLabel="Selecione"
               />
-              <EngineeringSelectField
+              <EngineeringSearchableSelect
                 id="prc-compare-to"
                 label={PRC_PRODUCTS_COPY.compareTo}
                 value={String(toRev)}
                 onChange={(v) => setToRev(v ? Number(v) : "")}
-                options={[
-                  { value: "", label: "Selecione" },
-                  ...revOptions,
-                ]}
+                options={revOptions}
+                placeholder="Selecione"
+                allowEmpty
+                emptyLabel="Selecione"
               />
               <EngineeringActionButton
                 variant="primary"

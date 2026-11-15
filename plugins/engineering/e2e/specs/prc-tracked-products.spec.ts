@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   expectNoFailures,
   loginAsDev,
+  selectKitOption,
   trackForbiddenApiCalls,
   trackPageErrors,
 } from "../helpers";
@@ -254,8 +255,8 @@ test("U3 — timeline expansível + comparação V1×V2 server-side", async ({
   await shot("timeline");
 
   /* Comparação V1×V2 — diff autoritativo do backend. */
-  await page.getByLabel("Versão de origem").selectOption("1");
-  await page.getByLabel("Versão de destino").selectOption("2");
+  await selectKitOption(page, "Versão de origem", "V1");
+  await selectKitOption(page, "Versão de destino", "V2");
   await page
     .getByRole("button", { name: "Comparar versões" })
     .click();
@@ -271,8 +272,8 @@ test("U3 — timeline expansível + comparação V1×V2 server-side", async ({
   await shot("compare");
 
   /* Mesma versão bloqueada. */
-  await page.getByLabel("Versão de origem").selectOption("1");
-  await page.getByLabel("Versão de destino").selectOption("1");
+  await selectKitOption(page, "Versão de origem", "V1");
+  await selectKitOption(page, "Versão de destino", "V1");
   await expect(
     page.getByText("Selecione duas versões distintas."),
   ).toBeVisible();
