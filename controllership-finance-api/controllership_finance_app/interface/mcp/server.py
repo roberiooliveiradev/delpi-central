@@ -238,7 +238,9 @@ def create_mcp_server() -> MCPServer:
         name="knowledge",
         title="Knowledge",
         description=(
-            "Base de conhecimento PROC-0072: action='search' "
+            "Base de conhecimento do Portal Controladoria & Finanças — "
+            "fechamento mensal, relatórios, auditoria de entradas e "
+            "LNF: action='search' "
             "(query/topic/report_id → itens com citações "
             "verificáveis: fonte, locator, classificação de "
             "evidência), action='get' (item completo por "

@@ -77,8 +77,12 @@ class ClaraAgentIntelligenceService:
                 "de tool READ — nunca de memória."
             ),
             "citations": (
-                "Conhecimento retornado traz citation_locator e "
-                "evidence_classification — apresente ambos."
+                "Conhecimento retornado traz display_citation, "
+                "citation_locator e evidence_classification. "
+                "Mostre display_citation e a classificação de "
+                "evidência ao usuário. O citation_locator permanece "
+                "no retorno para auditoria — não mostre caminho de "
+                "arquivo."
             ),
             "confirmation": (
                 "Toda ACT CONFIRMATION_REQUIRED exige PREPARE → "
