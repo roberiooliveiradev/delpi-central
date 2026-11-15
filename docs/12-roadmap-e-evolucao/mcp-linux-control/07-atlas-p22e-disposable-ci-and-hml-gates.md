@@ -63,3 +63,14 @@ GitHub workflow tem `permissions: contents: read`, sem segredo de producao, e na
 6. Somente apos evidencias e revisao independente considerar publicar `preview_deployment` (PREPARE). `ACT` permanece bloqueado ate P3.
 
 **Estado:** `P22E_CODE_MAIN_POSTED`, `P22E_EPHEMERAL_CI_SUBMITTED_NOT_VERIFIED`, `P22E_REAL_HML_NOT_EXECUTED`, `PROD_READ_CONFIRMED_BY_OPERATOR`, `DEPLOY_ACT_DISABLED`.
+
+
+## 6. Inventario HML confirmado pelo operador e piloto de leitura selecionado (2026-11-15)
+
+**Evidencia manual fornecida pelo operador no terminal de srv-api:** `docker ps --format '{{.Names}}  {{.Status}}' | grep -Ei 'hml|homolog|teste' || true`. Resultado: **23 containers delpi-hml ativos, todos com status (healthy)** na amostra. Entre eles: `delpi-hml-engineering`, `delpi-hml-engineering-api`, `delpi-hml-gateway`, `delpi-hml-keycloak`, `delpi-hml-postgres-plugins` e outros do ambiente HML. O comando nao demonstra isolamento de redes/dados sozinho.
+
+**Candidato escolhido apenas para observacao READ:** `delpi-hml-engineering` (frontend Engineering, sem alterar containers). Fonte do catalogo: `infra/docker-compose.hml.yml`, service `engineering`, project `delpi-hml`, container_name `delpi-hml-engineering`, healthcheck HTTP local, `ports: !override []`, `depends_on: !override {}`, `volumes: !override []`, labels `delpi.environment: homologation` e `delpi.project: delpi-hml`. Nao selecionar banco, Keycloak, Core API ou gateway para piloto.
+
+**Gate de inspeção de runtime ainda pendente:** ler com `docker inspect --type container --format` apenas Name, ID, ImageID, labels Compose project/service e State/Health; nunca imprimir Env, Mounts, NetworkSettings, volumes, credenciais ou JSON completo. Confirmar labels reais (nao inferir do Compose), image ID valido, nome exato e comportamento do healthcheck. Se divergirem, negar selecao do piloto e revisar catalogo. Tambem verificar que o SHA da imagem ainda **nao prova provenance do commit**.
+
+**Efeitos operacionais registrados:** usuario executou somente `docker ps`; nao ha relato de build, restart, deploy, schema, habilitacao de tools, Docker socket no MCP ou autorizacao ACT. Nenhum emissor signer ou proxy read-only foi instalado. O proximo passo e consulta filtrada com `docker inspect` + evidencia de status do workflow GitHub, mantendo HML e PROD intactos.
