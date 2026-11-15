@@ -884,8 +884,19 @@
   gap: 12px;
 }
 
+/* Grade fluida: campos curtos ocupam 3–4 colunas em cards largos
+ * (melhor aproveitamento horizontal) e degradam naturalmente; o
+ * breakpoint mobile mantém uma coluna. Só afeta `density="compact"`
+ * — formulários editáveis seguem na grade fixa de 2 colunas. */
 .delpi-prc__sheet--compact .delpi-prc__sheet-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px 20px;
+}
+
+@media (max-width: 640px) {
+  .delpi-prc__sheet--compact .delpi-prc__sheet-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .delpi-prc__sheet--compact .delpi-prc__sheet-field-value {

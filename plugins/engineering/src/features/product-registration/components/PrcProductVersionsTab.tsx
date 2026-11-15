@@ -40,6 +40,7 @@ import {
 } from "../prcCopy";
 import {
   diffCellState,
+  revisionDiffBuckets,
   summarizeChangedPaths,
   supplierLinkIdentity,
 } from "../prcSnapshot";
@@ -106,9 +107,10 @@ function DiffCell({
   const state = diffCellState(change, side);
   if (state.kind === "not_observed") {
     return (
-      <span className="engineering-prc__muted" title={
-        PRC_PRODUCTS_COPY.compareNotObservedHint
-      }>
+      <span
+        className="engineering-prc__muted engineering-prc__diff-missing"
+        title={PRC_PRODUCTS_COPY.compareNotObservedHint}
+      >
         {PRC_PRODUCTS_COPY.compareNotObserved} (V{rev})
       </span>
     );
@@ -375,6 +377,62 @@ function VersionEntry({
     rev.changedPaths,
   );
   const total = fieldPaths.length + supplierPaths.length;
+
+  /* Semântica do resumo — a Engineering API classifica o diff
+   * (`diffSummary` via `compute_technical_diff`): «não observado
+   * antes» é lacuna de cobertura, não alteração confirmada.
+   * Fallback neutro por `changedPaths` quando o contrato antigo
+   * não traz classificação. */
+  const buckets = revisionDiffBuckets(rev.diffSummary);
+  let summaryText: string;
+  let qualifierText: string | null = null;
+  if (isV1) {
+    /* O título já diz «Primeiro acompanhamento confirmado» — o
+     * resumo informa o que a baseline registrou, sem sugerir
+     * criação no TOTVS nem alterações do usuário. */
+    const parts = [
+      fieldPaths.length
+        ? `${fieldPaths.length} ${PRC_PRODUCTS_COPY.fieldsRecorded}`
+        : null,
+      supplierPaths.length
+        ? `${supplierPaths.length} ${PRC_PRODUCTS_COPY.linksRecorded}`
+        : null,
+    ].filter(Boolean);
+    summaryText = parts.length
+      ? parts.join(" · ")
+      : PRC_PRODUCTS_COPY.versionFirst;
+  } else if (rev.diffSummary && rev.diffSummary.comparable === false) {
+    summaryText = total
+      ? `${total} ${PRC_PRODUCTS_COPY.changesRegistered}`
+      : PRC_PRODUCTS_COPY.changesNone;
+    qualifierText = PRC_PRODUCTS_COPY.diffNotClassifiable;
+  } else if (buckets) {
+    summaryText = buckets.total
+      ? `${buckets.total} ${PRC_PRODUCTS_COPY.changesRegistered}`
+      : PRC_PRODUCTS_COPY.changesNone;
+    const parts = [
+      buckets.confirmed
+        ? `${buckets.confirmed} ${PRC_PRODUCTS_COPY.changesConfirmed}`
+        : null,
+      buckets.firstObserved
+        ? `${buckets.firstObserved} ${PRC_PRODUCTS_COPY.fieldsFirstObserved}`
+        : null,
+      buckets.suppliersLinked
+        ? `${buckets.suppliersLinked} ${PRC_PRODUCTS_COPY.suppliersLinked}`
+        : null,
+      buckets.suppliersUnlinked
+        ? `${buckets.suppliersUnlinked} ${PRC_PRODUCTS_COPY.suppliersUnlinked}`
+        : null,
+      buckets.noLongerObserved
+        ? `${buckets.noLongerObserved} ${PRC_PRODUCTS_COPY.fieldsNoLongerObserved}`
+        : null,
+    ].filter(Boolean);
+    qualifierText = parts.length ? parts.join(" · ") : null;
+  } else {
+    summaryText = total
+      ? `${total} ${PRC_PRODUCTS_COPY.changesRegistered}`
+      : PRC_PRODUCTS_COPY.changesNone;
+  }
   const previewNames = [
     ...fieldPaths.map((p) => prcFieldLabel(p)),
     ...supplierPaths.map((p) => {
@@ -442,10 +500,13 @@ function VersionEntry({
             />
           </span>
           <span className="engineering-prc__vtimeline-summary">
-            {total
-              ? `${total} ${PRC_PRODUCTS_COPY.changesReported}`
-              : PRC_PRODUCTS_COPY.changesNone}
+            {summaryText}
           </span>
+          {qualifierText ? (
+            <span className="engineering-prc__vtimeline-caveat">
+              {qualifierText}
+            </span>
+          ) : null}
           {preview.length ? (
             <span className="engineering-prc__vtimeline-preview">
               {preview.join(", ")}
@@ -601,75 +662,70 @@ function ComparisonResult({ result }: { result: PrcComparisonResult }) {
               {PRC_PRODUCTS_COPY.compareNotObservedHint}
             </p>
           ) : null}
-          {fieldGroups.map(([title, items]) => (
-            <section
-              key={title}
-              className="engineering-prc__compare-group"
-              aria-label={title}
-            >
-              <h4>{title}</h4>
-              <table className="engineering-prc__compare-table">
-                <thead>
-                  <tr>{header}</tr>
-                </thead>
-                <tbody>
-                  {items.map((c) => (
-                    <tr key={c.path}>
-                      <th scope="row">{prcFieldLabel(c.path)}</th>
-                      <td>
-                        <DiffCell
-                          change={c}
-                          side="before"
-                          rev={result.from.revisionNumber}
-                        />
-                      </td>
-                      <td>
-                        <DiffCell
-                          change={c}
-                          side="after"
-                          rev={result.to.revisionNumber}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          ))}
-          {hasLinks ? (
-            <section
-              className="engineering-prc__compare-group"
-              aria-label={PRC_PRODUCTS_COPY.compareSuppliersGroup}
-            >
-              <h4>{PRC_PRODUCTS_COPY.compareSuppliersGroup}</h4>
-              <table className="engineering-prc__compare-table">
-                <thead>
-                  <tr>{header}</tr>
-                </thead>
-                <tbody>
-                  {result.supplierLinkChanges.map((c) => (
-                    <tr key={c.path}>
-                      <th scope="row">{supplierChangeText(c)}</th>
-                      <td>
-                        <SupplierDiffCell
-                          change={c}
-                          side="before"
-                          rev={result.from.revisionNumber}
-                        />
-                      </td>
-                      <td>
-                        <SupplierDiffCell
-                          change={c}
-                          side="after"
-                          rev={result.to.revisionNumber}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          ) : null}
+          {/* Tabela única — um cabeçalho de colunas e um <tbody> por
+           * grupo canônico (`scope="rowgroup"` preserva a semântica
+           * para leitores de tela sem repetir <thead>). */}
+          <table className="engineering-prc__compare-table">
+            <thead>
+              <tr>{header}</tr>
+            </thead>
+            {fieldGroups.map(([title, items]) => (
+              <tbody key={title}>
+                <tr className="engineering-prc__compare-group-row">
+                  <th scope="rowgroup" colSpan={3}>
+                    {title}
+                  </th>
+                </tr>
+                {items.map((c) => (
+                  <tr key={c.path}>
+                    <th scope="row">{prcFieldLabel(c.path)}</th>
+                    <td>
+                      <DiffCell
+                        change={c}
+                        side="before"
+                        rev={result.from.revisionNumber}
+                      />
+                    </td>
+                    <td>
+                      <DiffCell
+                        change={c}
+                        side="after"
+                        rev={result.to.revisionNumber}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+            {hasLinks ? (
+              <tbody>
+                <tr className="engineering-prc__compare-group-row">
+                  <th scope="rowgroup" colSpan={3}>
+                    {PRC_PRODUCTS_COPY.compareSuppliersGroup}
+                  </th>
+                </tr>
+                {result.supplierLinkChanges.map((c) => (
+                  <tr key={c.path}>
+                    <th scope="row">{supplierChangeText(c)}</th>
+                    <td>
+                      <SupplierDiffCell
+                        change={c}
+                        side="before"
+                        rev={result.from.revisionNumber}
+                      />
+                    </td>
+                    <td>
+                      <SupplierDiffCell
+                        change={c}
+                        side="after"
+                        rev={result.to.revisionNumber}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ) : null}
+          </table>
         </>
       )}
 

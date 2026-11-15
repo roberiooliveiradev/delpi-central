@@ -108,10 +108,110 @@ test("P0-02 — comparação V1×V2 do 30190123: «Sem dado» para campos não o
   ).toBeVisible();
   await shot("compare-not-observed");
 
-  /* Comparação agrupada pelos grupos canônicos da ficha. */
+  /* Comparação em tabela única: grupos canônicos como rowheader
+   * (`scope="rowgroup"`), sem repetir o thead por grupo. */
   await expect(
-    page.getByRole("heading", { name: "Fornecedores" }).first(),
+    page
+      .getByRole("rowheader", { name: "Fornecedores" })
+      .first(),
   ).toBeVisible();
+  await expect(
+    page.getByRole("rowheader", {
+      name: /Identificação e classificação/,
+    }),
+  ).toBeVisible();
+
+  await expectNoFailures(pageErrors, forbidden);
+});
+
+test("G1 — timeline do 30190123 classifica cobertura, não «mudança técnica»", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-final-timeline-${name}-${testInfo.project.name}.png`,
+      fullPage: true,
+    });
+
+  await openProductDetail(page, "30190123");
+  await page.getByRole("tab", { name: "Versões" }).click();
+  await page.waitForURL(/tab=versions/, { timeout: 10_000 });
+  await expect(
+    page.getByRole("heading", { name: "Histórico de versões" }),
+  ).toBeVisible({ timeout: 20_000 });
+
+  /* V2 — «N diferenças registradas» com ressalva de cobertura:
+   * nunca «N mudanças técnicas» quando a V1 é legado esparso. */
+  const v2 = page
+    .locator(".engineering-prc__vtimeline-item")
+    .filter({ hasText: "V2" })
+    .first();
+  await expect(
+    v2.getByText(/diferenças registradas/),
+  ).toBeVisible();
+  await expect(
+    v2.getByText(/sem informação comparável na versão anterior/),
+  ).toBeVisible();
+  await expect(
+    v2.getByText(/mudança\(s\) técnica\(s\)/),
+  ).toHaveCount(0);
+
+  /* V1 — baseline honesta: «campos registrados», nunca criação
+   * TOTVS nem alteração do usuário. */
+  const v1 = page
+    .locator(".engineering-prc__vtimeline-item")
+    .filter({ hasText: "V1" })
+    .first();
+  await expect(
+    v1.getByText(/Primeiro acompanhamento confirmado/),
+  ).toBeVisible();
+  await expect(
+    v1.getByText(/registrado/),
+  ).toBeVisible();
+  await shot("semantics");
+
+  await expectNoFailures(pageErrors, forbidden);
+});
+
+test("G2 — ficha consolidada em density compact usa a largura", async ({
+  page,
+}, testInfo) => {
+  const forbidden = trackForbiddenApiCalls(page);
+  const pageErrors = trackPageErrors(page);
+  const shot = (name: string) =>
+    page.screenshot({
+      path: `e2e/artifacts/prc-final-sheet-${name}-${testInfo.project.name}.png`,
+      fullPage: true,
+    });
+
+  await openProductDetail(page, "30190123");
+  /* Aba Ficha (default) — grid compacta auto-fit: ≥2 colunas em
+   * viewports largos, 1 coluna em mobile, sem overflow. */
+  const grid = page.locator(".delpi-prc__sheet-grid").first();
+  await expect(grid).toBeVisible({ timeout: 20_000 });
+  const columns = await grid.evaluate(
+    (el) =>
+      getComputedStyle(el).gridTemplateColumns
+        .split(" ")
+        .filter(Boolean).length,
+  );
+  const vw = await page.evaluate(() => window.innerWidth);
+  if (vw >= 1024) {
+    expect(columns).toBeGreaterThanOrEqual(3);
+  } else if (vw <= 640) {
+    expect(columns).toBe(1);
+  } else {
+    expect(columns).toBeGreaterThanOrEqual(2);
+  }
+  const overflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth + 2,
+  );
+  expect(overflow, "overflow horizontal na ficha").toBe(false);
+  await shot("compact-grid");
 
   await expectNoFailures(pageErrors, forbidden);
 });
