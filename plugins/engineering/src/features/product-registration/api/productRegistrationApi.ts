@@ -325,6 +325,23 @@ export type PrcProductDetail = {
   allowedFlagActions: string[];
 };
 
+/** Classificação semântica do diff da revisão vs. a anterior,
+ * calculada pela Engineering API (mesmo `compute_technical_diff` da
+ * comparação). `null`/ausente na baseline (V1); `comparable: false`
+ * quando a revisão anterior é ilegível. */
+export type PrcRevisionDiffSummary = {
+  comparable: boolean;
+  total?: number;
+  fieldsModified?: number;
+  fieldsNewlyObserved?: number;
+  fieldsNoLongerObserved?: number;
+  suppliersAdded?: number;
+  suppliersRemoved?: number;
+  suppliersModified?: number;
+  suppliersNewlyObserved?: number;
+  suppliersNoLongerObserved?: number;
+};
+
 /** Índice de revisões (rota 14) — sem snapshot. */
 export type PrcRevisionSummary = {
   revisionNumber: number;
@@ -332,6 +349,7 @@ export type PrcRevisionSummary = {
   approvedBy: string;
   approvedAt: string;
   changedPaths: string[];
+  diffSummary?: PrcRevisionDiffSummary | null;
 };
 
 export type PrcRevisionChange = {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   diffCellState,
+  revisionDiffBuckets,
   snapshotFieldsToSheetData,
   snapshotHasField,
   snapshotHasSupplierLink,
@@ -184,5 +185,77 @@ describe("summarizeChangedPaths / supplierLinkIdentity", () => {
       attribute: "partNumber",
     });
     expect(supplierLinkIdentity("description")).toBeNull();
+  });
+});
+
+describe("revisionDiffBuckets — semântica da timeline", () => {
+  it("null/payload antigo → null (fallback neutro)", () => {
+    expect(revisionDiffBuckets(null)).toBeNull();
+    expect(revisionDiffBuckets(undefined)).toBeNull();
+    expect(
+      revisionDiffBuckets({ comparable: false }),
+    ).toBeNull();
+  });
+
+  it("expansão de cobertura não vira alteração confirmada", () => {
+    // motivador — V1 legado esparso × V2 schema-2 completo
+    const b = revisionDiffBuckets({
+      comparable: true,
+      total: 8,
+      fieldsModified: 0,
+      fieldsNewlyObserved: 7,
+      suppliersAdded: 1,
+    });
+    expect(b).toEqual({
+      total: 8,
+      confirmed: 0,
+      firstObserved: 7,
+      suppliersLinked: 1,
+      suppliersUnlinked: 0,
+      noLongerObserved: 0,
+    });
+  });
+
+  it("alteração real entre snapshots completos → confirmada", () => {
+    const b = revisionDiffBuckets({
+      comparable: true,
+      total: 2,
+      fieldsModified: 1,
+      suppliersModified: 1,
+    });
+    expect(b?.confirmed).toBe(2);
+    expect(b?.firstObserved).toBe(0);
+  });
+
+  it("nulo registrado, removidos e vínculos separados por classe", () => {
+    const b = revisionDiffBuckets({
+      comparable: true,
+      total: 5,
+      fieldsModified: 1,
+      fieldsNewlyObserved: 1,
+      fieldsNoLongerObserved: 1,
+      suppliersAdded: 1,
+      suppliersRemoved: 1,
+    });
+    expect(b).toMatchObject({
+      total: 5,
+      confirmed: 1,
+      firstObserved: 1,
+      suppliersLinked: 1,
+      suppliersUnlinked: 1,
+      noLongerObserved: 1,
+    });
+  });
+
+  it("tolera campos ausentes no contrato (zero implícito)", () => {
+    const b = revisionDiffBuckets({ comparable: true });
+    expect(b).toEqual({
+      total: 0,
+      confirmed: 0,
+      firstObserved: 0,
+      suppliersLinked: 0,
+      suppliersUnlinked: 0,
+      noLongerObserved: 0,
+    });
   });
 });

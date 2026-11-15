@@ -27,7 +27,7 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 
 | Etapa | Status | SHA |
 |---|---|---|
-| N0 Inventário | TODO | |
+| N0 Inventário | DONE | (este commit) |
 | N1 Superfície MCP e inteligência | TODO | |
 | N2 Corpus (texto das fontes e manifesto) | TODO | |
 | N3 Citação legível | TODO | |
@@ -80,3 +80,25 @@ BFF: imagem anterior pela tag. Corpus: republicar a versão anterior (o pipeline
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
 | 2026-11-14 | plano | — | READY | Plano registrado (doc 169). D1 e D2 do owner; D3–D6 propostas pelo Claude (owner pode vetar). |
+| 2026-11-14 | N0 | (este commit) | DONE | Inventário em `ab07b642`+. Y4: nenhuma parada. Evidência histórica e docs desta trilha ficam de fora da troca (abaixo). |
+
+## 8. Inventário N0 (HEAD de partida `ab07b642`)
+
+Contagem de `PROC-0072` (o código, já sem `CF-PROC0072-…` e sem o token dentro de nome de arquivo).
+
+| Classe | Arquivos | Ocorrências | Regra |
+|---|---|---|---|
+| (a) MCP e inteligência | 3 | 6 | N1 — nome + diretiva |
+| (b) fonte do corpus | 52 | 119 | S1–S7; `source_id` e caminho intactos |
+| (c) doc fora do corpus, mesmo eixo | 24 | 35 | S1–S7 |
+| (d) exceção §5 | migrations V001/V002/V011 (4 linhas com o código); demais migrations só com `CF-PROC0072-…`; comentários/testes (`test_pg_remainder_build.py`, `test_bpmn_migration.py`, MFE); nomes de arquivo | não trocar | |
+| meta desta trilha | 4 | 34 | o código é o assunto do plano; fora do manifesto |
+| evidência g082rw/g083 | 4 jsonl | 4888 | snapshot com hash de claim; não é fonte do manifesto |
+
+Amostra (a): `branding.py` missão, instruções e docstring; `server.py` descrição de `knowledge`; `clara_agent_intelligence.json` `ecosystem` e `knowledge_domains`.
+
+Amostra (b): `doc-00` README 17; `doc-82` 13; `doc-118` 5; `doc-90` 5; `doc-156` 4; `ficha-processo` 2. Manifesto: nomes de `doc-02`, `doc-90`, `doc-118`, `doc-156`, `ficha-processo`.
+
+Amostra (c): docs 127, 39, 46, 92 (3 cada); `19-rastreabilidade-teo.md` (`Código: PROC-0072`); índices `docs/12-roadmap-e-evolucao/README.md` e `financeiro-controladoria/README.md`.
+
+Y4 — lidas e não paradas: linha «Código: PROC-0072» (docs 02 e 19) não vira «Código: <nome>»; a linha sai e o código fica só na ficha (D3). `record_read(process=PROC-0072)` (doc 46) conserva o UUID na mesma frase. Checkpoint «perguntar por PROC-0072» (doc 93) passa a perguntar pelo fechamento mensal — o sentido do aceite (CLARA responde com fonte) permanece.
