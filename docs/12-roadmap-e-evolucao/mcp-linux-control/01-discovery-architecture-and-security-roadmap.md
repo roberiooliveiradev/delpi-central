@@ -638,3 +638,26 @@ O operador informou, apos identificar scope exclusivo sem mapper e cadastrar o `
 **Gate confirmado:** `KEYCLOAK_EVALUATE_RESOURCE_AUDIENCE_PASS` (controle de emissao em simulacao de cliente). **Ainda nao confirmado:** token novo emitido no login real do ChatGPT, autenticao de `POST /mcp`, initialize, `tools/list` e `tools/call`.
 
 **Proxima acao do operador:** reautorizar/reconectar `ATLAS — Infraestrutura Linux` no ChatGPT para forcar access token novo; evitar reutilizar conexao/token antigo. Se falhar, coletar apenas codigos HTTP e `mcp_auth_denied class` em logs, sem payloads de JWT. Se autenticar e listar 4 tools, invocar `get_host_health` e conferir timestamp/staleness; nenhuma capacidade de alteracao foi publicada.
+
+
+## 40. Primeiro aceite ponta a ponta ATLAS: consulta real ao Linux via ChatGPT (2026-11-15)
+
+**Evidencia reportada pelo operador:** apos corrigir mapper de audiencia exclusivo Keycloak e reconectar ATLAS no ChatGPT, uma chamada real do plugin retornou com sucesso os dados observados do servidor `srv-api`. Esta evidencia comprova autenticacao OAuth e ao menos uma chamada MCP de leitura resolvida ate a API do IT Portal e o snapshot Linux; nao equivale a aceite de todas as quatro ferramentas nem de negativas de RBAC.
+
+**Snapshot da resposta do ATLAS** (2026-11-15 09:03:47 America/Sao_Paulo, `observation_status=partial`):
+- CPU: 16 processadores logicos; percentual de uso indisponivel.
+- RAM: 47.0 GiB totais, ~21.6 GiB usados (45.8%), 25.5 GiB disponiveis.
+- Swap: 8.0 GiB, praticamente ociosa.
+- Sistema de arquivos raiz: 393.2 GiB totais, 168.2 GiB usados (42.8%), 208.1 GiB disponiveis.
+- Servicos: ativos `docker`, `containerd`, `nginx`, `ssh`, `sshd`, `cron`, `zabbix-agent2` (7); inativos `crond`, `zabbix-agent` (2). Nao tratar os inativos como incidentes sem validar se sao variantes nao utilizadas no host.
+- Docker: service ativo, contagem/saude de conteineres ausentes do snapshot. **Nao** inferir quantidade atual a partir de inventario historico.
+
+**Milestone:** `CHATGPT_OAUTH_AUTHENTICATED=PASS`, `MCP_READ_TOOL_CALL=PASS` para consulta de saude/servicos, `IT_PORTAL_OBSERVATION_READ=PASS`, `COLLECTOR_COMPLETENESS=PARTIAL`, `READONLY_BOUNDARY=UNCHANGED`. A resposta confirma funcionalidades expostas e que dados ausentes sao relatados como desconhecidos, mas nao valida testes adversariais.
+
+**Backlog focal para fase posterior (sem acao nesta etapa):**
+1. Traçar origem do campo percentual de CPU no coletor Linux e no contrato `it-portal-api /servers/{uuid}/observations/latest`; adicionar medida agregada robusta se nao coletada.
+2. Traçar `docker_summary`/contagens agregadas no coletor, preferir nativo autorizado read-only sem socket no container MCP, e mapear estados, sem expor lista de conteineres ou abrir privilegios.
+3. Definir regra de `observation_status` com evidencias de campos ausentes, distinguir partial esperado de falha real, preservar `observed_at` e status.
+4. Testar separadamente `get_deployment_revision` (deve reportar `not_available`), escopos Core negativos e recusa de ferramenta fora da lista autorizada; nenhum ACT/SSH/deploy neste marco.
+
+Amostra derivada da resposta fornecida pelo operador, nao prova de consulta direta do assistente ao runtime.
