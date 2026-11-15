@@ -1,47 +1,76 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  FileText,
+  GitCompare,
+  Link2Off,
+  Wallet,
+} from "lucide-react";
 
 import {
   downloadEntryAuditExport,
   getEntryAuditAnalysis,
   getEntryAuditBreakdowns,
+  getEntryAuditDaily,
   getEntryAuditSummary,
+  listEntryAuditOptions,
   listEntryAuditRows,
   listEntryAuditTes,
   setEntryAuditOccurrenceStatus,
   type EntryAuditAnalysis,
   type EntryAuditBreakdowns,
+  type EntryAuditDaily,
   type EntryAuditDocument,
   type EntryAuditFilters,
   type EntryAuditOccurrence,
+  type EntryAuditOption,
   type EntryAuditPage,
   type EntryAuditSummary,
   type EntryAuditTes,
 } from "../../api/entryAuditApi";
 import {
   CfActionButton,
+  CfComparativeAreaChart,
   CfDistributionDonut,
   CfHorizontalValueBars,
+  CfMetricKpiCard,
   CfMetricStrip,
   CfPageHero,
+  CfPagePath,
   CfResolutionStatusCell,
   CfScopeChipBar,
   CfSectionCard,
-  CfSegmentToggle,
   CfSemicircleProgressGauge,
   CfStateBanner,
+  CfStatusBadge,
   CfTitleWithHelp,
+  CfTrendDelta,
+  CfUnderlineNav,
 } from "../../app/controllershipFinanceUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
+import { EntryAuditLoadingState } from "./EntryAuditLoadingState";
+import { EntryAuditSeverityBadge } from "./EntryAuditSeverityBadge";
 import {
+  ENTRY_AUDIT_ACTION_ICONS,
+  ENTRY_AUDIT_TABS,
+  auditStatusBadgeVariant,
   conformityRatio,
   displayValue,
-  ENTRY_AUDIT_TABS,
   entryAuditClaraSuggestions,
+  entryAuditTabResource,
   formatAuditStatus,
+  formatBranchLabel,
+  formatDifference,
+  formatDocumentType,
+  formatMoneyBRL,
+  formatNoteSeries,
   formatPeriodLabel,
+  formatTheme,
   parseEntryAuditTab,
+  severityBadgeVariant,
   severityFromUrl,
   severityToUrl,
   type EntryAuditTab,
@@ -52,6 +81,8 @@ type AnalysisData = {
   summary: EntryAuditSummary;
   breakdowns: EntryAuditBreakdowns;
 };
+
+const kpiIcon = (node: ReactNode) => node;
 
 function currentSearch(): URLSearchParams {
   return new URLSearchParams(
@@ -68,8 +99,22 @@ function filtersFromUrl(params: URLSearchParams): EntryAuditFilters {
     tes: params.get("tes") ?? "",
     document_type: params.get("document_type") ?? "",
     status: params.get("status") ?? "",
+    situation: params.get("situation") ?? "",
     q: params.get("q") ?? "",
+    day: params.get("day") ?? "",
   };
+}
+
+function trendPct(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / previous) * 100;
+}
+
+function severityTone(
+  name: string,
+): "danger" | "warning" | "neutral" | "info" | "success" | undefined {
+  const variant = severityBadgeVariant(name);
+  return variant === "neutral" ? "neutral" : variant;
 }
 
 export function EntryAuditAnalysisPage({
@@ -81,7 +126,11 @@ export function EntryAuditAnalysisPage({
 }) {
   const [routeEpoch, setRouteEpoch] = useState(0);
   const [data, setData] = useState<AnalysisData | null>(null);
-  const [rows, setRows] = useState<Array<EntryAuditOccurrence | EntryAuditDocument | EntryAuditTes>>([]);
+  const [daily, setDaily] = useState<EntryAuditDaily | null>(null);
+  const [branchOptions, setBranchOptions] = useState<EntryAuditOption[]>([]);
+  const [rows, setRows] = useState<
+    Array<EntryAuditOccurrence | EntryAuditDocument | EntryAuditTes>
+  >([]);
   const [page, setPage] = useState<EntryAuditPage<unknown> | null>(null);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
@@ -99,6 +148,16 @@ export function EntryAuditAnalysisPage({
 
   useEffect(() => {
     const controller = new AbortController();
+    void listEntryAuditOptions(controller.signal)
+      .then((options) => {
+        if (!controller.signal.aborted) setBranchOptions(options.branches);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
     setError("");
     Promise.all([
       getEntryAuditAnalysis(analysisId, controller.signal),
@@ -110,25 +169,58 @@ export function EntryAuditAnalysisPage({
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
-          setError(reason instanceof Error ? reason.message : "Falha ao carregar análise.");
+          setError(
+            reason instanceof Error ? reason.message : "Falha ao carregar análise.",
+          );
         }
       });
     return () => controller.abort();
   }, [analysisId, filters, refresh]);
 
   useEffect(() => {
+    if (!data) return;
+    const multiDay = data.analysis.date_from !== data.analysis.date_to;
+    if (!multiDay) {
+      setDaily(null);
+      return;
+    }
     const controller = new AbortController();
+    void getEntryAuditDaily(analysisId, filters, controller.signal)
+      .then((payload) => {
+        if (!controller.signal.aborted) setDaily(payload);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setDaily(null);
+      });
+    return () => controller.abort();
+  }, [analysisId, data, filters]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const resource = entryAuditTabResource(tab);
+    const tabFilters: EntryAuditFilters =
+      tab === "posted_outside"
+        ? { ...filters, situation: "posted_outside_period" }
+        : filters;
+
     const request =
-      tab === "tes"
-        ? listEntryAuditTes(analysisId, filters, controller.signal).then((payload) => ({
-            items: payload.items,
-            page: 1,
-            page_size: payload.items.length || 1,
-            total: payload.items.length,
-          }))
-        : listEntryAuditRows<
-            EntryAuditOccurrence | EntryAuditDocument
-          >(analysisId, tab, filters, 1, 50, controller.signal);
+      resource === "tes"
+        ? listEntryAuditTes(analysisId, tabFilters, controller.signal).then(
+            (payload) => ({
+              items: payload.items,
+              page: 1,
+              page_size: payload.items.length || 1,
+              total: payload.items.length,
+            }),
+          )
+        : listEntryAuditRows<EntryAuditOccurrence | EntryAuditDocument>(
+            analysisId,
+            resource,
+            tabFilters,
+            1,
+            50,
+            controller.signal,
+          );
     request
       .then((payload) => {
         if (controller.signal.aborted) return;
@@ -137,7 +229,11 @@ export function EntryAuditAnalysisPage({
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
-          setError(reason instanceof Error ? reason.message : "Falha ao carregar registros.");
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Falha ao carregar registros.",
+          );
         }
       });
     return () => controller.abort();
@@ -164,21 +260,54 @@ export function EntryAuditAnalysisPage({
     );
   };
 
+  const goHome = () => navigatePluginPath(basePath);
+  const goEntry = () => navigatePluginPath(`${basePath}/entry-audit`);
+
   const occurrenceColumns: DataTableColumn<EntryAuditOccurrence>[] = [
-    { key: "severity", header: "Severidade", render: (row) => displayValue(row.severity) },
-    { key: "document", header: "Documento", render: (row) => displayValue(row.document_number) },
-    { key: "finding", header: "Ocorrência", render: (row) => displayValue(row.title) },
-    { key: "supplier", header: "Fornecedor", render: (row) => displayValue(row.supplier_name) },
-    { key: "tes", header: "TES", render: (row) => displayValue(row.tes) },
+    {
+      key: "severity",
+      header: "Severidade",
+      render: (row) => <EntryAuditSeverityBadge severity={row.severity} />,
+    },
+    {
+      key: "document",
+      header: "Nota/Série",
+      render: (row) => formatNoteSeries(row.document_number, row.series),
+    },
+    {
+      key: "supplier",
+      header: "Fornecedor",
+      render: (row) => displayValue(row.supplier_name),
+    },
+    {
+      key: "rule",
+      header: "Regra",
+      render: (row) => displayValue(row.rule_name ?? row.title),
+    },
+    {
+      key: "field",
+      header: "Campo",
+      render: (row) => displayValue(row.field_label ?? row.field),
+    },
+    {
+      key: "protheus",
+      header: "Protheus",
+      render: (row) => displayValue(row.protheus_value),
+    },
+    {
+      key: "xml",
+      header: "XML",
+      render: (row) => displayValue(row.xml_value),
+    },
     {
       key: "difference",
       header: "Diferença",
-      render: (row) => displayValue(row.difference),
+      render: (row) => formatDifference(row.difference, row.field),
       align: "right",
     },
     {
       key: "status",
-      header: "Tratamento",
+      header: "Status",
       render: (row) => (
         <CfResolutionStatusCell
           status={row.status === "resolved" ? "resolved" : "open"}
@@ -204,15 +333,18 @@ export function EntryAuditAnalysisPage({
   ];
 
   const genericColumns: DataTableColumn<EntryAuditDocument | EntryAuditTes>[] = [
-    { key: "branch", header: "Filial", render: (row) => displayValue(row.branch) },
+    {
+      key: "branch",
+      header: "Filial",
+      render: (row) =>
+        formatBranchLabel(String(row.branch ?? ""), branchOptions),
+    },
     {
       key: "document",
       header: tab === "tes" ? "TES" : "Documento",
       render: (row) =>
         displayValue(
-          "document_number" in row
-            ? row.document_number
-            : row.tes ?? row.code,
+          "document_number" in row ? row.document_number : row.tes ?? row.code,
         ),
     },
     {
@@ -246,27 +378,43 @@ export function EntryAuditAnalysisPage({
     }
   };
 
-  if (error && !data) return <CfStateBanner variant="error">{error}</CfStateBanner>;
-  if (!data) return <p aria-live="polite">Carregando análise…</p>;
+  if (error && !data) {
+    return (
+      <section className="cf-page-stack">
+        <CfStateBanner variant="error">
+          {error}
+          <CfActionButton variant="ghost" onClick={() => setRefresh((v) => v + 1)}>
+            Tentar de novo
+          </CfActionButton>
+        </CfStateBanner>
+      </section>
+    );
+  }
 
-  const chips = [
-    ...data.analysis.branches.map((branch) => ({
-      id: `branch-${branch}`,
-      label: `Filial ${branch}`,
-      active: filters.branch === branch,
-      onSelect: () =>
-        navigateWith({ branch: filters.branch === branch ? "" : branch }),
-    })),
-    ...data.analysis.document_types.map((type) => ({
-      id: `type-${type}`,
-      label: type.toUpperCase(),
-      active: filters.document_type === type,
-      onSelect: () =>
-        navigateWith({
-          document_type: filters.document_type === type ? "" : type,
-        }),
-    })),
-  ];
+  if (!data) {
+    return (
+      <EntryAuditLoadingState
+        pathItems={[
+          {
+            id: "home",
+            label: "Início",
+            href: basePath,
+            onNavigate: goHome,
+          },
+          {
+            id: "entry",
+            label: "Auditoria de Entradas",
+            href: `${basePath}/entry-audit`,
+            onNavigate: goEntry,
+          },
+        ]}
+        current="Análise"
+        title="Resultado da análise"
+        hint={CF_HELP.entryAudit.analysis}
+      />
+    );
+  }
+
   const periodLabel = formatPeriodLabel(
     data.analysis.date_from,
     data.analysis.date_to,
@@ -279,8 +427,116 @@ export function EntryAuditAnalysisPage({
     data.summary.conformity.clean,
     data.summary.conformity.divergent,
   );
-  const money = (value: number) =>
-    value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const { kpis, previous } = data.summary;
+
+  const chips = [
+    ...data.analysis.branches.map((branch) => ({
+      id: `branch-${branch}`,
+      label: formatBranchLabel(branch, branchOptions),
+      active: filters.branch === branch,
+      onSelect: () =>
+        navigateWith({ branch: filters.branch === branch ? "" : branch }),
+    })),
+    ...data.analysis.document_types.map((type) => ({
+      id: `type-${type}`,
+      label: formatDocumentType(type),
+      active: filters.document_type === type,
+      onSelect: () =>
+        navigateWith({
+          document_type: filters.document_type === type ? "" : type,
+        }),
+    })),
+    ...(filters.severity
+      ? [
+          {
+            id: "severity",
+            label: `Severidade: ${filters.severity}`,
+            active: true,
+            onSelect: () => navigateWith({ severity: "" }),
+          },
+        ]
+      : []),
+    ...(filters.theme
+      ? [
+          {
+            id: "theme",
+            label: `Tema: ${formatTheme(filters.theme)}`,
+            active: true,
+            onSelect: () => navigateWith({ theme: "" }),
+          },
+        ]
+      : []),
+    ...(filters.supplier
+      ? [
+          {
+            id: "supplier",
+            label: `Fornecedor: ${filters.supplier}`,
+            active: true,
+            onSelect: () => navigateWith({ supplier: "" }),
+          },
+        ]
+      : []),
+    ...(filters.tes
+      ? [
+          {
+            id: "tes",
+            label: `TES: ${filters.tes}`,
+            active: true,
+            onSelect: () => navigateWith({ tes: "" }),
+          },
+        ]
+      : []),
+    ...(filters.day
+      ? [
+          {
+            id: "day",
+            label: `Dia: ${filters.day}`,
+            active: true,
+            onSelect: () => navigateWith({ day: "" }),
+          },
+        ]
+      : []),
+  ];
+
+  const tabCounts: Partial<Record<EntryAuditTab, number>> = {
+    occurrences: kpis.occurrences,
+    unmatched: data.summary.conformity.unmatched_open,
+    posted_outside: data.summary.conformity.posted_outside_period.count,
+  };
+
+  const navItems = ENTRY_AUDIT_TABS.map((item) => {
+    const count =
+      item.value === tab && page ? page.total : tabCounts[item.value];
+    return {
+      id: item.value,
+      label: item.label,
+      count: typeof count === "number" ? count : undefined,
+      onSelect: () => navigateWith({ tab: item.value }),
+    };
+  });
+
+  const dailyPoints = useMemo(() => {
+    if (!daily?.series?.length) return [];
+    const byName = new Map<string, { name: string; current: number; previous: number }>();
+    daily.series.forEach((item) => {
+      byName.set(item.name, {
+        name: item.name,
+        current: item.count,
+        previous: 0,
+      });
+    });
+    daily.previous.forEach((item) => {
+      const existing = byName.get(item.name);
+      if (existing) existing.previous = item.count;
+      else
+        byName.set(item.name, {
+          name: item.name,
+          current: 0,
+          previous: item.count,
+        });
+    });
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [daily]);
 
   const copySuggestion = async (text: string) => {
     try {
@@ -293,64 +549,193 @@ export function EntryAuditAnalysisPage({
     }
   };
 
+  const metaParts = [
+    data.analysis.branches
+      .map((code) => formatBranchLabel(code, branchOptions))
+      .join(" · "),
+    data.analysis.document_types.map(formatDocumentType).join(" · "),
+  ].filter(Boolean);
+
   return (
-    <section className="cf-page-stack" aria-label="Resultado da auditoria de entradas">
+    <section
+      className="cf-page-stack"
+      aria-label="Resultado da auditoria de entradas"
+    >
+      <CfPagePath
+        ariaLabel="Caminho da página"
+        size="sm"
+        items={[
+          {
+            id: "home",
+            label: "Início",
+            href: basePath,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goHome();
+            },
+          },
+          {
+            id: "notas",
+            label: "Notas fiscais",
+            href: basePath,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goHome();
+            },
+          },
+          {
+            id: "entry",
+            label: "Auditoria de Entradas",
+            href: `${basePath}/entry-audit`,
+            onNavigate: (event: { preventDefault: () => void }) => {
+              event.preventDefault();
+              goEntry();
+            },
+          },
+        ]}
+        current={`Análise ${periodLabel}`}
+      />
+
       <CfPageHero
-        eyebrow="Auditoria de Entradas"
+        eyebrow="Notas fiscais"
         title={
           <CfTitleWithHelp
-            title="Resultado da análise"
+            title={`Análise de ${periodLabel}`}
             hint={CF_HELP.entryAudit.analysis}
           />
         }
-        description={`${periodLabel} · ${formatAuditStatus(data.analysis.status)}`}
+        description={metaParts.join(" · ")}
+        badge={
+          <CfStatusBadge
+            label={formatAuditStatus(data.analysis.status)}
+            variant={auditStatusBadgeVariant(data.analysis.status)}
+          />
+        }
         actions={
           <>
-            <CfActionButton onClick={exportFile} disabled={exporting} softDisabled>
-              {exporting ? "Exportando…" : "Exportar XLSX"}
+            <CfActionButton
+              variant="default"
+              onClick={exportFile}
+              disabled={exporting}
+              softDisabled
+              title={CF_HELP.entryAudit.export}
+            >
+              <span className="cf-action-with-icon">
+                {ENTRY_AUDIT_ACTION_ICONS.download}
+                {exporting ? "Exportando…" : "Exportar"}
+              </span>
             </CfActionButton>
-            <CfActionButton onClick={() => navigatePluginPath(`${basePath}/entry-audit`)}>
-              Nova análise
+            <CfActionButton
+              variant="default"
+              onClick={goEntry}
+              title={CF_HELP.entryAudit.rerun}
+            >
+              <span className="cf-action-with-icon">
+                {ENTRY_AUDIT_ACTION_ICONS.refresh}
+                Executar de novo
+              </span>
+            </CfActionButton>
+            <CfActionButton
+              variant="ghost"
+              onClick={goEntry}
+              title={CF_HELP.entryAudit.newAnalysis}
+            >
+              <span className="cf-action-with-icon">
+                {ENTRY_AUDIT_ACTION_ICONS.plus}
+                Nova análise
+              </span>
             </CfActionButton>
           </>
         }
       />
 
-      {error ? <CfStateBanner variant="error">{error}</CfStateBanner> : null}
+      {error ? (
+        <CfStateBanner variant="error">
+          {error}
+          <CfActionButton variant="ghost" onClick={() => setRefresh((v) => v + 1)}>
+            Tentar de novo
+          </CfActionButton>
+        </CfStateBanner>
+      ) : null}
       {data.summary.branches_unavailable?.length ? (
         <CfStateBanner variant="default">
-          Dados indisponíveis para: {data.summary.branches_unavailable.join(", ")}.
+          Dados indisponíveis para:{" "}
+          {data.summary.branches_unavailable
+            .map((code) => formatBranchLabel(code, branchOptions))
+            .join(", ")}
+          .
         </CfStateBanner>
       ) : null}
 
-      <CfMetricStrip
-        aria-label="Indicadores da auditoria"
-        items={[
-          { id: "documents", label: "Notas conferidas", value: data.summary.kpis.documents },
-          { id: "gross", label: "Valor conferido", value: money(data.summary.kpis.gross_checked) },
-          {
-            id: "high-diff",
-            label: "Diferença alta",
-            value: money(data.summary.kpis.high_difference),
-            tone: data.summary.kpis.high_difference ? "danger" : "neutral",
-          },
-          { id: "occurrences", label: "Ocorrências", value: data.summary.kpis.occurrences },
-          {
-            id: "high",
-            label: "Alta severidade",
-            value: data.summary.kpis.high,
-            tone: data.summary.kpis.high ? "danger" : "neutral",
-          },
-          { id: "pending", label: "Pendentes", value: data.summary.kpis.pending },
-          { id: "resolved", label: "Resolvidas", value: data.summary.kpis.resolved },
-        ]}
-      />
+      <div className="cf-kpi-grid" role="group" aria-label="Indicadores da auditoria">
+        <CfMetricKpiCard
+          label="Notas conferidas"
+          titleHint={CF_HELP.entryAudit.kpiDocuments}
+          value={String(kpis.documents)}
+          icon={kpiIcon(<FileText size={22} strokeWidth={1.75} aria-hidden />)}
+          hint={
+            <CfTrendDelta value={trendPct(kpis.documents, previous.documents)} />
+          }
+        />
+        <CfMetricKpiCard
+          label="Valor conferido"
+          titleHint={CF_HELP.entryAudit.kpiGross}
+          value={formatMoneyBRL(kpis.gross_checked)}
+          icon={kpiIcon(<Wallet size={22} strokeWidth={1.75} aria-hidden />)}
+          hint={
+            <CfTrendDelta
+              value={trendPct(kpis.gross_checked, previous.gross_checked)}
+            />
+          }
+        />
+        <CfMetricKpiCard
+          label="Ocorrências pendentes"
+          titleHint={CF_HELP.entryAudit.kpiPending}
+          value={String(kpis.pending)}
+          hint={`${kpis.resolved} resolvidas`}
+          icon={kpiIcon(
+            <AlertTriangle size={22} strokeWidth={1.75} aria-hidden />,
+          )}
+          tone={kpis.pending ? "warning" : "default"}
+        />
+        <CfMetricKpiCard
+          label="Alta"
+          titleHint={CF_HELP.entryAudit.kpiHigh}
+          value={String(kpis.high)}
+          icon={kpiIcon(
+            <AlertCircle size={22} strokeWidth={1.75} aria-hidden />,
+          )}
+          tone={kpis.high ? "negative" : "default"}
+          onSelect={() =>
+            navigateWith({
+              severity: filters.severity === "Alta" ? "" : severityToUrl("Alta"),
+              tab: "occurrences",
+            })
+          }
+          hint={
+            <CfTrendDelta value={trendPct(kpis.high, previous.high)} />
+          }
+        />
+        <CfMetricKpiCard
+          label="Diferença nas Altas"
+          titleHint={CF_HELP.entryAudit.kpiHighDiff}
+          value={formatMoneyBRL(kpis.high_difference)}
+          icon={kpiIcon(
+            <GitCompare size={22} strokeWidth={1.75} aria-hidden />,
+          )}
+          tone={kpis.high_difference ? "negative" : "default"}
+        />
+        <CfMetricKpiCard
+          label="Sem par em aberto"
+          titleHint={CF_HELP.entryAudit.kpiUnmatched}
+          value={String(data.summary.conformity.unmatched_open)}
+          icon={kpiIcon(<Link2Off size={22} strokeWidth={1.75} aria-hidden />)}
+          onSelect={() => navigateWith({ tab: "unmatched" })}
+        />
+      </div>
 
       <div className="cf-charts-grid">
-        <CfSectionCard
-          title="Conformidade"
-          hint={CF_HELP.entryAudit.conformity}
-        >
+        <CfSectionCard title="Conformidade" hint={CF_HELP.entryAudit.conformity}>
           <CfSemicircleProgressGauge
             value={cleanShare}
             centerLabel="Notas limpas"
@@ -374,52 +759,104 @@ export function EntryAuditAnalysisPage({
             aria-label="Resumo de conformidade"
             items={[
               {
-                id: "clean",
-                label: "Limpas",
-                value: data.summary.conformity.clean,
-              },
-              {
-                id: "divergent",
-                label: "Divergentes",
-                value: data.summary.conformity.divergent,
-                tone: data.summary.conformity.divergent ? "danger" : "neutral",
-              },
-              {
                 id: "unmatched-open",
                 label: "Sem par em aberto",
                 value: data.summary.conformity.unmatched_open,
               },
               {
+                id: "explained",
+                label: "Explicadas",
+                value: data.summary.conformity.unmatched_explained,
+              },
+              {
                 id: "posted-outside",
-                label: "Fora do período",
+                label: "Lançadas fora do período",
                 value: data.summary.conformity.posted_outside_period.count,
                 tone: "neutral",
               },
             ]}
           />
         </CfSectionCard>
-        <CfDistributionDonut
-          ariaLabel="Distribuição por severidade"
-          items={data.breakdowns.by_severity.map((item) => ({
-            id: item.name,
-            label: item.name,
-            value: item.count,
-          }))}
-          onSelect={(item) => {
-            if (item) navigateWith({ severity: severityToUrl(item.id) });
-          }}
-          selectedId={filters.severity || undefined}
-        />
-        <CfHorizontalValueBars
-          aria-label="Ocorrências por tema"
-          items={data.breakdowns.by_theme.map((item) => ({
-            id: item.name,
-            label: item.name,
-            value: item.count,
-          }))}
-          onItemClick={(item) => navigateWith({ theme: item.id })}
-          selectedId={filters.theme || undefined}
-        />
+
+        <CfSectionCard title="Severidade" hint={CF_HELP.entryAudit.severity}>
+          <CfDistributionDonut
+            ariaLabel="Distribuição por severidade"
+            items={data.breakdowns.by_severity.map((item) => ({
+              id: item.name,
+              label: item.name,
+              value: item.count,
+              tone: severityTone(item.name),
+            }))}
+            onSelect={(item) => {
+              if (item) navigateWith({ severity: severityToUrl(item.id) });
+            }}
+            selectedId={filters.severity || undefined}
+          />
+        </CfSectionCard>
+
+        <CfSectionCard title="Por tema" hint={CF_HELP.entryAudit.occurrences}>
+          <CfHorizontalValueBars
+            aria-label="Ocorrências por tema"
+            items={data.breakdowns.by_theme.map((item) => ({
+              id: item.name,
+              label: formatTheme(item.name),
+              value: item.count,
+            }))}
+            onItemClick={(item) => navigateWith({ theme: item.id })}
+            selectedId={filters.theme || undefined}
+          />
+        </CfSectionCard>
+
+        <CfSectionCard title="Por fornecedor">
+          <CfHorizontalValueBars
+            aria-label="Ocorrências por fornecedor"
+            items={data.breakdowns.suppliers.slice(0, 10).map((item) => ({
+              id: item.name,
+              label: item.name,
+              value: item.count,
+            }))}
+            onItemClick={(item) => navigateWith({ supplier: item.id })}
+            selectedId={filters.supplier || undefined}
+          />
+        </CfSectionCard>
+
+        <CfSectionCard title="Por TES">
+          <CfHorizontalValueBars
+            aria-label="Ocorrências por TES"
+            items={data.breakdowns.tes.slice(0, 10).map((item) => ({
+              id: item.name,
+              label: item.name,
+              value: item.count,
+            }))}
+            onItemClick={(item) => navigateWith({ tes: item.id })}
+            selectedId={filters.tes || undefined}
+          />
+        </CfSectionCard>
+
+        {dailyPoints.length > 1 ? (
+          <CfSectionCard title="Evolução por dia">
+            <CfComparativeAreaChart
+              data={dailyPoints}
+              series={[
+                {
+                  dataKey: "current",
+                  name: "Período",
+                  color: "var(--delpi-ui-accent, #2563eb)",
+                },
+                {
+                  dataKey: "previous",
+                  name: "Anterior",
+                  color: "var(--delpi-ui-muted, #94a3b8)",
+                },
+              ]}
+              valueFormatter={(value) => value.toLocaleString("pt-BR")}
+              onPointSelect={(point) =>
+                navigateWith({ day: String(point.name) })
+              }
+              selectedName={filters.day || null}
+            />
+          </CfSectionCard>
+        ) : null}
       </div>
 
       <CfScopeChipBar
@@ -433,16 +870,19 @@ export function EntryAuditAnalysisPage({
             document_type: "",
             severity: "",
             theme: "",
+            supplier: "",
+            tes: "",
+            day: "",
             status: "",
+            situation: "",
           })
         }
       />
 
-      <CfSegmentToggle<EntryAuditTab>
-        options={[...ENTRY_AUDIT_TABS]}
-        value={tab}
-        onChange={(value) => navigateWith({ tab: value })}
-        ariaLabel="Visões da auditoria"
+      <CfUnderlineNav
+        items={navItems}
+        activeId={tab}
+        aria-label="Visões da auditoria"
       />
 
       {tab === "occurrences" ? (
@@ -476,19 +916,16 @@ export function EntryAuditAnalysisPage({
         title="Pergunte à CLARA"
         subtitle="A CLARA lê esta mesma análise"
         hint={CF_HELP.entryAudit.clara}
-        collapsible
-        defaultOpen={false}
       >
         <ul className="cf-page-stack">
           {claraSuggestions.map((suggestion) => (
             <li key={suggestion}>
-              <span>{suggestion}</span>{" "}
               <CfActionButton
                 type="button"
                 variant="ghost"
                 onClick={() => copySuggestion(suggestion)}
               >
-                Copiar
+                {suggestion}
               </CfActionButton>
             </li>
           ))}

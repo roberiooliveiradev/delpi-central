@@ -30,8 +30,8 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U0 Inventário visual e matriz de conformidade | DONE | `938ccd1edb` |
 | U1 Base comum (vocabulário, formatação, badges, ícones, estados) | DONE | `1bcb9f470a` |
 | U2 Início | DONE | `b31321f1d0` |
-| U3 Auditoria — entrada e execução | DONE | (este commit) |
-| U4 Auditoria — resultado da análise | TODO | |
+| U3 Auditoria — entrada e execução | DONE | `4577724671` |
+| U4 Auditoria — resultado da análise | DONE | (este commit) |
 | U5 Auditoria — detalhe da ocorrência | TODO | |
 | U6 Demais páginas do Portal (desvios do padrão) | TODO | |
 | U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | TODO | |
@@ -116,4 +116,5 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | 2026-11-14 | U0 | `938ccd1edb` | DONE | Matriz G/H/E/A/O/F no código HEAD≥2ce2d29c; G9 INCONCLUSIVO até U7; screenshots HML via u0-inventory.spec (não commitados). |
 | 2026-11-14 | U1 | `1bcb9f470a` | DONE | Vocabulário/R$/severidade/ícones/estados/ajuda em entryAuditPresentation + SeverityBadge + LoadingState + CSS grids. |
 | 2026-11-14 | U2 | `b31321f1d0` | DONE | H1 highlights reais; H2 hubRouteIcons; H3 ExternalLink+title no SectionRouteCard (aditivo). |
-| 2026-11-14 | U3 | (este commit) | DONE | E1 form em linha + Executar; E2 ProgressTracker; E3 histórico com badge/vocabulário/Abrir; PagePath. |
+| 2026-11-14 | U3 | `4577724671` | DONE | E1 form em linha + Executar; E2 ProgressTracker; E3 histórico com badge/vocabulário/Abrir; PagePath. |
+| 2026-11-14 | U4 | (este commit) | DONE | A1–A9: PagePath/Hero/6 KPIs/donut status/charts/UnderlineNav/tabela/CLARA; loading G7; daily A5. |
