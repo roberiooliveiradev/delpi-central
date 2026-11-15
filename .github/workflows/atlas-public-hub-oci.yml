@@ -1,0 +1,76 @@
+name: ATLAS Public Hub OCI Revision Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/public-hub/Dockerfile"
+      - "infra/docker-compose.yml"
+      - "infra/docker-compose.hml.yml"
+      - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/up-hml-sequential.sh"
+      - "infra/scripts/up-prod-sequential.sh"
+      - "infra/scripts/tests/test_public_hub_provenance.py"
+      - ".github/workflows/atlas-public-hub-oci.yml"
+  pull_request:
+    paths:
+      - "plugins/public-hub/Dockerfile"
+      - "infra/docker-compose.yml"
+      - "infra/docker-compose.hml.yml"
+      - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/up-hml-sequential.sh"
+      - "infra/scripts/up-prod-sequential.sh"
+      - "infra/scripts/tests/test_public_hub_provenance.py"
+      - ".github/workflows/atlas-public-hub-oci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-hub-oci:
+    name: Full Git SHA label, clean input and negative build gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline contract and shell helper checks
+        run: |
+          python -m pip install --disable-pip-version-check pytest
+          bash -n infra/scripts/public-hub-provenance.sh
+          bash -n infra/scripts/up-hml-sequential.sh
+          bash -n infra/scripts/up-prod-sequential.sh
+          python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py
+      - name: Build only provenance stage on ephemeral CI runner
+        run: |
+          test "$(printf '%s' "$GITHUB_SHA" | wc -c)" -eq 40
+          docker build --pull --target provenance-contract \
+            --build-arg "SOURCE_REVISION=$GITHUB_SHA" \
+            -f plugins/public-hub/Dockerfile \
+            -t atlas-public-hub-oci:ci plugins
+          actual="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' atlas-public-hub-oci:ci)"
+          origin="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' atlas-public-hub-oci:ci)"
+          test "$actual" = "$GITHUB_SHA"
+          test "$origin" = "https://github.com/roberiooliveiradev/delpi-central"
+          echo "OCI stage labels: valid full Git commit and canonical source"
+      - name: Invalid, missing or abbreviated revisions must fail Docker build
+        run: |
+          if docker build --target provenance-contract \
+            -f plugins/public-hub/Dockerfile -t atlas-public-hub-oci:missing plugins \
+            >/tmp/atlas-public-hub-invalid.log 2>&1; then
+            echo "ERROR: missing SHA was accepted"
+            exit 1
+          fi
+          for bad in unknown dev 1234567 012345678901234567890123456789012345678 0123456789012345678901234567890123456789A; do
+            if docker build --target provenance-contract \
+              --build-arg "SOURCE_REVISION=$bad" \
+              -f plugins/public-hub/Dockerfile \
+              -t atlas-public-hub-oci:invalid plugins \
+              >/tmp/atlas-public-hub-invalid.log 2>&1; then
+              echo "ERROR: invalid SHA was accepted"
+              exit 1
+            fi
+          done
+          echo "Docker build denied all missing, malformed and abbreviated SHAs"
