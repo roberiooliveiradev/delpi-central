@@ -983,6 +983,10 @@ services:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
       target: production
+      args:
+        # Empty by default so other services can still render Compose config.
+        # Public Hub Dockerfile rejects a missing/invalid full SHA on build.
+        SOURCE_REVISION: ${PUBLIC_HUB_SOURCE_REVISION:-}
 
     container_name: delpi-public-hub
     restart: unless-stopped
