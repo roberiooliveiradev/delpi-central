@@ -66,6 +66,12 @@ test("U1 — seletor de área + listagem com 5 colunas e massa HML", async ({
   await page.waitForURL(/area=products/, { timeout: 15_000 });
   await shot("area-toggle");
 
+  /* Compacto abre em Cards (preferência persistida) — as asserções
+   * desta spec exercitam a Tabela. */
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
+
   /* 5 colunas aprovadas. */
   const table = page.getByRole("table");
   await expect(table).toBeVisible({ timeout: 20_000 });

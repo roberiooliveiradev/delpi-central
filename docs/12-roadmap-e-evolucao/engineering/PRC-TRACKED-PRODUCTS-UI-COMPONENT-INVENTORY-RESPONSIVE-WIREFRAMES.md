@@ -35,7 +35,8 @@
 | C15 | `EngineeringStateBanner`, `EngineeringEmptyState`, `EngineeringLoadingActivityCard` | [engineeringUi.ts](../../../plugins/engineering/src/ui/engineeringUi.ts) | Erro, vazio, loading | PROVEN_EXPORT |
 | C16 | `EngineeringTimeline` ← `createTimeline` | [engineeringUi.ts](../../../plugins/engineering/src/ui/engineeringUi.ts) | Histórico de versões/eventos | PROVEN_EXPORT; contrato de itens a verificar |
 | C17 | `EngineeringSectionCard`, `EngineeringFieldLabel`, `EngineeringTextField`, `EngineeringTextAreaField`, `EngineeringFormActions` | [engineeringUi.ts](../../../plugins/engineering/src/ui/engineeringUi.ts) e [PrcFlagModal.tsx](../../../plugins/engineering/src/features/product-registration/components/PrcFlagModal.tsx) | Filtros, modal, estados | PROVEN_EXPORT/USAGE |
-| C18 | `EngineeringDataCardsGrid`, `EngineeringInteractiveDataCard`, `EngineeringKanbanBoard` | [PrcQueuePage.tsx](../../../plugins/engineering/src/features/product-registration/pages/PrcQueuePage.tsx) | **Preservar** visões existentes em Solicitações | PROVEN_USAGE |
+| C18 | `EngineeringDataCardsGrid`, `EngineeringInteractiveDataCard`, `EngineeringKanbanBoard` | [PrcQueuePage.tsx](../../../plugins/engineering/src/features/product-registration/pages/PrcQueuePage.tsx), [PrcProductsPage.tsx](../../../plugins/engineering/src/features/product-registration/pages/PrcProductsPage.tsx) | Tabela\|Cards em Solicitações **e** Produtos acompanhados (Kanban só na fila) | PROVEN_USAGE |
+| C19 | `TableColumnVisibilityMenu`, `useTableColumnVisibility`, `usePersistedViewLayout` | [PrcQueuePage.tsx](../../../plugins/engineering/src/features/product-registration/pages/PrcQueuePage.tsx), [PrcProductsPage.tsx](../../../plugins/engineering/src/features/product-registration/pages/PrcProductsPage.tsx), [TableColumnVisibilityMenu.tsx](../../../plugins/plugin-ui/src/components/data/TableColumnVisibilityMenu.tsx) | Menu Colunas (visibilidade/ordem/reset) + preferências persistidas — chaves próprias `engineering:prc:requests:*` × `engineering:prc:products:*` | PROVEN_USAGE |
 
 **Boundary de reuso:** C09 é composição render-only compartilhada entre Engenharia e Minhas Solicitações; atualmente `draft`/`requestType`/`changedPaths`/`supplierLinkChanges` são de caso PRC. Não passar snapshot histórico como `draft` sem contrato/adaptação explícita. C12–C14 residem no MFE Engenharia, não no Plugin UI: antes de exigir import direto do kit, aplicar Abstraction Gate (owner, consumers, props neutras, testes, export MF) e extrair somente a apresentação reutilizável se necessário. Não criar falsos exports.
 
@@ -118,16 +119,24 @@ Envelope MFE: 24px laterais e 24px entre seções [T]; padding do hero = kit.
 │ ┌──────────────────────── [C02] HERO ÚNICO ───────────────────────────────┐ │
 │ │ CONTROLE E CADASTRO DE PRODUTOS                                        │ │
 │ │ [C03 Solicitações | ● PRODUTOS ACOMPANHADOS]                           │ │
-│ │ [C04 Código/descrição] [Flags: todas/abertas] [Ordenar: última evolução]│ │
+│ │ [C04 Código/descrição] [Flags: todas/abertas]                            │ │
 │ └─────────────────────────────────────────────────────────────────────────┘ │
+│ [C19 Colunas] [C03 Tabela | Cards]                            [Atualizar] │
 │ ┌──────────────────── PRODUTOS ACOMPANHADOS ──────────────────────────────┐ │
-│ │ [C06] Código | Descrição | Versão | Flags abertas | Última evolução     │ │
+│ │ [C06] Código ⇅ | Descrição ⇅ | Versão ⇅ | Flags abertas ⇅ | Últ.evol. ⇅│ │
 │ │ 10080025 | TERM. OLHAL... | V5 | 2 | 12/11/2026                      > │ │
 │ │ 10080022 | TERM. OLHAL... | V1 | 0 | 11/11/2026                      > │ │
 │ │ [paginação conforme contrato; sem produtos do catálogo geral]          │ │
 │ └─────────────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────────┘
 Uma linha por produto acompanhado. C06 é wrapper do MFE sobre classes do kit.
+As 5 colunas ordenam server-side asc/desc (⇅) — clique alterna a direção e a
+URL carrega `sortBy`/`sortDir`. C19 (kit) controla visibilidade/ordem/reset das
+colunas com persistência própria. `Tabela | Cards` via `usePersistedViewLayout`
+(`engineering:prc:products:layout`); modo Cards usa `EngineeringDataCardsGrid` +
+`PrcProductCard` (código oficial dominante, mesmo catálogo de campos da tabela).
+Compacto (≤768px) abre em Cards por padrão — mesma regra da fila. Sem Kanban:
+o modelo de produto não tem agrupamento por estado de processo.
 ```
 
 ### WF-03 — Detalhe acompanhado / Ficha técnica, desktop

@@ -527,6 +527,8 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
 test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", async ({
   page,
 }) => {
+  /* Sequência longa: 5 sorts com refetch server-side + 2 reloads. */
+  test.setTimeout(180_000);
   const pageErrors = trackPageErrors(page);
   const forbidden = trackForbiddenApiCalls(page);
   const shot = async (name: string) => {
@@ -560,8 +562,12 @@ test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", a
     "aria-sort",
     "ascending",
   );
+  /* Refetch é assíncrono após o commit da URL — poll até a ordem
+   * efetiva aparecer nas células. */
+  await expect.poll(() => codeCells()).toEqual(
+    (await codeCells()).slice().sort(),
+  );
   const codes = await codeCells();
-  expect(codes).toEqual([...codes].sort());
 
   await header("Código oficial").click();
   await page.waitForURL(/sortBy=code&sortDir=desc/, {
@@ -571,8 +577,9 @@ test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", a
     "aria-sort",
     "descending",
   );
-  const codesDesc = await codeCells();
-  expect(codesDesc).toEqual([...codes].sort().reverse());
+  await expect.poll(() => codeCells()).toEqual(
+    codes.slice().sort().reverse(),
+  );
 
   /* Novos campos do contrato: versão e bandeiras abertas. */
   await header("Versão atual").click();
@@ -595,14 +602,33 @@ test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", a
   /* 2) Menu Colunas: ocultar, persistir e restaurar. */
   const columnsTrigger = page.getByRole("button", { name: "Colunas" });
   await columnsTrigger.click();
-  const descOption = page.getByRole("checkbox", {
-    name: "Exibir coluna Descrição",
+  const columnsPanel = page.getByRole("dialog", {
+    name: "Colunas visíveis",
   });
-  await expect(descOption).toBeVisible({ timeout: 10_000 });
-  await descOption.click();
+  await expect(columnsPanel).toBeVisible({ timeout: 10_000 });
+  /* O input nativo é a11y-only (pointer-events:none); o usuário
+   * alterna clicando no label — caminho realista. */
+  await columnsPanel.getByText("Descrição", { exact: true }).click();
   await expect(header("Descrição")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await shot("column-hidden");
+
+  /* O hook grava com debounce — aguarda a preferência efetivar no
+   * storage antes do refresh (evita corrida de leitura). */
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            JSON.parse(
+              window.localStorage.getItem(
+                "engineering:prc:products:columns",
+              ) ?? "{}",
+            )?.visibility?.description ?? null,
+        ),
+      { timeout: 10_000 },
+    )
+    .toBe(false);
 
   /* Persistência: refresh mantém a preferência. */
   await page.reload();
@@ -611,7 +637,9 @@ test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", a
   await expect(header("Descrição")).toHaveCount(0);
 
   await columnsTrigger.click();
-  await page.getByRole("button", { name: "Restaurar" }).click();
+  await columnsPanel
+    .getByRole("button", { name: "Restaurar" })
+    .click();
   await expect(header("Descrição")).toBeVisible();
   await page.keyboard.press("Escape");
 
