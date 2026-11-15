@@ -105,3 +105,14 @@ O operador informou explicitamente que **nao autoriza utilizar `delpi-hml-engine
 **Nao validado:** existencia de label OCI `org.opencontainers.image.revision`, provenance assinada de imagem->commit GitHub, manifest HMAC de release, transporte Docker isolado para signer, lock/journal em banco HML, permissoes/aprovacao. Nenhum desses dados pode ser inferido de `ImageID`. `preview_deployment` e ACT continuam bloqueados.
 
 **Proxima observacao READ:** consultar apenas as labels OCI de revisao e os metadados da imagem efetivamente apontada pelo contêiner via `docker image inspect --format`; nao imprimir JSON completo, Env, mounts nem secrets. Se label OCI nao estiver presente, registrar como `REVISION_LABEL_UNAVAILABLE` e manter o bloqueio de provenance. Mesmo presente, a label e informativa, nao prova assinatura de build; requer vinculo assinado do pipeline.
+
+
+## 9. Resultado READ do OCI provenance no Public Hub (2026-11-15)
+
+**Evidencia de execucao fornecida pelo operador:** comando filtrado `docker image inspect --format` na imagem real de `delpi-hml-public-hub`: `ImageID=sha256:63ad3152e179d4a75e3cc1823a4062b300786fe841a635c4bbb8086e38e1112d`, `Created=2026-11-14T13:14:11.039760926Z`, `org.opencontainers.image.revision=<no value>`, `org.opencontainers.image.source=<no value>`. A imagem esta saudavel como container, mas **nao ha binding verificavel com commit GitHub**, portanto `REVISION_LABEL_UNAVAILABLE`, `HOST_RELEASE_PROVENANCE=BLOCKED`. Data de criacao e SHA do checkout atual nao comprovam release historica.
+
+**Causa de build confirmada no codigo versionado:** `plugins/public-hub/Dockerfile` (estagio `production`) nao declara `ARG SOURCE_REVISION`, `LABEL org.opencontainers.image.revision` ou `LABEL org.opencontainers.image.source`. `infra/docker-compose.yml`, service `public-hub`, usa `build.context: ../plugins`, `build.dockerfile: public-hub/Dockerfile` e `target: production`, **sem build.args SOURCE_REVISION**. `infra/docker-compose.hml.yml` estende esse build sem inserir essa evidencia. O script HML calcula `SOURCE_REVISION` curto, mas apenas exporta variavel de ambiente, nao torna-a automaticamente um argumento para esse Dockerfile.
+
+**Remediacao proposta, NAO IMPLEMENTADA:** introduzir rotulo OCI completo de 40 hex gerado por pipeline confiavel com SHA pinado; passar `SOURCE_REVISION` validado ao build por `build.args`, e registrar manifest de release emitido por executor confiavel que amarre SHA->ImageID->execucao/CI. Criar verificacao de pipeline que falhe em SHA truncado, ausente ou `unknown`. Rotulos OCI isolados nao substituem attestation do pipeline nem registro assinado; nao colar etiqueta arbitraria em imagem historica para simular prova.
+
+**Restricoes operacionais:** nao houve rebuild, restart, deploy ou migration. Public Hub permanece como candidato apenas READ ate confirmar ownership/janela; excluir componentes Engineering sob alteracao de Roberto. Gate de PREPARE/ACT nao habilitado.
