@@ -540,8 +540,11 @@ class ClaraKnowledgeRepository:
                            k.access_scope, k.domain_scope,
                            k.citation_locator,
                            k.last_verified_at, k.title, k.content,
+                           s.name AS source_name,
                            {rank} AS rank
                       FROM {_q('clara_knowledge_item')} k
+                      JOIN {_q('clara_knowledge_source')} s
+                        ON s.source_id = k.source_id
                      WHERE {' AND '.join(clauses)}
                      ORDER BY rank DESC, k.indexed_at DESC
                      LIMIT %s

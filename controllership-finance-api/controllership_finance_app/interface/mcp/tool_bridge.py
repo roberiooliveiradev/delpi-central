@@ -50,6 +50,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
 from controllership_finance_app.application.clara.agent_intelligence_service import (  # noqa: E501
     ClaraAgentIntelligenceService,
 )
+from controllership_finance_app.application.clara.knowledge_citation import (
+    display_citation,
+)
 from controllership_finance_app.application.clara.batch_orchestrator import (
     ClaraBatchOrchestrator,
 )
@@ -1438,6 +1441,24 @@ def _access_scope_for(user) -> str:
     return "PORTAL_MANAGE" if _is_manage(user) else "PORTAL_ACCESS"
 
 
+def _readable_citation(item: dict) -> dict[str, str]:
+    """Campos aditivos: nome da fonte e citação sem caminho de arquivo."""
+    source = item.get("source")
+    source_name = ""
+    if isinstance(source, dict):
+        source_name = str(source.get("name") or "")
+    source_title = str(item.get("source_name") or source_name)
+    locator = item.get("citation_locator")
+    if not isinstance(locator, dict):
+        locator = {}
+    return {
+        "source_title": source_title,
+        "display_citation": display_citation(
+            source_title, locator, str(item.get("title") or "")
+        ),
+    }
+
+
 def tool_search_closing_knowledge(
     query: str | None = None,
     topic: str | None = None,
@@ -1473,6 +1494,7 @@ def tool_search_closing_knowledge(
                     ],
                     "origin_authority": i["origin_authority"],
                     "citation_locator": i["citation_locator"],
+                    **_readable_citation(i),
                     "domain_scope": i.get("domain_scope")
                     or "controllership",
                     "excerpt": (i["content"] or "")[:600],
@@ -1510,6 +1532,7 @@ def tool_get_knowledge_item(knowledge_id: str) -> CallToolResult:
             "evidence_classification": item["evidence_classification"],
             "origin_authority": item["origin_authority"],
             "citation_locator": item["citation_locator"],
+            **_readable_citation(item),
             "domain_scope": item.get("domain_scope")
             or "controllership",
             "source": {
