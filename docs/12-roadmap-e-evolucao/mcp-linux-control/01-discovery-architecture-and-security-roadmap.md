@@ -564,3 +564,12 @@ Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post
 - Operador informou que a URL de callback fornecida pelo ChatGPT ja havia sido inserida em `Valid redirect URIs`. Valor exato nao foi copiado para o chat nem confirmado por comparacao literal. Nao presumir que demais ajustes Client scope foram feitos.
 - **A seguir:** validar shared scopes existentes `audience-delpi`, `mcp:tools`, `profile`, `email`, verificar audience mapper shared em `audience-delpi` sem alterar; criar apenas `mcp-audience-linux-ops` se ausente e configurar Audience custom `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp` apenas no access token. Atribuir como default ao cliente ATLAS. Conferir backup recente antes de novas mutacoes Keycloak. Preencher Client Secret diretamente na UI ChatGPT e escolher `client_secret_post`; ainda nao houve login/evidencia de `tools/list`.
 - Erro de login admin por password grant `HTTP 403` permanece para `--check`, sem impacto demonstrado sobre acesso manual Keycloak.
+
+
+## 34. ChatGPT aceitou cadastro do plugin ATLAS (2026-11-15)
+
+- Usuario confirmou criacao de `ATLAS — Infraestrutura Linux` no ChatGPT Plugins apos configurar o cliente `mcp-linux-ops`, PKCE S256, callback ChatGPT, scopes DEFAULT `mcp:tools` e `mcp-audience-linux-ops`, e mapper dedicado conforme prints anteriores.
+- **Evidencia visual do estado atual:** modal `Conectar a ATLAS — Infraestrutura Linux`, status `Aprovado pelo administrador`, botao `Continuar em ATLAS — Infraestrutura Linux` disponivel.
+- **Interpretacao delimitada:** cadastro/registro do plugin aceito e aprovado; ainda nao ha comprovacao de clique em `Continuar`, login Keycloak bem-sucedido, autorizacao do usuario, conexao finalizada, `tools/list` ou chamada autenticada `get_host_health`.
+- **Proxima acao:** usuario clica Continuar, autentica-se no Keycloak com sua conta, confere/consente apenas escopos previstos, volta ao ChatGPT e verifica status `Conectado`; entao testar quatro ferramentas READ (incluindo `get_host_health`) e testar controle de permissoes Core sem imprimir tokens/segredos. Nenhuma necessidade de novo deploy do gateway neste momento.
+- **Estado:** `CHATGPT_PLUGIN_REGISTERED_ADMIN_APPROVED`, `OAUTH_USER_LOGIN_PENDING`, `MCP_AUTHENTICATED_TOOLS_UNTESTED`.
