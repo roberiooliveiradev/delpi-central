@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a/P2.2b e P2.2c (recibo do host + idempotencia offline) versionados na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a-P2.2d (leitores GitHub/Core, recibo do host, signer offline e journal PostgreSQL inerte) na main, testes locais PASS, CI/verificador independente/HML pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -188,3 +188,18 @@ O modulo `deploy_host_receipt.py` valida **recibos assinados**, vinculando host/
 O modulo `deploy_journal_policy.py` agrega apenas decisao pura de idempotencia de PREPARE (CREATE candidato, replay igual, conflict divergente, bloqueio de TTL/UUID/status), **nao grava em Postgres**, nao substitui UNIQUE/lock/transacao, nao aprova nem executa. Nao publicar como tool externa. Nenhuma migration V016 criada por risco de aplicacao incidental no proximo deploy do it-portal-api e necessidade de coordenar numeracao com Delpi Remote.
 
 **Evidencias**: 30 testes offline do host + 17 do journal = **47 PASS locais**, Python 3.13, compileall OK, sem host/DB/CI real. GitHub CI/revisao independente ainda a confirmar. **Detalhes e proximo gate:** [04-atlas-p22c-host-receipt-journal-contract.md](./04-atlas-p22c-host-receipt-journal-contract.md). P2.2d devera implementar signer de host real e journal transacional PostgreSQL com antireplay DB; preview/A3/A4 permanecem bloqueados.
+
+
+## 15. A2.2d: emissor de recibo de runtime e journal inerte (2026-11-15)
+
+A nova `DockerReadOnlyInspect` realiza **uma** consulta GET fixa a `/containers/{nome_static}/json` via transporte de HTTP injetado e exige Compose project/service corretos, ID da imagem e estado de saude. Acesso ao Docker daemon equivale a alto privilegio e nao e concedido ao MCP. O proximo HML exige proxy de leitura e escopo/ACL; **nao existe socket aberto por default**.
+
+O `issue_host_receipt` vincula um release record HMAC assinado pelo futuro executor (chave exclusiva) a esse ID de imagem Docker, assinando a observacao com **outra chave**. O signer **nao** emite release manifests, nao cria chaves, nao aceita codigo/nomes livres da tool, nao publica endpoint e nao atesta checkout/migration/rollback; esses controles permanecem False e bloqueiam o PREPARE real.
+
+Na camada do owner `it-portal-api`, o `atlas_deploy_journal.py` contem as operacoes SQL parametrizadas `issue_challenge` e `store_prepared`, utilizando transacao DB, timeout de 90 segundos para desafio aleatorio, vinculo por digest, idempotency key por subject+UUID, conflito em payload diferente e evento preparado na mesma transacao. **Sem schema aplicado**; o SQL candidato fica em [05-atlas-p22d-candidate-schema.sql](./05-atlas-p22d-candidate-schema.sql), fora do runner, aguardando owner da migration. Nenhuma rota chama esse adapter ainda.
+
+**Evidencias:** 35 testes novos (17 host signer/source, 15 journal MockPg, 3 guardas SQL); 190 testes isolados na regressao cumulativa com Python 3.13, `compileall` PASS. Os seis arquivos principais testados foram conferidos contra GitHub por hash FNV e correspondem. CI do GitHub, `delpi-verifier`, teste PostgreSQL real e Docker HML permanecem **PENDING**; nao confundir mock com prova operacional. Sem deploy HML/PROD, sem release image real atestada, sem migracao e sem permissao ACT.
+
+[Runbook da P2.2d e gates para P2.2e](./06-atlas-p22d-runtime-attestation-and-journal.md).
+
+**Fase seguinte P2.2e:** review de privilegio da fonte Docker em proxy read-only, um piloto HML com imagem e release record reais, testes DB descartavel de concorrencia e nonce one-shot, aprovação da migration pelo Portal TI/Delpi Remote e Core grants antes de qualquer PREPARE externo. ACT segue bloqueado ate P3.
