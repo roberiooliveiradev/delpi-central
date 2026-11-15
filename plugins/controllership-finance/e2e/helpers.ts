@@ -90,6 +90,38 @@ export async function loginAs(
       !url.pathname.startsWith("/auth/") && !url.pathname.endsWith("/login"),
     { timeout: 45_000 },
   );
+  await dismissPrivacyGate(page);
+}
+
+/** Primeiro login HML: aceita política/consentimentos se a tela aparecer. */
+export async function dismissPrivacyGate(page: Page): Promise<void> {
+  const privacyHeading = page.getByRole("heading", {
+    name: /Política de Privacidade/i,
+  });
+  const shown = await privacyHeading
+    .waitFor({ state: "visible", timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!shown) return;
+
+  // Role até o fim para habilitar o aceite (fluxo LGPD do Portal).
+  for (let i = 0; i < 12; i += 1) {
+    await page.keyboard.press("PageDown");
+    await page.waitForTimeout(200);
+  }
+  const accept = page
+    .getByRole("button", {
+      name: /Aceitar|Concordo|Continuar|Li e aceito|Confirmar/i,
+    })
+    .first();
+  if (await accept.isEnabled().catch(() => false)) {
+    await accept.click();
+  } else if (await accept.isVisible().catch(() => false)) {
+    await accept.click({ force: true }).catch(() => undefined);
+  }
+  await privacyHeading
+    .waitFor({ state: "hidden", timeout: 30_000 })
+    .catch(() => undefined);
 }
 
 export async function openEntryAuditHome(page: Page): Promise<void> {
