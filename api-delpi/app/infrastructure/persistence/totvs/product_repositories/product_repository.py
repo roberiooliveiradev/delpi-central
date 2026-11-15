@@ -26,6 +26,7 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         customer_reference=None,
         product_type=None,
         subgroup=None,
+        previous_code=None,
         page=1,
         page_size=50,
         sort=None,
@@ -60,6 +61,14 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
         if subgroup:
             where_clauses.append("LTRIM(RTRIM(SB1.B1_SUBGRUP)) = ?")
             where_params.append(subgroup.strip())
+
+        # -----------------------------
+        # PREVIOUS CODE (B1_CODANT) — linhagem cadastral exata
+        # -----------------------------
+
+        if previous_code:
+            where_clauses.append("LTRIM(RTRIM(SB1.B1_CODANT)) = ?")
+            where_params.append(previous_code.strip())
 
         # -----------------------------
         # PRODUCT TYPE LIST (B1_TIPO)

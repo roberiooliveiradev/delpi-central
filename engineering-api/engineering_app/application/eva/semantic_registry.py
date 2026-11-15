@@ -195,12 +195,13 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "product", "search", "read",
         "Search the official product catalog (TOTVS SB1 via API DELPI) "
-        "by code, description, group, subgroup, type or customer "
-        "reference.",
+        "by code, description, group, subgroup, type, customer "
+        "reference or previous code (cadastral lineage).",
         "read",
         fields=(
             "code", "description", "group_code", "subgroup",
-            "product_type", "customer_reference", "sort", "direction",
+            "product_type", "customer_reference", "previous_code",
+            "sort", "direction",
         ),
         paginated=True,
     ),

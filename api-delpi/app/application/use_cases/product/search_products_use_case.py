@@ -18,6 +18,7 @@ class SearchProductsUseCase:
            description = request.description,
            group=request.group_code,
            customer_reference=request.customer_reference,
+           previous_code=request.previous_code,
            product_type=request.product_type,
            subgroup=request.subgroup,
            page = request.page,

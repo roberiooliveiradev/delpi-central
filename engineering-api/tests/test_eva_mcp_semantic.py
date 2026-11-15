@@ -289,6 +289,51 @@ def test_read_nc_search_delegates(monkeypatch) -> None:
     assert result.structured_content["entity"] == "nonconformity"
 
 
+def test_read_product_search_previous_code_filter(monkeypatch) -> None:
+    """read(product.search, filters={previous_code}) — linhagem reversa
+    oficial propagada ao gateway da api-delpi (G13)."""
+    _set_context(_human_user())
+
+    class _Aux:
+        calls = {}
+
+        async def fetch_product_search(self, ctx, **kw):
+            self.calls["search"] = kw
+            return {
+                "status": "available",
+                "items": [
+                    {"code": "90264302", "previous_code": "80015472"}
+                ],
+            }
+
+    aux = _Aux()
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: aux
+    )
+    result = asyncio.run(
+        sem.tool_read(
+            entity="product",
+            action="search",
+            filters={"previous_code": "80015472"},
+        )
+    )
+    assert not result.is_error
+    assert aux.calls["search"]["previous_code"] == "80015472"
+
+
+def test_read_product_search_rejects_unknown_filter() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_read(
+            entity="product",
+            action="search",
+            filters={"previous_code_typo": "80015472"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+
+
 def test_read_rejects_pagination_on_non_paginated_action() -> None:
     _set_context(_human_user())
     result = asyncio.run(

@@ -143,7 +143,8 @@ PRODUCT_PRICING = agent_route(
 PRODUCT_SEARCH = agent_route(
     summary="Buscar produtos no Protheus",
     description=(
-        "Consulta paginada por código, grupo ou descrição parcial. "
+        "Consulta paginada por código, grupo, subgrupo, tipo, descrição parcial, "
+        "referência do cliente ou código anterior (linhagem cadastral). "
         "Preferir quando o usuário não informou o código exato do item ou quer localizar um produto. "
         "Não usar para estoque por filial/armazém de um código já conhecido — use estoque do produto."
     ),

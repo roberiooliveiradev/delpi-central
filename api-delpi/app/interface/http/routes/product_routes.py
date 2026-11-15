@@ -230,6 +230,14 @@ def search_products_route(
     ),
     description: Optional[str] = Query(None),
     customer_reference: Optional[str] = Query(None),
+    previous_code: Optional[str] = Query(
+        None,
+        description=(
+            "Filtro opcional por código anterior (SB1.B1_CODANT, exato) — "
+            "linhagem cadastral: retorna produtos cujo código anterior é o "
+            "informado (ex.: cotação 8000/8001 → produtivo)."
+        ),
+    ),
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_500"),
@@ -257,6 +265,7 @@ def search_products_route(
             product_type=type_list,
             description=description,
             customer_reference=customer_reference,
+            previous_code=previous_code,
             page=page,
             page_size=page_size,
             sort=sort,
