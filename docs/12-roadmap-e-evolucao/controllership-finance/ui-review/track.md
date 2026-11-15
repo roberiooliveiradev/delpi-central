@@ -250,3 +250,7 @@ Confirmado A1: cada troca remonta `analysis+summary+breakdowns+daily` (+ resourc
 |---|---|---|---|---|
 | 2026-11-15 | U12 W0 | `0222fbaa9c` | DONE | Matriz + medição A1 antes |
 | 2026-11-15 | U12 W1 | (este commit) | DONE | previous null + sort/order whitelist; 12 pytest PASS |
+
+### Revisão do Claude sobre W0–W1 (15/11)
+
+W0 `0222fbaa9c` e W1 `0cbe6c3d65` aceitos com residual: 8 testes da W1 PASS; regra do anterior (mesmo nº de dias, imediatamente anterior, mesmas filiais e tipos, senão `null`) conferida no código. Residuais para a continuação: **R1** ordenar ocorrências por `status` não ordena (lê a linha; a situação está no store de status); **R2** lista branca sem `rule`/`field` e sem as colunas das demais abas. Parada em W2 por bloqueio do guard global do agent-kit (marcador `verifier-active.json` vale para todas as sessões da máquina) — fora desta trilha; correção no agent-kit (AK-3). Prompt: [prompts/U12-continuacao.md](./prompts/U12-continuacao.md).
