@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a atestacao estruturada e P2.2b leitores GitHub/CI e Core fresh versionados na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a/P2.2b e P2.2c (recibo do host + idempotencia offline) versionados na main, testes locais PASS, CI e verificador independente pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -179,3 +179,12 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 **Rastreabilidade e proposta de persistencia:** [03-atlas-deploy-journal-p2b.md](./03-atlas-deploy-journal-p2b.md) detalha uso candidato do PostgreSQL `it_portal`, constraints para `requester_subject/idempotency_key`, status transacionais e log append-only de eventos, sem migration aplicada. Nao escolher numero de migration antes de coordenar com o roadmap paralelo Delpi Remote.
 
 **Proximo passo A2.2c:** autoridade de release no host e testes com evidencias reais controladas; migration e repository SQL com UNIQUE/transacoes/replay; API backend fail-closed com Core fresh e catalogo CI, mantendo toda escrita ACT e execucao do host OFF.
+
+
+## 14. A2.2c: contrato de recibo runtime do host e idempotencia, sem efeitos (2026-11-15)
+
+O modulo `deploy_host_receipt.py` valida **recibos assinados**, vinculando host/ambiente/servico/commit a `ImageID` real observado e `ImageID` do registro de release que um futuro executor confiavel devera escrever. HMAC-SHA256, challenge aleatorio 256 bits, timestamps curtos, JSON estrito e comparacao de imagem com falha fechada; sem root, Docker socket, Git, rede, filesystem ou atuacao pelo MCP. Nenhum signatario/secret instalado, logo **nao existe HostProof real**. Qualquer retorno de `HostProof` conserva `migrations_safe=False` e `rollback_ready=False` ate prova independente, impedindo aprovacao/deploy prematuro.
+
+O modulo `deploy_journal_policy.py` agrega apenas decisao pura de idempotencia de PREPARE (CREATE candidato, replay igual, conflict divergente, bloqueio de TTL/UUID/status), **nao grava em Postgres**, nao substitui UNIQUE/lock/transacao, nao aprova nem executa. Nao publicar como tool externa. Nenhuma migration V016 criada por risco de aplicacao incidental no proximo deploy do it-portal-api e necessidade de coordenar numeracao com Delpi Remote.
+
+**Evidencias**: 30 testes offline do host + 17 do journal = **47 PASS locais**, Python 3.13, compileall OK, sem host/DB/CI real. GitHub CI/revisao independente ainda a confirmar. **Detalhes e proximo gate:** [04-atlas-p22c-host-receipt-journal-contract.md](./04-atlas-p22c-host-receipt-journal-contract.md). P2.2d devera implementar signer de host real e journal transacional PostgreSQL com antireplay DB; preview/A3/A4 permanecem bloqueados.
