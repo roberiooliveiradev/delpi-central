@@ -2000,3 +2000,19 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-MODEL-CONTINUATION-CONVERGENCE` | `PROVEN_IN_REAL_EVAL (monitor)` | INT2_A2: walk real `params:{page:1..3}` até `has_more:false` (total 109) via `pagination_args`/`next_page` + instrução v2-7; residual: sobre-filtro comportamental possível (A2 escolheu `qualidade` → insufficient honesto, não boundary) |
 | `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
 | `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | sem mudança |
+
+### 2026-11-15 — R5_INT3_SUFFICIENCY_AND_PARALLEL_MCP_DECISION: estados atualizados
+
+| ID | Estado | Evidência (eval real SHA `13012a1825`, INT2 n=12, arm B) |
+|---|---|---|
+| `CATALOG-FIELD-VOCABULARY-TRUNCATION` (novo) | `REMEDIATED (real eval)` | projeção truncava descrição a 400c e cortava o vocabulário de campos do owner → plano declarou `params.name` (inventado) em vez de `params.q`; bound elevado + regra de instrução → declaração real `params.q=qualidade` observada |
+| `T2-COMPREHENSION-DOTTED-ID-ANCHOR-FLAKE` (novo) | `OPEN_LOW` | exposição do `capability_id` reintroduziu cópia pontilhada como `evidence_source` (0/12 first-accept → header surface/âncora → 7/12); flakes residuais: 3× dotted-id + 1× op-class (`analyze`→`analysis`), sempre rejeitados pelo aceitador e corrigidos em retry bounded — nunca aceitos |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | vigente — âncora válida ≠ pertinência demonstrada; zero falso SATISFIED/COMPLETE em 2 amostras (24 cenários); insufficiency/partial honestos preservados |
+| `R5-REAL-MULTIPAGE-UNION-REPROOF` | `PROVEN_IN_REAL_EVAL (prior)` / `PARTIAL_THIS_SAMPLE` | walk real provado na amostra anterior (A2 pages 1→3 `has_more:false`); nesta amostra A2 = call filtrada única `q` → insufficient honesto; união multipágina não re-exercida |
+| `T2-SEQUENTIAL-CATALOG-LIST` | `ARCHITECTURE_DECISION_PROPOSED` | inventário `_groups` + proposta `decision-proposal.md` (bounded fan-out, deadline/cancel/failure-isolation/ordenação determinística preservados); nenhuma implementação — decisão com coordenação |
+| `R3-MCP-AUTH-FLAKINESS` | `STABLE_IN_SAMPLE` | 0 `mcp_authentication_failed` em 24 cenários desta task (2 amostras INT2) — consistente com a reprovação anterior |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | `delpi-api-delpi` unhealthy persiste; sem `mcp_timeout` material nesta amostra |
+| `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
+| `T2-MODEL-CONTINUATION-CONVERGENCE` | `PROVEN_IN_REAL_EVAL` | vigente |
+
+**VERDICT EXECUTOR=`IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; `PARALLEL_DISCOVERY_IMPL=NOT_AUTHORIZED`.** **NEXT=`COORDINATION_C3_T2_R5_INT3_AND_PARALLEL_DISCOVERY_INDEPENDENT_REVIEW`.**
