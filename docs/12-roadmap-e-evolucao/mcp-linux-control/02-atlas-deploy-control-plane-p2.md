@@ -2,7 +2,7 @@
 
 > **Atualizado:** 2026-11-15
 > **Owner:** TI DELPI / Minha DELPI
-> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a-P2.2e (leitores GitHub/Core, recibo host, signer e journal em CI isolado) na main; CI real de P2.2e, verificador independente e HML pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
+> **Estado atualizado 2026-11-15:** contrato P2 documentado; codigo P2.1 offline integrado na main por [PR #191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (CI verde); P2.2a-P2.2f (atestacao, journal e OCI SHA gate do Public Hub) na main; CI real, proveniencia assinada, verificador independente e HML pendentes; **nenhum PREPARE/ACT implantado, nenhuma tool nova no MCP**.
 > **Fontes relacionadas:** [roadmap e evidências](./01-discovery-architecture-and-security-roadmap.md), `linux-ops-mcp/`, `infra/scripts/up-prod-sequential.sh`, `infra/scripts/up-hml-sequential.sh`, `.cursor/rules/local-first-deploy.mdc`, `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 > **Restrição de custo:** priorizar GitHub/Keycloak/Core/IT Portal, host, containers e homologação existentes. Não pressupor túnel ou runner pago.
 > **Congelado por decisão do operador:** ampliação de telemetria CPU, contagem Docker e outros observáveis Linux; não é pré-requisito desta entrega. Atestação de revisão/health **de deploy** é requisito novo e separado.
@@ -214,3 +214,14 @@ Na camada do owner `it-portal-api`, o `atlas_deploy_journal.py` contem as operac
 **Evidencias efetivas:** 16 testes FakePg com a mudanca PASS local no ambiente isolado; testes Postgres/Docker reais ainda nao foram observados concluidos no GitHub Actions, pois as ferramentas de plugin disponiveis nao retornaram runs de evento push. CI, analise `delpi-verifier` e HML real ficam **pendentes**. Usuario confirmou os 35 testes P2.2d no srv-api e observacao OAuth/RBAC READ funcionando, sem logs reproduzidos aqui.
 
 **Detalhes, gates e operacao HML futura:** [07-atlas-p22e-disposable-ci-and-hml-gates.md](./07-atlas-p22e-disposable-ci-and-hml-gates.md). NAO aplicar `05-atlas-p22d-candidate-schema.sql` no postgres produtivo, NAO montar socket Docker no ATLAS, NAO publicar `preview_deployment` e NAO ativar executor de deploy. Para concluir P2.2e: CI e review independente + escolha de um servico HML seguro, release provenance real e canal read-only com ACL, banco de HML sob owner e permissão nominativa Core.
+
+
+## 17. A2.2f: rotulos OCI do Public Hub, SHA completo e DEV sem assinatura (2026-11-15)
+
+A imagem historica `delpi-hml-public-hub` esta `healthy`, mas sua revisao de GitHub nao pode ser comprovada: OCI `org.opencontainers.image.revision` e `org.opencontainers.image.source` ausentes em `ImageID=sha256:63ad3152e179d4a75e3cc1823a4062b300786fe841a635c4bbb8086e38e1112d`. Relato do operador registrado no [runbook P2.2f](./08-atlas-p22f-public-hub-oci-revision.md), **nao** considerado atestacao de release.
+
+Em novos builds versionados de `public-hub`, `plugins/public-hub/Dockerfile` faz fail-closed de `SOURCE_REVISION` (exatos 40 hex minusculos) e adiciona labels OCI `revision` + `source` ao stage leve `provenance-contract`, herdado pelo `production` final/default. O Compose de base recebe somente `PUBLIC_HUB_SOURCE_REVISION` para este servico, que o HML herda; o dev Compose usa stage `development` sem rotulos para nao bloquear trabalho nao commitado. `infra/scripts/public-hub-provenance.sh` e os scripts sequenciais HML/PROD garantem valor de `git rev-parse HEAD` e recusam build quando os inputs versionados estiverem alterados.
+
+**Evidencia:** 11 testes offline PASS local + shell `bash -n` PASS; [CI OCI](../../../.github/workflows/atlas-public-hub-oci.yml) foi criado com build somente do stage de metadados no runner efemero e testes negativos para SHA ausente, curto, invalido. **Nao foi confirmado que o job GitHub passou, nao foi feito build do Public Hub final nem deploy**, e a imagem HML antiga continua sem labels. O ATLAS permanece com quatro tools READ.
+
+**Nota de seguranca:** rotulos OCI nao provam origem confiavel do build. O deploy P2 exige a integridade de execucao, manifest assinado, read-back de ImageID, aprovacao humana independente, Core grants e rollback/migration gates; `HostProof` sozinho continua fail-closed. Nenhuma alteracao nas aplicacoes Engineering, Keycloak, banco ou MCP foi feita. P2.2g: instrumentar atestacao assinada da imagem final no CI e revisar owner/janela HML antes de qualquer rebuild.
