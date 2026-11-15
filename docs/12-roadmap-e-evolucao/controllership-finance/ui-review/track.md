@@ -268,3 +268,19 @@ Confirmado A1: cada troca remonta `analysis+summary+breakdowns+daily` (+ resourc
 ### Revisão do Claude sobre W0–W1 (15/11)
 
 W0 `0222fbaa9c` e W1 `0cbe6c3d65` aceitos com residual: 8 testes da W1 PASS; regra do anterior (mesmo nº de dias, imediatamente anterior, mesmas filiais e tipos, senão `null`) conferida no código. Residuais para a continuação: **R1** ordenar ocorrências por `status` não ordena (lê a linha; a situação está no store de status); **R2** lista branca sem `rule`/`field` e sem as colunas das demais abas. Parada em W2 por bloqueio do guard global do agent-kit (marcador `verifier-active.json` vale para todas as sessões da máquina) — fora desta trilha; correção no agent-kit (AK-3). Prompt: [prompts/U12-continuacao.md](./prompts/U12-continuacao.md).
+
+### Revisão do Claude sobre U12 W2–W8 (15/11) — ACCEPT_WITH_RESIDUAL
+
+Conferido no código (`ba53e55a2a`), nos testes e em PROD pela CLARA:
+
+- **Abas sem remontar:** `detailFiltersKey` sem tab/page/sort/order; resumo, breakdowns e daily só dependem dele. PASS.
+- **R1/R2 (`635afe20c1`):** ordenação por situação usa o mapa do store; listas brancas por recurso. PASS.
+- **Comparação com o anterior em PROD (fecha o SKIP do HML):** análise 07–13/11, filiais 01+02, sem anterior → `previous: null`; análise 13/11, filial 01 → anterior = 12/11, filial 01 (mesmo tamanho, mesmas filiais). PROVEN.
+- **Testes do MFE:** 499/504; as 5 falhas (`closing/`: DocumentDetailPanel, MonthlyDocumentsPanel, P3CutoffPanel, PackagesPage, reportQueryCache) e as 2 suítes `realKit` que não carregam são **anteriores à U12** — mesmo resultado no commit `0cbe6c3d65`. A U12 acrescentou 12 testes, todos verdes.
+
+Residuais:
+
+1. **Prints de PROD** (entrada e análise, desktop e celular) — owner.
+2. **Filtro do axe por classe do Portal:** o spec da W7 ignora contraste em nós `cf-action-with-icon`, que é classe do MFE (`index.css`). O contraste real é do `ActionButton` do kit dentro do hero (já registrado na U10), mas filtrar pela classe do Portal esconderia qualquer problema futuro nesses botões. Trocar o filtro para o seletor do componente do kit e registrar o residual com o dono do plugin-ui, junto com o `SegmentToggle` (Tabela/Cards), que a U12 passou a exibir.
+3. **Falhas antigas do MFE:** as 5 falhas e as 2 suítes `realKit` do `closing/` precisam de etapa própria (estão fora da U12, mas a suíte do MFE não fica verde).
+4. **Menor:** aplicar um filtro de detalhamento ainda zera hero, KPIs e gráficos até o resumo voltar; pode manter os dados na tela com o estado «atualizando».
