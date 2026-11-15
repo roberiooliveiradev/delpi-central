@@ -247,3 +247,80 @@ def test_instruction_resource_is_v42_with_object_test():
     assert "never explanation" in text
     assert "definitional ask" in text
     assert "processos na engenharia" not in text
+
+
+def test_admission_propose_clamps_call_timeout_to_invoke_model_ceiling():
+    """T2-ADMISSION-PROPOSE-TIMEOUT-MISMATCH: stage budget may be 120s
+    while InvokeModel.MAX_TIMEOUT_SECONDS is 60. The orchestrator must
+    clamp the per-call timeout — never request >60 and never raise the
+    InvokeModel ceiling.
+    """
+    from app.application.model_invocation.invoke_model import (
+        MAX_TIMEOUT_SECONDS,
+    )
+
+    fake = FakeProposalModel(
+        [
+            {
+                INTERACTION_ADMISSION_INSTRUCTION_ID: _payload(
+                    True, "operational"
+                )
+            }
+        ]
+    )
+    gates = OperationalCapabilityOrchestrator(
+        _providers(),
+        orchestration_instructions=load_test_orchestration_instructions(),
+        invoke_model=InvokeModel(fake),
+        model_ref=TEST_MODEL_REF,
+        model_stage_timeout_seconds=120.0,
+    )
+    interaction_class, owner_required = gates._admit_conversational_turn(
+        "processos na engenharia",
+        workspace_context=None,
+        prior_turns=(),
+        correlation="adm-timeout-clamp",
+        deadline=TurnDeadline.start(300.0),
+    )
+    assert owner_required is True
+    assert interaction_class is None
+    assert fake.requests, "admission must reach the model port"
+    assert fake.requests[0].timeout_seconds <= MAX_TIMEOUT_SECONDS
+    assert fake.requests[0].timeout_seconds > 0
+
+
+def test_admission_propose_timeout_never_exceeds_remaining_or_ceiling():
+    """Sibling: remaining turn budget below the stage still clamps to
+    remaining, and never above the InvokeModel ceiling."""
+    from app.application.model_invocation.invoke_model import (
+        MAX_TIMEOUT_SECONDS,
+    )
+
+    fake = FakeProposalModel(
+        [
+            {
+                INTERACTION_ADMISSION_INSTRUCTION_ID: _payload(
+                    False, "explanation"
+                )
+            }
+        ]
+    )
+    gates = OperationalCapabilityOrchestrator(
+        _providers(),
+        orchestration_instructions=load_test_orchestration_instructions(),
+        invoke_model=InvokeModel(fake),
+        model_ref=TEST_MODEL_REF,
+        model_stage_timeout_seconds=120.0,
+    )
+    deadline = TurnDeadline.start(25.0)
+    gates._admit_conversational_turn(
+        "O que é SIPOC?",
+        workspace_context=None,
+        prior_turns=(),
+        correlation="adm-timeout-remaining",
+        deadline=deadline,
+    )
+    assert fake.requests
+    timeout = fake.requests[0].timeout_seconds
+    assert timeout <= MAX_TIMEOUT_SECONDS
+    assert timeout <= 25.0

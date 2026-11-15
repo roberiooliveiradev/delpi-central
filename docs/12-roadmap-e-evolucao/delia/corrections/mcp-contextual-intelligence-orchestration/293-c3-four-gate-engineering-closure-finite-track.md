@@ -718,3 +718,8 @@ Delivered: `delia-api/scripts/int1_secure_decision_trace.py`, `tests/test_int1_s
 ### Anotação prospectiva — 2026-11-14 — decisão PO posterior (Doc 335)
 
 O registro histórico acima (baseline de **um único Agent Pydantic AI** e necessidade de prova comparativa antes de novos Agents) permanece válido como **decisão vigente de execução**, não deve ser apagado. O PO confirmou uma nova **arquitetura-alvo de produto** com quatro especialistas cognitivos distintos: compreensão, investigação, suficiência e síntese. **TARGET não equivale à aprovação de runtime**. Os handoffs serão tipados e governados; não são quatro autoridades, produtos ou chamadas obrigatórias por turno. Exigir inventário, baseline-vs-variant, generalização/safety/outcome/custo, contratos e decisão arquitetural antes de executar. **INT-1 CLOSED, INT-2 ACCEPTANCE PENDING; não atribuir existência de Agent independente ao INT-2.** Próximo passo da coordenação e fonte de direção: [Documento 335](./335-c3t2-four-cognitive-specialist-agents-po-product-direction-and-int2-resumption.md).
+
+### Stamp — R1–R6 functional rework two-agent + admission clamp (2026-11-15)
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-R1-R6-FUNCTIONAL-REWORK-AND-OUTCOME-REPROOF-01`.
+**RESULT:** admission timeout mismatch REMEDIATED (clamp to `MAX_TIMEOUT_SECONDS`, ceiling unchanged); R1 REVALIDATED_NO_DIFF; R2/R5/R6 partial revalidated; R3 MCP probe PASS; R4 PENDING (no deny identity); E8 real sample ENV_BLOCKED. Two-agent remains experimental. **NEXT:** `COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`. PRODUCTION_DEPLOY / PHASE_ADVANCEMENT / Agents 3–4: NOT_AUTHORIZED.

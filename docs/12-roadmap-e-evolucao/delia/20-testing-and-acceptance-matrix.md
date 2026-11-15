@@ -3100,3 +3100,20 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **Live reproof (smoke isolado, prod intocada):** `or-qwen14b-53bcadf6678e` — `tool_observation.pagination = {page:null,page_size:null,has_more:true,total_count:109,items_in_page:40}` + continuation_note — antes `has_more:null`; agregação correta via `total`. `or-qwen14b-b9e8153459c3` (arm B INT2_A) — envelope correto em resultado vazio (`has_more:null,total:0`); comportamento do modelo (sobre-filtro) registrado como residual comportamental, não de fronteira.
 
 **Latência por estágio (traces pareados, s):** catálogo+session+toolset ≈15,2 fixo (ambos braços); Compreensão B: 9–116 (mediana ~21); Investigação+tools: ~20–160/cenário; MCP invoke ~0,3s/owner-call (teo).
+
+### 2026-11-15 — C3/T2: R1–R6 functional rework (two Agents) + admission clamp
+
+**TASK:** `DELIA-C3-T2-TWO-AGENT-R1-R6-FUNCTIONAL-REWORK-AND-OUTCOME-REPROOF-01` @ `5bab60133f`.
+
+| Gate | Oráculo | Evidência |
+|---|---|---|
+| Admission timeout | `PASS` (REMEDIATED) | clamp `call_timeout≤MAX_TIMEOUT_SECONDS`; suite admission routing GREEN; teto 60 **não** elevado |
+| R1 handoff/plano | `REVALIDATED_NO_DIFF` | two-agent + preinvoke suites; Parte A `or-qwen14b-fe75c65c9a13` |
+| R2 continuidade | `PARTIAL` / sem novo diff contratual | residual convergência OPEN_LOW |
+| R3 MCP AuthN | `PASS_IN_SAMPLE` | probe 3/3 DAVI/TÉO/VISTA; parallel discovery OFF |
+| R4 AuthZ negativa | `PENDING` | identidade de escopo insuficiente não provisionada pelo owner |
+| R5 multipágina | `PROVEN_IN_SAMPLE` / OPEN residual | unitários união + walk Parte A; COMPLETE só com postcondition |
+| R6 clarificação | `PARTIAL` | unitários clarification GREEN; D2 Parte A; recovery multi-turno `TEST_NOT_RUN` |
+| E8 A/B outcome | `INCONCLUSIVE` / `ENV_BLOCKED` | `or-qwen14b-003efeba25ca` — MCP auth harness isolado; 0 invokes |
+
+**Restrições:** `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED. **NEXT=`COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`.**

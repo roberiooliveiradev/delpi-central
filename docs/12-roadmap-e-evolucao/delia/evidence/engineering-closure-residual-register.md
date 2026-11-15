@@ -2076,3 +2076,21 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `R5_MULTIPAGE_UNION` | `OPEN` | Unchanged per task directive |
 
 **NEXT:** `COORDINATION_C3_T2_PARALLEL_DISCOVERY_REPROOF_INDEPENDENT_REVIEW`. Flag remains OFF by default; no production/phase promotion.
+
+### 2026-11-15 — R1–R6 functional rework two-agent (`DELIA-C3-T2-TWO-AGENT-R1-R6-FUNCTIONAL-REWORK-AND-OUTCOME-REPROOF-01`)
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `T2-ADMISSION-PROPOSE-TIMEOUT-MISMATCH` | `REMEDIATED (bounded clamp)` | Owner `governed_capability_orchestrator._model_stage_proposal`: `call_timeout = min(stage, remaining, MAX_TIMEOUT_SECONDS)` — **não** eleva `InvokeModel.MAX_TIMEOUT_SECONDS=60`. RED→GREEN `test_admission_propose_clamps_call_timeout_to_invoke_model_ceiling` + sibling remaining. Stage 120s permanece orçamento de etapa; teto por chamada preservado. |
+| `R1` | `REVALIDATED_NO_DIFF` | Gate preinvoke + two-agent handoff: `test_two_agent_experiment` + `test_int3_r1_call_before_declare` + `test_comprehension_catalog_and_continuation` PASS. Parte A (`or-qwen14b-fe75c65c9a13`, two_agent=true): planos aceitos; residual semântico (filtros/âncoras inventados) ≠ regressão do gate. |
+| `R2` | `PARTIAL_REMEDIATED / OPEN_LOW` | Continuação contratual revalidada (paginação/envelope + INT2_E walk 1→3 na Parte A). Sem novo diff: falhas Parte A em enum com filtro inventado = fronteira COMPREHENSION/ARGS, não loop de continuidade. |
+| `R3` | `REVALIDATED_STABLE_IN_SAMPLE` | Probe MCP `list_groups` DAVI+TÉO+VISTA: 16 caps, failures=[], catalog_equivalence=TRUE, same_subject=TRUE (artefato `.battery/c3t2-r1r6-r3-mcp-probe.json`). Parallel flag OFF. Eval isolado E8 (`or-qwen14b-003efeba25ca`) sofreu `catalog_failure:mcp_authentication_failed` ×3 — classificado `ENV_BLOCKED` no harness isolado, não como regressão cognitiva (probe direto PASS). |
+| `R4` | `PENDING` | Identidade de eval com escopo insuficiente **não** provisionada neste ambiente (sem `DELIA_EVAL_SUBJECT_*` restrito / e2e-delia). Traces históricos AUTH_DENY com `davi.read SUCCESS` = oráculo inválido. Sem fabricar 403. |
+| `R5` | `PROVEN_IN_SAMPLE / OPEN` | Unitários `test_r45_pagination_integrity_rework` + `test_int2_delivery_completeness_contract` PASS; walk real Parte A INT2_E pages 1–3 total 109. União COMPLETE autoritativa / negativos cross-scope permanecem OPEN para aceite integrado. |
+| `R6` | `PARTIAL / OPEN` | Clarificação unitária PASS; Parte A INT2_D2 → `needs_clarification` honesto; INT2_F sem writes. Recovery multi-turno completo `TEST_NOT_RUN` nesta execução. |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Parte A: COMPLETE+NON_GROUNDED frequentes; G2 respondeu “200 ativos” vs total 109 — risco de COMPLETE sem postcondition autoritativa. Sem segundo mecanismo de suficiência. |
+| `TWO_AGENT_PROMOTION` | `NOT_AUTHORIZED` | E8 pós-fix ENV_BLOCKED; Parte A sem superioridade empresarial nova. Flag OFF / prod-blocked. |
+
+| `T2-INTERACTIVE-TURN-CALL-TIMEOUT-CEILING-SIBLING` | `OPEN_LOW (pré-existente; fora do clamp admission)` | Sibling observável: `HandleInteractiveConversationTurn._invoke_model_call` monta `timeout_seconds=min(configured, remaining)` sem clamp a `InvokeModel.MAX_TIMEOUT_SECONDS`. Config atual 30s (seguro); contrato admite até 300s — config >60 reproduziria `invalid_request`. Não introduzido por este rework; owner interaction/runtime. |
+
+**NEXT:** `COORDINATION_C3_T2_R1_R6_FUNCTIONAL_REWORK_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED. Verifier R1: `ACCEPT_WITH_RESIDUAL` (execução pytest no container `TEST_NOT_RUN` para o verificador; prova estática RED→GREEN confirmada).

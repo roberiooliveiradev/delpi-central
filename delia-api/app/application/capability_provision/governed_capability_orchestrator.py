@@ -88,7 +88,10 @@ from app.application.model_invocation.governed_retries import (
     LLM_CALL_MAX_ATTEMPTS,
     call_retry_eligible,
 )
-from app.application.model_invocation.invoke_model import InvokeModel
+from app.application.model_invocation.invoke_model import (
+    MAX_TIMEOUT_SECONDS,
+    InvokeModel,
+)
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     CapabilityProviderError,
@@ -1748,12 +1751,18 @@ class OperationalCapabilityOrchestrator:
         call_attempt = 0
         while True:
             call_attempt += 1
-            # Per-call ceiling: min(60s stage cap, remaining budget).
+            # Per-call ceiling: min(stage budget, remaining turn,
+            # InvokeModel.MAX_TIMEOUT_SECONDS). Stage may be 120s while
+            # the per-call contract ceiling remains 60s — requesting
+            # more is rejected as invalid_request before inference
+            # (T2-ADMISSION-PROPOSE-TIMEOUT-MISMATCH). Never raise the
+            # InvokeModel ceiling here.
             call_timeout = (
                 min(stage_timeout, deadline.remaining_seconds())
                 if deadline is not None
                 else stage_timeout
             )
+            call_timeout = min(call_timeout, MAX_TIMEOUT_SECONDS)
             if call_timeout < MIN_VIABLE_MODEL_STAGE_SECONDS:
                 raise _StageDeadlineExceeded("turn_budget_exhausted")
             # Stage 6 budget attribution: budget still available when
