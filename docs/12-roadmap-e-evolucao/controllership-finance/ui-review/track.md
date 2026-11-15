@@ -345,3 +345,16 @@ Requisitos e critérios: [review-3.md](./review-3.md) (RQ-U14-SEL, -BFF, -ENT, -
 | F3 | `88f10f1e0b` | ACCEPT_WITH_RESIDUAL | AC-ENT-1..3 + AC-KPI-1..5; HML |
 | F4 | `92d25b1385` | ACCEPT_WITH_RESIDUAL | AC-GRA-1..5 + AC-TAB-1..4; HML |
 | F5 | `c78d4a51d9` | ACCEPT_WITH_RESIDUAL | AC-CLARA-1..4 + AC-DOD-5; HML→PROD F2–F5 |
+
+### Revisão do Claude sobre U14 (15/11) — REWORK
+
+Conferido em PROD (análise 07–13/11, 1440×900, DOM medido).
+
+- **PASS em PROD:** AC-SEL-1/-3 (Alta → `severity=high`, rosca com as 3 fatias; «Limpar seleção» limpa a URL e os números voltam); AC-ENT-1/-2/-3 (entrada com filtros e botão numa linha no hero, barra da tabela numa linha, cabeçalhos uniformes); AC-KPI-1/-3/-4/-5; AC-TAB-1/-2/-4; AC-GRA-4/-5; AC-CLARA (nada de «CLARA» na análise).
+- **H1 crítico:** o Panorama está quebrado em PROD. A regra `[class*="semicircle"]` / `[class*="distribution-donut"]` com `min-height: 220px` (F4, AC-GRA-2) casou com 40+ internos do kit: marcadores da legenda viraram pílulas de 220 px; «73%» e «87» saíram do gráfico.
+- **AC-TAB-3 FAIL:** tabela com 1.451 px para 1.341 px em 1440. A preferência `columns:v1` salva antes vence o padrão novo, e a chave de acesso de 44 dígitos estica a coluna XML para 336 px.
+- **AC-GRA-3 FAIL / EXECUTION_DRIFT:** a premissa «o kit só tem área» é falsa: `BarSeriesChart` está exportado e em uso no estoque-seguranca.
+- **AC-KPI-2 FAIL:** «Ocorrências pendentes» cortado (scrollWidth > clientWidth).
+- **Processo:** AC visual aprovado sem medição (AC-GRA-2, AC-TAB-3). Na U14R, AC visual só passa com geometria medida em HML.
+
+Prompt: [prompts/U14R-rework.md](./prompts/U14R-rework.md).
