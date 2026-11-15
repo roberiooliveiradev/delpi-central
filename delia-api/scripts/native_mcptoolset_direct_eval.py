@@ -309,7 +309,10 @@ def _install_usage_meter() -> None:
         result = original(self, *args, **kwargs)
         usage = None
         try:
-            data = result.usage()
+            # pydantic_ai 2.50: AgentRunResult.usage is a RunUsage property,
+            # not a method — calling it raised TypeError and silently
+            # zeroed every eval's token counts.
+            data = result.usage
             usage = {
                 "input_tokens": int(data.input_tokens or 0),
                 "output_tokens": int(data.output_tokens or 0),

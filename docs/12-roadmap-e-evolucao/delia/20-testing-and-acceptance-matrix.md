@@ -3049,3 +3049,13 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 **Novo teste obrigatorio:** Compreensão com plano aceito, gasto real de requests e exceção subsequente: verificar que `artifact_kept` não silencia falha material, não perde usage e nunca recompõe limite acima do orçamento total. Distinguir output/observability-only, provider error, cancellation/deadline, retry-budget e erro inesperado. `max(1,...)` não pode conceder uma requisição extra quando saldo for zero. Só usar `PASS` com comportamento verificado. Saneamento R3 deve distinguir ambiente sem capabilities de AuthZ legítima, sem modificar permissões para forçar sucesso.
 
 **NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_EXCEPTION_BOUNDARY_AND_R3_AUTH_EVAL_READINESS`.**
+
+### 2026-11-14 — C3/T2: matriz de budget pós-exceção + evidência R3 (execução bounded)
+
+**WS-A RED→GREEN (`tests/test_two_agent_experiment.py`, 13 testes):** o teste obrigatório da revisão foi implementado — Compreensão com plano aceito + requests consumidos + exceção posterior prova que (a) a Investigação herda `total - consumido_medido` (12−4=8 após 4 requests reais), nunca o orçamento integral; (b) saldo zero de request ou tool-call impede o run da Investigação (zero runs, zero calls adicionais); (c) `artifact_kept` preserva plano/clarificação aceitos sem perder uso medido; (d) classes de exceção não-terminais contabilizam igual (`UnexpectedModelBehavior`, erro genérico — request que lança no provider não conta, semântica `RunUsage`); (e) exceções terminais (deadline/cancel) propagam e viram `PROCESSING_TIMEOUT` no boundary de turno, zero investigação. `NO_BUDGET_REGRANT` provado (sem `max(1,0)`).
+
+**WS-B reprodução sem LLM (provedor de credencial delegada):** `NOBEARER` → `mcp_authentication_failed: no authenticated subject credential in request scope`; `EXPIRED` (JWT `exp` passado) → `subject credential is expired or malformed` — ambos **pré-wire** (0 chamadas HTTP de exchange); `LIVE` prossegue ao exchange (1 chamada). Owners: `teo`/`vista` `tools/list`=6 (auth→exchange→discovery íntegros); `davi` `mcp_timeout` (`delpi-api-delpi` unhealthy — owner indisponível, classe distinta). Falhas de catálogo ×3/cenário nos traces = uma por especialista na fronteira compartilhada, nunca `mcp_authorization_denied`.
+
+**WS-C:** `test_eval_usage_meter.py` — meter lê `result.usage` (property), não `result.usage()`; tokens de run individual voltam a ser capturados.
+
+**Amostra válida ainda pendente:** nenhum eval real reexecutado nesta task; prontidão do novo A/B depende de amostra com harness corrigido.

@@ -1942,3 +1942,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `INCONCLUSIVE` | A/B comparável com catálogo válido, corpus e custo por objetivo comprovado |
 
 `R1=CLOSED_WITH_RESIDUAL`, `R2-R6=OPEN`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_EXCEPTION_BOUNDARY_AND_R3_AUTH_EVAL_READINESS`.**
+
+### 2026-11-14 — C3/T2 execução bounded: resoluções e residuais vigentes
+
+| ID | Status | Evidência / dependência |
+|---|---|---|
+| `T2-COMPREHENSION-EXCEPTION-USAGE-ACCOUNTING` | `REMEDIATED` | RED provado (subcontagem pós-`artifact_kept` + `max(1,0)` regrant); `_TurnUsageCountingModel`+`deps.turn_usage`, zero-balance gate; 13/13 boundary, suíte 1739 ×2 |
+| `T2-INVESTIGATION-TOKEN-CAPTURE` | `REMEDIATED` | causa: `result.usage()` chamado sobre property (`RunUsage`) → TypeError engolido → zeros em 33 runs; fix 1 linha + `test_eval_usage_meter.py`; custo USD por objetivo continua dependente de novo eval |
+| `R3-MCP-AUTH-FLAKINESS` | `DOMINANT_REMEDIATED + OPEN_ENV residual` | primeira divergência = `credential_for` fail-fast pré-wire; causa dominante = subject token único do harness vs TTL 300s (blackout pós ~+430s); remediado no harness (re-mint por cenário). **Residual:** falhas transitórias pré-expiração (braço B ~+215s) — provável exchange/Keycloak, sem prova de mensagem; fechamento exige nova amostra real |
+| `DELIA-EVAL-HARNESS-SUBJECT-SESSION` | `REMEDIATED (novo)` | mint-única removida; `subject_session_is_fresh` gate + `subject_session_public_meta` em `scenario_start` |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV (novo)` | `delpi-api-delpi` unhealthy → `mcp_timeout` em discovery; corretamente classificado, não auth; owner = ambiente/api-delpi |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | não exercido nesta task |
+| `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `INCONCLUSIVE` | nova amostra A/B depende do harness saneado + captura de tokens (ambas remediadas) |
+| `T2-EXECUTION-DRIFT-STASH-SWEEP` | `NOTED (novo)` | `pull --rebase --autostash` capturou WS-A sem restaurar; conteúdo recuperado íntegro; commit concorrente `9904b4fb46` varreu o diff sob mensagem alheia — código publicado correto, rastreabilidade de mensagem imperfeita |
+
+`R1=CLOSED_WITH_RESIDUAL`, `R2-R6=OPEN`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_AND_R3_INDEPENDENT_REVIEW`.**

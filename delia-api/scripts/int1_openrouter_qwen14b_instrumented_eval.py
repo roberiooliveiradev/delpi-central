@@ -72,7 +72,10 @@ _install_finalize_capture = _native._install_finalize_capture
 _install_usage_meter = _native._install_usage_meter
 _prior_turns = _native._prior_turns
 _run = _native._run
-_subject_token = _native._subject_token
+SubjectAccessSession = _native.SubjectAccessSession
+acquire_subject_access_session = _native.acquire_subject_access_session
+subject_session_is_fresh = _native.subject_session_is_fresh
+subject_session_public_meta = _native.subject_session_public_meta
 
 
 
@@ -839,6 +842,7 @@ def run_scenario(
     evaluation_id: str,
     scenario: dict,
     token: str,
+    subject_session: SubjectAccessSession | None = None,
 ) -> dict:
     scenario_holder = {
         "id": scenario["id"],
@@ -860,6 +864,9 @@ def run_scenario(
             "question": scenario["question"],
             "prior": list(scenario["prior"]),
             "expected": scenario.get("expected"),
+            "subject_session": subject_session_public_meta(subject_session)
+            if subject_session is not None
+            else None,
         },
         scenario_id=scenario["id"],
         correlation_id=scenario_holder["correlation"],
@@ -1025,8 +1032,14 @@ def main() -> int:
 
     mcp.call_remote_tool = _call_with_values  # type: ignore[method-assign]
 
-    token = _subject_token()
-    if not token:
+    # R3: subject access tokens expire (Keycloak access TTL ~300s) while a
+    # full eval arm runs ~900s — a token minted once turns the back half of
+    # every run into a deterministic mcp_authentication_failed blackout at
+    # the shared delegated-credential boundary. Acquire a session and
+    # re-mint per scenario when it is no longer fresh (eval-harness fix;
+    # runtime fail-closed behavior unchanged).
+    subject_session = acquire_subject_access_session()
+    if not subject_session.access_token:
         raise SystemExit("refused: subject token empty")
 
     summary = {
@@ -1042,12 +1055,15 @@ def main() -> int:
         scenario_holder["id"] = spec["id"]
         scenario_holder["correlation"] = f"{evaluation_id}-{spec['id']}"
         print(f"== starting {spec['id']}", flush=True)
+        if not subject_session_is_fresh(subject_session):
+            subject_session = acquire_subject_access_session()
         res = run_scenario(
             handler=handler,
             mcp=mcp,
             evaluation_id=evaluation_id,
             scenario=spec,
-            token=token,
+            token=subject_session.access_token,
+            subject_session=subject_session,
         )
         b3 = b3_box.get(spec["id"])
         summary["scenarios"][spec["id"]] = {
