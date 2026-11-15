@@ -41,7 +41,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | READY | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
-| U13 Residuais da U12 (X1–X3) | IN_PROGRESS | [prompt](./prompts/U13-residuais.md) |
+| U13 Residuais da U12 (X1–X3) | DONE (código) | [prompt](./prompts/U13-residuais.md) |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
 
@@ -295,6 +295,6 @@ Prompt: [prompts/U13-residuais.md](./prompts/U13-residuais.md). Report: [reports
 |---|---|---|---|
 | X1 axe + Exportar primary + residuais U10 | (este commit) | DONE | filtro closest kit/host; Comercial primary |
 | X2 suíte MFE verde | (este commit) | DONE | 518 vitest + 26 mjs; TESTE DESATUALIZADO |
-| X3 filtro detalhamento SWR | — | PENDING | — |
+| X3 filtro detalhamento SWR | (este commit) | DONE | reset só analysisId; detailFilter.test |
 | HML Playwright | — | PENDING | — |
 | PROD tag/deploy MFE | — | PENDING | — |

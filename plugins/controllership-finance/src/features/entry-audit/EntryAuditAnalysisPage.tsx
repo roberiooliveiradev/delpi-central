@@ -130,6 +130,7 @@ export function EntryAuditAnalysisPage({
   >([]);
   const [page, setPage] = useState<EntryAuditPage<unknown> | null>(null);
   const [rowsLoading, setRowsLoading] = useState(false);
+  const [summaryRefreshing, setSummaryRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -171,6 +172,7 @@ export function EntryAuditAnalysisPage({
     return () => controller.abort();
   }, []);
 
+  /** Só troca de análise zera o quadro; filtro de detalhe mantém hero/KPIs (stale-while-revalidate). */
   useEffect(() => {
     setAnalysis(null);
     setSummary(null);
@@ -179,7 +181,7 @@ export function EntryAuditAnalysisPage({
     setRows([]);
     setPage(null);
     setTabTotals({});
-  }, [analysisId, detailFiltersKey]);
+  }, [analysisId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -201,6 +203,7 @@ export function EntryAuditAnalysisPage({
   /** R1 — summary primeiro (KPIs); não depende de tab/page/sort. */
   useEffect(() => {
     const controller = new AbortController();
+    setSummaryRefreshing(true);
     void getEntryAuditSummary(analysisId, filters, controller.signal)
       .then((payload) => {
         if (!controller.signal.aborted) setSummary(payload);
@@ -211,6 +214,9 @@ export function EntryAuditAnalysisPage({
             reason instanceof Error ? reason.message : "Falha ao carregar resumo.",
           );
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSummaryRefreshing(false);
       });
     return () => controller.abort();
   }, [analysisId, detailFiltersKey, refresh, filters]);
@@ -742,7 +748,12 @@ export function EntryAuditAnalysisPage({
         </CfStateBanner>
       ) : null}
 
-      <div className="cf-kpi-grid" role="group" aria-label="Indicadores da auditoria">
+      <div
+        className="cf-kpi-grid"
+        role="group"
+        aria-label="Indicadores da auditoria"
+        aria-busy={summaryRefreshing ? true : undefined}
+      >
         <CfMetricKpiCard
           label="Notas conferidas"
           titleHint={
@@ -1060,6 +1071,7 @@ export function EntryAuditAnalysisPage({
           rows={rows as EntryAuditOccurrence[]}
           rowKey={(row) => row.stable_key}
           onRowClick={openOccurrence}
+          loading={rowsLoading}
           hidePaginationWhenSinglePage
           columnPreferencesKey="controllership-finance:entry-audit:occurrences:columns:v1"
           fontSizePreferencesKey="controllership-finance:entry-audit:occurrences:font:v1"
@@ -1103,6 +1115,7 @@ export function EntryAuditAnalysisPage({
                 JSON.stringify(row),
             )
           }
+          loading={rowsLoading}
           hidePaginationWhenSinglePage
           columnPreferencesKey={`controllership-finance:entry-audit:${tab}:columns:v1`}
           fontSizePreferencesKey={`controllership-finance:entry-audit:${tab}:font:v1`}

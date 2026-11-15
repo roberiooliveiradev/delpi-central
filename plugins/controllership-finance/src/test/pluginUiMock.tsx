@@ -270,10 +270,16 @@ export function createMetricKpiCard() {
     hint?: ReactNode;
     icon?: ReactNode;
     tone?: string;
+    onSelect?: () => void;
   }) {
     return el(
       "article",
-      { "data-tone": props.tone ?? "default" },
+      {
+        "data-tone": props.tone ?? "default",
+        role: props.onSelect ? "button" : undefined,
+        tabIndex: props.onSelect ? 0 : undefined,
+        onClick: props.onSelect,
+      },
       props.icon,
       el("span", null, props.label),
       el("strong", null, props.value),
