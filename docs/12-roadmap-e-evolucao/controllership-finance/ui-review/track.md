@@ -206,3 +206,46 @@ Fonte: [review-2.md](./review-2.md) (T1–T9, E1–E4, A1–A10). **Inclui a U11
 5. Nenhum valor cru (`408.00`) nem termo técnico (`field`, `cte`, `item`) na tela.
 6. Comparação com período anterior só quando a regra do anterior casa; senão nenhuma variação aparece.
 7. Ajuda (`CF_HELP` e página Ajuda) atualizada no mesmo commit da tela.
+
+### W0 — inventário (2026-11-15, HEAD `ecb464c3a9`)
+
+**Troca de aba (antes) — análise 01–15/11 HML** (`/tmp/ui-review-u12/w0-tab-switch-before.json`):
+
+| Aba | summary | breakdowns | daily | aba |
+|---|---|---|---|---|
+| Notas casadas / Sem par / Ocorrências / CT-e / TES / Lançadas fora | 1 | 2 | 2 | 1–2 (resource) |
+
+Confirmado A1: cada troca remonta `analysis+summary+breakdowns+daily` (+ resource da aba).
+
+**Matriz de tabelas (CONFIRMADO_NO_CODIGO):**
+
+| Página | Tabela | Paginação | Ordenável | columnPreferencesKey | Cards mobile | Coluna Abrir | Notas |
+|---|---|---|---|---|---|---|---|
+| entry-audit Home | análises | cliente (page_size=50; BFF aceita page) | não | — | não | sim (`open`) | T3, E4 |
+| entry-audit Analysis | ocorrências + docs/tes | servidor | não (occ tem `sort` BFF antigo) | — | não | não (row click) | T1–T2, A3 |
+| MonthlyClosing | competências | cliente | partial | — | não | row click | |
+| ChecklistAdmin | versões | cliente | sim | sim (legado key) | sim | row click | |
+| ChecklistVersion | itens | cliente | sim | `cf-checklist-version-items-columns` | sim | row click | |
+| ClosingChecklist | itens | cliente | não | `cf:closing:checklist:v1` | não | row click | |
+| BillingModBreakdown | anchors + lines | cliente | não | 1 de 2 | não | row click | |
+| BillingExclusionRoster | itens | cliente | não | sim | não | não | |
+| CatalogsAdmin | entries | cliente | não | — | não | open nearby | |
+| DocumentsAdmin | docs | cliente | não | — | não | não | |
+| CostCenterExpenses | itens | cliente | não | sim | não | não | |
+| FinancialSettlements | groups + items | cliente | não | 1–2 keys | não | não | |
+| InventoryAdjustments | itens | cliente | não | sim | não | não | |
+| ProductionOrderConsumption | R04 | serverSort | sim | — | não | row click | |
+| StockInventory | 3 tabelas | cliente | não | 2 de 3 | não | não | |
+| StockKardex / StockMovements | | cliente | não | sim | não | não | |
+| WorkInProcess | 2 tabelas | cliente | não | sim | não | não | |
+| MyTasks | tasks | cliente | não | `cf:my-tasks:v1` | não | não | |
+| P3CutoffPanel | local `<table class=cf-p3-table>` | — | — | — | — | — | T7 matriz/corte |
+| ReportSharedSections | 2× `cf-p3-table` | — | — | — | — | — | T7 conciliação |
+| ReportsMatrixPanel | `cf-p3-table` R01–R15 | — | — | — | — | — | **exceção matriz** |
+| PackagesPage / PendenciesPage | `cf-pend-table` | — | — | — | — | — | T7 → DataTable |
+
+`cfDataTableUi` ainda passa `hints` na paginação (T4). `cfFiltersUi` fixa aria «Filtros das baixas financeiras» (T9).
+
+| Data | Etapa | SHA | Status | Nota |
+|---|---|---|---|---|
+| 2026-11-15 | U12 W0 | (este commit) | DONE | Matriz + medição A1 antes |
