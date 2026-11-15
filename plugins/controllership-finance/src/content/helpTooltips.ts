@@ -609,6 +609,24 @@ export const CF_HELP = {
     detailHistory:
       "Linha do tempo operacional do documento: anexação, novas versões, remoção e decisões de conferência — sempre com responsável, foto do perfil oficial (ou iniciais) e data. Downloads e mensagens da conversa ficam fora daqui; a trilha de auditoria técnica permanece completa. Versões anteriores permanecem disponíveis.",
   },
+  entryAudit: {
+    page:
+      "Auditoria de Entradas compara os documentos de entrada registrados no Protheus com os XML fiscais do mesmo escopo. A análise é de apoio à conferência: ocorrências indicam o que revisar e não alteram o ERP.",
+    create:
+      "Escolha período, filiais e tipos de documento. O processamento mostra a etapa real de cada filial e a contagem de XML lidos quando a origem informa o total esperado — nenhum percentual é estimado.",
+    history:
+      "Análises anteriores preservam período, escopo e situação. Abra uma linha para consultar indicadores, filtros, ocorrências e demais conjuntos da conferência.",
+    analysis:
+      "Indicadores e tabelas refletem apenas as filiais concluídas. Filiais indisponíveis permanecem explícitas e valores ausentes aparecem como «—», nunca como zero.",
+    occurrences:
+      "Ocorrências são diferenças ou condições encontradas pela regra de auditoria. Resolver registra o tratamento humano; reabrir devolve o item à fila sem apagar o histórico.",
+    detail:
+      "O detalhe explica por que a ocorrência foi criada, a ação sugerida, os valores comparados e a trilha de tratamento. «—» significa dado não aplicável ou indisponível.",
+    clara:
+      "A CLARA lê a mesma análise pelas rotas da BFF. Copie uma sugestão e cole no chat para pedir explicação, foco no que pede ação ou comparação com a análise anterior — sem alterar o ERP.",
+    conformity:
+      "Conformidade resume notas limpas versus divergentes. «Lançadas fora do período» é informação neutra: a nota existe no Protheus, mas a emissão ficou fora do recorte da análise.",
+  },
   receivedDocuments: {
     page:
       "Fechamentos recebidos: as competências que a Controladoria disponibilizou para a sua área. Somente os documentos efetivamente enviados a você aparecem aqui — a lista é a projeção autorizada do fechamento, não o acervo interno. Selecione a competência para ver a entrega.",

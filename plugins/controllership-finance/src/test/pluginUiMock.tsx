@@ -264,14 +264,18 @@ export function createDashboardSectionCard() {
   return function SectionCard(props: {
     title?: ReactNode;
     subtitle?: ReactNode;
+    hint?: ReactNode;
     children?: ReactNode;
     actions?: ReactNode;
+    collapsible?: boolean;
+    defaultOpen?: boolean;
   }) {
     return el(
       "section",
       null,
       el("h2", null, props.title),
       props.subtitle,
+      props.hint,
       props.actions,
       props.children,
     );
@@ -1433,5 +1437,79 @@ export function UnifiedAvatar(props: {
     "data-avatar-src": props.imageUrl ?? "",
     "data-avatar-name": props.fallbackText ?? "",
   });
+}
+
+// -- T11 Entry Audit --------------------------------------------------------
+
+export const chartCardBemClasses = passthroughClasses;
+export const detailCardProductionBemClasses = passthroughClasses;
+
+export function ChartCard(props: AnyProps) {
+  return el("section", null, el("h2", null, props.title as ReactNode), props.children as ReactNode);
+}
+
+export function HorizontalValueBars(props: AnyProps) {
+  return el(
+    "div",
+    { "aria-label": props["aria-label"] },
+    ...((props.items as Array<{ id: string; label: string; value: number }>) ?? []).map(
+      (item) => el("span", { key: item.id }, `${item.label}: ${item.value}`),
+    ),
+  );
+}
+
+export function ComparativeAreaChart(props: AnyProps) {
+  return el("div", { "data-testid": "comparative-area-chart" }, JSON.stringify(props.data ?? []));
+}
+
+function passthroughFactory() {
+  return function Passthrough(props: AnyProps) {
+    return el(
+      "section",
+      { "aria-label": props["aria-label"] },
+      props.title ? el("h2", null, props.title as ReactNode) : null,
+      props.label as ReactNode,
+      props.children as ReactNode,
+    );
+  };
+}
+
+export const createDashboardScopeChipBar = passthroughFactory;
+export const createSemicircleProgressGauge = passthroughFactory;
+export const createDashboardDistributionDonut = passthroughFactory;
+export const createDashboardResolutionStatusCell = passthroughFactory;
+export const createDashboardUnderlineNav = passthroughFactory;
+export const createDashboardProgressTracker = passthroughFactory;
+export const createHostContainedDrawerShell = passthroughFactory;
+export const createDashboardDetailCard = passthroughFactory;
+export const createDashboardEmptyGuidance = passthroughFactory;
+export const createDashboardTrendDelta = passthroughFactory;
+export const createDashboardProgressSummaryBar = passthroughFactory;
+export const createDashboardInlineLoadingProgress = passthroughFactory;
+export const createTablePaginationNav = passthroughFactory;
+
+export function createDashboardMultiSelectField() {
+  return function MultiSelectField(props: AnyProps) {
+    return el(
+      "label",
+      null,
+      props.label as ReactNode,
+      el(
+        "select",
+        {
+          "aria-label": props.label,
+          multiple: true,
+          value: props.selectedValues,
+          onChange: (event: { target: HTMLSelectElement }) =>
+            (props.onChange as ((values: string[]) => void) | undefined)?.(
+              Array.from(event.target.selectedOptions).map((option) => option.value),
+            ),
+        },
+        ...((props.options as Array<{ value: string; label: string }>) ?? []).map(
+          (option) => el("option", { key: option.value, value: option.value }, option.label),
+        ),
+      ),
+    );
+  };
 }
 

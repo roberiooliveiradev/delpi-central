@@ -31,6 +31,9 @@ import { ReceivedDocumentsPage } from "./features/closing/ReceivedDocumentsPage"
 import { PackagesPage } from "./features/closing/PackagesPage";
 import { PendenciesPage } from "./features/closing/PendenciesPage";
 import { StockInventoryPage } from "./features/closing/StockInventoryPage";
+import { EntryAuditAnalysisPage } from "./features/entry-audit/EntryAuditAnalysisPage";
+import { EntryAuditHomePage } from "./features/entry-audit/EntryAuditHomePage";
+import { EntryAuditOccurrencePage } from "./features/entry-audit/EntryAuditOccurrencePage";
 import { HomePage } from "./features/home/HomePage";
 import { MyTasksPage } from "./features/me/MyTasksPage";
 import { ProfilePage } from "./features/me/ProfilePage";
@@ -151,6 +154,19 @@ function AppRoutes({
             period={resolved.checklistPeriod}
             documentRef={resolved.documentRef}
             reportKey={resolved.reportKey}
+          />
+        ) : resolved.view === "entry_audit" ? (
+          <EntryAuditHomePage basePath={basePath} />
+        ) : resolved.view === "entry_audit_analysis" ? (
+          <EntryAuditAnalysisPage
+            basePath={basePath}
+            analysisId={resolved.analysisId ?? ""}
+          />
+        ) : resolved.view === "entry_audit_occurrence" ? (
+          <EntryAuditOccurrencePage
+            basePath={basePath}
+            analysisId={resolved.analysisId ?? ""}
+            occurrenceKey={resolved.occurrenceKey ?? ""}
           />
         ) : resolved.view === "received_documents" ? (
           <ReceivedDocumentsPage

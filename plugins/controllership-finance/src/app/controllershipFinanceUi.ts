@@ -4,20 +4,34 @@
  */
 import {
   ActionButton,
+  ChartCard,
+  ComparativeAreaChart,
+  HelpTooltip,
+  HorizontalValueBars,
+  chartCardBemClasses,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
   createDashboardDateField,
+  createDashboardDetailCard,
+  createDashboardDistributionDonut,
   createDashboardEventsSection,
+  createDashboardEmptyGuidance,
+  createDashboardInlineLoadingProgress,
   createDashboardInteractiveDataCard,
   createDashboardLoadingActivityCard,
   createDashboardDataRecordCard,
   createDashboardMentionComposer,
   createDashboardMessageThread,
   createDashboardMetricStrip,
+  createDashboardMultiSelectField,
   createMetricKpiCard,
   createDashboardPageHero,
   createDashboardPagePath,
+  createDashboardProgressSummaryBar,
+  createDashboardProgressTracker,
   createDashboardRecentAccessStrip,
+  createDashboardResolutionStatusCell,
+  createDashboardScopeChipBar,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
   createDashboardSegmentToggle,
@@ -31,9 +45,15 @@ import {
   createDashboardTopBarSearchTrigger,
   createDashboardTopBarUserIdentity,
   createDashboardTopBarUtilityCluster,
+  createDashboardTrendDelta,
+  createDashboardUnderlineNav,
   createDashboardViewTransition,
+  createHostContainedDrawerShell,
   createHostContainedModalShell,
+  createSemicircleProgressGauge,
+  createTablePaginationNav,
   createTimeline,
+  detailCardProductionBemClasses,
   EmptyState,
   UnifiedAvatar,
   catalogSearchBarBemClasses,
@@ -151,6 +171,84 @@ export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const CfMessageThread = createDashboardMessageThread(UI_PREFIX);
 export const CfMentionComposer = createDashboardMentionComposer(UI_PREFIX);
 export const CfTimeline = createTimeline({ prefix: UI_PREFIX });
+export const CfScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
+export const CfSemicircleProgressGauge = createSemicircleProgressGauge({
+  prefix: UI_PREFIX,
+});
+export function CfHorizontalValueBars(
+  props: ComponentProps<typeof HorizontalValueBars>,
+) {
+  return createElement(HorizontalValueBars, { prefix: UI_PREFIX, ...props });
+}
+export function CfComparativeAreaChart(
+  props: ComponentProps<typeof ComparativeAreaChart>,
+) {
+  return createElement(ComparativeAreaChart, { prefix: UI_PREFIX, ...props });
+}
+export const CfDistributionDonut = createDashboardDistributionDonut({
+  prefix: UI_PREFIX,
+});
+export const CfResolutionStatusCell = createDashboardResolutionStatusCell({
+  prefix: UI_PREFIX,
+});
+export const CfUnderlineNav = createDashboardUnderlineNav({ prefix: UI_PREFIX });
+export const CfProgressTracker = createDashboardProgressTracker({
+  prefix: UI_PREFIX,
+});
+export const CfMultiSelectField = createDashboardMultiSelectField({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CF_PORTAL_SCOPE,
+  labels: {
+    emptyLabel: "Todos",
+    searchPlaceholder: "Buscar…",
+    selectVisible: "Selecionar opções visíveis",
+    clear: "Limpar seleção",
+    emptyOptions: "Nenhuma opção encontrada.",
+    multipleSelected: (count: number) => `${count} selecionados`,
+    searchAriaLabel: (label: string) => `Buscar em ${label}`,
+    selectedCountLabel: (count: number) => `${count} selecionados`,
+    removeTagAriaLabel: (value: string) => `Remover ${value}`,
+  },
+});
+export const CfDrawerShell = createHostContainedDrawerShell({
+  prefix: UI_PREFIX,
+  portalScopeClassName: CF_PORTAL_SCOPE,
+});
+export const CfDetailCard = createDashboardDetailCard({
+  classNames: detailCardProductionBemClasses(UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+  },
+});
+export const CfEmptyGuidance = createDashboardEmptyGuidance(UI_PREFIX);
+export function CfHelpTooltip(props: ComponentProps<typeof HelpTooltip>) {
+  return createElement(HelpTooltip, props);
+}
+export function CfChartCard(props: Omit<ComponentProps<typeof ChartCard>, "classNames">) {
+  return createElement(ChartCard, {
+    classNames: chartCardBemClasses(UI_PREFIX),
+    ...props,
+  });
+}
+export const CfTrendDelta = createDashboardTrendDelta({ prefix: UI_PREFIX });
+export const CfProgressSummaryBar = createDashboardProgressSummaryBar({
+  prefix: UI_PREFIX,
+  defaultLabel: "Progresso",
+});
+export const CfInlineLoadingProgress = createDashboardInlineLoadingProgress({
+  prefix: UI_PREFIX,
+  defaultLabel: "Carregando dados",
+});
+export const CfTablePaginationNav = createTablePaginationNav({
+  prefix: UI_PREFIX,
+  labels: {
+    navigationAriaLabel: "Paginação",
+    previous: "Página anterior",
+    next: "Próxima página",
+    infoBeforeCurrent: "Página",
+    infoAfterCurrent: (totalPages: number) => `de ${totalPages}`,
+  },
+});
 export const CfTextField = createDashboardTextField({
   classNames: textFieldBemClasses(UI_PREFIX),
 });

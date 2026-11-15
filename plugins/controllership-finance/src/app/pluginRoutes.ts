@@ -46,6 +46,9 @@ export type PluginView =
   | "packages"
   | "cockpit"
   | "monthly_closing"
+  | "entry_audit"
+  | "entry_audit_analysis"
+  | "entry_audit_occurrence"
   | "received_documents"
   | "my_tasks"
   | "profile"
@@ -66,6 +69,7 @@ export type PluginNavigationTarget =
   | "packages"
   | "cockpit"
   | "monthly_closing"
+  | "entry_audit"
   | "received_documents"
   | "my_tasks"
   | "profile";
@@ -84,6 +88,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/packages": "packages",
   "closing/cockpit": "cockpit",
   "closing/monthly-closing": "monthly_closing",
+  "entry-audit": "entry_audit",
   "closing/documents": "received_documents",
   "closing/my-tasks": "my_tasks",
   "closing/admin/catalogs": "catalogs_admin",
@@ -101,6 +106,7 @@ const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> 
   packages: "closing/packages",
   cockpit: "closing/cockpit",
   monthly_closing: "closing/monthly-closing",
+  entry_audit: "entry-audit",
   received_documents: "closing/documents",
   my_tasks: "closing/my-tasks",
   catalogs_admin: "closing/admin/catalogs",
@@ -151,6 +157,10 @@ const RECEIVED_DELIVERY_PATTERN =
 const RECEIVED_DOCUMENT_PATTERN =
   /^closing\/documents\/(\d{4}-(0[1-9]|1[0-2]))\/documents\/([A-Za-z0-9_.:%~-]+)$/;
 
+const ENTRY_AUDIT_OCCURRENCE_PATTERN =
+  /^entry-audit\/analyses\/([^/]+)\/occurrences\/([^/]+)$/;
+const ENTRY_AUDIT_ANALYSIS_PATTERN = /^entry-audit\/analyses\/([^/]+)$/;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
@@ -165,6 +175,8 @@ export type ResolvedPluginRoute = {
   documentItemKey?: string;
   /** Número da versão na rota admin em cascata (`versions/{n}`). */
   adminVersion?: string;
+  analysisId?: string;
+  occurrenceKey?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -194,6 +206,27 @@ export function resolvePluginRoute(
   const relativePath = path.startsWith(`${base}/`)
     ? path.slice(base.length + 1)
     : path.slice(base.length);
+  const entryAuditOccurrenceMatch =
+    ENTRY_AUDIT_OCCURRENCE_PATTERN.exec(relativePath);
+  if (entryAuditOccurrenceMatch) {
+    return {
+      view: "entry_audit_occurrence",
+      pathname: path,
+      relativePath,
+      analysisId: decodeURIComponent(entryAuditOccurrenceMatch[1] ?? ""),
+      occurrenceKey: decodeURIComponent(entryAuditOccurrenceMatch[2] ?? ""),
+    };
+  }
+  const entryAuditAnalysisMatch =
+    ENTRY_AUDIT_ANALYSIS_PATTERN.exec(relativePath);
+  if (entryAuditAnalysisMatch) {
+    return {
+      view: "entry_audit_analysis",
+      pathname: path,
+      relativePath,
+      analysisId: decodeURIComponent(entryAuditAnalysisMatch[1] ?? ""),
+    };
+  }
   const receivedDocumentMatch =
     RECEIVED_DOCUMENT_PATTERN.exec(relativePath);
   if (receivedDocumentMatch) {

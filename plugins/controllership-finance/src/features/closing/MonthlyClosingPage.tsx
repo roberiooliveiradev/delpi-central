@@ -738,22 +738,30 @@ export function MonthlyClosingPage({
             navigatePluginPath(monthlyPath(base, "", tab))
           }
           extraActions={
-            canDeleteCompetence &&
-            probe?.kind === "ready" &&
-            probe.data.status === "OPEN" ? (
-              <DeleteCompetenceControl
-                competence={probe.data}
-                onDeleted={(deletedPeriod) => {
-                  invalidateP3(deletedPeriod);
-                  invalidateReportMatrix(deletedPeriod);
-                  invalidateVisibleReports(deletedPeriod);
-                  setProbeResult(null);
-                  setCockpitResult(null);
-                  setRetryNonce((current) => current + 1);
-                  navigatePluginPath(`${base}/closing/monthly-closing`);
-                }}
-              />
-            ) : null
+            <>
+              <CfActionButton
+                type="button"
+                onClick={() => navigatePluginPath(`${base}/entry-audit`)}
+              >
+                Auditoria de Entradas
+              </CfActionButton>
+              {canDeleteCompetence &&
+              probe?.kind === "ready" &&
+              probe.data.status === "OPEN" ? (
+                <DeleteCompetenceControl
+                  competence={probe.data}
+                  onDeleted={(deletedPeriod) => {
+                    invalidateP3(deletedPeriod);
+                    invalidateReportMatrix(deletedPeriod);
+                    invalidateVisibleReports(deletedPeriod);
+                    setProbeResult(null);
+                    setCockpitResult(null);
+                    setRetryNonce((current) => current + 1);
+                    navigatePluginPath(`${base}/closing/monthly-closing`);
+                  }}
+                />
+              ) : null}
+            </>
           }
           tabs={
             period && !detailMode ? (

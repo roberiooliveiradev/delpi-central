@@ -40,6 +40,7 @@ describe("home honesty", () => {
         "home",
         "profile",
         "monthly_closing",
+        "entry_audit",
         "checklist_admin",
         "documents_admin",
         "catalogs_admin",

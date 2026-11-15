@@ -100,6 +100,29 @@ describe("pluginRoutes", () => {
     ).toBe("/apps/controllership-finance/closing/monthly-closing?tab=documents");
   });
 
+  it("resolve as rotas da Auditoria de Entradas", () => {
+    const home = resolvePluginRoute(
+      "/apps/controllership-finance/entry-audit",
+    );
+    expect(home.view).toBe("entry_audit");
+    expect(buildPluginPath("entry_audit")).toBe(
+      "/apps/controllership-finance/entry-audit",
+    );
+
+    const analysis = resolvePluginRoute(
+      "/apps/controllership-finance/entry-audit/analyses/a-123",
+    );
+    expect(analysis.view).toBe("entry_audit_analysis");
+    expect(analysis.analysisId).toBe("a-123");
+
+    const occurrence = resolvePluginRoute(
+      "/apps/controllership-finance/entry-audit/analyses/a-123/occurrences/01%7Ckey",
+    );
+    expect(occurrence.view).toBe("entry_audit_occurrence");
+    expect(occurrence.analysisId).toBe("a-123");
+    expect(occurrence.occurrenceKey).toBe("01|key");
+  });
+
   it("deep link de competência no Fechamento mensal", () => {
     const resolved = resolvePluginRoute(
       "/apps/controllership-finance/closing/monthly-closing/2026-10",
