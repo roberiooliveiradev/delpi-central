@@ -511,3 +511,12 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 **Proximo gate:** autenticar ChatGPT com cliente Keycloak `mcp-linux-ops` dedicado, callback exata informada pela UI. `infra/scripts/keycloak_linux_ops_client.py` ja consta em `main`, mas a revisao identificou dois contratos a corrigir ANTES de qualquer apply: mapper `audience-delpi` deve emitir `aud=delpi-central`; mapper de scope `mcp-audience-linux-ops` deve ser inspecionado antes do primeiro write para evitar cliente parcial. PR #190 aberto com preflight mais restrito, testes negativos e sem comandos de producao. **Nao executar `--apply` antes de merge aprovado e auditoria.**
 
 **Status:** `PUBLIC_PRMD_200_PASS`, `PUBLIC_UNAUTHENTICATED_401_PASS`, `PUBLIC_HEALTH_404_PASS`, `KEYCLOAK_CLIENT_NOT_VERIFIED`, `CHATGPT_PLUGIN_NOT_CONNECTED`.
+
+
+## 29. Evidencia ChatGPT Plugins: OAuth advanced discovery (2026-11-15)
+
+- Operador exibiu a tela `Adicionar servidor MCP personalizado` do ChatGPT, URL `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, autenticao OAuth. A UI apresenta `Criar como plugin` habilitado, aceite de risco marcado, descricao ATLAS.
+- **Descoberta automatica visivel**: authorization/token Keycloak realm `https://minhadelpi.com.br/auth/realms/delpi`, resource URL canonica, OIDC habilitado, scopes padrao `openid profile email mcp:tools` selecionados; `Escopos basicos` vazio. Registro de cliente default ainda `DCR`, CIMD ausente (como informa a UI).
+- **Configuracao exigida:** trocar metodo de registro de `DCR` para cliente previamente registrado (`provided`, rotulo pode variar), definir `clientId=mcp-linux-ops`, token endpoint client authentication `client_secret_post`; client secret somente no formulario de conexao do ChatGPT, nunca em chat/Git. Nao habilitar DCR para contornar Keycloak nem inventar callback URI.
+- **Dependencia sequencial:** ChatGPT mostra redirect URI exata nas configuracoes de gerenciamento do servidor ou conexao. Copiar essa URI literal para o cliente Keycloak no momento de provisioning. Sem URL real, **nao executar `--apply`**; `--check` permite diagnostico somente leitura. Antes de `--apply`, verificar PR de endurecimento #190 integrado, backup de Keycloak, grants Core e prescricao do runbook.
+- Publicacao HTTPS ja validada por operador em 200 JSON (PRMD), 401 MCP nao autorizado, 404 health externo. Ainda nao comprovados callback, cliente Keycloak criado, login humano ou `tools/list` e `tools/call`.
