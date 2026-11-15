@@ -261,3 +261,73 @@ def test_documents_sort_whitelist():
     assert [row["document_number"] for row in page["items"]] == ["1", "10"]
     with pytest.raises(EntryAuditError):
         _service(store).documents(analysis_id, {}, page=1, page_size=10, sort="hack")
+
+
+def test_occurrences_sort_by_status_from_store():
+    """R1: ordenar por status usa o mapa de status, não a linha bruta."""
+    store = MemoryEntryAuditStore()
+    analysis_id = _add_analysis(
+        store, date_from=date(2026, 11, 12), date_to=date(2026, 11, 12), branches=["01"]
+    )
+    _add_occurrence(store, analysis_id, document_number="1", stable_key="pending-key", severity="Alta")
+    _add_occurrence(store, analysis_id, document_number="2", stable_key="resolved-key", severity="Alta")
+    store.upsert_status(
+        "resolved-key",
+        status="resolved",
+        kind="occurrence",
+        user_id="u1",
+        user_name="Tester",
+    )
+    service = _service(store)
+    asc = service.occurrences(
+        analysis_id, {}, page=1, page_size=50, sort="status", order="asc"
+    )
+    assert [row["status"] for row in asc["items"]] == ["pending", "resolved"]
+    desc = service.occurrences(
+        analysis_id, {}, page=1, page_size=50, sort="status", order="desc"
+    )
+    assert [row["status"] for row in desc["items"]] == ["resolved", "pending"]
+
+
+def test_occurrences_sort_whitelist_includes_rule_and_field():
+    """R2: colunas Regra/Campo da tela entram na lista branca."""
+    store = MemoryEntryAuditStore()
+    analysis_id = _add_analysis(
+        store, date_from=date(2026, 11, 12), date_to=date(2026, 11, 12), branches=["01"]
+    )
+    _add_occurrence(
+        store,
+        analysis_id,
+        document_number="1",
+        stable_key="a",
+        title="Zebra",
+        field="total",
+    )
+    _add_occurrence(
+        store,
+        analysis_id,
+        document_number="2",
+        stable_key="b",
+        title="Alpha",
+        field="cfop",
+    )
+    # patch titles into store rows
+    for row in store.occurrences:
+        if row["stable_key"] == "a":
+            row["title"] = "Zebra"
+            row["field"] = "total"
+        if row["stable_key"] == "b":
+            row["title"] = "Alpha"
+            row["field"] = "cfop"
+    service = _service(store)
+    by_rule = service.occurrences(
+        analysis_id, {}, page=1, page_size=50, sort="rule", order="asc"
+    )
+    assert [row["rule_name"] for row in by_rule["items"]] == ["Alpha", "Zebra"]
+    by_field = service.occurrences(
+        analysis_id, {}, page=1, page_size=50, sort="field", order="asc"
+    )
+    assert [row["field"] for row in by_field["items"]] == ["cfop", "total"]
+    with pytest.raises(EntryAuditError) as exc:
+        service.occurrences(analysis_id, {}, page=1, page_size=10, sort="hack")
+    assert exc.value.status_code == 422

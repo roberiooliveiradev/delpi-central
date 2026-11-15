@@ -374,10 +374,24 @@ class EntryAuditService:
         _analysis, ready = self._ready(analysis_id)
         rows = self._filtered("occurrences", analysis_id, filters)
         sort_by, sort_dir = _resolve_sort(sort, order, OCCURRENCE_SORT_WHITELIST, default_sort="severity", default_order="asc")
-        rows = _sorted_rows(rows, sort_by, sort_dir, kind="occurrences")
+        # R1: situação (pending/resolved) vive no store de status — carregar antes de ordenar.
+        status_map_all: dict[str, dict] | None = None
+        if sort_by == "status":
+            status_map_all = self._statuses_map(rows)
+            reverse = sort_dir == "desc"
+            rows = sorted(
+                rows,
+                key=lambda row: (
+                    _status_from_map(status_map_all, row),
+                    str(row.get("document_number") or ""),
+                ),
+                reverse=reverse,
+            )
+        else:
+            rows = _sorted_rows(rows, sort_by, sort_dir, kind="occurrences")
         start = (page - 1) * page_size
         page_slice = rows[start : start + page_size]
-        status_map = self._statuses_map(page_slice)
+        status_map = status_map_all if status_map_all is not None else self._statuses_map(page_slice)
         page_rows = [
             _public_occurrence(row, status_map.get(str(row.get("stable_key") or "")))
             for row in page_slice
@@ -1445,11 +1459,53 @@ def _by_day(rows: list[dict]) -> list[dict]:
 
 
 ANALYSIS_SORT_WHITELIST = frozenset({"created_at", "date_from", "date_to", "status", "finished_at"})
-OCCURRENCE_SORT_WHITELIST = frozenset({"severity", "supplier", "document", "day", "difference", "theme", "status"})
-DOCUMENT_SORT_WHITELIST = frozenset({"document_number", "received_date", "supplier_name", "amount", "situation", "series", "branch"})
-UNMATCHED_SORT_WHITELIST = frozenset({"document_number", "supplier_name", "situation", "series", "branch", "nature"})
-CTE_SORT_WHITELIST = frozenset({"document_number", "branch", "access_key"})
-TES_SORT_WHITELIST = frozenset({"tes_code", "items", "description"})
+# Colunas da aba Ocorrências (MFE) + chaves legadas (theme/day).
+OCCURRENCE_SORT_WHITELIST = frozenset(
+    {
+        "severity",
+        "supplier",
+        "document",
+        "day",
+        "difference",
+        "theme",
+        "status",
+        "rule",
+        "field",
+        "protheus",
+        "xml",
+    }
+)
+# W6: colunas tipadas das abas de documentos / CT-e / TES.
+DOCUMENT_SORT_WHITELIST = frozenset(
+    {
+        "document_number",
+        "received_date",
+        "issue_date",
+        "supplier_name",
+        "amount",
+        "situation",
+        "series",
+        "branch",
+        "access_key",
+    }
+)
+UNMATCHED_SORT_WHITELIST = frozenset(
+    {
+        "document_number",
+        "supplier_name",
+        "situation",
+        "series",
+        "branch",
+        "nature",
+        "received_date",
+        "amount",
+        "access_key",
+    }
+)
+CTE_SORT_WHITELIST = frozenset(
+    {"document_number", "branch", "access_key", "series", "supplier_name", "amount", "received_date"}
+)
+TES_SORT_WHITELIST = frozenset({"tes_code", "items", "description", "branch"})
 
 
 def _resolve_sort(
@@ -1477,6 +1533,45 @@ def _resolve_sort(
     return sort_by, sort_dir
 
 
+_PERCENT_FIELDS = frozenset({"rate", "simple_rate", "alíq. icms", "pcredsn (%)"})
+_DATE_FIELDS = frozenset({"issue_date", "emissão", "emissao"})
+
+
+def _typed_field_sort_value(value: object, field: object) -> tuple:
+    """Ordena Protheus/XML pelo tipo do campo (número, data ou texto)."""
+    field_key = str(field or "").strip().lower()
+    text = "" if value is None else str(value).strip()
+    if field_key in _DATE_FIELDS or (
+        len(text) >= 10 and text[4:5] == "-" and text[7:8] == "-"
+    ):
+        return (0, text[:10], text)
+    money_fields = {
+        "total",
+        "goods",
+        "st",
+        "discount",
+        "icms",
+        "base",
+        "ipi",
+        "amount",
+        "freight",
+        "expense",
+        "insurance",
+        "book_icms",
+        "ipi_base",
+        "other_expense",
+    }
+    if field_key in _PERCENT_FIELDS or field_key in money_fields:
+        return (1, _amount_text(value), text)
+    # Heurística: decimal serializado «1234.50» → número.
+    body = text[1:] if text.startswith("-") else text
+    if body.count(".") == 1:
+        left, right = body.split(".", 1)
+        if left.isdigit() and right.isdigit():
+            return (1, _amount_text(value), text)
+    return (2, text.lower(), text)
+
+
 def _occurrence_sort_key(row: dict, sort: str):
     if sort == "supplier":
         return (str(row.get("supplier_name") or ""), str(row.get("document_number") or ""))
@@ -1488,8 +1583,29 @@ def _occurrence_sort_key(row: dict, sort: str):
         return (abs(_amount_text(row.get("difference"))), str(row.get("document_number") or ""))
     if sort == "theme":
         return (str(row.get("theme") or ""), str(row.get("document_number") or ""))
+    if sort == "rule":
+        return (
+            str(row.get("title") or row.get("reason") or row.get("rule_name") or ""),
+            str(row.get("document_number") or ""),
+        )
+    if sort == "field":
+        return (
+            str(row.get("field_label") or row.get("field") or ""),
+            str(row.get("document_number") or ""),
+        )
+    if sort == "protheus":
+        return (
+            *_typed_field_sort_value(row.get("protheus_value"), row.get("field")),
+            str(row.get("document_number") or ""),
+        )
+    if sort == "xml":
+        return (
+            *_typed_field_sort_value(row.get("xml_value"), row.get("field")),
+            str(row.get("document_number") or ""),
+        )
     if sort == "status":
-        return (str(row.get("status") or ""), str(row.get("document_number") or ""))
+        # Preferir occurrences() com status_map; fallback na linha pública.
+        return (str(row.get("status") or "pending"), str(row.get("document_number") or ""))
     severity_order = {"Alta": 0, "Depende da TES": 1, "Média": 2, "Baixa": 3, "Info": 4}
     return (severity_order.get(row.get("severity"), 9), str(row.get("document_number") or ""))
 
@@ -1503,12 +1619,16 @@ def _row_sort_key(row: dict, sort: str, *, kind: str):
             return (int(sf4.get("items") or row.get("items") or 0), str(row.get("tes_code") or ""))
         if sort == "description":
             sf4 = row.get("sf4") or {}
-            return (str(sf4.get("description") or ""), str(row.get("tes_code") or ""))
+            return (str(sf4.get("description") or row.get("description") or ""), str(row.get("tes_code") or ""))
+        if sort == "branch":
+            return (str(row.get("branch") or ""), str(row.get("tes_code") or ""))
         return (str(row.get("tes_code") or ""),)
     if sort == "amount":
         return (_amount(row), str(row.get("document_number") or ""))
     if sort == "nature":
         return (str(row.get("nature") or ""), str(row.get("document_number") or ""))
+    if sort in {"received_date", "issue_date"}:
+        return (str(row.get(sort) or "")[:10], str(row.get("document_number") or ""))
     return (str(row.get(sort) or ""), str(row.get("document_number") or row.get("access_key") or ""))
 
 
