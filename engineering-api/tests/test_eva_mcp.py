@@ -1251,7 +1251,7 @@ def test_knowledge_g11_lifecycle_topic_in_catalog_and_enum():
         "LIF-TYPE-FAMILY-STAGE",
         "LIF-FLOW-QUOTATION-TO-PRODUCTION",
         "LIF-LINEAGE-PREVIOUS-CODE",
-        "LIF-REVERSE-LINEAGE-GAP",
+        "LIF-REVERSE-LINEAGE-PREVIOUS-CODE",
         "LIF-OV-PRODUCT-VERIFY",
         "LIF-OV-ABSENT-NOT-ERROR",
         "LIF-OV-DIVERGENT-NO-FIX",
@@ -1275,15 +1275,41 @@ def test_knowledge_g11_lifecycle_topic_in_catalog_and_enum():
         == "LIF-OV-ABSENT-NOT-ERROR"
     )
     assert "não é erro" in absent["criterion"]
-    # gaps contratuais explícitos — nunca inferidos
+    # G16 — linhagem reversa é capacidade PROVEN, não gap: regra
+    # aponta o contrato oficial e recusa cardinalidade 1:1
+    reverse = next(
+        r for r in entry["rules"] if r["rule_id"]
+        == "LIF-REVERSE-LINEAGE-PREVIOUS-CODE"
+    )
+    assert "product.search" in reverse["criterion"]
+    assert "previous_code" in reverse["criterion"]
+    assert "1:1" in reverse["limitations"]
+    # gaps contratuais restantes — nunca inferidos; a linhagem
+    # reversa NÃO pode permanecer listada como ausente
     gaps = " ".join(entry["contract_gaps"])
-    assert "previous_code" in gaps
-    assert "LMP impresso" in gaps or "lmp_printed" in gaps
-    # caso comprovado documentado
+    assert "reverse_lineage" not in gaps
+    assert "previous_code" not in gaps
+    assert "lmp_printed" in gaps or "LMP impresso" in gaps
+    assert "8000" in gaps
+    # inventário registra o filtro implantado (G13/G15)
+    assert "previous_code" in (
+        entry["contract_inventory"]["read_product_search"]
+    )
+    assert "SEM filtro previous_code" not in (
+        entry["contract_inventory"]["read_product_search"]
+    )
+    # playbook reverso usa o contrato oficial, sem GAP
+    playbook = " ".join(
+        entry["query_playbooks"]["lineage_reverse_quotation_to_9026"]
+    )
+    assert "GAP" not in playbook
+    assert "previous_code" in playbook
+    # caso comprovado documentado — direto e reverso (G15)
     case = entry["verified_case"]
     assert "80015472" in case["quotation_product"]
     assert "90264302" in case["production_product"]
     assert "003086" in case["demand"]
+    assert "product.search" in case["proven"]
 
 
 def test_knowledge_g11_negative_states_and_no_fabrication():

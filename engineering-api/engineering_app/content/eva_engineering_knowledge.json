@@ -1,5 +1,5 @@
 {
- "version": "1.5",
+ "version": "1.6",
  "owner": "engineering-api",
  "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais; topic product.drawing_bom_comparison (G6) derivado do contrato do comparador oficial e do conhecimento legado onda-14 (ADAPT, sem dependencia runtime); topic product.lifecycle_traceability (G11) derivado dos contratos api-delpi/engineering vigentes e do fluxo de negócio informado pelo owner — itens pendentes de ratificação estão marcados.",
  "topics": {
@@ -312,14 +312,15 @@
   },
   "product.lifecycle_traceability": {
    "title": "Ciclo de vida do produto — cotação 8000/8001, produção 9026, OV/LMP e rastreabilidade documental",
-   "revision": "1.0",
+   "revision": "1.1",
    "sources": [
     "api-delpi GET /products/{code}?view=engineering (SB1: previous_code=B1_CODANT, customer_reference=B1_REFEREN, customer_reference_old=B1_REFCANT, drawing_code, type, group_code, current_revision)",
+    "api-delpi GET /products/search?previous_code=... (SB1.B1_CODANT, LTRIM/RTRIM, exato, paginado) — implantado G13/G15",
     "api-delpi contrato LMP — detail por sale_number com list_products (produtos da demanda)",
     "engineering-api semantic contract: read(product.detail|search|structure|where_used), read(lmp.detail|history_events|history_flow), analyze(product.drawing_understanding)",
-    "Caso comprovado por consultas oficiais EVA: 80015472 → 90264302 → OV 003086 (doc 119 §94.14)",
+    "Caso comprovado por consultas oficiais EVA: 80015472 → 90264302 → OV 003086 (doc 119 §94.14 e §94.17 — G15 prova produtiva)",
     "Fluxo de negócio informado pelo owner DELPI (cotação → Engenharia/LMP → desenho/estrutura → produção); itens não ratificados marcados OWNER_PENDING",
-    "Doc 119 §94.13-94.14 — G10/G11"
+    "Doc 119 §94.13-94.17 — G10/G11/G13/G15/G16"
    ],
    "vocabulary": {
     "MP": "Matéria-Prima — insumo do processo produtivo, conforme type cadastral oficial",
@@ -369,15 +370,15 @@
      "limitations": "campo vazio = lineage desconhecida, não ausência de vínculo; previous_code ≠ drawing_code ≠ customer_reference"
     },
     {
-     "rule_id": "LIF-REVERSE-LINEAGE-GAP",
+     "rule_id": "LIF-REVERSE-LINEAGE-PREVIOUS-CODE",
      "owner": "api-delpi (produto)",
-     "source": "inventário de contratos G11",
-     "version": "1.0",
+     "source": "GET /products/search?previous_code= → SB1.B1_CODANT (G13/G15)",
+     "version": "1.1",
      "applicability": "rastreabilidade 8000/8001→9026",
-     "criterion": "consulta reversa (produtos cujo previous_code = X) NÃO existe nos contratos vigentes — product.search não aceita filtro previous_code; declarar gap e não inferir sucessores por semelhança de código/descrição",
-     "evidence_required": "n/a — lacuna contratual registrada",
-     "severity": "warning",
-     "limitations": "extensão READ no owner produto exige decisão arquitetural"
+     "criterion": "consulta reversa oficial: read(product.search, filters={previous_code=<código>}) retorna produtos cujo previous_code é exatamente o código pesquisado — ex.: previous_code='80015472' → 90264302 (grupo 9026); resultado pode ter zero, um ou vários sucessores; identificar a família (group_code) de cada retorno",
+     "evidence_required": "product.search(previous_code) + product.detail do(s) sucessore(s) + contexto (grupo/descrição/referência); vínculo só declarado quando confirmado por dados oficiais",
+     "severity": "info",
+     "limitations": "não presumir cardinalidade 1:1 nem restringir automaticamente à família 9026 (usar group_code só quando o usuário pedir); zeros à esquerda preservados; semelhança de descrição nunca comprova vínculo; zero resultados = consulta oficial sem sucessores nas condições aplicadas, não inexistência histórica; vínculo cadastral ≠ liberação técnica"
     },
     {
      "rule_id": "LIF-OV-PRODUCT-VERIFY",
@@ -488,8 +489,9 @@
     ],
     "lineage_reverse_quotation_to_9026": [
      "read(product.detail, product_code=<8000/8001>)",
-     "GAP: sem filtro previous_code — não inferir sucessores; declarar contract_gap",
-     "se OV conhecida: read(lmp.detail) → list_products pode revelar 9026 associado à mesma demanda"
+     "read(product.search, filters={previous_code: <8000/8001>}) → sucessores oficiais (0..N — preservar todos, identificar group_code de cada um)",
+     "read(product.detail, product_code=<sucessor>) → confirmar previous_code e contexto",
+     "se OV conhecida: read(lmp.detail) → list_products pode confirmar ambos na mesma demanda — consulta OV só quando houver contexto, nunca obrigatória para linhagem"
     ],
     "drawing_ov_cross_check": [
      "analyze(product.drawing_understanding) → revision_history.ov",
@@ -511,24 +513,29 @@
     "production_product": "90264302 | CHICOTE DE LIGACAO | group_code 9026 | type PA | previous_code 80015472 | customer_reference 18702881 | drawing_code 10013396831",
     "demand": "sale_number 003086 | listing_kind LMP | engineering_status FINALIZADA | branch 01 | products [80015472, 90264302]",
     "drawing_history": "REV 00 | DATA 26/10/26 | LMP 16726 | OV 003086 | EXECUTADO william | LIBERADO gabriella (job aj-29efddde4736424f)",
-    "proven": "linhagem direta previous_code; ambos os produtos na mesma OV/LMP; OV impressa confere com a demanda",
+    "proven": "linhagem direta previous_code (product.detail); linhagem reversa product.search(previous_code='80015472')→90264302 comprovada em produção (G15); ambos os produtos na mesma OV/LMP; OV impressa confere com a demanda",
     "not_proven": "aprovação técnica do desenho; correção da BOM; significado do número LMP impresso 16726"
    },
    "negative_cases": [
     "9026 sem previous_code → lineage UNKNOWN, nunca inventar anterior",
     "8000/8001 sem 9026 conhecido → não afirmar conversão",
     "8000/8001 com múltiplos sucessores → preservar todos os vínculos oficiais",
+    "product.search(previous_code) com zero resultados → consulta oficial sem sucessores nas condições aplicadas — não significa inexistência histórica de relacionamento",
+    "sucessor fora da família 9026 → declarar vínculo cadastral com a família real; não filtrar silenciosamente",
+    "código anterior vazio ou filtro inválido → estado honesto da consulta (validation/FORBIDDEN/SOURCE_UNAVAILABLE), nunca resultado fabricado",
     "produto sem BOM → não inventar componentes",
     "BOM oficial ≠ tabela OCR → relatório candidato de divergência",
     "serviço LMP indisponível → resultado documental preservado, verificação pendente",
     "acesso negado → FORBIDDEN",
     "REV técnica ≠ revisão TOTVS → domínios segregados",
     "LMP impressa ≠ sale_number → sem equivalência automática",
+    "OV sem vínculo comprovado com o produto → não declarar consistência",
+    "customer_reference divergente entre cotação e produtivo → não presumir quebra de vínculo nem equivalência",
     "OV ausente em carimbo histórico → sem falso positivo"
    ],
    "contract_inventory": {
     "read_product_detail": "previous_code, customer_reference, customer_reference_old, drawing_code, type, group_code, current_revision — view=engineering",
-    "read_product_search": "code, description, group_code, subgroup, product_type, customer_reference — SEM filtro previous_code",
+    "read_product_search": "code, description, group_code, subgroup, product_type, customer_reference, previous_code — previous_code implantado G13/G15 (SB1.B1_CODANT, exato, trim externo)",
     "read_product_structure": "BOM oficial",
     "read_product_where_used": "BOM reversa",
     "read_lmp_detail": "sale_number → list_products da demanda",
@@ -536,7 +543,6 @@
     "analyze_drawing_understanding": "OCR/carimbo/histórico/componentes — observação visual separada de fonte oficial"
    },
    "contract_gaps": [
-    "reverse_lineage: consulta por previous_code (8000/8001→9026) — extensão READ na api-delpi pendente de decisão arquitetural",
     "lmp_printed_lookup: consulta pelo número LMP impresso do desenho — significado do identificador pendente de ratificação",
     "family_semantics: distinção oficial 8000×8001 e marco temporal de adoção de OV impressa — pendentes de ratificação/validação documental"
    ],
