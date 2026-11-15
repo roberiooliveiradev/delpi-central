@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** (reconciliado com o contrato publicado da BFF, T9R5 — T10.0) |
+| Status | **DONE** (T10–T13: plugin-ui + MFE em HML/PROD — 2026-11-14) |
 | Data | 2026-11-14 |
 | Plano | [../plan.md](../plan.md) · back-end [../backend/README.md](../backend/README.md) · MCP [../mcp/README.md](../mcp/README.md) |
 | Contrato | rotas `/entry-audit/*` de `controllership-finance-api` (back-end fechado); o que o doc usa e a BFF não entrega foi ajustado no doc — ver «Reconciliação T10.0» |

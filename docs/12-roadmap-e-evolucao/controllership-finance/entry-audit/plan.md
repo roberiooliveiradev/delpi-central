@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** — execução pela [trilha](./track.md) |
+| Status | **DONE** — trilha T0–T13 concluída (front em PROD 2026-11-14); ver [track.md](./track.md) |
 | Data | 2026-11-13 |
 | Decisor | owner do produto |
 | Baseline | HEAD `08825074` (somente leitura) |

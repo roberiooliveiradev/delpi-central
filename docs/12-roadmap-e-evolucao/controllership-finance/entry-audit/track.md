@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | **READY** (trilha aprovada pelo owner em 2026-11-13) |
+| Status | **DONE** (front-end em PROD em 2026-11-14; trilha T0–T13 concluída) |
 | Plano | [plan.md](./plan.md) · [backend](./backend/README.md) · [mcp](./mcp/README.md) · [frontend](./frontend/README.md) · [reference](./reference/skill-auditoria-entradas-nfe-protheus/) |
 | Autoridade | instruções oficiais do arquiteto e `.cursor` aplicáveis > ADR-003 (criado em T1) > **esta trilha (ordem de execução)** > plan/backend/mcp/frontend > reference |
 | Ordem | T0 → T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8 → T9 → **PARADA para verificação do owner pela CLARA** → T10 → T11 → T12 → T13 |
@@ -70,7 +70,7 @@
 | T10 | plugin-ui — caracterização, evoluções, primitivos | DONE | DEV | d7ffdd6e46 | 2026-11-14 | DistributionDonut + ResolutionStatusCell; evoluções aditivas §§3–6; 120 testes focados PASS |
 | T11 | MFE — páginas 01, 02, 03 + Ajuda | DONE | DEV | 348930aa55 | 2026-11-14 | rotas entry-audit; Home/Analysis/Occurrence; Cf*; Ajuda; atalho fechamento; 46 PASS + tsc |
 | T12 | Front-end em HML | DONE | HML | a1153128b8, 0db70bb95c | 2026-11-14 | MFE no compose HML; remoteEntry 200; Playwright 4/4 PASS (desktop+mobile) |
-| T13 | PROD — front-end | IN_PROGRESS | PROD | | 2026-11-14 | tags + publish plugin-ui / MFE |
+| T13 | PROD — front-end | DONE | PROD | dde564efe3 | 2026-11-14 | tags frontend; plugin-ui+MFE 200; summary 12/11 01 = 19/5/1 |
 
 Status: TODO · IN_PROGRESS · BLOCKED · DONE.
 
@@ -270,6 +270,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 | 2026-11-14 | T5 | 13b580e5d5 | DONE | Análise idempotente, worker que retoma órfãs, execução por filial, reexecução preservando o status, D11 (XML pela chave, listagem com folga, «Em lançamento (LNF)»), D12 no snapshot, rotas atrás de `ENTRY_AUDIT_ENABLED` e de `controllership-finance.access` (manage herda), exportação xlsx no layout da skill. `/tes` passa a devolver `F4_TIPO` e `F4_CF`. Paridade real, filial 01, recebimento 12/11/2026, os dois campos preenchidos nos dois lados: 458 TES, 12 NF-e e 7 CT-e casados, 5 ocorrências, 0 sem par, zero diferenças. Pytest da aplicação 8 PASS; api-delpi 12 PASS; motor 83 PASS. Suíte da BFF: 1268 PASS, 39 FAIL pré-existentes (docs ausentes no container, contagem direta 15 contra 13, modo de migration do LNF), contract tests do LNF PASS. Bearer só em memória do processo. Flag permanece desligada. |
 | 2026-11-14 | T5 | | IN_PROGRESS | REWORK: token delegado no worker; falha de XML silenciosa. |
 | 2026-11-14 | T6 | 90ce0457b5 | IN_PROGRESS | financial-api no Compose, no script sequencial e no gateway de HML. `ENTRY_AUDIT_ENABLED` padrão true só no serviço de HML. Checkout de HML em `main` com esse commit. O `.env.hml` recebeu as variáveis de leitura do Questor. O realm de HML não tem o cliente `controllership-finance-api` nem os escopos `stock-inventory.read` e `settlements.read` (19 escopos, nenhum desses). O provisionador canônico não cria o cliente. Sem esse cliente a BFF não emite a credencial de serviço e o ensaio não começa. Retomar em T6. |
+| 2026-11-14 | T13 | dde564efe3 | DONE | Tags `rollback-entry-audit-frontend-plugin-ui` e `…-controllership-finance` em `0d489aaa98`. PROD pull + `up-prod-sequential --build plugin-ui` e `controllership-finance`. remoteEntry plugin-ui/CF/engineering/LNF/PC = 200. `options` sem auth 401. Summary da análise `b75deca4` (12/11 filial 01): documents 19, occurrences 5, high 1. Logs MFE sem token. Trilha DONE. |
 | 2026-11-14 | T12 | a1153128b8 / 0db70bb95c | DONE | Compose HML + `up-hml-sequential` com MFE `controllership-finance`. Pull HML `a1153128b8`. Build plugin-ui + MFE healthy; `remoteEntry` 200 após reload do gateway. Playwright HML 4/4 PASS (autorizado desktop/mobile + sem access). Screenshots em `/tmp/entry-audit-t12-artifacts` no host (não commitados). |
 | 2026-11-14 | T11 | 348930aa55 | DONE | MFE `plugins/controllership-finance`: client `entryAuditApi`; rotas `entry-audit` / analyses / occurrences; páginas Home (criar+andamento), Analysis (KPIs, conformidade, donut, temas, chips, abas, Pergunte à CLARA) e Occurrence (resolver/reabrir, copiar pergunta CLARA, XML); adapters Cf* dos primitivos T10; Ajuda `CF_HELP.entryAudit`; atalho no Fechamento mensal. Vitest focado 46 PASS; `tsc --noEmit` PASS. Sem dado real em fixture. |
 | 2026-11-14 | T10 | d7ffdd6e46 | DONE | plugin-ui: caracterização + evoluções aditivas ScopeChipBar/Semicircle/HVB/ComparativeAreaChart; primitivos DistributionDonut e ResolutionStatusCell; demos no catálogo; exports. 120 testes focados PASS. |
