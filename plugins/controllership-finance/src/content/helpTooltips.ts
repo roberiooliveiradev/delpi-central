@@ -623,9 +623,11 @@ export const CF_HELP = {
     whatAudits:
       "A auditoria confere valor, impostos, CST/origem, CFOP, chave de acesso e coerência entre Protheus e XML no período e filiais escolhidos. Não grava no ERP.",
     history:
-      "Análises anteriores preservam período, escopo e situação. Abra uma linha para consultar indicadores, filtros, ocorrências e demais conjuntos da conferência.",
+      "Análises anteriores preservam período, escopo e situação. Clique na linha (ou no card no celular) para abrir. Ordene pelas colunas e use o menu Colunas para mostrar ou ocultar campos — a preferência fica neste navegador.",
     analysis:
-      "Indicadores e tabelas refletem apenas as filiais concluídas. Filiais indisponíveis permanecem explícitas e valores ausentes aparecem como «—», nunca como zero.",
+      "Indicadores e tabelas refletem apenas as filiais concluídas. Filiais indisponíveis permanecem explícitas e valores ausentes aparecem como «—», nunca como zero. Nas abas, ordene no servidor pelo cabeçalho da coluna e escolha quais colunas ver; no celular use a visão em cards.",
+    fieldValues:
+      "Valores Protheus/XML aparecem formatados (R$, %, data ou texto) conforme o campo da regra. O rótulo do campo é o nome de negócio — nunca o código técnico «field».",
     kpiDocuments:
       "Quantidade de notas conferidas no período (recebidas no recorte), excluindo XML indisponível e lançadas fora do período.",
     kpiGross:

@@ -132,19 +132,33 @@ export function formatDocumentTypes(types: string[] | null | undefined): string 
 /** Preferir nome curto das options; fallback «Filial {code}». */
 export function formatBranchLabel(
   code: string,
+  options?: Array<{ code: string; name?: string | null; state?: string | null }>,
+): string {
+  const match = options?.find((option) => option.code === code);
+  const state = match?.state?.trim();
+  // U12 E3: rótulo pelo código (razão social só no title/ajuda).
+  return state ? `Filial ${code} · ${state}` : `Filial ${code}`;
+}
+
+export function formatBranchTitle(
+  code: string,
   options?: Array<{ code: string; name?: string | null }>,
 ): string {
   const match = options?.find((option) => option.code === code);
-  if (match?.name?.trim()) return match.name.trim();
-  return `Filial ${code}`;
+  const name = match?.name?.trim();
+  return name || `Filial ${code}`;
 }
 
 export function formatBranches(
   codes: string[],
-  options?: Array<{ code: string; name?: string | null }>,
+  options?: Array<{ code: string; name?: string | null; state?: string | null }>,
 ): string {
   if (!codes.length) return "—";
-  return codes.map((code) => formatBranchLabel(code, options)).join(", ");
+  if (codes.length === 1) return formatBranchLabel(codes[0], options);
+  if (codes.length === 2) {
+    return `Filiais ${codes[0]} e ${codes[1]}`;
+  }
+  return `Filiais ${codes.join(", ")}`;
 }
 
 export function formatMoneyBRL(value: number | null | undefined): string {
@@ -170,6 +184,9 @@ export function formatDifference(
     }
   }
   if (value === null || value === undefined || value === "") return "—";
+  if (field && entryAuditFieldKind({ field }) === "percent") {
+    return formatEntryAuditFieldValue(value, "percent");
+  }
   if (typeof value === "number") return formatMoneyBRL(value);
   const text = String(value).trim();
   if (!text) return "—";
@@ -181,6 +198,177 @@ export function formatDifference(
     return formatMoneyBRL(asPt);
   }
   return text;
+}
+
+/* ------------------------------------------------------------------ */
+/* Campos das regras — rótulo PT + tipo de valor (U12 W3)              */
+/* ------------------------------------------------------------------ */
+
+export type EntryAuditFieldKind = "money" | "percent" | "date" | "text";
+
+type FieldCatalogEntry = { label: string; kind: EntryAuditFieldKind };
+
+/**
+ * Catálogo de campos conferidos pelas regras (domain/entry_audit/engine.py).
+ * Chave = código gravado pela API (`FIELD_CODES` em application/entry_audit/vocabulary.py)
+ * ou código canônico equivalente quando a API ainda grava o rótulo literal.
+ */
+export const ENTRY_AUDIT_FIELD_CATALOG: Readonly<
+  Record<string, FieldCatalogEntry>
+> = {
+  total: { label: "Valor total da nota", kind: "money" },
+  goods: { label: "Valor das mercadorias", kind: "money" },
+  st: { label: "ICMS ST", kind: "money" },
+  discount: { label: "Desconto", kind: "money" },
+  series: { label: "Série", kind: "text" },
+  icms: { label: "ICMS", kind: "money" },
+  base: { label: "Base de ICMS", kind: "money" },
+  ipi: { label: "IPI", kind: "money" },
+  simple_rate: { label: "Alíquota de crédito do Simples", kind: "percent" },
+  amount: { label: "Valor do item", kind: "money" },
+  cfop: { label: "CFOP", kind: "text" },
+  taker: { label: "Tomador do frete", kind: "text" },
+  rate: { label: "Alíquota de ICMS", kind: "percent" },
+  cst: { label: "CST", kind: "text" },
+  key: { label: "Chave de acesso", kind: "text" },
+  species: { label: "Espécie", kind: "text" },
+  number: { label: "Número do documento", kind: "text" },
+  supplier: { label: "CNPJ do fornecedor", kind: "text" },
+  origin: { label: "Origem da mercadoria", kind: "text" },
+  freight: { label: "Frete", kind: "money" },
+  expense: { label: "Despesas", kind: "money" },
+  insurance: { label: "Seguro", kind: "money" },
+  book_icms: { label: "ICMS do livro fiscal", kind: "money" },
+  /* Rótulos que a API hoje grava como «field» (sem código próprio). */
+  tes: { label: "TES", kind: "text" },
+  issue_date: { label: "Data de emissão", kind: "date" },
+  ipi_base: { label: "Base de IPI", kind: "money" },
+  other_expense: { label: "Outras despesas", kind: "money" },
+};
+
+/** Rótulos literais do motor/Protheus → código canônico do catálogo. */
+const FIELD_LABEL_ALIASES: Readonly<Record<string, string>> = {
+  "vlr total": "total",
+  "vlr mercadorias": "goods",
+  "icms st": "st",
+  desconto: "discount",
+  série: "series",
+  serie: "series",
+  "base icms": "base",
+  "pcredsn (%)": "simple_rate",
+  "vlr item": "amount",
+  tomador: "taker",
+  "alíq. icms": "rate",
+  chave: "key",
+  espécie: "species",
+  especie: "species",
+  número: "number",
+  numero: "number",
+  cnpj: "supplier",
+  "cst (origem)": "origin",
+  despesa: "expense",
+  "icms livro": "book_icms",
+  emissão: "issue_date",
+  emissao: "issue_date",
+  "base ipi": "ipi_base",
+  "outras despesas": "other_expense",
+};
+
+export const ENTRY_AUDIT_UNKNOWN_FIELD_LABEL = "Campo não identificado";
+
+export type EntryAuditFieldSource = {
+  field?: string | null;
+  field_label?: string | null;
+  stable_key?: string | null;
+};
+
+function catalogCodeFor(raw: string | null | undefined): string | null {
+  const text = (raw ?? "").trim();
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  if (lower in ENTRY_AUDIT_FIELD_CATALOG) return lower;
+  return FIELD_LABEL_ALIASES[lower] ?? null;
+}
+
+/** Código de campo embutido na `stable_key` (`…|rule_id|<campo>|item`). */
+function fieldFromStableKey(stableKey: string | null | undefined): string | null {
+  const parts = (stableKey ?? "").split("|");
+  const index = parts[1]?.startsWith("doc:") ? 6 : 3;
+  return parts.length > index + 1 ? parts[index] || null : null;
+}
+
+/** Resolve o campo da ocorrência para o catálogo (código → rótulo → stable_key). */
+export function resolveEntryAuditField(
+  source: EntryAuditFieldSource,
+): FieldCatalogEntry | null {
+  const code =
+    catalogCodeFor(source.field) ??
+    catalogCodeFor(fieldFromStableKey(source.stable_key)) ??
+    catalogCodeFor(source.field_label);
+  return code ? ENTRY_AUDIT_FIELD_CATALOG[code] : null;
+}
+
+/** Rótulo PT do campo — nunca devolve códigos técnicos como «field». */
+export function entryAuditFieldLabel(source: EntryAuditFieldSource): string {
+  const entry = resolveEntryAuditField(source);
+  if (entry) return entry.label;
+  const apiLabel = (source.field_label ?? "").trim();
+  if (apiLabel && apiLabel.toLowerCase() !== "field") return apiLabel;
+  return ENTRY_AUDIT_UNKNOWN_FIELD_LABEL;
+}
+
+export function entryAuditFieldKind(
+  source: EntryAuditFieldSource,
+): EntryAuditFieldKind {
+  return resolveEntryAuditField(source)?.kind ?? "text";
+}
+
+function parseDecimal(value: string | number): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const text = value.trim();
+  if (/^-?\d+(\.\d+)?$/.test(text)) return Number(text);
+  if (/^-?\d{1,3}(\.\d{3})*,\d+$/.test(text) || /^-?\d+,\d+$/.test(text)) {
+    return Number(text.replace(/\./g, "").replace(",", "."));
+  }
+  return null;
+}
+
+export function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}%`;
+}
+
+function formatDateValue(value: string): string {
+  const text = value.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/.exec(text);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return text;
+}
+
+/** Formata valor Protheus/XML conforme o tipo do campo (R$, %, dd/mm/aaaa, texto). */
+export function formatEntryAuditFieldValue(
+  value: string | number | null | undefined,
+  kind: EntryAuditFieldKind,
+): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "string" && !value.trim()) return "—";
+  if (kind === "money" || kind === "percent") {
+    const parsed = parseDecimal(value);
+    if (parsed === null) return String(value).trim();
+    return kind === "money" ? formatMoneyBRL(parsed) : formatPercent(parsed);
+  }
+  if (kind === "date") return formatDateValue(String(value));
+  return String(value).trim();
+}
+
+export function formatOccurrenceValue(
+  value: string | number | null | undefined,
+  source: EntryAuditFieldSource,
+): string {
+  return formatEntryAuditFieldValue(value, entryAuditFieldKind(source));
 }
 
 export function formatAuditStatus(status: string): string {

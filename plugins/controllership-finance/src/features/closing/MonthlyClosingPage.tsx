@@ -52,6 +52,7 @@ import {
 } from "../../app/cfFiltersUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import { ClosingHero } from "../../app/ClosingHero";
@@ -895,6 +896,15 @@ export function MonthlyClosingPage({
               emptyMessage="Nenhum fechamento aberto."
               onRowClick={(row) =>
                 navigateToPeriod(row.period, "overview")
+              }
+              columnPreferencesKey="cf:closing:monthly-closing:v1"
+              fontSizePreferencesKey="cf:closing:monthly-closing:font:v1"
+              viewLayoutPreferencesKey="cf:closing:monthly-closing:layout:v1"
+              renderCard={(row) =>
+                renderCfRecordCard(COMPETENCE_COLUMNS, row, {
+                  onActivate: (item) =>
+                    navigateToPeriod(item.period, "overview"),
+                })
               }
             />
           ) : null}

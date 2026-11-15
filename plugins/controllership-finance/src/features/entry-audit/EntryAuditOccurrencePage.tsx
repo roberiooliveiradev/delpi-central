@@ -25,7 +25,9 @@ import {
   ENTRY_AUDIT_ACTION_ICONS,
   displayValue,
   entryAuditOccurrenceClaraPrompt,
+  entryAuditFieldLabel,
   formatDifference,
+  formatOccurrenceValue,
   formatNoteSeries,
   formatPeriodLabel,
   formatTheme,
@@ -290,7 +292,10 @@ export function EntryAuditOccurrencePage({
         </dl>
       </CfDetailCard>
 
-      <CfDetailCard title="Comparação">
+      <CfDetailCard
+        title="Comparação"
+        hint={CF_HELP.entryAudit.fieldValues}
+      >
         <dl>
           <dt>Nota/Série</dt>
           <dd>
@@ -301,11 +306,11 @@ export function EntryAuditOccurrencePage({
           <dt>TES</dt>
           <dd>{displayValue(occurrence.tes)}</dd>
           <dt>Campo</dt>
-          <dd>{displayValue(occurrence.field_label ?? occurrence.field)}</dd>
+          <dd>{entryAuditFieldLabel(occurrence)}</dd>
           <dt>Protheus</dt>
-          <dd>{displayValue(occurrence.protheus_value)}</dd>
+          <dd>{formatOccurrenceValue(occurrence.protheus_value, occurrence)}</dd>
           <dt>XML</dt>
-          <dd>{displayValue(occurrence.xml_value)}</dd>
+          <dd>{formatOccurrenceValue(occurrence.xml_value, occurrence)}</dd>
           <dt>Diferença</dt>
           <dd>{formatDifference(occurrence.difference, occurrence.field)}</dd>
         </dl>

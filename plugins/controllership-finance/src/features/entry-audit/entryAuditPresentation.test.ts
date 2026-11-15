@@ -40,9 +40,9 @@ describe("entryAuditPresentation", () => {
     expect(formatTheme("header")).toBe("Cabeçalho");
     expect(formatDocumentType("nfe")).toBe("NF-e");
     expect(formatDocumentTypes(["cte", "nfe"])).toBe("CT-e, NF-e");
-    expect(formatBranchLabel("01", [{ code: "01", name: "Matriz (SC)" }])).toBe(
-      "Matriz (SC)",
-    );
+    expect(
+      formatBranchLabel("01", [{ code: "01", name: "Matriz", state: "SC" }]),
+    ).toBe("Filial 01 · SC");
     expect(formatBranchLabel("02")).toBe("Filial 02");
   });
 

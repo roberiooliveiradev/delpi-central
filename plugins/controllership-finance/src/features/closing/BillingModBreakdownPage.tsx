@@ -29,6 +29,7 @@ import {
 } from "../../app/controllershipFinanceUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -199,11 +200,15 @@ export function BillingModBreakdownPage({
             ) : null}
           </div>
         ),
+        sortable: true,
+        sortValue: (row) => row.product,
       },
       {
         key: "branch",
         header: "Filial",
         render: (row) => row.branch ?? "—",
+        sortable: true,
+        sortValue: (row) => row.branch ?? "",
       },
       {
         key: "billedQty",
@@ -318,6 +323,14 @@ export function BillingModBreakdownPage({
             loading={loading}
             emptyMessage="Nenhuma âncora faturada encontrada para a competência/filial selecionadas."
             columnPreferencesKey="cf:closing:billing-mod-breakdown:v1"
+            fontSizePreferencesKey="cf:closing:billing-mod-breakdown:font:v1"
+            viewLayoutPreferencesKey="cf:closing:billing-mod-breakdown:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(columns, row, {
+                onActivate: (item) => setSelectedKey(anchorKey(item)),
+                ariaLabel: `Produto faturado ${row.product}`,
+              })
+            }
           />
 
           {selectedAnchor ? (
@@ -402,7 +415,13 @@ export function BillingModBreakdownPage({
 function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
   const columns = useMemo<DataTableColumn<BillingModLine>[]>(
     () => [
-      { key: "level", header: "Nível", render: (row) => row.level },
+      {
+        key: "level",
+        header: "Nível",
+        render: (row) => row.level,
+        sortable: true,
+        sortValue: (row) => row.level,
+      },
       {
         key: "product",
         header: "Produto componente",
@@ -523,6 +542,14 @@ function AnchorDetail({ anchor }: { anchor: BillingModAnchor }) {
           }
           hideSearch
           emptyMessage="Nenhuma operação retornada."
+          columnPreferencesKey="cf:closing:billing-mod-breakdown:lines:v1"
+          fontSizePreferencesKey="cf:closing:billing-mod-breakdown:lines:font:v1"
+          viewLayoutPreferencesKey="cf:closing:billing-mod-breakdown:lines:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              ariaLabel: "Operação do roteiro",
+            })
+          }
         />
       )}
     </div>

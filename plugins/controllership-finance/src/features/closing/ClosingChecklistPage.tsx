@@ -48,7 +48,11 @@ import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
 } from "../../app/cfFeedbackUi";
-import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import {
+  DataTableSection,
+  renderCfRecordCard,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import {
   FilterInputField,
   FilterSelectField,
@@ -366,6 +370,8 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
         render: (row) => (
           <span className="cf-cell-primary">{row.item_key}</span>
         ),
+        sortable: true,
+        sortValue: (row) => row.item_key,
       },
       {
         key: "name",
@@ -664,8 +670,14 @@ export function ClosingChecklistPage({ period }: { period?: string }) {
               emptyMessage="Nenhum item corresponde aos filtros aplicados."
               columnPreferencesKey="cf:closing:checklist:v1"
               fontSizePreferencesKey="cf:closing:checklist:font:v1"
+              viewLayoutPreferencesKey="cf:closing:checklist:layout:v1"
               resizableColumns
               onRowClick={(row) => openDetail(row.item_key)}
+              renderCard={(row) =>
+                renderCfRecordCard(columns, row, {
+                  onActivate: (item) => openDetail(item.item_key),
+                })
+              }
             />
 
             <P3CutoffPanel period={activePeriod} />

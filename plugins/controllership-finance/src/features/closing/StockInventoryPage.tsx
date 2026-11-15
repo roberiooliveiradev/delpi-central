@@ -50,7 +50,11 @@ import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
 } from "../../app/cfFeedbackUi";
-import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import {
+  DataTableSection,
+  renderCfRecordCard,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import {
   FilterInputField,
   FilterSelectField,
@@ -340,6 +344,8 @@ export function StockInventoryPage({
           ) : (
             "—"
           ),
+        sortable: true,
+        sortValue: (row) => row.productCode ?? "",
       },
       {
         key: "description",
@@ -521,6 +527,8 @@ export function StockInventoryPage({
           ) : (
             "Sem tipo"
           ),
+        sortable: true,
+        sortValue: (group) => group.productType ?? "",
       },
       {
         key: "itemCount",
@@ -576,6 +584,8 @@ export function StockInventoryPage({
         headerHint: CF_HELP.stockInventory.columns.warehouse,
         className: "cf-table__col--compact",
         render: (group) => group.warehouse ?? "—",
+        sortable: true,
+        sortValue: (group) => group.warehouse ?? "",
       },
       {
         key: "branchCode",
@@ -880,6 +890,13 @@ export function StockInventoryPage({
           hideSearch
           emptyMessage="Nenhum agrupamento por tipo para os filtros aplicados."
           columnPreferencesKey="cf:closing:stock-type-summary:v1"
+          fontSizePreferencesKey="cf:closing:stock-type-summary:font:v1"
+          viewLayoutPreferencesKey="cf:closing:stock-type-summary:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(typeColumns, row, {
+              ariaLabel: "Resumo por tipo de produto",
+            })
+          }
         />
       ) : null}
       {reportContext &&
@@ -899,6 +916,13 @@ export function StockInventoryPage({
           hideSearch
           emptyMessage="Nenhum agrupamento por armazém para os filtros aplicados."
           columnPreferencesKey="cf:closing:stock-warehouse-summary:v1"
+          fontSizePreferencesKey="cf:closing:stock-warehouse-summary:font:v1"
+          viewLayoutPreferencesKey="cf:closing:stock-warehouse-summary:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(warehouseColumns, row, {
+              ariaLabel: "Resumo por armazém",
+            })
+          }
         />
       ) : null}
 
@@ -987,6 +1011,12 @@ export function StockInventoryPage({
           emptyMessage="Nenhum item de estoque encontrado para os filtros aplicados."
           columnPreferencesKey={`cf:closing:stock-inventory:${applied?.reportScope ?? "all_products"}:v1`}
           fontSizePreferencesKey="cf:closing:stock-inventory:font:v1"
+          viewLayoutPreferencesKey={`cf:closing:stock-inventory:${applied?.reportScope ?? "all_products"}:layout:v1`}
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              ariaLabel: "Item de estoque",
+            })
+          }
           resizableColumns
         />
       ) : null}

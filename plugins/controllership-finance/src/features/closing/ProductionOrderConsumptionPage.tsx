@@ -11,6 +11,7 @@ import {
 } from "../../app/cfFiltersUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -473,6 +474,19 @@ export function ProductionOrderConsumptionPage({
                   setPage(1);
                 },
               }}
+              columnPreferencesKey="cf:closing:production-order-consumption:v1"
+              fontSizePreferencesKey="cf:closing:production-order-consumption:font:v1"
+              viewLayoutPreferencesKey="cf:closing:production-order-consumption:layout:v1"
+              renderCard={(row) =>
+                renderCfRecordCard(R04_COLUMNS(dateType), row, {
+                  onActivate: (item) => {
+                    const op = String(
+                      item.productionOrder ?? item.op ?? "",
+                    );
+                    if (op) openDetail(op);
+                  },
+                })
+              }
             />
           )}
           {Array.isArray(data?.limitations) &&
@@ -524,6 +538,16 @@ export function ProductionOrderConsumptionPage({
                         }
                         hideSearch
                         emptyMessage="Sem materiais no contrato."
+                        columnPreferencesKey="cf:closing:production-order-consumption:materials:v1"
+                        fontSizePreferencesKey="cf:closing:production-order-consumption:materials:font:v1"
+                        viewLayoutPreferencesKey="cf:closing:production-order-consumption:materials:layout:v1"
+                        renderCard={(row) =>
+                          renderCfRecordCard(
+                            detailListColumns(list[0]),
+                            row,
+                            { ariaLabel: "Material consumido" },
+                          )
+                        }
                       />
                     ) : null;
                   })()}

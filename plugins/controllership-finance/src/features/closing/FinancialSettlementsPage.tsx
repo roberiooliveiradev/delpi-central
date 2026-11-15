@@ -39,7 +39,11 @@ import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
 } from "../../app/cfFeedbackUi";
-import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import {
+  DataTableSection,
+  renderCfRecordCard,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import { FilterInputField, FilterSelectField, FiltersRow } from "../../app/cfFiltersUi";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatAmount, formatCivilDate } from "../../utils/formatters";
@@ -433,6 +437,8 @@ export function FinancialSettlementsPage({
         headerHint: CF_HELP.closing.columns.date,
         className: "cf-table__col--compact",
         render: (row) => formatCivilDate(row.settlementDate),
+        sortable: true,
+        sortValue: (row) => row.settlementDate ?? "",
       },
       {
         key: "document",
@@ -633,6 +639,8 @@ export function FinancialSettlementsPage({
           ) : (
             "—"
           ),
+        sortable: true,
+        sortValue: (group) => group.natureCode ?? "",
       },
       {
         key: "movement",
@@ -852,6 +860,13 @@ export function FinancialSettlementsPage({
           hideSearch
           emptyMessage="Nenhum agrupamento no período para os filtros aplicados."
           columnPreferencesKey="cf:closing:settlement-groups:v1"
+          fontSizePreferencesKey="cf:closing:settlement-groups:font:v1"
+          viewLayoutPreferencesKey="cf:closing:settlement-groups:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(groupColumns, row, {
+              ariaLabel: "Agrupamento de baixa",
+            })
+          }
         />
       ) : null}
 
@@ -882,6 +897,12 @@ export function FinancialSettlementsPage({
           emptyMessage="Nenhuma baixa encontrada no período para os filtros aplicados."
           columnPreferencesKey={`cf:closing:financial-settlements:${applied?.side ?? "payable"}:v1`}
           fontSizePreferencesKey="cf:closing:financial-settlements:font:v1"
+          viewLayoutPreferencesKey={`cf:closing:financial-settlements:${applied?.side ?? "payable"}:layout:v1`}
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              ariaLabel: "Baixa financeira",
+            })
+          }
           resizableColumns
         />
         </div>

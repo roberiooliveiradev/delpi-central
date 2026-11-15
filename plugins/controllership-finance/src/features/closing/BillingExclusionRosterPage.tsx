@@ -52,6 +52,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -280,6 +281,8 @@ export function BillingExclusionRosterPage({
         header: "Emissão",
         headerHint: CF_HELP.billingExclusionRoster.columns.issueDate,
         render: (row) => formatCivilDate(row.issueDate),
+        sortable: true,
+        sortValue: (row) => row.issueDate ?? "",
       },
       {
         key: "document",
@@ -754,6 +757,13 @@ export function BillingExclusionRosterPage({
           hideSearch
           emptyMessage="Nenhuma nota no período para os filtros aplicados."
           columnPreferencesKey="cf:closing:billing-exclusion-roster:v1"
+          fontSizePreferencesKey="cf:closing:billing-exclusion-roster:font:v1"
+          viewLayoutPreferencesKey="cf:closing:billing-exclusion-roster:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              ariaLabel: "Nota de exclusão de faturamento",
+            })
+          }
           serverPagination={
             payload?.pagination
               ? {

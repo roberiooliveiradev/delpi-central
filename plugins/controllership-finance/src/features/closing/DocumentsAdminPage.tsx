@@ -47,6 +47,7 @@ import {
 } from "../../app/controllershipFinanceUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
@@ -277,6 +278,8 @@ export function DocumentsAdminPage({
             ) : null}
           </div>
         ),
+        sortable: true,
+        sortValue: (row) => row.name,
       },
       {
         key: "applicability",
@@ -500,6 +503,14 @@ export function DocumentsAdminPage({
                 rowKey={(row) => row.itemKey}
                 loading={false}
                 emptyMessage="Nenhum documento encontrado. Ajuste os filtros ou cadastre o primeiro documento."
+                columnPreferencesKey="cf:closing:documents-admin:v1"
+                fontSizePreferencesKey="cf:closing:documents-admin:font:v1"
+                viewLayoutPreferencesKey="cf:closing:documents-admin:layout:v1"
+                renderCard={(row) =>
+                  renderCfRecordCard(columns, row, {
+                    ariaLabel: `Documento ${row.itemKey}`,
+                  })
+                }
               />
             )}
           </>

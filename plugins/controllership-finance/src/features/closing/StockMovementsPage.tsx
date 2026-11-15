@@ -50,6 +50,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -258,6 +259,8 @@ export function StockMovementsPage({
           ) : (
             "Sem tipo"
           ),
+        sortable: true,
+        sortValue: (row) => row.productType ?? "",
       },
       moneyColumn("openingBalance", "Saldo inicial"),
       moneyColumn("purchases", "Compras"),
@@ -551,6 +554,13 @@ export function StockMovementsPage({
             hideSearch
             emptyMessage="Nenhum tipo de produto com movimentação no período para os filtros aplicados."
             columnPreferencesKey="cf:closing:stock-movements:v1"
+            fontSizePreferencesKey="cf:closing:stock-movements:font:v1"
+            viewLayoutPreferencesKey="cf:closing:stock-movements:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(columns, row, {
+                ariaLabel: "Resumo por tipo de produto",
+              })
+            }
           />
         ) : null}
       </div>

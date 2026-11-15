@@ -1,9 +1,12 @@
 /** Kit DataTable do Portal — fábricas `@delpi/plugin-ui`, prefixo `cf`. */
+import type { ReactNode } from "react";
+
 import {
   createDashboardDataTableKit,
   createDashboardPaginationKit,
   TABLE_PAGE_SIZE_OPTIONS,
   type DashboardDataTableSectionProps,
+  type DataTableColumn,
   type PageJumpValidationReason,
 } from "@delpi/plugin-ui/index";
 
@@ -12,19 +15,16 @@ import {
   useTrackedSingleFetchProgress,
 } from "../utils/loadingProgress";
 import { CF_HELP } from "../content/helpTooltips";
-import { CfLoadingCard, UI_PREFIX } from "./controllershipFinanceUi";
+import {
+  CfInteractiveDataCard,
+  CfLoadingCard,
+  UI_PREFIX,
+} from "./controllershipFinanceUi";
 
 const P = CF_HELP.closing.pagination;
 
 const paginationKit = createDashboardPaginationKit({
   prefix: UI_PREFIX,
-  hints: {
-    pageSize: P.pageSize,
-    previous: P.previous,
-    next: P.next,
-    info: P.info,
-    jump: P.jump,
-  },
   tablePageSizeLabels: {
     label: "Itens por página",
     selectAriaLabel: "Quantidade de itens por página",
@@ -96,6 +96,50 @@ const KitDataTableSection = kit.DataTableSection;
  */
 export function DataTableSection<T>(props: DashboardDataTableSectionProps<T>) {
   return <KitDataTableSection hidePaginationWhenSinglePage {...props} />;
+}
+
+/** Converte decimal serializado («1234.50») em número para `sortValue` de colunas numéricas. */
+export function cfNumericSortValue(
+  value: string | number | null | undefined,
+): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Card mobile derivado das colunas da tabela (U12): a mesma definição de
+ * coluna alimenta tabela e cards — sem segunda fonte de rótulos/valores.
+ * A primeira coluna vira título; `onActivate` torna o card clicável.
+ */
+export function renderCfRecordCard<T>(
+  columns: ReadonlyArray<DataTableColumn<T>>,
+  row: T,
+  options: {
+    ariaLabel?: string;
+    onActivate?: (row: T) => void;
+    openHint?: string;
+    skipKeys?: readonly string[];
+  } = {},
+): ReactNode {
+  const skip = new Set(options.skipKeys ?? []);
+  const fields = columns
+    .filter((column) => !skip.has(column.key) && column.header.trim() !== "")
+    .map((column, index) => ({
+      id: column.key,
+      label: column.mobileLabel ?? column.header,
+      value: column.render(row),
+      valueTone: index === 0 ? ("title" as const) : undefined,
+    }));
+  const onActivate = options.onActivate;
+  return (
+    <CfInteractiveDataCard
+      ariaLabel={options.ariaLabel}
+      fields={fields}
+      onActivate={onActivate ? () => onActivate(row) : undefined}
+      openHint={onActivate ? (options.openHint ?? "Abrir detalhes") : undefined}
+    />
+  );
 }
 
 export { TABLE_PAGE_SIZE_OPTIONS };

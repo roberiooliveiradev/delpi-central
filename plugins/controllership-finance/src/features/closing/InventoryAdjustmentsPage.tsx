@@ -48,6 +48,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -300,6 +301,8 @@ export function InventoryAdjustmentsPage({
         key: "movementDate",
         header: "Data",
         render: (row) => formatCivilDate(row.movementDate),
+        sortable: true,
+        sortValue: (row) => row.movementDate ?? "",
       },
       {
         key: "productCode",
@@ -686,6 +689,13 @@ export function InventoryAdjustmentsPage({
             hideSearch
             emptyMessage="Nenhum ajuste de inventário no período para os filtros aplicados."
             columnPreferencesKey="cf:closing:inventory-adjustments:v1"
+            fontSizePreferencesKey="cf:closing:inventory-adjustments:font:v1"
+            viewLayoutPreferencesKey="cf:closing:inventory-adjustments:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(columns, row, {
+                ariaLabel: "Ajuste de inventário",
+              })
+            }
             serverPagination={
               payload?.pagination
                 ? {

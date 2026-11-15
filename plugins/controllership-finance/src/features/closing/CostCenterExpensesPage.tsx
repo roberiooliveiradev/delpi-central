@@ -53,6 +53,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -299,6 +300,8 @@ export function CostCenterExpensesPage({
         header: "Data digitação",
         headerHint: CF_HELP.costCenterExpenses.columns.entryDate,
         render: (row) => formatCivilDate(row.entryDate),
+        sortable: true,
+        sortValue: (row) => row.entryDate ?? "",
       },
       {
         key: "document",
@@ -780,6 +783,13 @@ export function CostCenterExpensesPage({
           hideSearch
           emptyMessage="Nenhum lançamento no período para os filtros aplicados."
           columnPreferencesKey="cf:closing:cost-center-expenses:v1"
+          fontSizePreferencesKey="cf:closing:cost-center-expenses:font:v1"
+          viewLayoutPreferencesKey="cf:closing:cost-center-expenses:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              ariaLabel: "Lançamento de centro de custo",
+            })
+          }
           serverPagination={
             payload?.pagination
               ? {

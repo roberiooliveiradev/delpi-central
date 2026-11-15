@@ -51,6 +51,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -289,6 +290,8 @@ export function WorkInProcessPage({
         render: (row) => (
           <span className="cf-cell-primary">{row.productCode}</span>
         ),
+        sortable: true,
+        sortValue: (row) => row.productCode ?? "",
       },
       {
         key: "description",
@@ -308,6 +311,8 @@ export function WorkInProcessPage({
           ) : (
             "Sem tipo"
           ),
+        sortable: true,
+        sortValue: (row) => row.productType ?? "",
       },
       {
         key: "productionOrder",
@@ -363,6 +368,8 @@ export function WorkInProcessPage({
           ) : (
             "Sem tipo"
           ),
+        sortable: true,
+        sortValue: (row) => row.productType ?? "",
       },
       {
         key: "physicalValue",
@@ -696,6 +703,13 @@ export function WorkInProcessPage({
             hideSearch
             emptyMessage="Nenhum agrupamento por tipo para os filtros aplicados."
             columnPreferencesKey="cf:closing:wip-type-summary:v1"
+            fontSizePreferencesKey="cf:closing:wip-type-summary:font:v1"
+            viewLayoutPreferencesKey="cf:closing:wip-type-summary:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(typeColumns, row, {
+                ariaLabel: "Resumo por tipo de produto",
+              })
+            }
           />
         ) : null}
 
@@ -722,6 +736,13 @@ export function WorkInProcessPage({
             }
             emptyMessage="Nenhum saldo alocado a ordens de produção para os filtros aplicados."
             columnPreferencesKey="cf:closing:work-in-process:v1"
+            fontSizePreferencesKey="cf:closing:work-in-process:font:v1"
+            viewLayoutPreferencesKey="cf:closing:work-in-process:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(itemColumns, row, {
+                ariaLabel: "Saldo alocado por ordem de produção",
+              })
+            }
           />
         ) : null}
       </div>

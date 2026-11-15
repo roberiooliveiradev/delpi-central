@@ -25,7 +25,11 @@ import {
   CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
-import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import {
+  DataTableSection,
+  renderCfRecordCard,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
 import {
@@ -183,23 +187,31 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
   const columns: DataTableColumn<EntryAuditAnalysisListItem>[] = useMemo(
     () => [
       {
-        key: "period",
+        key: "date_from",
         header: "Período",
+        sortable: true,
+        sortValue: (row) => row.date_from,
         render: (row) => formatPeriodLabel(row.date_from, row.date_to),
       },
       {
         key: "branches",
         header: "Filiais",
+        sortable: true,
+        sortValue: (row) => row.branches.join(","),
         render: (row) => formatBranches(row.branches, branchOptions),
       },
       {
         key: "types",
         header: "Tipos",
+        sortable: true,
+        sortValue: (row) => row.document_types.join(","),
         render: (row) => formatDocumentTypes(row.document_types),
       },
       {
         key: "status",
         header: "Situação",
+        sortable: true,
+        sortValue: (row) => row.status,
         render: (row) => (
           <CfStatusBadge
             label={formatAuditStatus(row.status)}
@@ -208,19 +220,11 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
         ),
       },
       {
-        key: "created",
+        key: "created_at",
         header: "Criada em",
+        sortable: true,
+        sortValue: (row) => row.created_at,
         render: (row) => formatDateTimeShort(row.created_at),
-      },
-      {
-        key: "open",
-        header: "Ação",
-        render: () => (
-          <span className="cf-action-with-icon">
-            {ENTRY_AUDIT_ACTION_ICONS.open}
-            Abrir
-          </span>
-        ),
       },
     ],
     [branchOptions],
@@ -402,6 +406,15 @@ export function EntryAuditHomePage({ basePath }: { basePath: string }) {
           rowKey={(row) => row.id}
           hideSearch
           onRowClick={(row) => openAnalysis(row.id)}
+          columnPreferencesKey="controllership-finance:entry-audit:analyses:columns:v1"
+          fontSizePreferencesKey="controllership-finance:entry-audit:analyses:font:v1"
+          viewLayoutPreferencesKey="controllership-finance:entry-audit:analyses:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, {
+              onActivate: (item) => openAnalysis(item.id),
+              ariaLabel: `Análise ${row.id}`,
+            })
+          }
         />
       ) : (
         <CfEmptyState

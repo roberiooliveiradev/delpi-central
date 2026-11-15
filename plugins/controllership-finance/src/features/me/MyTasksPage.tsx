@@ -28,6 +28,7 @@ import {
 } from "../../app/controllershipFinanceUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -165,6 +166,8 @@ export function MyTasksPage() {
         headerHint: CF_HELP.myTasks.columns.since,
         render: (task) =>
           task.pendingSince ? formatDateTime(task.pendingSince) : "—",
+        sortable: true,
+        sortValue: (task) => task.pendingSince ?? "",
       },
       {
         key: "link",
@@ -294,6 +297,11 @@ export function MyTasksPage() {
           hideSearch
           emptyMessage="Nenhuma tarefa encontrada."
           columnPreferencesKey="cf:my-tasks:v1"
+          fontSizePreferencesKey="cf:my-tasks:font:v1"
+          viewLayoutPreferencesKey="cf:my-tasks:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(columns, row, { ariaLabel: "Tarefa" })
+          }
         />
       </div>
     </section>

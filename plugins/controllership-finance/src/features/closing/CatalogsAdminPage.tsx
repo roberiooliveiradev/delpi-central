@@ -38,6 +38,7 @@ import {
 } from "../../app/controllershipFinanceUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import { ClosingHero } from "../../app/ClosingHero";
@@ -216,7 +217,14 @@ export function CatalogsAdminPage() {
 
   const columns = useMemo<DataTableColumn<CatalogEntry>[]>(
     () => [
-      { key: "code", header: "Código", headerHint: CF_HELP.catalogs.columns.code, render: (e) => e.code },
+      {
+        key: "code",
+        header: "Código",
+        headerHint: CF_HELP.catalogs.columns.code,
+        render: (e) => e.code,
+        sortable: true,
+        sortValue: (e) => e.code,
+      },
       { key: "label", header: "Rótulo", headerHint: CF_HELP.catalogs.columns.label, render: (e) => e.label },
       {
         key: "attributes",
@@ -392,6 +400,14 @@ export function CatalogsAdminPage() {
                 loading={entries === null}
                 hideSearch
                 emptyMessage="Nenhuma entrada neste catálogo."
+                columnPreferencesKey="cf:closing:catalogs-admin:v1"
+                fontSizePreferencesKey="cf:closing:catalogs-admin:font:v1"
+                viewLayoutPreferencesKey="cf:closing:catalogs-admin:layout:v1"
+                renderCard={(row) =>
+                  renderCfRecordCard(columns, row, {
+                    ariaLabel: `Entrada ${row.code}`,
+                  })
+                }
               />
             </CfSectionCard>
 

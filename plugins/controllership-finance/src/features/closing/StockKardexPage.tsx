@@ -50,6 +50,7 @@ import {
 } from "../../app/cfFeedbackUi";
 import {
   DataTableSection,
+  renderCfRecordCard,
   type DataTableColumn,
 } from "../../app/cfDataTableUi";
 import {
@@ -308,6 +309,8 @@ export function StockKardexPage({
         key: "movementDate",
         header: "Data",
         render: (row) => formatCivilDate(row.movementDate),
+        sortable: true,
+        sortValue: (row) => row.movementDate ?? "",
       },
       {
         key: "productCode",
@@ -748,6 +751,13 @@ export function StockKardexPage({
             hideSearch
             emptyMessage="Nenhuma movimentação no período para os filtros aplicados."
             columnPreferencesKey="cf:closing:stock-kardex:v1"
+            fontSizePreferencesKey="cf:closing:stock-kardex:font:v1"
+            viewLayoutPreferencesKey="cf:closing:stock-kardex:layout:v1"
+            renderCard={(row) =>
+              renderCfRecordCard(columns, row, {
+                ariaLabel: "Movimentação de estoque",
+              })
+            }
             serverPagination={
               payload?.pagination
                 ? {

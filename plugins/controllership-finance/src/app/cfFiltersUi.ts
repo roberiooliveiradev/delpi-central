@@ -6,6 +6,6 @@ import { CF_PORTAL_SCOPE } from "./controllershipFinanceUi";
 export const { FiltersRow, FilterInputField, FilterSelectField } =
   createDashboardFiltersKit({
     prefix: "cf",
-    labels: { filtersAriaLabel: "Filtros das baixas financeiras" },
+    labels: { filtersAriaLabel: "Filtros" },
     portalScopeClassName: CF_PORTAL_SCOPE,
   });

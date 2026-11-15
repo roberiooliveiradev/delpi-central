@@ -49,7 +49,11 @@ import {
   CfTrendDelta,
   CfUnderlineNav,
 } from "../../app/controllershipFinanceUi";
-import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
+import {
+  DataTableSection,
+  renderCfRecordCard,
+  type DataTableColumn,
+} from "../../app/cfDataTableUi";
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { CF_HELP } from "../../content/helpTooltips";
 import { EntryAuditLoadingState } from "./EntryAuditLoadingState";
@@ -63,8 +67,10 @@ import {
   entryAuditClaraSuggestions,
   entryAuditTabResource,
   formatAuditStatus,
+  entryAuditFieldLabel,
   formatBranchLabel,
   formatDifference,
+  formatOccurrenceValue,
   formatDocumentType,
   formatMoneyBRL,
   formatNoteSeries,
@@ -144,6 +150,8 @@ export function EntryAuditAnalysisPage({
     200,
     Math.max(10, Number(params.get("page_size") || "50") || 50),
   );
+  const tableSort = (params.get("sort") || "").trim();
+  const tableOrder = (params.get("order") || "asc").toLowerCase() === "desc" ? "desc" : "asc";
 
   useEffect(() => {
     const sync = () => setRouteEpoch((value) => value + 1);
@@ -236,16 +244,22 @@ export function EntryAuditAnalysisPage({
         ? { ...filters, situation: "posted_outside_period" }
         : filters;
 
+    const sortArg = tableSort || undefined;
+    const orderArg = tableSort ? (tableOrder as "asc" | "desc") : undefined;
     const request =
       resource === "tes"
-        ? listEntryAuditTes(analysisId, tabFilters, controller.signal).then(
-            (payload) => ({
-              items: payload.items,
-              page: 1,
-              page_size: payload.items.length || 1,
-              total: payload.items.length,
-            }),
-          )
+        ? listEntryAuditTes(
+            analysisId,
+            tabFilters,
+            controller.signal,
+            sortArg,
+            orderArg,
+          ).then((payload) => ({
+            items: payload.items,
+            page: 1,
+            page_size: payload.items.length || 1,
+            total: payload.items.length,
+          }))
         : listEntryAuditRows<EntryAuditOccurrence | EntryAuditDocument>(
             analysisId,
             resource,
@@ -253,6 +267,8 @@ export function EntryAuditAnalysisPage({
             tablePage,
             tablePageSize,
             controller.signal,
+            sortArg,
+            orderArg,
           );
     request
       .then((payload) => {
@@ -281,13 +297,17 @@ export function EntryAuditAnalysisPage({
     summary,
     tablePage,
     tablePageSize,
+    tableSort,
+    tableOrder,
   ]);
 
   const navigateWith = (changes: Record<string, string>) => {
     const next = currentSearch();
     const touchesPagingOnly =
       Object.keys(changes).length > 0 &&
-      Object.keys(changes).every((key) => key === "page" || key === "page_size");
+      Object.keys(changes).every(
+        (key) => key === "page" || key === "page_size" || key === "sort" || key === "order",
+      );
     Object.entries(changes).forEach(([key, value]) => {
       if (value) next.set(key, value);
       else next.delete(key);
@@ -317,47 +337,56 @@ export function EntryAuditAnalysisPage({
     {
       key: "severity",
       header: "Severidade",
+      sortable: true,
       render: (row) => <EntryAuditSeverityBadge severity={row.severity} />,
     },
     {
       key: "document",
       header: "Nota/Série",
+      sortable: true,
       render: (row) => formatNoteSeries(row.document_number, row.series),
     },
     {
       key: "supplier",
       header: "Fornecedor",
+      sortable: true,
       render: (row) => displayValue(row.supplier_name),
     },
     {
       key: "rule",
       header: "Regra",
+      sortable: true,
       render: (row) => displayValue(row.rule_name ?? row.title),
     },
     {
       key: "field",
       header: "Campo",
-      render: (row) => displayValue(row.field_label ?? row.field),
+      sortable: true,
+      render: (row) => entryAuditFieldLabel(row),
     },
     {
       key: "protheus",
       header: "Protheus",
-      render: (row) => displayValue(row.protheus_value),
+      sortable: true,
+      render: (row) => formatOccurrenceValue(row.protheus_value, row),
     },
     {
       key: "xml",
       header: "XML",
-      render: (row) => displayValue(row.xml_value),
+      sortable: true,
+      render: (row) => formatOccurrenceValue(row.xml_value, row),
     },
     {
       key: "difference",
       header: "Diferença",
+      sortable: true,
       render: (row) => formatDifference(row.difference, row.field),
       align: "right",
     },
     {
       key: "status",
       header: "Status",
+      sortable: true,
       render: (row) => (
         <CfResolutionStatusCell
           status={row.status === "resolved" ? "resolved" : "open"}
@@ -386,30 +415,67 @@ export function EntryAuditAnalysisPage({
     {
       key: "branch",
       header: "Filial",
+      sortable: true,
       render: (row) =>
         formatBranchLabel(String(row.branch ?? ""), branchOptions),
     },
     {
-      key: "document",
+      key: tab === "tes" ? "tes_code" : "document_number",
       header: tab === "tes" ? "TES" : "Documento",
+      sortable: true,
       render: (row) =>
         displayValue(
-          "document_number" in row ? row.document_number : row.tes ?? row.code,
+          "document_number" in row
+            ? row.document_number
+            : ("tes" in row ? row.tes : undefined) ?? ("code" in row ? row.code : ""),
         ),
     },
     {
-      key: "description",
+      key: tab === "tes" ? "description" : "supplier_name",
       header: tab === "tes" ? "Descrição" : "Fornecedor",
+      sortable: true,
       render: (row) =>
         displayValue(
           "supplier_name" in row ? row.supplier_name : row.description,
         ),
     },
     {
-      key: "situation",
-      header: "Situação",
-      render: (row) =>
-        displayValue("situation" in row ? row.situation : "Utilizada"),
+      // CT-e: «situation» ∉ CTE_SORT_WHITELIST — ordena por amount.
+      key:
+        tab === "tes" ? "items" : tab === "cte" ? "amount" : "situation",
+      header: tab === "tes" ? "Itens" : tab === "cte" ? "Valor" : "Situação",
+      sortable: true,
+      render: (row) => {
+        if (tab === "tes") {
+          const items =
+            ("sf4" in row &&
+              row.sf4 &&
+              (row.sf4 as { items?: number }).items) ??
+            ("items" in row ? row.items : undefined);
+          return displayValue(items ?? "");
+        }
+        if (tab === "cte") {
+          const raw =
+            "amount" in row
+              ? row.amount
+              : "total" in row
+                ? (row as { total?: unknown }).total
+                : undefined;
+          if (typeof raw === "number" && Number.isFinite(raw)) {
+            return formatMoneyBRL(raw);
+          }
+          if (typeof raw === "string" && raw.trim()) {
+            const parsed = Number(raw);
+            return Number.isFinite(parsed)
+              ? formatMoneyBRL(parsed)
+              : displayValue(raw);
+          }
+          return displayValue(raw);
+        }
+        return displayValue(
+          "situation" in row ? row.situation : "Utilizada",
+        );
+      },
     },
   ];
 
@@ -585,7 +651,13 @@ export function EntryAuditAnalysisPage({
       id: item.value,
       label: item.label,
       count: typeof count === "number" ? count : undefined,
-      onSelect: () => navigateWith({ tab: item.value }),
+      onSelect: () =>
+        navigateWith({
+          tab: item.value,
+          sort: "",
+          order: "",
+          page: "1",
+        }),
     };
   });
 
@@ -778,6 +850,9 @@ export function EntryAuditAnalysisPage({
             navigateWith({
               severity: filters.severity === "Alta" ? "" : severityToUrl("Alta"),
               tab: "occurrences",
+              sort: "",
+              order: "",
+              page: "1",
             })
           }
           hint={
@@ -802,7 +877,14 @@ export function EntryAuditAnalysisPage({
           titleHint={CF_HELP.entryAudit.kpiUnmatched}
           value={String(summary.conformity.unmatched_open)}
           icon={kpiIcon(<Link2Off size={22} strokeWidth={1.75} aria-hidden />)}
-          onSelect={() => navigateWith({ tab: "unmatched" })}
+          onSelect={() =>
+            navigateWith({
+              tab: "unmatched",
+              sort: "",
+              order: "",
+              page: "1",
+            })
+          }
         />
       </div>
 
@@ -981,12 +1063,33 @@ export function EntryAuditAnalysisPage({
           rowKey={(row) => row.stable_key}
           onRowClick={openOccurrence}
           hidePaginationWhenSinglePage
+          columnPreferencesKey="controllership-finance:entry-audit:occurrences:columns:v1"
+          fontSizePreferencesKey="controllership-finance:entry-audit:occurrences:font:v1"
+          viewLayoutPreferencesKey="controllership-finance:entry-audit:occurrences:layout:v1"
+          renderCard={(row) =>
+            renderCfRecordCard(occurrenceColumns, row, {
+              onActivate: openOccurrence,
+              ariaLabel: `Ocorrência ${row.document_number ?? ""}`,
+              skipKeys: ["status"],
+            })
+          }
           serverPagination={{
             page: page?.page ?? tablePage,
             pageSize: page?.page_size ?? tablePageSize,
             total: page?.total ?? 0,
             onPageChange: (nextPage) =>
               navigateWith({ page: String(nextPage) }),
+            onPageSizeChange: (size) =>
+              navigateWith({ page_size: String(size), page: "1" }),
+          }}
+          serverSort={{
+            sortKey: tableSort || "severity",
+            sortDirection: tableOrder,
+            onSortChange: (key) => {
+              const nextOrder =
+                tableSort === key && tableOrder === "asc" ? "desc" : "asc";
+              navigateWith({ sort: key, order: nextOrder, page: "1" });
+            },
           }}
         />
       ) : (
@@ -1003,6 +1106,14 @@ export function EntryAuditAnalysisPage({
             )
           }
           hidePaginationWhenSinglePage
+          columnPreferencesKey={`controllership-finance:entry-audit:${tab}:columns:v1`}
+          fontSizePreferencesKey={`controllership-finance:entry-audit:${tab}:font:v1`}
+          viewLayoutPreferencesKey={`controllership-finance:entry-audit:${tab}:layout:v1`}
+          renderCard={(row) =>
+            renderCfRecordCard(genericColumns, row, {
+              ariaLabel: "Registro da auditoria",
+            })
+          }
           serverPagination={
             entryAuditTabResource(tab) === "tes"
               ? undefined
@@ -1012,8 +1123,25 @@ export function EntryAuditAnalysisPage({
                   total: page?.total ?? 0,
                   onPageChange: (nextPage) =>
                     navigateWith({ page: String(nextPage) }),
+                  onPageSizeChange: (size) =>
+                    navigateWith({ page_size: String(size), page: "1" }),
                 }
           }
+          serverSort={{
+            sortKey:
+              tableSort ||
+              (tab === "tes"
+                ? "tes_code"
+                : tab === "cte"
+                  ? "document_number"
+                  : "received_date"),
+            sortDirection: tableOrder,
+            onSortChange: (key) => {
+              const nextOrder =
+                tableSort === key && tableOrder === "asc" ? "desc" : "asc";
+              navigateWith({ sort: key, order: nextOrder, page: "1" });
+            },
+          }}
         />
       )}
 
