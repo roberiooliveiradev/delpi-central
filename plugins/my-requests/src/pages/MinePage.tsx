@@ -468,7 +468,11 @@ export function MinePage() {
               : "—",
           },
         ]}
-        href={row.destination}
+        href={
+          row.source === "engineering-prc"
+            ? row.destination
+            : myRequestsPath({ requestId: row.id })
+        }
         ariaLabel={`Abrir ${row.displayNumber}`}
         onNavigate={(event: { preventDefault(): void }) => {
           event.preventDefault();

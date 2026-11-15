@@ -126,3 +126,14 @@ describe("URL state — deep link e back/forward", () => {
     expect(urlHook).toContain("navigateMyRequestsPath");
   });
 });
+
+describe("Cards — href sempre interno ao host", () => {
+  it("nunca passa destination vazio ao RecordCard (crash em cards view)", () => {
+    // Regression UX-V2-E2E-01: toUnifiedRow.destination = "" para rows
+    // requests-api → href="" → isSafeNavigationHref throw → página em branco
+    // no modo cards (default mobile). O href resolve a origem no render.
+    expect(mine).not.toMatch(/href=\{row\.destination\}/);
+    expect(mine).toContain('row.source === "engineering-prc"');
+    expect(queue).toContain("myRequestsPath({ requestId: row.id })");
+  });
+});
