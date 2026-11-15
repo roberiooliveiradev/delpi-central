@@ -34,6 +34,7 @@ from app.composition.supplies_composer import (
 from app.application.use_cases.supplies.get_purchase_request_approval_lead_time_use_case import (
     GetPurchaseRequestApprovalLeadTimeUseCase,
 )
+from app.interface.http.schemas.purchase_request_pending_approvals_schema import PendingApprovalResponse
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
@@ -638,3 +639,50 @@ def list_supplies_purchase_request_recent_linked_receipts_route(
             "Erro interno ao listar recebimentos vinculados à SC.",
             status_code=500,
         )
+
+
+@router.get(
+    "/pending-approvals",
+    response_model=PendingApprovalResponse,
+    operation_id="list_supplies_purchase_request_pending_approvals",
+    summary="Alçadas ativas de solicitações de compra",
+    description="Feed interno paginado por filial e SC. Somente SCR status 02, SCs bloqueadas e abertas, sem corte por data. Cursor exclusivo; próximo cursor nulo encerra a varredura.",
+)
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
+def list_supplies_purchase_request_pending_approvals_route(
+    after_branch: str = Query(
+        "", description="Filial do último documento da página anterior."
+    ),
+    after_request_number: str = Query(
+        "", description="SC do último documento da página anterior."
+    ),
+    limit: int = LIMIT_QUERY("limit_25_100"),
+):
+    from app.application.use_cases.supplies.list_purchase_request_pending_approvals_use_case import (
+        ListPurchaseRequestPendingApprovalsUseCase,
+    )
+    from app.interface.http.supplies_bff_service_access import (
+        is_trusted_internal_caller,
+    )
+
+    # This cross-unit polling feed belongs exclusively to the authenticated BFF.
+    if not is_trusted_internal_caller(PURCHASE_REQUESTS_API_CALLER):
+        return error_response(
+            "Feed exclusivo do serviço de solicitações de compra.", status_code=403
+        )
+    try:
+        result = ListPurchaseRequestPendingApprovalsUseCase().execute(
+            after_branch=after_branch,
+            after_request_number=after_request_number,
+            limit=limit,
+        )
+        return api_delpi_success(
+            result, operation_id="list_supplies_purchase_request_pending_approvals"
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError:
+        return error_response("Base TOTVS indisponível.", status_code=503)

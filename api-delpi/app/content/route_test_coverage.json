@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-13",
-  "baselineOperationCount": 787,
-  "operationCount": 787,
-  "coveredCount": 706,
+  "generatedAt": "2026-11-15",
+  "baselineOperationCount": 788,
+  "operationCount": 788,
+  "coveredCount": 707,
   "gapCount": 80,
   "exemptCount": 1,
   "byModule": {
@@ -224,8 +224,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 48,
-      "covered": 46,
+      "total": 49,
+      "covered": 47,
       "gap": 2,
       "exempt": 0
     },
@@ -6949,6 +6949,15 @@
       "path": "/supplies/purchase-requests/open-coverage",
       "module": "supplies",
       "entity": "supplies_purchase_request_coverage",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_pending_approvals",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/pending-approvals",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_pending_approval",
       "shape": "list",
       "status": "covered"
     },

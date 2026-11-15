@@ -1,3 +1,5 @@
+import { PURCHASE_REQUESTS_HELP } from "../content/helpTooltips";
+
 import { useMemo } from "react";
 
 import { DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
@@ -90,6 +92,7 @@ export function PurchaseRequestsTable({
       {
         key: "approval",
         header: "Aprovação",
+        headerHint: PURCHASE_REQUESTS_HELP.approval,
         render: (item) => labelApprovalStatus(listItemApprovalStatus(item)),
       },
       {

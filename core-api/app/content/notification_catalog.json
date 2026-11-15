@@ -334,6 +334,26 @@
         "controllership-finance"
       ],
       "pluginId": "controllership-finance"
+    },
+    "purchase_request_pending_requester": {
+      "label": "Solicitações de Compras",
+      "notificationLabel": "SC aguardando aprovação — solicitante",
+      "kind": "app",
+      "mutable": true,
+      "sourceApps": [
+        "purchase-requests"
+      ],
+      "pluginId": "purchase-requests"
+    },
+    "purchase_request_pending_approver": {
+      "label": "Solicitações de Compras",
+      "notificationLabel": "SC pendente na minha alçada",
+      "kind": "app",
+      "mutable": true,
+      "sourceApps": [
+        "purchase-requests"
+      ],
+      "pluginId": "purchase-requests"
     }
   },
   "legacyCategoryAliases": {

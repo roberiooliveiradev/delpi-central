@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 787,
-  "stableCount": 787,
+  "operationCount": 788,
+  "stableCount": 788,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -5226,6 +5226,13 @@
       "operationId": "get_supplies_purchase_requests_open_coverage",
       "method": "GET",
       "path": "/supplies/purchase-requests/open-coverage",
+      "tag": "Suprimentos — Solicitações de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_pending_approvals",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/pending-approvals",
       "tag": "Suprimentos — Solicitações de compra",
       "stable": true
     },

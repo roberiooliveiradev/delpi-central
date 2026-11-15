@@ -1,0 +1,14 @@
+{
+  "requesterTitle": "SC {request} aguardando aprovação",
+  "approverTitle": "SC {request} pendente na sua alçada",
+  "requesterMessage": "Sua solicitação de compra ainda precisa de aprovação. Acompanhe a liberação com os aprovadores responsáveis.",
+  "approverMessage": "Esta solicitação de compra aguarda sua aprovação na alçada ativa do Protheus.",
+  "document": "Solicitação de compra {request} · Filial {branch}",
+  "approversLabel": "Aprovadores pendentes",
+  "productsLabel": "Produtos da solicitação",
+  "actionLabel": "Ver solicitação",
+  "detailsLabel": "Consulte os detalhes para ver todos os produtos e aprovadores.",
+  "unknownApprover": "Aprovador não identificado",
+  "requesterCategory": "purchase_request_pending_requester",
+  "approverCategory": "purchase_request_pending_approver"
+}

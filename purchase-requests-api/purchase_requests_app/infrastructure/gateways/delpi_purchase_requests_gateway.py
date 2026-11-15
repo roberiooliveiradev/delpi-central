@@ -117,3 +117,16 @@ class DelpiPurchaseRequestsGateway:
                 "limit": str(limit),
             },
         )
+
+
+    def list_pending_approvals(
+        self, *, after_branch="", after_request_number="", limit=100
+    ):
+        return self._client.get_path(
+            "/supplies/purchase-requests/pending-approvals",
+            params={
+                "after_branch": after_branch,
+                "after_request_number": after_request_number,
+                "limit": str(limit),
+            },
+        )

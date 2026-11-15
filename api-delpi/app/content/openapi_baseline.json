@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 787,
+  "operation_count": 788,
   "operations": [
     {
       "method": "GET",
@@ -113311,6 +113311,62 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Unpaged dump of open Protheus purchase requests (SC1) for raw materials (B1_TIPO = MP), with product coverage from available stock plus open purchase orders minus open commitments."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-requests/pending-approvals",
+      "operationId": "list_supplies_purchase_request_pending_approvals",
+      "summary": "Alçadas ativas de solicitações de compra",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "after_branch",
+          "in": "query",
+          "required": false,
+          "description": "Filial do último documento da página anterior.",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "after_request_number",
+          "in": "query",
+          "required": false,
+          "description": "SC do último documento da página anterior.",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=25 ge=1 le=100",
+          "type": "integer",
+          "default": 25
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_request_pending_approval",
+        "shape": "list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Feed interno paginado por filial e SC. Somente SCR status 02, SCs bloqueadas e abertas, sem corte por data. Cursor exclusivo; próximo cursor nulo encerra a varredura."
     },
     {
       "method": "GET",

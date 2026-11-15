@@ -6,6 +6,8 @@ NOTIFICATION_EVENT_KEYS = frozenset(
     {
         "purchase_order_created",
         "purchase_receipt_recorded",
+        "purchase_request_pending_requester",
+        "purchase_request_pending_approver",
         "purchase_request_approved",
         "purchase_request_rejected",
         "purchase_delivery_overdue",
@@ -24,6 +26,18 @@ NOTIFICATION_EVENTS: list[dict[str, Any]] = [
         "label": "Recebimento registrado",
         "description": "Quando há entrada de nota fiscal vinculada ao pedido.",
         "sort_order": 20,
+    },
+    {
+        "event_key": "purchase_request_pending_requester",
+        "label": "SC aguardando aprovação",
+        "description": "Lembrete diário ao solicitante com aprovadores e produtos.",
+        "sort_order": 25,
+    },
+    {
+        "event_key": "purchase_request_pending_approver",
+        "label": "SC pendente na minha alçada",
+        "description": "Lembrete diário ao responsável pela alçada ativa.",
+        "sort_order": 26,
     },
     {
         "event_key": "purchase_request_approved",

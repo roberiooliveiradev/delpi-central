@@ -194,13 +194,20 @@ ORDER BY branch, request_number, level, approved_at, approver_code
 MAX_PENDING_REQUESTS = 100
 
 
-def build_lead_time_pending_sql(where_clause: str) -> str:
+def build_lead_time_pending_sql(
+    where_clause: str, *, max_requests: int = MAX_PENDING_REQUESTS,
+    actionable_only: bool = False, order_by_document: bool = False,
+) -> str:
     """Current SCR status 02 (active pending), never status 01 (queued later level).
 
     The first 100 distinct active SCs are selected before joining pending
     approvers, so parallel approval groups cannot hide another SC. Pending
     totals are computed before paging; the approved mean is not affected.
     """
+    if not 1 <= int(max_requests) <= MAX_PENDING_REQUESTS + 1:
+        raise ValueError("Invalid pending request limit")
+    order = "H.branch, H.request_number" if order_by_document else "H.issue_date DESC, H.branch, H.request_number DESC"
+    actionable = "AND H.unapproved_items > 0 AND H.blocked_items > 0" if actionable_only else ""
     return f"""
 WITH request_headers AS (
     SELECT
@@ -208,6 +215,8 @@ WITH request_headers AS (
         RTRIM(SC1.C1_NUM) AS request_number,
         MIN(TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)) AS issue_date,
         MIN(NULLIF(RTRIM(SC1.C1_SOLICIT), '')) AS requester_name,
+        MIN(NULLIF(RTRIM(SC1.C1_USER), '')) AS requester_user_id,
+        SUM(CASE WHEN RTRIM(SC1.C1_APROV) = 'B' THEN 1 ELSE 0 END) AS blocked_items,
         SUM(CASE WHEN RTRIM(SC1.C1_APROV) = 'L' THEN 0 ELSE 1 END) AS unapproved_items,
         SUM(CASE WHEN TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)
                       IS NULL THEN 1 ELSE 0 END) AS invalid_issue_items
@@ -219,10 +228,11 @@ pending_heads AS (
     SELECT H.*,
         COUNT(*) OVER () AS pending_total,
         ROW_NUMBER() OVER (
-            ORDER BY H.issue_date DESC, H.branch, H.request_number DESC
+            ORDER BY {order}
         ) AS rn
     FROM request_headers H
     WHERE H.issue_date IS NOT NULL AND H.invalid_issue_items = 0
+      {actionable}
       AND EXISTS (
           SELECT 1 FROM SCR010 SCR WITH (NOLOCK)
           WHERE SCR.D_E_L_E_T_ = '' AND SCR.CR_TIPO = 'SC'
@@ -234,7 +244,7 @@ pending_heads AS (
 SELECT DISTINCT
     H.branch, H.request_number,
     CONVERT(varchar(10), H.issue_date, 23) AS issue_date,
-    H.requester_name, H.unapproved_items, H.pending_total,
+    H.requester_name, H.requester_user_id, H.unapproved_items, H.pending_total,
     RTRIM(SCR.CR_NIVEL) AS level,
     RTRIM(SCR.CR_APROV) AS approver_code,
     SAK.approver_name,
@@ -264,8 +274,8 @@ OUTER APPLY (
       AND RTRIM(AK.AK_FILIAL) IN ('', RTRIM(SCR.CR_FILIAL))
     ORDER BY CASE WHEN RTRIM(AK.AK_FILIAL) = RTRIM(SCR.CR_FILIAL) THEN 0 ELSE 1 END
 ) SAK
-WHERE H.rn <= {MAX_PENDING_REQUESTS}
-ORDER BY issue_date DESC, H.branch, H.request_number DESC, level, approver_code
+WHERE H.rn <= {int(max_requests)}
+ORDER BY {order.replace("H.issue_date", "issue_date")}, level, approver_code
 """
 
 

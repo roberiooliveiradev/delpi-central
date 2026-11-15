@@ -241,6 +241,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_supplies_purchase_request_approval_lead_time": RouteContract(
         "supplies_purchase_request_approval_lead_time", "composite_analysis"
     ),
+    "list_supplies_purchase_request_pending_approvals": RouteContract(
+        "supplies_purchase_request_pending_approval", "list"
+    ),
     "list_supplies_purchase_request_approval_states": RouteContract(
         "supplies_purchase_request_approval_state", "list"
     ),

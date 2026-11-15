@@ -89,6 +89,7 @@ class PurchaseRequestsPortalNotificationService:
         event_type: str,
         category: str | None = None,
         metadata: dict[str, Any] | None = None,
+        html_content: str | None = None,
     ) -> PortalNotifyOutcome:
         if not self.enabled:
             return PortalNotifyOutcome.retry_later()
@@ -125,6 +126,9 @@ class PurchaseRequestsPortalNotificationService:
                 **(metadata or {}),
             },
         }
+        if html_content:
+            payload["presentation"] = "html"
+            payload["htmlContent"] = html_content
         if recipients:
             payload["userIds"] = recipients
         if codes:
