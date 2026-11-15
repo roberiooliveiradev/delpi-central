@@ -50,3 +50,26 @@ def test_no_direct_delpi_openapi_settings(monkeypatch):
     assert not hasattr(settings, "openapi_delpi_enabled")
     assert not hasattr(settings, "openapi_delpi_base_url")
     assert not hasattr(settings, "openapi_delpi_declarations_path")
+
+
+def test_parallel_mcp_discovery_defaults_off(monkeypatch):
+    monkeypatch.delenv("DELIA_PARALLEL_MCP_DISCOVERY", raising=False)
+    monkeypatch.delenv("DELIA_ENV", raising=False)
+    assert Settings().parallel_mcp_discovery is False
+
+
+def test_parallel_mcp_discovery_refused_in_production(monkeypatch):
+    monkeypatch.setenv("DELIA_ENV", "production")
+    monkeypatch.setenv("DELIA_PARALLEL_MCP_DISCOVERY", "true")
+    try:
+        Settings()
+    except ValueError as exc:
+        assert "DELIA_PARALLEL_MCP_DISCOVERY" in str(exc)
+    else:
+        raise AssertionError("production boot with flag must fail closed")
+
+
+def test_parallel_mcp_discovery_allowed_outside_production(monkeypatch):
+    monkeypatch.setenv("DELIA_ENV", "development")
+    monkeypatch.setenv("DELIA_PARALLEL_MCP_DISCOVERY", "true")
+    assert Settings().parallel_mcp_discovery is True
