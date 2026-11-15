@@ -39,7 +39,8 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
-| U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | READY | [prompt](./prompts/U13-residuais.md) |
+| U14 Acabamento visual da Auditoria + sai «Pergunte à CLARA» (Y1–Y5) | READY | [prompt](./prompts/U14-acabamento-visual.md) |
+| U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | DONE | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 | U13 Residuais da U12 (X1–X3) | DONE | `f546acd388` + tag `rollback-ui-review-u13-controllership-finance` |
 
@@ -312,3 +313,7 @@ Observações (sem bloqueio):
 2. As suítes `realKit` dependem de `plugins/plugin-ui/node_modules` (alias do `recharts`). Sem CI do MFE, registrar no README do MFE: instalar as dependências do plugin-ui antes de `npm test`.
 3. Contraste do `primary` do kit (branco sobre `#089bdb`, ≈3,1:1) segue com o dono do plugin-ui.
 4. Prints de PROD pelo owner seguem pendentes.
+
+### U14 — acabamento visual (15/11)
+
+Inspeção do Claude em PROD (entrada e análise 07–13/11, 1440×900 e ≈800 px, medição no DOM), aprovada pelo owner. **Decisão do owner:** a CLARA é um MCP usado no ChatGPT/Claude, não um assistente dentro do Portal — sai o card «Pergunte à CLARA», o botão «Copiar pergunta para a CLARA» e o bloco «Sugestão da CLARA» (campo que a BFF não produz). A página de consentimento e o MCP seguem. Prompt: [prompts/U14-acabamento-visual.md](./prompts/U14-acabamento-visual.md).
