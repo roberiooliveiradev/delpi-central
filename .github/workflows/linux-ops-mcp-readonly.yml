@@ -1,0 +1,54 @@
+name: Linux Ops MCP Readonly Tests
+
+on:
+  pull_request:
+    paths:
+      - "linux-ops-mcp/**"
+      - "shared/delpi_auth/**"
+      - "shared/delpi_mcp/**"
+      - "shared/pyproject.toml"
+      - ".github/workflows/linux-ops-mcp-readonly.yml"
+  push:
+    branches: [main]
+    paths:
+      - "linux-ops-mcp/**"
+      - "shared/delpi_auth/**"
+      - "shared/delpi_mcp/**"
+      - "shared/pyproject.toml"
+      - ".github/workflows/linux-ops-mcp-readonly.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install adapter + shared packages
+        run: |
+          python -m pip install --disable-pip-version-check -r linux-ops-mcp/requirements.txt
+          python -m pip install --disable-pip-version-check ./shared pytest
+      - name: Compile app (no import side effects)
+        run: python -m compileall -q linux-ops-mcp/linux_ops_mcp
+      - name: Unit tests and auth negatives
+        run: PYTHONPATH=linux-ops-mcp python -m pytest -q linux-ops-mcp/tests
+      - name: Check MCP SDK import and explicit tool inventory
+        run: |
+          PYTHONPATH=linux-ops-mcp python - <<'PY'
+          from linux_ops_mcp.server import create_mcp_server
+          tools = create_mcp_server()._tool_manager.list_tools()
+          names = sorted(tool.name for tool in tools)
+          expected = sorted([
+              "get_host_health", "list_managed_services",
+              "get_service_health", "get_deployment_revision",
+          ])
+          assert names == expected, (names, expected)
+          print("tool inventory: 4 read-only tools")
+          PY
+      - name: Build constrained image, without starting containers
+        run: docker build --pull -f linux-ops-mcp/Dockerfile -t delpi/linux-ops-mcp:ci .
