@@ -434,6 +434,23 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
     });
   const crumbs = () => page.getByRole("navigation", { name: "Caminho da página" });
 
+  /* Em viewports compactos o PagePath canônico recolhe ancestrais no
+   * menu «…» (overflow). O helper resolve o link onde quer que esteja. */
+  const crumbLink = async (nav: ReturnType<typeof crumbs>, name: string) => {
+    const direct = nav.getByRole("link", { name });
+    const overflow = nav.getByRole("button", {
+      name: "Mostrar páginas anteriores",
+    });
+    await expect(direct.or(overflow)).toBeVisible({ timeout: 20_000 });
+    if (await direct.isVisible().catch(() => false)) return direct;
+    if ((await overflow.getAttribute("aria-expanded")) !== "true") {
+      await overflow.click();
+    }
+    const item = page.getByRole("menuitem", { name });
+    await expect(item).toBeVisible();
+    return item;
+  };
+
   /* 1) Fila: Início / C&CP / Solicitações. */
   await page.goto(QUEUE_PATH);
   await ensureAuthenticated(page);
@@ -441,9 +458,7 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
   await expect(
     navQueue.getByRole("link", { name: "Início" }),
   ).toBeVisible({ timeout: 20_000 });
-  await expect(
-    navQueue.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
-  ).toBeVisible();
+  await crumbLink(navQueue, "Controle e Cadastro de Produtos");
   await expect(
     navQueue.locator('[aria-current="page"]'),
   ).toHaveText("Solicitações");
@@ -452,29 +467,23 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
   await page.goto(`${QUEUE_PATH}?area=products`);
   await ensureAuthenticated(page);
   const navProducts = crumbs();
-  await expect(
-    navProducts.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
-  ).toBeVisible({ timeout: 20_000 });
+  await crumbLink(navProducts, "Controle e Cadastro de Produtos");
   await expect(
     navProducts.locator('[aria-current="page"]'),
-  ).toHaveText("Produtos acompanhados");
+  ).toHaveText("Produtos acompanhados", { timeout: 20_000 });
   await shot("breadcrumb-products");
 
   /* 3) Detalhe de produto: raiz + Produtos acompanhados + código. */
   await openProductDetail(page, "30190123");
   const navDetail = crumbs();
-  await expect(
-    navDetail.getByRole("link", { name: "Controle e Cadastro de Produtos" }),
-  ).toBeVisible({ timeout: 20_000 });
-  await expect(
-    navDetail.getByRole("link", { name: "Produtos acompanhados" }),
-  ).toBeVisible();
+  await crumbLink(navDetail, "Controle e Cadastro de Produtos");
+  const productsLink = await crumbLink(navDetail, "Produtos acompanhados");
   await expect(
     navDetail.locator('[aria-current="page"]'),
   ).toHaveText("30190123");
 
   /* 4) Link intermediário retorna à área correta (?area=products). */
-  await navDetail.getByRole("link", { name: "Produtos acompanhados" }).click();
+  await productsLink.click();
   await page.waitForURL(/area=products/, { timeout: 15_000 });
   await expect(
     crumbs().locator('[aria-current="page"]'),
@@ -484,23 +493,22 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
   /* 5) Detalhe de solicitação: raiz + Solicitações + #id. */
   await page.goto(QUEUE_PATH);
   await ensureAuthenticated(page);
-  const firstRow = page
+  const firstEntry = page
     .getByRole("table")
     .locator("tbody tr")
-    .first();
-  await expect(firstRow).toBeVisible({ timeout: 20_000 });
-  await firstRow.click();
+    .first()
+    .or(page.getByRole("button", { name: /Solicitação #/ }).first());
+  await expect(firstEntry).toBeVisible({ timeout: 20_000 });
+  await firstEntry.click();
   await page.waitForURL(/product-registration\/[0-9a-f-]{36}/, {
     timeout: 15_000,
   });
   const navReq = crumbs();
-  await expect(
-    navReq.getByRole("link", { name: "Solicitações" }),
-  ).toBeVisible({ timeout: 20_000 });
+  const requestsLink = await crumbLink(navReq, "Solicitações");
   await expect(navReq.locator('[aria-current="page"]')).toHaveText(/^#/);
 
   /* 6) «Solicitações» volta à fila sem parâmetro de área (padrão). */
-  await navReq.getByRole("link", { name: "Solicitações" }).click();
+  await requestsLink.click();
   await page.waitForURL(/product-registration(\?|$)/, { timeout: 15_000 });
   await expect(
     crumbs().locator('[aria-current="page"]'),
