@@ -39,7 +39,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
-| U14 Refinamento visual + defeitos da seleção + CLARA fora do Portal (F0–F5, com verificador) | IN_PROGRESS | [prompt](./prompts/U14-acabamento-visual.md) |
+| U14 Refinamento visual + defeitos da seleção + CLARA fora do Portal (F0–F5, com verificador) | DONE | [prompt](./prompts/U14-acabamento-visual.md) · [report](./report-u14.md) |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | DONE | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 | U13 Residuais da U12 (X1–X3) | DONE | `f546acd388` + tag `rollback-ui-review-u13-controllership-finance` |
@@ -344,4 +344,4 @@ Requisitos e critérios: [review-3.md](./review-3.md) (RQ-U14-SEL, -BFF, -ENT, -
 | F2 | `fb81da0a96` | ACCEPT_WITH_RESIDUAL | AC-BFF-1..4 + SEL-3; HML |
 | F3 | `88f10f1e0b` | ACCEPT_WITH_RESIDUAL | AC-ENT-1..3 + AC-KPI-1..5; HML |
 | F4 | `92d25b1385` | ACCEPT_WITH_RESIDUAL | AC-GRA-1..5 + AC-TAB-1..4; HML |
-| F5 | (este commit) | ACCEPT_WITH_RESIDUAL | AC-CLARA-1..4 + AC-DOD-5; HML→PROD F2–F5 |
+| F5 | `c78d4a51d9` | ACCEPT_WITH_RESIDUAL | AC-CLARA-1..4 + AC-DOD-5; HML→PROD F2–F5 |
