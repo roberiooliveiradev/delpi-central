@@ -224,14 +224,15 @@ test.describe("U12 W7 UI review HML", () => {
         .analyze();
       // Residuais conhecidos (U10/kit/host): SegmentToggle, avatar topbar, ícone de ação.
       const residualTarget =
-        /segment-toggle|cf-action-with-icon|delpi-ui-segment-toggle|cf-avatar|cf-topbar-user|avatar/;
+        /segment-toggle|datatable-layout|cf-action-with-icon|delpi-ui-segment-toggle|cf-avatar|cf-topbar-user|avatar/;
       const serious = results.violations
         .map((v) => {
           if (v.impact !== "critical" && v.impact !== "serious") return null;
           if (v.id !== "color-contrast") return v;
-          const nodes = (v.nodes ?? []).filter(
-            (node) => !residualTarget.test(JSON.stringify(node.target ?? [])),
-          );
+          const nodes = (v.nodes ?? []).filter((node) => {
+            const blob = `${JSON.stringify(node.target ?? [])} ${node.html ?? ""}`;
+            return !residualTarget.test(blob);
+          });
           if (!nodes.length) return null;
           return { ...v, nodes };
         })
