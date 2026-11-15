@@ -339,3 +339,14 @@ PR #186, head `02dd50ad8c755557b473ab1a78e348696a9fbfc3`:
 - Gate para merge de PR #186: revisao do diff, politica de branch e aprovacao do responsavel. Nao fazer merge ou deploy automaticamente apenas porque o CI passou.
 
 **Status:** `P1-R2 CI_PASS / SOURCE_IN_PR / RUNTIME_NOT_DEPLOYED / AUTHN_NOT_PROVEN_LIVE`.
+
+
+## 17. PR #187 e preparacao do deploy isolado (2026-11-14)
+
+- PR #187 merged em `main`: commit `c7d0b85ecb464a3d3b32236b00ceb78653efc70e`.
+- Correcoes da revisao: runbook extrai a porta loopback efetivamente configurada; README reconhece publicacao exclusiva em `127.0.0.1`.
+- GitHub Actions no commit de head `97a0ec73fc1ab890a00106f63569f6740431302f`: `Architecture Enforcement` e `Linux Ops MCP Readonly Tests` passaram, incluindo teste MCP OAuth e build Docker da imagem.
+- Nenhuma execucao no `srv-api`, criacao Keycloak, Secure MCP Tunnel ou conexao ChatGPT foi realizada na sessao.
+- Atualizacao do checkout: evitar pull destrutivo; preservar alteracao em `shared/delpi_auth.egg-info/SOURCES.txt` com stash escopado e patch de backup, usar `git pull --ff-only` e parar se houver conflito. Nunca executar deploy completo da stack.
+- Ativacao: profile `linux-ops`, build isolado, `up -d --no-deps linux-ops-mcp` SOMENTE apos configurar UUID de servidor, issuer e audience OAuth canonicos, Keycloak dedicado e URL externa real do transporte. Sem isso, apenas atualizar repositorio/validar build, deixando o container desativado.
+- Read-back: verificar `docker ps` somente do MCP, `healthz`, 401 sem Bearer e socket apenas em loopback. **Nao afirmar deploy concluido sem evidencias do operador.**
