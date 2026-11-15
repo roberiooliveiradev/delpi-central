@@ -360,3 +360,21 @@ PR #186, head `02dd50ad8c755557b473ab1a78e348696a9fbfc3`:
 - Antes de executar `up -d --no-deps --no-build linux-ops-mcp`, confirmar **sem mostrar secrets**: UUID `IT_PORTAL_COLLECTOR_SERVER_ID` em `/etc/delpi/it-portal-linux-collector.env`; campos canonicos `PUBLIC_BASE_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_JWKS_URL`, `KEYCLOAK_AUDIENCE`; e os novos `LINUX_OPS_SERVER_ID`, `LINUX_OPS_MCP_RESOURCE_URL` (URL exata do transporte escolhido). O Code-only build não prova runtime configurado.
 - Secure MCP Tunnel precisa de `tunnel_id` em Platform, permissao da org (Tunnels Read+Manage/Use), associacao com workspace, `tunnel-client` e chave runtime guardada no host; authorization server Keycloak precisa continuar acessivel ao browser. Referencia oficial: https://developers.openai.com/api/docs/guides/secure-mcp-tunnels.
 - Caminho seguinte: read-only preflight dos campos + primeiro cadastro do tunel privado e autenticacao dedicada. Nao publicar porta SSH/Docker nem fazer deploy global.
+
+
+## 19. Preflight de ambiente: imagem pronta, UUID recuperavel e resource URL pendente (2026-11-14)
+
+**Origem:** verificacao fornecida pelo operador humano no `srv-api` apos pull e build; assistente nao teve acesso ao shell de producao.
+
+- `docker compose ... --profile linux-ops config --services` inclui `linux-ops-mcp`.
+- `docker images` mostra `infra-linux-ops-mcp:latest`.
+- `.env` existente contem valores para `PUBLIC_BASE_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_JWKS_URL`, `KEYCLOAK_AUDIENCE`.
+- `.env` nao contem valores para `LINUX_OPS_SERVER_ID` nem `LINUX_OPS_MCP_RESOURCE_URL`.
+- O UUID canônico do host ja consta de `/etc/delpi/it-portal-linux-collector.env` como `IT_PORTAL_COLLECTOR_SERVER_ID`; nunca criar UUID novo. O UUID pode ser transferido localmente sem exibir o valor e deve ser validado via `uuid.UUID`.
+- O codigo `linux_ops_mcp.asgi.resource_url()` requer `https://<PUBLIC_BASE_URL hostname>/apps/linux-ops-mcp/mcp`; a URL canonica pode ser **provisoria para teste local**, mas o endpoint/resource audience real usado no cadastro de ChatGPT Secure MCP Tunnel ainda depende de verificacao de compatibilidade do tunel. **Nao declarar OAuth funcional nem publicar cliente Keycloak antes de validar a audiencia real.**
+
+**Decisao de rollout:** permitir somente smoke local de `linux-ops-mcp` (profile opt-in, porta 127.0.0.1, sem `--build` ou `--pull`, sem tocar outras APIs) apos configuracao local nao secreta; testar `healthz`, absence de listener publico e `401` sem Bearer. A resposta `healthz` nao atesta Core RBAC. Para login real, cadastrar cliente Keycloak dedicado com callback fornecido pelo ChatGPT e validar `aud`, issuer, scopes, metadata e `tools/call`. Se `resource` do host nao casar com o recurso do tunel, parar em vez de remover validacao.
+
+**Fonte oficial consultada:** https://developers.openai.com/api/docs/guides/secure-mcp-tunnels e https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt. O tunel exige runtime API key, tunnel_id e associacao ao workspace; Keycloak authorization server nao e automaticamente encaminhado pelo tunel.
+
+**Evidencia restante:** `LINUX_OPS_SERVER_ID` gravado; `LINUX_OPS_MCP_RESOURCE_URL` provisoria/definitiva identificada; `docker ps`, `ss -lnt`, `curl /healthz`, desafio OAuth 401; testes com token humano e ChatGPT permanecem `NOT_DONE`.
