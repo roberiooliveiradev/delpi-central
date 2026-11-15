@@ -140,12 +140,10 @@ def password_token(username: str, password: str) -> str:
 
 
 def core(method: str, path: str, token: str, body=None):
-    data = None if body is None else json.dumps(body).encode()
     cmd = [
         "docker",
         "run",
         "--rm",
-        "-i",
         "--network",
         NETWORK,
         "curlimages/curl:8.5.0",
@@ -160,7 +158,9 @@ def core(method: str, path: str, token: str, body=None):
         "Content-Type: application/json",
         f"http://core-api:8000{path}",
     ]
-    proc = subprocess.run(cmd, input=data, capture_output=True)
+    if body is not None:
+        cmd.extend(["-d", json.dumps(body)])
+    proc = subprocess.run(cmd, capture_output=True)
     out = proc.stdout.decode()
     status = next(
         (ln for ln in out.splitlines() if ln.startswith("HTTP ")), "HTTP ?"
