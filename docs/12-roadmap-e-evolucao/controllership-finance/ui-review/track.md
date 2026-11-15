@@ -159,3 +159,18 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | PROD | DONE | Publicado; tag `rollback-ui-review-u9-controllership-finance`; **pedir prints ao owner** |
 
 SHA código U9: `1a1b8749bb` (+fixes grant). Tag rollback: `rollback-ui-review-u9-controllership-finance`.
+
+## 9. U10 — desempenho BFF e perfis
+
+| Item | Status | Nota |
+|---|---|---|
+| R1 `/summary` N+1 + memo | DONE | `statuses_of` + memo rows/runs; HML 01–15/11 summary≈242–285 ms (antes ≈8,3 s); query-budget tests |
+| R2 Perfis + LGPD | DONE | ConsentModal no Playwright; cf-access/manage/lnf/dre PASS; access sem LNF |
+| R3 axe inventário | DONE | Lista seletor/página/dono; MFE-local=0; host/plugin-ui registrados (sem fix kit nesta etapa) |
+| PROD BFF | DONE | Tag `rollback-ui-review-u10-controllership-finance-api`; **pedir prints + tempo de abertura ao owner** |
+
+SHA BFF: `aefd74682d`. Report: [reports/U10-desempenho-e-perfis.md](./reports/U10-desempenho-e-perfis.md).
+
+| Data | Etapa | SHA | Status | Nota |
+|---|---|---|---|---|
+| 2026-11-15 | U10 | `aefd74682d` (+e2e/docs) | DONE | G9 BFF; perfis HML; inventário axe; PROD BFF |

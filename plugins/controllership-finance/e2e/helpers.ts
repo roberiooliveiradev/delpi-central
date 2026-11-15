@@ -93,7 +93,10 @@ export async function loginAs(
   await dismissPrivacyGate(page);
 }
 
-/** Primeiro login HML: aceita política/consentimentos se a tela aparecer. */
+/**
+ * Primeiro login HML: fluxo real do ConsentModal do Portal
+ * (rolar política → Prosseguir → Aceitar e continuar).
+ */
 export async function dismissPrivacyGate(page: Page): Promise<void> {
   const privacyHeading = page.getByRole("heading", {
     name: /Política de Privacidade/i,
@@ -104,41 +107,34 @@ export async function dismissPrivacyGate(page: Page): Promise<void> {
     .catch(() => false);
   if (!shown) return;
 
-  const scrollBox = page
-    .locator('[class*="privacy"], [class*="consent"], dialog, [role="dialog"]')
-    .first();
-  if (await scrollBox.isVisible().catch(() => false)) {
-    for (let i = 0; i < 20; i += 1) {
-      await scrollBox.evaluate((el) => {
-        el.scrollTop = el.scrollHeight;
-      }).catch(() => undefined);
-      await page.waitForTimeout(150);
-    }
-  } else {
-    for (let i = 0; i < 20; i += 1) {
-      await page.keyboard.press("End");
-      await page.waitForTimeout(100);
-    }
+  const policyBox = page.locator(".consent-policy").first();
+  await policyBox.waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+  if (await policyBox.isVisible().catch(() => false)) {
+    await policyBox.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      el.dispatchEvent(new Event("scroll", { bubbles: true }));
+    });
+    // Garante threshold do modal (scrollHeight - clientHeight - 40).
+    await page.waitForTimeout(300);
+    await policyBox.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      el.dispatchEvent(new Event("scroll", { bubbles: true }));
+    });
   }
 
-  const accept = page
-    .getByRole("button", {
-      name: /Aceitar|Concordo|Continuar|Li e aceito|Confirmar|Prosseguir/i,
-    })
-    .filter({ hasNotText: /Consentimentos/i })
-    .last();
-  await accept.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
-  if (await accept.isVisible().catch(() => false)) {
-    await accept.click({ force: true }).catch(() => undefined);
-  }
-  // Segundo passo (consentimentos) se existir
-  const consentAccept = page
-    .getByRole("button", { name: /Aceitar|Confirmar|Salvar|Continuar/i })
-    .last();
-  if (await consentAccept.isEnabled().catch(() => false)) {
-    await consentAccept.click({ force: true }).catch(() => undefined);
-  }
+  const proceed = page.getByRole("button", { name: /^Prosseguir/i });
+  await expect(proceed).toBeEnabled({ timeout: 15_000 });
+  await proceed.click();
+
+  const accept = page.getByRole("button", { name: /Aceitar e continuar/i });
+  await expect(accept).toBeEnabled({ timeout: 15_000 });
+  await accept.click();
+
   await privacyHeading
+    .waitFor({ state: "hidden", timeout: 45_000 })
+    .catch(() => undefined);
+  await page
+    .locator(".consent-overlay")
     .waitFor({ state: "hidden", timeout: 45_000 })
     .catch(() => undefined);
 }
