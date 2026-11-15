@@ -1,5 +1,8 @@
 # Wireframes — Minhas Solicitações
 
+> **Atualização de design — 15/11/2026:** a composição nova, os quatro wireframes revisados e o contrato de paridade com o Helpdesk estão em [UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md](./UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md). Os wireframes E5–E23 abaixo são a **fotografia da implementação anterior**, não o layout alvo aprovado. Topbar com quatro abas **acima do hero**, hero único compacto, Filtros/Ordenar/Colunas, Tabela/Cards e primitives generalizados no Plugin UI são **TARGET**, não IMPLEMENTED. Não copiar mecanismos de Helpdesk entre MFEs.
+
+
 > **Produto:** Minhas Solicitações  
 > **Id técnico:** `my-requests` · `basePath` `/apps/my-requests`  
 > **API:** `/apps/requests-api` (nunca api-delpi no browser)  
