@@ -20,11 +20,11 @@ test.describe("home-hub H5", () => {
     await loginAs(page, "allowed");
     await openHome(page);
 
-    await expect(page.getByText("Central de Fechamento")).toBeVisible();
-    await expect(page.getByText("Notas fiscais")).toBeVisible();
-    await expect(page.getByText("Auditoria de Entradas")).toBeVisible();
-    await expect(page.getByText("Portal")).toHaveCount(0);
-    await expect(page.getByText("Meu perfil")).toHaveCount(0);
+    await expect(page.getByText("Central de Fechamento", { exact: true })).toBeVisible();
+    await expect(page.getByText("Notas fiscais", { exact: true })).toBeVisible();
+    await expect(page.getByText("Auditoria de Entradas", { exact: true })).toBeVisible();
+    await expect(page.getByText("Portal", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Meu perfil", { exact: true })).toHaveCount(0);
 
     // Superadmin HML pode ver Administração; access-only não.
     // Favoritar «Fechamento mensal» e recarregar.
@@ -52,7 +52,7 @@ test.describe("home-hub H5", () => {
     test.skip(testInfo.project.name !== "mobile", "mobile only");
     await loginAs(page, "allowed");
     await openHome(page);
-    await expect(page.getByText("Notas fiscais")).toBeVisible();
+    await expect(page.getByText("Notas fiscais", { exact: true })).toBeVisible();
     await page.screenshot({
       path: `${ARTIFACTS}/h5-access-mobile.png`,
       fullPage: true,
