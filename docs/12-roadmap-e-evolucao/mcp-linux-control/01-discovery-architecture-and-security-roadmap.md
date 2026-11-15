@@ -326,3 +326,16 @@ Amostra de saida `systemctl list-timers` e `systemctl show` do `srv-api`, recebi
 **Proxima sequencia:** CI/review P1-R2 -> opcao de transporte (Tunnel ou gateway) -> provisionamento OAuth dedicado com audience e callback reais -> smoke autenticado /mcp -> so depois classificar P1 `RUNTIME_VERIFIED`. Nunca fazer `git pull` destrutivo no checkout sujo, nem rebuild global de producao.
 
 **Rastreamento:** PR #185 (codigo P1 ja merged na main), PR #186 (endurecimento/runtime pendente), PR #184 (documentacao em revisao). Nenhum deploy ou alteracao no `srv-api` realizado pelo assistente nesta etapa.
+
+
+## 16. CI P1-R2 confirmado (2026-11-14)
+
+PR #186, head `02dd50ad8c755557b473ab1a78e348696a9fbfc3`:
+
+- GitHub Actions Architecture Enforcement run `43662826514`: `SUCCESS`.
+- GitHub Actions Linux Ops MCP Readonly Tests run `43662826533`: `SUCCESS`.
+- Passaram install shared, compile, unit tests e AuthZ negativos, catalogo das 4 tools MCP e `docker build` da imagem isolada.
+- Todos os resultados sao de **runner CI**, nao de execucao no `srv-api` nem de OAuth/ChatGPT. A imagem nao foi publicada/iniciada na producao.
+- Gate para merge de PR #186: revisao do diff, politica de branch e aprovacao do responsavel. Nao fazer merge ou deploy automaticamente apenas porque o CI passou.
+
+**Status:** `P1-R2 CI_PASS / SOURCE_IN_PR / RUNTIME_NOT_DEPLOYED / AUTHN_NOT_PROVEN_LIVE`.
