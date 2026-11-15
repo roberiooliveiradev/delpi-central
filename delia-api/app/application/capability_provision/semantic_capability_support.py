@@ -4181,21 +4181,42 @@ def _finalize_agent_collected_attempts(
                 error_code="investigation_clarification_required",
                 admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
             )
-        unmet_obligations = False
         early_obligations = (
             plan.evidence_needed
             if plan is not None and plan.evidence_needed
             else ()
         )
-        if early_obligations:
-            coverage = _evaluate_material_obligations(
-                obligations=early_obligations,
-                business=business_early,
-                delivery=_plan_delivery_mode(plan),
+        if not early_obligations:
+            # No declared material obligations (plan=None / empty):
+            # residual clarification still fills a real gap — do not
+            # discard it over unrelated business evidence (sibling
+            # ``test_clarification_short_circuits_finalize``).
+            missing = _obligation_descriptions(()) or ("clarification",)
+            content = (
+                str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
+                or _clarification_content(missing)
             )
-            unmet_obligations = any(
-                state != OBLIGATION_SATISFIED for _, state in coverage
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+                correlation_id=correlation,
+                content=content,
+                limitations=(
+                    "agent_requested_clarification",
+                    "verified_evidence_preserved",
+                ),
+                error_code="investigation_clarification_required",
+                admission_outcome=unbound_outcome or OWNER_PATH_UNBOUND,
+                outcome=business_early[0].outcome,
+                provenance=business_early[0].provenance,
             )
+        coverage = _evaluate_material_obligations(
+            obligations=early_obligations,
+            business=business_early,
+            delivery=_plan_delivery_mode(plan),
+        )
+        unmet_obligations = any(
+            state != OBLIGATION_SATISFIED for _, state in coverage
+        )
         if unmet_obligations:
             content = (
                 str(clarification_question).strip()[:MAX_RENDER_CONTENT_CHARS]
@@ -4217,7 +4238,7 @@ def _finalize_agent_collected_attempts(
                 outcome=business_early[0].outcome,
                 provenance=business_early[0].provenance,
             )
-        # Satisfied (or undeclared) obligations: ignore residual
+        # Declared obligations all SATISFIED: ignore residual
         # clarification and continue coverage/finalization on evidence.
         clarification_superseded = True
 
