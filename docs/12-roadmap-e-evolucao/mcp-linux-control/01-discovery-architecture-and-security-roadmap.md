@@ -1,7 +1,7 @@
 # Delpi MCP Linux Control — arquitetura, segurança e roadmap
 
 > **Data da avaliação:** 2026-11-14  
-> **Status:** `PROPOSED / DISCOVERY`. Este documento não instala, conecta, autoriza ou publica um MCP e não comprova estado operacional do `srv-api`.  
+> **Status atualizado em 2026-11-15:** `P1_AUTHENTICATED_READ_PROVEN / P2_DEPLOY_GOVERNANCE_PROPOSED`. A seção inicial é histórica; a conexão e uma consulta READ real foram demonstradas pelo operador (ver §40). **Nenhum PREPARE/ACT de deploy existe ainda.**  
 > **Ambiente-alvo:** Linux `srv-api`, checkout de produção `/home/operador/projetos/delpi-central`.  
 > **Escopo da entrega inicial:** levantamento de código e documentação, desenho de segurança, inventário somente leitura e critérios de evolução. **Nenhuma mudança em Docker/Keycloak/host/CI neste PR.**
 
@@ -661,3 +661,20 @@ O operador informou, apos identificar scope exclusivo sem mapper e cadastrar o `
 4. Testar separadamente `get_deployment_revision` (deve reportar `not_available`), escopos Core negativos e recusa de ferramenta fora da lista autorizada; nenhum ACT/SSH/deploy neste marco.
 
 Amostra derivada da resposta fornecida pelo operador, nao prova de consulta direta do assistente ao runtime.
+
+
+## 41. Prioridade do operador: P2 governanca para deploys via ATLAS (2026-11-15)
+
+**Decisao expressa do operador:** encerrar por ora a expansao da telemetria Linux (CPU %, Docker aggregate e status parcial) para concentrar o roadmap em **deploys seguros sob demanda pelo ChatGPT**. Requisito final: receber pedido conversacional de publicacao de servico/versionamento GitHub, preparar preflight, obter autorizacao humana independente, executar apenas o alvo autorizado, verificar revisao e health e registrar resultado auditavel; sempre sem terminal livre MCP.
+
+**Entregavel desta etapa (apenas design, sem deploy):** [Contrato tecnico ATLAS P2–P4](./02-atlas-deploy-control-plane-p2.md), que especifica fronteiras do MCP, Core/Keycloak/policy, executor Linux isolado, catalogo PREPARE/ACT, proposta selada, estados, aprovacao nominativa fora do ChatGPT, CI SHA pinado, readonly release evidence, matriz de testes negativos, HML e rollout restrito de producao.
+
+**Inventario existente confirmado por codigo:** `linux-ops-mcp/linux_ops_mcp/server.py` possui **4 READ e nenhum ACT**; `infra/scripts/up-prod-sequential.sh` e `infra/scripts/up-hml-sequential.sh` executam serviços isoladamente e suportam dry-run, mas `--pull` do script de produção não é gate de SHA imutável nem verificação transacional de deploy. `AGENTS.md` exige fluxo local-first, cuidado de concorrência, verificação independente antes de novas mudanças de código, e registra exceções específicas de implantação em PRODUCAO. O roadmap não concede permissão para publicar qualquer serviço.
+
+**Sequencia de implementação decidida:** P2.0 contrato (PROPOSED nesta etapa) -> P2.1 validadores puros/deny-by-default + testes -> P2.2 governanca Core + journal/CI/versao -> P2.3 autorizacao humana -> P3 dry-run e ACT em HML -> P4 piloto PROD de um servico nao critico. Sem nova coleta de observabilidade geral ate nova prioridade.
+
+**Gates ativos e pendentes:**
+- `P1_READ_MCP=OPERATOR_CONFIRMED`.
+- `P2_DEPLOY_CONTRACT=DOCUMENTED_IN_PR`.
+- `P2_POLICY_CODE=NOT_IMPLEMENTED`, `P2_APPROVAL=NOT_IMPLEMENTED`, `P3_HOST_EXECUTOR=NOT_IMPLEMENTED`, `P4_PROD_DEPLOY=NOT_AUTHORIZED_OR_EXECUTED`.
+- Futuras operacoes exigem identificacao do servico piloto/health, conferencias CI/revisao e executor contido antes de qualquer ACT. A branch/documento nao representa deploy de codigo em runtime.
