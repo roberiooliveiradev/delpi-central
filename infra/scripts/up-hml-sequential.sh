@@ -327,8 +327,10 @@ pre_up_hooks() {
         "$COMPOSE_DIR/hml-data/ocr-models"
       if [[ "$DRY_RUN" == true ]]; then
         echo "  [dry-run] bash $SCRIPT_DIR/hml-provision-eng-prc.sh $COMPOSE_DIR/$ENV_FILE"
+        echo "  [dry-run] bash $SCRIPT_DIR/hml-provision-eng-nc.sh $COMPOSE_DIR/$ENV_FILE"
       else
         bash "$SCRIPT_DIR/hml-provision-eng-prc.sh" "$COMPOSE_DIR/$ENV_FILE"
+        bash "$SCRIPT_DIR/hml-provision-eng-nc.sh" "$COMPOSE_DIR/$ENV_FILE"
       fi
       ;;
   esac

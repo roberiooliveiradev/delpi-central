@@ -90,29 +90,43 @@ export function ncHistoryActorLabel(event: NcHistoryEvent): string {
  * Engineering API; `loading` mantém placeholder honesto até o fetch. */
 export function buildNcHeroHighlights(
   indicators: NcIndicators | null,
+  options?: { unavailable?: boolean },
 ): PageHeroHighlight[] {
-  const loading = indicators === null;
+  const loading = indicators === null && !options?.unavailable;
+  const unavailable = indicators === null && Boolean(options?.unavailable);
+  const describe = (available: (ind: NcIndicators) => string) =>
+    loading
+      ? "Carregando indicadores oficiais…"
+      : indicators === null
+        ? "Indicadores indisponíveis no momento."
+        : available(indicators);
   return [
     {
       id: "days-without-nc",
       label: "Dias sem NC",
-      value: loading
-        ? "…"
-        : String(indicators.current_days_without_nc),
-      description: loading
-        ? "Carregando indicadores oficiais…"
-        : indicators.last_nc_date
-          ? `Última NC em ${formatNcDate(indicators.last_nc_date)}`
+      value: unavailable
+        ? "—"
+        : loading
+          ? "…"
+          : String(indicators?.current_days_without_nc),
+      description: describe((ind) =>
+        ind.last_nc_date
+          ? `Última NC em ${formatNcDate(ind.last_nc_date)}`
           : "Sem ocorrências registradas",
+      ),
       loading,
     },
     {
       id: "record-days-without-nc",
       label: "Recorde de dias sem NC",
-      value: loading ? "…" : String(indicators.record_days_without_nc),
-      description: loading
-        ? "Carregando indicadores oficiais…"
-        : `${indicators.nc_count} NC(s) registrada(s)`,
+      value: unavailable
+        ? "—"
+        : loading
+          ? "…"
+          : String(indicators?.record_days_without_nc),
+      description: describe(
+        (ind) => `${ind.nc_count} NC(s) registrada(s)`,
+      ),
       loading,
     },
   ];

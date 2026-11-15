@@ -41,11 +41,13 @@ import {
   mapApiFieldsToCorrectionErrors,
   type PrcCorrectionTargetErrors,
 } from "@delpi/plugin-ui/index";
+import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   buildPrcQueueUrl,
   EMPTY_PRC_QUEUE_URL,
   navigatePrcHref,
   parsePrcTab,
+  PRC_PATHS,
   prcDetailTabHref,
   useLocationSearch,
   type PrcTabKey,
@@ -496,14 +498,33 @@ export function PrcDetailPage({
     <main className="engineering-prc">
       <EngineeringPagePath
         back={{
-          label: PRC_COPY.detailBreadcrumb,
-          href: `${basePath}/${"product-registration"}`,
+          label: PRC_COPY.breadcrumbHome,
+          href: basePath,
           onNavigate: (event) => {
             event.preventDefault();
-            backToQueue();
+            navigateEngineeringView("home", { basePath });
           },
         }}
-        items={[]}
+        items={[
+          {
+            id: "prc-root",
+            label: PRC_COPY.breadcrumbRoot,
+            href: `${basePath}/${PRC_PATHS.queue}`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePrcHref(`${basePath}/${PRC_PATHS.queue}`);
+            },
+          },
+          {
+            id: "prc-requests",
+            label: PRC_COPY.detailBreadcrumb,
+            href: `${basePath}/${PRC_PATHS.queue}`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              backToQueue();
+            },
+          },
+        ]}
         current={prcShortId(detail.id)}
       />
 

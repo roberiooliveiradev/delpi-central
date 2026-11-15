@@ -169,6 +169,17 @@ describe("buildNcHeroHighlights", () => {
     expect(highlights.every((h) => h.loading)).toBe(true);
     expect(highlights.every((h) => h.value === "…")).toBe(true);
   });
+
+  it("erro de consulta não é zero nem loading — indisponível honesto", () => {
+    const highlights = buildNcHeroHighlights(null, { unavailable: true });
+    expect(highlights.every((h) => h.loading)).toBe(false);
+    expect(highlights.every((h) => h.value === "—")).toBe(true);
+    expect(
+      highlights.every((h) =>
+        h.description === "Indicadores indisponíveis no momento."
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("buildNcProductsSummary", () => {

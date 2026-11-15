@@ -262,7 +262,9 @@ export function NonconformitiesListPage() {
         eyebrow="Portal Engenharia"
         title="Não conformidades"
         description="Registro e acompanhamento das não conformidades de Engenharia — dados oficiais da Engineering API."
-        highlights={buildNcHeroHighlights(indicators)}
+        highlights={buildNcHeroHighlights(indicators, {
+          unavailable: Boolean(error),
+        })}
         actions={
           <>
             <EngineeringActionButton
@@ -427,9 +429,18 @@ export function NonconformitiesListPage() {
       ) : null}
 
       {error ? (
-        <EngineeringStateBanner variant="error">
-          {`Não conformidades indisponíveis — ${error}`}
-        </EngineeringStateBanner>
+        <>
+          <EngineeringStateBanner variant="error">
+            {`Não conformidades indisponíveis — ${error}`}
+          </EngineeringStateBanner>
+          <EngineeringActionButton
+            variant="ghost"
+            softDisabled={loading}
+            onClick={() => void load()}
+          >
+            Tentar novamente
+          </EngineeringActionButton>
+        </>
       ) : null}
 
       {loading && !list ? (

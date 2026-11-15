@@ -547,11 +547,15 @@ services:
       ENG_DRAWING_BENCHMARK_ENABLED: "false"
       ENG_DRAWING_OCR_BENCHMARK_ENABLED: ""
       ENG_DRAWING_OCR_MODEL_DIR: ""
-      ENG_NC_REPOSITORY: ""
-      ENG_NC_DB_HOST: ""
-      ENG_NC_DB_USER: ""
-      ENG_NC_DB_PASSWORD: ""
-      ENG_NC_IMPORT_REPLACE_ENABLED: ""
+      # Não conformidades — fail-honest sem ENG_NC_* (Unavailable repo);
+      # principal dedicado eng_nc provisionado por hml-provision-eng-nc.sh.
+      ENG_NC_REPOSITORY: ${ENG_NC_REPOSITORY:-}
+      ENG_NC_DB_HOST: ${ENG_NC_DB_HOST:-}
+      ENG_NC_DB_PORT: ${ENG_NC_DB_PORT:-5432}
+      ENG_NC_DB_NAME: ${ENG_NC_DB_NAME:-}
+      ENG_NC_DB_USER: ${ENG_NC_DB_USER:-}
+      ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
+      ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
       INSTALL_VISION_EXTRAS: "false"
       # Product Registration — schema engineering já migrado pelo api-delpi;
       # principal dedicado eng_prc (nunca PLUGINS_DB_USER).

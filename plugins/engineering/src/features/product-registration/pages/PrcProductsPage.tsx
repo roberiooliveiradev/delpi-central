@@ -268,8 +268,18 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
             navigateEngineeringView("home", { basePath });
           },
         }}
-        items={[]}
-        current={PRC_COPY.breadcrumbRoot}
+        items={[
+          {
+            id: "prc-root",
+            label: PRC_COPY.breadcrumbRoot,
+            href: `${basePath}/${PRC_PATHS.queue}`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePrcHref(`${basePath}/${PRC_PATHS.queue}`);
+            },
+          },
+        ]}
+        current={PRC_PRODUCTS_COPY.areaProducts}
       />
 
       <EngineeringPageHero

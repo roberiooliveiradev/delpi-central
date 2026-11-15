@@ -60,7 +60,10 @@ _USER_AGENT = (
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
 
-_INFRA_ENV = Path(__file__).resolve().parents[1] / ".env"
+_INFRA_ENV = Path(
+    os.environ.get("S2S_PROVISION_ENV_FILE")
+    or Path(__file__).resolve().parents[1] / ".env"
+)
 
 
 def _env_value(key: str) -> str:

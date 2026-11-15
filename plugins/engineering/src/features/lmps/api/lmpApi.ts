@@ -96,7 +96,15 @@ function assertAvailable(data: EngineeringData, fallback: string): void {
       (typeof data.message === "string" && data.message) ||
       (typeof data.reason === "string" && data.reason) ||
       data.status;
-    throw new Error(`${fallback} (${reason})`);
+    /* Código técnico (ex.: service_auth_unavailable) fica no log — a
+     * mensagem ao usuário distingue permissão de indisponibilidade sem
+     * expor internals de autenticação S2S. */
+    console.warn(`[lmps] ${fallback}: ${reason}`);
+    throw new Error(
+      data.status === "forbidden"
+        ? `${fallback} — acesso restrito ao seu usuário.`
+        : fallback,
+    );
   }
 }
 

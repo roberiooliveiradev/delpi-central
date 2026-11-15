@@ -759,7 +759,12 @@ export function DashboardLmpsPage({
       {error && !hasData && !loading ? (
         <section className="engineering-lmps-charts-grid">
           <ChartCard title="Erro">
-            <div className={STATE_BOX_ERROR}>{error}</div>
+            <div className={STATE_BOX_ERROR}>
+              {error}{" "}
+              <EngineeringActionButton variant="ghost" onClick={reload}>
+                <RefreshCw size={14} aria-hidden="true" /> Tentar novamente
+              </EngineeringActionButton>
+            </div>
           </ChartCard>
         </section>
       ) : null}
@@ -768,7 +773,10 @@ export function DashboardLmpsPage({
         <section className="engineering-lmps-charts-grid">
           <div className={STATE_BOX_ERROR}>
             Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
-            {error}
+            {error}{" "}
+            <EngineeringActionButton variant="ghost" onClick={reload}>
+              <RefreshCw size={14} aria-hidden="true" /> Tentar novamente
+            </EngineeringActionButton>
           </div>
         </section>
       ) : null}

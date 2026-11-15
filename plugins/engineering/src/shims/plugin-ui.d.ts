@@ -1445,12 +1445,8 @@ declare module "@delpi/plugin-ui/index" {
     }) => void;
   };
 
-  export type PagePathItem = {
-    label: string;
-    href?: string;
-    onNavigate?: (event: {
-      preventDefault: () => void;
-    }) => void;
+  export type PagePathItem = PagePathLink & {
+    id: string;
   };
 
   export type DashboardPagePathProps = {

@@ -178,6 +178,16 @@ export function PrcProductDetailPage({
         }}
         items={[
           {
+            id: "prc-root",
+            label: PRC_COPY.breadcrumbRoot,
+            href: `${basePath}/${PRC_PATHS.queue}`,
+            onNavigate: (event) => {
+              event.preventDefault();
+              navigatePrcHref(`${basePath}/${PRC_PATHS.queue}`);
+            },
+          },
+          {
+            id: "prc-products",
             label: PRC_PRODUCTS_COPY.detailBreadcrumb,
             href: `${basePath}/${PRC_PATHS.queue}?area=products`,
             onNavigate: (event) => {
