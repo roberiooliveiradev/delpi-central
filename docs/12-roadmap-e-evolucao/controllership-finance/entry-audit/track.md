@@ -257,6 +257,7 @@ A amostra do owner (SF1 exportada às 14h19 de 12/11) tinha 7 notas SPED+CTE na 
 
 | Data | Etapa | SHA | Resultado | Evidência / observações |
 |---|---|---|---|---|
+| 2026-11-14 | TES | `aeba1d7131` | DONE | Fichas TES-00..05 no corpus. SF4 viva (458 códigos) igual à extração de 09/11/2026 nos campos comparados; SX3 confirmou `F4_PISCRED`, `F4_TESDV` e `F4_MSBLQL`. Ingestão governada, mesmo modo (controladoria e depois LNF), 0 falhas. HML `b44fbd58-7abf-4be4-8a49-2ea84453e6cc` e, após o LNF, `0dbcda58-9040-46b0-b075-f1d096e3fbeb`. PROD `4d01e4fc-ddf2-46ef-9479-09f41d51e9d7` e, após o LNF, `ad25f991-a481-4cbf-88c0-b8bf3b634c98`. Os dois ambientes: 121 fontes, 2637 itens. Itens publicados: TES-00 11, TES-01 9, TES-02 7, TES-03 53, TES-04 44, TES-05 7. Busca de conhecimento devolve as fichas com `citation_locator`; usuário só de LNF não recebe `ficha-tes-*`. Golden set R01–R15: 2 PASS. |
 | 2026-11-14 | — | — | Owner | Autorização permanente para HML (regra 9, D15) e fusão futura Financeiro → Controladoria & Finanças registrada como fora da trilha (D16). |
 | 2026-11-13 | — | — | Trilha criada | plano, back-end, front-end e MCP consolidados; decisões D1–D14 |
 | 2026-11-14 | T0 | 19b026cef6 | DONE | Mapa SX3×skill em backend §4. Questor: NF-e filtra emissão em dd/MM/yyyy (ISO → HTTP 500); CT-e filtra nos dois formatos; `iTotal` da NF-e não é contagem; sessão 02 PROVEN em PROD. HML sem container financial-api. LNF aberto por número+fornecedor; chave só no DANFE. Próxima migration `V023`. Volume de um mês é pequeno. Sem upload. |
