@@ -3,6 +3,7 @@
 > **TASK_ID:** MYREQ-HELPDESK-PLUGIN-UI-CROSS-MFE-UX-CONTRACT-01
 > **Decisão de produto:** aprovada na conversa em 15/11/2026: as quatro abas de Minhas Solicitações permanecem **acima do hero**; paridade visual e comportamental com Meus Chamados de TI; componentes/primitivos reutilizáveis pertencem ao **Plugin UI** e são importados pelos dois MFEs.
 > **Fase deste registro:** PLANNED / REQUIREMENTS_APPROVED_FOR_DOCUMENTATION. **Não** é comprovação de implementação, build, E2E ou deploy. Nenhum direito de produção decorre deste texto.
+> **Evidência de execução (HML, 15/11/2026):** [`UX-PARITY-EXECUTION-EVIDENCE.md`](./UX-PARITY-EXECUTION-EVIDENCE.md) — implementada e homologada em HML via `MYREQ-HELPDESK-PLUGIN-UI-CROSS-MFE-UX-IMPLEMENTATION-HML-01` (commits `8553acecab`…`1696ce51c1`).
 > **Owners:** Plugin UI (primitivos/apresentação neutra), my-requests (jornada e modelos do solicitante), helpdesk (jornada/chamados), requests-api (solicitações corporativas), Engineering API (PRC); Core (RBAC/rotas), Keycloak (identidade).
 > **Referências:** [WIREFRAMES My Requests](./WIREFRAMES.md), [Helpdesk list](../helpdesk/13-listagem-de-chamados.md), [Helpdesk wireframes](../helpdesk/WIREFRAMES.md), [My Requests playbook](./PLAYBOOK.md).
 

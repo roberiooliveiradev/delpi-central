@@ -58,6 +58,7 @@ api-delpi/data/
 # Playwright E2E artifacts (gerados a cada run)
 plugins/bpmn-modeler/test-results/
 plugins/bpmn-modeler/playwright-report/
+plugins/my-requests/e2e/artifacts/
 # Snapshots de sessão E2E (tokens — nunca commitar)
 plugins/bpmn-modeler/e2e/.auth/
 .worktrees/
