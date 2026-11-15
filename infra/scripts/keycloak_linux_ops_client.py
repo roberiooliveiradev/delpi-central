@@ -163,6 +163,33 @@ class Provisioner:
         rows = self._get(f"clients/{client_uuid}/default-client-scopes") or []
         return {s["id"] for s in rows}
 
+    def _audience_mapper_valid(self, scope: dict, audience: str) -> bool:
+        """Require the approved value in access-token aud, not just scope existence."""
+        mappers = self._mappers(scope["id"])
+        return any(
+            m.get("protocolMapper") == "oidc-audience-mapper"
+            and (
+                cfg.get("included.custom.audience") == audience
+                or cfg.get("included.client.audience") == audience
+            )
+            and cfg.get("access.token.claim") == "true"
+            for m in mappers
+            for cfg in [m.get("config") or {}]
+        )
+
+    def _dedicated_mapper_status(self, scope: dict) -> str | None:
+        """Detect scope drift before creating a client or making any write."""
+        mappers = self._mappers(scope["id"])
+        if not mappers:
+            return "absent"
+        valid = [
+            m for m in mappers
+            if m.get("protocolMapper") == "oidc-audience-mapper"
+            and m.get("config", {}).get("included.custom.audience") == self.c.resource
+            and m.get("config", {}).get("access.token.claim") == "true"
+        ]
+        return None if len(valid) == 1 and len(mappers) == 1 else "unexpected"
+
     def audit(self) -> list[str]:
         """Read-only drift; never returns raw client repr, tokens or credentials."""
         issues = []
@@ -173,15 +200,14 @@ class Provisioner:
         for name in DEFAULT_SCOPE_NAMES:
             if name not in scopes:
                 issues.append(f"required shared scope missing: {name}")
+        shared_audience = scopes.get("audience-delpi")
+        if shared_audience and not self._audience_mapper_valid(
+            shared_audience, "delpi-central"
+        ):
+            issues.append("shared platform audience mapper missing or invalid")
         audience_scope = scopes.get(DEDICATED_SCOPE)
         if audience_scope:
-            mappers = self._mappers(audience_scope["id"])
-            matches = [m for m in mappers
-                       if m.get("protocolMapper") == "oidc-audience-mapper"
-                       and m.get("config", {}).get("included.custom.audience")
-                       == self.c.resource
-                       and m.get("config", {}).get("access.token.claim") == "true"]
-            if len(matches) != 1 or len(mappers) != 1:
+            if self._dedicated_mapper_status(audience_scope) is not None:
                 issues.append("dedicated scope audience mapper differs")
         else:
             issues.append("dedicated audience scope absent")
@@ -219,6 +245,13 @@ class Provisioner:
         for name in DEFAULT_SCOPE_NAMES:
             if name not in scopes:
                 raise ContractError(f"shared scope missing; do not create: {name}")
+        if not self._audience_mapper_valid(scopes["audience-delpi"], "delpi-central"):
+            raise ContractError("shared platform audience mapper missing or invalid")
+        # Preflight ALL existing shared/dedicated mapper state before first write.
+        # A conflicting resource mapper must never leave a newly created client.
+        existing_scope = scopes.get(DEDICATED_SCOPE)
+        if existing_scope and self._dedicated_mapper_status(existing_scope) == "unexpected":
+            raise ContractError("unexpected mapper in dedicated scope")
 
         uuid = self._uuid()
         if uuid:
