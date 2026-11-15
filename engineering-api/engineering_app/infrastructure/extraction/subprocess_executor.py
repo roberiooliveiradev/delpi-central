@@ -45,6 +45,14 @@ _DEFAULT_TIMEOUT_S = 180.0
 _DEFAULT_CONCURRENCY = 1
 
 _semaphore = threading.BoundedSemaphore(_DEFAULT_CONCURRENCY)
+_active_lock = threading.Lock()
+_active_workers = 0
+
+
+def active_workers() -> int:
+    """Workers OCR em execução neste processo (para observabilidade)."""
+    with _active_lock:
+        return _active_workers
 
 
 def _int_env(name: str, default: int, lo: int, hi: int) -> int:
@@ -110,6 +118,7 @@ def run_pipeline_isolated(
     timeout = float(
         timeout_s or max(_DEFAULT_TIMEOUT_S, limits["cpu_seconds"] + 60)
     )
+    global _active_workers
     corr = correlation_id or uuid.uuid4().hex[:12]
     doc_hash = hashlib.sha256(pdf_bytes).hexdigest()
     record: dict[str, Any] = {
@@ -145,6 +154,8 @@ def run_pipeline_isolated(
             }
         )
         return record
+    with _active_lock:
+        _active_workers += 1
     proc: subprocess.Popen | None = None
     try:
         try:
@@ -246,6 +257,8 @@ def run_pipeline_isolated(
         record = inner
     finally:
         _semaphore.release()
+        with _active_lock:
+            _active_workers -= 1
         if proc is not None and proc.poll() is None:  # orphan guard
             try:
                 os.killpg(proc.pid, signal.SIGKILL)

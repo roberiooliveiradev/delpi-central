@@ -395,13 +395,43 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "engineering facts. Requires ENG_DRAWING_BENCHMARK_ENABLED and "
         "ENG_DRAWING_OCR_BENCHMARK_ENABLED.",
         "analysis",
-        fields=("product_code",),
+        fields=("product_code", "job_id", "existing_only"),
         notes=(
             "Deterministic, explainable rules only (position/alignment "
             "clustering); OCR confidence is never association "
             "confidence; DIMENSION_TEXT_FOUND is not a verified "
             "geometry association; BOM stays source of truth; absence "
-            "in OCR never proves absence in the drawing; read-only."
+            "in OCR never proves absence in the drawing; read-only. "
+            "Async job model: first call returns job_id/RUNNING, poll "
+            "with the same job_id; existing_only=true resolves the "
+            "idempotent key without starting processing; admission is "
+            "fail-closed — one heavy visual job at a time."
+        ),
+    ),
+    _a(
+        "drawing", "runtime_status", "read",
+        "Operational status of the visual drawing pipeline (OCR "
+        "availability, heavy-job slots, admission state and real "
+        "resource usage with scope labels) — READ_ONLY, never starts "
+        "OCR, loads models or renders PDFs.",
+        "read",
+        notes=(
+            "host/container memory scopes are labeled separately; "
+            "RLIMIT_AS is virtual address space, not free memory; "
+            "UNKNOWN means metrics unavailable — never fabricated."
+        ),
+    ),
+    _a(
+        "drawing", "job_list", "read",
+        "List the caller's own drawing-analysis jobs (job_id, product, "
+        "analysis type, status, phase, timestamps, result_available) "
+        "— owner-scoped, never enumerates other users' jobs; the "
+        "registry is process-local and lost on restart.",
+        "read",
+        notes=(
+            "Polling an existing job: analyze(product.drawing_"
+            "understanding, product_code + job_id); a job of another "
+            "user is indistinguishable from a non-existent one."
         ),
     ),
     # --- knowledge ----------------------------------------------------------

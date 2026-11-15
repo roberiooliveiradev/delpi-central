@@ -464,6 +464,11 @@ _READ_DISPATCH = {
     ("product", "drawing_download"): (
         lambda a: bridge.tool_get_product_drawing_pdf(**a)
     ),
+    # Drawing ops — status/jobs READ_ONLY (RQ-OPS); nunca disparam OCR.
+    ("drawing", "runtime_status"): (
+        lambda a: _drawing_runtime_status(a)
+    ),
+    ("drawing", "job_list"): lambda a: _drawing_job_list(a),
     ("product", "history"): (
         lambda a: bridge.tool_get_product_history(**a)
     ),
@@ -540,6 +545,49 @@ async def _prc_read(action: str, args: dict) -> CallToolResult:
         action=action, capability=f"product_registration.{action}"
     )
     return await prc_semantic.read_action(context, entry, args)
+
+
+async def _drawing_runtime_status(args: dict) -> CallToolResult:
+    """RQ-OPS-01 — estado operacional READ_ONLY; nunca inicia OCR,
+    carrega modelo ou renderiza PDF."""
+    bridge._require_engineering_human()
+    from engineering_app.application.drawing.visual_admission import (
+        ocr_runtime_status,
+    )
+
+    return _ok(
+        {"ocr_runtime_status": ocr_runtime_status()},
+        "Estado operacional do processamento visual de desenhos.",
+    )
+
+
+async def _drawing_job_list(args: dict) -> CallToolResult:
+    """RQ-OPS-03 — jobs de análise do caller (owner-scoped)."""
+    context = bridge._require_engineering_human()
+    from engineering_app.application.drawing.analysis_jobs import (
+        analysis_job_store,
+        job_summary,
+    )
+
+    ctx = bridge._source_context(context)
+    ident = _drawing_job_owner_fingerprint(ctx)
+    store = analysis_job_store()
+    jobs = [job_summary(j) for j in store.list_for_owner(ident)]
+    return _ok(
+        {
+            "jobs": jobs,
+            "count": len(jobs),
+            "process_local_registry": True,
+            "restart_loses_jobs": True,
+            "result_ttl_s": 3600,
+            "note": (
+                "Somente jobs do usuário autenticado são listados; "
+                "resultado COMPLETED expira após o TTL e o registro "
+                "não sobrevive a reinício do serviço."
+            ),
+        },
+        "Jobs de análise de desenho do usuário autenticado.",
+    )
 
 # --- analyze --------------------------------------------------------------
 
@@ -806,6 +854,7 @@ async def _analyze_product_drawing(
         # executa desacoplado; o consumidor consulta por job_id.
         from engineering_app.application.drawing.analysis_jobs import (
             analysis_job_store,
+            job_summary,
         )
         from engineering_app.application.drawing.perception_contract import (
             TABLE_PERCEPTION_REVISION,
@@ -866,6 +915,8 @@ async def _analyze_product_drawing(
                         "analysis_type": "product.drawing_analysis",
                         "status": "RUNNING",
                         "job_id": job.job_id,
+                        "phase": job.phase,
+                        "job": job_summary(job),
                         "retry": {
                             "analysis_type": "product.drawing_analysis",
                             "parameters": {
@@ -877,24 +928,128 @@ async def _analyze_product_drawing(
                     },
                     "Análise visual em execução — consulte o job_id.",
                 )
-            if job.status == "FAILED":
-                err = job.error or {}
-                return _err(
-                    err.get("message")
-                    or "Execução da análise falhou.",
-                    status_code=err.get("status_code", 500),
-                    code=err.get("code") or "analysis_incomplete",
+            if job.status == "COMPLETED":
+                return _ok(
+                    job.result or {},
+                    "Análise técnica do desenho oficial do produto.",
                 )
-            return _ok(
-                job.result or {},
-                "Análise técnica do desenho oficial do produto.",
+            # FAILED / EXPIRED — estados terminais com erro tipado.
+            err = job.error or {}
+            return _err(
+                err.get("message") or "Execução da análise falhou.",
+                status_code=err.get("status_code", 500),
+                code=err.get("code") or "analysis_incomplete",
             )
-        job, created = _store.get_or_start(
-            product_code=code,
-            identity_fingerprint=_ident_fp,
-            params_fingerprint=_params_fp,
+        # Admissão atômica ANTES de criar o job — mesma política do
+        # path de understanding (1 processamento visual pesado/host).
+        from engineering_app.application.drawing.visual_admission import (  # noqa: E501
+            ADMITTED,
+            BUSY,
+            RESOURCE_LIMIT,
+            UNKNOWN_CAPACITY,
+            visual_admission_gate,
         )
+
+        _gate = visual_admission_gate()
+        _outcome, _admission = _gate.try_acquire()
+        if _outcome != ADMITTED:
+            _code_map = {
+                BUSY: (503, "ocr_busy"),
+                RESOURCE_LIMIT: (503, "resource_limit"),
+                UNKNOWN_CAPACITY: (503, "unknown_capacity"),
+            }
+            _sc, _ec = _code_map.get(
+                _outcome, (503, "ocr_unavailable")
+            )
+            return _err(
+                "Processamento visual recusado na admissão "
+                f"({_outcome}).",
+                status_code=_sc,
+                code=_ec,
+                data={
+                    "admission_state": _outcome,
+                    "admission": _admission,
+                    "retriable": True,
+                },
+            )
+        try:
+            job, created = _store.get_or_start(
+                product_code=code,
+                identity_fingerprint=_ident_fp,
+                params_fingerprint=_params_fp,
+                analysis_type="product.drawing_analysis",
+            )
+        except Exception:
+            _gate.release()
+            raise
+        if not created:
+            _gate.release()  # job idempotente já detém seu slot
+            if job.status == "COMPLETED" and job.document_sha:
+                # RQ-03D — valida identidade documental do resultado
+                # reutilizado; documento divergente → supersede e
+                # re-tenta a admissão para o documento atual.
+                _cur = await _current_drawing_document_sha(ctx, code)
+                if _cur is None:
+                    return _source_unverifiable_error()
+                if _cur != job.document_sha:
+                    _store.supersede(job.job_id)
+                    _outcome, _admission = _gate.try_acquire()
+                    if _outcome != ADMITTED:
+                        return _err(
+                            "Processamento visual recusado na "
+                            f"admissão ({_outcome}).",
+                            status_code=503,
+                            code="ocr_unavailable",
+                            data={
+                                "admission_state": _outcome,
+                                "admission": _admission,
+                                "retriable": True,
+                            },
+                        )
+                    try:
+                        job, created = _store.get_or_start(
+                            product_code=code,
+                            identity_fingerprint=_ident_fp,
+                            params_fingerprint=_params_fp,
+                            analysis_type="product.drawing_analysis",
+                        )
+                    except Exception:
+                        _gate.release()
+                        raise
+                    if not created:
+                        _gate.release()
+            if job.status == "RUNNING":
+                return _ok(
+                    {
+                        "analysis_type": "product.drawing_analysis",
+                        "status": "RUNNING",
+                        "job_id": job.job_id,
+                        "phase": job.phase,
+                        "job": job_summary(job),
+                        "retry": {
+                            "analysis_type": "product.drawing_analysis",
+                            "parameters": {
+                                "product_code": code,
+                                "compose_understanding": True,
+                                "job_id": job.job_id,
+                            },
+                        },
+                    },
+                    "Análise visual em execução — consulte o job_id.",
+                )
+            if job.status == "COMPLETED":
+                return _ok(
+                    job.result or {},
+                    "Análise técnica do desenho oficial do produto.",
+                )
+            err = job.error or {}
+            return _err(
+                err.get("message") or "Execução da análise falhou.",
+                status_code=err.get("status_code", 500),
+                code=err.get("code") or "analysis_incomplete",
+            )
         if created:
+            _store.update_phase(job.job_id, "FETCHING_DOCUMENT")
             _ctx_snapshot = ctx
             _mcp_context = context  # contexto MCP cru — exigido por
             # _produce_drawing_understanding (ele resolve
@@ -937,7 +1092,11 @@ async def _analyze_product_drawing(
                         tokens,
                         pdf_bytes,
                     ) = await _produce_drawing_understanding(
-                        _mcp_context, code
+                        _mcp_context,
+                        code,
+                        phase_cb=lambda ph: _store.update_phase(
+                            job.job_id, ph
+                        ),
                     )
                     prog = None
                     if params.get("progressive_investigation") or True:
@@ -981,6 +1140,7 @@ async def _analyze_product_drawing(
                         drawing_tokens=tokens,
                         prefetched=_pf,
                     )
+                    _store.update_phase(job.job_id, "FINALIZING")
                     _store.complete(
                         job.job_id,
                         {
@@ -1027,6 +1187,8 @@ async def _analyze_product_drawing(
                         f"{type(exc).__name__}: {exc}",
                         status_code=500,
                     )
+                finally:
+                    _gate.release()  # slot de admissão sempre devolvido
 
             _aio.create_task(_run_job())
         return _ok(  # noqa: E501
@@ -1034,6 +1196,7 @@ async def _analyze_product_drawing(
                 "analysis_type": "product.drawing_analysis",
                 "status": "RUNNING",
                 "job_id": job.job_id,
+                "job": job_summary(job),
                 "retry": {
                     "analysis_type": "product.drawing_analysis",
                     "parameters": {
@@ -1156,6 +1319,61 @@ def _drawing_job_owner_fingerprint(ctx) -> str:
 
     user_id = str(getattr(ctx, "user_id", "") or "").strip()
     return hashlib.sha256(f"uid:{user_id}".encode()).hexdigest()[:20]
+
+
+async def _current_drawing_document_sha(ctx, code: str) -> str | None:
+    """RQ-03D — SHA-256 do PDF oficial vigente, para validar a
+    identidade documental antes de reutilizar um resultado existente.
+
+    ``None`` quando a fonte delegada não responde — nesse caso o
+    reuso é fail-closed (não servimos resultado de documento que não
+    conseguimos verificar). Nunca inicia OCR: apenas a leitura
+    delegada do PDF, mesma fonte que o próprio job usaria.
+    """
+    import hashlib as _hl
+
+    try:
+        src = bridge.build_delegated_auxiliary_source()
+        pdf_raw = await src.fetch_product_drawing_pdf(ctx, code=code)
+    except Exception:
+        return None
+    content = pdf_raw.get("content") if isinstance(pdf_raw, dict) else None
+    if not isinstance(content, (bytes, bytearray)) or not content:
+        return None
+    return _hl.sha256(bytes(content)).hexdigest()
+
+
+def _stale_document_error(existing_only: bool) -> CallToolResult:
+    return _err(
+        "O documento oficial vigente difere do documento analisado "
+        "(SHA-256 divergente) — o resultado anterior não é "
+        "reutilizável.",
+        status_code=404,
+        code="stale_document",
+        data={
+            "retriable": False,
+            "existing_only": existing_only,
+            "hint": (
+                "Repita a chamada sem existing_only para analisar o "
+                "documento atual."
+                if existing_only
+                else "Submeta uma nova análise para o documento atual."
+            ),
+        },
+    )
+
+
+def _source_unverifiable_error() -> CallToolResult:
+    return _err(
+        "Não foi possível verificar a identidade do documento oficial "
+        "vigente — reuso fail-closed (RQ-03D).",
+        status_code=502,
+        code="source_unavailable",
+        data={
+            "retriable": True,
+            "admission_state": "SOURCE_UNAVAILABLE",
+        },
+    )
 
 
 def _compact_report_for_consumer(report):
@@ -1433,7 +1651,9 @@ async def _run_understanding_visual_benchmark(ctx, code: str):
     return out, runs
 
 
-async def _produce_drawing_understanding(context, code: str):
+async def _produce_drawing_understanding(
+    context, code: str, phase_cb=None
+):
     """Produção compartilhada de evidência visual (R12.1) — caso de uso
     interno do bridge, NÃO um handler MCP. Chamável por composição
     legítima em `product.drawing_analysis` e `product.drawing_understanding`
@@ -1451,7 +1671,11 @@ async def _produce_drawing_understanding(context, code: str):
     )
 
     ctx = bridge._source_context(context)
+    if phase_cb:
+        phase_cb("OCR")
     out, runs = await _run_understanding_visual_benchmark(ctx, code)
+    if phase_cb:
+        phase_cb("UNDERSTANDING")
     if not runs:
         raise DrawingAnalysisError(
             "no_ocr_evidence",
@@ -1655,11 +1879,17 @@ async def _produce_drawing_understanding(context, code: str):
 
 
 def _understanding_job_running(job) -> CallToolResult:
+    from engineering_app.application.drawing.analysis_jobs import (
+        job_summary,
+    )
+
     return _ok(
         {
             "analysis_type": "product.drawing_understanding",
             "status": "RUNNING",
             "job_id": job.job_id,
+            "phase": job.phase,
+            "job": job_summary(job),
             "result_ready": False,
             "retry": {
                 "analysis_type": "product.drawing_understanding",
@@ -1679,7 +1909,13 @@ def _understanding_job_running(job) -> CallToolResult:
 
 
 def _understanding_job_terminal(job) -> CallToolResult:
-    if job.status == "FAILED":
+    from engineering_app.application.drawing.analysis_jobs import (
+        job_summary,
+    )
+
+    if job.status != "COMPLETED":
+        # FAILED / EXPIRED — erro tipado; nunca servir payload de um
+        # resultado invalidado (ex.: stale_document).
         err = job.error or {}
         return _err(
             err.get("message") or "Execução da leitura falhou.",
@@ -1689,6 +1925,7 @@ def _understanding_job_terminal(job) -> CallToolResult:
     payload = dict(job.result or {})
     payload["status"] = "COMPLETED"
     payload["job_id"] = job.job_id
+    payload["job"] = job_summary(job)
     payload["result_ready"] = True
     return _ok(
         payload,
@@ -1732,6 +1969,13 @@ async def _analyze_drawing_understanding(
         )
     from engineering_app.application.drawing.analysis_jobs import (
         analysis_job_store,
+    )
+    from engineering_app.application.drawing.visual_admission import (
+        ADMITTED,
+        BUSY,
+        RESOURCE_LIMIT,
+        UNKNOWN_CAPACITY,
+        visual_admission_gate,
     )
     from engineering_app.application.drawing.drawing_analysis_service import (  # noqa: E501
         DrawingAnalysisError,
@@ -1783,21 +2027,132 @@ async def _analyze_drawing_understanding(
         if job.status == "RUNNING":
             return _understanding_job_running(job)
         return _understanding_job_terminal(job)
-    job, created = store.get_or_start(
+    if params.get("existing_only"):
+        # Semântica explícita: NUNCA inicia OCR/job — resolve a chave
+        # idempotente e responde NOT_FOUND quando não há resultado.
+        job = store.find_existing(
+            product_code=code,
+            identity_fingerprint=ident,
+            params_fingerprint=params_fp,
+        )
+        if (
+            job is not None
+            and job.status == "COMPLETED"
+            and job.document_sha
+        ):
+            # RQ-03D — resultado só é reutilizável se o documento
+            # oficial vigente for o mesmo analisado (SHA-256).
+            current_sha = await _current_drawing_document_sha(ctx, code)
+            if current_sha is None:
+                return _source_unverifiable_error()
+            if current_sha != job.document_sha:
+                return _stale_document_error(existing_only=True)
+        if job is None:
+            return _err(
+                "Nenhum resultado existente para este produto e "
+                "parâmetros — existing_only não inicia processamento.",
+                status_code=404,
+                code="no_existing_result",
+                data={
+                    "retriable": False,
+                    "existing_only": True,
+                    "product_code": code,
+                    "hint": (
+                        "Repita a chamada sem existing_only para "
+                        "admitir uma nova análise, ou liste os jobs "
+                        "via read(drawing.job_list)."
+                    ),
+                },
+            )
+        if job.status == "RUNNING":
+            return _understanding_job_running(job)
+        return _understanding_job_terminal(job)
+    # Admissão ANTES de criar o job — check-and-reserve atômico no
+    # gate impede que dois callers simultâneos iniciem dois OCRs.
+    existing = store.find_existing(
         product_code=code,
         identity_fingerprint=ident,
         params_fingerprint=params_fp,
     )
-    if not created:
-        if job.status == "RUNNING":
-            return _understanding_job_running(job)
-        return _understanding_job_terminal(job)
+    if existing is not None:
+        if (
+            existing.status == "COMPLETED"
+            and existing.document_sha
+        ):
+            # RQ-03D — valida identidade documental antes de servir
+            # o resultado; documento divergente → supersede e admite
+            # uma nova análise do documento atual.
+            current_sha = await _current_drawing_document_sha(ctx, code)
+            if current_sha is None:
+                return _source_unverifiable_error()
+            if current_sha != existing.document_sha:
+                store.supersede(existing.job_id)
+                existing = None
+        if existing is not None:
+            if existing.status == "RUNNING":
+                return _understanding_job_running(existing)
+            return _understanding_job_terminal(existing)
+    gate = visual_admission_gate()
+    outcome, admission_detail = gate.try_acquire()
+    if outcome != ADMITTED:
+        code_map = {
+            BUSY: (503, "ocr_busy"),
+            RESOURCE_LIMIT: (503, "resource_limit"),
+            UNKNOWN_CAPACITY: (503, "unknown_capacity"),
+        }
+        status_code, err_code = code_map.get(
+            outcome, (503, "ocr_unavailable")
+        )
+        return _err(
+            "Processamento visual recusado na admissão "
+            f"({outcome}).",
+            status_code=status_code,
+            code=err_code,
+            data={
+                "admission_state": outcome,
+                "admission": admission_detail,
+                "retriable": True,
+                "retry": {
+                    "analysis_type": "product.drawing_understanding",
+                    "parameters": {"product_code": code},
+                },
+            },
+        )
+    try:
+        job, created = store.get_or_start(
+            product_code=code,
+            identity_fingerprint=ident,
+            params_fingerprint=params_fp,
+            analysis_type="product.drawing_understanding",
+        )
+        if not created:
+            # Outro caller venceu a corrida entre find_existing e
+            # get_or_start — devolve o job compartilhado e libera o
+            # slot que reservamos (o slot dele já está ativo).
+            gate.release()
+            if job.status == "RUNNING":
+                return _understanding_job_running(job)
+            return _understanding_job_terminal(job)
+    except Exception:
+        gate.release()
+        raise
+    store.update_phase(job.job_id, "FETCHING_DOCUMENT")
 
     async def _run_job() -> None:
+        def _phase(name: str) -> None:
+            store.update_phase(job.job_id, name)
+
         try:
             payload = await _execute_drawing_understanding(
-                context, code, question
+                context, code, question, phase_cb=_phase
             )
+            if job.document_sha is None:
+                _u = payload.get("understanding") or {}
+                store.set_document_sha(
+                    job.job_id,
+                    _u.get("document_hash_sha256"),
+                )
+            _phase("FINALIZING")
             store.complete(
                 job.job_id, _compact_report_for_consumer(payload)
             )
@@ -1833,13 +2188,15 @@ async def _analyze_drawing_understanding(
                 f"{type(exc).__name__}: {exc}",
                 status_code=500,
             )
+        finally:
+            gate.release()  # slot de admissão sempre devolvido
 
     _aio.create_task(_run_job())
     return _understanding_job_running(job)
 
 
 async def _execute_drawing_understanding(
-    context, code: str, question: str | None
+    context, code: str, question: str | None, phase_cb=None
 ) -> dict:
     """Produz o payload de understanding. Só roda dentro do job."""
     from engineering_app.application.drawing.document_benchmark_service import (  # noqa: E501
@@ -1859,8 +2216,12 @@ async def _execute_drawing_understanding(
     )
 
     understanding, structure, best, tokens, _pdf_bytes = (
-        await _produce_drawing_understanding(context, code)
+        await _produce_drawing_understanding(
+            context, code, phase_cb=phase_cb
+        )
     )
+    if phase_cb:
+        phase_cb("COMPARING")
     # Relatório candidato consolidado (R10) — seções A–H do doc 116-B,
     # montado dos dados já governados; additive, DRAFT/CANDIDATE.
     _comp = (understanding.get("component_table") or {}).get("rows") or []

@@ -233,7 +233,7 @@ def test_get_context_entity_filter() -> None:
 
 def test_get_context_unknown_entity() -> None:
     _set_context(_human_user())
-    result = sem.tool_get_context(entity="drawing")
+    result = sem.tool_get_context(entity="inexistent_entity")
     assert result.is_error
 
 

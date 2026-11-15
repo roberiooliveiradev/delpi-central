@@ -20,9 +20,19 @@ from tests.test_eva_mcp import _human_user, _set_context
 def visual_flags(monkeypatch):
     monkeypatch.setenv("ENG_DRAWING_BENCHMARK_ENABLED", "true")
     monkeypatch.setenv("ENG_DRAWING_OCR_BENCHMARK_ENABLED", "true")
+    from engineering_app.application.drawing import visual_admission
+    from engineering_app.infrastructure.extraction import resource_monitor
+
+    monkeypatch.setattr(
+        resource_monitor,
+        "admission_budget_check",
+        lambda usage=None: ("ok", {}),
+    )
+    visual_admission.reset_visual_admission_gate()
     reset_analysis_job_store()
     yield
     reset_analysis_job_store()
+    visual_admission.reset_visual_admission_gate()
 
 
 def _payload(code: str) -> dict:
@@ -47,7 +57,7 @@ async def test_long_understanding_returns_job_then_completed(monkeypatch, visual
     release = asyncio.Event()
     calls = []
 
-    async def slow(context, code, question):
+    async def slow(context, code, question, phase_cb=None):
         calls.append(code)
         started.set()
         await release.wait()
@@ -92,7 +102,7 @@ async def test_long_understanding_returns_job_then_completed(monkeypatch, visual
 
 
 async def test_understanding_job_failure_is_typed(monkeypatch, visual_flags):
-    async def boom(context, code, question):
+    async def boom(context, code, question, phase_cb=None):
         raise DrawingAnalysisError(
             "document_unreadable", "PDF ilegível.", status_code=422
         )
@@ -124,7 +134,7 @@ async def test_understanding_job_is_hidden_from_another_user(
 ):
     release = asyncio.Event()
 
-    async def slow(context, code, question):
+    async def slow(context, code, question, phase_cb=None):
         await release.wait()
         return _payload(code)
 
@@ -148,7 +158,7 @@ async def test_understanding_job_is_hidden_from_another_user(
 async def test_understanding_unexpected_error_stays_typed(
     monkeypatch, visual_flags
 ):
-    async def boom(context, code, question):
+    async def boom(context, code, question, phase_cb=None):
         raise RuntimeError("serializer blew up")
 
     monkeypatch.setattr(sem, "_execute_drawing_understanding", boom)
