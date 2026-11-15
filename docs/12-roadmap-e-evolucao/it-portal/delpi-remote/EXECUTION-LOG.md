@@ -539,6 +539,24 @@ Este arquivo registra o **estado real verificado**. A cada tarefa: adicionar ent
 **Rollback:** nenhum runtime alterado; caso regressao futura, reverter codigo em commit, preservar migrations historicas.
 **Proximo passo unico:** P4: desenhar e validar registro de chave confiavel/attestation Windows em HML e canal seguro do convite, sem rotas operacionais ate revisao privada.
 
+## 2026-11-14 | G2-S4-S2b-P4 | prerequisitos Windows sem attestation
+
+**Objetivo:** preparar triagem local segura para piloto Windows, antes de qualquer enrollment, ancoragem de chave ou concessao Keycloak.
+
+**Arquivos alterados:** coletor PowerShell read-only `Collect-ItPortalWorkstationTrustReadiness.ps1`, smoke `Test-ItPortalWorkstationTrustReadiness.ps1`, validador Python `workstation_trust_readiness.py`, testes `test_workstation_trust_readiness.py`, workflow `it-portal-api.yml`, README, SECURITY-GATES, runbook P4 e diario.
+
+**Commit/issue:** mesma entrega na main (GitHub/issue #179). CI deve ser confirmado em run da API apos push; sem declarar sucesso antecipado.
+
+**Testes e evidencias:** validador compara schema estrito, timestamps em UTC, dados extras/sensiveis e tentativas de marcar attestation/autorizacao, alem de TPM, Secure Boot e estados desconhecidos. Pipeline executa parser PowerShell, smoke nao mutante e pytest. Executar Windows 11/PowerShell 5.1 real apenas em HML presencial, apos autorizar piloto.
+
+**Estado de producao/implantacao:** nenhuma instalacao, nenhuma alteracao local de TPM, BIOS/UEFI, certificado, Keycloak, DB, agente ou rede. Script em plano de diagnostico, sem qualquer contato com API. Nao houve deploy produtivo.
+
+**Riscos e limitacoes:** Get-Tpm e Confirm-SecureBootUEFI fornecem somente observacoes locais nao autenticadas; TPM presente + Secure Boot enabled NAO significam que chave Ed25519 do P3 seja protegida por hardware. Documento cita que key attestation TPM via Microsoft Platform Crypto Provider usa RSA; estudar protocolo aprovado com ancoragem de confianca, challenge, protecao de chave e dispositivo. Sem homologacao e evidencias privadas nao avancar para grants.
+
+**Rollback:** remover scripts e regras de validacao em commit de reversao caso cause regressao; nao modificar migrations V009-V015.
+
+**Proximo passo unico:** checar CI, coletar diagnostico no primeiro Windows piloto em HML com relatorio tratado como nao confiavel, escolher estrategia de chaves TPM RSA/mTLS ou Ed25519 com ancoragem externa comprovavel e validar fluxo end-to-end antes de emitir credenciais.
+
 ## Template obrigatorio das proximas entradas
 
 ```markdown

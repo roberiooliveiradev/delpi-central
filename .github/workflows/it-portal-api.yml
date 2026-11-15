@@ -64,6 +64,8 @@ jobs:
             'it-portal-api/collectors/windows_workstation/Enable-ItPortalWorkstationAgent.ps1'
             'it-portal-api/collectors/windows_workstation/Uninstall-ItPortalWorkstationAgent.ps1'
             'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationAgentPlan.ps1'
+            'it-portal-api/collectors/windows_workstation/Collect-ItPortalWorkstationTrustReadiness.ps1'
+            'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationTrustReadiness.ps1'
             'it-portal-api/collectors/windows_host/Invoke-ItPortalWindowsServiceControlAgent.ps1'
             'it-portal-api/collectors/windows_host/Install-ItPortalWindowsServiceControlAgent.ps1'
           )
@@ -80,6 +82,10 @@ jobs:
         shell: pwsh
         run: |
           & 'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationAgentPlan.ps1'
+      - name: G2-S4-S2b-P4 PowerShell read-only readiness smoke
+        shell: pwsh
+        run: |
+          & 'it-portal-api/collectors/windows_workstation/Test-ItPortalWorkstationTrustReadiness.ps1'
       - name: G0-SEC Delpi Remote offline gate (must remain BLOCKED)
         working-directory: it-portal-api
         run: python -m it_portal_app.domain.remote_security_readiness --repo-root ..

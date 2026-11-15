@@ -83,3 +83,11 @@ O validador `remote_policy_review.py` deve retornar `G0-SEC-S2 BLOCKED`; CI verd
 - [ ] Homologacao do responsavel registrada no diario com evidencias
 
 **Nao confundir** essa lista com autorizacao: cada quadrado permanece vazio ate existir evidencia real.
+
+## G2-S4-S2b-P4 | Diagnostico Windows nao e attestation (14/11/2026)
+
+O script read-only e a biblioteca de validacao P4 retornam **somente prontidao local nao autenticada**. TPM 2.0 presente, TPM ready e Secure Boot enabled sao prerequisitos possiveis, mas nao prova de dispositivo confiavel, ownership corporativo, chave private non-exportable ou hardware backed. Resultado CANDIDATE nunca autoriza cadastro, Keycloak, S2S, ingestao nem acesso remoto. Relatorio desconhecido ou sem privilegios continua INCONCLUSIVE; ausencia de recursos: NOT_READY; payload adulterado: INVALID.
+
+**Decisao tecnica aberta:** a prova Ed25519 atual P2/P3 demonstra apenas posse de chave preconfiavel. Nao supor que essa chave seja diretamente atestada por TPM/Windows: key attestation via Microsoft Platform Crypto Provider se baseia em RSA. Avaliar prototipo Windows em ambiente HML aprovado usando Microsoft Platform Crypto Provider, cadeia de confianca e politica de chaves nao exportaveis (ou alternativa aprovada) antes de escolher arquitetura. Nao incluir identificadores/endorsements em publico.
+
+Fonte: [Microsoft Learn TPM key attestation](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/multi-domain-key-attestation).
