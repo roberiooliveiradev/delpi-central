@@ -39,6 +39,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U9 Rework (G9, perfis, axe, página do usuário) | DONE | `1a1b8749bb` |
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
+| U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | READY | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
