@@ -2003,7 +2003,7 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 
 ### 2026-11-15 — R5_INT3_SUFFICIENCY_AND_PARALLEL_MCP_DECISION: estados atualizados
 
-| ID | Estado | Evidência (eval real SHA `13012a1825`, INT2 n=12, arm B) |
+| ID | Estado | Evidência (eval real SHA `47b06c2e33`, INT2 n=12, arm B) |
 |---|---|---|
 | `CATALOG-FIELD-VOCABULARY-TRUNCATION` (novo) | `REMEDIATED (real eval)` | projeção truncava descrição a 400c e cortava o vocabulário de campos do owner → plano declarou `params.name` (inventado) em vez de `params.q`; bound elevado + regra de instrução → declaração real `params.q=qualidade` observada |
 | `T2-COMPREHENSION-DOTTED-ID-ANCHOR-FLAKE` (novo) | `OPEN_LOW` | exposição do `capability_id` reintroduziu cópia pontilhada como `evidence_source` (0/12 first-accept → header surface/âncora → 7/12); flakes residuais: 3× dotted-id + 1× op-class (`analyze`→`analysis`), sempre rejeitados pelo aceitador e corrigidos em retry bounded — nunca aceitos |
