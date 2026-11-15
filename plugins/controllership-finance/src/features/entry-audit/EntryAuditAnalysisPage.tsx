@@ -36,7 +36,6 @@ import {
   CfHorizontalValueBars,
   CfLoadingCard,
   CfMetricKpiCard,
-  CfMetricStrip,
   CfPageHero,
   CfPagePath,
   CfResolutionStatusCell,
@@ -149,9 +148,10 @@ export function EntryAuditAnalysisPage({
     [detailFiltersKey],
   );
   const tablePage = Math.max(1, Number(params.get("page") || "1") || 1);
+  // AC-TAB-4: padrão 25 linhas nas tabelas da análise.
   const tablePageSize = Math.min(
     200,
-    Math.max(10, Number(params.get("page_size") || "50") || 50),
+    Math.max(10, Number(params.get("page_size") || "25") || 25),
   );
   const tableSort = (params.get("sort") || "").trim();
   const tableOrder = (params.get("order") || "asc").toLowerCase() === "desc" ? "desc" : "asc";
@@ -251,6 +251,42 @@ export function EntryAuditAnalysisPage({
       });
     return () => controller.abort();
   }, [analysisId, analysis, summary, detailFiltersKey, refresh, filters]);
+
+  /** AC-TAB-1: pré-busca totais das abas CT-e e TES (não vêm do summary). */
+  useEffect(() => {
+    if (!summary) return;
+    const controller = new AbortController();
+    const loadTotal = (
+      tabId: EntryAuditTab,
+      resource: "cte" | "tes",
+    ) => {
+      const request =
+        resource === "tes"
+          ? Promise.resolve(listEntryAuditTes(analysisId, filters, controller.signal)).then(
+              (payload) => payload?.items?.length ?? 0,
+            )
+          : Promise.resolve(
+              listEntryAuditRows(
+                analysisId,
+                "cte",
+                filters,
+                1,
+                1,
+                controller.signal,
+              ),
+            ).then((payload) => payload?.total ?? 0);
+      return request
+        .then((total) => {
+          if (!controller.signal.aborted) {
+            setTabTotals((prev) => ({ ...prev, [tabId]: total }));
+          }
+        })
+        .catch(() => undefined);
+    };
+    void loadTotal("cte", "cte");
+    void loadTotal("tes", "tes");
+    return () => controller.abort();
+  }, [analysisId, summary, detailFiltersKey, refresh, filters]);
 
   useEffect(() => {
     if (!summary) return;
@@ -372,13 +408,29 @@ export function EntryAuditAnalysisPage({
       key: "supplier",
       header: "Fornecedor",
       sortable: true,
-      render: (row) => displayValue(row.supplier_name),
+      className: "cf-col-ellipsis",
+      render: (row) => {
+        const text = displayValue(row.supplier_name);
+        return (
+          <span className="cf-cell-ellipsis" title={text === "—" ? undefined : text}>
+            {text}
+          </span>
+        );
+      },
     },
     {
       key: "rule",
       header: "Regra",
       sortable: true,
-      render: (row) => displayValue(row.rule_name ?? row.title),
+      className: "cf-col-ellipsis",
+      render: (row) => {
+        const text = displayValue(row.rule_name ?? row.title);
+        return (
+          <span className="cf-cell-ellipsis" title={text === "—" ? undefined : text}>
+            {text}
+          </span>
+        );
+      },
     },
     {
       key: "field",
@@ -407,7 +459,7 @@ export function EntryAuditAnalysisPage({
     },
     {
       key: "status",
-      header: "Status",
+      header: "Situação",
       sortable: true,
       render: (row) => (
         <CfResolutionStatusCell
@@ -454,17 +506,18 @@ export function EntryAuditAnalysisPage({
   };
 
   const dailyChart = useMemo(() => {
-    if (!daily?.series?.length) return { points: [], includePrevious: false };
+    if (!analysis || !daily) return { points: [], includePrevious: false };
     const includePrevious =
       summary?.previous != null && Boolean(daily.previous?.length);
-    return {
-      points: alignEntryAuditDailySeries(
-        daily.series,
-        includePrevious ? daily.previous : [],
-      ),
-      includePrevious,
-    };
-  }, [daily, summary?.previous]);
+    // AC-GRA-3: preencher todos os dias do período (mesmo sem ocorrência).
+    const points = alignEntryAuditDailySeries(
+      daily.series ?? [],
+      includePrevious ? daily.previous : [],
+      { dateFrom: analysis.date_from, dateTo: analysis.date_to },
+    );
+    if (points.length <= 1) return { points: [], includePrevious: false };
+    return { points, includePrevious };
+  }, [analysis, daily, summary?.previous]);
 
   const dailySelectedName = useMemo(() => {
     if (!filters.day) return null;
@@ -886,20 +939,11 @@ export function EntryAuditAnalysisPage({
                       count: summary.conformity.divergent,
                       tone: "danger",
                     },
-                  ]}
-                />
-                <CfMetricStrip
-                  aria-label="Resumo de conformidade"
-                  items={[
-                    {
-                      id: "unmatched-open",
-                      label: "Sem par em aberto",
-                      value: summary.conformity.unmatched_open,
-                    },
                     {
                       id: "explained",
                       label: "Explicadas",
-                      value: summary.conformity.unmatched_explained,
+                      count: summary.conformity.unmatched_explained,
+                      tone: "info",
                     },
                   ]}
                 />
@@ -940,52 +984,62 @@ export function EntryAuditAnalysisPage({
               title="Evolução por dia"
               hint={CF_HELP.entryAudit.dailyEvolution}
             >
-              <CfComparativeAreaChart
-                data={dailyChart.points}
-                height={280}
-                series={
-                  dailyChart.includePrevious
-                    ? [
-                        {
-                          dataKey: "current",
-                          name: "Este período",
-                          color: "var(--delpi-ui-accent, #2563eb)",
-                        },
-                        {
-                          dataKey: "previous",
-                          name: previousPeriodLegend
-                            ? `Período anterior (${previousPeriodLegend})`
-                            : "Período anterior",
-                          color: "var(--delpi-ui-muted, #94a3b8)",
-                        },
-                      ]
-                    : [
-                        {
-                          dataKey: "current",
-                          name: "Este período",
-                          color: "var(--delpi-ui-accent, #2563eb)",
-                        },
-                      ]
-                }
-                valueFormatter={(value) => value.toLocaleString("pt-BR")}
-                onPointSelect={(point) => {
-                  const day =
-                    typeof point.day === "string" && point.day
-                      ? point.day
-                      : "";
-                  if (!day) return;
-                  navigateWith({
-                    day: filters.day === day ? "" : day,
-                  });
-                }}
-                pointAriaLabel={(point) =>
-                  entryAuditDailyPointAriaLabel(
-                    point as EntryAuditDailyChartPoint,
-                    dailyChart.includePrevious,
-                  )
-                }
-                selectedName={dailySelectedName}
-              />
+              <div
+                className="cf-analysis-daily-chart"
+                role="group"
+                aria-label="Evolução diária de ocorrências"
+              >
+                <span className="cf-analysis-daily-chart__y-label" aria-hidden>
+                  Ocorrências
+                </span>
+                <CfComparativeAreaChart
+                  data={dailyChart.points}
+                  height={240}
+                  smooth={false}
+                  series={
+                    dailyChart.includePrevious
+                      ? [
+                          {
+                            dataKey: "current",
+                            name: "Este período",
+                            color: "var(--delpi-ui-accent, #2563eb)",
+                          },
+                          {
+                            dataKey: "previous",
+                            name: previousPeriodLegend
+                              ? `Período anterior (${previousPeriodLegend})`
+                              : "Período anterior",
+                            color: "var(--delpi-ui-muted, #94a3b8)",
+                          },
+                        ]
+                      : [
+                          {
+                            dataKey: "current",
+                            name: "Este período",
+                            color: "var(--delpi-ui-accent, #2563eb)",
+                          },
+                        ]
+                  }
+                  valueFormatter={(value) => value.toLocaleString("pt-BR")}
+                  onPointSelect={(point) => {
+                    const day =
+                      typeof point.day === "string" && point.day
+                        ? point.day
+                        : "";
+                    if (!day) return;
+                    navigateWith({
+                      day: filters.day === day ? "" : day,
+                    });
+                  }}
+                  pointAriaLabel={(point) =>
+                    entryAuditDailyPointAriaLabel(
+                      point as EntryAuditDailyChartPoint,
+                      dailyChart.includePrevious,
+                    )
+                  }
+                  selectedName={dailySelectedName}
+                />
+              </div>
             </CfSectionCard>
           ) : multiDay && !daily ? (
             <CfLoadingCard title="Carregando evolução diária…" />
@@ -1116,6 +1170,17 @@ export function EntryAuditAnalysisPage({
           columnPreferencesKey="controllership-finance:entry-audit:occurrences:columns:v1"
           fontSizePreferencesKey="controllership-finance:entry-audit:occurrences:font:v1"
           viewLayoutPreferencesKey="controllership-finance:entry-audit:occurrences:layout:v1"
+          defaultColumnVisibility={{
+            severity: true,
+            document: true,
+            supplier: true,
+            rule: true,
+            field: true,
+            protheus: true,
+            xml: true,
+            difference: true,
+            status: true,
+          }}
           renderCard={(row) =>
             renderCfRecordCard(occurrenceColumns, row, {
               onActivate: openOccurrence,

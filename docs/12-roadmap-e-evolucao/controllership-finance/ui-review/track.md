@@ -342,6 +342,6 @@ Requisitos e critérios: [review-3.md](./review-3.md) (RQ-U14-SEL, -BFF, -ENT, -
 | F0 | `8553acecab` | n/a (rebaseline) | Defeito reproduzido HML; screenshots `/tmp/ui-review-u14-f0` |
 | F1 | `ea31b4a1e8` | ACCEPT_WITH_RESIDUAL | AC-SEL-1/2/4 + testes; HML→PROD |
 | F2 | `fb81da0a96` | ACCEPT_WITH_RESIDUAL | AC-BFF-1..4 + SEL-3; HML |
-| F3 | (este commit) | ACCEPT_WITH_RESIDUAL | AC-ENT-1..3 + AC-KPI-1..5; HML |
-| F4 | — | — | — |
+| F3 | `88f10f1e0b` | ACCEPT_WITH_RESIDUAL | AC-ENT-1..3 + AC-KPI-1..5; HML |
+| F4 | (este commit) | ACCEPT_WITH_RESIDUAL | AC-GRA-1..5 + AC-TAB-1..4; HML |
 | F5 | — | — | — |

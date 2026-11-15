@@ -120,7 +120,7 @@ function R04_COLUMNS(dateType: DateType): DataTableColumn<R04Row>[] {
     },
     {
       key: "status",
-      header: "Status",
+      header: "Situação",
       headerHint: R04_COL_HELP.status,
       align: "center",
       // C2_STATUS — flag administrativo comprovado nos fontes

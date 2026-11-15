@@ -75,8 +75,9 @@ export function entryAuditTabResource(
 
 const THEME_LABELS: Record<string, string> = {
   cte: "CT-e",
-  item: "Itens",
-  header: "Cabeçalho",
+  item: "Itens da nota",
+  items: "Itens da nota",
+  header: "Cabeçalho da nota",
   simples: "Simples Nacional",
   coherence: "Coerência fiscal",
   key: "Chave de acesso",
@@ -627,19 +628,74 @@ export type EntryAuditDailyChartPoint = {
   previousDay?: string;
 };
 
+/** Lista ISO YYYY-MM-DD inclusiva (AC-GRA-3: dia sem ocorrência = 0). */
+export function enumerateIsoDateRange(
+  dateFrom: string,
+  dateTo: string,
+): string[] {
+  const start = Date.parse(`${dateFrom}T00:00:00Z`);
+  const end = Date.parse(`${dateTo}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) {
+    return [];
+  }
+  const days: string[] = [];
+  for (let cursor = start; cursor <= end; cursor += 86_400_000) {
+    days.push(new Date(cursor).toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+/**
+ * Preenche todos os dias do período com count 0 quando ausentes (AC-GRA-3).
+ * Sem `dateFrom`/`dateTo`, devolve a série ordenada como veio.
+ */
+export function fillEntryAuditDailySeries(
+  series: ReadonlyArray<{ name: string; count: number }>,
+  dateFrom?: string | null,
+  dateTo?: string | null,
+): Array<{ name: string; count: number }> {
+  const byDay = new Map(
+    series
+      .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.name))
+      .map((item) => [item.name, item.count]),
+  );
+  if (dateFrom && dateTo) {
+    const range = enumerateIsoDateRange(dateFrom, dateTo);
+    if (range.length) {
+      return range.map((day) => ({ name: day, count: byDay.get(day) ?? 0 }));
+    }
+  }
+  return [...series]
+    .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.name))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /**
  * Alinha série anterior pela posição do dia (dia 1 com dia 1), não pela data ISO.
- * Sem série anterior → só `current`.
+ * Sem série anterior → só `current`. Com período, preenche dias ausentes com 0.
  */
 export function alignEntryAuditDailySeries(
   series: ReadonlyArray<{ name: string; count: number }>,
   previous: ReadonlyArray<{ name: string; count: number }> | null | undefined,
+  period?: { dateFrom: string; dateTo: string } | null,
 ): EntryAuditDailyChartPoint[] {
-  const sortedCurrent = [...series].sort((a, b) => a.name.localeCompare(b.name));
-  const sortedPrevious = [...(previous ?? [])].sort((a, b) =>
-    a.name.localeCompare(b.name),
+  const sortedCurrent = fillEntryAuditDailySeries(
+    series,
+    period?.dateFrom,
+    period?.dateTo,
   );
-  const hasPrevious = sortedPrevious.length > 0;
+  // Anterior: preencher o período anterior espelho (mesmo nº de dias) e alinhar
+  // por índice de dia (dia 1↔dia 1), não pela data ISO (AC-GRA-3 / OC-1).
+  const previousRange =
+    period?.dateFrom && period?.dateTo
+      ? entryAuditPreviousPeriodRange(period.dateFrom, period.dateTo)
+      : null;
+  const sortedPrevious = previousRange
+    ? fillEntryAuditDailySeries(previous ?? [], previousRange[0], previousRange[1])
+    : [...(previous ?? [])]
+        .filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.name))
+        .sort((a, b) => a.name.localeCompare(b.name));
+  const hasPrevious = Boolean(previous?.length) || Boolean(previousRange);
 
   return sortedCurrent.map((item, index) => {
     const aligned = hasPrevious ? sortedPrevious[index] : undefined;
@@ -648,9 +704,11 @@ export function alignEntryAuditDailySeries(
       day: item.name,
       current: item.count,
     };
-    if (hasPrevious) {
-      point.previous = aligned?.count ?? 0;
-      if (aligned?.name) point.previousDay = aligned.name;
+    if (hasPrevious && aligned) {
+      point.previous = aligned.count;
+      point.previousDay = aligned.name;
+    } else if (hasPrevious) {
+      point.previous = 0;
     }
     return point;
   });

@@ -717,6 +717,51 @@
   min-width: 0;
 }
 
+/* AC-GRA-2: mesma altura de área de gráfico (meia-lua e rosca). */
+.dashboard-controllership-finance .cf-analysis-panorama__conformity [class*="semicircle"],
+.dashboard-controllership-finance .cf-analysis-panorama__severity [class*="distribution-donut"] {
+  flex: 1 1 auto;
+  min-height: 220px;
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama__conformity [class*="semicircle"] [class*="__chart"],
+.dashboard-controllership-finance .cf-analysis-panorama__severity [class*="distribution-donut"] [class*="__chart"] {
+  min-height: 200px;
+  height: 200px;
+}
+
+/* AC-GRA-3: eixo «Ocorrências» ao lado do gráfico diário. */
+.dashboard-controllership-finance .cf-analysis-daily-chart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 8px;
+  align-items: stretch;
+}
+
+.dashboard-controllership-finance .cf-analysis-daily-chart__y-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cf-text-muted, var(--text-muted, #64748b));
+  letter-spacing: 0.04em;
+  align-self: center;
+}
+
+/* AC-TAB-3: Fornecedor/Regra com teto e reticências em 1440. */
+.dashboard-controllership-finance .cf-col-ellipsis,
+.dashboard-controllership-finance td.cf-col-ellipsis {
+  max-width: 180px;
+}
+
+.dashboard-controllership-finance .cf-cell-ellipsis {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dashboard-controllership-finance .cf-analysis-breakdowns {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

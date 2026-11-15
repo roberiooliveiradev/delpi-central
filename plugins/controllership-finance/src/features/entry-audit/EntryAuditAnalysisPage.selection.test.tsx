@@ -8,6 +8,7 @@ const getSummary = vi.fn();
 const getBreakdowns = vi.fn();
 const getDaily = vi.fn();
 const listRows = vi.fn();
+const listTes = vi.fn();
 const listOptions = vi.fn();
 
 vi.mock("../../api/entryAuditApi", () => ({
@@ -18,7 +19,7 @@ vi.mock("../../api/entryAuditApi", () => ({
   getEntryAuditSummary: (...args: unknown[]) => getSummary(...args),
   listEntryAuditOptions: (...args: unknown[]) => listOptions(...args),
   listEntryAuditRows: (...args: unknown[]) => listRows(...args),
-  listEntryAuditTes: vi.fn(),
+  listEntryAuditTes: (...args: unknown[]) => listTes(...args),
   setEntryAuditOccurrenceStatus: vi.fn(),
   ENTRY_AUDIT_SEVERITY_URL: { high: "Alta", medium: "Media", low: "Baixa" },
 }));
@@ -73,11 +74,13 @@ beforeEach(() => {
   getBreakdowns.mockReset();
   getDaily.mockReset();
   listRows.mockReset();
+  listTes.mockReset();
   listOptions.mockReset();
 
   window.history.replaceState({}, "", "/?tab=occurrences&page=1");
 
   listOptions.mockResolvedValue({ branches: [], document_types: [] });
+  listTes.mockResolvedValue({ items: [] });
   getAnalysis.mockResolvedValue(mockAnalysis);
   getSummary.mockResolvedValue(mockSummary);
   getBreakdowns.mockResolvedValue({

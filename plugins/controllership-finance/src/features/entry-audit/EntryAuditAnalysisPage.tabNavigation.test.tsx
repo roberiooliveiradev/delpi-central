@@ -8,6 +8,7 @@ const getSummary = vi.fn();
 const getBreakdowns = vi.fn();
 const getDaily = vi.fn();
 const listRows = vi.fn();
+const listTes = vi.fn();
 const listOptions = vi.fn();
 
 vi.mock("../../api/entryAuditApi", () => ({
@@ -18,7 +19,7 @@ vi.mock("../../api/entryAuditApi", () => ({
   getEntryAuditSummary: (...args: unknown[]) => getSummary(...args),
   listEntryAuditOptions: (...args: unknown[]) => listOptions(...args),
   listEntryAuditRows: (...args: unknown[]) => listRows(...args),
-  listEntryAuditTes: vi.fn(),
+  listEntryAuditTes: (...args: unknown[]) => listTes(...args),
   setEntryAuditOccurrenceStatus: vi.fn(),
   ENTRY_AUDIT_SEVERITY_URL: {},
 }));
@@ -73,11 +74,13 @@ beforeEach(() => {
   getBreakdowns.mockReset();
   getDaily.mockReset();
   listRows.mockReset();
+  listTes.mockReset();
   listOptions.mockReset();
 
   window.history.replaceState({}, "", "/?tab=occurrences&page=1");
 
   listOptions.mockResolvedValue({ branches: [], document_types: [] });
+  listTes.mockResolvedValue({ items: [] });
   getAnalysis.mockResolvedValue(mockAnalysis);
   getSummary.mockResolvedValue(mockSummary);
   getBreakdowns.mockResolvedValue({
@@ -113,7 +116,8 @@ describe("EntryAuditAnalysisPage tab navigation (W6 / A1)", () => {
       expect(getSummary).toHaveBeenCalledTimes(1);
       expect(getBreakdowns).toHaveBeenCalledTimes(1);
       expect(getDaily).toHaveBeenCalledTimes(1);
-      expect(listRows).toHaveBeenCalledTimes(1);
+      // 1 = aba ativa (ocorrências) + 1 = pré-busca total da aba CT-e (AC-TAB-1)
+      expect(listRows).toHaveBeenCalledTimes(2);
     });
 
     const documentsTab = await screen.findByRole("tab", {
@@ -128,7 +132,7 @@ describe("EntryAuditAnalysisPage tab navigation (W6 / A1)", () => {
     fireEvent.click(documentsTab);
 
     await waitFor(() => {
-      expect(listRows).toHaveBeenCalledTimes(2);
+      expect(listRows).toHaveBeenCalledTimes(3);
     });
 
     expect(getSummary).toHaveBeenCalledTimes(1);

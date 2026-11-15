@@ -647,17 +647,17 @@ export const CF_HELP = {
     clara:
       "A CLARA lê a mesma análise pelas rotas da BFF. Copie uma sugestão e cole no chat para pedir explicação, foco no que pede ação ou comparação com a análise anterior — sem alterar o ERP.",
     panorama:
-      "Visão resumida da análise: percentual de notas limpas, distribuição por severidade e quantidades de sem par e explicadas. As legendas ficam abaixo dos gráficos para facilitar a leitura.",
+      "Visão resumida da análise: percentual de notas limpas e distribuição por severidade. «Explicadas» aparece na legenda da Conformidade; o KPI «Sem par em aberto» permanece na faixa de indicadores.",
     conformity:
-      "Notas limpas são as conferidas sem divergência; divergentes têm ao menos uma ocorrência. O percentual considera só essas duas faixas — não inclui sem par nem notas lançadas fora do período.",
+      "Notas limpas são as conferidas sem divergência; divergentes têm ao menos uma ocorrência. «Explicadas» conta os sem par já justificados. O percentual do gauge considera limpas e divergentes.",
+    dailyEvolution:
+      "Ocorrências por dia de recebimento no período — todos os dias do recorte aparecem no eixo (dia sem ocorrência = 0). Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
     postedOutside:
       "Contagem de notas encontradas no Protheus com recebimento fora do recorte De–Até desta análise (regra posted_outside_period). Não entram nas notas conferidas nem no percentual de conformidade; consulte a aba homônima para a lista.",
     severity:
       "Severidade com ícone e tom: Alta (crítico), Média (atenção), Baixa (neutro), Info (informativo). O donut e a tabela usam a mesma paleta de status.",
     occurrencesWhere:
       "Onde as ocorrências se concentram no recorte atual. Clique em uma barra para filtrar a tabela da aba.",
-    dailyEvolution:
-      "Ocorrências por dia de recebimento no período. Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
     export:
       "Baixa a planilha XLSX desta análise com o recorte atual.",
     rerun:

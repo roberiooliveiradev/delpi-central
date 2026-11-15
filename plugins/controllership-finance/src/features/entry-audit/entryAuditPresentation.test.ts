@@ -45,7 +45,8 @@ describe("entryAuditPresentation", () => {
 
   it("traduz temas e tipos para vocabulário de negócio", () => {
     expect(formatTheme("cte")).toBe("CT-e");
-    expect(formatTheme("header")).toBe("Cabeçalho");
+    expect(formatTheme("header")).toBe("Cabeçalho da nota");
+    expect(formatTheme("item")).toBe("Itens da nota");
     expect(formatDocumentType("nfe")).toBe("NF-e");
     expect(formatDocumentTypes(["cte", "nfe"])).toBe("CT-e, NF-e");
     expect(
@@ -123,6 +124,35 @@ describe("entryAuditPresentation", () => {
     expect(aria).toContain("12");
     expect(aria).toContain("31/10");
     expect(aria).toContain("3");
+  });
+
+  it("preenche todos os dias do período com zero (AC-GRA-3)", () => {
+    const points = alignEntryAuditDailySeries(
+      [{ name: "2026-11-09", count: 4 }],
+      [],
+      { dateFrom: "2026-11-07", dateTo: "2026-11-10" },
+    );
+    expect(points.map((p) => p.day)).toEqual([
+      "2026-11-07",
+      "2026-11-08",
+      "2026-11-09",
+      "2026-11-10",
+    ]);
+    expect(points.map((p) => p.current)).toEqual([0, 0, 4, 0]);
+  });
+
+  it("alinha anterior pelo índice do dia no período espelho (OC-1)", () => {
+    // Atual 07–10/11; anterior espelho = 03–06/11. Dado só em 05/11 (= dia 3).
+    const points = alignEntryAuditDailySeries(
+      [{ name: "2026-11-09", count: 4 }],
+      [{ name: "2026-11-05", count: 7 }],
+      { dateFrom: "2026-11-07", dateTo: "2026-11-10" },
+    );
+    expect(points[0]?.day).toBe("2026-11-07");
+    expect(points[0]?.previous).toBe(0);
+    expect(points[2]?.day).toBe("2026-11-09");
+    expect(points[2]?.previous).toBe(7);
+    expect(points[2]?.previousDay).toBe("2026-11-05");
   });
 
   it("calcula rótulo do período anterior com o mesmo número de dias", () => {
