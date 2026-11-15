@@ -1,0 +1,41 @@
+name: Linux Ops MCP Gateway Routes
+
+on:
+  pull_request:
+    paths:
+      - "gateway/nginx.conf"
+      - "gateway/nginx.dev.conf"
+      - "gateway/snippets/linux-ops-mcp-locations.conf"
+      - "gateway/tests/**"
+      - ".github/workflows/linux-ops-mcp-gateway.yml"
+  push:
+    branches: [main]
+    paths:
+      - "gateway/nginx.conf"
+      - "gateway/nginx.dev.conf"
+      - "gateway/snippets/linux-ops-mcp-locations.conf"
+      - "gateway/tests/**"
+      - ".github/workflows/linux-ops-mcp-gateway.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  gateway-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate strict MCP routes
+        run: |
+          python -m pip install --disable-pip-version-check pytest
+          python -m pytest -q gateway/tests/test_linux_ops_mcp_gateway.py
+      - name: nginx -t on isolated snippets harness (no real backend)
+        run: |
+          docker run --rm \
+            -v "$PWD/gateway/tests/nginx-linux-ops-mcp-test.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$PWD/gateway/snippets:/etc/nginx/snippets:ro" \
+            nginx:alpine nginx -t
