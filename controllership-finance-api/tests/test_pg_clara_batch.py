@@ -38,6 +38,7 @@ from controllership_finance_app.application.clara.step_up_consent import (
 from controllership_finance_app.infrastructure.persistence.clara_consent_challenge_repository import (
     ClaraConsentChallengeRepository,
 )
+from clara_test_identity import cf_closing_writer, lnf_only_writer
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
 )
@@ -232,15 +233,10 @@ def env(_configure_db):
         "batches": ClaraBatchRepository(),
         "orchestrator": ClaraBatchOrchestrator(
             writes=ClaraGovernedWrites(
-                identity_provider=lambda: {
-                    "subject": ADMIN, "name": "cf-admin-test",
-                    "is_manage": True, "is_dre": True,
-                })),
+                identity_provider=lambda: cf_closing_writer(ADMIN))),
         "writes": ClaraGovernedWrites(
-            identity_provider=lambda: {
-                "subject": ADMIN, "name": "cf-admin-test",
-                "is_manage": True, "is_dre": True,
-            }),
+            identity_provider=lambda: cf_closing_writer(ADMIN),
+        ),
         "version_id": version_id,
     }
 
@@ -997,10 +993,7 @@ def test_batch_db_failure_marks_failed_and_reports(env, monkeypatch):
     # usa um orchestrator cujo _writes é a classe monkeypatchada.
     orch2 = ClaraBatchOrchestrator(
             writes=ClaraGovernedWrites(
-                identity_provider=lambda: {
-                    "subject": ADMIN, "name": "cf-admin-test",
-                    "is_manage": True, "is_dre": True,
-                }))
+                identity_provider=lambda: cf_closing_writer(ADMIN)))
     prepared = orch2.prepare_batch(
         operations=[
             _resolve_op(clarif_id),
@@ -1566,3 +1559,41 @@ def test_approve_claim_race_no_deadlock(env):
             _challenge_for_batch(prepared["batch_id"])["status"]
         )
     assert set(results) <= {"CONSUMED"}
+
+
+LNF_ONLY = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-lnf-only-batch"))
+
+
+def _closing_effect_counts() -> tuple[int, int]:
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM controllership_finance.clara_proposal")
+        proposals = cur.fetchone()[0]
+        cur.execute(
+            "SELECT count(*) FROM controllership_finance.closing_clarification"
+        )
+        clarifications = cur.fetchone()[0]
+    return proposals, clarifications
+
+
+def test_lnf_only_access_operation_is_blocked_in_the_plan(env):
+    """Operação de gate access fica blocked/forbidden; as outras mantêm o motivo do plano."""
+    before = _closing_effect_counts()
+    orch = ClaraBatchOrchestrator(
+        writes=ClaraGovernedWrites(
+            identity_provider=lambda: lnf_only_writer(LNF_ONLY),
+        ),
+    )
+    plan = orch.plan_batch(
+        operations=[
+            _clarify_op(env, "só LNF não abre esclarecimento"),
+            {"capability": "totvs.write_stock", "params": {}},
+        ],
+        actor_sub=LNF_ONLY,
+    )
+    ops = {op["index"]: op for op in plan["operations"]}
+    assert ops[0]["status"] == "blocked"
+    assert ops[0]["block_reason"] == "forbidden"
+    assert ops[1]["status"] == "blocked"
+    assert ops[1]["block_reason"] == "unknown_capability"
+    assert plan["viable_count"] == 0
+    assert _closing_effect_counts() == before

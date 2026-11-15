@@ -22,8 +22,10 @@ import pytest
 from controllership_finance_app.application.clara.corpus_ingestion import (
     segment_markdown,
 )
+from clara_test_identity import cf_closing_member, cf_closing_writer, lnf_only_writer
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
+    OperationForbidden,
     ProposalStale,
     UnknownCapability,
 )
@@ -235,10 +237,8 @@ def env(_configure_db):
         "knowledge": ClaraKnowledgeRepository(),
         "proposals": ClaraProposalRepository(),
         "writes": ClaraGovernedWrites(
-            identity_provider=lambda: {
-                "subject": ADMIN, "name": "cf-admin-test",
-                "is_manage": True, "is_dre": True,
-            }),
+            identity_provider=lambda: cf_closing_writer(ADMIN),
+        ),
         "version_id": version_id,
     }
 
@@ -1249,10 +1249,7 @@ def test_pg_direct_gate_denied_no_mutation(env):
     gate `dre` e identidade sem o vínculo falha antes de qualquer
     efeito — proposta nunca é selada."""
     non_dre = ClaraGovernedWrites(
-        identity_provider=lambda: {
-            "subject": REVIEWER_C, "name": "reviewer",
-            "is_manage": False, "is_dre": False,
-        },
+        identity_provider=lambda: cf_closing_member(REVIEWER_C),
     )
     with pytest.raises(ChecklistDomainError) as exc:
         non_dre.execute_direct(
@@ -1389,10 +1386,7 @@ def test_pg_direct_draft_requires_manage(env):
     """Sem `.manage` efetivo, draft_create falha forbidden antes de
     qualquer efeito — proposta nunca selada."""
     non_manage = ClaraGovernedWrites(
-        identity_provider=lambda: {
-            "subject": REVIEWER_C, "name": "reviewer",
-            "is_manage": False, "is_dre": False,
-        },
+        identity_provider=lambda: cf_closing_member(REVIEWER_C),
     )
     template_id = str(
         ClosingChecklistRepository().list_templates()[0]["template_id"]
@@ -1433,3 +1427,37 @@ def test_pg_direct_version_publish_still_governed(env):
             },
             actor_sub=ADMIN,
         )
+
+
+LNF_ONLY = str(uuid.uuid5(uuid.NAMESPACE_DNS, "cf-lnf-only-clara"))
+
+
+def _closing_effect_counts() -> tuple[int, int]:
+    with plugins_db_connect() as conn, conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM controllership_finance.clara_proposal")
+        proposals = cur.fetchone()[0]
+        cur.execute(
+            "SELECT count(*) FROM controllership_finance.closing_clarification"
+        )
+        clarifications = cur.fetchone()[0]
+    return proposals, clarifications
+
+
+def test_lnf_only_actor_cannot_write_closing(env):
+    """Gate access exige has_cf_access. Entrada só-LNF não grava proposta nem esclarecimento."""
+    before = _closing_effect_counts()
+    writes = ClaraGovernedWrites(
+        identity_provider=lambda: lnf_only_writer(LNF_ONLY),
+    )
+    with pytest.raises(OperationForbidden) as exc:
+        writes.execute_direct(
+            capability="clarification.open",
+            params={
+                "period": PERIOD,
+                "package_version_id": env["version_id"],
+                "question": "só LNF não escreve no fechamento",
+            },
+            actor_sub=LNF_ONLY,
+        )
+    assert exc.value.code == "forbidden"
+    assert _closing_effect_counts() == before
