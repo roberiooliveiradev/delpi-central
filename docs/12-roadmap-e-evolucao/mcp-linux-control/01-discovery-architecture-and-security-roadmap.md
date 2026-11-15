@@ -475,3 +475,12 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 4. Nao executar mais deploy nem tentar cadastro ChatGPT ate o PRMD publico ser realmente JSON e o MCP recusar chamadas sem Bearer.
 
 **Status:** `PUBLIC_ROUTE_NOT_PROVEN`, `LOCAL_MCP_PREVIOUSLY_HEALTHY`, `KEYCLOAK_CLIENT_PENDING`. O `PR #189` trata somente do cliente OAuth Keycloak e nao conserta rota HTTP.
+
+
+## 26. Confirmacao de imagem antiga do gateway no srv-api (2026-11-15)
+
+**Evidencia de consulta fornecida pelo operador:** no contêiner efetivamente em execucao `delpi-gateway`, tanto `/etc/nginx/snippets/linux-ops-mcp-locations.conf` quanto o include em `/etc/nginx/nginx.conf` estao **AUSENTES**. Requisicoes HTTP ao gateway local usando `Host: minhadelpi.com.br` retornaram `200 text/html` para PRMD, `405 text/html` para POST MCP sem token e `200 text/html` para healthz, indicando fallback ao portal.
+
+**Causa operacional confirmada:** imagem/configuracao de gateway em execucao nao contem as alteracoes do PR #188. Cloudflare nao e necessario para explicar as falhas locais. Nao houve evidencia de falha do ATLAS backend; sua validacao local anterior retornou healthy/PRMD JSON/401.
+
+**Procedimento correto, ainda nao executado:** primeiro verificar snippet no checkout atualizado e criar tag de backup da **imagem atualmente em execucao**, registrar identificador da imagem; `docker compose build gateway` isolado; executar `docker compose run --rm --no-deps --entrypoint nginx gateway -t` e validar include no container de teste; apenas em janela de mudanca aprovada, `docker compose up -d --no-deps --no-build --force-recreate gateway`; validar include/health/PRMD 200 JSON/401/404 e serviços existentes. Se falhar, restaurar a tag de imagem anterior para o ref usado no serviço e forçar recriacao de apenas gateway. Manter Keycloak/ATLAS/Cloudflare intactos. **Sem deploy pelo assistente, aguardando execução e read-back do operador.**
