@@ -321,6 +321,17 @@ class PostgresEntryAuditStore:
     def status_of(self, stable_key: str) -> dict | None:
         return self._one(f"SELECT * FROM {SCHEMA}.entry_audit_status WHERE stable_key = %s", (stable_key,))
 
+    def statuses_of(self, stable_keys: list[str]) -> dict[str, dict]:
+        """Uma consulta para N chaves — evita N+1 de ``status_of`` por linha."""
+        keys = [key for key in dict.fromkeys(stable_keys) if key]
+        if not keys:
+            return {}
+        rows = self._all(
+            f"SELECT * FROM {SCHEMA}.entry_audit_status WHERE stable_key = ANY(%s)",
+            (keys,),
+        )
+        return {str(row["stable_key"]): row for row in rows if row.get("stable_key")}
+
     def upsert_status(self, stable_key: str, *, kind: str, status: str, user_id: str, user_name: str) -> dict:
         return self._one(
             f"""

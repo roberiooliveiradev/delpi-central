@@ -182,6 +182,14 @@ class MemoryEntryAuditStore:
         found = self.statuses.get(stable_key)
         return deepcopy(found) if found else None
 
+    def statuses_of(self, stable_keys: list[str]) -> dict[str, dict]:
+        keys = [key for key in dict.fromkeys(stable_keys) if key]
+        return {
+            key: deepcopy(self.statuses[key])
+            for key in keys
+            if key in self.statuses
+        }
+
     def upsert_status(self, stable_key: str, *, kind: str, status: str, user_id: str, user_name: str) -> dict:
         current = self.statuses.get(stable_key, {"stable_key": stable_key, "kind": kind, "status": "pending", "id": str(uuid4())})
         current.setdefault("id", str(uuid4()))

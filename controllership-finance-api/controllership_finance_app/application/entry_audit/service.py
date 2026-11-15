@@ -65,6 +65,28 @@ class EntryAuditService:
         self._config = config
         self._lookback_days = lookback_days
         self._cache_days = cache_days
+        # Memo local à instância (uma requisição HTTP) — sem cache entre requests.
+        self._rows_memo: dict[tuple[str, str], list[dict]] = {}
+        self._runs_memo: dict[str, list[dict]] = {}
+
+    def _cached_rows(self, kind: str, analysis_id: str) -> list[dict]:
+        key = (kind, analysis_id)
+        cached = self._rows_memo.get(key)
+        if cached is None:
+            cached = self._store.rows(kind, analysis_id)
+            self._rows_memo[key] = cached
+        return cached
+
+    def _cached_runs(self, analysis_id: str) -> list[dict]:
+        cached = self._runs_memo.get(analysis_id)
+        if cached is None:
+            cached = self._store.runs_of(analysis_id)
+            self._runs_memo[analysis_id] = cached
+        return cached
+
+    def _statuses_map(self, rows: list[dict]) -> dict[str, dict]:
+        keys = [str(row.get("stable_key") or "") for row in rows]
+        return self._store.statuses_of(keys)
 
     def create(self, *, date_from: date, date_to: date, document_types: list[str] | None, branches: list[str] | None, user_id: str, user_name: str, via: str) -> dict:
         types, branch_codes = _filters(document_types, branches)
@@ -247,12 +269,14 @@ class EntryAuditService:
         clean = sum(1 for row in documents if _document_identity(row) not in divergent_keys)
         explained = sum(1 for row in unmatched if _explained(row))
         high_rows = [row for row in occurrences if row["severity"] == "Alta"]
+        status_map = self._statuses_map(occurrences)
+        pending, resolved = _pending_resolved_counts(occurrences, status_map)
         current = {
             "documents": len(documents),
             "occurrences": len(occurrences),
             "high": len(high_rows),
-            "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
-            "resolved": sum(1 for row in occurrences if _status(self._store, row) == "resolved"),
+            "pending": pending,
+            "resolved": resolved,
             "xml_unavailable": len(unavailable),
             "gross_checked": round(sum(_amount(row) for row in documents), 2),
             "high_difference": round(sum(abs(_amount_text(row.get("difference"))) for row in high_rows), 2),
@@ -312,12 +336,14 @@ class EntryAuditService:
         rows, _total = self._store.list_analyses(date_from=date_from, date_to=date_to, branch=branch, status="done", page=1, page_size=200)
         points = []
         for analysis in rows:
-            occurrences = self._store.rows("occurrences", analysis["id"])
-            documents = self._store.rows("documents", analysis["id"])
+            occurrences = self._cached_rows("occurrences", analysis["id"])
+            documents = self._cached_rows("documents", analysis["id"])
             if branch:
                 occurrences = [row for row in occurrences if row.get("branch") == branch]
                 documents = [row for row in documents if row.get("branch") == branch]
             documents = [row for row in documents if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
+            status_map = self._statuses_map(occurrences)
+            pending, resolved = _pending_resolved_counts(occurrences, status_map)
             points.append({
                 "analysis_id": analysis["id"],
                 "date_from": analysis["date_from"].isoformat(),
@@ -327,8 +353,8 @@ class EntryAuditService:
                 "documents": len(documents),
                 "occurrences": len(occurrences),
                 "high": sum(1 for row in occurrences if row.get("severity") == "Alta"),
-                "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
-                "resolved": sum(1 for row in occurrences if _status(self._store, row) == "resolved"),
+                "pending": pending,
+                "resolved": resolved,
             })
         if group == "month":
             return {"points": points, "months": _months(points)}
@@ -339,7 +365,12 @@ class EntryAuditService:
         rows = self._filtered("occurrences", analysis_id, filters)
         rows.sort(key=lambda row: _sort_key(row, sort))
         start = (page - 1) * page_size
-        page_rows = [_public_occurrence(row, self._store.status_of(row["stable_key"])) for row in rows[start : start + page_size]]
+        page_slice = rows[start : start + page_size]
+        status_map = self._statuses_map(page_slice)
+        page_rows = [
+            _public_occurrence(row, status_map.get(str(row.get("stable_key") or "")))
+            for row in page_slice
+        ]
         return {"items": page_rows, "page": page, "page_size": page_size, "total": len(rows), "branches_unavailable": ready}
 
     def occurrence(self, analysis_id: str, stable_key: str) -> dict:
@@ -431,17 +462,22 @@ class EntryAuditService:
 
     def _ready(self, analysis_id: str) -> tuple[dict, list[str]]:
         analysis = self._require(analysis_id)
-        runs = self._store.runs_of(analysis_id)
+        runs = self._cached_runs(analysis_id)
         if not any(run["status"] in {"done", "partial"} for run in runs):
             raise EntryAuditError("A análise ainda não tem filial concluída.", status_code=409, code="ANALYSIS_NOT_READY")
         unavailable = [run["branch_code"] for run in runs if run["status"] == "failed"]
         return analysis, unavailable
 
     def _filtered(self, kind: str, analysis_id: str, filters: dict) -> list[dict]:
-        rows = _dedupe(self._store.rows(kind, analysis_id))
-        failed = {run["branch_code"] for run in self._store.runs_of(analysis_id) if run["status"] == "failed"}
+        rows = _dedupe(self._cached_rows(kind, analysis_id))
+        failed = {
+            run["branch_code"]
+            for run in self._cached_runs(analysis_id)
+            if run["status"] == "failed"
+        }
         rows = [row for row in rows if row.get("branch") not in failed]
         allowed = _FILTERS_BY_KIND.get(kind, _FILTERS_BY_KIND["occurrences"])
+        status_map: dict[str, dict] | None = None
         for name in ("branch", "severity", "theme", "supplier", "tes", "document_type", "day", "status", "situation"):
             value = filters.get(name)
             if not value or name not in allowed:
@@ -451,7 +487,9 @@ class EntryAuditService:
             elif name == "day":
                 rows = [row for row in rows if str(row.get("received_date") or row.get("issue_date") or "") == value]
             elif name == "status":
-                rows = [row for row in rows if _status(self._store, row) == value]
+                if status_map is None:
+                    status_map = self._statuses_map(rows)
+                rows = [row for row in rows if _status_from_map(status_map, row) == value]
             elif name == "document_type":
                 rows = [row for row in rows if row.get("document_type") == value]
             elif name == "situation":
@@ -484,12 +522,14 @@ class EntryAuditService:
         documents = [row for row in document_rows if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
         unavailable = [row for row in document_rows if row.get("situation") == "xml_unavailable"]
         high_rows = [row for row in occurrences if row["severity"] == "Alta"]
+        status_map = self._statuses_map(occurrences)
+        pending, resolved = _pending_resolved_counts(occurrences, status_map)
         return {
             "documents": len(documents),
             "occurrences": len(occurrences),
             "high": len(high_rows),
-            "pending": sum(1 for row in occurrences if _status(self._store, row) == "pending"),
-            "resolved": sum(1 for row in occurrences if _status(self._store, row) == "resolved"),
+            "pending": pending,
+            "resolved": resolved,
             "xml_unavailable": len(unavailable),
             "gross_checked": round(sum(_amount(row) for row in documents), 2),
             "high_difference": round(sum(abs(_amount_text(row.get("difference"))) for row in high_rows), 2),
@@ -1234,7 +1274,27 @@ def _links(row: dict) -> dict:
     }
 
 
+def _status_from_map(status_map: dict[str, dict], row: dict) -> str:
+    found = status_map.get(str(row.get("stable_key") or ""))
+    return (found or {}).get("status", "pending")
+
+
+def _pending_resolved_counts(
+    rows: list[dict], status_map: dict[str, dict]
+) -> tuple[int, int]:
+    """Uma passada — pending é o default quando não há linha de status."""
+    pending = 0
+    resolved = 0
+    for row in rows:
+        if _status_from_map(status_map, row) == "resolved":
+            resolved += 1
+        else:
+            pending += 1
+    return pending, resolved
+
+
 def _status(store, row: dict) -> str:
+    """Compat: leitura unitária (detalhe/resolve). Preferir mapa em lotes."""
     found = store.status_of(row["stable_key"])
     return (found or {}).get("status", "pending")
 
