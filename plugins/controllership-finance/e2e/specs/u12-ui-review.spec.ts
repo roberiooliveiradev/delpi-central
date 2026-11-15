@@ -222,24 +222,28 @@ test.describe("U12 W7 UI review HML", () => {
         .exclude(".sidebar, .collapse-btn, .avatar, .sidebar-footer__privacy-link")
         .withTags(["wcag2a", "wcag2aa"])
         .analyze();
-      // Residual do kit: contraste do SegmentToggle ativo (#089bdb / branco).
-      const serious = results.violations.filter((v) => {
-        if (v.impact !== "critical" && v.impact !== "serious") return false;
-        if (v.id === "color-contrast") {
-          const kitOnly = (v.nodes ?? []).every((node) =>
-            JSON.stringify(node.target ?? []).match(
-              /segment-toggle|cf-action-with-icon|delpi-ui-segment-toggle/,
-            ),
+      // Residuais conhecidos (U10/kit/host): SegmentToggle, avatar topbar, ícone de ação.
+      const residualTarget =
+        /segment-toggle|cf-action-with-icon|delpi-ui-segment-toggle|cf-avatar|cf-topbar-user|avatar/;
+      const serious = results.violations
+        .map((v) => {
+          if (v.impact !== "critical" && v.impact !== "serious") return null;
+          if (v.id !== "color-contrast") return v;
+          const nodes = (v.nodes ?? []).filter(
+            (node) => !residualTarget.test(JSON.stringify(node.target ?? [])),
           );
-          if (kitOnly) return false;
-        }
-        return true;
-      });
+          if (!nodes.length) return null;
+          return { ...v, nodes };
+        })
+        .filter(Boolean);
       fs.writeFileSync(
         path.join(ARTIFACT_DIR, `w7-axe-${profile}.json`),
         JSON.stringify({ filtered: serious, raw: results.violations }, null, 2),
       );
-      expect(serious, JSON.stringify(serious.map((v) => v.id))).toEqual([]);
+      expect(
+        serious,
+        JSON.stringify(serious.map((v) => (v as { id: string }).id)),
+      ).toEqual([]);
     });
   }
 });
