@@ -350,3 +350,13 @@ PR #186, head `02dd50ad8c755557b473ab1a78e348696a9fbfc3`:
 - Atualizacao do checkout: evitar pull destrutivo; preservar alteracao em `shared/delpi_auth.egg-info/SOURCES.txt` com stash escopado e patch de backup, usar `git pull --ff-only` e parar se houver conflito. Nunca executar deploy completo da stack.
 - Ativacao: profile `linux-ops`, build isolado, `up -d --no-deps linux-ops-mcp` SOMENTE apos configurar UUID de servidor, issuer e audience OAuth canonicos, Keycloak dedicado e URL externa real do transporte. Sem isso, apenas atualizar repositorio/validar build, deixando o container desativado.
 - Read-back: verificar `docker ps` somente do MCP, `healthz`, 401 sem Bearer e socket apenas em loopback. **Nao afirmar deploy concluido sem evidencias do operador.**
+
+
+## 18. Confirmacao operacional: pull e build executados pelo owner (2026-11-14)
+
+- O operador confirmou na conversa que **passo 1 (pull protegido de main) e passo 2 (docker compose --profile linux-ops build linux-ops-mcp)** foram executados com sucesso em `srv-api`. Classificacao: `OPERATOR_REPORTED`, sem acesso direto do agente ao terminal.
+- O operador **nao confirmou** inicio do conteiner MCP, `healthz`, OAuth, Keycloak dedicado, `tunnel-client`, `tools/list` ou conexao com ChatGPT. Preservar os estados `MCP_RUNTIME_NOT_VERIFIED` e `TUNNEL_NOT_CONFIGURED`.
+- Ultimo merge pertinente: PR #187 em main, commit `c7d0b85ecb464a3d3b32236b00ceb78653efc70e`; bundle de P1 READ + Compose opt-in e porta localhost exclusiva.
+- Antes de executar `up -d --no-deps --no-build linux-ops-mcp`, confirmar **sem mostrar secrets**: UUID `IT_PORTAL_COLLECTOR_SERVER_ID` em `/etc/delpi/it-portal-linux-collector.env`; campos canonicos `PUBLIC_BASE_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_JWKS_URL`, `KEYCLOAK_AUDIENCE`; e os novos `LINUX_OPS_SERVER_ID`, `LINUX_OPS_MCP_RESOURCE_URL` (URL exata do transporte escolhido). O Code-only build não prova runtime configurado.
+- Secure MCP Tunnel precisa de `tunnel_id` em Platform, permissao da org (Tunnels Read+Manage/Use), associacao com workspace, `tunnel-client` e chave runtime guardada no host; authorization server Keycloak precisa continuar acessivel ao browser. Referencia oficial: https://developers.openai.com/api/docs/guides/secure-mcp-tunnels.
+- Caminho seguinte: read-only preflight dos campos + primeiro cadastro do tunel privado e autenticacao dedicada. Nao publicar porta SSH/Docker nem fazer deploy global.
