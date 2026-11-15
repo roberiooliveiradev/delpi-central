@@ -432,3 +432,15 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 **Gate de custo:** confirmar no Cloudflare o plano existente, hostname e politica de trafego aplicavel. Sem confirmar o risco de faturamento marginal zero, nao comprar / ativar add-on. Uso de ChatGPT com plugin propio, sem chamada da Responses API por token pago; obedecer quotas/limites ChatGPT. A infraestrutura local segue consumindo recursos existentes e nao possui custo zero literal de eletricidade/operacao.
 
 **Status:** `ZERO_ADDITIONAL_COST_REQUIRED`; `OPENAI_TUNNEL_ON_HOLD`; `EXISTING_CLOUDFLARE_ROUTE_CANDIDATE`; `EXTERNAL_MCP_ENDPOINT_NOT_DEPLOYED`.
+
+
+## 23. P1.5 - provisionamento OAuth limitado e controlado (2026-11-14)
+
+- PR #188 (Cloudflare gateway restrito) foi integrado a `main`; a infraestrutura do gateway de producao nao foi redeployada pelo assistente.
+- PR #189 (branch `feat/linux-ops-mcp-keycloak-client-20261115`): script `infra/scripts/keycloak_linux_ops_client.py` prepara cadastro `mcp-linux-ops` Keycloak **sem alterar clientes existentes**, modo CHECK padrao somente leitura e APPLY idempotente explicitamente condicionado a callback exata do plugin ChatGPT, validacao de issuer/audience, backup IAM e aprovacao de alteracao.
+- Reusa `delia_mcp_keycloak_state.py` (Keycloak Admin REST) e client scopes genericos `mcp:tools` e `audience-delpi`; resource audience isolado em `mcp-audience-linux-ops` (nao modificar scope compartilhado).
+- Suite mockada e GitHub Actions especificos criados. Nao houve Keycloak apply real, nenhum segredo capturado, nenhum deploy, nenhuma conexao OAuth de usuario real.
+- Precondicao principal: obter redirect URI **exata** na UI do ChatGPT plugin. Nao preencher callback por inferencia; nenhuma configuracao publica sera ativada ate validacao.
+- Runbook detalhado de rollout/rollback: `linux-ops-mcp/docs/05-keycloak-dedicated-client-onboarding.md`.
+
+**Status atual:** `KEYCLOAK_SCRIPT_PR_OPEN`, `PRODUCTION_APPLY_NOT_DONE`, `GATEWAY_NOT_REDEPLOYED`, `CHATGPT_CONNECTION_NOT_DONE`.
