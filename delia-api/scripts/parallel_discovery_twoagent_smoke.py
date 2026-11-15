@@ -40,7 +40,21 @@ from app.infrastructure.auth.subject_bearer import (
 )
 from app.infrastructure.config.settings import Settings
 
-QUESTION = "liste os catálogos disponíveis"
+# Bounded e2e battery: each scenario exercises a distinct outcome
+# class. EVAL_SCENARIOS overrides with a JSON list of
+# {"id": ..., "text": ...}. Read/discovery-class only — no writes.
+DEFAULT_SCENARIOS = [
+    {"id": "enum", "text": "liste os catálogos disponíveis"},
+    {
+        "id": "read",
+        "text": "quais são os itens do catálogo de produtos?",
+    },
+    {
+        "id": "owner_down",
+        "text": "qual o saldo atual do produto ABC-123 no estoque?",
+    },
+    {"id": "ambiguous", "text": "me conta sobre o projeto"},
+]
 
 
 def _subject_token() -> str:
@@ -63,53 +77,90 @@ def _subject_token() -> str:
 
 def main() -> int:
     settings = Settings()
-    subject = _subject_token()
 
     core = CorePlatformAccessAdapter(
         core_api_url=settings.core_api_url,
         timeout_seconds=settings.core_timeout_seconds,
         http_get=_bounded_http_get,
     )
-    access_context = core.resolve(subject)
 
     app = create_application()
     handler = app.config["INTERACTION_TURN_HANDLER"]
 
-    token = bind_subject_bearer(subject)
-    started = time.monotonic()
-    try:
-        result = handler.execute(
-            InteractiveTurnRequest(
-                access_context=access_context,
-                input_text=QUESTION,
-                command_type=TURN_COMMAND_MESSAGE,
+    scenarios = DEFAULT_SCENARIOS
+    if os.getenv("EVAL_SCENARIOS"):
+        scenarios = json.loads(os.environ["EVAL_SCENARIOS"])
+
+    runs = []
+    for sc in scenarios:
+        # Fresh subject per scenario: the realm access-token TTL is
+        # shorter than a full battery on slow CPU inference, so a
+        # single mint would expire mid-run and masquerade as an
+        # application auth failure.
+        subject = _subject_token()
+        access_context = core.resolve(subject)
+        token = bind_subject_bearer(subject)
+        started = time.monotonic()
+        try:
+            result = handler.execute(
+                InteractiveTurnRequest(
+                    access_context=access_context,
+                    input_text=sc["text"],
+                    command_type=TURN_COMMAND_MESSAGE,
+                )
             )
-        )
-    finally:
-        unbind_subject_bearer(token)
-    elapsed = time.monotonic() - started
+            runs.append(
+                {
+                    "id": sc["id"],
+                    "elapsed_s": round(
+                        time.monotonic() - started, 1
+                    ),
+                    "result_type": type(result).__name__,
+                    "epistemic_class": str(
+                        getattr(result, "epistemic_class", None)
+                    ),
+                    "grounding_status": str(
+                        getattr(result, "grounding_status", None)
+                    ),
+                    "limitations": [
+                        str(lim)[:80]
+                        for lim in getattr(
+                            result, "limitations", ()
+                        )
+                        or ()
+                    ][:4],
+                    "content_head": str(
+                        getattr(result, "content", "")
+                    )[:120]
+                    or None,
+                }
+            )
+        except Exception as exc:
+            runs.append(
+                {
+                    "id": sc["id"],
+                    "elapsed_s": round(
+                        time.monotonic() - started, 1
+                    ),
+                    "result_type": f"EXC:{type(exc).__name__}",
+                    "epistemic_class": None,
+                    "grounding_status": None,
+                    "limitations": None,
+                    "content_head": None,
+                }
+            )
+        finally:
+            unbind_subject_bearer(token)
 
     summary = {
         "flags": {
             "parallel_mcp_discovery": settings.parallel_mcp_discovery,
             "two_agent_experiment": settings.two_agent_experiment,
+            "runtime_profile": os.getenv("DELIA_RUNTIME_PROFILE")
+            or "default",
         },
-        "elapsed_s": round(elapsed, 1),
-        "result_type": type(result).__name__,
-        "status": getattr(result, "status", None)
-        or getattr(result, "outcome", None)
-        or str(result)[:120],
+        "scenarios": runs,
     }
-    # Surface whatever truthful outcome fields the result carries.
-    for attr in (
-        "outcome",
-        "sufficiency",
-        "completion",
-        "answer_status",
-    ):
-        value = getattr(result, attr, None)
-        if value is not None:
-            summary[attr] = str(value)[:160]
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     return 0
 

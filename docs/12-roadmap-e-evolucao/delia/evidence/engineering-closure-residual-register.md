@@ -2058,3 +2058,21 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Unchanged — no new coverage evidence claimed |
 
 **NEXT:** `COORDINATION_C3_T2_PARALLEL_MCP_DISCOVERY_EXPERIMENT_INDEPENDENT_REVIEW`. Flag remains OFF by default; no production/phase promotion.
+
+### 2026-11-15 — security rework + full-set re-proof (`DELIA-C3-T2-PARALLEL-DISCOVERY-SECURITY-AND-FULL-SET-REPROOF-01`)
+
+Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decision/coordination-independent-review-2026-11-15b.md` (`ACCEPT_WITH_RESIDUAL`, reviewed SHA `0b88545d64`).
+
+| Residual | Status | Evidence |
+|---|---|---|
+| `NEGATIVE_BEARER_AUTH_ORACLE` | `REMEDIATED (real boundary)` | 22-test module `tests/test_mcp_provider_parallel_discovery.py` now crosses the real `KeycloakDelegatedCredentialProvider` + `McpSpecialistAdapter` + `DelpiMcpTransport` boundary with a governed `deadline_http_post` stub — zero fake interop on the no-bearer path: absent caller bearer → `mcp_authentication_failed` before any wire call (0 delegated tokens minted, 0 capabilities published); valid bearer → delegated token keeps subject `sub` + `azp=delia-api` per specialist |
+| `CROSS_USER_IDENTITY_ISOLATION` | `PROVEN` | Two concurrent `list_groups` invocations with distinct subjects — each worker's delegated exchange observed the caller's own `sub` (fingerprint-keyed cache; no A→B mixing) |
+| `BEARER_UNBIND_ON_EXCEPTION` | `PROVEN` | Worker exception → `unbind_subject_bearer` in `finally`; a subsequent task on the same reused pool thread sees no stale bearer (thread-reuse oracle) |
+| `WORKER_TOTAL_LIFETIME_ORACLE` | `PROVEN_BOUNDED` | Per-frontier trace: `list_groups` shared `remaining_budget` → `SpecialistInterop` → adapter → delegated exchange → `DelpiMcpTransport` → `bounded_request` (absolute socket deadline bound in the executing thread). Existing proofs: trickle status/headers/body, TLS handshake, DNS storms (`test_http_absolute_deadline.py`) — no fresh budget per fragment. In-flight workers cannot be force-killed (sync boundary) but their I/O dies at the absolute deadline; results never adopted (late → `mcp_timeout`). Repeated-timeout stability: bounded pool create/release per call, no thread accumulation across turns (test) |
+| `T2-ENV-API-DELPI-DOWN` | `OPEN_LOW (env) → HANDOFF` | `delpi-api-delpi` now `Up (unhealthy)` — startup still fails on the same `V024__prc_record_flags.sql` checksum divergence (source `be614649b7` differs from applied DB content; concurrent engineering/entry-audit stream owns it). Discovery failure class shifted `mcp_timeout`→`mcp_unavailable` (fast fail), identical surface in both arms. **Handoff to entry-audit/api-delpi owner: recorded DB checksum `8f9c97…` vs source `817a70…`; do NOT baseline/repair from DÉLIA.** |
+| `T2-PARALLEL-LLM-E2E` | `EXECUTED_BOUNDED` | Local model env repaired (declared tag `qwen3:8b` repointed to intact `qwen3:4b-instruct-2507-q4_K_M` weights — both 14b and `delia-qwen3:8b` manifests had blob drift; reversible `ollama cp`, documented). Real e2e two-Agent battery (4 scenarios × 2 arms, fresh subject per scenario, `experiment_variant=split`): identical outcome classes and catalog ON/OFF, all NON_GROUNDED honest (`delpi_source_unverified`), FALSE_COMPLETE=0, auth_failures=0 — no e2e latency claim (LLM-dominated turns, n=4) |
+| `T2-ADMISSION-PROPOSE-TIMEOUT-MISMATCH` | `OPEN_LOW (novo, flag-independent)` | **Latent defect found during e2e:** `model_propose`/`interaction_admission` fails `invalid_request` at 0 ms on interactive turns — `call_timeout=min(stage_timeout=120, remaining≈300)` exceeds `InvokeModel.MAX_TIMEOUT_SECONDS=60`, so `_validate_request` rejects before any provider call. Turn proceeds via generalist path (comprehension runs). Identical in both arms, pre-existing, unrelated to parallel discovery. Fix requires deciding the authoritative bound (60 s call ceiling vs 120 s stage budget) — exceeds this task's scope |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Unchanged — no new coverage evidence claimed |
+| `R5_MULTIPAGE_UNION` | `OPEN` | Unchanged per task directive |
+
+**NEXT:** `COORDINATION_C3_T2_PARALLEL_DISCOVERY_REPROOF_INDEPENDENT_REVIEW`. Flag remains OFF by default; no production/phase promotion.
