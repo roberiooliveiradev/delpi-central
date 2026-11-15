@@ -264,7 +264,7 @@ def main() -> int:
             "PUT",
             f"/admin/rbac/roles/{role_id}/permissions",
             tester_token,
-            {"permission_ids": [perm_id_by_code[c] for c in codes]},
+            {"permissionIds": [perm_id_by_code[c] for c in codes]},
         )
         print("ROLE_PERMS", role_name, st, ",".join(codes))
 
@@ -280,7 +280,7 @@ def main() -> int:
             "PUT",
             f"/admin/rbac/users/{user_id}/roles",
             tester_token,
-            {"role_ids": [role_id]},
+            {"roleIds": [role_id]},
         )
         print("USER_ROLES", username, st)
 
