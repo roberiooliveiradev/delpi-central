@@ -573,3 +573,16 @@ Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post
 - **Interpretacao delimitada:** cadastro/registro do plugin aceito e aprovado; ainda nao ha comprovacao de clique em `Continuar`, login Keycloak bem-sucedido, autorizacao do usuario, conexao finalizada, `tools/list` ou chamada autenticada `get_host_health`.
 - **Proxima acao:** usuario clica Continuar, autentica-se no Keycloak com sua conta, confere/consente apenas escopos previstos, volta ao ChatGPT e verifica status `Conectado`; entao testar quatro ferramentas READ (incluindo `get_host_health`) e testar controle de permissoes Core sem imprimir tokens/segredos. Nenhuma necessidade de novo deploy do gateway neste momento.
 - **Estado:** `CHATGPT_PLUGIN_REGISTERED_ADMIN_APPROVED`, `OAUTH_USER_LOGIN_PENDING`, `MCP_AUTHENTICATED_TOOLS_UNTESTED`.
+
+
+## 35. OAuth login ChatGPT PASS; MCP action discovery FAIL (2026-11-15)
+
+**Evidencia visual enviada pelo operador:** ao clicar no plugin `ATLAS — Infraestrutura Linux`, houve redirecionamento a Minha DELPI / Keycloak, login com conta corporativa informado como superadmin, retorno ao ChatGPT e toast em ingles `Authentication succeeded, action discovery failed`. **Nenhuma tool demonstrada.**
+
+**Interpretacao por etapas:**
+- `OAUTH_CALLBACK_AUTH_SUCCESS` confirmado pela UI. Isso nao implica que o access token produzido foi aceito no backend MCP.
+- `MCP_DISCOVERY_FAILED` confirmado pela UI. Pode ser falha de AuthN por `aud`/scopes/JWT, 403 por transport host/origin, falha upstream/proxy, incompatibilidade de protocolo MCP initialize ou erro de esquema `tools/list`. Nao deduzir causa exata do toast.
+- O middleware `shared/delpi_mcp/auth.py` escreve warnings sanitizados `mcp_auth_denied class=... path=/mcp/` para `TOKEN_VALIDATION_FAILED`, `RESOURCE_AUDIENCE_MISMATCH`, `MISSING_REQUIRED_SCOPE`. `linux-ops-mcp` usa Uvicorn access logs no container; `gateway` usa log_format `tv_access_sanitized`. O token usa audiencia global `delpi-central` (validador base) e URL exata do MCP e scopes `openid profile email mcp:tools`.
+- **Triage proposto:** correlacionar tentativa unica com agregacao sanitizada **somente** de metodo+rota+status HTTP e classes `mcp_auth_denied` dos containers `delpi-gateway` e `delpi-linux-ops-mcp`; nao exibir headers, query string, tokens, bodies, secret ou logs integrais. Se 401, verificar via UI Keycloak `Client Scopes > Evaluate` se audiencias `delpi-central` e URL exata, `scope` completo, `iss`, `azp` e `email` (sem compartilhar token). Se 403/404/5xx, inspecionar Nginx/upstream; se 200 e tools nao aparecem, testar handshake `initialize` e `tools/list` autenticados e validar schema contra client ChatGPT, sem desabilitar controles.
+- `it-portal.access` e `it-portal.servers.view` sao autorizacoes Core **de chamada**, nao diagnostico inicial para `tools/list`: estas so sao verificadas na execucao da ferramenta, no `server.py`, apos discovery. Superadmin do portal nao demonstra aud/scope de token.
+- **Estado:** `OAUTH_LOGIN_PASS`, `MCP_ACTION_DISCOVERY_FAIL`, `TOOLS_LIST_NOT_PROVEN`, `READ_TOOL_CALL_NOT_PROVEN`. Nao repetir deploy de gateway nem fragilizar Keycloak; recolher evidencia segura primeiro.
