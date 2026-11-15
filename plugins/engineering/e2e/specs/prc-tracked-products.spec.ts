@@ -31,6 +31,11 @@ async function openProductsArea(page: Page): Promise<void> {
   await expect(
     page.getByRole("button", { name: "Produtos acompanhados" }),
   ).toBeVisible({ timeout: 30_000 });
+  /* Compacto abre em Cards (preferência persistida) — as asserções
+   * desta spec exercitam a Tabela. */
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
 }
 
 test("U1 — seletor de área + listagem com 5 colunas e massa HML", async ({
@@ -114,6 +119,9 @@ test("U1 — URL state: deep-link, refresh e voltar preservam área/filtro", asy
 
   await page.goto(`${QUEUE_PATH}?area=products&flagState=none`);
   await ensureAuthenticated(page);
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
   await expect(page.getByRole("table")).toBeVisible({
     timeout: 20_000,
   });

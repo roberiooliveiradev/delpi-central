@@ -32,6 +32,10 @@ async function openProductDetail(
 ): Promise<void> {
   await page.goto(`${QUEUE_PATH}?area=products&search=${code}`);
   await ensureAuthenticated(page);
+  /* Compacto abre em Cards — detalhe abre pela linha da Tabela. */
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
   const row = page
     .getByRole("table")
     .locator("tbody tr")
@@ -233,6 +237,9 @@ test("UX — tema escuro + zoom 200% + teclado na área de produtos", async ({
   });
   await page.goto(`${QUEUE_PATH}?area=products`);
   await ensureAuthenticated(page);
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
   await expect(page.getByRole("table")).toBeVisible({
     timeout: 20_000,
   });
@@ -513,6 +520,127 @@ test("G5 — breadcrumb reflete a área: raiz, solicitações, produtos e detalh
   await expect(
     crumbs().locator('[aria-current="page"]'),
   ).toHaveText("Solicitações", { timeout: 20_000 });
+
+  await expectNoFailures(pageErrors, forbidden);
+});
+
+test("G6 — paridade de listagem: sort 5 colunas, menu Colunas e modo Cards", async ({
+  page,
+}) => {
+  const pageErrors = trackPageErrors(page);
+  const forbidden = trackForbiddenApiCalls(page);
+  const shot = async (name: string) => {
+    await page.screenshot({
+      path: `artifacts/g6-${test.info().project.name}-${name}.png`,
+      fullPage: false,
+    });
+  };
+
+  await page.goto(`${QUEUE_PATH}?area=products`);
+  await ensureAuthenticated(page);
+  /* Compacto abre em Cards por padrão — o teste de sort precisa da
+   * Tabela; o toggle é idempotente. */
+  await page
+    .getByRole("button", { name: "Tabela", exact: true })
+    .click();
+  const table = page.getByRole("table");
+  const firstRow = table.locator("tbody tr").first();
+  await expect(firstRow).toBeVisible({ timeout: 20_000 });
+
+  /* 1) Sort: todas as colunas ordenáveis, clique alterna direção e
+   * reflete na URL. */
+  const header = (name: string) =>
+    page.getByRole("columnheader", { name });
+  const codeCells = () =>
+    table.locator("tbody tr td:first-child").allTextContents();
+
+  await header("Código oficial").click();
+  await page.waitForURL(/sortBy=code&sortDir=asc/, { timeout: 15_000 });
+  await expect(header("Código oficial")).toHaveAttribute(
+    "aria-sort",
+    "ascending",
+  );
+  const codes = await codeCells();
+  expect(codes).toEqual([...codes].sort());
+
+  await header("Código oficial").click();
+  await page.waitForURL(/sortBy=code&sortDir=desc/, {
+    timeout: 15_000,
+  });
+  await expect(header("Código oficial")).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
+  const codesDesc = await codeCells();
+  expect(codesDesc).toEqual([...codes].sort().reverse());
+
+  /* Novos campos do contrato: versão e bandeiras abertas. */
+  await header("Versão atual").click();
+  await page.waitForURL(/sortBy=version&sortDir=desc/, {
+    timeout: 15_000,
+  });
+  await expect(header("Versão atual")).toHaveAttribute(
+    "aria-sort",
+    "descending",
+  );
+  await header("Bandeiras abertas").click();
+  await page.waitForURL(/sortBy=openFlags&sortDir=desc/, {
+    timeout: 15_000,
+  });
+  await header("Última evolução").click();
+  await page.waitForURL(/sortBy=lastEvolution&sortDir=desc/, {
+    timeout: 15_000,
+  });
+
+  /* 2) Menu Colunas: ocultar, persistir e restaurar. */
+  const columnsTrigger = page.getByRole("button", { name: "Colunas" });
+  await columnsTrigger.click();
+  const descOption = page.getByRole("checkbox", {
+    name: "Exibir coluna Descrição",
+  });
+  await expect(descOption).toBeVisible({ timeout: 10_000 });
+  await descOption.click();
+  await expect(header("Descrição")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await shot("column-hidden");
+
+  /* Persistência: refresh mantém a preferência. */
+  await page.reload();
+  await ensureAuthenticated(page);
+  await expect(firstRow).toBeVisible({ timeout: 20_000 });
+  await expect(header("Descrição")).toHaveCount(0);
+
+  await columnsTrigger.click();
+  await page.getByRole("button", { name: "Restaurar" }).click();
+  await expect(header("Descrição")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  /* 3) Modo Cards: mesmo escopo, identidade e navegação ao detalhe. */
+  await page
+    .getByRole("button", { name: "Cards", exact: true })
+    .click();
+  const productCard = page.getByRole("button", {
+    name: /Produto \d+/,
+  });
+  await expect(productCard.first()).toBeVisible({ timeout: 15_000 });
+  await shot("cards-mode");
+
+  /* Preferência de layout persiste no refresh. */
+  await page.reload();
+  await ensureAuthenticated(page);
+  await expect(
+    page.getByRole("button", { name: /Produto \d+/ }).first(),
+  ).toBeVisible({ timeout: 20_000 });
+
+  /* Card abre a ficha técnica do produto. */
+  await page
+    .getByRole("button", { name: /Produto \d+/ })
+    .first()
+    .click();
+  await page.waitForURL(/product-registration\/products\//, {
+    timeout: 15_000,
+  });
+  await ensureAuthenticated(page);
 
   await expectNoFailures(pageErrors, forbidden);
 });

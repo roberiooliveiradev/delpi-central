@@ -1225,6 +1225,7 @@ async def prc_list_verifications(request_id: str = Path(...)):
 async def prc_list_records(
     search: str | None = Query(default=None, max_length=100),
     sort: str | None = Query(default=None, max_length=32),
+    sortDir: str | None = Query(default=None, pattern="^(asc|desc)$"),
     flagState: str | None = Query(default=None, max_length=16),
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=25, ge=1, le=100),
@@ -1237,6 +1238,7 @@ async def prc_list_records(
         data = build_prc_service().list_records(
             actor=_actor(user), search=search, page=page,
             page_size=pageSize, sort=sort, flag_state=flagState,
+            sort_dir=sortDir,
         )
     except Exception as exc:
         return _err(exc, op)

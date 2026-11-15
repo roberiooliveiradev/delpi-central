@@ -186,6 +186,34 @@ describe("prcNavigate url state", () => {
     );
   });
 
+  it("accepts all five product sort keys and canonical default dir", () => {
+    const state = parsePrcQueueUrl(
+      "?area=products&sortBy=openFlags&sortDir=asc",
+    );
+    expect(state.sortBy).toBe("openFlags");
+    expect(state.sortDir).toBe("asc");
+    expect(
+      parsePrcQueueUrl("?area=products&sortBy=version").sortBy,
+    ).toBe("version");
+    /* sortDir ausente → direção canônica do campo (code=asc,
+     * version/openFlags/lastEvolution=desc). */
+    expect(
+      parsePrcQueueUrl("?area=products&sortBy=code").sortDir,
+    ).toBe("asc");
+    expect(
+      parsePrcQueueUrl("?area=products&sortBy=version").sortDir,
+    ).toBe("desc");
+    /* campo fora da whitelist cai no estado vazio; sortDir de
+     * solicitações não vaza para produtos. */
+    const bad = parsePrcQueueUrl(
+      "?area=products&sortBy=createdAt&sortDir=asc",
+    );
+    expect(bad.sortBy).toBe("");
+    expect(
+      parsePrcQueueUrl("?sortBy=version&sortDir=asc").sortBy,
+    ).toBe("");
+  });
+
   it("parses product tab and revision with safe fallbacks", () => {
     expect(parsePrcProductTab("?tab=versions")).toBe("versions");
     expect(parsePrcProductTab("?tab=bogus")).toBe("sheet");

@@ -19,6 +19,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
+from engineering_app.application.ports.product_registration import (
+    resolve_record_sort,
+)
 from engineering_app.domain.product_registration import snapshot
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
@@ -37,6 +40,15 @@ _T_REQ = f"{_SCHEMA}.product_registration_requests"
 _T_DRAFT = f"{_SCHEMA}.product_registration_drafts"
 _T_REC = f"{_SCHEMA}.product_registration_records"
 _T_REV = f"{_SCHEMA}.product_registration_revisions"
+
+# Whitelist fechada — chaves do contrato → expressões SQL internas.
+_RECORD_SORT_COLUMNS = {
+    "code": "r.official_product_code",
+    "description": "(rev.technical_snapshot #>> '{fields,description,value}')",
+    "version": "r.current_revision_number",
+    "openFlags": "COALESCE(fc.open_count,0)",
+    "lastEvolution": "rev.approved_at",
+}
 _T_EVT = f"{_SCHEMA}.product_registration_events"
 _T_VER = f"{_SCHEMA}.product_registration_verifications"
 _T_IDEM = f"{_SCHEMA}.product_registration_idempotency"
@@ -645,6 +657,7 @@ class PostgresProductRegistrationRepository:
         page_size: int,
         sort: str | None = None,
         flag_state: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict[str, Any]:
         where = "r.current_revision_number >= 1"
         params: list[Any] = []
@@ -667,18 +680,15 @@ class PostgresProductRegistrationRepository:
             where += " AND COALESCE(fc.open_count,0) > 0"
         elif flag_state == "none":
             where += " AND COALESCE(fc.open_count,0) = 0"
-        order = {
-            "code": "r.official_product_code ASC, r.id ASC",
-            "description": (
-                "(rev.technical_snapshot #>> '{fields,description,value}') ASC NULLS LAST,"
-                " r.id ASC"
-            ),
-            "lastEvolution": (
-                "rev.approved_at DESC NULLS LAST, r.id DESC"
-            ),
-        }.get(sort or "lastEvolution")
-        if order is None:
-            order = "rev.approved_at DESC NULLS LAST, r.id DESC"
+        # Ordenação aplicada ao conjunto completo antes de LIMIT/OFFSET.
+        # Whitelist fechada de expressões — nenhum identificador vem do
+        # cliente. NULLS LAST nas duas direções; desempate estável por id.
+        field, direction = resolve_record_sort(sort, sort_dir)
+        dir_sql = "DESC" if direction == "desc" else "ASC"
+        order = (
+            f"{_RECORD_SORT_COLUMNS[field]} {dir_sql} NULLS LAST,"
+            f" r.id {dir_sql}"
+        )
         base = (
             f"FROM {_T_REC} r"
             f" LEFT JOIN {_T_REV} rev"

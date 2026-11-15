@@ -5,10 +5,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FilterX, RefreshCw } from "lucide-react";
 
+import {
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  TableColumnVisibilityMenu,
+  useTableColumnVisibility,
+} from "@delpi/plugin-ui/index";
 import { HomeApiError } from "../../../api/httpClient";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   EngineeringActionButton,
+  EngineeringDataCardsGrid,
   EngineeringEmptyState,
   EngineeringFilterInput,
   EngineeringIconButton,
@@ -16,7 +22,9 @@ import {
   EngineeringPageHero,
   EngineeringPagePath,
   EngineeringScopeChipBar,
+  EngineeringSegmentToggle,
   EngineeringStateBanner,
+  usePersistedViewLayout,
 } from "../../../ui/engineeringUi";
 import type { DataTableColumn } from "../../lmps/components/dataTableUi";
 import { DataTableSection } from "../../lmps/components/DataTableSection";
@@ -35,25 +43,36 @@ import {
 } from "../prcNavigate";
 import { PRC_COPY, PRC_PRODUCTS_COPY } from "../prcCopy";
 import { PrcAreaToggle } from "../components/PrcAreaToggle";
+import { PRC_PRODUCT_COLUMN_CATALOG } from "../prcProductsFieldCatalog";
+import {
+  buildPrcProductCardColumns,
+  PrcProductCard,
+} from "../components/PrcProductCard";
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
+const COLUMN_PREFERENCES_KEY = "engineering:prc:products:columns";
+const LAYOUT_PREFERENCES_KEY = "engineering:prc:products:layout";
 
-/** Coluna UI → sort do contrato backend (direção canônica por
- * chave — o servidor não aceita sortDir; o indicador da tabela
- * espelha a direção efetiva). */
+/** Coluna UI → sort do contrato backend + direção canônica no
+ * primeiro clique (o servidor aceita `sortDir` asc|desc e resolve
+ * o default por campo quando omitido). */
 const SORT_BY_COLUMN: Record<
   string,
   { sort: string; dir: "asc" | "desc" }
 > = {
   officialCode: { sort: "code", dir: "asc" },
   description: { sort: "description", dir: "asc" },
+  currentRevisionNumber: { sort: "version", dir: "desc" },
+  openFlagCount: { sort: "openFlags", dir: "desc" },
   lastEvolution: { sort: "lastEvolution", dir: "desc" },
 };
 
 const COLUMN_BY_SORT: Record<string, string> = {
   code: "officialCode",
   description: "description",
+  version: "currentRevisionNumber",
+  openFlags: "openFlagCount",
   lastEvolution: "lastEvolution",
 };
 
@@ -114,6 +133,7 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
             search: state.search || undefined,
             flagState: state.flagState || undefined,
             sort: state.sortBy || "lastEvolution",
+            sortDir: state.sortBy ? state.sortDir : undefined,
             page: state.page,
             pageSize: PAGE_SIZE,
           },
@@ -221,13 +241,13 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
       {
         key: "currentRevisionNumber",
         header: PRC_PRODUCTS_COPY.colVersion,
-        sortable: false,
+        sortable: true,
         render: (row) => `V${row.currentRevisionNumber}`,
       },
       {
         key: "openFlagCount",
         header: PRC_PRODUCTS_COPY.colOpenFlags,
-        sortable: false,
+        sortable: true,
         render: (row) =>
           /* Contagem contratada pelo backend — zero real é "0",
            * nunca «—» (indisponível seria outro estado). */
@@ -250,6 +270,34 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
     ],
     [],
   );
+
+  /** Preferências compartilhadas — menu Colunas controla Tabela e Cards. */
+  const {
+    visibility,
+    orderedColumns,
+    reorderColumns,
+    setColumnVisible,
+    reset: resetColumns,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: COLUMN_PREFERENCES_KEY,
+    columns: PRC_PRODUCT_COLUMN_CATALOG,
+    /* Código oficial é a identidade: fica como fallback se todas as
+     * demais forem ocultadas. */
+    emptyFallbackKeys: ["officialCode"],
+  });
+  const visibleColumns = useMemo(
+    () => filterColumns(columns),
+    [filterColumns, columns],
+  );
+  const cardColumns = useMemo(
+    () => buildPrcProductCardColumns(columns, visibleColumns),
+    [columns, visibleColumns],
+  );
+  const { layout, setLayout } = usePersistedViewLayout({
+    storageKey: LAYOUT_PREFERENCES_KEY,
+    defaultMode: "table",
+  });
 
   const forbidden = error?.status === 403;
   const refresh = useCallback(() => {
@@ -356,6 +404,29 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
               chips={flagChips}
             />
           </div>
+          {/* Paridade com a fila: menu Colunas + modos Tabela/Cards. */}
+          <div className="engineering-prc__queue-bottom">
+            <TableColumnVisibilityMenu
+              columns={orderedColumns}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReorderColumns={reorderColumns}
+              onReset={resetColumns}
+              labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+            />
+            <EngineeringSegmentToggle
+              ariaLabel="Modo de apresentação dos produtos"
+              idPrefix="prc-products-layout"
+              size="sm"
+              widthMode="content"
+              value={layout}
+              onChange={setLayout}
+              options={[
+                { value: "table", label: "Tabela" },
+                { value: "cards", label: "Cards" },
+              ]}
+            />
+          </div>
         </div>
       </EngineeringPageHero>
 
@@ -408,42 +479,76 @@ export function PrcProductsPage({ basePath }: { basePath: string }) {
       ) : null}
 
       {!forbidden && !error && list && list.items.length > 0 ? (
-        <DataTableSection
-          unframed
-          title={PRC_PRODUCTS_COPY.listTitle}
-          columns={columns}
-          rows={list.items}
-          rowKey={(row) => row.recordId}
-          loading={loading}
-          hideSearch
-          emptyMessage={PRC_PRODUCTS_COPY.emptyFiltered}
-          serverPagination={{
-            page: applied.page,
-            pageSize: PAGE_SIZE,
-            total: list.total,
-            onPageChange: (page) => commit({ ...applied, page }),
-          }}
-          serverSort={{
-            sortKey:
-              COLUMN_BY_SORT[applied.sortBy || "lastEvolution"] ||
-              null,
-            sortDirection: applied.sortDir,
-            onSortChange: (columnKey) => {
-              const mapped = SORT_BY_COLUMN[columnKey];
-              if (!mapped) return;
-              commit(
-                {
-                  ...applied,
-                  sortBy: mapped.sort,
-                  sortDir: mapped.dir,
-                  page: 1,
+        <div className="engineering-prc__queue-view">
+          {layout === "cards" ? (
+            <>
+              <EngineeringDataCardsGrid
+                ariaLabel="Produtos acompanhados em cards"
+                className="engineering-prc__request-cards-grid"
+              >
+                {list.items.map((row) => (
+                  <PrcProductCard
+                    key={row.recordId}
+                    row={row}
+                    columns={cardColumns}
+                    onOpen={openDetail}
+                  />
+                ))}
+              </EngineeringDataCardsGrid>
+              <p className="engineering-prc__muted">
+                Página {applied.page} · {list.total} produto(s) no
+                escopo.
+              </p>
+            </>
+          ) : (
+            <DataTableSection
+              unframed
+              title={PRC_PRODUCTS_COPY.listTitle}
+              columns={visibleColumns}
+              rows={list.items}
+              rowKey={(row) => row.recordId}
+              loading={loading}
+              hideSearch
+              emptyMessage={PRC_PRODUCTS_COPY.emptyFiltered}
+              serverPagination={{
+                page: applied.page,
+                pageSize: PAGE_SIZE,
+                total: list.total,
+                onPageChange: (page) => commit({ ...applied, page }),
+              }}
+              serverSort={{
+                sortKey:
+                  COLUMN_BY_SORT[applied.sortBy || "lastEvolution"] ||
+                  null,
+                sortDirection: applied.sortDir,
+                onSortChange: (columnKey) => {
+                  const mapped = SORT_BY_COLUMN[columnKey];
+                  if (!mapped) return;
+                  /* Mesma coluna → alterna direção; coluna nova →
+                     direção canônica do campo. */
+                  const active =
+                    COLUMN_BY_SORT[
+                      applied.sortBy || "lastEvolution"
+                    ] === columnKey;
+                  commit(
+                    {
+                      ...applied,
+                      sortBy: mapped.sort,
+                      sortDir: active
+                        ? applied.sortDir === "asc"
+                          ? "desc"
+                          : "asc"
+                        : mapped.dir,
+                      page: 1,
+                    },
+                    { replace: false },
+                  );
                 },
-                { replace: false },
-              );
-            },
-          }}
-          onRowClick={openDetail}
-        />
+              }}
+              onRowClick={openDetail}
+            />
+          )}
+        </div>
       ) : null}
     </main>
   );

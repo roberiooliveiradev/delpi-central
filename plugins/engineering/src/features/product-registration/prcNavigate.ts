@@ -122,10 +122,21 @@ const SORT_KEYS = new Set([
   "assignedTo", "id",
 ]);
 
-/** Sort da listagem de produtos (contrato backend — rota 12b). */
+/** Sort da listagem de produtos (contrato backend — rota 12b;
+ * `sortDir` acompanha `sortBy` na URL). */
 const PRODUCT_SORT_KEYS = new Set([
-  "lastEvolution", "code", "description",
+  "lastEvolution", "code", "description", "version", "openFlags",
 ]);
+
+/** Direção canônica por campo quando a URL omite `sortDir` — espelha
+ * o contrato do backend (fonte: RECORD_SORT_DEFAULT_DIRS). */
+const PRODUCT_SORT_DEFAULT_DIRS: Record<string, "asc" | "desc"> = {
+  code: "asc",
+  description: "asc",
+  version: "desc",
+  openFlags: "desc",
+  lastEvolution: "desc",
+};
 
 export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   const p = new URLSearchParams(search);
@@ -134,7 +145,15 @@ export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
   const area = p.get("area") === "products" ? "products" as const : "";
   const flagState = p.get("flagState") ?? "";
   const sortBy = p.get("sortBy") ?? "";
-  const sortDir = p.get("sortDir") === "asc" ? "asc" : "desc";
+  const rawDir = p.get("sortDir");
+  const effectiveSortBy = area === "products"
+    ? (PRODUCT_SORT_KEYS.has(sortBy) ? sortBy : "")
+    : (SORT_KEYS.has(sortBy) ? sortBy : "");
+  const sortDir = rawDir === "asc" || rawDir === "desc"
+    ? rawDir
+    : (area === "products" && effectiveSortBy
+      ? PRODUCT_SORT_DEFAULT_DIRS[effectiveSortBy]
+      : "desc");
   return {
     area,
     view: p.get("view") === "pending" ? "pending" : "",
@@ -142,9 +161,7 @@ export function parsePrcQueueUrl(search: string): PrcQueueUrlState {
     type: type === "create" || type === "update" ? type : "",
     search: p.get("search") ?? "",
     page: Number.isFinite(page) ? page : 1,
-    sortBy: area === "products"
-      ? (PRODUCT_SORT_KEYS.has(sortBy) ? sortBy : "")
-      : (SORT_KEYS.has(sortBy) ? sortBy : ""),
+    sortBy: effectiveSortBy,
     sortDir,
     flagState:
       flagState === "open" || flagState === "none"

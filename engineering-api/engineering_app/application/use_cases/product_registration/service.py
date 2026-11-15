@@ -19,6 +19,8 @@ from engineering_app.application.ports.product_registration import (
     AttachmentStoragePort,
     OfficialProductReaderPort,
     ProductRegistrationRepository,
+    RECORD_SORTS,
+    resolve_record_sort,
 )
 from engineering_app.application.ports.realtime import (
     NullRealtimePublisher,
@@ -1275,7 +1277,8 @@ class ProductRegistrationService:
             ),
         }
 
-    _RECORD_SORTS = ("lastEvolution", "code", "description")
+    # Whitelist + direção canônica vivem no port (fonte única).
+    _RECORD_SORTS = RECORD_SORTS
 
     def list_records(
         self,
@@ -1286,6 +1289,7 @@ class ProductRegistrationService:
         page_size: int,
         sort: str | None = None,
         flag_state: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict[str, Any]:
         _require_actor_read(actor)
         if not actor.is_analyst:
@@ -1296,13 +1300,19 @@ class ProductRegistrationService:
             raise PrcValidationError(
                 "sort inválido.", fields={"sort": "enum"}
             )
+        if sort_dir is not None and sort_dir not in ("asc", "desc"):
+            raise PrcValidationError(
+                "sortDir inválido.", fields={"sortDir": "enum"}
+            )
         if flag_state is not None and flag_state not in ("open", "none"):
             raise PrcValidationError(
                 "flagState inválido.", fields={"flagState": "enum"}
             )
+        effective_sort, effective_dir = resolve_record_sort(sort, sort_dir)
         data = self._repo.list_records(
             search=search, page=page, page_size=page_size,
-            sort=sort or "lastEvolution", flag_state=flag_state,
+            sort=effective_sort, flag_state=flag_state,
+            sort_dir=effective_dir,
         )
         data["items"] = [
             {

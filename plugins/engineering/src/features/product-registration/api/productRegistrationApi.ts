@@ -572,7 +572,8 @@ export async function routeDivergence(
 }
 
 /** U1 — Produtos acompanhados (rota 12b). `sort`: lastEvolution
- * (default), code ou description; `flagState`: open|none. */
+ * (default), code, description, version ou openFlags; `sortDir`:
+ * asc|desc (default canônico por campo); `flagState`: open|none. */
 export async function fetchPrcProducts(
   filters: Record<string, unknown>,
   signal?: AbortSignal,

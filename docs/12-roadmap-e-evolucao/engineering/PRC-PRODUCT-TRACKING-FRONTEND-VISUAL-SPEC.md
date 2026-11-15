@@ -41,7 +41,7 @@ Não adicionar menu global, segunda top bar, aba principal Flags, aba principal 
 
 **Solicitações (padrão):** preservar busca por número/código/descrição, filtros Status/Tipo, indicador contextual Campos sinalizados, visualizações Tabela/Cards/Kanban, ações e realtime. A alternância não deve descartar estados em edição nem provocar navegação destrutiva.
 
-**Produtos acompanhados:** o mesmo hero muda somente filtros e ações contextuais; busca por código oficial/descrição, filtro de flags abertas e ordenação por última evolução. Tabela inspirada no Catálogo, mas colunas próprias: **Código oficial | Descrição | Versão atual | Flags abertas | Última evolução**; solicitação de origem opcional conforme espaço/contrato. Uma linha por identidade acompanhada; clicar abre detalhe. Sem Kanban obrigatório, sem tabela de todas as versões, sem exibir produtos do catálogo que nunca foram acompanhados.
+**Produtos acompanhados:** o mesmo hero muda somente filtros e ações contextuais; busca por código oficial/descrição, filtro de flags abertas e ordenação server-side por **qualquer uma das cinco colunas** em asc/desc (padrão: última evolução desc). Tabela inspirada no Catálogo, mas colunas próprias: **Código oficial | Descrição | Versão atual | Flags abertas | Última evolução**; solicitação de origem opcional conforme espaço/contrato. Menu **Colunas** (visibilidade/ordem/reset, preferência `engineering:prc:products:columns`) e visualizações **Tabela | Cards** (preferência `engineering:prc:products:layout`; compacto abre em Cards), em paridade com a fila. Uma linha/card por identidade acompanhada; clicar abre detalhe. Sem Kanban, sem tabela de todas as versões, sem exibir produtos do catálogo que nunca foram acompanhados.
 
 **URL:** manter deep links de solicitação e Catálogo; definir subrotas próprias do acompanhamento após inventário de router. Alternância deve ser navegável por URL/back-forward/F5. Os caminhos exatos são TARGET, não contratos existentes comprovados.
 
@@ -143,15 +143,15 @@ Preservar o comportamento atual da fila PRC: busca por número/código/descriç�
 
 ### Segmento Produtos acompanhados
 
-Mostrar **somente** produtos que têm versões confirmadas de acompanhamento na Engineering API; não listar o universo do Catálogo TOTVS. Filtros: busca por **código oficial ou descrição**, estado de bandeiras (**todas/com abertas/sem abertas**), ordenação (**última evolução** como padrão; código; descrição), sempre sujeitos a contrato e AuthZ.
+Mostrar **somente** produtos que têm versões confirmadas de acompanhamento na Engineering API; não listar o universo do Catálogo TOTVS. Filtros: busca por **código oficial ou descrição**, estado de bandeiras (**todas/com abertas/sem abertas**), ordenação (**última evolução** como padrão; qualquer coluna em asc/desc via `sort`+`sortDir`), sempre sujeitos a contrato e AuthZ.
 
-Tabela em desktop com **cinco colunas prioritárias nesta ordem**:
+Tabela em desktop com **cinco colunas prioritárias nesta ordem** (visibilidade e ordem configuráveis pelo menu **Colunas**; `officialCode` permanece como identidade/fallback):
 
 | Código oficial | Descrição | Versão atual | Flags abertas | Última evolução |
 |---|---|---|---|---|
 | código do snapshot confirmado | descrição do snapshot confirmado | Vn | número de flags OPEN atuais | data da última evolução confirmada |
 
-Sem coluna de status do cadastro oficial TOTVS, sem ação Novo produto acompanhado e sem Kanban obrigatório nesse segmento. Uma linha por identidade de produto acompanhada, não por versão; clique/teclado abre o detalhe, quando autorizado.
+Visualizações **Tabela | Cards** com o mesmo escopo/filtros/paginação; o card mantém código oficial dominante mesmo com campos ocultos. Sem coluna de status do cadastro oficial TOTVS, sem ação Novo produto acompanhado e sem Kanban nesse segmento. Uma linha/card por identidade de produto acompanhada, não por versão; clique/teclado abre o detalhe, quando autorizado.
 
 ### Comportamento responsivo alvo
 

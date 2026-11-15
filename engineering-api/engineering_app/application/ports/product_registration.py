@@ -14,6 +14,35 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+# --- contrato de ordenação da listagem 12b --------------------------------
+#
+# Whitelist fechada de campos ordenáveis e direção canônica por campo
+# quando o cliente omite ``sortDir`` (compatibilidade legada: code/
+# description ascendiam; lastEvolution descendia). Fonte única para o
+# service (validação) e para os adapters (resolução de ORDER BY).
+RECORD_SORTS: tuple[str, ...] = (
+    "lastEvolution",
+    "code",
+    "description",
+    "version",
+    "openFlags",
+)
+
+RECORD_SORT_DEFAULT_DIRS: dict[str, str] = {
+    "code": "asc",
+    "description": "asc",
+    "version": "desc",
+    "openFlags": "desc",
+    "lastEvolution": "desc",
+}
+
+
+def resolve_record_sort(sort: str | None, sort_dir: str | None) -> tuple[str, str]:
+    """Campo+direção efetivos: whitelist + default canônico por campo."""
+    field = sort if sort in RECORD_SORTS else "lastEvolution"
+    direction = sort_dir if sort_dir in ("asc", "desc") else RECORD_SORT_DEFAULT_DIRS[field]
+    return field, direction
+
 
 class ProductRegistrationRepository(Protocol):
     """Persistência do módulo — owner: Engineering API."""
@@ -130,6 +159,7 @@ class ProductRegistrationRepository(Protocol):
         page_size: int,
         sort: str | None = None,
         flag_state: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict[str, Any]: ...
 
     def list_revisions(self, record_id: str) -> list[dict[str, Any]]: ...

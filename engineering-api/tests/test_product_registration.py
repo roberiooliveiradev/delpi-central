@@ -1096,6 +1096,152 @@ class TestTechnicalRecordsList:
         assert got == sorted(ids, reverse=True)
         assert p2["page"] == 2 and len(p2["items"]) == 1
 
+    def _seed_with_revision(
+        self, repo, *, code, rev, description, approved_at,
+    ):
+        rid = self._seed(repo, code=code, rev=rev, updated_at=approved_at)
+        repo._revisions[rid] = [
+            {
+                "revision_number": rev,
+                "request_id": str(uuid.uuid4()),
+                "approved_by_subject": "analyst-1",
+                "approved_at": approved_at,
+                "technical_snapshot": {
+                    "fields": (
+                        {"description": {
+                            "value": description,
+                            "coverageState": "present",
+                        }}
+                        if description is not None
+                        else {}
+                    ),
+                    "supplierLinks": {},
+                },
+                "changes": [],
+            }
+        ]
+        return rid
+
+    def _seed_flags(self, repo, rid, count):
+        for i in range(count):
+            flag_id = str(uuid.uuid4())
+            repo._record_flags[flag_id] = {
+                "id": flag_id,
+                "record_id": rid,
+                "status": "OPEN",
+                "flag_type": "attendance",
+            }
+
+    def test_sort_all_five_fields_both_directions(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """G1 — whitelist 12b: 5 campos × asc/desc no conjunto completo."""
+        repo = prc_service_repo["repo"]
+        a = self._seed_with_revision(
+            repo, code="005", rev=10, description="Beta",
+            approved_at="2026-01-01T10:00:00+00:00",
+        )
+        b = self._seed_with_revision(
+            repo, code="001", rev=9, description="Alpha",
+            approved_at="2026-01-03T10:00:00+00:00",
+        )
+        c = self._seed_with_revision(
+            repo, code="003", rev=2, description="#",
+            approved_at="2026-01-02T10:00:00+00:00",
+        )
+        self._seed_flags(repo, a, 2)
+        self._seed_flags(repo, c, 1)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+
+        cases = [
+            # (sort, dir, ordem esperada de officialCode)
+            ("code", "asc", ["001", "003", "005"]),
+            ("code", "desc", ["005", "003", "001"]),
+            ("description", "asc", ["003", "001", "005"]),  # "#" < alpha
+            ("description", "desc", ["005", "001", "003"]),
+            ("version", "asc", ["003", "001", "005"]),      # 2 < 9 < 10
+            ("version", "desc", ["005", "001", "003"]),     # numérico
+            ("openFlags", "asc", ["001", "003", "005"]),    # 0 < 1 < 2
+            ("openFlags", "desc", ["005", "003", "001"]),
+            ("lastEvolution", "asc", ["005", "003", "001"]),
+            ("lastEvolution", "desc", ["001", "003", "005"]),
+        ]
+        for sort, direction, expected in cases:
+            data = _get(
+                client,
+                f"{self.URL}?sort={sort}&sortDir={direction}",
+                tok,
+            ).json()["data"]
+            got = [i["officialCode"] for i in data["items"]]
+            assert got == expected, f"{sort}/{direction}: {got}"
+
+    def test_sort_legacy_defaults_preserved(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """Contrato legado: sort sem sortDir usa direção canônica."""
+        repo = prc_service_repo["repo"]
+        self._seed_with_revision(
+            repo, code="002", rev=2, description="B",
+            approved_at="2026-01-01T10:00:00+00:00",
+        )
+        r2 = self._seed_with_revision(
+            repo, code="001", rev=1, description="A",
+            approved_at="2026-01-02T10:00:00+00:00",
+        )
+        self._seed_flags(repo, r2, 1)
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+        for sort, expected in [
+            ("code", ["001", "002"]),          # asc
+            ("description", ["001", "002"]),   # asc
+            ("lastEvolution", ["001", "002"]), # desc (01-02 > 01-01)
+            ("version", ["002", "001"]),       # desc (2 > 1)
+            ("openFlags", ["001", "002"]),     # desc (1 > 0)
+        ]:
+            data = _get(
+                client, f"{self.URL}?sort={sort}", tok
+            ).json()["data"]
+            got = [i["officialCode"] for i in data["items"]]
+            assert got == expected, f"{sort}: {got}"
+
+    def test_sort_nulls_last_both_directions(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        repo = prc_service_repo["repo"]
+        self._seed_with_revision(
+            repo, code="001", rev=1, description="Alpha",
+            approved_at="2026-01-01T10:00:00+00:00",
+        )
+        self._seed_with_revision(
+            repo, code="002", rev=1, description=None,
+            approved_at="2026-01-02T10:00:00+00:00",
+        )
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+        for direction in ("asc", "desc"):
+            data = _get(
+                client,
+                f"{self.URL}?sort=description&sortDir={direction}",
+                tok,
+            ).json()["data"]
+            got = [i["officialCode"] for i in data["items"]]
+            assert got[-1] == "002" and got[0] == "001"
+
+    def test_sort_invalid_values_rejected(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        core_rbac["behavior"] = ("data", rbac_payload(ANALYST))
+        tok = _token(jwks_env, "analyst-1")
+        for qs in (
+            "sort=official_product_code;DROP",
+            "sort=unknownField",
+            "sortDir=sideways",
+            "sort=version&sortDir=up",
+        ):
+            resp = _get(client, f"{self.URL}?{qs}", tok)
+            assert resp.status_code == 422, f"{qs}: {resp.status_code}"
+
     def test_search_case_insensitive(
         self, client, jwks_env, core_rbac, prc_service_repo
     ):

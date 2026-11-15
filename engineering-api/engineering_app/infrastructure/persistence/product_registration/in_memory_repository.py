@@ -12,6 +12,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from engineering_app.application.ports.product_registration import (
+    resolve_record_sort,
+)
 from engineering_app.domain.product_registration import snapshot
 from engineering_app.domain.product_registration.errors import (
     PrcConcurrencyError,
@@ -431,6 +434,7 @@ class InMemoryProductRegistrationRepository:
         page_size: int,
         sort: str | None = None,
         flag_state: str | None = None,
+        sort_dir: str | None = None,
     ) -> dict[str, Any]:
         items = [
             self._record_list_item(r)
@@ -449,24 +453,29 @@ class InMemoryProductRegistrationRepository:
             items = [r for r in items if r["open_flag_count"] > 0]
         elif flag_state == "none":
             items = [r for r in items if r["open_flag_count"] == 0]
-        if sort == "code":
-            items.sort(key=lambda r: (r["official_product_code"], r["id"]))
-        elif sort == "description":
-            items.sort(
-                key=lambda r: (
-                    r.get("description") is None,
-                    str(r.get("description") or "").lower(),
-                    r["id"],
-                )
-            )
-        else:  # lastEvolution (default)
-            items.sort(
-                key=lambda r: (
-                    r.get("last_evolution_at") or "",
-                    r["id"],
-                ),
-                reverse=True,
-            )
+        # Paridade com o adapter Postgres: whitelist do contrato,
+        # NULLS LAST nas duas direções, desempate estável por id.
+        field, direction = resolve_record_sort(sort, sort_dir)
+        descending = direction == "desc"
+        extractors = {
+            "code": lambda r: r["official_product_code"],
+            "description": lambda r: (
+                None if r.get("description") is None
+                else str(r["description"]).lower()
+            ),
+            "version": lambda r: r["current_revision_number"],
+            "openFlags": lambda r: r["open_flag_count"],
+            "lastEvolution": lambda r: r.get("last_evolution_at"),
+        }
+        key = extractors[field]
+        non_null = [r for r in items if key(r) is not None]
+        nulls = [r for r in items if key(r) is None]
+        # Desempate por id na mesma direção do campo (contrato legado) —
+        # aplica-se também às linhas nulas (ORDER BY …, id DIR).
+        non_null.sort(key=lambda r: r["id"], reverse=descending)
+        non_null.sort(key=key, reverse=descending)
+        nulls.sort(key=lambda r: r["id"], reverse=descending)
+        items = non_null + nulls
         total = len(items)
         start = (page - 1) * page_size
         return {
