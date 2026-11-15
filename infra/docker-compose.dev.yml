@@ -961,7 +961,7 @@ services:
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
-      target: production
+      target: development
 
     container_name: delpi-public-hub
     restart: unless-stopped
