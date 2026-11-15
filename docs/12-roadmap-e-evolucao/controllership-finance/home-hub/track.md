@@ -32,8 +32,8 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 | H1 BFF: `lnfAccess` no viewer-context | DONE | `6a6ca32c84` |
 | H2 BFF: favoritos (V030 + rotas) | DONE | `15f8e18653` |
 | H3 MFE: cards (Portal sai, Notas fiscais, Administração) | DONE | `02d812285c` |
-| H4 MFE: favoritos (estrela, store, barra do topo) e Ajuda | DONE | (este commit) |
-| H5 HML | TODO | |
+| H4 MFE: favoritos (estrela, store, barra do topo) e Ajuda | DONE | `3336e20b0a` |
+| H5 HML | DONE | `936948b954` |
 | H6 PROD | TODO | |
 
 ### H0 — inventário Comercial → CF
@@ -88,4 +88,5 @@ MFE e BFF pelas tags. V030 só cria tabela nova: rollback da BFF não precisa de
 | 2026-11-14 | H1 | `6a6ca32c84` | DONE | `capabilities.lnfAccess` aditivo via `has_lnf_clara_entry`; testes viewer 24 PASS; MFE client + vitest 22 PASS. |
 | 2026-11-14 | H2 | `15f8e18653` | DONE | V030 `home_favorites`; GET/PUT `/me/home-favorites`; auth access\|accessDre; 11 PASS. |
 | 2026-11-14 | H3 | `02d812285c` | DONE | Cards alvo; Portal fora; LNF externo; Admin manage; D7; vitest 36 PASS. |
-| 2026-11-14 | H4 | (este commit) | DONE | Favoritos MFE + strip + Ajuda; LNF sem estrela (D8); vitest 30 PASS; tsc ok. |
+| 2026-11-14 | H4 | `3336e20b0a` | DONE | Favoritos MFE + strip + Ajuda; LNF sem estrela (D8); vitest 30 PASS; tsc ok. |
+| 2026-11-14 | H5 | `936948b954` | DONE | HML pull+build API/MFE healthy; Playwright 3/3 PASS (desktop cards+favoritos, mobile, Ctrl+K). Screenshots `/tmp/home-hub-h5-artifacts` (não commitados). Perfis manage/LNF/DRE dedicados: INCONCLUSIVE (só `hml-tester` superadmin). Claro/escuro: INCONCLUSIVE. |
