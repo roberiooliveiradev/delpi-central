@@ -586,3 +586,21 @@ Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post
 - **Triage proposto:** correlacionar tentativa unica com agregacao sanitizada **somente** de metodo+rota+status HTTP e classes `mcp_auth_denied` dos containers `delpi-gateway` e `delpi-linux-ops-mcp`; nao exibir headers, query string, tokens, bodies, secret ou logs integrais. Se 401, verificar via UI Keycloak `Client Scopes > Evaluate` se audiencias `delpi-central` e URL exata, `scope` completo, `iss`, `azp` e `email` (sem compartilhar token). Se 403/404/5xx, inspecionar Nginx/upstream; se 200 e tools nao aparecem, testar handshake `initialize` e `tools/list` autenticados e validar schema contra client ChatGPT, sem desabilitar controles.
 - `it-portal.access` e `it-portal.servers.view` sao autorizacoes Core **de chamada**, nao diagnostico inicial para `tools/list`: estas so sao verificadas na execucao da ferramenta, no `server.py`, apos discovery. Superadmin do portal nao demonstra aud/scope de token.
 - **Estado:** `OAUTH_LOGIN_PASS`, `MCP_ACTION_DISCOVERY_FAIL`, `TOOLS_LIST_NOT_PROVEN`, `READ_TOOL_CALL_NOT_PROVEN`. Nao repetir deploy de gateway nem fragilizar Keycloak; recolher evidencia segura primeiro.
+
+
+## 36. Causa isolada da descoberta: RESOURCE_AUDIENCE_MISMATCH (2026-11-15)
+
+**Evidencia operador, 30 min de logs filtrados do gateway/MCP:**
+- Gateway `GET /apps/linux-ops-mcp/mcp` e `POST /apps/linux-ops-mcp/mcp` => HTTP 401; `GET /apps/linux-ops-mcp/.well-known/oauth-protected-resource` => HTTP 200;
+- Backend MCP `GET/POST /mcp/` sem bearer => `AUTH: MISSING_BEARER` (descoberta inicial esperada);
+- Backend MCP `POST /mcp/` com bearer => **`AUTH: RESOURCE_AUDIENCE_MISMATCH`**, HTTP 401 (duas entradas no recorte).
+
+**Conclusao ancorada no codigo** `shared/delpi_mcp/auth.py`: `RESOURCE_AUDIENCE_MISMATCH` so ocorre apos `validate_token(token)` passar e antes do teste de scopes; portanto o JWT foi validado pelo verificador canonico (que confere a audiencia base da plataforma) mas `aud` nao incluiu a URL exata `https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`. A falha observada precede `tools/list` e nao e inferivel como erro de schema, RBAC do usuario, gateway ou SDK. O login OAuth ChatGPT foi previamente confirmado com modal `Authentication succeeded`.
+
+**Proxima verificacao segura, sem alterações de servicos:**
+1. Keycloak realm `delpi` -> Clients -> `mcp-linux-ops` -> Client scopes -> Evaluate. Selecionar usuario de teste; inspecionar **Generated access token** (decodificado na UI) localmente; confirmar `aud` contendo `delpi-central` **e URL exata do ATLAS**, e `scope` contendo `openid profile email mcp:tools`. Nao enviar/copiar JWT, segredo, credenciais ou capturas com token.
+2. Se `aud` nao contiver a URL do ATLAS, conferir scope `mcp-audience-linux-ops` associado ao cliente como **Default** (nao Optional), mapper `linux-ops-resource-audience` nele, tipo Audience, Included Custom Audience URL exata, **Add to access token On**; salvar somente caso haja divergencia. Nao mexer no scope compartilhado `audience-delpi`.
+3. Se o token de teste estiver correto, reautorizar/conectar novamente o plugin ATLAS no ChatGPT para obter **novo token**, pois o anterior pode ter sido emitido antes dos mappers; correlacionar apenas codigo HTTP + classe de falha, sem tokens.
+4. Somente apos POST MCP autenticado passar de 401 e `tools/list` responder, validar as 4 ferramentas READ e Core RBAC em `tools/call`.
+
+**Estado:** `OAUTH_LOGIN_PASS`, `JWT_PLATFORM_VALID_PASS`, `MCP_RESOURCE_AUDIENCE_FAIL`, `ACTION_DISCOVERY_BLOCKED_PRE_TOOLS`, `NO_FIX_DEPLOYED`.
