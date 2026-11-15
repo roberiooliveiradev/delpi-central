@@ -457,6 +457,119 @@ export function formatPeriodLabel(dateFrom: string, dateTo: string): string {
   return `${from} a ${to}`;
 }
 
+/** Eixo do gráfico diário — `dd/mm` a partir de ISO `YYYY-MM-DD`. */
+export function formatEntryAuditChartDay(isoDate: string): string {
+  const text = isoDate.trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (match) return `${match[3]}/${match[2]}`;
+  const parsed = new Date(`${text}T12:00:00`);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  }
+  return text;
+}
+
+function parseIsoDateOnly(iso: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!match) return null;
+  const date = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+  );
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function addUtcDays(iso: string, delta: number): string {
+  const base = parseIsoDateOnly(iso);
+  if (!base) return iso;
+  base.setUTCDate(base.getUTCDate() + delta);
+  return base.toISOString().slice(0, 10);
+}
+
+function inclusiveDaySpan(dateFrom: string, dateTo: string): number {
+  const from = parseIsoDateOnly(dateFrom);
+  const to = parseIsoDateOnly(dateTo);
+  if (!from || !to) return 1;
+  const diff = Math.round((to.getTime() - from.getTime()) / 86_400_000);
+  return Math.max(1, diff + 1);
+}
+
+/** Janela imediatamente anterior com o mesmo número de dias (regra da BFF). */
+export function entryAuditPreviousPeriodRange(
+  dateFrom: string,
+  dateTo: string,
+): [string, string] | null {
+  if (!parseIsoDateOnly(dateFrom) || !parseIsoDateOnly(dateTo)) return null;
+  const span = inclusiveDaySpan(dateFrom, dateTo);
+  const previousTo = addUtcDays(dateFrom, -1);
+  const previousFrom = addUtcDays(previousTo, -(span - 1));
+  return [previousFrom, previousTo];
+}
+
+export function entryAuditPreviousPeriodLabel(
+  dateFrom: string,
+  dateTo: string,
+): string | null {
+  const range = entryAuditPreviousPeriodRange(dateFrom, dateTo);
+  if (!range) return null;
+  return formatPeriodLabel(range[0], range[1]);
+}
+
+export type EntryAuditDailyChartPoint = {
+  /** Rótulo do eixo (`dd/mm`). */
+  name: string;
+  /** Data ISO do período atual (filtro `day`). */
+  day: string;
+  current: number;
+  previous?: number;
+  /** Data ISO do dia alinhado no período anterior (tooltip). */
+  previousDay?: string;
+};
+
+/**
+ * Alinha série anterior pela posição do dia (dia 1 com dia 1), não pela data ISO.
+ * Sem série anterior → só `current`.
+ */
+export function alignEntryAuditDailySeries(
+  series: ReadonlyArray<{ name: string; count: number }>,
+  previous: ReadonlyArray<{ name: string; count: number }> | null | undefined,
+): EntryAuditDailyChartPoint[] {
+  const sortedCurrent = [...series].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedPrevious = [...(previous ?? [])].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const hasPrevious = sortedPrevious.length > 0;
+
+  return sortedCurrent.map((item, index) => {
+    const aligned = hasPrevious ? sortedPrevious[index] : undefined;
+    const point: EntryAuditDailyChartPoint = {
+      name: formatEntryAuditChartDay(item.name),
+      day: item.name,
+      current: item.count,
+    };
+    if (hasPrevious) {
+      point.previous = aligned?.count ?? 0;
+      if (aligned?.name) point.previousDay = aligned.name;
+    }
+    return point;
+  });
+}
+
+export function entryAuditDailyPointAriaLabel(
+  point: EntryAuditDailyChartPoint,
+  includePrevious: boolean,
+): string {
+  const current = `${point.name}: ${point.current.toLocaleString("pt-BR")}`;
+  if (!includePrevious || point.previous == null) return current;
+  const prevDay = point.previousDay
+    ? formatEntryAuditChartDay(point.previousDay)
+    : "—";
+  const prevCount = point.previous.toLocaleString("pt-BR");
+  return `${current} · anterior ${prevDay}: ${prevCount}`;
+}
+
 /** dd/mm/aaaa hh:mm (E3) — sem segundos. */
 export function formatDateTimeShort(iso: string | null | undefined): string {
   if (!iso) return "—";

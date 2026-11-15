@@ -62,10 +62,15 @@ import {
   ENTRY_AUDIT_ACTION_ICONS,
   ENTRY_AUDIT_TABS,
   auditStatusBadgeVariant,
+  alignEntryAuditDailySeries,
   conformityRatio,
   displayValue,
   entryAuditClaraSuggestions,
+  entryAuditDailyPointAriaLabel,
+  entryAuditPreviousPeriodLabel,
   entryAuditTabResource,
+  type EntryAuditDailyChartPoint,
+  formatEntryAuditChartDay,
   formatAuditStatus,
   entryAuditFieldLabel,
   formatBranchLabel,
@@ -494,31 +499,32 @@ export function EntryAuditAnalysisPage({
     }
   };
 
-  const dailyPoints = useMemo(() => {
-    if (!daily?.series?.length) return [];
-    const byName = new Map<
-      string,
-      { name: string; current: number; previous: number }
-    >();
-    daily.series.forEach((item) => {
-      byName.set(item.name, {
-        name: item.name,
-        current: item.count,
-        previous: 0,
-      });
-    });
-    daily.previous.forEach((item) => {
-      const existing = byName.get(item.name);
-      if (existing) existing.previous = item.count;
-      else
-        byName.set(item.name, {
-          name: item.name,
-          current: 0,
-          previous: item.count,
-        });
-    });
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [daily]);
+  const dailyChart = useMemo(() => {
+    if (!daily?.series?.length) return { points: [], includePrevious: false };
+    const includePrevious =
+      summary?.previous != null && Boolean(daily.previous?.length);
+    return {
+      points: alignEntryAuditDailySeries(
+        daily.series,
+        includePrevious ? daily.previous : [],
+      ),
+      includePrevious,
+    };
+  }, [daily, summary?.previous]);
+
+  const dailySelectedName = useMemo(() => {
+    if (!filters.day) return null;
+    const match = dailyChart.points.find((point) => point.day === filters.day);
+    return match?.name ?? formatEntryAuditChartDay(filters.day);
+  }, [dailyChart.points, filters.day]);
+
+  const previousPeriodLegend = useMemo(
+    () =>
+      analysis
+        ? entryAuditPreviousPeriodLabel(analysis.date_from, analysis.date_to)
+        : null,
+    [analysis],
+  );
 
   if (error && !analysis && !summary) {
     return (
@@ -570,22 +576,6 @@ export function EntryAuditAnalysisPage({
   const noPreviousHint = "Sem análise do período anterior para comparar";
 
   const chips = [
-    ...analysis.branches.map((branch) => ({
-      id: `branch-${branch}`,
-      label: formatBranchLabel(branch, branchOptions),
-      active: filters.branch === branch,
-      onSelect: () =>
-        navigateWith({ branch: filters.branch === branch ? "" : branch }),
-    })),
-    ...analysis.document_types.map((type) => ({
-      id: `type-${type}`,
-      label: formatDocumentType(type),
-      active: filters.document_type === type,
-      onSelect: () =>
-        navigateWith({
-          document_type: filters.document_type === type ? "" : type,
-        }),
-    })),
     ...(filters.severity
       ? [
           {
@@ -630,9 +620,19 @@ export function EntryAuditAnalysisPage({
       ? [
           {
             id: "day",
-            label: `Dia: ${filters.day}`,
+            label: `Dia: ${formatEntryAuditChartDay(filters.day)}`,
             active: true,
             onSelect: () => navigateWith({ day: "" }),
+          },
+        ]
+      : []),
+    ...(filters.situation
+      ? [
+          {
+            id: "situation",
+            label: `Situação: ${filters.situation}`,
+            active: true,
+            onSelect: () => navigateWith({ situation: "" }),
           },
         ]
       : []),
@@ -888,163 +888,207 @@ export function EntryAuditAnalysisPage({
         />
       </div>
 
-      <div className="cf-charts-grid">
-        <CfSectionCard title="Conformidade" hint={CF_HELP.entryAudit.conformity}>
-          <CfSemicircleProgressGauge
-            value={cleanShare}
-            centerLabel="Notas limpas"
-            aria-label="Percentual de notas limpas"
-            legend={[
-              {
-                id: "clean",
-                label: "Limpas",
-                count: summary.conformity.clean,
-                tone: "success",
-              },
-              {
-                id: "divergent",
-                label: "Divergentes",
-                count: summary.conformity.divergent,
-                tone: "danger",
-              },
-            ]}
-          />
-          <CfMetricStrip
-            aria-label="Resumo de conformidade"
-            items={[
-              {
-                id: "unmatched-open",
-                label: "Sem par em aberto",
-                value: summary.conformity.unmatched_open,
-              },
-              {
-                id: "explained",
-                label: "Explicadas",
-                value: summary.conformity.unmatched_explained,
-              },
-              {
-                id: "posted-outside",
-                label: "Lançadas fora do período",
-                value: summary.conformity.posted_outside_period.count,
-                tone: "neutral",
-              },
-            ]}
-          />
-        </CfSectionCard>
+      <div className="cf-analysis-charts">
+        <div className="cf-analysis-panorama-row">
+          <CfSectionCard title="Panorama" hint={CF_HELP.entryAudit.panorama}>
+            <div className="cf-analysis-panorama">
+              <div className="cf-analysis-panorama__conformity">
+                <CfTitleWithHelp
+                  title="Conformidade"
+                  hint={CF_HELP.entryAudit.conformity}
+                />
+                <CfSemicircleProgressGauge
+                  value={cleanShare}
+                  centerLabel="Notas limpas"
+                  aria-label="Percentual de notas limpas"
+                  legend={[
+                    {
+                      id: "clean",
+                      label: "Limpas",
+                      count: summary.conformity.clean,
+                      tone: "success",
+                    },
+                    {
+                      id: "divergent",
+                      label: "Divergentes",
+                      count: summary.conformity.divergent,
+                      tone: "danger",
+                    },
+                  ]}
+                />
+                <CfMetricStrip
+                  aria-label="Resumo de conformidade"
+                  items={[
+                    {
+                      id: "unmatched-open",
+                      label: "Sem par em aberto",
+                      value: summary.conformity.unmatched_open,
+                    },
+                    {
+                      id: "explained",
+                      label: "Explicadas",
+                      value: summary.conformity.unmatched_explained,
+                    },
+                  ]}
+                />
+              </div>
+              {breakdowns ? (
+                <div className="cf-analysis-panorama__severity">
+                  <CfTitleWithHelp
+                    title="Severidade"
+                    hint={CF_HELP.entryAudit.severity}
+                  />
+                  <CfDistributionDonut
+                    ariaLabel="Distribuição por severidade"
+                    legendPlacement="below"
+                    items={breakdowns.by_severity.map((item) => ({
+                      id: item.name,
+                      label: item.name,
+                      value: item.count,
+                      tone: severityTone(item.name),
+                    }))}
+                    onSelect={(item) => {
+                      if (item) navigateWith({ severity: severityToUrl(item.id) });
+                    }}
+                    selectedId={filters.severity || undefined}
+                  />
+                </div>
+              ) : (
+                <CfLoadingCard title="Carregando severidade…" />
+              )}
+            </div>
+          </CfSectionCard>
+
+          {dailyChart.points.length > 1 ? (
+            <CfSectionCard
+              title="Evolução por dia"
+              hint={CF_HELP.entryAudit.dailyEvolution}
+            >
+              <CfComparativeAreaChart
+                data={dailyChart.points}
+                height={280}
+                series={
+                  dailyChart.includePrevious
+                    ? [
+                        {
+                          dataKey: "current",
+                          name: "Este período",
+                          color: "var(--delpi-ui-accent, #2563eb)",
+                        },
+                        {
+                          dataKey: "previous",
+                          name: previousPeriodLegend
+                            ? `Período anterior (${previousPeriodLegend})`
+                            : "Período anterior",
+                          color: "var(--delpi-ui-muted, #94a3b8)",
+                        },
+                      ]
+                    : [
+                        {
+                          dataKey: "current",
+                          name: "Este período",
+                          color: "var(--delpi-ui-accent, #2563eb)",
+                        },
+                      ]
+                }
+                valueFormatter={(value) => value.toLocaleString("pt-BR")}
+                onPointSelect={(point) => {
+                  const day =
+                    typeof point.day === "string" && point.day
+                      ? point.day
+                      : "";
+                  if (day) navigateWith({ day });
+                }}
+                pointAriaLabel={(point) =>
+                  entryAuditDailyPointAriaLabel(
+                    point as EntryAuditDailyChartPoint,
+                    dailyChart.includePrevious,
+                  )
+                }
+                selectedName={dailySelectedName}
+              />
+            </CfSectionCard>
+          ) : multiDay && !daily ? (
+            <CfLoadingCard title="Carregando evolução diária…" />
+          ) : null}
+        </div>
 
         {breakdowns ? (
-          <>
-            <CfSectionCard title="Severidade" hint={CF_HELP.entryAudit.severity}>
-              <CfDistributionDonut
-                ariaLabel="Distribuição por severidade"
-                items={breakdowns.by_severity.map((item) => ({
-                  id: item.name,
-                  label: item.name,
-                  value: item.count,
-                  tone: severityTone(item.name),
-                }))}
-                onSelect={(item) => {
-                  if (item) navigateWith({ severity: severityToUrl(item.id) });
-                }}
-                selectedId={filters.severity || undefined}
-              />
-            </CfSectionCard>
-
-            <CfSectionCard title="Por tema" hint={CF_HELP.entryAudit.occurrences}>
-              <CfHorizontalValueBars
-                aria-label="Ocorrências por tema"
-                items={breakdowns.by_theme.map((item) => ({
-                  id: item.name,
-                  label: formatTheme(item.name),
-                  value: item.count,
-                }))}
-                onItemClick={(item) => navigateWith({ theme: item.id })}
-                selectedId={filters.theme || undefined}
-              />
-            </CfSectionCard>
-
-            <CfSectionCard title="Por fornecedor">
-              <CfHorizontalValueBars
-                aria-label="Ocorrências por fornecedor"
-                items={breakdowns.suppliers.slice(0, 10).map((item) => ({
-                  id: item.name,
-                  label: item.name,
-                  value: item.count,
-                }))}
-                onItemClick={(item) => navigateWith({ supplier: item.id })}
-                selectedId={filters.supplier || undefined}
-              />
-            </CfSectionCard>
-
-            <CfSectionCard title="Por TES">
-              <CfHorizontalValueBars
-                aria-label="Ocorrências por TES"
-                items={breakdowns.tes.slice(0, 10).map((item) => ({
-                  id: item.name,
-                  label: item.name,
-                  value: item.count,
-                }))}
-                onItemClick={(item) => navigateWith({ tes: item.id })}
-                selectedId={filters.tes || undefined}
-              />
-            </CfSectionCard>
-          </>
-        ) : (
-          <>
-            <CfLoadingCard title="Carregando severidade…" />
-            <CfLoadingCard title="Carregando temas…" />
-            <CfLoadingCard title="Carregando fornecedores…" />
-            <CfLoadingCard title="Carregando TES…" />
-          </>
-        )}
-
-        {dailyPoints.length > 1 ? (
-          <CfSectionCard title="Evolução por dia">
-            <CfComparativeAreaChart
-              data={dailyPoints}
-              series={[
-                {
-                  dataKey: "current",
-                  name: "Período",
-                  color: "var(--delpi-ui-accent, #2563eb)",
-                },
-                {
-                  dataKey: "previous",
-                  name: "Anterior",
-                  color: "var(--delpi-ui-muted, #94a3b8)",
-                },
-              ]}
-              valueFormatter={(value) => value.toLocaleString("pt-BR")}
-              onPointSelect={(point) =>
-                navigateWith({ day: String(point.name) })
-              }
-              selectedName={filters.day || null}
-            />
+          <CfSectionCard
+            title="Onde estão as ocorrências"
+            hint={CF_HELP.entryAudit.occurrencesWhere}
+          >
+            <div className="cf-analysis-breakdowns">
+              <div className="cf-analysis-breakdowns__column">
+                <CfTitleWithHelp
+                  title="Por tema"
+                  hint={CF_HELP.entryAudit.occurrences}
+                />
+                <CfHorizontalValueBars
+                  layout="stacked"
+                  aria-label="Ocorrências por tema"
+                  items={breakdowns.by_theme.map((item) => ({
+                    id: item.name,
+                    label: formatTheme(item.name),
+                    value: item.count,
+                  }))}
+                  onItemClick={(item) => navigateWith({ theme: item.id })}
+                  selectedId={filters.theme || undefined}
+                />
+              </div>
+              <div className="cf-analysis-breakdowns__column">
+                <p className="cf-analysis-breakdowns__heading">
+                  Por fornecedor (top 8)
+                </p>
+                <CfHorizontalValueBars
+                  layout="stacked"
+                  aria-label="Ocorrências por fornecedor"
+                  items={breakdowns.suppliers.slice(0, 8).map((item) => ({
+                    id: item.name,
+                    label: item.name,
+                    value: item.count,
+                  }))}
+                  onItemClick={(item) => navigateWith({ supplier: item.id })}
+                  selectedId={filters.supplier || undefined}
+                />
+              </div>
+              <div className="cf-analysis-breakdowns__column">
+                <p className="cf-analysis-breakdowns__heading">Por TES (top 8)</p>
+                <CfHorizontalValueBars
+                  layout="stacked"
+                  aria-label="Ocorrências por TES"
+                  items={breakdowns.tes.slice(0, 8).map((item) => ({
+                    id: item.name,
+                    label: item.name,
+                    value: item.count,
+                  }))}
+                  onItemClick={(item) => navigateWith({ tes: item.id })}
+                  selectedId={filters.tes || undefined}
+                />
+              </div>
+            </div>
           </CfSectionCard>
-        ) : multiDay && !daily ? (
-          <CfLoadingCard title="Carregando evolução diária…" />
-        ) : null}
+        ) : (
+          <CfLoadingCard title="Carregando distribuição das ocorrências…" />
+        )}
       </div>
 
-      <CfScopeChipBar
-        label="Escopo"
-        chips={chips}
-        aria-label="Filtros de escopo da auditoria"
-        emptyHint="Sem filtros de escopo."
-        onClearAll={() =>
-          navigateWith({
-            branch: "",
-            document_type: "",
-            severity: "",
-            theme: "",
-            supplier: "",
-            tes: "",
-            day: "",
-            status: "",
-            situation: "",
-          })
-        }
-      />
+      {summary.conformity.posted_outside_period.count > 0 ? (
+        <p className="cf-analysis-posted-outside-note">
+          <CfTitleWithHelp
+            title={`Lançadas fora do período: ${summary.conformity.posted_outside_period.count.toLocaleString("pt-BR")}`}
+            hint={CF_HELP.entryAudit.postedOutside}
+          />
+        </p>
+      ) : null}
+
+      {chips.length ? (
+        <CfScopeChipBar
+          label="Filtros aplicados"
+          chips={chips}
+          aria-label="Filtros de detalhamento da auditoria"
+        />
+      ) : null}
 
       <CfUnderlineNav
         items={navItems}
@@ -1150,19 +1194,22 @@ export function EntryAuditAnalysisPage({
         subtitle="A CLARA lê esta mesma análise"
         hint={CF_HELP.entryAudit.clara}
       >
-        <ul className="cf-page-stack">
+        <div
+          className="cf-analysis-clara-actions"
+          role="group"
+          aria-label="Sugestões para o chat"
+        >
           {claraSuggestions.map((suggestion) => (
-            <li key={suggestion}>
-              <CfActionButton
-                type="button"
-                variant="ghost"
-                onClick={() => copySuggestion(suggestion)}
-              >
-                {suggestion}
-              </CfActionButton>
-            </li>
+            <CfActionButton
+              key={suggestion}
+              type="button"
+              variant="ghost"
+              onClick={() => copySuggestion(suggestion)}
+            >
+              {suggestion}
+            </CfActionButton>
           ))}
-        </ul>
+        </div>
         <p aria-live="polite">{copiedHint}</p>
       </CfSectionCard>
     </section>

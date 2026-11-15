@@ -617,11 +617,11 @@ export const CF_HELP = {
   },
   entryAudit: {
     page:
-      "Auditoria de Entradas compara os documentos de entrada registrados no Protheus com os XML fiscais do mesmo escopo. A análise é de apoio à conferência: ocorrências indicam o que revisar e não alteram o ERP.",
+      "Auditoria de Entradas compara os documentos de entrada registrados no Protheus com os XML fiscais do mesmo escopo. Confere valor, impostos, CST/origem, CFOP, chave de acesso e coerência entre Protheus e XML no período e filiais escolhidos — apoio à conferência, sem gravar no ERP.",
     create:
       "Escolha período (De ≤ Até), filiais e tipos de documento. «Executar auditoria» inicia o processamento; o andamento mostra a etapa real de cada filial e a contagem de XML lidos quando a origem informa o total esperado — nenhum percentual é estimado.",
     whatAudits:
-      "A auditoria confere valor, impostos, CST/origem, CFOP, chave de acesso e coerência entre Protheus e XML no período e filiais escolhidos. Não grava no ERP.",
+      "Confere valor, impostos, CST/origem, CFOP, chave de acesso e coerência entre Protheus e XML no período e filiais escolhidos. Não grava no ERP.",
     history:
       "Análises anteriores preservam período, escopo e situação. Clique na linha (ou no card no celular) para abrir. Ordene pelas colunas e use o menu Colunas para mostrar ou ocultar campos — a preferência fica neste navegador.",
     analysis:
@@ -646,10 +646,18 @@ export const CF_HELP = {
       "O detalhe explica por que a ocorrência foi criada, a ação sugerida, os valores comparados e a trilha de tratamento. «—» significa dado não aplicável ou indisponível.",
     clara:
       "A CLARA lê a mesma análise pelas rotas da BFF. Copie uma sugestão e cole no chat para pedir explicação, foco no que pede ação ou comparação com a análise anterior — sem alterar o ERP.",
+    panorama:
+      "Visão resumida da análise: percentual de notas limpas, distribuição por severidade e quantidades de sem par e explicadas. As legendas ficam abaixo dos gráficos para facilitar a leitura.",
     conformity:
-      "Conformidade resume notas limpas versus divergentes. «Lançadas fora do período» é informação neutra: a nota existe no Protheus, mas o recebimento ficou fora do recorte da análise.",
+      "Notas limpas são as conferidas sem divergência; divergentes têm ao menos uma ocorrência. O percentual considera só essas duas faixas — não inclui sem par nem notas lançadas fora do período.",
+    postedOutside:
+      "Contagem de notas encontradas no Protheus com recebimento fora do recorte De–Até desta análise (regra posted_outside_period). Não entram nas notas conferidas nem no percentual de conformidade; consulte a aba homônima para a lista.",
     severity:
       "Severidade com ícone e tom: Alta (crítico), Média (atenção), Baixa (neutro), Info (informativo). O donut e a tabela usam a mesma paleta de status.",
+    occurrencesWhere:
+      "Onde as ocorrências se concentram no recorte atual. Clique em uma barra para filtrar a tabela da aba.",
+    dailyEvolution:
+      "Ocorrências por dia de recebimento no período. Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
     export:
       "Baixa a planilha XLSX desta análise com o recorte atual.",
     rerun:

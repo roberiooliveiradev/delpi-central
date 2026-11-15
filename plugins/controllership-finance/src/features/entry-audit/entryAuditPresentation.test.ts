@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  alignEntryAuditDailySeries,
   auditStatusBadgeVariant,
   conformityRatio,
   entryAuditClaraSuggestions,
+  entryAuditDailyPointAriaLabel,
   entryAuditOccurrenceClaraPrompt,
+  entryAuditPreviousPeriodLabel,
+  entryAuditPreviousPeriodRange,
   entryAuditTabResource,
   formatBranchLabel,
+  formatBranches,
   formatDifference,
   formatDocumentType,
   formatDocumentTypes,
+  formatEntryAuditChartDay,
   formatMoneyBRL,
   formatNoteSeries,
   formatPeriodLabel,
@@ -44,6 +50,8 @@ describe("entryAuditPresentation", () => {
       formatBranchLabel("01", [{ code: "01", name: "Matriz", state: "SC" }]),
     ).toBe("Filial 01 · SC");
     expect(formatBranchLabel("02")).toBe("Filial 02");
+    expect(formatBranches(["01", "02"])).toBe("Filiais 01 e 02");
+    expect(formatBranches(["01", "02", "03"])).toBe("Filiais 01, 02, 03");
   });
 
   it("formata dinheiro e diferença (código → —)", () => {
@@ -62,6 +70,52 @@ describe("entryAuditPresentation", () => {
     expect(severityBadgeVariant("Info")).toBe("info");
     expect(auditStatusBadgeVariant("done")).toBe("success");
     expect(auditStatusBadgeVariant("failed")).toBe("danger");
+  });
+
+  it("alinha evolução diária por índice do dia (não pela data ISO)", () => {
+    const points = alignEntryAuditDailySeries(
+      [
+        { name: "2026-11-01", count: 5 },
+        { name: "2026-11-02", count: 12 },
+      ],
+      [
+        { name: "2026-10-17", count: 8 },
+        { name: "2026-10-31", count: 3 },
+      ],
+    );
+    expect(points).toHaveLength(2);
+    expect(points[0]?.name).toBe("01/11");
+    expect(points[0]?.day).toBe("2026-11-01");
+    expect(points[0]?.current).toBe(5);
+    expect(points[0]?.previous).toBe(8);
+    expect(points[0]?.previousDay).toBe("2026-10-17");
+    expect(points[1]?.previous).toBe(3);
+    expect(points[1]?.previousDay).toBe("2026-10-31");
+    expect(formatEntryAuditChartDay("2026-11-05")).toBe("05/11");
+
+    const solo = alignEntryAuditDailySeries(
+      [{ name: "2026-11-01", count: 1 }],
+      [],
+    );
+    expect(solo[0]?.previous).toBeUndefined();
+
+    const aria = entryAuditDailyPointAriaLabel(points[1]!, true);
+    expect(aria).toContain("12");
+    expect(aria).toContain("31/10");
+    expect(aria).toContain("3");
+  });
+
+  it("calcula rótulo do período anterior com o mesmo número de dias", () => {
+    expect(entryAuditPreviousPeriodRange("2026-11-01", "2026-11-15")).toEqual([
+      "2026-10-17",
+      "2026-10-31",
+    ]);
+    expect(entryAuditPreviousPeriodLabel("2026-11-01", "2026-11-15")).toContain(
+      "17",
+    );
+    expect(entryAuditPreviousPeriodLabel("2026-11-01", "2026-11-15")).toContain(
+      "31",
+    );
   });
 
   it("monta sugestões e prompt da CLARA", () => {

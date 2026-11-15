@@ -645,6 +645,98 @@
   }
 }
 
+/* U12 W5 — layout do resultado da análise (review-2 §3). */
+.dashboard-controllership-finance .cf-analysis-charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: stretch;
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama-row > *:first-child {
+  grid-column: span 5;
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama-row > *:nth-child(2) {
+  grid-column: span 7;
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-controllership-finance .cf-analysis-panorama__conformity,
+.dashboard-controllership-finance .cf-analysis-panorama__severity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-analysis-breakdowns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-controllership-finance .cf-analysis-breakdowns__column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-analysis-breakdowns__heading {
+  margin: 0;
+  font-size: var(--cf-font-sm, 13px);
+  font-weight: 600;
+  color: var(--cf-text, var(--text, #111));
+}
+
+.dashboard-controllership-finance .cf-analysis-posted-outside-note {
+  margin: 0;
+  font-size: var(--cf-font-sm, 13px);
+  color: var(--cf-text-muted, var(--text-muted, #64748b));
+}
+
+.dashboard-controllership-finance .cf-analysis-clara-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-controllership-finance .cf-analysis-panorama-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-controllership-finance .cf-analysis-panorama-row > *:first-child,
+  .dashboard-controllership-finance .cf-analysis-panorama-row > *:nth-child(2) {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-controllership-finance .cf-analysis-panorama {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-controllership-finance .cf-analysis-breakdowns {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* UI review — 6 KPIs → 3 → 2 → 1 (A2 / §18). */
 .dashboard-controllership-finance .cf-kpi-grid {
   display: grid;
