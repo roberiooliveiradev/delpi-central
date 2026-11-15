@@ -1,5 +1,8 @@
 # 13 — Listagem de chamados
 
+> **Cross-MFE UX parity (15/11/2026, TARGET):** [My Requests × Helpdesk × Plugin UI](../my-requests/UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md). Generalizar apenas editor visual de filtros, multi-sort, composição, paginação e demais primitivas neutras ainda privadas no Plugin UI; Helpdesk deve migrar para export público juntamente com My Requests, preservando contratos GLPI e resultados atuais. Não introduzir import runtime do MFE My Requests.
+
+
 > **Status:** inventário sincronizado com o código (E7 + H13). Paridade [`16-plano-paridade.md`](./16-plano-paridade.md) **concluída**. Não altera [`06-plano-execucao.md`](./06-plano-execucao.md).
 > **Tela publicada:** [`WIREFRAMES.md`](./WIREFRAMES.md) §1 — tabela/cards, builder AND, rodapé `createDashboardPaginationKit` + `HintAction`, datas absolutas, `solved_at`/`closed_at`, `requester_display_name`, `q` no conteúdo, `pending`/`approval`, `created_*`.
 > **Fotos de 21/09/2026:** MFE `/apps/helpdesk` e GLPI Super-Admin `front/ticket.php` (bancada, não o produto).
