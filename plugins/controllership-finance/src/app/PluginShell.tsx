@@ -149,14 +149,17 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
         },
       ];
 
+  const showLnf = viewer?.capabilities.lnfAccess === true;
+
   const paletteSections = useMemo(
     () =>
       resolveHubSections({
         access: hasAccess,
         manage: showManage,
         accessDre: dreViewer,
+        lnfAccess: showLnf,
       }),
-    [hasAccess, showManage, dreViewer],
+    [hasAccess, showManage, dreViewer, showLnf],
   );
 
   const paletteHits = useMemo(
@@ -168,6 +171,11 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     (routeId: string) => {
       const route = findHubRouteById(paletteSections, routeId);
       if (!route) return;
+      if (route.kind === "external" && route.href) {
+        window.location.assign(route.href);
+        return;
+      }
+      if (!route.viewId) return;
       navigatePluginView(route.viewId, { basePath, search: route.search });
       setPaletteOpen(false);
       setPaletteQuery("");

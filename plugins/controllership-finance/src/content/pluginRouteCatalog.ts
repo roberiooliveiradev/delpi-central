@@ -1,30 +1,40 @@
 /**
  * Catálogo canônico do hub Início: seção (1º) → rotas (2º).
- * Paths só via viewId + buildPluginPath — sem URL absoluta.
+ * Paths internos via viewId + buildPluginPath; link externo LNF via
+ * ``kind: "external"`` + ``href`` (home-hub H3 / padrão Comercial).
  *
  * Somente rotas implementadas em runtime podem entrar aqui. Rotas
  * futuras (Visão geral dedicada, Sala de interação, Ajuda) NÃO são
  * indexadas até existirem. «Minhas tarefas» existe em runtime, mas
  * está fora da navegação desta release por decisão de escopo
  * (CF-PROC0072-CLARA-COMPLETE-001 §18) — rota e código preservados.
+ * Início e Meu perfil saem dos cards (D1/D7): Início está na top bar;
+ * Meu perfil no avatar.
  */
 import type { PluginNavigationTarget } from "../app/pluginRoutes";
 
-export type HubCapability = "access" | "manage" | "accessDre";
+export type HubCapability = "access" | "manage" | "accessDre" | "lnfAccess";
 
-export type HubRouteKind = "navigate" | "create";
+export type HubRouteKind = "navigate" | "create" | "external";
 
 export type HubRouteDef = {
   id: string;
   label: string;
-  viewId: PluginNavigationTarget;
+  /** Obrigatório para navigate/create; omitido em ``kind: "external"``. */
+  viewId?: PluginNavigationTarget;
+  /** Path absoluto do Portal para ``kind: "external"`` (ex.: app LNF). */
+  href?: string;
   search?: string;
   requiredCap: HubCapability;
   keywords?: readonly string[];
   kind?: HubRouteKind;
 };
 
-export type HubSectionId = "portal" | "closing" | "closing_dre";
+export type HubSectionId =
+  | "closing"
+  | "notas_fiscais"
+  | "administration"
+  | "closing_dre";
 
 export type HubSectionDef = {
   id: HubSectionId;
@@ -36,49 +46,10 @@ export type HubSectionDef = {
 
 export type HubCapabilities = Record<HubCapability, boolean>;
 
+/** App LNF no Portal — mesma entrada do launcher Minha DELPI. */
+export const LNF_APP_HREF = "/apps/lancamento-notas-fiscais";
+
 export const HUB_SECTIONS: readonly HubSectionDef[] = [
-  {
-    id: "portal",
-    title: "Portal",
-    description: "Áreas do Portal Controladoria & Finanças.",
-    iconKey: "portal",
-    routes: [
-      {
-        id: "home",
-        label: "Início",
-        viewId: "home",
-        requiredCap: "access",
-        keywords: [
-          "inicio",
-          "início",
-          "home",
-          "portal",
-          "começo",
-          "comeco",
-          "saudação",
-          "saudacao",
-        ],
-      },
-      {
-        id: "profile",
-        label: "Meu perfil",
-        viewId: "profile",
-        requiredCap: "access",
-        keywords: [
-          "perfil",
-          "usuario",
-          "usuário",
-          "identidade",
-          "foto",
-          "grupos",
-          "permissoes",
-          "permissões",
-          "vinculos",
-          "vínculos",
-        ],
-      },
-    ],
-  },
   {
     id: "closing",
     title: "Central de Fechamento",
@@ -155,6 +126,14 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "fechamento",
         ],
       },
+    ],
+  },
+  {
+    id: "notas_fiscais",
+    title: "Notas fiscais",
+    description: "Conferência e lançamento das notas de entrada.",
+    iconKey: "notas_fiscais",
+    routes: [
       {
         id: "entry-audit",
         label: "Auditoria de Entradas",
@@ -173,6 +152,32 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "cte",
         ],
       },
+      {
+        id: "lnf-app",
+        label: "Lançamento de notas fiscais",
+        kind: "external",
+        href: LNF_APP_HREF,
+        requiredCap: "lnfAccess",
+        keywords: [
+          "lancamento",
+          "lançamento",
+          "notas",
+          "fiscais",
+          "lnf",
+          "entrada",
+          "xml",
+          "nfe",
+          "nf-e",
+        ],
+      },
+    ],
+  },
+  {
+    id: "administration",
+    title: "Administração",
+    description: "Checklist, documentos e catálogos do fechamento.",
+    iconKey: "administration",
+    routes: [
       {
         id: "closing-admin",
         label: "Administração do checklist",
@@ -309,6 +314,7 @@ export function hubRouteLabelByView(
   const normalized = search?.startsWith("?") ? search : search ? `?${search}` : undefined;
   for (const section of HUB_SECTIONS) {
     for (const route of section.routes) {
+      if (!route.viewId || route.kind === "external") continue;
       if (route.viewId !== viewId) continue;
       const routeSearch = route.search;
       if ((routeSearch ?? undefined) === (normalized ?? undefined)) {
@@ -318,6 +324,7 @@ export function hubRouteLabelByView(
   }
   for (const section of HUB_SECTIONS) {
     for (const route of section.routes) {
+      if (!route.viewId || route.kind === "external") continue;
       if (route.viewId === viewId && !route.search && route.kind !== "create") {
         return route.label;
       }
@@ -386,7 +393,10 @@ function buildRouteSearchIndex(
       text: normalizeSearchText(section.description ?? ""),
     },
     { weight: SEARCH_FIELD_WEIGHTS.title, text: normalizeSearchText(section.title) },
-    { weight: SEARCH_FIELD_WEIGHTS.viewId, text: normalizeSearchText(route.viewId) },
+    {
+      weight: SEARCH_FIELD_WEIGHTS.viewId,
+      text: normalizeSearchText(route.viewId ?? route.href ?? ""),
+    },
   ].filter((field) => field.text.length > 0);
 }
 
@@ -441,8 +451,10 @@ export type HubSearchHit = {
   id: string;
   label: string;
   groupLabel: string;
-  viewId: PluginNavigationTarget;
+  viewId?: PluginNavigationTarget;
   search?: string;
+  href?: string;
+  kind?: HubRouteKind;
 };
 
 export function collectSearchHits(
@@ -465,6 +477,8 @@ export function collectSearchHits(
           groupLabel: section.title,
           viewId: route.viewId,
           search: route.search,
+          href: route.href,
+          kind: route.kind,
         },
         score,
         order: order++,

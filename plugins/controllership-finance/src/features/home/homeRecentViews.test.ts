@@ -14,24 +14,38 @@ beforeEach(() => {
 
 describe("homeRecentViews", () => {
   it("push adiciona e lê de volta", () => {
-    pushRecentView({ viewId: "home", label: "Início" });
+    pushRecentView({ viewId: "entry_audit", label: "Auditoria de Entradas" });
     const items = readRecentViews();
     expect(items.length).toBe(1);
-    expect(items[0].viewId).toBe("home");
-    expect(items[0].label).toBe("Início");
+    expect(items[0].viewId).toBe("entry_audit");
   });
 
   it("deduplica pela chave viewId+search", () => {
-    pushRecentView({ viewId: "home", label: "Início" });
-    pushRecentView({ viewId: "home", label: "Início" });
-    pushRecentView({ viewId: "home", search: "?q=a", label: "Início" });
+    pushRecentView({ viewId: "monthly_closing", label: "Fechamento mensal" });
+    pushRecentView({ viewId: "monthly_closing", label: "Fechamento mensal" });
+    pushRecentView({
+      viewId: "monthly_closing",
+      search: "tab=documents",
+      label: "Documentos",
+    });
     const items = readRecentViews();
     expect(items.length).toBe(2);
   });
 
   it("respeita o limite de 5 entradas", () => {
+    const views = [
+      "entry_audit",
+      "checklist_admin",
+      "documents_admin",
+      "catalogs_admin",
+      "received_documents",
+    ] as const;
     for (let i = 0; i < 8; i++) {
-      pushRecentView({ viewId: "home", search: `?q=${i}`, label: `R${i}` });
+      pushRecentView({
+        viewId: views[i % views.length],
+        search: i >= views.length ? `?x=${i}` : undefined,
+        label: `R${i}`,
+      });
     }
     const items = readRecentViews();
     expect(items.length).toBe(5);
@@ -45,23 +59,24 @@ describe("homeRecentViews", () => {
     expect(readRecentViews()).toEqual([]);
   });
 
-  it("descarta itens de views que não existem no catálogo", () => {
+  it("descarta Início e views fora do catálogo (D7)", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify([
         { viewId: "overview", label: "X", at: 1 },
         { viewId: "home", label: "Início", at: 2 },
+        { viewId: "entry_audit", label: "Auditoria", at: 3 },
       ]),
     );
     const items = readRecentViews();
     expect(items.length).toBe(1);
-    expect(items[0].viewId).toBe("home");
+    expect(items[0].viewId).toBe("entry_audit");
   });
 
   it("não armazena tokens nem payloads — só viewId/search/label/at", () => {
     pushRecentView({
-      viewId: "home",
-      label: "Início",
+      viewId: "entry_audit",
+      label: "Auditoria",
     } as never);
     const raw = window.localStorage.getItem(STORAGE_KEY) ?? "";
     expect(raw).not.toContain("token");
@@ -70,13 +85,16 @@ describe("homeRecentViews", () => {
   });
 
   it("filterRecentsByCaps filtra por capacidade do catálogo", () => {
-    const items = pushRecentView({ viewId: "home", label: "Início" });
-    // `home` exige `access` — interno vê, somente-DRE não.
+    const items = pushRecentView({
+      viewId: "entry_audit",
+      label: "Auditoria",
+    });
     expect(
       filterRecentsByCaps(items, {
         access: true,
         manage: false,
         accessDre: false,
+        lnfAccess: false,
       }).length,
     ).toBe(1);
     expect(
@@ -84,6 +102,7 @@ describe("homeRecentViews", () => {
         access: false,
         manage: false,
         accessDre: true,
+        lnfAccess: false,
       }).length,
     ).toBe(0);
   });

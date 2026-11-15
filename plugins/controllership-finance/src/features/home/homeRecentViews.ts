@@ -22,7 +22,12 @@ function dedupeKey(item: Pick<RecentHubView, "viewId" | "search">): string {
 
 function isKnownView(viewId: string): boolean {
   return HUB_SECTIONS.some((section) =>
-    section.routes.some((route) => route.viewId === viewId),
+    section.routes.some(
+      (route) =>
+        route.kind !== "external" &&
+        route.viewId === viewId &&
+        route.viewId !== "home",
+    ),
   );
 }
 
@@ -69,7 +74,18 @@ export function filterRecentsByCaps(
   return items.filter((item) => {
     for (const section of HUB_SECTIONS) {
       for (const route of section.routes) {
+        if (route.kind === "external" || !route.viewId) continue;
         if (route.viewId !== item.viewId) continue;
+        if ((route.search ?? undefined) !== (item.search ?? undefined)) continue;
+        return capabilities[route.requiredCap];
+      }
+    }
+    // Match by viewId alone when search differs from a specific hub shortcut.
+    for (const section of HUB_SECTIONS) {
+      for (const route of section.routes) {
+        if (route.kind === "external" || !route.viewId) continue;
+        if (route.viewId !== item.viewId) continue;
+        if (route.search) continue;
         return capabilities[route.requiredCap];
       }
     }

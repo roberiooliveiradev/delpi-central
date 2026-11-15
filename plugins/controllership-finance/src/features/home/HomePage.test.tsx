@@ -62,8 +62,13 @@ describe("HomePage", () => {
     expect(
       screen.getByText("Eventos operacionais indisponíveis nesta versão."),
     ).toBeTruthy();
-    // Catálogo contém apenas a rota implementada.
-    expect(screen.getAllByText("Início").length).toBeGreaterThan(0);
+    expect(screen.getByText("Central de Fechamento")).toBeTruthy();
+    expect(screen.getByText("Notas fiscais")).toBeTruthy();
+    expect(screen.getByText("Auditoria de Entradas")).toBeTruthy();
+    expect(screen.queryByText("Portal")).toBeNull();
+    expect(screen.queryByText("Meu perfil")).toBeNull();
+    expect(screen.queryByText("Lançamento de notas fiscais")).toBeNull();
+    expect(screen.queryByText("Administração")).toBeNull();
     expect(screen.queryByText("Minhas tarefas")).toBeNull();
     expect(screen.queryByText("Visão geral")).toBeNull();
   });
@@ -83,9 +88,9 @@ describe("HomePage", () => {
     await waitFor(() =>
       expect(screen.getByText("Contexto indisponível")).toBeTruthy(),
     );
-    // Launcher continua montado.
+    // Launcher continua montado (access default enquanto viewer null).
     expect(screen.getByText("Caminhos e funcionalidades")).toBeTruthy();
-    expect(screen.getAllByText("Início").length).toBeGreaterThan(0);
+    expect(screen.getByText("Central de Fechamento")).toBeTruthy();
   });
 
   it("busca ?q= filtra o catálogo", async () => {
@@ -93,14 +98,27 @@ describe("HomePage", () => {
     window.history.replaceState(
       null,
       "",
-      "/apps/controllership-finance?q=inicio",
+      "/apps/controllership-finance?q=fechamento",
     );
     render(<HomePage basePath="/apps/controllership-finance" />);
     const search = screen.getByLabelText(
       "Buscar caminhos e funcionalidades",
     ) as HTMLInputElement;
-    expect(search.value).toBe("inicio");
-    expect(screen.getAllByText("Início").length).toBeGreaterThan(0);
+    expect(search.value).toBe("fechamento");
+    expect(screen.getByText("Fechamento mensal")).toBeTruthy();
+  });
+
+  it("com lnfAccess exibe o link do app LNF no card Notas fiscais", async () => {
+    setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: true });
+    render(<HomePage basePath="/apps/controllership-finance" />);
+    expect(screen.getByText("Lançamento de notas fiscais")).toBeTruthy();
+  });
+
+  it("com manage exibe o card Administração", async () => {
+    setViewer("Ana", { access: true, manage: true, accessDre: false, lnfAccess: false });
+    render(<HomePage basePath="/apps/controllership-finance" />);
+    expect(screen.getByText("Administração")).toBeTruthy();
+    expect(screen.getByText("Administração do checklist")).toBeTruthy();
   });
 
   it("busca sem resultado mostra estado vazio honesto", async () => {
@@ -145,11 +163,10 @@ describe("HomePage", () => {
     expect(screen.queryByText("Fechamento Mensal")).toBeNull();
   });
 
-  it("últimos acessos registra a visita à home", async () => {
+  it("não lista Início nos caminhos do hub (D7)", async () => {
     setViewer("Ana", { access: true, manage: false, accessDre: false, lnfAccess: false });
     render(<HomePage basePath="/apps/controllership-finance" />);
-    await waitFor(() =>
-      expect(screen.getByText("Últimos acessos")).toBeTruthy(),
-    );
+    expect(screen.getByText("Fechamento mensal")).toBeTruthy();
+    expect(screen.queryByText("Início")).toBeNull();
   });
 });

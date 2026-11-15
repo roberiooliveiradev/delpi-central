@@ -30,8 +30,8 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 |---|---|---|
 | H0 Inventário do padrão Comercial × CF | DONE | `9904b4fb46` |
 | H1 BFF: `lnfAccess` no viewer-context | DONE | `6a6ca32c84` |
-| H2 BFF: favoritos (V030 + rotas) | DONE | (este commit) |
-| H3 MFE: cards (Portal sai, Notas fiscais, Administração) | TODO | |
+| H2 BFF: favoritos (V030 + rotas) | DONE | `15f8e18653` |
+| H3 MFE: cards (Portal sai, Notas fiscais, Administração) | DONE | (este commit) |
 | H4 MFE: favoritos (estrela, store, barra do topo) e Ajuda | TODO | |
 | H5 HML | TODO | |
 | H6 PROD | TODO | |
@@ -86,4 +86,5 @@ MFE e BFF pelas tags. V030 só cria tabela nova: rollback da BFF não precisa de
 | 2026-11-14 | plano | — | READY | Doc 170. D1–D4 do owner; D5 regra do produto; D6–D8 propostas pelo Claude. |
 | 2026-11-14 | H0 | `9904b4fb46` | DONE | Inventário Comercial×CF; D7/D8 confirmados no código. HEAD base `59855c61`. Higiene: index prévio incluiu 2 arquivos delia no mesmo commit (não revertidos). |
 | 2026-11-14 | H1 | `6a6ca32c84` | DONE | `capabilities.lnfAccess` aditivo via `has_lnf_clara_entry`; testes viewer 24 PASS; MFE client + vitest 22 PASS. |
-| 2026-11-14 | H2 | (este commit) | DONE | V030 `home_favorites`; GET/PUT `/me/home-favorites`; auth access\|accessDre; 11 PASS. |
+| 2026-11-14 | H2 | `15f8e18653` | DONE | V030 `home_favorites`; GET/PUT `/me/home-favorites`; auth access\|accessDre; 11 PASS. |
+| 2026-11-14 | H3 | (este commit) | DONE | Cards alvo; Portal fora; LNF externo; Admin manage; D7; vitest 36 PASS. |

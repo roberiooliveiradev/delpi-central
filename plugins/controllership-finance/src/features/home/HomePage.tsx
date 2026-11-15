@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { CalendarCheck2, Landmark } from "lucide-react";
+import { CalendarCheck2, FileText, Settings } from "lucide-react";
 
 import { useViewerContext } from "../../app/ViewerContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -42,8 +42,9 @@ const EVENTS = HUB_CONTENT.events;
 const FEATURES = HUB_CONTENT.features;
 
 const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
-  portal: <Landmark size={20} strokeWidth={1.75} aria-hidden="true" />,
   closing: <CalendarCheck2 size={20} strokeWidth={1.75} aria-hidden="true" />,
+  notas_fiscais: <FileText size={20} strokeWidth={1.75} aria-hidden="true" />,
+  administration: <Settings size={20} strokeWidth={1.75} aria-hidden="true" />,
   closing_dre: (
     <CalendarCheck2 size={20} strokeWidth={1.75} aria-hidden="true" />
   ),
@@ -73,6 +74,8 @@ export function HomePage({ basePath }: HomePageProps) {
       accessDre:
         viewer?.capabilities.accessDre === true &&
         viewer?.capabilities.access !== true,
+      // LNF só com capability confirmada pela BFF (D6) — sem default aberto.
+      lnfAccess: viewer?.capabilities.lnfAccess === true,
     }),
     [viewer],
   );
@@ -83,18 +86,9 @@ export function HomePage({ basePath }: HomePageProps) {
     writeHomeSearchQuery(searchQuery);
   }, [searchQuery]);
 
-  useEffect(() => {
-    setRecents(
-      pushRecentView({
-        viewId: "home",
-        label: "Início",
-      }),
-    );
-  }, []);
-
   const recordVisit = useCallback(
     (
-      viewId: HubRouteDef["viewId"],
+      viewId: NonNullable<HubRouteDef["viewId"]>,
       search: string | undefined,
       label: string | undefined,
     ) => {
@@ -102,7 +96,7 @@ export function HomePage({ basePath }: HomePageProps) {
         pushRecentView({
           viewId,
           search,
-          label: label ?? "Início",
+          label: label ?? viewId,
         }),
       );
     },
@@ -110,7 +104,12 @@ export function HomePage({ basePath }: HomePageProps) {
   );
 
   const navigateRoute = useCallback(
-    (route: Pick<HubRouteDef, "viewId" | "search" | "label">) => {
+    (route: Pick<HubRouteDef, "viewId" | "search" | "label" | "kind" | "href">) => {
+      if (route.kind === "external" && route.href) {
+        window.location.assign(route.href);
+        return;
+      }
+      if (!route.viewId) return;
       recordVisit(route.viewId, route.search, route.label);
       navigatePluginView(route.viewId, { basePath, search: route.search });
     },
@@ -221,7 +220,7 @@ export function HomePage({ basePath }: HomePageProps) {
               items={visibleRecents.map((item) => ({
                 id: `${item.viewId}::${item.search ?? ""}`,
                 label: item.label,
-                icon: SECTION_ICONS.portal,
+                icon: SECTION_ICONS.closing,
               }))}
               onSelect={(id: string) => {
                 const item = visibleRecents.find(
@@ -258,7 +257,7 @@ export function HomePage({ basePath }: HomePageProps) {
                     description={section.description}
                     icon={
                       SECTION_ICONS[section.id] ?? (
-                        <Landmark size={20} aria-hidden="true" />
+                        <CalendarCheck2 size={20} aria-hidden="true" />
                       )
                     }
                     routes={mapSectionRoutes(section)}

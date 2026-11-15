@@ -5,39 +5,42 @@ import {
   filterRouteCatalog,
   findHubRouteById,
   HUB_SECTIONS,
+  LNF_APP_HREF,
   resolveHubSections,
   scoreRouteMatch,
   tokenizeQuery,
 } from "./pluginRouteCatalog";
 
-describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => {
-  it("expõe Fechamento mensal como entrada principal + atalhos contextuais", () => {
+describe("pluginRouteCatalog — home-hub H3 (padrão Portais)", () => {
+  it("expõe cards alvo: Fechamento, Notas fiscais, Administração, DRE", () => {
+    expect(HUB_SECTIONS.map((s) => s.id)).toEqual([
+      "closing",
+      "notas_fiscais",
+      "administration",
+      "closing_dre",
+    ]);
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
     expect(routeIds).toEqual([
-      "home",
-      "profile",
       "monthly-closing",
       "monthly-closing-documents",
       "monthly-closing-reports",
       "entry-audit",
+      "lnf-app",
       "closing-admin",
       "documents-admin",
       "catalogs-admin",
       "dre-monthly-closing",
     ]);
-    const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
-    expect(new Set(viewIds)).toEqual(
-      new Set([
-        "home",
-        "profile",
-        "monthly_closing",
-        "entry_audit",
-        "checklist_admin",
-        "documents_admin",
-        "catalogs_admin",
-        "received_documents",
-      ]),
-    );
+    expect(routeIds).not.toContain("home");
+    expect(routeIds).not.toContain("profile");
+  });
+
+  it("link LNF é externo com href canônico e cap lnfAccess", () => {
+    const lnf = findHubRouteById(HUB_SECTIONS, "lnf-app");
+    expect(lnf?.kind).toBe("external");
+    expect(lnf?.href).toBe(LNF_APP_HREF);
+    expect(lnf?.requiredCap).toBe("lnfAccess");
+    expect(lnf?.viewId).toBeUndefined();
   });
 
   it("não expõe módulos técnicos como caminhos primários da Home", () => {
@@ -51,9 +54,10 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
       "stock-inventory",
       "overview",
       "interaction_rooms",
-      "administration",
       "help",
       "closing_center",
+      "home",
+      "profile",
     ]) {
       expect(allIds).not.toContain(removed);
     }
@@ -71,43 +75,62 @@ describe("pluginRouteCatalog — navegação consolidada (doc 112 §26)", () => 
     expect(reports?.search).toBe("tab=reports");
   });
 
-  it("resolveHubSections projeta as seções por capability (RW03)", () => {
+  it("resolveHubSections projeta as seções por capability (RW03 + H3)", () => {
     const internal = resolveHubSections({
       access: true,
       manage: false,
       accessDre: false,
+      lnfAccess: false,
     });
-    expect(internal.length).toBe(2);
-    expect(internal[0].routes[0].id).toBe("home");
-    expect(internal[1].routes[0].id).toBe("monthly-closing");
+    expect(internal.map((s) => s.id)).toEqual(["closing", "notas_fiscais"]);
+    expect(internal[0].routes.map((r) => r.id)).toEqual([
+      "monthly-closing",
+      "monthly-closing-documents",
+      "monthly-closing-reports",
+    ]);
+    expect(internal[1].routes.map((r) => r.id)).toEqual(["entry-audit"]);
 
-    // Somente-DRE: uma única seção autorizada — a projeção externa.
+    const withLnf = resolveHubSections({
+      access: true,
+      manage: false,
+      accessDre: false,
+      lnfAccess: true,
+    });
+    expect(
+      withLnf.find((s) => s.id === "notas_fiscais")?.routes.map((r) => r.id),
+    ).toEqual(["entry-audit", "lnf-app"]);
+
     const dre = resolveHubSections({
       access: false,
       manage: false,
       accessDre: true,
+      lnfAccess: false,
     });
     expect(dre.length).toBe(1);
     expect(dre[0].id).toBe("closing_dre");
-    expect(dre[0].routes.map((r) => r.id)).toEqual([
-      "dre-monthly-closing",
-    ]);
-    expect(dre[0].routes[0].viewId).toBe("received_documents");
+    expect(dre[0].routes.map((r) => r.id)).toEqual(["dre-monthly-closing"]);
 
-    // Sem nenhuma capability efetiva, o catálogo não oferece caminho.
     expect(
-      resolveHubSections({ access: false, manage: false, accessDre: false }),
+      resolveHubSections({
+        access: false,
+        manage: false,
+        accessDre: false,
+        lnfAccess: false,
+      }),
     ).toEqual([]);
 
-    // `manage` sozinho libera apenas as rotas administrativas.
     const manageOnly = resolveHubSections({
       access: false,
       manage: true,
       accessDre: false,
+      lnfAccess: false,
     });
-    expect(
-      manageOnly.flatMap((s) => s.routes.map((r) => r.id)),
-    ).toEqual(["closing-admin", "documents-admin", "catalogs-admin"]);
+    expect(manageOnly.map((s) => s.id)).toEqual(["administration"]);
+    expect(manageOnly.flatMap((s) => s.routes.map((r) => r.id))).toEqual([
+      "closing-admin",
+      "documents-admin",
+      "catalogs-admin",
+    ]);
   });
 });
 
@@ -120,24 +143,22 @@ describe("busca do catálogo", () => {
   it("scoreRouteMatch casa label e keywords", () => {
     const section = HUB_SECTIONS[0];
     const route = section.routes[0];
-    expect(scoreRouteMatch(section, route, "inicio")).toBeGreaterThan(0);
-    expect(scoreRouteMatch(section, route, "home")).toBeGreaterThan(0);
-    expect(scoreRouteMatch(section, route, "fechamento")).toBe(0);
+    expect(scoreRouteMatch(section, route, "fechamento")).toBeGreaterThan(0);
+    expect(scoreRouteMatch(section, route, "inicio")).toBe(0);
   });
 
   it("filterRouteCatalog filtra e retorna vazio sem match", () => {
-    // «ini» casa «Início» e «admINIs tração» (label da rota admin).
-    expect(filterRouteCatalog(HUB_SECTIONS, "ini").length).toBe(2);
+    expect(filterRouteCatalog(HUB_SECTIONS, "fechamento").length).toBeGreaterThan(0);
     expect(filterRouteCatalog(HUB_SECTIONS, "xyz-inexistente").length).toBe(0);
-    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(3);
+    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(4);
     expect(filterRouteCatalog(HUB_SECTIONS, "baixas").length).toBe(1);
   });
 
-  it("collectSearchHits retorna hit do Início", () => {
-    const hits = collectSearchHits(HUB_SECTIONS, "inic");
-    expect(hits.length).toBe(1);
-    expect(hits[0].id).toBe("home");
-    expect(hits[0].groupLabel).toBe("Portal");
+  it("collectSearchHits não indexa Início (D7)", () => {
+    expect(collectSearchHits(HUB_SECTIONS, "inic")).toEqual([]);
+    const hits = collectSearchHits(HUB_SECTIONS, "auditoria");
+    expect(hits[0]?.id).toBe("entry-audit");
+    expect(hits[0]?.groupLabel).toBe("Notas fiscais");
   });
 
   it("collectSearchHits vazio sem query", () => {
@@ -145,7 +166,9 @@ describe("busca do catálogo", () => {
   });
 
   it("findHubRouteById encontra por id", () => {
-    expect(findHubRouteById(HUB_SECTIONS, "home")?.viewId).toBe("home");
+    expect(findHubRouteById(HUB_SECTIONS, "entry-audit")?.viewId).toBe(
+      "entry_audit",
+    );
     expect(findHubRouteById(HUB_SECTIONS, "nope")).toBeUndefined();
   });
 });
