@@ -42,6 +42,9 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (  
 )
 
 from clara_golden_set_r01_r15 import GOLDEN_SET, NEGATIVE_SET
+from controllership_finance_app.domain.knowledge.search_codes import (
+    extract_search_codes,
+)
 
 PG_ENV = (
     "CF_TEST_PG_HOST",
@@ -773,3 +776,116 @@ def test_only_canonical_fichas_are_operational(corpus):
                  if h["source_id"] in authorized_ids
                  and h["source_id"] not in OPERATIONAL_SOURCE_IDS]
         assert not leaks, f"{query}: non-operational hits {sorted(set(leaks))}"
+
+
+def _blob(hit: dict) -> str:
+    return f"{hit.get('title') or ''}\n{hit.get('content') or ''}"
+
+
+def _in_top3(hits: list[dict], predicate) -> bool:
+    return any(predicate(hit) for hit in hits[:3])
+
+
+def test_queries_without_codes_keep_the_previous_order(corpus):
+    """Sem código, knowledge_id e ordem são os do passe AND/OR."""
+    plain = [
+        case for case in GOLDEN_SET if not extract_search_codes(case["q"])
+    ]
+    assert len(plain) >= 20
+    for case in plain[:20]:
+        current = corpus.search(
+            query=case["q"], report_id=case["report_id"], limit=12,
+        )
+        previous = corpus.search(
+            query=case["q"], report_id=case["report_id"], limit=12,
+            codes=[],
+        )
+        assert [hit["knowledge_id"] for hit in current] == [
+            hit["knowledge_id"] for hit in previous
+        ]
+        assert all("match" not in hit for hit in current)
+
+
+def test_code_rank_acceptance_targets_are_in_the_top_3(corpus):
+    """Conjunto de aceite TES-R2, sem topic, linguagem natural."""
+    def has(source: str, needle: str):
+        def predicate(hit: dict) -> bool:
+            return (
+                hit["source_id"] == source
+                and needle.lower() in _blob(hit).lower()
+            )
+        return predicate
+
+    cases = [
+        (
+            "o que a TES 594 faz",
+            lambda hit: (
+                hit["source_id"] == "ficha-tes-04"
+                and "tes 594" in _blob(hit).lower()
+            ) or (
+                hit["source_id"] == "ficha-tes-01"
+                and "594" in _blob(hit)
+            ),
+        ),
+        (
+            "em qual relatório a TES 120 pesa",
+            has("ficha-tes-01", "120"),
+        ),
+        (
+            "a TES 036 credita ICMS?",
+            lambda hit: (
+                hit["source_id"] == "ficha-tes-03"
+                and "036" in _blob(hit)
+                and "frete" in _blob(hit).lower()
+            ),
+        ),
+        ("TES 001 é compra de quê?", has("ficha-tes-03", "TES 001")),
+        ("a TES 499 existe?", has("ficha-tes-00", "499")),
+        ("quais TES ficam fora do R10", has("ficha-tes-01", "R10")),
+        ("o que faz a TES 614", has("ficha-tes-04", "TES 614")),
+        (
+            "a TES 525 movimenta estoque?",
+            has("ficha-tes-04", "TES 525"),
+        ),
+        ("para que serve a TES 019", has("ficha-tes-03", "TES 019")),
+        ("a TES 706 baixa estoque?", has("ficha-tes-04", "TES 706")),
+        ("o que é a TES 3A8", has("ficha-tes-03", "TES 3A8")),
+        (
+            "quais TES usam o CFOP 5124",
+            lambda hit: (
+                hit["source_id"] == "ficha-tes-04"
+                and "5124" in _blob(hit)
+                and "industrializa" in _blob(hit).lower()
+            ),
+        ),
+    ]
+    misses = []
+    for query, predicate in cases:
+        hits = corpus.search(query=query, limit=8)
+        if not _in_top3(hits, predicate):
+            misses.append(
+                (
+                    query,
+                    [
+                        (hit["source_id"], hit.get("title"), hit.get("match"))
+                        for hit in hits[:3]
+                    ],
+                )
+            )
+        elif extract_search_codes(query):
+            assert any(hit.get("match") == "code" for hit in hits[:3])
+    assert not misses, misses
+
+
+def test_code_rank_negatives_match_the_previous_order(corpus):
+    for query in (
+        "status do fechamento de outubro 2026",
+        "quais as pendências da competência",
+        "o que é o relatório R10",
+    ):
+        assert extract_search_codes(query) == []
+        current = corpus.search(query=query, limit=8)
+        previous = corpus.search(query=query, limit=8, codes=[])
+        assert [hit["knowledge_id"] for hit in current] == [
+            hit["knowledge_id"] for hit in previous
+        ]

@@ -823,3 +823,9 @@ Varredura integral do corpus (não só top-hits): 22 correções (`g083-correcti
 ### 24.4 Evidências e testes
 
 `evidence-g083/`: residual-inventory, claim-authority-matrix, historical-exposure, corrections, retrieval-validation, tests, conversational-115, coverage. Testes: auditoria claim-level (0 REVIEW/STALE), adversarial **16/16**, suíte PG **15/15** (golden 105 + 10 negativos + invariantes SUPERSEDED/escopo). Artefatos intermediários descobertos pelo próprio teste de invariante (doc-121 `report_not_implemented`, variante doc-86, índice doc-00) corrigidos e revalidados.
+
+## 25. TES-R2 — passe de código exato (14/11/2026)
+
+O AND de §13.4 e o fill OR continuam iguais quando a pergunta não traz código. Quando traz, `extract_search_codes` (função pura, sem banco) lê tokens de TES (`525`, `3A8`) e de 4 dígitos (`5124`, `9035`), e ignora ano `20xx`, relatório `R10`/`R05` e data (`2026-10`, `10/2026`, `14/11`).
+
+`ClaraKnowledgeRepository.search` recebe essa lista e, antes do AND, faz um passe limitado à metade de `limit` (para cima): mesmo filtro de escopo, domínio, tópico e relatório, conteúdo com o código como palavra inteira (`\mcódigo\M`). A linha de catálogo `| TES <código> |` ordena na frente; o desempate é o `ts_rank` da consulta em OU. Os passes AND e OR seguem sem repetir `knowledge_id`. Item desse passe ganha `match=code` (campo opcional; os demais campos da tool `knowledge` ficam). Sem código, o SQL e a ordem são os de §13.4. TES-05 não muda.

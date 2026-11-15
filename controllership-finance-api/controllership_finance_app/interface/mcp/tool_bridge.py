@@ -44,6 +44,9 @@ from controllership_finance_app.application.invoice_posting.permissions import (
     LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
 )
 
+from controllership_finance_app.domain.knowledge.search_codes import (
+    extract_search_codes,
+)
 from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
 )
@@ -1477,6 +1480,7 @@ def tool_search_closing_knowledge(
             access_scope=_access_scope_for(user),
             domain_scopes=domains,
             limit=limit,
+            codes=extract_search_codes(query),
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc)
@@ -1500,6 +1504,9 @@ def tool_search_closing_knowledge(
                     "excerpt": (i["content"] or "")[:600],
                     "rank": i.get("rank"),
                     "full_match": i.get("full_match", True),
+                    **(
+                        {"match": i["match"]} if i.get("match") else {}
+                    ),
                 }
                 for i in items
             ],

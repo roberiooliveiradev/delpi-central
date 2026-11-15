@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any
 
 import psycopg
@@ -26,6 +27,9 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
     PersistenceUnavailable,
 )
+from controllership_finance_app.domain.knowledge.search_codes import (
+    extract_search_codes,
+)
 from controllership_finance_app.infrastructure.persistence.plugins_db import (
     SCHEMA_NAME,
     plugins_db_connect,
@@ -33,6 +37,7 @@ from controllership_finance_app.infrastructure.persistence.plugins_db import (
 )
 
 _SCHEMA = SCHEMA_NAME
+_SAFE_CODE = re.compile(r"^[0-9A-Z]{3,4}$")
 
 
 def _q(table: str) -> str:
@@ -432,12 +437,22 @@ class ClaraKnowledgeRepository:
         access_scope: str = "PORTAL_ACCESS",
         domain_scopes: list[str] | None = None,
         limit: int = 8,
+        codes: list[str] | None = None,
     ) -> list[dict]:
         """Recuperação com citação — FTS português + filtros estruturados.
 
         `INTERNAL_ONLY` nunca alcança escopo de Portal; `PORTAL_MANAGE`
         só sai para manage efetivo (o caller decide o scope do ator).
         F7-R4: ``domain_scopes`` limita controllership vs LNF.
+
+        ``codes`` é a lista já extraída da pergunta (TES, CFOP, grupo).
+        ``None`` extrai da própria consulta. Lista vazia — ou pergunta
+        sem código — mantém o passe AND e o fill OR, na mesma ordem.
+        Com código, um passe anterior (no máximo metade de ``limit``,
+        arredondado para cima) sobe o trecho em que o código casa como
+        palavra inteira; a linha de catálogo ``| TES <código> |`` vem
+        antes do ``ts_rank`` do OU. Os passes AND e OR seguem e não
+        repetem ``knowledge_id``. O passe de código marca ``match=code``.
         """
         clauses = ["k.status = 'PUBLISHED'"]
         where_params: list[Any] = []
@@ -471,12 +486,93 @@ class ClaraKnowledgeRepository:
                 rank_params=[],
                 limit=limit,
             )
+        resolved = (
+            extract_search_codes(query) if codes is None else list(codes)
+        )
+        safe_codes = [
+            code.upper()
+            for code in resolved
+            if _SAFE_CODE.fullmatch(code.upper())
+        ]
+        code_items: list[dict] = []
+        if safe_codes:
+            code_items = self._search_code_pass(
+                clauses=clauses,
+                where_params=where_params,
+                query=query,
+                codes=safe_codes,
+                limit=(limit + 1) // 2,
+            )
+        return code_items + self._search_fulltext(
+            clauses=clauses,
+            where_params=where_params,
+            query=query,
+            limit=limit - len(code_items),
+            exclude_ids=[str(item["knowledge_id"]) for item in code_items],
+        )
+
+    def _search_code_pass(
+        self,
+        *,
+        clauses: list[str],
+        where_params: list[Any],
+        query: str,
+        codes: list[str],
+        limit: int,
+    ) -> list[dict]:
+        """Trechos em que algum código casa como palavra inteira.
+
+        A expressão de rank é parâmetro (não interpola o texto da
+        pergunta). O código já passou por ``^[0-9A-Z]{3,4}$``.
+        """
+        alternation = "|".join(codes)
+        word = rf"\m({alternation})\M"
+        catalog = rf"\|\s*TES\s+({alternation})\s*\|"
         items = self._search_rows(
-            clauses=[
-                *clauses,
-                "k.content_tsv @@ plainto_tsquery('portuguese', %s)",
-            ],
-            where_params=[*where_params, query],
+            clauses=[*clauses, "k.content ~* %s"],
+            where_params=[*where_params, word],
+            rank=(
+                "((k.content ~* %s)::int * 1000 + ts_rank("
+                "k.content_tsv, (replace("
+                "plainto_tsquery('portuguese', %s)::text,"
+                " ' & ', ' | '))::tsquery))"
+            ),
+            rank_params=[catalog, query],
+            limit=limit,
+        )
+        for item in items:
+            item["match"] = "code"
+            item["full_match"] = False
+        return items
+
+    def _search_fulltext(
+        self,
+        *,
+        clauses: list[str],
+        where_params: list[Any],
+        query: str,
+        limit: int,
+        exclude_ids: list[str],
+    ) -> list[dict]:
+        """AND preferencial e, se faltar, fill OR.
+
+        Sem ``exclude_ids`` o SQL é o de Gate 076: mesma ordem.
+        """
+        if limit <= 0:
+            return []
+        and_clauses = [
+            *clauses,
+            "k.content_tsv @@ plainto_tsquery('portuguese', %s)",
+        ]
+        and_params: list[Any] = [*where_params, query]
+        if exclude_ids:
+            and_clauses.append(
+                "k.knowledge_id::text <> ALL(%s::text[])"
+            )
+            and_params.append(exclude_ids)
+        items = self._search_rows(
+            clauses=and_clauses,
+            where_params=and_params,
             rank=(
                 "ts_rank(k.content_tsv, "
                 "plainto_tsquery('portuguese', %s))"
@@ -493,6 +589,8 @@ class ClaraKnowledgeRepository:
             # é estritamente aditivo: itens AND mantêm posição/ordem;
             # candidatos parciais entram depois, marcados full_match
             # false — ausência real de evidência continua zerada.
+            # Com código na pergunta, os knowledge_id do passe de
+            # código já estão em exclude_ids e não repetem aqui.
             extra = self._search_rows(
                 clauses=[
                     *clauses,
@@ -504,7 +602,7 @@ class ClaraKnowledgeRepository:
                 where_params=[
                     *where_params,
                     query,
-                    [str(i["knowledge_id"]) for i in items],
+                    [str(i["knowledge_id"]) for i in items] + exclude_ids,
                 ],
                 rank=(
                     "ts_rank(k.content_tsv, (replace("
