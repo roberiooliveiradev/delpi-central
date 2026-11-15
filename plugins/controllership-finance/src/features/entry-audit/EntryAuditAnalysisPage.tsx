@@ -81,12 +81,14 @@ import {
   formatNoteSeries,
   formatPeriodLabel,
   formatTheme,
+  entryAuditDetailFiltersFromSearch,
+  entryAuditDetailFiltersKey,
   parseEntryAuditTab,
   severityBadgeVariant,
-  severityFromUrl,
   severityToUrl,
   type EntryAuditTab,
 } from "./entryAuditPresentation";
+import { buildEntryAuditGenericColumns } from "./entryAuditTableColumns";
 
 const kpiIcon = (node: ReactNode) => node;
 
@@ -94,21 +96,6 @@ function currentSearch(): URLSearchParams {
   return new URLSearchParams(
     typeof window === "undefined" ? "" : window.location.search,
   );
-}
-
-function filtersFromUrl(params: URLSearchParams): EntryAuditFilters {
-  return {
-    branch: params.get("branch") ?? "",
-    severity: severityFromUrl(params.get("severity")),
-    theme: params.get("theme") ?? "",
-    supplier: params.get("supplier") ?? "",
-    tes: params.get("tes") ?? "",
-    document_type: params.get("document_type") ?? "",
-    status: params.get("status") ?? "",
-    situation: params.get("situation") ?? "",
-    q: params.get("q") ?? "",
-    day: params.get("day") ?? "",
-  };
 }
 
 function trendPct(current: number, previous: number): number | null {
@@ -147,9 +134,19 @@ export function EntryAuditAnalysisPage({
   const [refresh, setRefresh] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [copiedHint, setCopiedHint] = useState("");
+  const [tabTotals, setTabTotals] = useState<Partial<Record<EntryAuditTab, number>>>(
+    {},
+  );
   const params = useMemo(() => currentSearch(), [routeEpoch]);
   const tab = parseEntryAuditTab(params.get("tab"));
-  const filters = useMemo(() => filtersFromUrl(params), [params]);
+  const detailFiltersKey = useMemo(
+    () => entryAuditDetailFiltersKey(params),
+    [routeEpoch],
+  );
+  const filters = useMemo(
+    () => entryAuditDetailFiltersFromSearch(params),
+    [detailFiltersKey],
+  );
   const tablePage = Math.max(1, Number(params.get("page") || "1") || 1);
   const tablePageSize = Math.min(
     200,
@@ -174,15 +171,19 @@ export function EntryAuditAnalysisPage({
     return () => controller.abort();
   }, []);
 
-  /** R1 — análise + summary primeiro (KPIs); não esperar breakdowns/rows. */
   useEffect(() => {
-    const controller = new AbortController();
-    setError("");
+    setAnalysis(null);
     setSummary(null);
     setBreakdowns(null);
     setDaily(null);
     setRows([]);
     setPage(null);
+    setTabTotals({});
+  }, [analysisId, detailFiltersKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setError("");
     void getEntryAuditAnalysis(analysisId, controller.signal)
       .then((payload) => {
         if (!controller.signal.aborted) setAnalysis(payload);
@@ -194,6 +195,12 @@ export function EntryAuditAnalysisPage({
           );
         }
       });
+    return () => controller.abort();
+  }, [analysisId, refresh]);
+
+  /** R1 — summary primeiro (KPIs); não depende de tab/page/sort. */
+  useEffect(() => {
+    const controller = new AbortController();
     void getEntryAuditSummary(analysisId, filters, controller.signal)
       .then((payload) => {
         if (!controller.signal.aborted) setSummary(payload);
@@ -206,7 +213,7 @@ export function EntryAuditAnalysisPage({
         }
       });
     return () => controller.abort();
-  }, [analysisId, filters, refresh]);
+  }, [analysisId, detailFiltersKey, refresh, filters]);
 
   useEffect(() => {
     if (!analysis || !summary) return;
@@ -219,7 +226,7 @@ export function EntryAuditAnalysisPage({
         if (!controller.signal.aborted) setBreakdowns(null);
       });
     return () => controller.abort();
-  }, [analysisId, analysis, summary, filters, refresh]);
+  }, [analysisId, analysis, summary, detailFiltersKey, refresh, filters]);
 
   useEffect(() => {
     if (!analysis || !summary) return;
@@ -237,7 +244,7 @@ export function EntryAuditAnalysisPage({
         if (!controller.signal.aborted) setDaily(null);
       });
     return () => controller.abort();
-  }, [analysisId, analysis, summary, filters, refresh]);
+  }, [analysisId, analysis, summary, detailFiltersKey, refresh, filters]);
 
   useEffect(() => {
     if (!summary) return;
@@ -280,6 +287,10 @@ export function EntryAuditAnalysisPage({
         if (controller.signal.aborted) return;
         setRows(payload.items);
         setPage(payload);
+        setTabTotals((prev) => ({
+          ...prev,
+          [tab]: payload.total,
+        }));
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) {
@@ -416,73 +427,10 @@ export function EntryAuditAnalysisPage({
     },
   ];
 
-  const genericColumns: DataTableColumn<EntryAuditDocument | EntryAuditTes>[] = [
-    {
-      key: "branch",
-      header: "Filial",
-      sortable: true,
-      render: (row) =>
-        formatBranchLabel(String(row.branch ?? ""), branchOptions),
-    },
-    {
-      key: tab === "tes" ? "tes_code" : "document_number",
-      header: tab === "tes" ? "TES" : "Documento",
-      sortable: true,
-      render: (row) =>
-        displayValue(
-          "document_number" in row
-            ? row.document_number
-            : ("tes" in row ? row.tes : undefined) ?? ("code" in row ? row.code : ""),
-        ),
-    },
-    {
-      key: tab === "tes" ? "description" : "supplier_name",
-      header: tab === "tes" ? "Descrição" : "Fornecedor",
-      sortable: true,
-      render: (row) =>
-        displayValue(
-          "supplier_name" in row ? row.supplier_name : row.description,
-        ),
-    },
-    {
-      // CT-e: «situation» ∉ CTE_SORT_WHITELIST — ordena por amount.
-      key:
-        tab === "tes" ? "items" : tab === "cte" ? "amount" : "situation",
-      header: tab === "tes" ? "Itens" : tab === "cte" ? "Valor" : "Situação",
-      sortable: true,
-      render: (row) => {
-        if (tab === "tes") {
-          const items =
-            ("sf4" in row &&
-              row.sf4 &&
-              (row.sf4 as { items?: number }).items) ??
-            ("items" in row ? row.items : undefined);
-          return displayValue(items ?? "");
-        }
-        if (tab === "cte") {
-          const raw =
-            "amount" in row
-              ? row.amount
-              : "total" in row
-                ? (row as { total?: unknown }).total
-                : undefined;
-          if (typeof raw === "number" && Number.isFinite(raw)) {
-            return formatMoneyBRL(raw);
-          }
-          if (typeof raw === "string" && raw.trim()) {
-            const parsed = Number(raw);
-            return Number.isFinite(parsed)
-              ? formatMoneyBRL(parsed)
-              : displayValue(raw);
-          }
-          return displayValue(raw);
-        }
-        return displayValue(
-          "situation" in row ? row.situation : "Utilizada",
-        );
-      },
-    },
-  ];
+  const genericColumns = useMemo(
+    () => buildEntryAuditGenericColumns(tab, branchOptions),
+    [tab, branchOptions],
+  );
 
   const exportFile = async () => {
     setExporting(true);
@@ -638,19 +586,24 @@ export function EntryAuditAnalysisPage({
       : []),
   ];
 
-  const tabCounts: Partial<Record<EntryAuditTab, number>> = {
+  const summaryTabCounts: Partial<Record<EntryAuditTab, number>> = {
     occurrences: kpis.occurrences,
+    documents: kpis.documents,
     unmatched: summary.conformity.unmatched_open,
     posted_outside: summary.conformity.posted_outside_period.count,
   };
 
   const navItems = ENTRY_AUDIT_TABS.map((item) => {
-    const count =
-      item.value === tab && page ? page.total : tabCounts[item.value];
+    const count = tabTotals[item.value] ?? summaryTabCounts[item.value];
+    const label =
+      typeof count === "number"
+        ? `${item.label} (${count.toLocaleString("pt-BR")})`
+        : item.label;
     return {
       id: item.value,
-      label: item.label,
-      count: typeof count === "number" ? count : undefined,
+      label,
+      controlId: `entry-audit-tabpanel-${item.value}`,
+      tabId: `entry-audit-tab-${item.value}`,
       onSelect: () =>
         navigateWith({
           tab: item.value,
@@ -1091,6 +1044,7 @@ export function EntryAuditAnalysisPage({
       ) : null}
 
       <CfUnderlineNav
+        mode="tabs"
         items={navItems}
         activeId={tab}
         aria-label="Visões da auditoria"

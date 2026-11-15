@@ -1529,7 +1529,37 @@ export const createDashboardScopeChipBar = passthroughFactory;
 export const createSemicircleProgressGauge = passthroughFactory;
 export const createDashboardDistributionDonut = passthroughFactory;
 export const createDashboardResolutionStatusCell = passthroughFactory;
-export const createDashboardUnderlineNav = passthroughFactory;
+export function createDashboardUnderlineNav() {
+  return function DashboardUnderlineNav(props: AnyProps) {
+    const items =
+      (props.items as Array<{
+        id: string;
+        label: ReactNode;
+        onSelect?: () => void;
+      }>) ?? [];
+    const mode = props.mode as string | undefined;
+    return el(
+      "div",
+      {
+        role: mode === "tabs" ? "tablist" : undefined,
+        "aria-label": props["aria-label"],
+      },
+      ...items.map((item) =>
+        el(
+          "button",
+          {
+            key: item.id,
+            type: "button",
+            role: mode === "tabs" ? "tab" : undefined,
+            "aria-selected": item.id === props.activeId ? true : undefined,
+            onClick: item.onSelect,
+          },
+          item.label,
+        ),
+      ),
+    );
+  };
+}
 export const createDashboardProgressTracker = passthroughFactory;
 export const createHostContainedDrawerShell = passthroughFactory;
 export const createDashboardDetailCard = passthroughFactory;

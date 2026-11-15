@@ -15,7 +15,10 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-import { ENTRY_AUDIT_SEVERITY_URL } from "../../api/entryAuditApi";
+import {
+  ENTRY_AUDIT_SEVERITY_URL,
+  type EntryAuditFilters,
+} from "../../api/entryAuditApi";
 
 export type EntryAuditBadgeTone =
   | "neutral"
@@ -92,6 +95,28 @@ export function parseEntryAuditTab(value: string | null): EntryAuditTab {
   return ENTRY_AUDIT_TABS.some((tab) => tab.value === value)
     ? (value as EntryAuditTab)
     : "occurrences";
+}
+
+/** Filtros de detalhamento (exclui tab, page, page_size, sort, order). */
+export function entryAuditDetailFiltersFromSearch(
+  params: URLSearchParams,
+): EntryAuditFilters {
+  return {
+    branch: params.get("branch") ?? "",
+    severity: severityFromUrl(params.get("severity")),
+    theme: params.get("theme") ?? "",
+    supplier: params.get("supplier") ?? "",
+    tes: params.get("tes") ?? "",
+    document_type: params.get("document_type") ?? "",
+    status: params.get("status") ?? "",
+    situation: params.get("situation") ?? "",
+    q: params.get("q") ?? "",
+    day: params.get("day") ?? "",
+  };
+}
+
+export function entryAuditDetailFiltersKey(params: URLSearchParams): string {
+  return JSON.stringify(entryAuditDetailFiltersFromSearch(params));
 }
 
 export function severityFromUrl(value: string | null): string {

@@ -1,5 +1,5 @@
 /**
- * U12 R2 / W2 — contrato: colunas `sortable` do MFE (serverSort) ⊆ whitelist BFF
+ * U12 R2 / W2 / W6 — contrato: colunas `sortable` do MFE (serverSort) ⊆ whitelist BFF
  * **por aba/recurso** (não pela união).
  */
 import { readFileSync } from "node:fs";
@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { ENTRY_AUDIT_TABS, entryAuditTabResource } from "./entryAuditPresentation";
+import { buildEntryAuditGenericColumns } from "./entryAuditTableColumns";
 
 const ANALYSIS_PAGE = join(__dirname, "EntryAuditAnalysisPage.tsx");
 
@@ -69,36 +70,6 @@ function extractOccurrenceSortKeys(source: string): string[] {
   );
 }
 
-/** Resolve a chave efetiva de uma coluna genérica para a aba dada. */
-function resolveGenericKeysForTab(source: string, tab: string): string[] {
-  const block = source.match(
-    /const genericColumns[\s\S]*?=[\s\S]*?\[([\s\S]*?)\];/,
-  )?.[1];
-  if (!block) return [];
-  const keys: string[] = [];
-  // Padrões: key: "branch" | key: tab === "tes" ? "a" : "b" | key: tab === "tes" ? "a" : tab === "cte" ? "b" : "c"
-  for (const col of block.split(/\{\s*key:/).slice(1)) {
-    if (!/sortable:\s*true/.test(col)) continue;
-    const triple = col.match(
-      /^\s*tab === "tes" \? "([^"]+)" : tab === "cte" \? "([^"]+)" : "([^"]+)"/,
-    );
-    if (triple) {
-      keys.push(
-        tab === "tes" ? triple[1] : tab === "cte" ? triple[2] : triple[3],
-      );
-      continue;
-    }
-    const dual = col.match(/^\s*tab === "tes" \? "([^"]+)" : "([^"]+)"/);
-    if (dual) {
-      keys.push(tab === "tes" ? dual[1] : dual[2]);
-      continue;
-    }
-    const plain = col.match(/^\s*"([^"]+)"/);
-    if (plain) keys.push(plain[1]);
-  }
-  return keys;
-}
-
 describe("U12 R2 sort contract MFE ⊆ BFF por aba", () => {
   it("ocorrências sortable ⊆ OCCURRENCE_SORT_WHITELIST", () => {
     const source = readFileSync(ANALYSIS_PAGE, "utf8");
@@ -112,8 +83,7 @@ describe("U12 R2 sort contract MFE ⊆ BFF por aba", () => {
     }
   });
 
-  it("cada aba genérica só emite chaves da whitelist do recurso", () => {
-    const source = readFileSync(ANALYSIS_PAGE, "utf8");
+  it("cada aba genérica só emite chaves sortable da whitelist do recurso", () => {
     for (const tabDef of ENTRY_AUDIT_TABS) {
       if (tabDef.value === "occurrences") continue;
       const resource =
@@ -125,7 +95,8 @@ describe("U12 R2 sort contract MFE ⊆ BFF por aba", () => {
               ? "unmatched"
               : "documents";
       const whitelist = WHITELIST_BY_RESOURCE[resource];
-      const keys = resolveGenericKeysForTab(source, tabDef.value);
+      const columns = buildEntryAuditGenericColumns(tabDef.value, []);
+      const keys = columns.filter((col) => col.sortable).map((col) => col.key);
       expect(keys.length, `${tabDef.value} sem sortable`).toBeGreaterThan(0);
       for (const key of keys) {
         expect(
