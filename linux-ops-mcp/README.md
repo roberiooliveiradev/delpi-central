@@ -1,6 +1,6 @@
 # Delpi Linux Operations MCP — P1 READ-ONLY em operacao; P2 PREPARE em desenvolvimento
 
-**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1/P2.2a adiciona somente modulos Python offline nao importados no `server.py`. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
+**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1/P2.2a/P2.2b/P2.2c adiciona somente modulos Python de governanca/atestacao **nao importados no `server.py`**. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
 
 ## Scope and reuse
 
@@ -114,3 +114,11 @@ O serviço opt-in anuncia apenas `127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765
 - `CorePermissionReader.read` recebe identidade e access token do **contexto autenticado no backend**; usa `load_user_rbac(token, force_refresh=True)` e aceita grants explicitos de deploy. Nao confia em `is_superadmin` como grant. Ainda nao possui API de producao ou Keycloak/Core scopes novos.
 - Testes isolados: `PYTHONPATH=linux-ops-mcp python -m pytest -q linux-ops-mcp/tests/test_deploy_evidence_readers.py` → **32 PASS local** (Python 3.13, `httpx.MockTransport`, sem rede). Full-suite GitHub CI e revisao independente **pendentes**.
 - Dependencias bloqueadoras: producer `HostProof` com SHA realmente implantado por servico, catalogo de workflow IDs por ambiente, grants Core, journal SQL e API PREPARE. Ver [roadmap mestre](../docs/12-roadmap-e-evolucao/mcp-linux-control/README.md) e [journal proposto](../docs/12-roadmap-e-evolucao/mcp-linux-control/03-atlas-deploy-journal-p2b.md). Nada de deploy em HML/PROD nesta entrega.
+
+
+## P2.2c — Recibo de release local e idempotencia (2026-11-15)
+
+- `linux_ops_mcp/deploy_host_receipt.py`: validador offline de um futuro **comprovante HMAC-SHA256 do host**, vinculando challenge, host, repo, ambiente, servico, SHA e IDs de imagem registrada/em execucao. Verifica integridade, campos exatos e frescor (90s). **Nao le Docker**, nao gera assinatura/chaves, nao assina sem trust boundary. O produtor host ainda precisa ser implementado fora do MCP, entao nenhuma evidencia real esta disponivel. Mesmo valido, seu `HostProof` mantem `migrations_safe=False` e `rollback_ready=False` ate atestacoes independentes.
+- `linux_ops_mcp/deploy_journal_policy.py`: decisao inerte para candidatos PREPARE, UUID/idempotency key, SHA, hash, TTL de ate dez minutos e replay identico. **Sem Postgres/lock/transacao/API/ACT**. Persistencia e nonce one-shot exigem tabela e repository backend autorizados e coordenacao de migration.
+- `tests/test_deploy_host_receipt.py` **30 PASS** + `tests/test_deploy_journal_policy.py` **17 PASS** (47 PASS local, Python 3.13, sem rede/host/DB); `compileall` local PASS. GitHub CI e revisao independente pendentes de evidencia.
+- [Roadmap mestre](../docs/12-roadmap-e-evolucao/mcp-linux-control/README.md) e [runbook P2.2c](../docs/12-roadmap-e-evolucao/mcp-linux-control/04-atlas-p22c-host-receipt-journal-contract.md) mantem status, riscos e proximo gate. P2.2d: emissor local real em HML, registro imutavel de release, atestacao separada de rollback/migration e journal PostgreSQL com concorrencia. Sem deploy de qualquer componente desta fase em HML/PROD.
