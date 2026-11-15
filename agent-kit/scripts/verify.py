@@ -198,28 +198,49 @@ def diff_stat(repo: Path, escopo: str) -> str:
     return truncate_diff_stat(raw)
 
 
+REPORT_FORMAT_HEADING = "## Formato do relatório"
+ACCEPTED_VERDICTS_LINE = (
+    "ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE"
+)
+VERDICT_FORMAT_FOOTER = (
+    f"Vereditos aceitos: {ACCEPTED_VERDICTS_LINE}.\n"
+    "PASS/FAIL são status de item, nunca veredito."
+)
+RETRY_FORMAT_REMINDER = (
+    "\n\n## Lembrete de formato (2ª tentativa)\n\n"
+    "A saída anterior não tinha uma linha `veredito:` com valor válido.\n"
+    f"Use exatamente uma linha `veredito: <VALOR>` com um de: {ACCEPTED_VERDICTS_LINE}.\n"
+    "PASS/FAIL são status de item, nunca veredito.\n"
+)
+
+
 def render_headless_protocol() -> str:
-    """Prefer installed copy; fall back to source tree next to this script."""
+    """Prefer installed headless protocol; fall back to source tree.
+
+    ``protocol.headless.md`` (from install/build) already embeds report-format.md.
+    Append report-format only when the loaded text lacks that section — once.
+    """
+    kit_root = Path(__file__).resolve().parents[1]
     candidates = [
         kit_home() / "protocol.headless.md",
-        Path(__file__).resolve().parents[1] / "verifier" / "protocol.headless.md",
-        Path(__file__).resolve().parents[1] / "verifier" / "protocol.md",
+        kit_root / "verifier" / "protocol.headless.md",
+        kit_root / "verifier" / "protocol.md",
     ]
-    report = [
+    report_candidates = [
         kit_home() / "report-format.md",
-        Path(__file__).resolve().parents[1] / "verifier" / "report-format.md",
+        kit_root / "verifier" / "report-format.md",
     ]
     protocol_text = None
-    for path in candidates:
-        if path.exists():
-            protocol_text = path.read_text(encoding="utf-8")
+    for candidate in candidates:
+        if candidate.exists():
+            protocol_text = candidate.read_text(encoding="utf-8")
             break
     if protocol_text is None:
-        protocol_text = "(protocolo não encontrado — instale o kit 0.2.0)"
+        protocol_text = "(protocolo não encontrado — instale o kit)"
     report_text = ""
-    for path in report:
-        if path.exists():
-            report_text = path.read_text(encoding="utf-8")
+    for candidate in report_candidates:
+        if candidate.exists():
+            report_text = candidate.read_text(encoding="utf-8")
             break
     # Strip YAML frontmatter if present
     if protocol_text.startswith("---"):
@@ -227,9 +248,9 @@ def render_headless_protocol() -> str:
         if len(parts) == 3:
             protocol_text = parts[2].lstrip("\n")
     body = protocol_text.rstrip()
-    if report_text:
+    if report_text and REPORT_FORMAT_HEADING not in body:
         body += "\n\n---\n\n" + report_text.rstrip()
-    version = "0.2.0"
+    version = "0.3.1"
     ver_path = kit_home() / "VERSION"
     if ver_path.exists():
         version = ver_path.read_text(encoding="utf-8").strip() or version
@@ -237,6 +258,7 @@ def render_headless_protocol() -> str:
         body.replace("{{KIT_VERSION}}", version)
         .replace("{{PLATFORM}}", "headless")
         .replace("{{RECORD_CMD}}", f'"{sys.executable}" "{kit_home() / "verifier_hooks.py"}" record')
+        .replace("{{GUARD_ALWAYS_CMD}}", "")
     )
 
 
@@ -295,6 +317,7 @@ def build_prompt(fields: Dict[str, str], repo: Path, request_text: str) -> str:
         "",
         f"Trabalhe no repositório: {repo}",
         "Ao final, emita o relatório no formato fixo, com a linha `veredito:`.",
+        VERDICT_FORMAT_FOOTER,
     ]
     return "\n".join(parts)
 
@@ -411,16 +434,27 @@ def ensure_ledger(repo: Path, verdict: str, rodada: int, summary: str, force: bo
     )
 
 
-def write_inconclusive(repo: Path, reason: str, raw: str, engine: str, model: str, rodada: int) -> Path:
+def write_inconclusive(
+    repo: Path,
+    reason: str,
+    raw: str,
+    engine: str,
+    model: str,
+    rodada: int,
+    *,
+    attempts: int = 1,
+) -> Path:
     vdir = verifier_dir(repo)
     assert vdir is not None
     reports = vdir / "reports"
     reports.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     path = reports / f"{stamp}-r{rodada}-{engine or 'none'}.md"
+    attempts_line = f"tentativas: {attempts}\n\n" if attempts > 1 else ""
     body = (
         f"# Relatório do delpi-verifier\n\n"
         f"motor: {engine or 'none'} · modelo: {model or 'n/a'}\n\n"
+        f"{attempts_line}"
         f"veredito: INCONCLUSIVE\n\n"
         f"motivo: {reason}\n\n"
         f"## Saída bruta\n\n```\n{raw}\n```\n"
@@ -429,7 +463,15 @@ def write_inconclusive(repo: Path, reason: str, raw: str, engine: str, model: st
     return path
 
 
-def save_report(repo: Path, text: str, engine: str, model: str, rodada: int) -> Path:
+def save_report(
+    repo: Path,
+    text: str,
+    engine: str,
+    model: str,
+    rodada: int,
+    *,
+    attempts: int = 1,
+) -> Path:
     vdir = verifier_dir(repo)
     assert vdir is not None
     reports = vdir / "reports"
@@ -437,6 +479,8 @@ def save_report(repo: Path, text: str, engine: str, model: str, rodada: int) -> 
     stamp = time.strftime("%Y%m%d-%H%M%S")
     path = reports / f"{stamp}-r{rodada}-{engine}.md"
     header = f"motor: {engine} · modelo: {model}\n"
+    if attempts > 1:
+        header += f"tentativas: {attempts}\n"
     if not text.lstrip().startswith("motor:"):
         # Insert header after first markdown title if present
         lines = text.splitlines()
@@ -444,6 +488,18 @@ def save_report(repo: Path, text: str, engine: str, model: str, rodada: int) -> 
             text = lines[0] + "\n\n" + header + "\n" + "\n".join(lines[1:])
         else:
             text = header + "\n" + text
+    elif attempts > 1 and "tentativas:" not in text[:400]:
+        # Ensure tentativas is visible near the motor header
+        text = text.replace(header.rstrip("\n"), header.rstrip("\n"), 1)
+        lines = text.splitlines()
+        inserted = False
+        out_lines = []
+        for line in lines:
+            out_lines.append(line)
+            if not inserted and line.startswith("motor:"):
+                out_lines.append(f"tentativas: {attempts}")
+                inserted = True
+        text = "\n".join(out_lines)
     path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
     return path
 
@@ -501,42 +557,59 @@ def run_verify(args: argparse.Namespace) -> int:
     binary = which_engine(engine, install)
     assert binary is not None
 
-    prompt = build_prompt(fields, repo, request_text)
-    prompt_file = Path(tempfile.mkstemp(prefix="delpi-verify-", suffix=".md")[1])
-    prompt_file.write_text(prompt, encoding="utf-8")
+    base_prompt = build_prompt(fields, repo, request_text)
+    code = 0
+    raw = ""
+    verdict: Optional[str] = None
+    attempts = 0
+    max_attempts = 2
 
-    try:
-        if engine == "devin":
-            code, raw = launch_devin(binary, repo, prompt_file, model, install, timeout)
-        else:
-            code, raw = launch_cursor(binary, repo, prompt_file, model, timeout)
-    finally:
+    for attempt in range(1, max_attempts + 1):
+        attempts = attempt
+        prompt = base_prompt if attempt == 1 else (base_prompt + RETRY_FORMAT_REMINDER)
+        prompt_file = Path(tempfile.mkstemp(prefix="delpi-verify-", suffix=".md")[1])
+        prompt_file.write_text(prompt, encoding="utf-8")
         try:
-            prompt_file.unlink()
-        except OSError:
-            pass
+            if engine == "devin":
+                code, raw = launch_devin(binary, repo, prompt_file, model, install, timeout)
+            else:
+                code, raw = launch_cursor(binary, repo, prompt_file, model, timeout)
+        finally:
+            try:
+                prompt_file.unlink()
+            except OSError:
+                pass
 
-    if raw.startswith("[verify.py] falha ao lançar motor"):
-        report_path = write_inconclusive(repo, "falha ao lançar motor", raw, engine, model, rodada)
-        ensure_ledger(repo, "INCONCLUSIVE", rodada, "falha ao lançar motor")
-        sys.stdout.write(report_path.read_text(encoding="utf-8"))
-        return 1
+        if raw.startswith("[verify.py] falha ao lançar motor"):
+            report_path = write_inconclusive(
+                repo, "falha ao lançar motor", raw, engine, model, rodada, attempts=attempts
+            )
+            ensure_ledger(repo, "INCONCLUSIVE", rodada, "falha ao lançar motor")
+            sys.stdout.write(report_path.read_text(encoding="utf-8"))
+            return 1
 
-    verdict = extract_verdict(raw)
+        verdict = extract_verdict(raw)
+        if verdict is not None:
+            break
+        # Invalid format: one retry with the same engine and a short reminder.
+        if attempt < max_attempts:
+            continue
+
     if verdict is None:
         report_path = write_inconclusive(
             repo,
-            "relatório fora do formato",
+            "relatório fora do formato (2 tentativas)",
             raw,
             engine,
             model,
             rodada,
+            attempts=attempts,
         )
-        ensure_ledger(repo, "INCONCLUSIVE", rodada, "relatório fora do formato")
+        ensure_ledger(repo, "INCONCLUSIVE", rodada, "relatório fora do formato (2 tentativas)")
         sys.stdout.write(report_path.read_text(encoding="utf-8"))
         return 0 if code == 0 else 1
 
-    report_path = save_report(repo, raw, engine, model, rodada)
+    report_path = save_report(repo, raw, engine, model, rodada, attempts=attempts)
     ensure_ledger(repo, verdict, rodada, f"veredito lido do relatório ({engine})")
     sys.stdout.write(report_path.read_text(encoding="utf-8"))
     return 0

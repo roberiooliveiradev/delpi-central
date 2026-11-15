@@ -37,5 +37,8 @@ jobs:
           git config --global user.name "ci"
           python -m unittest discover -s tests -v
 
-      - name: Render agents (smoke)
-        run: python agent-kit/scripts/build.py --out /tmp/dak-dist --cursor-model ci-model --devin-model ci-model
+      - name: Render headless protocol (smoke)
+        run: |
+          python agent-kit/scripts/build.py --out /tmp/dak-dist
+          test -s /tmp/dak-dist/protocol.headless.md
+          grep -q '## Formato do relatório' /tmp/dak-dist/protocol.headless.md

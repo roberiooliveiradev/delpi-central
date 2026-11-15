@@ -57,11 +57,15 @@ class VerifyTests(unittest.TestCase):
             (KIT / "hooks" / "verifier_hooks.py").read_text(encoding="utf-8"),
             encoding="utf-8",
         )
-        (self.kit / "VERSION").write_text("0.3.0\n", encoding="utf-8")
+        (self.kit / "VERSION").write_text("0.3.1\n", encoding="utf-8")
         (self.kit / "protocol.headless.md").write_text(
-            "# headless protocol\nveredito: PLACEHOLDER\n", encoding="utf-8"
+            "# headless protocol\n\n## Formato do relatório (obrigatório)\n\nveredito: PLACEHOLDER\n",
+            encoding="utf-8",
         )
-        (self.kit / "report-format.md").write_text("# Relatório\n", encoding="utf-8")
+        (self.kit / "report-format.md").write_text(
+            "## Formato do relatório (obrigatório)\n\nDuplicata se anexado.\n",
+            encoding="utf-8",
+        )
         subprocess.run(["git", "init"], cwd=self.repo, check=True, capture_output=True)
         subprocess.run(
             ["git", "config", "user.email", "t@example.com"], cwd=self.repo, check=True, capture_output=True
@@ -88,7 +92,7 @@ class VerifyTests(unittest.TestCase):
 
     def write_install(self, engines=None, models=None, paths=None):
         data = {
-            "version": "0.3.0",
+            "version": "0.3.1",
             "engines": engines or ["devin", "cursor"],
             "models": models or {"devin": "swe-2-high", "cursor": "composer-2.5"},
             "timeout_sec": 5,
@@ -166,15 +170,72 @@ class VerifyTests(unittest.TestCase):
         self.assertEqual(last["verdict"], "INCONCLUSIVE")
         self.assertEqual(last.get("recorded_by"), "verify.py")
 
-    def test_report_without_verdict_inconclusive(self):
+    def test_report_without_verdict_retries_then_inconclusive(self):
         self.write_install()
-        self.stub("devin", 'echo "relatório sem linha de veredito"')
+        counter = self.root / "calls.txt"
+        self.stub(
+            "devin",
+            f'echo x >> "{counter}"; echo "relatório sem linha de veredito"',
+        )
         code = verify.main(
             ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
         )
         self.assertEqual(code, 0)
+        self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 2)
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
-        self.assertTrue(any("relatório fora do formato" in r.read_text(encoding="utf-8") for r in reports))
+        text = reports[0].read_text(encoding="utf-8")
+        self.assertIn("relatório fora do formato (2 tentativas)", text)
+        self.assertIn("tentativas: 2", text)
+
+    def test_retry_invalid_then_valid_uses_second(self):
+        self.write_install()
+        counter = self.root / "calls2.txt"
+        self.stub(
+            "devin",
+            f'''
+n=$(wc -l < "{counter}" 2>/dev/null || echo 0)
+echo x >> "{counter}"
+if [ "$n" -lt 1 ]; then
+  printf '%s\\n' '# Relatório' 'veredito: PASS' 'resumo: errado'
+else
+  printf '%s\\n' '# Relatório' 'veredito: ACCEPT' 'resumo: ok'
+fi
+''',
+        )
+        code = verify.main(
+            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 2)
+        reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
+        text = reports[0].read_text(encoding="utf-8")
+        self.assertIn("veredito: ACCEPT", text)
+        self.assertIn("tentativas: 2", text)
+
+    def test_first_valid_verdict_single_launch(self):
+        self.write_install()
+        counter = self.root / "calls3.txt"
+        self.stub(
+            "devin",
+            f'echo x >> "{counter}"; printf "%s\\n" "# Relatório" "veredito: ACCEPT" "resumo: ok"',
+        )
+        code = verify.main(
+            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 1)
+        reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
+        text = reports[0].read_text(encoding="utf-8")
+        self.assertIn("veredito: ACCEPT", text)
+        self.assertNotIn("tentativas:", text)
+
+    def test_prompt_contains_report_format_once(self):
+        self.write_install()
+        fields = verify.parse_request(COMPLETE_REQUEST)
+        prompt = verify.build_prompt(fields, self.repo, COMPLETE_REQUEST)
+        self.assertEqual(prompt.count("## Formato do relatório"), 1)
+        self.assertIn("PASS/FAIL são status de item, nunca veredito", prompt)
+        self.assertIn("ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE", prompt)
 
     def test_env_active_during_run_without_global_marker(self):
         self.write_install()

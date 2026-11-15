@@ -1,5 +1,17 @@
 # Changelog — agent-kit
 
+## 0.3.1 — 2026-11-15
+
+- **OC-1 CI:** o smoke do workflow `agent-kit.yml` chama `build.py` só com `--out` (flags
+  `--cursor-model`/`--devin-model` removidas na 0.3.0) e falha se `protocol.headless.md`
+  estiver vazio ou sem `## Formato do relatório`.
+- **OC-2 formato:** se a saída do motor não tiver `veredito:` válido, `verify.py` relança o
+  mesmo motor uma vez com lembrete de formato; o relatório registra `tentativas: 2`. Duas
+  falhas → `INCONCLUSIVE` com motivo `relatório fora do formato (2 tentativas)`.
+- Prompt headless termina com a lista explícita de vereditos aceitos; PASS/FAIL nunca são
+  veredito. `render_headless_protocol` não duplica `## Formato do relatório` quando o
+  protocolo headless já embute o formato.
+
 ## 0.3.0 — 2026-11-15
 
 **BREAKING**
