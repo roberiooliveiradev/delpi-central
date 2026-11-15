@@ -5140,3 +5140,100 @@ retidos.*
 - engineering-api: `test_eva_mcp_semantic.py` +2 casos
   (filtro aceito e propagado; filtro desconhecido rejeitado)
   = **122 passed** na imagem `infra-engineering-api:latest`.
+
+### 94.17 G15 — Execução produtiva G13/G14 e ativação E2E
+
+**Task:** `EVA-G15-G13-G14-PRODUCTION-DEPLOY-AND-CHATGPT-MCP-E2E-CLOSURE-01`
+(autorização explícita do usuário: implementar e deploy do que falta;
+ordem obrigatória api-delpi → engineering-api → conector).
+
+#### Reancoragem
+
+- HEAD `47f993eefb` = `origin/main`; escopo G13/G14 já publicado
+  (`c775fd9f5a` impl + `3f011352b1` doc).
+- api-delpi prod (`0737b65f5252`) **não continha** o predicado
+  `previous_code`; engineering prod (`83692f3d6a39`) já continha
+  G11 v1.5 mas não o consumer G13.
+- Contrato doc DAVI: divergência `B1_CODITE` (matriz) ×
+  `B1_CODANT` (código produzindo o vínculo real) mantida como
+  flag para owner — **SQL não alterado para acompanhar doc**.
+
+#### Gate bloqueador encontrado e corrigido na raiz
+
+Primeira tentativa de deploy api-delpi abortou no startup gate de
+migrations imutáveis: `engineering|V024__prc_record_flags.sql`
+checksum arquivo `8f9c9753…` ≠ banco `817a70f4…`. Causa-raiz:
+commit alheio `e94e3f9989` "restaurou" o arquivo para uma variante
+nunca aplicada. Auditoria completa de checksums (14 schemas, 88+
+versões) provou **V024 como única divergência**; schema `quality`
+tem V003–V021 aplicadas sem arquivo (condição pré-existente que
+não dispara o gate — registrada para o stream owner). Correção:
+`3a95d6a3e7` restaura o arquivo ao conteúdo **efetivamente
+aplicado** (provado por leitura direta em
+`engineering.schema_migrations`), zerando efeito sobre dados/DDL.
+Se a semântica pretendida era `'created'`, exige migration
+incremental nova — handoff ao owner do stream.
+
+#### Deploys executados (sequência obrigatória respeitada)
+
+- **api-delpi:** imagem `fb59fba3d445` (rollback tag
+  `rollback-pre-g15` → `0737b65f5252`), healthy. OpenAPI
+  baseline sincronizado cirurgicamente (`5bab60133f`, só
+  `search_products`; drift regenerado +806/−74 rejeitado).
+- **engineering-api:** imagem `73e0c49f5369` (rollback
+  `rollback-pre-g15b` → `83692f3d6a39`), healthy, 1 processo
+  python (zero workers OCR), G10 (`x_left`) e G11 v1.5
+  preservados, `previous_code` em registry+gateway+bridge.
+- srv-api HEAD de deploy: `3a95d6a3e7`. Nenhum outro serviço
+  tocado; `delpi-gateway` voltou a healthy; zero escritas de
+  negócio; zero OCR.
+
+#### Provas produtivas em dado oficial (credencial de serviço)
+
+`SearchProductsUseCase(ProductRepository()).execute` em
+`delpi-api-delpi` contra TOTVS vivo:
+
+| Caso | Resultado |
+|---|---|
+| `previous_code=80015472` | total **1** → `90264302` (grupo 9026, PA, `previous_code=80015472`) |
+| inexistente `ZZZ_NOEXIST` | total 0 (sem drop silencioso) |
+| `'  80015472  '` (espaços) | total 1 (trim externo) |
+| `+ group_code=9026` | total 1 |
+| `+ group_code=8001` | total 0 (filtro aplica) |
+| `' OR 1=1 --` | total 0 (parametrizado) |
+| `page_size=1` | total 1 / items 1 (paginação vigente) |
+
+AuthZ HTTP preservada: `/apps/api-delpi/products/search` sem
+auth → **401** fail-closed.
+
+`GetLmpFactUseCase` `sale_number='003086'` → contém **ambos**
+`90264302` e `80015472` na demanda (vínculo OV↔dois cadastros
+provado em dado real).
+
+Semantic registry prod: `product.search.fields` inclui
+`previous_code` (allowlist publicada em runtime);
+`knowledge_topics()` → 6 tópicos incl.
+`product.lifecycle_traceability`, versão `1.5`, 12 regras LIF.
+
+#### Vereditos
+
+`G15_API_DELPI_PASS` · `G15_ENGINEERING_PASS` ·
+`G15_KNOWLEDGE_PASS` · `G15_MCP_PASS` (schema+dispatch em
+runtime; a chamada autenticada via MCP depende de JWT humano —
+credencial de avaliação está em cofre, fora do executor)
+· **`G15_PASS_WITH_RESIDUAL`**.
+
+**Handoff Coordination (`CHATGPT_CONNECTOR_REFRESH=PENDING_OWNER_ACTION`):**
+refresh de discovery do conector EVA no ChatGPT + query real
+`knowledge(topic=product.lifecycle_traceability)` +
+`read(product,search,{previous_code:'80015472'})` na sessão —
+o enum é publicado pelo server no startup; o conector cacheia
+`tools/list` e precisa reconectar. `CHATGPT_E2E_PASS` só pode
+ser declarado pelo owner do conector com essa evidência.
+
+**Residuais de domínio (inalterados, `OWNER_PENDING`):**
+distinção oficial 8000×8001; cardinalidade real do vínculo
+cadastral; significado da LMP impressa `16726`; marco histórico
+de OV nos desenhos; homologação Engenharia; typo documental
+`B1_CODITE`×`B1_CODANT` na matriz DAVI; migrations órfãs
+`quality` V003–V021 (stream owner).
