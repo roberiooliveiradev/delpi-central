@@ -83,6 +83,9 @@ from controllership_finance_app.interface.http.routes.validations_routes import 
 from controllership_finance_app.interface.http.routes.viewer_context_routes import (
     router as viewer_context_router,
 )
+from controllership_finance_app.interface.http.routes.home_favorites_routes import (
+    router as home_favorites_router,
+)
 from controllership_finance_app.interface.mcp import (
     combine_lifespan,
     mcp_http_app,
@@ -254,6 +257,7 @@ app.include_router(mcp_metadata_router)
 app.include_router(health_router)
 app.include_router(characters_router)
 app.include_router(viewer_context_router)
+app.include_router(home_favorites_router)
 app.include_router(closing_router)
 app.include_router(closing_state_router)
 app.include_router(billing_mod_breakdown_router)

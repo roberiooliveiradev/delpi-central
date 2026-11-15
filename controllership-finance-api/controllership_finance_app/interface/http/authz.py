@@ -111,6 +111,29 @@ def authorized_admin(request: Request):
     return user
 
 
+def authorized_home_hub_user(request: Request):
+    """Viewer do Início: ``access`` OU ``access.dre`` (favoritos / hub)."""
+    user = _human_user(request)
+    if not (
+        has_permission(user, ACCESS_PERMISSION)
+        or has_permission(user, DRE_ACCESS_PERMISSION)
+    ):
+        raise Exception("Forbidden")
+    return user
+
+
+def actor_sub_for_favorites(user) -> str | None:
+    """Identidade textual dos favoritos — ``sub`` JWT com fallback ``id``."""
+    for attr in ("sub", "id", "user_id"):
+        value = getattr(user, attr, None)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
 def actor_subject(user) -> str:
     """Identidade do ator para colunas UUID (auditoria/abertura).
 
