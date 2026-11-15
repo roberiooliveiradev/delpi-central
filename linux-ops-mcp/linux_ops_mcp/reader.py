@@ -59,7 +59,7 @@ class Settings:
             or parsed.port not in {None, 80, 8000}
         ):
             raise ReadError("upstream_not_configured")
-        return cls(upstream_base_url=base, server_id=server_id)
+        return cls(upstream_base_url=base, server_id=str(UUID(server_id)))
 
 
 def _nonnegative_number(value: object) -> int | None:
