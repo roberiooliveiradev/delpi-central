@@ -33,6 +33,7 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 | N3 Citação legível | DONE | `1e8bdfc1f6` |
 | N4 Testes de trava | DONE | `ca85263433` |
 | N5 HML → PROD e republicação do corpus | DONE | (commit N5) |
+| N5R Citação limpa (sem ref interna) | DONE | (este commit) |
 
 ## 4. Etapas
 
@@ -86,6 +87,7 @@ BFF: imagem anterior pela tag. Corpus: republicar a versão anterior (o pipeline
 | 2026-11-14 | N3 | `1e8bdfc1f6` | DONE | `source_title` e `display_citation` aditivos na busca e no item. `citation_locator` intacto. Contrato na descrição da tool `knowledge`. |
 | 2026-11-14 | N4 | `ca85263433` | DONE | Trava do corpus e da superfície MCP. Suíte BFF local: 1370 passed, 199 skipped; PG 79 skipped (sem Postgres local). Nenhuma falha nova. |
 | 2026-11-14 | N5 | (commit N5) | DONE | HML imagem `bb62ceea34c1` e PROD imagem `65b9ab2682f0`, ambas em `ca85263433`, healthy. Tag `rollback-monthly-closing-naming-controllership-finance-api` → `dde564efe3`. Imagem PROD que estava no ar antes do rebuild: `c533f3146afc` (ainda sem N1). Corpus antes: 115 fontes / 2517 publicados. Depois (HML e PROD): 121 / 2637. Versão final PROD `dbbb34ce-7394-454e-8cf0-9f35294d4186`. Delta: +6 fontes TES ainda não publicadas; `lnf-api-doc` de 31 seções obsoletas para 1 (arquivo atual é ponteiro de 360 bytes). `PROC-0072` publicado só no item Identificação de `ficha-processo`. MCP sem o código. |
+| 2026-11-14 | N5R | (este commit) | DONE | `display_citation` remove `(doc/docs/GATE/D-…)` da seção e deduplica seção=título. `heading_path`/`citation_locator` intactos. Calculado na leitura → sem republicar corpus. Pytest `test_clara_display_citation.py` 8 PASS. Tag `rollback-monthly-closing-naming-n5r-controllership-finance-api`. |
 
 ## 8. Inventário N0 (HEAD de partida `ab07b642`)
 
