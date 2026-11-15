@@ -4600,3 +4600,49 @@ implantado).
 **G6-D permanece BLOCKED:** identidade de avaliação MCP não
 provisionada (Doc 121 §5). `MCP_AUTHENTICATED_E2E` e
 `CHATGPT_CONSUMPTION` sem evidência — não declarar.
+
+### 94.10 G6 — observabilidade, admissão atômica e jobs MCP (2026-11-14 ~21:40 -03)
+
+Task `EVA-G6-MCP-JOB-STATUS-RESOURCE-ADMISSION-IMPLEMENTATION-01`
+(owner Coordination). Implementado e commitado em `aa01adca0a`
+(backend-first, sem deploy — gate produtivo dedicado exigido).
+
+**Capacidades entregues (código + contrato MCP):**
+
+| RQ | Capacidade | Implementação |
+|----|-----------|----------------|
+| RQ-01 | Estado operacional READ_ONLY | `read(drawing.runtime_status)` → `ocr_runtime_status` (AVAILABLE/BUSY/RESOURCE_LIMIT/UNAVAILABLE/DEGRADED/UNKNOWN) com `observed_at`, `freshness`, `ocr_enabled`, `ocr_busy`, `active_heavy_jobs`, `admission_state`, `admission_reason`, `resource_limits`, `resource_usage` — nunca inicia OCR/modelo/render |
+| RQ-02 | Métricas reais c/ escopo | `resource_monitor` (infra): `/proc/meminfo`→`host_scope`, cgroup v1/v2→`container_scope`, loadavg+cpu.max; `admission_budget_mb` = min(bounds)−headroom; `UNKNOWN` quando indisponível, zero fabricação; RLIMIT_AS documentado como address space |
+| RQ-03 | Jobs do caller | `read(drawing.job_list)` owner-scoped (nunca enumera outra identidade); `analyze(..., job_id)` polling; `existing_only=true` resolve chave idempotente sem criar job → `no_existing_result` 404; `EXPIRED`/`stale_document` tipados |
+| RQ-03D | Identidade documental | reuso de resultado COMPLETED exige SHA-256 do PDF vigente == `document_sha` do job; divergente → `supersede` + nova análise; fonte indisponível → `source_unavailable` fail-closed |
+| RQ-04 | Admissão atômica | `VisualAdmissionGate.try_acquire` — check-and-reserve sob um único lock; 1 job pesado/host (env `ENG_DRAWING_OCR_MAX_HEAVY_JOBS`, default 1); outcomes `ADMITTED/BUSY/RESOURCE_LIMIT/OCR_UNAVAILABLE/UNKNOWN_CAPACITY`; slot devolvido em `finally` (sucesso/falha/cancel) |
+| RQ-05 | Controle de recursos | orçamento medido (`ENG_DRAWING_ADMISSION_MIN_AVAILABLE_MB` default 2560 + headroom `ENG_DRAWING_ADMISSION_HOST_HEADROOM_MB` default 1024) — derivado do pico medido do worker (~2–2,5GB); RLIMIT_AS mantido (address space, não RSS) — decisão documentada, não corte arbitrário |
+| RQ-06 | Progresso honesto | fases reais `FETCHING_DOCUMENT→OCR→UNDERSTANDING→COMPARING→FINALIZING` no envelope (`phase` + `job_summary` completo) — sem percentual inventado |
+| RQ-07 | MCP tipado | mesma superfície semântica (6 tools fixas); `read(drawing.*)` novo entity catalogado no registry — sem introspecção arbitrária de host |
+| RQ-09 | Segurança | `_require_engineering_human` em toda superfície nova; owner-hash em todo lookup; `stale_document` não serve payload; jobs de outro usuário = `job_not_found` indistinguível |
+
+**Incidente de worktree (registro):** durante a implementação, um
+agente concorrente (task controllership-finance/PRC) executou
+rebase+commits em paralelo e o working tree perdeu os arquivos
+desta task (incl. untracked não cobertos por autostash). Todo o
+conteúdo foi reaplicado e commitado imediatamente (`aa01adca0a`);
+nenhum conteúdo do outro agente foi tocado. Bug real detectado
+pela regressão durante a reaplicação: `global _active_workers`
+ausente → `UnboundLocalError` + vazamento do semáforo OCR;
+corrigido antes do commit.
+
+**Limitações honestas preservadas:**
+
+- Gate governa ESTE processo — probes/containers externos ao
+  serviço seguem sob a política operacional do owner
+  (1 PDF por janela + budget check), não há enforcement técnico
+  cross-container (exigiria decisão de Infra — Abstraction Gate).
+- Registro de jobs é processo-local: restart/deploy descarta
+  jobs — exposto como `process_local_registry`/`restart_loses_jobs`.
+- `90264302` foi o único PDF processado em runtime (§94.9) —
+  nenhum OCR real adicional para esta implementação (mocks).
+
+**Deploy:** NÃO executado — exige gate operacional dedicado
+(RQ-11): rebuild de imagem no SHA `aa01adca0a`, rollback tag da
+imagem vigente, health+recursos pós-deploy e 1 PDF sequencial.
+`MCP_E2E autenticado` permanece BLOCKED (Doc 121 §5).
