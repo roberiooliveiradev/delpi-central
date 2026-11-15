@@ -33,8 +33,8 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U3 Auditoria — entrada e execução | DONE | `4577724671` |
 | U4 Auditoria — resultado da análise | DONE | `25a491123f` |
 | U5 Auditoria — detalhe da ocorrência | DONE | `94a98abca1` |
-| U6 Demais páginas do Portal (desvios do padrão) | DONE | (este commit) |
-| U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | TODO | |
+| U6 Demais páginas do Portal (desvios do padrão) | DONE | `f16cec684a` |
+| U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | DONE | `cc2aec7849` |
 | U8 PROD | TODO | |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
@@ -119,7 +119,8 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | 2026-11-14 | U3 | `4577724671` | DONE | E1 form em linha + Executar; E2 ProgressTracker; E3 histórico com badge/vocabulário/Abrir; PagePath. |
 | 2026-11-14 | U4 | `25a491123f` | DONE | A1–A9: PagePath/Hero/6 KPIs/donut status/charts/UnderlineNav/tabela/CLARA; loading G7; daily A5. |
 | 2026-11-14 | U5 | `94a98abca1` | DONE | O: PagePath, badge severidade, DetailField, Por quê/O que fazer, confirmação Resolver, Timeline, XML. |
-| 2026-11-14 | U6 | (este commit) | DONE | NotFound → CfPageHero. Lista V5: relatórios ClosingHero (padrão fechamento); Meu perfil no Core `/profile`. |
+| 2026-11-14 | U6 | `f16cec684a` | DONE | NotFound → CfPageHero. Lista V5: relatórios ClosingHero (padrão fechamento); Meu perfil no Core `/profile`. |
+| 2026-11-15 | U7 | `cc2aec7849` | DONE | HML MFE healthy; Playwright U7 PASS (home/entry/analysis 1440/1024/390). G9 openMs≈9,0s (docs=315, high=17). Screenshots `/tmp/ui-review-u7`. Perfis Keycloak dedicados: INCONCLUSIVE (só `hml-tester`, como H5). axe: INCONCLUSIVE (sem `@axe-core/playwright` no MFE). Claro/escuro: INCONCLUSIVE. Fixes: PagePath `back` + hooks #310. |
 
 ### U6 — páginas corrigidas e lista de decisão (V5)
 
