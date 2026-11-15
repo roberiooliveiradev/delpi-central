@@ -35,7 +35,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U5 Auditoria — detalhe da ocorrência | DONE | `94a98abca1` |
 | U6 Demais páginas do Portal (desvios do padrão) | DONE | `f16cec684a` |
 | U7 HML (usuários de teste por perfil, Playwright, axe, screenshots) | DONE | `cc2aec7849` |
-| U8 PROD | TODO | |
+| U8 PROD | DONE | `4785e7aa3e` |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
 
@@ -121,6 +121,23 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | 2026-11-14 | U5 | `94a98abca1` | DONE | O: PagePath, badge severidade, DetailField, Por quê/O que fazer, confirmação Resolver, Timeline, XML. |
 | 2026-11-14 | U6 | `f16cec684a` | DONE | NotFound → CfPageHero. Lista V5: relatórios ClosingHero (padrão fechamento); Meu perfil no Core `/profile`. |
 | 2026-11-15 | U7 | `cc2aec7849` | DONE | HML MFE healthy; Playwright U7 PASS (home/entry/analysis 1440/1024/390). G9 openMs≈9,0s (docs=315, high=17). Screenshots `/tmp/ui-review-u7`. Perfis Keycloak dedicados: INCONCLUSIVE (só `hml-tester`, como H5). axe: INCONCLUSIVE (sem `@axe-core/playwright` no MFE). Claro/escuro: INCONCLUSIVE. Fixes: PagePath `back` + hooks #310. |
+| 2026-11-15 | U8 | `4785e7aa3e` | DONE | Tags `rollback-ui-review-controllership-finance` + `rollback-ui-review-plugin-ui`. PROD pull+build plugin-ui+CF; home/remoteEntry 200; App chunk com «Executar auditoria» e «Diferença nas Altas». Abertura autenticada Início/entrada/análise 01–15/11 + paridade CLARA: INCONCLUSIVE (sem usuário de teste PROD; não usar credencial HML). |
+
+## 7. Report final (U0–U8)
+
+| Etapa | SHA | Resultado |
+|---|---|---|
+| U0 | `938ccd1edb` | Matriz G/H/E/A/O/F no código |
+| U1 | `1bcb9f470a` | Vocabulário/R$/badges/estados/CSS |
+| U2 | `b31321f1d0` | Highlights reais + ícones + LNF title (kit aditivo) |
+| U3 | `4577724671` | Entrada: form, ProgressTracker, histórico |
+| U4 | `25a491123f` | Análise layout alvo A1–A9 |
+| U5 | `94a98abca1` | Detalhe ocorrência |
+| U6 | `f16cec684a` | NotFound + lista V5 |
+| U7 | `cc2aec7849` (+fixes `f5f263df86`/`cc2aec7849`) | HML Playwright PASS; G9≈9s |
+| U8 | `4785e7aa3e` | PROD publicado; tags de rollback |
+
+**Paradas V1–V6:** nenhuma acionada.
 
 ### U6 — páginas corrigidas e lista de decisão (V5)
 
