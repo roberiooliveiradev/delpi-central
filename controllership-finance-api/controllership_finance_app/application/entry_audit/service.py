@@ -124,8 +124,18 @@ class EntryAuditService:
             ],
         }
 
-    def list_analyses(self, *, date_from, date_to, branch, status, page, page_size) -> dict:
-        rows, total = self._store.list_analyses(date_from=date_from, date_to=date_to, branch=branch, status=status, page=page, page_size=page_size)
+    def list_analyses(self, *, date_from, date_to, branch, status, page, page_size, sort: str | None = None, order: str | None = None) -> dict:
+        sort_by, sort_dir = _resolve_sort(sort, order, ANALYSIS_SORT_WHITELIST, default_sort="created_at", default_order="desc")
+        rows, total = self._store.list_analyses(
+            date_from=date_from,
+            date_to=date_to,
+            branch=branch,
+            status=status,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
         return {"items": [_public_analysis(row) for row in rows], "page": page, "page_size": page_size, "total": total}
 
     def get_analysis(self, analysis_id: str) -> dict:
@@ -360,10 +370,11 @@ class EntryAuditService:
             return {"points": points, "months": _months(points)}
         return {"points": points}
 
-    def occurrences(self, analysis_id: str, filters: dict, *, page: int, page_size: int, sort: str) -> dict:
+    def occurrences(self, analysis_id: str, filters: dict, *, page: int, page_size: int, sort: str | None = None, order: str | None = None) -> dict:
         _analysis, ready = self._ready(analysis_id)
         rows = self._filtered("occurrences", analysis_id, filters)
-        rows.sort(key=lambda row: _sort_key(row, sort))
+        sort_by, sort_dir = _resolve_sort(sort, order, OCCURRENCE_SORT_WHITELIST, default_sort="severity", default_order="asc")
+        rows = _sorted_rows(rows, sort_by, sort_dir, kind="occurrences")
         start = (page - 1) * page_size
         page_slice = rows[start : start + page_size]
         status_map = self._statuses_map(page_slice)
@@ -386,21 +397,21 @@ class EntryAuditService:
         detail["links"] = _links(found)
         return detail
 
-    def documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
+    def documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int, sort: str | None = None, order: str | None = None) -> dict:
         # Padrão da aba «Notas casadas»: só as recebidas no período.
         # Fora do período e XML indisponível entram só com situation explícita.
         scoped = dict(filters)
         if not scoped.get("situation"):
             scoped["situation"] = "period"
-        return self._page("documents", analysis_id, scoped, page, page_size)
+        return self._page("documents", analysis_id, scoped, page, page_size, sort=sort, order=order)
 
-    def unmatched_documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
-        page_payload = self._page("unmatched", analysis_id, filters, page, page_size)
+    def unmatched_documents(self, analysis_id: str, filters: dict, *, page: int, page_size: int, sort: str | None = None, order: str | None = None) -> dict:
+        page_payload = self._page("unmatched", analysis_id, filters, page, page_size, sort=sort, order=order)
         page_payload["items"] = [{**row, "links": _links(row)} for row in page_payload["items"]]
         return page_payload
 
-    def ctes(self, analysis_id: str, filters: dict, *, page: int, page_size: int) -> dict:
-        page_payload = self._page("ctes", analysis_id, filters, page, page_size)
+    def ctes(self, analysis_id: str, filters: dict, *, page: int, page_size: int, sort: str | None = None, order: str | None = None) -> dict:
+        page_payload = self._page("ctes", analysis_id, filters, page, page_size, sort=sort, order=order)
         # F3/E6: análises antigas podem ter fiscal_code "" no JSON; leitura nunca devolve.
         items = []
         for row in page_payload.get("items") or []:
@@ -410,9 +421,11 @@ class EntryAuditService:
         page_payload["items"] = items
         return page_payload
 
-    def tes_used(self, analysis_id: str, filters: dict) -> dict:
+    def tes_used(self, analysis_id: str, filters: dict, *, sort: str | None = None, order: str | None = None) -> dict:
         _analysis, ready = self._ready(analysis_id)
         rows = self._filtered("tes", analysis_id, filters)
+        sort_by, sort_dir = _resolve_sort(sort, order, TES_SORT_WHITELIST, default_sort="tes_code", default_order="asc")
+        rows = _sorted_rows(rows, sort_by, sort_dir, kind="tes")
         return {"items": rows, "branches_unavailable": ready}
 
     def occurrence_state(self, stable_key: str) -> dict | None:
@@ -442,9 +455,21 @@ class EntryAuditService:
             "branches_unavailable": ready,
         }
 
-    def _page(self, kind: str, analysis_id: str, filters: dict, page: int, page_size: int) -> dict:
+    def _page(self, kind: str, analysis_id: str, filters: dict, page: int, page_size: int, *, sort: str | None = None, order: str | None = None) -> dict:
         _analysis, ready = self._ready(analysis_id)
         rows = self._filtered(kind, analysis_id, filters)
+        whitelist = {
+            "documents": DOCUMENT_SORT_WHITELIST,
+            "unmatched": UNMATCHED_SORT_WHITELIST,
+            "ctes": CTE_SORT_WHITELIST,
+        }.get(kind, DOCUMENT_SORT_WHITELIST)
+        default_sort = {
+            "documents": "received_date",
+            "unmatched": "document_number",
+            "ctes": "document_number",
+        }.get(kind, "document_number")
+        sort_by, sort_dir = _resolve_sort(sort, order, whitelist, default_sort=default_sort, default_order="asc")
+        rows = _sorted_rows(rows, sort_by, sort_dir, kind=kind)
         start = (page - 1) * page_size
         return {"items": rows[start : start + page_size], "page": page, "page_size": page_size, "total": len(rows), "branches_unavailable": ready}
 
@@ -503,20 +528,43 @@ class EntryAuditService:
         return rows
 
     def _previous_analysis(self, analysis: dict) -> dict | None:
+        """Análise imediatamente anterior, mesmo nº de dias, mesmas filiais e tipos.
+
+        Sem match exato → None (indisponível ≠ zero).
+        """
         span = (analysis["date_to"] - analysis["date_from"]).days + 1
         previous_to = analysis["date_from"] - timedelta(days=1)
         previous_from = previous_to - timedelta(days=span - 1)
-        rows, _total = self._store.list_analyses(date_from=previous_from, date_to=previous_to, branch=None, status="done", page=1, page_size=20)
-        return rows[0] if rows else None
+        want_branches = set(analysis.get("branches") or [])
+        want_types = set(analysis.get("document_types") or [])
+        rows, _total = self._store.list_analyses(
+            date_from=previous_from,
+            date_to=previous_to,
+            branch=None,
+            status="done",
+            page=1,
+            page_size=50,
+            sort_by="finished_at",
+            sort_dir="desc",
+        )
+        matches = []
+        for row in rows:
+            if row.get("date_from") != previous_from or row.get("date_to") != previous_to:
+                continue
+            if set(row.get("branches") or []) != want_branches:
+                continue
+            if set(row.get("document_types") or []) != want_types:
+                continue
+            matches.append(row)
+        if not matches:
+            return None
+        matches.sort(key=lambda row: row.get("finished_at") or row.get("created_at") or "", reverse=True)
+        return matches[0]
 
-    def _previous_kpis(self, analysis: dict, filters: dict) -> dict:
-        empty = {
-            "documents": 0, "occurrences": 0, "high": 0, "pending": 0,
-            "resolved": 0, "xml_unavailable": 0, "gross_checked": 0.0, "high_difference": 0.0,
-        }
+    def _previous_kpis(self, analysis: dict, filters: dict) -> dict | None:
         previous = self._previous_analysis(analysis)
         if previous is None:
-            return empty
+            return None
         occurrences = self._filtered("occurrences", previous["id"], filters)
         document_rows = self._filtered("documents", previous["id"], filters)
         documents = [row for row in document_rows if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
@@ -1396,12 +1444,79 @@ def _by_day(rows: list[dict]) -> list[dict]:
     return _count([{**row, "day": str(row.get("received_date") or "")[:10]} for row in rows], "day")
 
 
-def _sort_key(row: dict, sort: str):
+ANALYSIS_SORT_WHITELIST = frozenset({"created_at", "date_from", "date_to", "status", "finished_at"})
+OCCURRENCE_SORT_WHITELIST = frozenset({"severity", "supplier", "document", "day", "difference", "theme", "status"})
+DOCUMENT_SORT_WHITELIST = frozenset({"document_number", "received_date", "supplier_name", "amount", "situation", "series", "branch"})
+UNMATCHED_SORT_WHITELIST = frozenset({"document_number", "supplier_name", "situation", "series", "branch", "nature"})
+CTE_SORT_WHITELIST = frozenset({"document_number", "branch", "access_key"})
+TES_SORT_WHITELIST = frozenset({"tes_code", "items", "description"})
+
+
+def _resolve_sort(
+    sort: str | None,
+    order: str | None,
+    whitelist: frozenset[str],
+    *,
+    default_sort: str,
+    default_order: str,
+) -> tuple[str, str]:
+    sort_by = (sort or "").strip() or default_sort
+    if sort_by not in whitelist:
+        raise EntryAuditError(
+            f"Coluna de ordenação inválida: {sort_by}.",
+            status_code=422,
+            code="INVALID_SORT",
+        )
+    sort_dir = (order or default_order).strip().lower()
+    if sort_dir not in {"asc", "desc"}:
+        raise EntryAuditError(
+            "Parâmetro order deve ser asc ou desc.",
+            status_code=422,
+            code="INVALID_SORT_ORDER",
+        )
+    return sort_by, sort_dir
+
+
+def _occurrence_sort_key(row: dict, sort: str):
     if sort == "supplier":
-        return (row.get("supplier_name") or "", row.get("document_number") or "")
+        return (str(row.get("supplier_name") or ""), str(row.get("document_number") or ""))
     if sort == "document":
-        return (row.get("document_number") or "", row.get("item") or "")
+        return (str(row.get("document_number") or ""), str(row.get("item") or ""))
     if sort == "day":
-        return (row.get("received_date") or "", row.get("document_number") or "")
-    order = {"Alta": 0, "Depende da TES": 1, "Média": 2, "Baixa": 3, "Info": 4}
-    return (order.get(row.get("severity"), 9), row.get("document_number") or "")
+        return (str(row.get("received_date") or ""), str(row.get("document_number") or ""))
+    if sort == "difference":
+        return (abs(_amount_text(row.get("difference"))), str(row.get("document_number") or ""))
+    if sort == "theme":
+        return (str(row.get("theme") or ""), str(row.get("document_number") or ""))
+    if sort == "status":
+        return (str(row.get("status") or ""), str(row.get("document_number") or ""))
+    severity_order = {"Alta": 0, "Depende da TES": 1, "Média": 2, "Baixa": 3, "Info": 4}
+    return (severity_order.get(row.get("severity"), 9), str(row.get("document_number") or ""))
+
+
+def _row_sort_key(row: dict, sort: str, *, kind: str):
+    if kind == "occurrences":
+        return _occurrence_sort_key(row, sort)
+    if kind == "tes":
+        if sort == "items":
+            sf4 = row.get("sf4") or {}
+            return (int(sf4.get("items") or row.get("items") or 0), str(row.get("tes_code") or ""))
+        if sort == "description":
+            sf4 = row.get("sf4") or {}
+            return (str(sf4.get("description") or ""), str(row.get("tes_code") or ""))
+        return (str(row.get("tes_code") or ""),)
+    if sort == "amount":
+        return (_amount(row), str(row.get("document_number") or ""))
+    if sort == "nature":
+        return (str(row.get("nature") or ""), str(row.get("document_number") or ""))
+    return (str(row.get(sort) or ""), str(row.get("document_number") or row.get("access_key") or ""))
+
+
+def _sorted_rows(rows: list[dict], sort_by: str, sort_dir: str, *, kind: str) -> list[dict]:
+    reverse = sort_dir == "desc"
+    return sorted(rows, key=lambda row: _row_sort_key(row, sort_by, kind=kind), reverse=reverse)
+
+
+def _sort_key(row: dict, sort: str):
+    """Compat: ordenação legada de ocorrências (asc implícito)."""
+    return _occurrence_sort_key(row, sort or "severity")

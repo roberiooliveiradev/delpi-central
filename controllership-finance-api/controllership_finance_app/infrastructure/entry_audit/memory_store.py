@@ -79,7 +79,18 @@ class MemoryEntryAuditStore:
         found = self.analyses.get(analysis_id)
         return deepcopy(found) if found else None
 
-    def list_analyses(self, *, date_from, date_to, branch, status, page, page_size) -> tuple[list[dict], int]:
+    def list_analyses(
+        self,
+        *,
+        date_from,
+        date_to,
+        branch,
+        status,
+        page,
+        page_size,
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+    ) -> tuple[list[dict], int]:
         rows = list(self.analyses.values())
         if date_from:
             rows = [row for row in rows if row["date_to"] >= date_from]
@@ -89,7 +100,9 @@ class MemoryEntryAuditStore:
             rows = [row for row in rows if branch in row["branches"]]
         if status:
             rows = [row for row in rows if row["status"] == status]
-        rows.sort(key=lambda row: row["created_at"], reverse=True)
+        reverse = (sort_dir or "desc").lower() == "desc"
+        key_name = sort_by or "created_at"
+        rows.sort(key=lambda row: row.get(key_name) or "", reverse=reverse)
         start = (page - 1) * page_size
         return [deepcopy(row) for row in rows[start : start + page_size]], len(rows)
 

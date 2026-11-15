@@ -412,14 +412,28 @@ Leituras de resultado (`summary`, `daily`, `breakdowns`, `facets`, `occurrences`
 
 Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `supplier`, `tes`, `document_type`, `day`, `status` (`pending`|`resolved`), `q`. O servidor aplica; o cliente não recalcula regra.
 
+**Período anterior (U12 W1a).** A análise anterior válida tem o mesmo número de dias, termina no dia imediatamente anterior ao `date_from` atual, mesmas filiais e mesmos tipos de documento, status `done`. Caso contrário `summary.previous` é `null` (indisponível ≠ zero). A CLARA só emite `entry_audit.compare` com `compare_to` explícito; sem anterior válido registra `entry_audit.previous_unavailable`.
+
+**Ordenação (U12 W1b).** Query `sort=<coluna>&order=asc|desc`. Sem parâmetros = ordem histórica de cada recurso. Coluna fora da lista branca → 422 `INVALID_SORT`.
+
+| Recurso | Default | Whitelist |
+|---|---|---|
+| `GET /analyses` | `created_at` desc | `created_at`, `date_from`, `date_to`, `status`, `finished_at` |
+| `occurrences` | `severity` asc | `severity`, `supplier`, `document`, `day`, `difference`, `theme`, `status` |
+| `documents` (incl. `posted_outside_period`) | `received_date` asc | `document_number`, `received_date`, `supplier_name`, `amount`, `situation`, `series`, `branch` |
+| `unmatched` | `document_number` asc | `document_number`, `supplier_name`, `situation`, `series`, `branch`, `nature` |
+| `cte` | `document_number` asc | `document_number`, `branch`, `access_key` |
+| `tes` | `tes_code` asc | `tes_code`, `items`, `description` |
+
+
 | Rota | `data` |
 |---|---|
-| `summary` | quatro KPIs, comparação com o período anterior do mesmo tamanho, conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`, `posted_outside_period` com `count` e `received_dates`) |
-| `daily` | série do período e do período anterior: dia → notas com divergência |
+| `summary` | KPIs atuais; `previous` = KPIs do período anterior **ou `null`** quando não há análise anterior válida (U11/U12 W1a); conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`, `posted_outside_period` com `count` e `by_date`) |
+| `daily` | série do período e do período anterior (`previous: []` se não houver anterior): dia → notas com divergência |
 | `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências |
 | `facets` | fornecedores, temas, TES e severidades, com contagem |
 | `GET /entry-audit/trend` | `branch`, `date_from`, `date_to`: pendentes e altas por mês, entre análises |
-| `occurrences` | página de ocorrências; ordenação `sort` (`severity`, `supplier`, `document`, `day`) |
+| `occurrences` | página de ocorrências; `sort` + `order=asc\|desc` (whitelist abaixo) |
 | `occurrences/{key}` | valores, `why`, `action`, `rule_id`, `rule_name`, chave, links de DANFE/DACTE/XML já expostos pelo LNF, histórico de status |
 | `documents`, `unmatched`, `cte`, `tes` | a aba correspondente |
 | `POST /occurrences/{key}/resolve` e `/reopen` | status compartilhado. Idempotente. `kind` não vai na URL: a chave diz se é ocorrência ou nota sem par. As rotas `/unmatched/{key}/resolve` e `/reopen` são o mesmo efeito, para o cliente que já está na aba. |

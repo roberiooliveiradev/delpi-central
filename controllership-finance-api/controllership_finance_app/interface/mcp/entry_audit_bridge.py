@@ -127,7 +127,7 @@ def tool_entry_audit_trend(
 def tool_entry_audit_occurrences(analysis_id: str, page: int | None = None, page_size: int | None = None, **filters: Any) -> CallToolResult:
     """Lista de ocorrências da análise."""
     page_n, size = _pages(page, page_size)
-    return _call(lambda: _service().occurrences(analysis_id, _filters(filters), page=page_n, page_size=size, sort=""))
+    return _call(lambda: _service().occurrences(analysis_id, _filters(filters), page=page_n, page_size=size, sort=None))
 
 
 def tool_entry_audit_occurrence(analysis_id: str, key: str) -> CallToolResult:
@@ -187,7 +187,7 @@ def tool_analyze_entry_audit_findings(
         rows: list[dict] = []
         total = None
         while page_n <= 5:
-            page = service.occurrences(target, _filters(filters), page=page_n, page_size=200, sort="")
+            page = service.occurrences(target, _filters(filters), page=page_n, page_size=200, sort=None)
             rows.extend(page.get("items") or [])
             total = page.get("total")
             if total is None or len(rows) >= int(total):
@@ -215,6 +215,14 @@ def tool_analyze_entry_audit_findings(
             ),
             "value": {"kpis": kpis, "conformity": conformity, "filters": applied},
         })
+        previous = summary.get("previous") if isinstance(summary, dict) else None
+        if previous is None:
+            findings.append({
+                "kind": "FACT",
+                "code": "entry_audit.previous_unavailable",
+                "message": "Sem análise do período anterior para comparar.",
+                "value": {"previous": None},
+            })
         for (rule_id, title, severity, tes), items in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0][0])):
             action = str(items[0].get("action") or items[0].get("what_to_do") or "")
             cause = _cause(rule_id)

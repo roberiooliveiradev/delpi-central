@@ -123,12 +123,23 @@ def list_analyses(
     status: str | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
 ):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
     return _call(lambda: ok(
-        _service(request).list_analyses(date_from=date_from, date_to=date_to, branch=branch, status=status, page=page, page_size=page_size),
+        _service(request).list_analyses(
+            date_from=date_from,
+            date_to=date_to,
+            branch=branch,
+            status=status,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+            order=order,
+        ),
         operation_id="list_entry_audit_analyses",
     ))
 
@@ -198,11 +209,24 @@ def get_trend(request: Request, branch: str | None = None, date_from: date | Non
 
 
 @router.get("/analyses/{analysis_id}/occurrences", operation_id="list_entry_audit_occurrences")
-def list_occurrences(analysis_id: str, request: Request, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200), sort: str = "severity"):
+def list_occurrences(
+    analysis_id: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
+):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _with_branches(None, _service(request).occurrences(analysis_id, _filters(request), page=page, page_size=page_size, sort=sort), "list_entry_audit_occurrences"))
+    return _call(lambda: _with_branches(
+        None,
+        _service(request).occurrences(
+            analysis_id, _filters(request), page=page, page_size=page_size, sort=sort, order=order,
+        ),
+        "list_entry_audit_occurrences",
+    ))
 
 
 @router.get("/analyses/{analysis_id}/occurrences/{stable_key}", operation_id="get_entry_audit_occurrence")
@@ -214,35 +238,83 @@ def get_occurrence(analysis_id: str, stable_key: str, request: Request):
 
 
 @router.get("/analyses/{analysis_id}/documents", operation_id="list_entry_audit_documents")
-def list_documents(analysis_id: str, request: Request, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200)):
+def list_documents(
+    analysis_id: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
+):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _with_branches(None, _service(request).documents(analysis_id, _filters(request), page=page, page_size=page_size), "list_entry_audit_documents"))
+    return _call(lambda: _with_branches(
+        None,
+        _service(request).documents(
+            analysis_id, _filters(request), page=page, page_size=page_size, sort=sort, order=order,
+        ),
+        "list_entry_audit_documents",
+    ))
 
 
 @router.get("/analyses/{analysis_id}/unmatched", operation_id="list_entry_audit_unmatched")
-def list_unmatched(analysis_id: str, request: Request, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200)):
+def list_unmatched(
+    analysis_id: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
+):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _with_branches(None, _service(request).unmatched_documents(analysis_id, _filters(request), page=page, page_size=page_size), "list_entry_audit_unmatched"))
+    return _call(lambda: _with_branches(
+        None,
+        _service(request).unmatched_documents(
+            analysis_id, _filters(request), page=page, page_size=page_size, sort=sort, order=order,
+        ),
+        "list_entry_audit_unmatched",
+    ))
 
 
 @router.get("/analyses/{analysis_id}/cte", operation_id="list_entry_audit_cte")
-def list_cte(analysis_id: str, request: Request, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200)):
+def list_cte(
+    analysis_id: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
+):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _with_branches(None, _service(request).ctes(analysis_id, _filters(request), page=page, page_size=page_size), "list_entry_audit_cte"))
+    return _call(lambda: _with_branches(
+        None,
+        _service(request).ctes(
+            analysis_id, _filters(request), page=page, page_size=page_size, sort=sort, order=order,
+        ),
+        "list_entry_audit_cte",
+    ))
 
 
 @router.get("/analyses/{analysis_id}/tes", operation_id="list_entry_audit_tes_used")
-def list_tes(analysis_id: str, request: Request):
+def list_tes(
+    analysis_id: str,
+    request: Request,
+    sort: str | None = Query(None),
+    order: str | None = Query(None),
+):
     user = _actor(request)
     if not hasattr(user, "principal_type"):
         return user
-    return _call(lambda: _with_branches(None, _service(request).tes_used(analysis_id, _filters(request)), "list_entry_audit_tes_used"))
+    return _call(lambda: _with_branches(
+        None,
+        _service(request).tes_used(analysis_id, _filters(request), sort=sort, order=order),
+        "list_entry_audit_tes_used",
+    ))
 
 
 @router.post("/occurrences/{stable_key}/resolve", operation_id="resolve_entry_audit_occurrence")

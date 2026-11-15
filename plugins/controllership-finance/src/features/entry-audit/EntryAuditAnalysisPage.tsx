@@ -499,17 +499,9 @@ export function EntryAuditAnalysisPage({
     summary.conformity.divergent,
   );
   const { kpis, previous } = summary;
-  const previousSafe = previous ?? {
-    documents: 0,
-    occurrences: 0,
-    high: 0,
-    pending: 0,
-    resolved: 0,
-    xml_unavailable: 0,
-    gross_checked: 0,
-    high_difference: 0,
-  };
+  const hasPrevious = previous != null;
   const multiDay = analysis.date_from !== analysis.date_to;
+  const noPreviousHint = "Sem análise do período anterior para comparar";
 
   const chips = [
     ...analysis.branches.map((branch) => ({
@@ -728,24 +720,40 @@ export function EntryAuditAnalysisPage({
       <div className="cf-kpi-grid" role="group" aria-label="Indicadores da auditoria">
         <CfMetricKpiCard
           label="Notas conferidas"
-          titleHint={CF_HELP.entryAudit.kpiDocuments}
+          titleHint={
+            hasPrevious
+              ? CF_HELP.entryAudit.kpiDocuments
+              : `${CF_HELP.entryAudit.kpiDocuments} ${noPreviousHint}.`
+          }
           value={String(kpis.documents)}
           icon={kpiIcon(<FileText size={22} strokeWidth={1.75} aria-hidden />)}
           hint={
-            <CfTrendDelta
-              value={trendPct(kpis.documents, previousSafe.documents)}
-            />
+            hasPrevious ? (
+              <CfTrendDelta
+                value={trendPct(kpis.documents, previous.documents)}
+              />
+            ) : (
+              noPreviousHint
+            )
           }
         />
         <CfMetricKpiCard
           label="Valor conferido"
-          titleHint={CF_HELP.entryAudit.kpiGross}
+          titleHint={
+            hasPrevious
+              ? CF_HELP.entryAudit.kpiGross
+              : `${CF_HELP.entryAudit.kpiGross} ${noPreviousHint}.`
+          }
           value={formatMoneyBRL(kpis.gross_checked)}
           icon={kpiIcon(<Wallet size={22} strokeWidth={1.75} aria-hidden />)}
           hint={
-            <CfTrendDelta
-              value={trendPct(kpis.gross_checked, previousSafe.gross_checked)}
-            />
+            hasPrevious ? (
+              <CfTrendDelta
+                value={trendPct(kpis.gross_checked, previous.gross_checked)}
+              />
+            ) : (
+              noPreviousHint
+            )
           }
         />
         <CfMetricKpiCard
@@ -773,7 +781,11 @@ export function EntryAuditAnalysisPage({
             })
           }
           hint={
-            <CfTrendDelta value={trendPct(kpis.high, previousSafe.high)} />
+            hasPrevious ? (
+              <CfTrendDelta value={trendPct(kpis.high, previous.high)} />
+            ) : (
+              noPreviousHint
+            )
           }
         />
         <CfMetricKpiCard

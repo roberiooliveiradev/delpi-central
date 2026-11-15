@@ -88,7 +88,8 @@ export type EntryAuditKpis = {
 
 export type EntryAuditSummary = {
   kpis: EntryAuditKpis;
-  previous: EntryAuditKpis;
+  /** Null quando não há análise anterior válida (mesmo nº de dias, imediatamente anterior, mesmas filiais/tipos). */
+  previous: EntryAuditKpis | null;
   conformity: {
     clean: number;
     divergent: number;
@@ -249,6 +250,8 @@ export function listEntryAuditAnalyses(
     date_to?: string;
     page?: number;
     page_size?: number;
+    sort?: string;
+    order?: "asc" | "desc";
   } = {},
   signal?: AbortSignal,
 ) {
@@ -309,6 +312,8 @@ export function listEntryAuditRows<T>(
   page = 1,
   pageSize = 50,
   signal?: AbortSignal,
+  sort?: string,
+  order?: "asc" | "desc",
 ) {
   return httpGet<CfEnvelope<EntryAuditPage<T>>>(
     cfApiUrl(
@@ -316,6 +321,8 @@ export function listEntryAuditRows<T>(
         ...filters,
         page,
         page_size: pageSize,
+        sort,
+        order,
       })}`,
     ),
     { signal },
@@ -326,9 +333,17 @@ export function listEntryAuditTes(
   id: string,
   filters: EntryAuditFilters = {},
   signal?: AbortSignal,
+  sort?: string,
+  order?: "asc" | "desc",
 ) {
   return httpGet<CfEnvelope<{ items: EntryAuditTes[]; branches_unavailable?: string[] }>>(
-    cfApiUrl(`/entry-audit/analyses/${encodeURIComponent(id)}/tes${query(filters)}`),
+    cfApiUrl(
+      `/entry-audit/analyses/${encodeURIComponent(id)}/tes${query({
+        ...filters,
+        sort,
+        order,
+      })}`,
+    ),
     { signal },
   ).then(unwrap);
 }

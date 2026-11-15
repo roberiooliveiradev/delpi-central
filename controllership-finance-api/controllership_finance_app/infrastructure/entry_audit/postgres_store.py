@@ -73,7 +73,18 @@ class PostgresEntryAuditStore:
     def get_analysis(self, analysis_id: str) -> dict | None:
         return self._one(f"SELECT * FROM {SCHEMA}.entry_audit_analysis WHERE id = %s", (analysis_id,))
 
-    def list_analyses(self, *, date_from, date_to, branch, status, page, page_size) -> tuple[list[dict], int]:
+    def list_analyses(
+        self,
+        *,
+        date_from,
+        date_to,
+        branch,
+        status,
+        page,
+        page_size,
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+    ) -> tuple[list[dict], int]:
         clauses = ["TRUE"]
         params: list = []
         if date_from:
@@ -89,12 +100,22 @@ class PostgresEntryAuditStore:
             clauses.append("status = %s")
             params.append(status)
         where = " AND ".join(clauses)
+        # Whitelist enforced in application layer; map only known columns here.
+        column_map = {
+            "created_at": "created_at",
+            "date_from": "date_from",
+            "date_to": "date_to",
+            "status": "status",
+            "finished_at": "finished_at",
+        }
+        order_col = column_map.get(sort_by or "created_at", "created_at")
+        order_dir = "DESC" if (sort_dir or "desc").lower() == "desc" else "ASC"
         total = self._one(f"SELECT COUNT(*) AS total FROM {SCHEMA}.entry_audit_analysis WHERE {where}", tuple(params))
         rows = self._all(
             f"""
             SELECT * FROM {SCHEMA}.entry_audit_analysis
              WHERE {where}
-             ORDER BY created_at DESC
+             ORDER BY {order_col} {order_dir} NULLS LAST
              LIMIT %s OFFSET %s
             """,
             tuple(params + [page_size, (page - 1) * page_size]),

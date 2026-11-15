@@ -248,4 +248,5 @@ Confirmado A1: cada troca remonta `analysis+summary+breakdowns+daily` (+ resourc
 
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
-| 2026-11-15 | U12 W0 | (este commit) | DONE | Matriz + medição A1 antes |
+| 2026-11-15 | U12 W0 | `0222fbaa9c` | DONE | Matriz + medição A1 antes |
+| 2026-11-15 | U12 W1 | (este commit) | DONE | previous null + sort/order whitelist; 12 pytest PASS |
