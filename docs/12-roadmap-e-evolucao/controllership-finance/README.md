@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **14/11/2026 — Início no padrão dos Portais:** [`home-hub/`](./home-hub/README.md) (doc 170) `READY` — tira o card Portal, cria os cards **Notas fiscais** (Auditoria de Entradas + Lançamento de Notas Fiscais) e **Administração**, e traz os **Favoritos** como no Comercial.
+>
 > **14/11/2026 — Nome do macroprocesso na CLARA e no Portal:** [`monthly-closing-naming/`](./monthly-closing-naming/README.md) (doc 169) `READY` — o que o usuário vê passa a dizer **Fechamento mensal da Controladoria** nas instruções do conector, na inteligência da CLARA, na base de conhecimento e nas citações. O código do TÉO fica só na ficha, §Identificação. Documentos continuam na base; identificadores técnicos e migrations ficam.
 >
 > **13/11/2026 — Auditoria de entradas no Portal e na CLARA:** [`entry-audit/`](./entry-audit/README.md) (doc 168) `PLAN_DRAFT` — plano, back-end, front-end, MCP, referência e planejamento. Porta a skill `auditoria-entradas-nfe-protheus` e o painel Raio-X para uma página do Portal e para o catálogo da CLARA. D4 decidida: tudo com `controllership-finance.access`.
