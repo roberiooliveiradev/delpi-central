@@ -533,3 +533,11 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 - OAuth PRMD publico 200 JSON, MCP sem token 401 e health externo 404 ja validados; **nao concluir** que erro no gateway. Causa exata do erro generico na UI nao e demonstravel apenas pelo print. Hipotese forte: client ainda nao provisionado e/ou secret ausente, ou metodo de autenticao no token incorreto; exigem verificacao.
 
 **Proxima acao:** `python3 infra/scripts/keycloak_linux_ops_client.py --check` em srv-api, sem prints de credenciais. Confirmar backup atual do Keycloak, copiar callback exata diretamente do ChatGPT para `LINUX_OPS_OAUTH_REDIRECT_URI` local e somente com autorizacao fazer `--apply`; depois conferir `--check` NO_DRIFT, obter secret em Keycloak > Clients > mcp-linux-ops > Credentials, preencher somente no editor do ChatGPT e selecionar `client_secret_post`. Nao aplicar modificacoes globais em Keycloak e nao reiniciar gateway. Se falhar apos isso, inspecionar motivo tecnicamente antes de diagnosticar.
+
+
+## 31. Keycloak read-only preflight fail-closed genérico (2026-11-15)
+
+- Usuario executou `python3 infra/scripts/keycloak_linux_ops_client.py --check` no `srv-api` e obteve apenas `[linux-ops-keycloak] FAIL_CLOSED: ProvisioningError`.
+- Analise do codigo atual (main): `infra/scripts/keycloak_linux_ops_client.py:335-350` primeiro carrega `Config`, obtem token administrativo `KC_ADMIN_TOKEN` ou `KEYCLOAK_ADMIN/KEYCLOAK_ADMIN_PASSWORD` via `mint_admin_token()`; depois chama `server_version()`, `KcAdmin.call` para auditar o realm `delpi`, client scopes e cliente `mcp-linux-ops`. O handler `except` retorna o nome da classe para `ProvisioningError`, deliberadamente ocultando detalhe original. **O erro nao prova ausencia do cliente** nem necessidade de refazer gateway.
+- Proximo gate: diagnostico SOMENTE LEITURA com print de fase e HTTP code derivado da cadeia `__cause__` de excecoes, sem imprimir body, URL com credenciais, token ou senha e sem `--apply`. Distinguir falha `mint_admin_token` (master auth), `serverinfo` (admin rights/routing) e `GET /admin/realms/delpi/*` (RBAC/URL). Somente apos identificacao orientar correcoes pontuais.
+- Client OAuth nao provisionado nem login ChatGPT comprovados; mantenha `ATLAS_HTTPS_VERIFIED`, `KEYCLOAK_ADMIN_CHECK_FAIL_CLOSED`.
