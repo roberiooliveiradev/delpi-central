@@ -415,3 +415,20 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 **Proximo gate:** criar o tunel com `tunnel_id`, vincular Platform org ao workspace ChatGPT e obter os detalhes definitivos da URL do recurso atraves da descoberta do tunel; rodar `tunnel-client doctor` com runtime key de Tunnels Read+Use armazenada somente no servidor. Se a URL do recurso divergir, preparar PR revisado para vinculo OAuth unico ao recurso do tunel, sem aceitar audiencias arbitrarias nem desabilitar validacao de `iss`/`aud`/`scope`. O Keycloak dedicado so deve ser finalizado quando a audiencia e o callback reais forem conhecidos. Conforme https://developers.openai.com/api/docs/guides/secure-mcp-tunnels ; https://github.com/openai/tunnel-client/blob/master/docs/onboarding.md.
 
 **Estado:** `LOCAL_HEALTH_PASS`, `PRMD_200_PASS`, `UNAUTHENTICATED_401_PASS`, `TUNNEL_NOT_PROVISIONED`, `RESOURCE_AUDIENCE_COMPATIBILITY_TO_VERIFY`, `KEYCLOAK_CLIENT_NOT_PROVEN`, `CHATGPT_MCP_NOT_CONNECTED`.
+
+
+## 22. Restricao financeira: zero custo adicional (2026-11-14)
+
+**Decisao do owner:** evolucao do MCP Linux **sem assinatura adicional, sem habilitar cobranca da API OpenAI, sem terceiro tunel pago, sem novo servidor e sem gastos recorrentes adicionais** em relacao ao ambiente atual. Nao comprometer-se com despesa nao autorizada.
+
+**Pesquisa de preco (referencias oficiais):**
+- https://developers.openai.com/api/docs/guides/secure-mcp-tunnels : Secure MCP Tunnel requer runtime API key e Platform organization; nao publica tabela clara garantindo custo zero do proprio tunel.
+- https://help.openai.com/en/articles/9039756-managing-billing-for-chatgpt-and-the-api-platform : faturamento ChatGPT e API separado; o plano ChatGPT nao incorpora automaticamente uso pago da API.
+- https://developers.cloudflare.com/tunnel/ : Cloudflare Tunnel esta disponivel em todos os planos. Ja existe `cloudflared` na infraestrutura do srv-api (reportado no inventario). Nenhuma contratacao nova deve ser assumida.
+- https://developers.openai.com/api/docs/guides/custom-mcp-server : ChatGPT admite adicionar custom MCP por URL HTTPS remota, sujeito a permissoes do workspace.
+
+**Recomendacao tecnica alterada:** suspender provisionamento do OpenAI Secure MCP Tunnel ate confirmar em documento oficial `billing=0` e permissao organizacional. Priorizar rota HTTPS autenticada pela infraestrutura Cloudflare existente + gateway canônico, usando dominio `minhadelpi.com.br`. A rota deve encaminhar ao `linux-ops-mcp:8000` via rede interna, sem abrir SSH/Docker nem permitir comandos genericos. Preservar restricao atual `127.0.0.1:18765`; nao publicar porta em `0.0.0.0`. Adicionar `/apps/linux-ops-mcp/mcp` + aliases de discovery PRMD e desafio OAuth no gateway, com leitura exata, sem hotfix e sem depender de upstream Docker resolvido estaticamente quando o profile estiver inativo. Revisar impacto no gateway critico antes de deploy; usar PR isolado + CI + `nginx -t` + rollout sem reiniciar outros servicos.
+
+**Gate de custo:** confirmar no Cloudflare o plano existente, hostname e politica de trafego aplicavel. Sem confirmar o risco de faturamento marginal zero, nao comprar / ativar add-on. Uso de ChatGPT com plugin propio, sem chamada da Responses API por token pago; obedecer quotas/limites ChatGPT. A infraestrutura local segue consumindo recursos existentes e nao possui custo zero literal de eletricidade/operacao.
+
+**Status:** `ZERO_ADDITIONAL_COST_REQUIRED`; `OPENAI_TUNNEL_ON_HOLD`; `EXISTING_CLOUDFLARE_ROUTE_CANDIDATE`; `EXTERNAL_MCP_ENDPOINT_NOT_DEPLOYED`.
