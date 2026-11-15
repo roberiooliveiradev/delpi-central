@@ -1957,3 +1957,17 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-EXECUTION-DRIFT-STASH-SWEEP` | `NOTED (novo)` | `pull --rebase --autostash` capturou WS-A sem restaurar; conteúdo recuperado íntegro; commit concorrente `9904b4fb46` varreu o diff sob mensagem alheia — código publicado correto, rastreabilidade de mensagem imperfeita |
 
 `R1=CLOSED_WITH_RESIDUAL`, `R2-R6=OPEN`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_AND_R3_INDEPENDENT_REVIEW`.**
+
+### 2026-11-14 — INDEPENDENT_REVIEW_BUDGET_R3_2026_11_14: estado vigente após review
+
+| Item | Estado | Observação |
+|---|---|---|
+| `T2-COMPREHENSION-EXCEPTION-USAGE-ACCOUNTING` | `ACCEPT / CLOSED_WITH_MONITORING` | RunUsage/WrapperModel + zero-balance gate corrigem caso RED reportado; revisar exceções não-terminais `artifact_kept` |
+| `T2-INVESTIGATION-TOKEN-CAPTURE` | `TECHNICAL_FIX_ACCEPTED / REAL_REPROOF_PENDING` | `result.usage` property corrigida; novo eval para confirmar tokens reais |
+| `R3-MCP-AUTH-FLAKINESS` | `DOMINANT_REMEDIATED / OPEN_ENV` | Token único do harness corrigido com renovação pré-cenário; pre-expiry transient continua não explicado |
+| `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `TO_VERIFY` | Renovação por cenário não garante renovação durante cenário excessivamente longo |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | Owner timeout/unhealthy distinto de autenticação |
+| `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `INCONCLUSIVE` | Requer novo A/B com catálogos válidos, custos e outcomes no mesmo SHA |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | Identidade real sem permissão ainda não testada |
+
+**VERDICT=`ACCEPT_WITH_RESIDUAL` implementação bounded, `R3_NOT_CLOSED`, `TWO_AGENT_PROMOTION_NOT_AUTHORIZED`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_POST_R3_REMEDIATION_REAL_AB_REPROOF_READINESS`.**
