@@ -41,6 +41,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | READY | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
+| U13 Residuais da U12 (X1–X3) | IN_PROGRESS | [prompt](./prompts/U13-residuais.md) |
 
 ## 3.1 Matriz de conformidade (U0) — evidência no código HEAD `1970a2bb4a`
 
@@ -285,3 +286,15 @@ Residuais:
 2. **Filtro do axe por classe do Portal:** o spec da W7 ignora contraste em nós `cf-action-with-icon`, que é classe do MFE (`index.css`). O contraste real é do `ActionButton` do kit dentro do hero (já registrado na U10), mas filtrar pela classe do Portal esconderia qualquer problema futuro nesses botões. Trocar o filtro para o seletor do componente do kit e registrar o residual com o dono do plugin-ui, junto com o `SegmentToggle` (Tabela/Cards), que a U12 passou a exibir.
 3. **Falhas antigas do MFE:** as 5 falhas e as 2 suítes `realKit` do `closing/` precisam de etapa própria (estão fora da U12, mas a suíte do MFE não fica verde).
 4. **Menor:** aplicar um filtro de detalhamento ainda zera hero, KPIs e gráficos até o resumo voltar; pode manter os dados na tela com o estado «atualizando».
+
+## 11. U13 — residuais da U12 (X1–X3)
+
+Prompt: [prompts/U13-residuais.md](./prompts/U13-residuais.md). Report: [reports/report-u13.md](./reports/report-u13.md).
+
+| Item | SHA | Status | Nota |
+|---|---|---|---|
+| X1 axe + Exportar primary + residuais U10 | (este commit) | DONE | filtro closest kit/host; Comercial primary |
+| X2 suíte MFE verde | — | PENDING | — |
+| X3 filtro detalhamento SWR | — | PENDING | — |
+| HML Playwright | — | PENDING | — |
+| PROD tag/deploy MFE | — | PENDING | — |

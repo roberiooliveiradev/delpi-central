@@ -13,8 +13,74 @@ import { loginAs, openEntryAuditHome, type PortalCredentialKind } from "../helpe
 const ARTIFACT_DIR =
   process.env.CF_E2E_ARTIFACT_DIR || path.join("/tmp", "ui-review-u12");
 
+/**
+ * Exceções de contraste conhecidas — decide pelo componente do kit/host
+ * (closest), não por classe do Portal (`cf-action-with-icon`).
+ * Cores medidas pelo axe HML U12 (branco sobre #089bdb ≈ 3.12:1).
+ */
+const AXE_COLOR_CONTRAST_EXCEPTIONS: ReadonlyArray<{
+  id: string;
+  owner: string;
+  closest: string;
+  foreground: string;
+  background: string;
+}> = [
+  {
+    id: "action-button",
+    owner: "plugin-ui ActionButton (.delpi-ui-action-btn)",
+    closest: ".delpi-ui-action-btn",
+    foreground: "#ffffff",
+    background: "#089bdb",
+  },
+  {
+    id: "segment-toggle",
+    owner: "plugin-ui SegmentToggle (.delpi-ui-segment-toggle)",
+    closest: ".delpi-ui-segment-toggle",
+    foreground: "#ffffff",
+    background: "#089bdb",
+  },
+  {
+    id: "topbar-avatar",
+    owner: "plugin-ui Avatar / TopBarUser (.delpi-ui-avatar, .cf-topbar-user)",
+    closest: ".delpi-ui-avatar, .cf-topbar-user, .delpi-ui-topbar-user",
+    foreground: "#ffffff",
+    background: "#089bdb",
+  },
+  {
+    id: "host-avatar",
+    owner: "host Portal (.avatar)",
+    closest: ".avatar",
+    foreground: "(host)",
+    background: "(host)",
+  },
+];
+
 function ensureDir(): void {
   fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+}
+
+/** True se o nó axe está dentro de um residual conhecido do kit/host. */
+async function isKitOrHostContrastResidual(
+  page: Page,
+  target: string[] | undefined,
+): Promise<boolean> {
+  if (!target?.length) return false;
+  const selector = target[target.length - 1];
+  if (!selector) return false;
+  const closestList = AXE_COLOR_CONTRAST_EXCEPTIONS.map((item) => item.closest);
+  return page.evaluate(
+    ({ sel, closestSelectors }) => {
+      let el: Element | null = null;
+      try {
+        el = document.querySelector(sel);
+      } catch {
+        return false;
+      }
+      if (!el) return false;
+      return closestSelectors.some((css) => Boolean(el?.closest(css)));
+    },
+    { sel: selector, closestSelectors: closestList },
+  );
 }
 
 async function openFirstAnalysis(page: Page): Promise<boolean> {
@@ -216,30 +282,41 @@ test.describe("U12 W7 UI review HML", () => {
         return;
       }
       await openEntryAuditHome(page);
-      // Escopo no portal CF — chrome do host (sidebar/avatar/collapse) é residual U10.
       const results = await new AxeBuilder({ page })
-        .include(".dashboard-controllership-finance, [aria-label='Auditoria de Entradas'], .cf-page-stack")
-        .exclude(".sidebar, .collapse-btn, .avatar, .sidebar-footer__privacy-link")
+        .include(
+          ".dashboard-controllership-finance, [aria-label='Auditoria de Entradas'], .cf-page-stack",
+        )
+        .exclude(".sidebar, .collapse-btn, .sidebar-footer__privacy-link")
         .withTags(["wcag2a", "wcag2aa"])
         .analyze();
-      // Residuais conhecidos (U10/kit/host): SegmentToggle, avatar topbar, ícone de ação.
-      const residualTarget =
-        /segment-toggle|datatable-layout|cf-action-with-icon|delpi-ui-segment-toggle|cf-avatar|cf-topbar-user|avatar/;
-      const serious = results.violations
-        .map((v) => {
-          if (v.impact !== "critical" && v.impact !== "serious") return null;
-          if (v.id !== "color-contrast") return v;
-          const nodes = (v.nodes ?? []).filter((node) => {
-            const blob = `${JSON.stringify(node.target ?? [])} ${node.html ?? ""}`;
-            return !residualTarget.test(blob);
-          });
-          if (!nodes.length) return null;
-          return { ...v, nodes };
-        })
-        .filter(Boolean);
+      const serious = [];
+      for (const v of results.violations) {
+        if (v.impact !== "critical" && v.impact !== "serious") continue;
+        if (v.id !== "color-contrast") {
+          serious.push(v);
+          continue;
+        }
+        const kept = [];
+        for (const node of v.nodes ?? []) {
+          const residual = await isKitOrHostContrastResidual(
+            page,
+            node.target as string[] | undefined,
+          );
+          if (!residual) kept.push(node);
+        }
+        if (kept.length) serious.push({ ...v, nodes: kept });
+      }
       fs.writeFileSync(
         path.join(ARTIFACT_DIR, `w7-axe-${profile}.json`),
-        JSON.stringify({ filtered: serious, raw: results.violations }, null, 2),
+        JSON.stringify(
+          {
+            exceptions: AXE_COLOR_CONTRAST_EXCEPTIONS,
+            filtered: serious,
+            raw: results.violations,
+          },
+          null,
+          2,
+        ),
       );
       expect(
         serious,

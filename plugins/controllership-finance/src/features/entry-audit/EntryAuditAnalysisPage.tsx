@@ -689,7 +689,7 @@ export function EntryAuditAnalysisPage({
         actions={
           <>
             <CfActionButton
-              variant="default"
+              variant="primary"
               onClick={exportFile}
               disabled={exporting}
               softDisabled

@@ -48,6 +48,17 @@ Inventário completo em `/tmp/ui-review-u10/r3-axe-inventory.json`. **Nenhuma vi
 | home | color-contrast | `…delpi-ui-section-route-card__route-label-text` | **plugin-ui** — `SectionRouteCard` |
 | entry | color-contrast | `.delpi-ui-action-btn > .cf-action-with-icon` | **plugin-ui** — `ActionButton` (+ wrapper MFE) |
 
+### Residuais do kit (U13 X1 — não corrigir aqui)
+
+| Página | Seletor (closest) | Componente dono | FG / BG medidos |
+|---|---|---|---|
+| análise (hero Exportar / ações) | `.delpi-ui-action-btn` | **plugin-ui** — `ActionButton` | `#ffffff` / `#089bdb` (~3.12:1) |
+| análise (Tabela/Cards) | `.delpi-ui-segment-toggle` | **plugin-ui** — `SegmentToggle` | `#ffffff` / `#089bdb` (~3.12:1) |
+| home, entry, análise | `.delpi-ui-avatar`, `.cf-topbar-user` | **plugin-ui** — `Avatar` / TopBarUser | `#ffffff` / `#089bdb` |
+| home, entry, análise | `.avatar` | **host** — shell Portal | (host) |
+
+Decisão U13: Comercial usa `variant="primary"` na ação principal do hero; alinhamos «Exportar» como `primary` (composição do Portal). Contraste restante permanece residual do kit.
+
 ## PROD
 
 BFF `controllership-finance-api` publicada após U10. **Parar:** owner envia prints (Início, entrada, análise 01–15/11 desktop+mobile) e o tempo de abertura da análise.
