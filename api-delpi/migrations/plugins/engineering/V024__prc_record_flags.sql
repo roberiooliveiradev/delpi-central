@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS engineering.product_registration_record_flag_events (
         REFERENCES engineering.product_registration_records (id)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
     event_type       VARCHAR(32) NOT NULL
-        CHECK (event_type IN ('created', 'updated', 'resolved', 'removed')),
+        CHECK (event_type IN ('flag.created', 'flag.updated',
+                              'flag.resolved', 'flag.removed')),
     revision_number  INTEGER NOT NULL CHECK (revision_number >= 1),
     actor_subject    VARCHAR(200) NOT NULL,
     actor_display_name VARCHAR(255),
