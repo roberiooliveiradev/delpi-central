@@ -1,0 +1,95 @@
+name: ATLAS P2.2e Disposable Integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py"
+      - "it-portal-api/tests/integration/test_atlas_postgres_journal.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_receipt.py"
+      - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
+      - ".github/workflows/atlas-p22e-integration.yml"
+  pull_request:
+    paths:
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py"
+      - "it-portal-api/tests/integration/test_atlas_postgres_journal.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/deploy_host_receipt.py"
+      - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
+      - ".github/workflows/atlas-p22e-integration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgres:
+    name: Real PostgreSQL transactions, ephemeral only
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: atlas_ci_disposable
+          POSTGRES_USER: atlas_ci
+          POSTGRES_PASSWORD: ci-disposable-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U atlas_ci -d atlas_ci_disposable"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      ATLAS_DISPOSABLE_PG: "true"
+      ATLAS_ISOLATED_PG_DSN: "host=127.0.0.1 port=5432 dbname=atlas_ci_disposable user=atlas_ci password=ci-disposable-only connect_timeout=5"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exact backend test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r it-portal-api/requirements.txt
+          python -m pip install --disable-pip-version-check ./shared
+      - name: Verify SQL and concurrency on disposable PostgreSQL
+        run: |
+          PYTHONPATH=it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider it-portal-api/tests/integration/test_atlas_postgres_journal.py
+
+  disposable-docker:
+    name: Real Docker read-only inspection, ephemeral only
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ATLAS_DISPOSABLE_DOCKER: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install isolated Python test tools
+        run: python -m pip install --disable-pip-version-check pytest 'httpx>=0.27,<1'
+      - name: Start ephemeral, labeled pilot on CI host only
+        run: |
+          docker run -d --rm --name atlas-ci-pilot-hml \
+            --label com.docker.compose.project=atlas-ci-hml \
+            --label com.docker.compose.service=atlas-ci-pilot \
+            --health-cmd 'test -f /etc/os-release' \
+            --health-interval 1s --health-retries 10 \
+            alpine:3.20 sleep 120
+          for i in $(seq 1 30); do
+            state=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' atlas-ci-pilot-hml)
+            if [ "$state" = healthy ]; then exit 0; fi
+            sleep 1
+          done
+          echo 'Ephemeral CI Docker pilot failed health readiness'
+          exit 1
+      - name: Verify real Docker Engine GET and fail-closed receipt
+        run: |
+          PYTHONPATH=linux-ops-mcp PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider linux-ops-mcp/tests/test_atlas_docker_engine_ci.py
+      - name: Remove only the ephemeral pilot
+        if: always()
+        run: docker rm -f atlas-ci-pilot-hml >/dev/null 2>&1 || true
