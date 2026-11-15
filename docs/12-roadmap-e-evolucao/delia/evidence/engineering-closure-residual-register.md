@@ -2016,3 +2016,18 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-MODEL-CONTINUATION-CONVERGENCE` | `PROVEN_IN_REAL_EVAL` | vigente |
 
 **VERDICT EXECUTOR=`IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; `PARALLEL_DISCOVERY_IMPL=NOT_AUTHORIZED`.** **NEXT=`COORDINATION_C3_T2_R5_INT3_AND_PARALLEL_DISCOVERY_INDEPENDENT_REVIEW`.**
+
+### 2026-11-15 — VOCABULARY_RELIABILITY_AND_PARALLEL_GATE: estados atualizados
+
+| ID | Estado | Evidência (evals reais `e24e6526e6` + `40320fc5f3`, INT2 n=12 cada, arm B) |
+|---|---|---|
+| `T2-COMPREHENSION-DOTTED-ID-ANCHOR-FLAKE` | `PARTIAL_REMEDIATED / OPEN_LOW` | separação tipada (invocation_surface/selector_args/anchor_contract) → 0 dotted em 12 cenários + 1 residual na amostra seguinte (INT2_E2); flake não é mais dominante, recuperação bounded |
+| `T2-COMPREHENSION-GOAL-CLASS-VOCABULARY` (novo) | `REMEDIATED (real eval)` | enums `_GOAL_CLASSES`/`_DELIVERY_MODES` expostos 1× no bloco → `explain`/`aggregation` inventados eliminados (bad_gc=0 na amostra `40320fc5f3`) |
+| `CATALOG-FIELD-VOCABULARY-TRUNCATION` | `REMEDIATED` | vigente — `params.q` segue declarado; field vocabulary preservado |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | vigente — anchors válidas (`processes`, `process_document`, `transportadora`) aceitas sem pertinência mecânica demonstrada; zero falso SATISFIED em 48 cenários acumulados |
+| `T2-SEQUENTIAL-CATALOG-LIST` | `READY_FOR_COORDINATION_AUTHORIZATION` | gate completo: SYNC path provado, custo real em McpCapabilityProvider.list_groups, blocker ContextVar subject-bearer mapeado (bind_subject_bearer existente), recomendação ThreadPoolExecutor bounded flag-gated; não implementado |
+| `R3-MCP-AUTH-FLAKINESS` | `STABLE_IN_SAMPLE` | 0 mcp_authentication_failed em 24 cenários adicionais |
+| `DAVI-OWNER-AVAILABILITY` | `OPEN_ENV` | sem mudança |
+| `R3-INTRA-SCENARIO-TOKEN-VALIDITY` | `OPEN_LOW` | sem mudança |
+
+**VERDICT EXECUTOR=`IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; `PARALLEL_DISCOVERY_IMPL=NOT_AUTHORIZED`.** **NEXT=`COORDINATION_C3_T2_VOCABULARY_RELIABILITY_AND_PARALLEL_GATE_INDEPENDENT_REVIEW`.**
