@@ -1446,6 +1446,125 @@ declare module "@delpi/plugin-ui/index" {
   export function shouldTryAsyncClipboardImageRead(data: DataTransfer | null | undefined): boolean;
   export function readClipboardImageFiles(): Promise<File[]>;
   export function isRichTextClipboardImageFile(file: File): boolean;
+
+  /* ----- DashboardListTools (filtros/ordenação compartilhados) ----- */
+
+  export type DashboardSortDirection = "asc" | "desc";
+
+  export type DashboardSortLevel = {
+    field: string;
+    direction: DashboardSortDirection;
+  };
+
+  export type DashboardSortFieldOption = {
+    value: string;
+    label: string;
+  };
+
+  export type DashboardFilterRule = {
+    id: string;
+    field: string;
+    operator: string;
+    value: string;
+  };
+
+  export type DashboardFilterFieldDescriptor = {
+    key: string;
+    label: string;
+    operator: string;
+    operatorLabel?: string;
+    input: "select" | "text" | "date";
+    options?: readonly { value: string; label: string }[];
+    placeholderOption?: string;
+    searchable?: boolean;
+    defaultValue?: string;
+  };
+
+  export function newDashboardFilterRuleId(): string;
+
+  export type DashboardToolbarPopoverProps = {
+    label: ReactNode;
+    icon?: ReactNode;
+    ariaLabel?: string;
+    panelAriaLabel?: string;
+    panelTitle?: string;
+    panelHint?: string;
+    wide?: boolean;
+    children: (close: () => void) => ReactNode;
+  };
+
+  export function createDashboardToolbarPopover(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardToolbarPopoverProps>;
+
+  export type DashboardSortLevelsBuilderLabels = {
+    ariaLabel?: string;
+    fieldHint?: string;
+    directionLabel?: string;
+    directionHint?: string;
+    levelHint?: string;
+    levelAriaLabel?: (level: number) => string;
+    removeLevelHint?: string;
+    removeLevelAriaLabel?: (level: number) => string;
+    addLevelHint?: string;
+    addLevelLabel?: ReactNode;
+    addLevelAriaLabel?: string;
+    applyHint?: string;
+    applyLabel?: ReactNode;
+    applyAriaLabel?: string;
+    directionAscLabel?: string;
+    directionDescLabel?: string;
+  };
+
+  export type DashboardSortLevelsBuilderProps = {
+    levels: DashboardSortLevel[];
+    options: readonly DashboardSortFieldOption[];
+    onChange: (next: DashboardSortLevel[]) => void;
+    onApply: () => void;
+    maxLevels?: number;
+  };
+
+  export function createDashboardSortLevelsBuilder(config: {
+    prefix: string;
+    labels: DashboardSortLevelsBuilderLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardSortLevelsBuilderProps>;
+
+  export type DashboardFilterRulesBuilderLabels = {
+    ariaLabel?: string;
+    fieldLabel?: string;
+    fieldHint?: string;
+    operatorHint?: string;
+    valueLabel?: string;
+    valueHint?: string;
+    removeRuleHint?: string;
+    removeRuleAriaLabel?: string;
+    addRuleHint?: string;
+    addRuleLabel?: ReactNode;
+    addRuleAriaLabel?: string;
+    clearHint?: string;
+    clearLabel?: ReactNode;
+    clearAriaLabel?: string;
+    applyHint?: string;
+    applyLabel?: ReactNode;
+    applyAriaLabel?: string;
+  };
+
+  export type DashboardFilterRulesBuilderProps = {
+    rules: DashboardFilterRule[];
+    fields: readonly DashboardFilterFieldDescriptor[];
+    onChange: (next: DashboardFilterRule[]) => void;
+    onApply: () => void;
+    onClear: () => void;
+    createRuleId?: () => string;
+  };
+
+  export function createDashboardFilterRulesBuilder(config: {
+    prefix: string;
+    labels: DashboardFilterRulesBuilderLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardFilterRulesBuilderProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

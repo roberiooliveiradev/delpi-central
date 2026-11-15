@@ -23,6 +23,33 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+_LIST_SORT_KEYS = {
+    "created_at": lambda item: item.created_at or _utcnow(),
+    "updated_at": lambda item: item.updated_at or _utcnow(),
+    "request_number": lambda item: str(item.request_number or ""),
+    "status": lambda item: str(item.status or ""),
+    "type_code": lambda item: str(item.type_code or ""),
+    "branch": lambda item: str(item.branch_code or ""),
+}
+
+
+def _apply_list_sort(
+    items: list[Request],
+    sort_levels: list[tuple[str, str]] | None,
+) -> None:
+    from requests_app.domain.services.request_list_sort import (
+        effective_sort_levels,
+    )
+
+    # Deterministic tiebreak first, then stable sort last-level-first
+    # → lexicographic multi-key order with id breaking ties.
+    items.sort(key=lambda item: str(item.id or ""))
+    for field, direction in reversed(effective_sort_levels(sort_levels)):
+        items.sort(
+            key=_LIST_SORT_KEYS[field], reverse=(direction == "desc")
+        )
+
+
 class InMemoryRequestTypeRepository(RequestTypeRepositoryPort):
     def __init__(self, types: list[RequestType] | None = None) -> None:
         self._by_code: dict[str, RequestType] = {}
@@ -129,6 +156,7 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         status: str | None = None,
         branch_code: str | None = None,
         q: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -154,7 +182,7 @@ class InMemoryRequestRepository(RequestRepositoryPort):
                 )
             )
         ]
-        items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
+        _apply_list_sort(items, sort_levels)
         total = len(items)
         start = max(page - 1, 0) * page_size
         return [deepcopy(item) for item in items[start : start + page_size]], total
@@ -170,6 +198,7 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         q: str | None = None,
         completed_by_user_id: str | None = None,
         assignee_user_id: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -219,7 +248,7 @@ class InMemoryRequestRepository(RequestRepositoryPort):
             ):
                 continue
             items.append(item)
-        items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
+        _apply_list_sort(items, sort_levels)
         total = len(items)
         start = max(page - 1, 0) * page_size
         return [deepcopy(item) for item in items[start : start + page_size]], total

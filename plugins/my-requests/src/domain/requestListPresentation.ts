@@ -144,8 +144,11 @@ export function prcToUnifiedRow(
 export function mergeUnifiedRows(
   a: UnifiedRequestRow[],
   b: UnifiedRequestRow[],
+  direction: "asc" | "desc" = "desc",
 ): UnifiedRequestRow[] {
   return [...a, ...b].sort((x, y) =>
-    (y.createdAt || "").localeCompare(x.createdAt || ""),
+    direction === "asc"
+      ? (x.createdAt || "").localeCompare(y.createdAt || "")
+      : (y.createdAt || "").localeCompare(x.createdAt || ""),
   );
 }

@@ -183,6 +183,24 @@ export {
 } from "./DataListToolbar";
 
 export {
+  createDashboardFilterRulesBuilder,
+  createDashboardSortLevelsBuilder,
+  createDashboardToolbarPopover,
+  newDashboardFilterRuleId,
+  type DashboardFilterFieldDescriptor,
+  type DashboardFilterRule,
+  type DashboardFilterRulesBuilderLabels,
+  type DashboardFilterRulesBuilderProps,
+  type DashboardSortDirection,
+  type DashboardSortFieldOption,
+  type DashboardSortLevel,
+  type DashboardSortLevelsBuilderLabels,
+  type DashboardSortLevelsBuilderProps,
+  type DashboardToolbarPopoverLabels,
+  type DashboardToolbarPopoverProps,
+} from "./DashboardListTools";
+
+export {
   DataCardsGrid,
   DataCardsSortBar,
   createDashboardDataCardsGrid,

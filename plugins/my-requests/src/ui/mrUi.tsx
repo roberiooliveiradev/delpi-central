@@ -1,10 +1,15 @@
+import { createElement, type ComponentProps } from "react";
+
 import {
   attachmentPreviewStripBemClasses,
   createCompactPagination,
   createDashboardAttachmentPreviewStrip,
+  createDashboardDataCardsGrid,
+  createDashboardDataRecordCard,
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
   createDashboardFileDropzone,
+  createDashboardFilterRulesBuilder,
   createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardJourneyProgressBar,
@@ -13,14 +18,18 @@ import {
   createDashboardMessageThread,
   createDashboardNavigationCard,
   createDashboardPageHeader,
+  createDashboardPageHero,
   createDashboardProgressTracker,
   createDashboardRoomConversationShell,
+  createDashboardScopeChipBar,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
+  createDashboardSortLevelsBuilder,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createDashboardToolbarPopover,
   createDashboardTopBar,
   createDashboardUnderlineNav,
   createHostContainedModalShell,
@@ -71,6 +80,82 @@ export const MyRequestsSectionCard = createDashboardSectionCard({
 
 export const MyRequestsNavigationCard = createDashboardNavigationCard({
   classNames: navigationCardBemClasses(MR_UI_PREFIX),
+});
+
+/** Hero compacto — mesmo padrão do Helpdesk nas listas. */
+const MyRequestsPageHeroBase = createDashboardPageHero({ prefix: MR_UI_PREFIX });
+
+export function MyRequestsPageHero(
+  props: Omit<ComponentProps<typeof MyRequestsPageHeroBase>, "density">,
+) {
+  return createElement(MyRequestsPageHeroBase, { density: "compact", ...props });
+}
+
+export const MyRequestsScopeChipBar = createDashboardScopeChipBar({
+  prefix: MR_UI_PREFIX,
+});
+
+export const MyRequestsRecordCard = createDashboardDataRecordCard({
+  prefix: MR_UI_PREFIX,
+});
+
+export const MyRequestsDataCardsGrid = createDashboardDataCardsGrid({
+  prefix: MR_UI_PREFIX,
+});
+
+/** Popover ancorado de toolbar — mecânica do kit (portal + flip/clamp). */
+export const MyRequestsListToolbarPopover = createDashboardToolbarPopover({
+  prefix: MR_UI_PREFIX,
+  portalScopeClassName: MR_PORTAL_SCOPE,
+});
+
+/** Ordenação multinível — catálogo de campos vem do contrato da página. */
+export const MyRequestsSortLevelsBuilder = createDashboardSortLevelsBuilder({
+  prefix: MR_UI_PREFIX,
+  portalScopeClassName: MR_PORTAL_SCOPE,
+  labels: {
+    ariaLabel: "Ordenação da lista",
+    fieldHint: "Campo deste nível de ordenação.",
+    directionLabel: "Direção",
+    directionHint: "Ascendente (A→Z) ou descendente.",
+    levelHint: "Até três níveis. O primeiro é o que a grade destaca.",
+    levelAriaLabel: (level) => `Nível ${level}`,
+    removeLevelHint: "Remove este nível (precisa restar pelo menos um).",
+    removeLevelAriaLabel: (level) => `Remover nível ${level}`,
+    addLevelHint: "Inclui outro nível (máximo três).",
+    addLevelLabel: "Outro nível",
+    addLevelAriaLabel: "Adicionar nível de ordenação",
+    applyHint: "Grava a ordenação na URL e recarrega a lista.",
+    applyLabel: "Aplicar",
+    applyAriaLabel: "Aplicar ordenação",
+    directionAscLabel: "Ascendente",
+    directionDescLabel: "Descendente",
+  },
+});
+
+/** Builder de critérios AND — campos/operadores vêm do contrato da página. */
+export const MyRequestsFilterRulesBuilder = createDashboardFilterRulesBuilder({
+  prefix: MR_UI_PREFIX,
+  portalScopeClassName: MR_PORTAL_SCOPE,
+  labels: {
+    ariaLabel: "Construtor de filtros",
+    fieldLabel: "Campo",
+    fieldHint: "Campo do filtro. Critérios alinhados à grade.",
+    operatorHint: "Operação do critério — conforme o campo.",
+    valueLabel: "Valor",
+    valueHint: "Valor da regra. Vazio não entra ao aplicar.",
+    removeRuleHint: "Remove esta regra. A lista só muda depois de Aplicar.",
+    removeRuleAriaLabel: "Remover critério",
+    addRuleHint: "Inclui outro critério.",
+    addRuleLabel: "Adicionar critério",
+    addRuleAriaLabel: "Adicionar critério",
+    clearHint: "Apaga as regras do painel sem mudar a URL até aplicar.",
+    clearLabel: "Limpar",
+    clearAriaLabel: "Limpar critérios",
+    applyHint: "Aplica os critérios e atualiza a lista.",
+    applyLabel: "Aplicar filtros",
+    applyAriaLabel: "Aplicar filtros",
+  },
 });
 
 export const MyRequestsTopBar = createDashboardTopBar({

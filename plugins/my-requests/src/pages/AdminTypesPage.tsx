@@ -13,6 +13,7 @@ import type { RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsEmptyState,
   MyRequestsLoadingState,
+  MyRequestsPageHero,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   MyRequestsStatusBadge,
@@ -72,6 +73,15 @@ export function AdminTypesPage() {
 
   return (
     <AppShell title="Tipos de solicitação">
+      <MyRequestsPageHero
+        title="Administração"
+        description="Catálogo de tipos de solicitação e suas configurações (somente leitura)."
+        badge={
+          access.canManage && items.length
+            ? `${items.length} ${items.length === 1 ? "tipo" : "tipos"}`
+            : undefined
+        }
+      />
       <MyRequestsSectionCard title="Catálogo de tipos">
         <div data-help="admin" title={MY_REQUESTS_HELP_TOOLTIPS.admin.section}>
           {!access.canManage ? (

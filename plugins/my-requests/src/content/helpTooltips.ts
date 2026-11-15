@@ -12,6 +12,18 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     section:
       "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). As colunas «Assunto» e «Solicitante» ajudam a identificar o chamado sem abrir um a um (no tipo Abertura de Chamado, o assunto é o título informado na abertura). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação. A coluna «Concluída por» mostra quem fechou a solicitação; use o filtro Minhas para ver só as concluídas por você ou as atribuídas a você.",
   },
+  listUi: {
+    filterBuilderToggle:
+      "Abre o painel de filtros avançados: adicione critérios por campo (tipo, status, filial e, na fila, o escopo Minhas). Os critérios combinam em E lógico e só valem depois de Aplicar.",
+    sortBuilderToggle:
+      "Abre a ordenação. Na fila você pode empilhar até três níveis (o primeiro é o principal). Na lista Minhas, a ordenação só pode usar campos comuns às duas fontes de dados.",
+    statusChips:
+      "Atalhos de status: toque num chip para filtrar só aquele status; toque de novo para desfazer.",
+    viewLayout:
+      "Alterna entre a grade em tabela e a exibição em cartões.",
+    columns:
+      "Escolhe quais colunas aparecem e a ordem delas. A escolha fica gravada nesta página.",
+  },
   new: {
     section:
       "Escolha um card para abrir o formulário de um tipo que você pode criar. Tipos sem permissão de criação não aparecem. A filial, quando necessária, fica dentro do formulário. Você também pode abrir um tipo direto pelo link com ?type=.",

@@ -148,11 +148,12 @@ describe("Helpdesk list UX structural", () => {
   });
 
   it("lista de regras do builder tem teto de altura com scroll", () => {
-    const css = read("../index.css");
+    // Mecânica migrada p/ o kit: delpi-ui-filter-builder vive no plugin-ui.
+    const css = read("../../../plugin-ui/src/styles/dashboard-list-tools.css");
     expect(css).toMatch(
-      /\.helpdesk-filter-builder__rules[\s\S]*?max-height:\s*min\(12\.5rem,\s*32vh\)/,
+      /\.delpi-ui-filter-builder__rules[\s\S]*?max-height:\s*min\(12\.5rem,\s*32vh\)/,
     );
-    expect(css).toMatch(/\.helpdesk-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
+    expect(css).toMatch(/\.delpi-ui-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
   });
 
   it("paginação usa kit + HintAction no rodapé (sem ícones ? do HelpTooltip)", () => {
@@ -339,15 +340,15 @@ describe("Helpdesk list UX structural", () => {
     const sort = read("TicketListSortPopover.tsx");
     const assign = read("HelpdeskAssignPopover.tsx");
     const page = read("HelpdeskPage.tsx");
-    expect(filter).toContain('role="dialog"');
-    expect(filter).toContain("aria-expanded");
+    const ui = read("../ui/helpdeskUi.tsx");
+    // Popover ancorado generalizado no kit — o MFE consome a fábrica.
+    expect(ui).toContain("createDashboardToolbarPopover");
+    expect(ui).toContain("HelpdeskListToolbarPopover");
+    expect(filter).toContain("HelpdeskListToolbarPopover");
     expect(filter).toContain("TicketListFilterBuilder");
-    expect(filter).toContain("AnchoredPanelPortal");
-    expect(filter).toContain("onDismiss");
     expect(filter).not.toContain("onBeforeOpen");
-    expect(sort).toContain('role="dialog"');
+    expect(sort).toContain("HelpdeskListToolbarPopover");
     expect(sort).toContain("TicketListSortBuilder");
-    expect(sort).toContain("AnchoredPanelPortal");
     expect(sort).not.toContain("onBeforeOpen");
     expect(assign).toContain("AnchoredPanelPortal");
     expect(page).not.toContain("onBeforeOpen");

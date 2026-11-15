@@ -57,6 +57,7 @@ class RequestRepositoryPort(ABC):
         status: str | None = None,
         branch_code: str | None = None,
         q: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]: ...
@@ -73,6 +74,7 @@ class RequestRepositoryPort(ABC):
         q: str | None = None,
         completed_by_user_id: str | None = None,
         assignee_user_id: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]: ...

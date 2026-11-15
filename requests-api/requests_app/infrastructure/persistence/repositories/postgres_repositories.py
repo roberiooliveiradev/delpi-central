@@ -25,6 +25,29 @@ from requests_app.infrastructure.persistence.plugins_postgres_connection import 
 
 _SCHEMA = "my_requests"
 
+# Whitelisted ORDER BY columns for list_mine/list_work_queue sort levels.
+_LIST_SORT_COLUMNS = {
+    "created_at": "r.created_at",
+    "updated_at": "r.updated_at",
+    "request_number": "r.request_number",
+    "status": "r.status",
+    "type_code": "t.code",
+    "branch": "r.branch_code",
+}
+
+
+def _list_order_by(sort_levels: list[tuple[str, str]] | None) -> str:
+    from requests_app.domain.services.request_list_sort import (
+        effective_sort_levels,
+    )
+
+    parts = [
+        f"{_LIST_SORT_COLUMNS[field]} {direction.upper()}"
+        for field, direction in effective_sort_levels(sort_levels)
+    ]
+    parts.append("r.id ASC")
+    return "ORDER BY " + ", ".join(parts)
+
 
 def _row_to_type(row: dict[str, Any]) -> RequestType:
     workflow = row.get("workflow_definition") or {}
@@ -297,6 +320,7 @@ class PostgresRequestRepository(RequestRepositoryPort):
         status: str | None = None,
         branch_code: str | None = None,
         q: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -341,7 +365,7 @@ class PostgresRequestRepository(RequestRepositoryPort):
         FROM {_SCHEMA}.requests r
         JOIN {_SCHEMA}.request_types t ON t.id = r.request_type_id
         WHERE {where_sql}
-        ORDER BY r.created_at DESC
+        {_list_order_by(sort_levels)}
         LIMIT %s OFFSET %s
         """
         offset = max(page - 1, 0) * page_size
@@ -369,6 +393,7 @@ class PostgresRequestRepository(RequestRepositoryPort):
         q: str | None = None,
         completed_by_user_id: str | None = None,
         assignee_user_id: str | None = None,
+        sort_levels: list[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -438,7 +463,7 @@ class PostgresRequestRepository(RequestRepositoryPort):
         FROM {_SCHEMA}.requests r
         JOIN {_SCHEMA}.request_types t ON t.id = r.request_type_id
         WHERE {where_sql}
-        ORDER BY r.created_at DESC
+        {_list_order_by(sort_levels)}
         LIMIT %s OFFSET %s
         """
         offset = max(page - 1, 0) * page_size

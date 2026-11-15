@@ -10,22 +10,32 @@ import { describe, expect, it } from "vitest";
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(resolve(dir, "MinePage.tsx"), "utf-8");
+const shell = readFileSync(
+  resolve(dir, "../components/RequestListShell.tsx"),
+  "utf-8",
+);
 const domain = readFileSync(
   resolve(dir, "../domain/requestListPresentation.ts"),
   "utf-8",
 );
 
 describe("MinePage — tabela unificada requests-api + PRC", () => {
-  it("renderiza UMA DataTable para as duas origens", () => {
-    expect(src.match(/<DataTable[\s>]/g)).toHaveLength(1);
+  it("renderiza UMA seção de dados do kit para as duas origens", () => {
+    /* MinePage compõe o shell compartilhado; o shell renderiza
+     * exatamente uma MyRequestsDataTableSection (kit Plugin UI). */
+    expect(src).toContain("<RequestListShell");
+    expect(src.match(/<RequestListShell[\s>]/g)).toHaveLength(1);
+    expect(
+      shell.match(/<MyRequestsDataTableSection[\s>]/g),
+    ).toHaveLength(1);
   });
 
   it("não renderiza casos PRC como parágrafos nem card separado", () => {
     expect(src).not.toContain("prcItems.map");
     expect(src).not.toMatch(/prcItems\.map\([^)]*<p>/);
     expect(src).not.toContain("Cadastro de produtos e matérias-primas");
-    /* um único card-section (abertura + fechamento) — sem card PRC extra */
-    expect(src.match(/<MyRequestsSectionCard/g)!.length).toBe(1);
+    /* sem card-section PRC extra — a listagem é uma seção única do kit */
+    expect(src.match(/<MyRequestsSectionCard/g) ?? []).toHaveLength(0);
   });
 
   it("usa o view model unificado (UnifiedRequestRow) com fonte e destino", () => {

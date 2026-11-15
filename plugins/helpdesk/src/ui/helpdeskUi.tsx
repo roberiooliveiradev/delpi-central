@@ -33,6 +33,7 @@ import {
   createDashboardStatusBadge,
   createDashboardTextAreaField,
   createDashboardTextField,
+  createDashboardToolbarPopover,
   createFilterBarShell,
   createHostContainedDrawerShell,
   DataTable,
@@ -626,6 +627,12 @@ const helpdeskFilters = createDashboardFiltersKit({
   prefix: PREFIX,
   labels: { filtersAriaLabel: "Filtros dos chamados" },
   portalScopeClassName: "dashboard-helpdesk",
+});
+
+/** Popover ancorado de toolbar da lista — mecânica do kit (portal + flip/clamp + dismiss). */
+export const HelpdeskListToolbarPopover = createDashboardToolbarPopover({
+  prefix: PREFIX,
+  portalScopeClassName: HELPDESK_PORTAL_SCOPE,
 });
 
 export const HelpdeskFiltersRow = helpdeskFilters.FiltersRow;

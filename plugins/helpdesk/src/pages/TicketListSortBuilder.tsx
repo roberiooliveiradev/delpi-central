@@ -1,12 +1,8 @@
-import { Check, Plus, Trash2 } from "lucide-react";
-import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
+import { createDashboardSortLevelsBuilder } from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
-import {
-  type TicketListSortLevel,
-} from "../presentation/ticketListViewModel";
+import { type TicketListSortLevel } from "../presentation/ticketListViewModel";
 import { TICKET_LIST_SORTABLE_COLUMNS } from "../presentation/ticketView";
-import { HelpdeskFilterSelect, HelpdeskIconButton } from "../ui/helpdeskUi";
 
 const SORT_OPTIONS = TICKET_LIST_SORTABLE_COLUMNS.map((key) => ({
   value: key,
@@ -36,6 +32,32 @@ const SORT_OPTIONS = TICKET_LIST_SORTABLE_COLUMNS.map((key) => ({
                         : key,
 }));
 
+const help = helpTooltips.sortBuilder;
+
+/** Ordenação multinível — mecânica do kit; catálogo/labels do domínio. */
+const SortLevelsBuilder = createDashboardSortLevelsBuilder({
+  prefix: "helpdesk",
+  portalScopeClassName: "dashboard-helpdesk",
+  labels: {
+    ariaLabel: "Ordenação da lista",
+    fieldHint: help.field,
+    directionLabel: "Direção",
+    directionHint: help.direction,
+    levelHint: help.panel,
+    levelAriaLabel: (level) => `Nível ${level}`,
+    removeLevelHint: help.removeLevel,
+    removeLevelAriaLabel: (level) => `Remover nível ${level}`,
+    addLevelHint: help.addLevel,
+    addLevelLabel: "Outro nível",
+    addLevelAriaLabel: "Outra ordenação",
+    applyHint: help.apply,
+    applyLabel: "Aplicar",
+    applyAriaLabel: "Aplicar ordenação",
+    directionAscLabel: "Ascendente",
+    directionDescLabel: "Descendente",
+  },
+});
+
 export function TicketListSortBuilder({
   levels,
   onChange,
@@ -45,97 +67,17 @@ export function TicketListSortBuilder({
   onChange: (next: TicketListSortLevel[]) => void;
   onApply: () => void;
 }) {
-  const help = helpTooltips.sortBuilder;
-
-  function updateLevel(index: number, patch: Partial<TicketListSortLevel>) {
-    onChange(levels.map((level, i) => (i === index ? { ...level, ...patch } : level)));
-  }
-
   return (
-    <div className="helpdesk-sort-builder" aria-label="Ordenação da lista">
-      <ul className="helpdesk-sort-builder__levels">
-        {levels.map((level, index) => (
-          <li key={`${level.field}-${index}`} className="helpdesk-sort-builder__level">
-            <HintAction hint={help.panel} ariaLabel={`Ajuda: nível ${index + 1}`}>
-              <span className="helpdesk-sort-builder__ordinal" aria-hidden>
-                {index + 1}
-              </span>
-            </HintAction>
-            <HelpdeskFilterSelect
-              label={`Nível ${index + 1}`}
-              hint={help.field}
-              value={level.field}
-              searchable
-              onChange={(field) =>
-                updateLevel(index, { field: field as TicketListSortLevel["field"] })
-              }
-              options={SORT_OPTIONS}
-            />
-            <HelpdeskFilterSelect
-              label="Direção"
-              hint={help.direction}
-              value={level.direction}
-              onChange={(direction) =>
-                updateLevel(index, { direction: direction === "asc" ? "asc" : "desc" })
-              }
-              options={[
-                { value: "desc", label: "Descendente" },
-                { value: "asc", label: "Ascendente" },
-              ]}
-            />
-            {levels.length > 1 ? (
-              <span className="helpdesk-sort-builder__remove">
-                <HintAction hint={help.removeLevel} ariaLabel={`Ajuda: Remover nível ${index + 1}`}>
-                  <HelpdeskIconButton
-                    aria-label={`Remover nível ${index + 1}`}
-                    onClick={() => onChange(levels.filter((_, i) => i !== index))}
-                  >
-                    <Trash2 size={14} aria-hidden />
-                  </HelpdeskIconButton>
-                </HintAction>
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      <div className="helpdesk-sort-builder__actions">
-        {levels.length < 3 ? (
-          <HintAction hint={help.addLevel} ariaLabel="Ajuda: Outra ordenação">
-            <ActionButton
-              variant="ghost"
-              type="button"
-              aria-label="Outra ordenação"
-              onClick={() =>
-                onChange([
-                  ...levels,
-                  {
-                    field: SORT_OPTIONS.find((option) => !levels.some((l) => l.field === option.value))
-                      ?.value as TicketListSortLevel["field"],
-                    direction: "asc",
-                  },
-                ])
-              }
-            >
-              <Plus size={16} aria-hidden />
-              Outro nível
-            </ActionButton>
-          </HintAction>
-        ) : null}
-        <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar ordenação">
-          <ActionButton
-            variant="primary"
-            type="button"
-            aria-label="Aplicar ordenação"
-            onClick={() => {
-              onChange(levels);
-              onApply();
-            }}
-          >
-            <Check size={16} aria-hidden />
-            Aplicar
-          </ActionButton>
-        </HintAction>
-      </div>
-    </div>
+    <SortLevelsBuilder
+      levels={levels}
+      options={SORT_OPTIONS}
+      onChange={(next) =>
+        onChange(next.map((level) => ({
+          field: level.field as TicketListSortLevel["field"],
+          direction: level.direction,
+        })))
+      }
+      onApply={onApply}
+    />
   );
 }

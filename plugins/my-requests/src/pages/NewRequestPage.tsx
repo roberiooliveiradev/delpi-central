@@ -23,6 +23,7 @@ import {
   MyRequestsFormActions,
   MyRequestsLoadingState,
   MyRequestsNavigationCard,
+  MyRequestsPageHero,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
 } from "../ui/mrUi";
@@ -139,6 +140,15 @@ export function NewRequestPage() {
 
   return (
     <AppShell title="Nova solicitação">
+      <MyRequestsPageHero
+        title="Nova solicitação"
+        description="Escolha o tipo de solicitação para abrir o formulário guiado."
+        badge={
+          creatableTypes.length
+            ? `${creatableTypes.length} ${creatableTypes.length === 1 ? "tipo" : "tipos"}`
+            : undefined
+        }
+      />
       <MyRequestsSectionCard title="Escolha o tipo" hint={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
         <div data-help="new">
           {error ? (

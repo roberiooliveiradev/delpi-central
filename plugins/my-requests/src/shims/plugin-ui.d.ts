@@ -1607,4 +1607,338 @@ declare module "@delpi/plugin-ui/index" {
   export function parseEngineeringRealtimeMessage(
     raw: string,
   ): EngineeringRealtimeMessage | null;
+
+  /* ----- DashboardListTools (filtros/ordenação compartilhados) ----- */
+
+  export type DashboardSortDirection = "asc" | "desc";
+
+  export type DashboardSortLevel = {
+    field: string;
+    direction: DashboardSortDirection;
+  };
+
+  export type DashboardSortFieldOption = {
+    value: string;
+    label: string;
+  };
+
+  export type DashboardFilterRule = {
+    id: string;
+    field: string;
+    operator: string;
+    value: string;
+  };
+
+  export type DashboardFilterFieldDescriptor = {
+    key: string;
+    label: string;
+    operator: string;
+    operatorLabel?: string;
+    input: "select" | "text" | "date";
+    options?: readonly { value: string; label: string }[];
+    placeholderOption?: string;
+    searchable?: boolean;
+    defaultValue?: string;
+  };
+
+  export function newDashboardFilterRuleId(): string;
+
+  export type DashboardToolbarPopoverProps = {
+    label: ReactNode;
+    icon?: ReactNode;
+    ariaLabel?: string;
+    panelAriaLabel?: string;
+    panelTitle?: string;
+    panelHint?: string;
+    wide?: boolean;
+    children: (close: () => void) => ReactNode;
+  };
+
+  export function createDashboardToolbarPopover(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardToolbarPopoverProps>;
+
+  export type DashboardSortLevelsBuilderLabels = {
+    ariaLabel?: string;
+    fieldHint?: string;
+    directionLabel?: string;
+    directionHint?: string;
+    levelHint?: string;
+    levelAriaLabel?: (level: number) => string;
+    removeLevelHint?: string;
+    removeLevelAriaLabel?: (level: number) => string;
+    addLevelHint?: string;
+    addLevelLabel?: ReactNode;
+    addLevelAriaLabel?: string;
+    applyHint?: string;
+    applyLabel?: ReactNode;
+    applyAriaLabel?: string;
+    directionAscLabel?: string;
+    directionDescLabel?: string;
+  };
+
+  export type DashboardSortLevelsBuilderProps = {
+    levels: DashboardSortLevel[];
+    options: readonly DashboardSortFieldOption[];
+    onChange: (next: DashboardSortLevel[]) => void;
+    onApply: () => void;
+    maxLevels?: number;
+  };
+
+  export function createDashboardSortLevelsBuilder(config: {
+    prefix: string;
+    labels: DashboardSortLevelsBuilderLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardSortLevelsBuilderProps>;
+
+  export type DashboardFilterRulesBuilderLabels = {
+    ariaLabel?: string;
+    fieldLabel?: string;
+    fieldHint?: string;
+    operatorHint?: string;
+    valueLabel?: string;
+    valueHint?: string;
+    removeRuleHint?: string;
+    removeRuleAriaLabel?: string;
+    addRuleHint?: string;
+    addRuleLabel?: ReactNode;
+    addRuleAriaLabel?: string;
+    clearHint?: string;
+    clearLabel?: ReactNode;
+    clearAriaLabel?: string;
+    applyHint?: string;
+    applyLabel?: ReactNode;
+    applyAriaLabel?: string;
+  };
+
+  export type DashboardFilterRulesBuilderProps = {
+    rules: DashboardFilterRule[];
+    fields: readonly DashboardFilterFieldDescriptor[];
+    onChange: (next: DashboardFilterRule[]) => void;
+    onApply: () => void;
+    onClear: () => void;
+    createRuleId?: () => string;
+  };
+
+  export function createDashboardFilterRulesBuilder(config: {
+    prefix: string;
+    labels: DashboardFilterRulesBuilderLabels;
+    portalScopeClassName?: string;
+  }): ComponentType<DashboardFilterRulesBuilderProps>;
+
+  /* ----- Hero, chips de escopo, cards ----- */
+
+  export type ScopeChip = {
+    id: string;
+    label: ReactNode;
+    active?: boolean;
+    onSelect?: () => void;
+    onRemove?: () => void;
+    removeAriaLabel?: string;
+  };
+
+  export type DashboardScopeChipBarProps = {
+    chips: ScopeChip[];
+    label?: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+    onClearAll?: () => void;
+    clearAllLabel?: string;
+    emptyHint?: ReactNode;
+  };
+
+  export function createDashboardScopeChipBar(config: {
+    prefix: string;
+  }): ComponentType<DashboardScopeChipBarProps>;
+
+  export type DashboardPageHeroProps = {
+    eyebrow?: ReactNode;
+    title: ReactNode;
+    description?: ReactNode;
+    badge?: ReactNode;
+    actions?: ReactNode;
+    children?: ReactNode;
+    density?: "default" | "compact";
+    variant?: "surface" | "immersive";
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardPageHero(config: {
+    prefix: string;
+  }): ComponentType<DashboardPageHeroProps>;
+
+  export type DataRecordCardField = {
+    id: string;
+    label: ReactNode;
+    value: ReactNode;
+    present?: boolean;
+  };
+
+  export type DashboardDataRecordCardProps = {
+    leading?: ReactNode;
+    title: ReactNode;
+    subtitle?: ReactNode;
+    status?: ReactNode;
+    fields?: DataRecordCardField[];
+    context?: ReactNode;
+    href?: string;
+    onNavigate?: (event: MouseEvent) => void;
+    ariaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardDataRecordCard(config: {
+    prefix: string;
+  }): ComponentType<DashboardDataRecordCardProps>;
+
+  export type DashboardDataCardsGridProps = {
+    children?: ReactNode;
+    empty?: ReactNode;
+    ariaLabel?: string;
+    className?: string;
+    style?: CSSProperties;
+  };
+
+  export function createDashboardDataCardsGrid(config: {
+    prefix: string;
+  }): ComponentType<DashboardDataCardsGridProps>;
+
+  /* ----- Kit DataTable (seção com toolbar/paginação/cards) ----- */
+
+  export type ServerPaginationConfig = {
+    page: number;
+    pageSize: number;
+    total: number;
+    onPageChange: (page: number) => void;
+  };
+
+  export type ServerSortConfig = {
+    sortKey: string | null;
+    sortDirection: "asc" | "desc";
+    onSortChange: (columnKey: string) => void;
+  };
+
+  export type ServerSearchConfig = {
+    value: string;
+    onChange: (value: string) => void;
+  };
+
+  export type DashboardDataTableSectionProps<T> = {
+    title: string;
+    titleHint?: string;
+    hint?: string;
+    hideRecordsCount?: boolean;
+    columns: DataTableColumn<T>[];
+    rows: T[];
+    rowKey: (row: T) => string;
+    loading?: boolean;
+    refreshing?: boolean;
+    emptyMessage?: string;
+    pageSize?: number;
+    searchPlaceholder?: string;
+    searchHint?: string;
+    getSearchText?: (row: T) => string;
+    hideSearch?: boolean;
+    serverPagination?: ServerPaginationConfig;
+    serverSort?: ServerSortConfig;
+    serverSearch?: ServerSearchConfig;
+    toolbarExtra?: ReactNode;
+    toolbarLeading?: ReactNode;
+    toolbarFilters?: ReactNode;
+    columnPreferencesKey?: string;
+    defaultColumnVisibility?: Record<string, boolean>;
+    viewLayoutPreferencesKey?: string;
+    viewLayoutDefaultMode?: "table" | "cards" | "board";
+    renderCard?: (row: T) => ReactNode;
+    onRowClick?: (row: T) => void;
+    hidePaginationWhenSinglePage?: boolean;
+    unframed?: boolean;
+  };
+
+  export type PaginationLabels = {
+    navigationAriaLabel: string;
+    pagesAriaLabel: string;
+    previous: string;
+    next: string;
+    info: (args: {
+      rangeStart: number;
+      rangeEnd: number;
+      total: number;
+      page: number;
+      totalPages: number;
+    }) => string;
+    jumpLabel: string;
+    jumpInputAriaLabel: string;
+    jumpError: (reason: string, totalPages: number) => string;
+  };
+
+  export function createDashboardPaginationKit(config: {
+    prefix: string;
+    labels: PaginationLabels;
+    tablePageSizeLabels: { label: string; selectAriaLabel: string };
+    hints?: Record<string, string | undefined>;
+  }): {
+    Pagination: ComponentType<{
+      page: number;
+      pageSize: number;
+      total: number;
+      onPageChange: (page: number) => void;
+    }>;
+    TablePageSizeSelect: ComponentType<{
+      pageSize: number;
+      pageSizeOptions?: readonly number[];
+      onPageSizeChange: (pageSize: number) => void;
+    }>;
+  };
+
+  export function createDashboardLoadingActivityCard(config: {
+    prefix: string;
+    labels: Record<string, unknown>;
+    withCopyWrapper?: boolean;
+    block?: string;
+    defaultTone?: string;
+  }): ComponentType<{
+    title: string;
+    description: string;
+    variant?: "compact" | "panel";
+    sticky?: boolean;
+    progressPercent?: number;
+  }>;
+
+  export type RequestProgress = {
+    completed: number;
+    total: number;
+  };
+
+  export function createDashboardDataTableKit(config: {
+    prefix: string;
+    labels: Record<string, unknown>;
+    LoadingActivityCard: ComponentType<{
+      title: string;
+      description: string;
+      variant?: "compact" | "panel";
+      sticky?: boolean;
+      progressPercent?: number;
+    }>;
+    Pagination: ComponentType<{
+      page: number;
+      pageSize: number;
+      total: number;
+      onPageChange: (page: number) => void;
+    }>;
+    TablePageSizeSelect: ComponentType<{
+      pageSize: number;
+      pageSizeOptions?: readonly number[];
+      onPageSizeChange: (pageSize: number) => void;
+    }>;
+    tablePageSizeOptions: readonly number[];
+    useLoadingProgress: (active: boolean, requestProgress: RequestProgress) => number;
+    useTrackedSingleFetchProgress: (active: boolean) => RequestProgress;
+    defaultPageSize?: number;
+  }): {
+    DataTable: <T>(props: DataTableProps<T>) => ReactElement;
+    DataTableSection: <T>(props: DashboardDataTableSectionProps<T>) => ReactElement;
+  };
 }

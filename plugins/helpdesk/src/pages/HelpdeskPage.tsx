@@ -911,7 +911,7 @@ export function CreateItemsSection({
     if (!q) return;
     setRelatedSearching(true);
     setRelatedError(null);
-    void listTickets({ q, page_size: "8" })
+    void listTickets({ q, page_size: 8 })
       .then((payload) => {
         setRelatedResults(payload.items ?? []);
         setRelatedSearched(true);
@@ -964,7 +964,7 @@ export function CreateItemsSection({
                 label="Buscar equipamento"
                 value={query}
                 onChange={onQueryChange}
-                ariaLabel="Buscar equipamento por nome, serial ou inventário"
+                hint="Buscar equipamento por nome, serial ou inventário"
               />
               <ActionButton
                 type="button"
@@ -1035,7 +1035,7 @@ export function CreateItemsSection({
               label="Chamado relacionado"
               value={relatedInput}
               onChange={onRelatedInputChange}
-              ariaLabel="Buscar chamado por número ou título"
+              hint="Buscar chamado por número ou título"
             />
             <ActionButton
               type="button"
@@ -1931,15 +1931,30 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   /** Bumps resolve identity after IDB seed (create parity). */
   const [pendingHydrated, setPendingHydrated] = useState(0);
   const myPhotoUrl = useMyPersonProfilePhoto();
-  const conversationDirectoryIds = useMemo(() => {
-    const ids = new Set<string>();
+  const conversationPhotoEntries = useMemo(() => {
+    const entries: { directoryUserId?: string; hasPhoto?: boolean }[] = [];
     const requesterId = (ticket?.requester_directory_user_id || "").trim();
     const assignedId = (ticket?.assigned_directory_user_id || "").trim();
-    if (requesterId) ids.add(requesterId);
-    if (assignedId) ids.add(assignedId);
-    return [...ids];
-  }, [ticket?.requester_directory_user_id, ticket?.assigned_directory_user_id]);
-  const { photoFor: directoryPhotoFor } = useDirectoryUserPhotoUrls(conversationDirectoryIds);
+    if (requesterId) {
+      entries.push({
+        directoryUserId: requesterId,
+        hasPhoto: Boolean(ticket?.requester_has_photo),
+      });
+    }
+    if (assignedId) {
+      entries.push({
+        directoryUserId: assignedId,
+        hasPhoto: Boolean(ticket?.assigned_has_photo),
+      });
+    }
+    return entries;
+  }, [
+    ticket?.requester_directory_user_id,
+    ticket?.assigned_directory_user_id,
+    ticket?.requester_has_photo,
+    ticket?.assigned_has_photo,
+  ]);
+  const { photoFor: directoryPhotoFor } = useDirectoryUserPhotoUrls(conversationPhotoEntries);
   const requesterPhotoFor = directoryPhotoFor;
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
   /** Explicit per-id user intent — MIME type never decides attachment vs inline. */

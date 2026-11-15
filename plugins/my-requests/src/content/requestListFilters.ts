@@ -13,6 +13,8 @@ export type RequestListFiltersState = {
   status: string;
   branch: string;
   mineScope: "" | "completed_by_me" | "assigned_to_me";
+  /** Ordenação serializada `field:dir[,field:dir]` (requests-api) — "" = padrão. */
+  sort: string;
   page: number;
 };
 

@@ -79,6 +79,15 @@ def _normalize_branch(raw: Any) -> str | None:
     return text or None
 
 
+def _parse_sort(sort: str | None) -> list[tuple[str, str]] | None:
+    from requests_app.domain.services.request_list_sort import parse_list_sort
+
+    try:
+        return parse_list_sort(sort)
+    except ValueError:
+        raise ApplicationError(code="invalid_sort", status_code=422)
+
+
 def _require_idempotency_key(idempotency_key: str | None) -> str:
     key = str(idempotency_key or "").strip()
     if not key:
@@ -374,6 +383,7 @@ class ListMyRequestsUseCase:
         status: str | None = None,
         branch_code: str | None = None,
         q: str | None = None,
+        sort: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -390,6 +400,7 @@ class ListMyRequestsUseCase:
             status=status,
             branch_code=branch_code,
             q=q,
+            sort_levels=_parse_sort(sort),
             page=page,
             page_size=page_size,
         )
@@ -427,6 +438,7 @@ class ListWorkQueueRequestsUseCase:
         branch_code: str | None = None,
         q: str | None = None,
         mine_scope: str | None = None,
+        sort: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -488,6 +500,7 @@ class ListWorkQueueRequestsUseCase:
             q=q,
             completed_by_user_id=completed_by_user_id,
             assignee_user_id=assignee_user_id,
+            sort_levels=_parse_sort(sort),
             page=page,
             page_size=page_size,
         )

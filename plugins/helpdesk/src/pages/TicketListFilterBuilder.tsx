@@ -1,21 +1,53 @@
-import { Eraser, Plus, Trash2 } from "lucide-react";
-import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
+import { Eraser } from "lucide-react";
+import {
+  createDashboardFilterRulesBuilder,
+  type DashboardFilterFieldDescriptor,
+  type DashboardFilterRule,
+} from "@delpi/plugin-ui/index";
 
 import { helpTooltips } from "../content/helpTooltips";
 import {
-  newFilterRuleId,
   TICKET_LIST_BUILDER_FIELDS,
+  type ListFilterOperator,
+  type TicketListFilterFieldKey,
   type TicketListFilterGroup,
   type TicketListFilterRule,
 } from "../presentation/ticketListViewModel";
 import { TICKET_STATUS_FILTERS } from "../presentation/ticketView";
-import {
-  HelpdeskFilterInput,
-  HelpdeskFilterSelect,
-  HelpdeskIconButton,
-} from "../ui/helpdeskUi";
 
 type CatalogOption = { id: number; name: string };
+
+const help = helpTooltips.filterBuilder;
+
+/** Builder de critérios AND — mecânica do kit; catálogo/labels do domínio. */
+const FilterRulesBuilder = createDashboardFilterRulesBuilder({
+  prefix: "helpdesk",
+  portalScopeClassName: "dashboard-helpdesk",
+  labels: {
+    ariaLabel: "Construtor de filtros",
+    fieldLabel: "Campo",
+    fieldHint: help.field,
+    operatorHint: help.operator,
+    valueLabel: "Valor",
+    valueHint: help.value,
+    removeRuleHint: help.removeRule,
+    removeRuleAriaLabel: "Remover regra",
+    addRuleHint: help.addRule,
+    addRuleLabel: "Adicionar critério",
+    addRuleAriaLabel: "Adicionar critério",
+    clearHint: help.clear,
+    clearLabel: (
+      <>
+        <Eraser size={16} aria-hidden />
+        Limpar
+      </>
+    ),
+    clearAriaLabel: "Limpar",
+    applyHint: help.apply,
+    applyLabel: "Aplicar filtros",
+    applyAriaLabel: "Aplicar filtros",
+  },
+});
 
 /**
  * Visual AND builder for solicitante filters.
@@ -40,187 +72,125 @@ export function TicketListFilterBuilder({
   assignees: CatalogOption[];
   requesters: CatalogOption[];
 }) {
-  const help = helpTooltips.filterBuilder;
+  const fields: DashboardFilterFieldDescriptor[] = TICKET_LIST_BUILDER_FIELDS.map(
+    (meta) => {
+      const base = {
+        key: meta.key,
+        label: meta.label,
+        operator: meta.operator,
+      };
+      if (meta.input === "status") {
+        return {
+          ...base,
+          input: "select" as const,
+          searchable: true,
+          options: [...TICKET_STATUS_FILTERS],
+        };
+      }
+      if (meta.input === "urgency") {
+        return {
+          ...base,
+          input: "select" as const,
+          searchable: true,
+          placeholderOption: "Todas",
+          options: urgencies.map((item) => ({
+            value: String(item.id),
+            label: item.name,
+          })),
+        };
+      }
+      if (meta.input === "category") {
+        return {
+          ...base,
+          input: "select" as const,
+          searchable: true,
+          placeholderOption: "Todas",
+          options: categories.map((item) => ({
+            value: String(item.id),
+            label: item.name,
+          })),
+        };
+      }
+      if (meta.input === "assignee") {
+        return {
+          ...base,
+          input: "select" as const,
+          searchable: true,
+          placeholderOption: "Todos",
+          options: assignees.map((item) => ({
+            value: String(item.id),
+            label: item.name,
+          })),
+        };
+      }
+      if (meta.input === "requester") {
+        return {
+          ...base,
+          input: "select" as const,
+          searchable: true,
+          placeholderOption: "Todos",
+          options: requesters.map((item) => ({
+            value: String(item.id),
+            label: item.name,
+          })),
+        };
+      }
+      if (meta.input === "mine") {
+        return {
+          ...base,
+          input: "select" as const,
+          defaultValue: "1",
+          options: [
+            { value: "1", label: "Somente os meus" },
+            { value: "0", label: "Todos os visíveis" },
+          ],
+        };
+      }
+      if (meta.input === "date") {
+        return { ...base, input: "date" as const };
+      }
+      return { ...base, input: "text" as const };
+    },
+  );
 
-  function updateRule(ruleId: string, patch: Partial<TicketListFilterRule>) {
+  /* O critério "mine" guarda "1"/"" no modelo e exibe "1"/"0" no select. */
+  const toUiRules = (): DashboardFilterRule[] =>
+    group.rules.map((rule) => {
+      const meta = TICKET_LIST_BUILDER_FIELDS.find(
+        (item) => item.key === rule.field,
+      );
+      if (meta?.input === "mine") {
+        return { ...rule, value: rule.value === "1" ? "1" : "0" };
+      }
+      return rule;
+    });
+
+  const handleChange = (next: DashboardFilterRule[]) =>
     onChange({
       ...group,
-      rules: group.rules.map((rule) => (rule.id === ruleId ? { ...rule, ...patch } : rule)),
+      rules: next.map((rule): TicketListFilterRule => {
+        const typed: TicketListFilterRule = {
+          ...rule,
+          field: rule.field as TicketListFilterFieldKey,
+          operator: rule.operator as ListFilterOperator,
+        };
+        const meta = TICKET_LIST_BUILDER_FIELDS.find(
+          (item) => item.key === rule.field,
+        );
+        if (meta?.input === "mine") {
+          return { ...typed, value: rule.value === "1" ? "1" : "" };
+        }
+        return typed;
+      }),
     });
-  }
-
-  function removeRule(ruleId: string) {
-    onChange({ ...group, rules: group.rules.filter((rule) => rule.id !== ruleId) });
-  }
-
-  function addRule() {
-    const field = TICKET_LIST_BUILDER_FIELDS[0];
-    onChange({
-      ...group,
-      rules: [
-        ...group.rules,
-        {
-          id: newFilterRuleId(),
-          field: field.key,
-          operator: field.operator,
-          value: "",
-        },
-      ],
-    });
-  }
 
   return (
-    <div className="helpdesk-filter-builder" aria-label="Construtor de filtros">
-      <ul className="helpdesk-filter-builder__rules">
-        {group.rules.map((rule) => {
-          const meta =
-            TICKET_LIST_BUILDER_FIELDS.find((item) => item.key === rule.field) ??
-            TICKET_LIST_BUILDER_FIELDS[0];
-          const operatorLabel =
-            meta.operator === "contains"
-              ? "contém"
-              : meta.operator === "gte"
-                ? "de"
-                : meta.operator === "lte"
-                  ? "até"
-                  : "é";
-          return (
-            <li key={rule.id} className="helpdesk-filter-builder__rule" data-kind={meta.input}>
-              <HelpdeskFilterSelect
-                label="Campo"
-                hint={help.field}
-                value={rule.field}
-                searchable
-                onChange={(field) => {
-                  const nextMeta =
-                    TICKET_LIST_BUILDER_FIELDS.find((item) => item.key === field) ?? meta;
-                  updateRule(rule.id, {
-                    field: nextMeta.key,
-                    operator: nextMeta.operator,
-                    value: nextMeta.input === "mine" ? "1" : "",
-                  });
-                }}
-                options={TICKET_LIST_BUILDER_FIELDS.map((item) => ({
-                  value: item.key,
-                  label: item.label,
-                }))}
-              />
-              <HintAction hint={help.operator} ariaLabel="Ajuda: operador">
-                <span className="helpdesk-filter-builder__op">{operatorLabel}</span>
-              </HintAction>
-              {meta.input === "status" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value}
-                  searchable
-                  onChange={(value) => updateRule(rule.id, { value })}
-                  options={[...TICKET_STATUS_FILTERS]}
-                />
-              ) : null}
-              {meta.input === "urgency" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value}
-                  searchable
-                  onChange={(value) => updateRule(rule.id, { value })}
-                  options={[
-                    { value: "", label: "Todas" },
-                    ...urgencies.map((item) => ({ value: String(item.id), label: item.name })),
-                  ]}
-                />
-              ) : null}
-              {meta.input === "category" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value}
-                  searchable
-                  onChange={(value) => updateRule(rule.id, { value })}
-                  options={[
-                    { value: "", label: "Todas" },
-                    ...categories.map((item) => ({ value: String(item.id), label: item.name })),
-                  ]}
-                />
-              ) : null}
-              {meta.input === "assignee" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value}
-                  searchable
-                  onChange={(value) => updateRule(rule.id, { value })}
-                  options={[
-                    { value: "", label: "Todos" },
-                    ...assignees.map((item) => ({ value: String(item.id), label: item.name })),
-                  ]}
-                />
-              ) : null}
-              {meta.input === "requester" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value}
-                  searchable
-                  onChange={(value) => updateRule(rule.id, { value })}
-                  options={[
-                    { value: "", label: "Todos" },
-                    ...requesters.map((item) => ({ value: String(item.id), label: item.name })),
-                  ]}
-                />
-              ) : null}
-              {meta.input === "mine" ? (
-                <HelpdeskFilterSelect
-                  label="Valor"
-                  hint={help.value}
-                  value={rule.value === "1" ? "1" : "0"}
-                  onChange={(value) => updateRule(rule.id, { value: value === "1" ? "1" : "" })}
-                  options={[
-                    { value: "1", label: "Somente os meus" },
-                    { value: "0", label: "Todos os visíveis" },
-                  ]}
-                />
-              ) : null}
-              {meta.input === "text" || meta.input === "date" ? (
-                <HelpdeskFilterInput
-                  label="Valor"
-                  hint={help.value}
-                  type={meta.input === "date" ? "date" : "search"}
-                  value={rule.value}
-                  onChange={(value) => updateRule(rule.id, { value })}
-                />
-              ) : null}
-              <span className="helpdesk-filter-builder__remove">
-                <HintAction hint={help.removeRule} ariaLabel="Ajuda: Remover regra">
-                  <HelpdeskIconButton aria-label="Remover regra" onClick={() => removeRule(rule.id)}>
-                    <Trash2 size={14} aria-hidden />
-                  </HelpdeskIconButton>
-                </HintAction>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="helpdesk-filter-builder__actions">
-        <HintAction hint={help.addRule} ariaLabel="Ajuda: Adicionar critério">
-          <ActionButton variant="ghost" type="button" aria-label="Adicionar critério" onClick={addRule}>
-            <Plus size={16} aria-hidden />
-            Adicionar critério
-          </ActionButton>
-        </HintAction>
-        <HintAction hint={help.clear} ariaLabel="Ajuda: Limpar">
-          <ActionButton variant="ghost" type="button" aria-label="Limpar" onClick={onClear}>
-            <Eraser size={16} aria-hidden />
-            Limpar
-          </ActionButton>
-        </HintAction>
-        <HintAction hint={help.apply} ariaLabel="Ajuda: Aplicar filtros">
-          <ActionButton variant="primary" type="button" aria-label="Aplicar filtros" onClick={onApply}>
-            Aplicar filtros
-          </ActionButton>
-        </HintAction>
-      </div>
-    </div>
+    <FilterRulesBuilder
+      rules={toUiRules()}
+      fields={fields}
+      onChange={handleChange}
+      onApply={onApply}
+      onClear={onClear}
+    />
   );
 }

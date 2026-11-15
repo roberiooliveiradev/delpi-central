@@ -17,10 +17,10 @@ function cssRule(css: string, selector: string): string {
   return css.slice(openBrace, closeBrace);
 }
 
+// Overlays domain-specificos — usam AnchoredPanelPortal direto.
+// Filter/sort migraram p/ HelpdeskListToolbarPopover (kit, portal igual).
 const POPOVER_FILES = [
   "HelpdeskAssignPopover.tsx",
-  "TicketListFilterPopover.tsx",
-  "TicketListSortPopover.tsx",
   "TicketTimelineTools.tsx",
 ];
 

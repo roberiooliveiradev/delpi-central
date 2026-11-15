@@ -108,18 +108,20 @@ export function readCreateDraft(): HelpdeskCreateDraft | null {
 function itemLinksFromDraft(value: unknown): HelpdeskCreateDraftItemLink[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map((row) => {
+    .map((row): HelpdeskCreateDraftItemLink | null => {
       if (!row || typeof row !== "object") return null;
       const entry = row as Record<string, unknown>;
       const itemsId = Number(entry.itemsId);
       const itemtype = asString(entry.itemtype).trim();
       if (!itemtype || !Number.isInteger(itemsId) || itemsId <= 0) return null;
-      return {
+      const link: HelpdeskCreateDraftItemLink = {
         itemtype,
         itemsId,
         name: asString(entry.name),
-        typeLabel: asString(entry.typeLabel) || undefined,
       };
+      const typeLabel = asString(entry.typeLabel);
+      if (typeLabel) link.typeLabel = typeLabel;
+      return link;
     })
     .filter((row): row is HelpdeskCreateDraftItemLink => row !== null);
 }

@@ -33,12 +33,16 @@ export type RequestListQuery = {
   branch?: string;
   q?: string;
   mineScope?: "completed_by_me" | "assigned_to_me";
+  /** Ordenação multinível serializada `field:dir[,field:dir]` (máx. 3). */
+  sort?: string;
 };
 
 export function buildRequestListQueryParams(options?: RequestListQuery): string {
   const params = new URLSearchParams();
   if (options?.page) params.set("page", String(options.page));
   if (options?.pageSize) params.set("page_size", String(options.pageSize));
+  const sort = options?.sort?.trim();
+  if (sort) params.set("sort", sort);
   const typeCode = options?.typeCode?.trim();
   if (typeCode) params.set("type_code", typeCode);
   const status = options?.status?.trim();

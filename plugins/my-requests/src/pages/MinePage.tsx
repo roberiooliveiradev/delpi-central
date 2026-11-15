@@ -1,10 +1,15 @@
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
-  DataTable,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
+  newDashboardFilterRuleId,
+  type DashboardFilterFieldDescriptor,
+  type DashboardFilterRule,
+  type DashboardSortLevel,
   type DataTableColumn,
+  type ScopeChip,
 } from "@delpi/plugin-ui/index";
 
 import { useMyRequestsListSync } from "../app/MyRequestsRealtimeProvider";
@@ -12,9 +17,10 @@ import { usePrcListSync } from "../app/PrcRealtimeProvider";
 import { listMyRequests, listRequestTypes } from "../api/requestsApi";
 import { listMyPrcRequests } from "../features/product-registration/prcApi";
 import { AppShell } from "../components/AppShell";
-import { RequestListFilters } from "../components/RequestListFilters";
+import { RequestListShell } from "../components/RequestListShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  REQUEST_STATUS_FILTER_OPTIONS,
   requestTypeLabel,
   statusLabel,
 } from "../content/presentationLabels";
@@ -30,21 +36,23 @@ import {
   type UnifiedRequestRow,
 } from "../domain/requestListPresentation";
 import {
+  PRC_TYPE_CODE,
+  defaultSortLevels,
+  parseListSortLevels,
+  serializeListSortLevels,
+  sortCatalogForSource,
+  sourceForTypeCode,
+} from "../domain/requestListSort";
+import {
   myRequestsPath,
   myRequestsPrcPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
+import { useRequestListUrlState } from "../hooks/useRequestListUrlState";
+import { canCreateAnyRequest } from "../security/requestsAccess";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
-import {
-  MyRequestsCompactPagination,
-  MyRequestsEmptyState,
-  MyRequestsLoadingState,
-  MyRequestsSectionCard,
-  MyRequestsStateBanner,
-  MyRequestsStatusBadge,
-} from "../ui/mrUi";
-import { mrDataTableClassNames, mrDataTableLabels } from "../ui/mrUiContracts";
+import { MyRequestsRecordCard, MyRequestsStatusBadge } from "../ui/mrUi";
 
 const INITIAL_FILTERS: RequestListFiltersState = {
   q: "",
@@ -52,30 +60,42 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   status: "",
   branch: "",
   mineScope: "",
+  sort: "",
   page: 1,
 };
 
 /* Janela de merge honesta: para compor a página N unificada por data,
  * basta a janela page*PAGE_SIZE de cada fonte (ambas paginadas e
- * ordenadas por criação desc). Limitada a 100 por chamada (contrato). */
+ * ordenadas por criação na mesma direção). Limitada a 100 (contrato). */
 const MERGE_WINDOW_MAX = 100;
-/** Tipo requests-api equivalente ao caso PRC da Engineering API. */
-const PRC_TYPE_CODE = "raw-material-creation";
+
+const MINE_COLUMN_PREFS_KEY = "my-requests.mine.columns.v1";
+const MINE_VIEW_LAYOUT_KEY = "my-requests.mine.view-layout.v1";
+
+function statusChips(
+  current: string,
+  onSelect: (value: string) => void,
+): ScopeChip[] {
+  return REQUEST_STATUS_FILTER_OPTIONS.filter((option) => option.value).map(
+    (option) => ({
+      id: `status-${option.value}`,
+      label: option.label,
+      active: current === option.value,
+      onSelect: () => onSelect(option.value),
+    }),
+  );
+}
 
 export function MinePage() {
   const access = useRequestsPermissions();
   const [rows, setRows] = useState<UnifiedRequestRow[]>([]);
   const [total, setTotal] = useState(0);
   const [types, setTypes] = useState<RequestTypeSummary[]>([]);
-  const [filters, setFilters] = useState<RequestListFiltersState>(INITIAL_FILTERS);
+  const [filters, patchFilters] = useRequestListUrlState(INITIAL_FILTERS);
   const [error, setError] = useState<string | null>(null);
   const [prcError, setPrcError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listEpoch, setListEpoch] = useState(0);
-
-  const patchFilters = useCallback((patch: Partial<RequestListFiltersState>) => {
-    setFilters((prev) => ({ ...prev, ...patch }));
-  }, []);
 
   const bumpList = useCallback(() => {
     setListEpoch((value) => value + 1);
@@ -84,6 +104,147 @@ export function MinePage() {
   /* ENG-REALTIME-01 — casos PRC vivem na Engineering API; evento dela
    * também reindexa a lista unificada (mesmo epoch/refetch oficial). */
   usePrcListSync(bumpList);
+
+  /* Fonte efetiva: tipo requests-api "raw-material-creation" ainda
+   * combina casos PRC da Engineering API — catálogo mesclado só
+   * expõe o campo comparável nas duas fontes (Data). */
+  const source = sourceForTypeCode(filters.typeCode);
+  const sortCatalog = sortCatalogForSource(
+    source === "prc" ? "merged" : source,
+  );
+
+  const appliedLevels = useMemo(() => {
+    const parsed = parseListSortLevels(filters.sort, sortCatalog.fields);
+    return parsed.length ? parsed : defaultSortLevels(source);
+  }, [filters.sort, sortCatalog.fields, source]);
+
+  const [sortLevels, setSortLevels] = useState<DashboardSortLevel[]>(
+    appliedLevels,
+  );
+  useEffect(() => setSortLevels(appliedLevels), [appliedLevels]);
+
+  /* Troca de fonte invalida o sort aplicado (campos incompatíveis). */
+  useEffect(() => {
+    if (
+      filters.sort &&
+      !parseListSortLevels(filters.sort, sortCatalog.fields).length
+    ) {
+      patchFilters({ sort: "", page: 1 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortCatalog]);
+
+  const applySort = useCallback(() => {
+    patchFilters({
+      sort: serializeListSortLevels(sortLevels),
+      page: 1,
+    });
+  }, [sortLevels, patchFilters]);
+
+  const sortSummary = useMemo(() => {
+    const first = appliedLevels[0];
+    const option = sortCatalog.fields.find(
+      (field) => field.value === first?.field,
+    );
+    if (!option) return "Ordenar";
+    const suffix = appliedLevels.length > 1 ? ` (+${appliedLevels.length - 1})` : "";
+    return `${option.label} ${first?.direction === "asc" ? "↑" : "↓"}${suffix}`;
+  }, [appliedLevels, sortCatalog.fields]);
+
+  /* ----- builder de critérios: Tipo / Status / Filial ----- */
+
+  const typeOptions = useMemo(
+    () =>
+      types.map((item) => ({ value: item.code, label: item.name })),
+    [types],
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      REQUEST_STATUS_FILTER_OPTIONS.filter((option) => option.value).map(
+        (option) => ({ value: option.value, label: option.label }),
+      ),
+    [],
+  );
+
+  const branchOptions = useMemo(
+    () =>
+      access.branches.map((branch) => ({ value: branch, label: branch })),
+    [access.branches],
+  );
+
+  const filterFields: DashboardFilterFieldDescriptor[] = useMemo(
+    () => [
+      {
+        key: "typeCode",
+        label: "Tipo",
+        operator: "eq",
+        input: "select",
+        options: typeOptions,
+        placeholderOption: "Todos",
+        searchable: true,
+      },
+      {
+        key: "status",
+        label: "Status",
+        operator: "eq",
+        input: "select",
+        options: statusOptions,
+        placeholderOption: "Todos",
+      },
+      {
+        key: "branch",
+        label: "Filial",
+        operator: "eq",
+        input: "select",
+        options: branchOptions,
+        placeholderOption: "Todas",
+      },
+    ],
+    [typeOptions, statusOptions, branchOptions],
+  );
+
+  const filtersToRules = useCallback((): DashboardFilterRule[] => {
+    const rules: DashboardFilterRule[] = [];
+    const pairs: Array<[string, string]> = [
+      ["typeCode", filters.typeCode],
+      ["status", filters.status],
+      ["branch", filters.branch],
+    ];
+    for (const [field, value] of pairs) {
+      if (!value) continue;
+      rules.push({
+        id: newDashboardFilterRuleId(),
+        field,
+        operator: "eq",
+        value,
+      });
+    }
+    return rules;
+  }, [filters.typeCode, filters.status, filters.branch]);
+
+  const [filterRules, setFilterRules] = useState<DashboardFilterRule[]>(
+    filtersToRules,
+  );
+  useEffect(() => setFilterRules(filtersToRules()), [filtersToRules]);
+
+  const applyFilterRules = useCallback(() => {
+    const next: RequestListFiltersState = {
+      ...filters,
+      typeCode: "",
+      status: "",
+      branch: "",
+      page: 1,
+    };
+    for (const rule of filterRules) {
+      if (rule.field === "typeCode") next.typeCode = rule.value;
+      if (rule.field === "status") next.status = rule.value;
+      if (rule.field === "branch") next.branch = rule.value;
+    }
+    patchFilters(next);
+  }, [filterRules, filters, patchFilters]);
+
+  /* -------------------------------------------------------- */
 
   useEffect(() => {
     const ac = new AbortController();
@@ -112,6 +273,12 @@ export function MinePage() {
       (!filters.typeCode || filters.typeCode === PRC_TYPE_CODE) &&
       !filters.branch;
 
+    const requestsSort = serializeListSortLevels(appliedLevels);
+    const primary = appliedLevels[0] ?? {
+      field: "created_at",
+      direction: "desc" as const,
+    };
+
     const reqPromise = listMyRequests({
       signal: ac.signal,
       page: 1,
@@ -120,6 +287,7 @@ export function MinePage() {
       status: filters.status || undefined,
       branch: filters.branch || undefined,
       q: filters.q || undefined,
+      sort: requestsSort,
     });
 
     const prcPromise = includePrc
@@ -128,6 +296,8 @@ export function MinePage() {
           pageSize: windowSize,
           status: filters.status || undefined,
           search: filters.q || undefined,
+          sortBy: "createdAt",
+          sortDir: primary.direction,
         })
       : Promise.resolve(null);
 
@@ -182,20 +352,17 @@ export function MinePage() {
           );
         }
 
-        const merged = mergeUnifiedRows(reqRows, prcRows);
+        const merged = mergeUnifiedRows(reqRows, prcRows, primary.direction);
         const start = (filters.page - 1) * REQUEST_LIST_PAGE_SIZE;
-        setRows(
-          merged.slice(start, start + REQUEST_LIST_PAGE_SIZE),
-        );
+        setRows(merged.slice(start, start + REQUEST_LIST_PAGE_SIZE));
         setTotal(reqTotal + prcTotal);
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
       });
     return () => ac.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, listEpoch, types]);
-
-  const totalPages = Math.max(1, Math.ceil(total / REQUEST_LIST_PAGE_SIZE) || 1);
 
   const columns = useMemo<DataTableColumn<UnifiedRequestRow>[]>(
     () => [
@@ -260,8 +427,63 @@ export function MinePage() {
     [],
   );
 
-  const hasRows = rows.length > 0;
-  const hasError = Boolean(error) && Boolean(prcError);
+  /* Coluna → campo do contrato efetivo (header-sort). */
+  const columnSortMap = useMemo(() => {
+    const map: Record<string, string> = { date: "created_at" };
+    if (source === "requests") {
+      map.number = "request_number";
+      map.type = "type_code";
+      map.status = "status";
+      map.branch = "branch";
+    }
+    return map;
+  }, [source]);
+
+  const activeSortColumn = useMemo(() => {
+    const field = appliedLevels[0]?.field;
+    for (const [column, candidate] of Object.entries(columnSortMap)) {
+      if (candidate === field) return column;
+    }
+    return null;
+  }, [appliedLevels, columnSortMap]);
+
+  const renderCard = useCallback(
+    (row: UnifiedRequestRow) => (
+      <MyRequestsRecordCard
+        title={row.subject}
+        subtitle={`${row.displayNumber} · ${row.typeLabel}`}
+        status={
+          <MyRequestsStatusBadge
+            label={row.statusLabel}
+            variant={row.statusVariant}
+          />
+        }
+        fields={[
+          { id: "branch", label: "Filial", value: row.branch || "—" },
+          {
+            id: "date",
+            label: "Data",
+            value: row.createdAt
+              ? new Date(row.createdAt).toLocaleDateString("pt-BR")
+              : "—",
+          },
+        ]}
+        href={row.destination}
+        ariaLabel={`Abrir ${row.displayNumber}`}
+        onNavigate={(event: { preventDefault(): void }) => {
+          event.preventDefault();
+          navigateMyRequestsPath(
+            row.source === "engineering-prc"
+              ? row.destination
+              : myRequestsPath({ requestId: row.id }),
+          );
+        }}
+      />
+    ),
+    [],
+  );
+
+  const listError = [error, prcError].filter(Boolean).join(" · ") || null;
   const emptyMessage =
     filters.q || filters.typeCode || filters.status || filters.branch
       ? "Nenhuma solicitação para os filtros selecionados."
@@ -269,51 +491,65 @@ export function MinePage() {
 
   return (
     <AppShell title="Minhas solicitações">
-      <MyRequestsSectionCard title="Minhas solicitações">
-        <div data-help="mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
-          <RequestListFilters
-            filters={filters}
-            types={types}
-            branches={access.branches}
-            disabled={loading}
-            onChange={patchFilters}
-            onClear={() => setFilters(INITIAL_FILTERS)}
-          />
-          {error ? (
-            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-          ) : null}
-          {prcError ? (
-            <MyRequestsStateBanner variant="error">
-              {prcError}
-            </MyRequestsStateBanner>
-          ) : null}
-          {loading ? <MyRequestsLoadingState /> : null}
-          {!loading && !hasRows && !error && !prcError ? (
-            <MyRequestsEmptyState message={emptyMessage} />
-          ) : null}
-          {!loading && hasRows ? (
-            <>
-              <DataTable
-                columns={columns}
-                rows={rows}
-                rowKey={(row) => `${row.source}-${row.id}`}
-                layout="embedded"
-                classNames={mrDataTableClassNames}
-                labels={mrDataTableLabels}
-              />
-              <MyRequestsCompactPagination
-                page={filters.page}
-                pageSize={REQUEST_LIST_PAGE_SIZE}
-                total={total}
-                totalPages={totalPages}
-                onPageChange={(page) => patchFilters({ page })}
-                disabled={loading}
-              />
-            </>
-          ) : null}
-          {!loading && hasError ? null : null}
-        </div>
-      </MyRequestsSectionCard>
+      <RequestListShell
+        title="Minhas solicitações"
+        description="Acompanhe as solicitações que você abriu — serviços gerais e casos de cadastro de produto (PRC) no mesmo lugar."
+        count={`${total} ${total === 1 ? "solicitação" : "solicitações"}`}
+        heroAction={
+          canCreateAnyRequest(access) ? (
+            <ActionButton
+              type="button"
+              variant="primary"
+              onClick={() => navigateMyRequestsPath("new")}
+            >
+              <Plus size={16} aria-hidden />
+              Nova solicitação
+            </ActionButton>
+          ) : undefined
+        }
+        onRefresh={bumpList}
+        refreshing={loading}
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => `${row.source}-${row.id}`}
+        loading={loading}
+        error={listError}
+        emptyMessage={emptyMessage}
+        sectionHint={MY_REQUESTS_HELP_TOOLTIPS.mine.section}
+        searchHint="Busca no número, tipo e assunto das suas solicitações."
+        page={filters.page}
+        pageSize={REQUEST_LIST_PAGE_SIZE}
+        total={total}
+        onPageChange={(page) => patchFilters({ page })}
+        search={filters.q}
+        onSearchCommit={(value) => patchFilters({ q: value.trim(), page: 1 })}
+        chips={statusChips(filters.status, (value) =>
+          patchFilters({ status: value === filters.status ? "" : value, page: 1 }),
+        )}
+        chipsLabel="Status"
+        onClearChips={() => patchFilters({ status: "", page: 1 })}
+        sort={{
+          fields: sortCatalog.fields,
+          levels: sortLevels,
+          maxLevels: sortCatalog.maxLevels,
+          onChange: setSortLevels,
+          onApply: applySort,
+          summaryLabel: sortSummary,
+        }}
+        filter={{
+          fields: filterFields,
+          rules: filterRules,
+          onChange: setFilterRules,
+          onApply: applyFilterRules,
+          onClear: () => setFilterRules([]),
+        }}
+        columnSortMap={columnSortMap}
+        sortKey={activeSortColumn}
+        sortDirection={appliedLevels[0]?.direction ?? "desc"}
+        columnPrefsKey={MINE_COLUMN_PREFS_KEY}
+        viewLayoutKey={MINE_VIEW_LAYOUT_KEY}
+        renderCard={renderCard}
+      />
     </AppShell>
   );
 }

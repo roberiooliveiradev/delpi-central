@@ -1,0 +1,190 @@
+/**
+ * List tools — popover de toolbar + builders de ordenação/filtro.
+ * Tokens --delpi-ui-* (claro/escuro via portal/host). BEM:
+ * delpi-ui-list-tools-* / delpi-ui-sort-builder* / delpi-ui-filter-builder*.
+ *
+ * Mecânica visual extraída do padrão Helpdesk; neutra de domínio.
+ */
+
+/* O painel renderiza via portal fora do wrapper — tokens repetidos nas duas
+ * raízes para o painel herdar superfície/tema (ver AnchoredPanelPortal). */
+.delpi-ui-list-tools-popover,
+.delpi-ui-list-tools-popover__panel,
+.delpi-ui-sort-builder,
+.delpi-ui-filter-builder {
+  --delpi-ui-list-tools-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --delpi-ui-list-tools-text: var(--delpi-ui-text, var(--text, #111111));
+  --delpi-ui-list-tools-muted: var(
+    --delpi-ui-text-muted,
+    var(--text-muted, color-mix(in srgb, var(--delpi-ui-list-tools-text) 55%, transparent))
+  );
+  --delpi-ui-list-tools-border: var(--delpi-ui-border, var(--border, #e6e6e6));
+  --delpi-ui-list-tools-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-list-tools-popover {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--delpi-ui-list-tools-text);
+}
+
+/* Fallback quando o gatilho não herda `.delpi-ui-table-toolbar-action`. */
+.delpi-ui-list-tools-popover__trigger:not(.delpi-ui-table-toolbar-action) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  min-height: 30px;
+  border: 1px solid var(--delpi-ui-list-tools-border);
+  border-radius: 10px;
+  background: var(--delpi-ui-list-tools-surface);
+  color: var(--delpi-ui-list-tools-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.delpi-ui-list-tools-popover__trigger[aria-expanded="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-list-tools-accent) 55%,
+    var(--delpi-ui-list-tools-border)
+  );
+}
+
+.delpi-ui-list-tools-popover__panel {
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(28rem, 70vh);
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--delpi-ui-list-tools-border);
+  border-radius: 12px;
+  background: var(--delpi-ui-list-tools-surface);
+  color: var(--delpi-ui-list-tools-text);
+  box-shadow: 0 8px 28px color-mix(in srgb, #000 18%, transparent);
+  box-sizing: border-box;
+}
+
+.delpi-ui-list-tools-popover__panel--wide {
+  width: min(40rem, calc(100vw - 1.25rem));
+  max-height: min(32rem, 75vh);
+}
+
+.delpi-ui-list-tools-popover__header {
+  display: grid;
+  gap: 0.2rem;
+  margin-block-end: 0.65rem;
+}
+
+.delpi-ui-list-tools-popover__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.delpi-ui-list-tools-popover__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--delpi-ui-list-tools-muted);
+}
+
+.delpi-ui-list-tools-popover__body {
+  min-width: 0;
+}
+
+/* Builders: superfície embutida dentro do painel. */
+.delpi-ui-sort-builder,
+.delpi-ui-filter-builder {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--delpi-ui-list-tools-text);
+}
+
+.delpi-ui-filter-builder__rules,
+.delpi-ui-sort-builder__levels {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* ~3–4 itens visíveis; acima disso rola e deixa a tabela à vista */
+  max-height: min(12.5rem, 32vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+
+.delpi-ui-filter-builder__rule,
+.delpi-ui-sort-builder__level {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem 0.5rem;
+}
+
+.delpi-ui-filter-builder__rule > .delpi-ui-filter-box,
+.delpi-ui-sort-builder__level > .delpi-ui-filter-box {
+  flex: 1 1 11rem;
+  min-width: 9rem;
+  max-width: 18rem;
+}
+
+.delpi-ui-filter-builder__op {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-block-start: 0.85rem;
+  color: var(--delpi-ui-list-tools-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.delpi-ui-filter-builder__remove,
+.delpi-ui-sort-builder__remove {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+.delpi-ui-sort-builder__ordinal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: center;
+  margin-block-start: 0.85rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-list-tools-accent) 18%,
+    transparent
+  );
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.delpi-ui-filter-builder__actions,
+.delpi-ui-sort-builder__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-block-start: 0.15rem;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-filter-builder__rule > .delpi-ui-filter-box,
+  .delpi-ui-sort-builder__level > .delpi-ui-filter-box {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .delpi-ui-filter-builder__op,
+  .delpi-ui-sort-builder__ordinal {
+    margin-block-start: 0;
+  }
+}

@@ -269,6 +269,8 @@ export function listMyPrcRequests(
     status?: string;
     search?: string;
     source?: string;
+    sortBy?: string;
+    sortDir?: "asc" | "desc";
   },
 ): Promise<PrcRequestList> {
   const params = new URLSearchParams();
@@ -277,6 +279,8 @@ export function listMyPrcRequests(
   if (query?.status) params.set("status", query.status);
   if (query?.search) params.set("search", query.search);
   if (query?.source) params.set("source", query.source);
+  if (query?.sortBy) params.set("sortBy", query.sortBy);
+  if (query?.sortDir) params.set("sortDir", query.sortDir);
   return httpGet<Envelope<PrcRequestList>>(
     `${PRC_BASE}/requests?${params.toString()}`,
     { signal },
