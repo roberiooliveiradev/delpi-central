@@ -1,6 +1,6 @@
-# Delpi Linux Operations MCP — P1 READ-ONLY candidate
+# Delpi Linux Operations MCP — P1 READ-ONLY em operacao; P2 PREPARE em desenvolvimento
 
-**Status:** source candidate, **not deployed**. Code-only CI passed in PR #186; no production connection, tunnel, Keycloak client, health smoke, or end-user OAuth has been proven. The public repository must not contain secrets or runtime log outputs.
+**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1/P2.2a adiciona somente modulos Python offline nao importados no `server.py`. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
 
 ## Scope and reuse
 
@@ -96,3 +96,12 @@ DEPLOY_WRITE: NOT_IMPLEMENTED
 ### P1.3: endpoint privado via loopback (PR #187)
 
 O serviço opt-in anuncia apenas `127.0.0.1:${LINUX_OPS_MCP_LOOPBACK_PORT:-18765}:8000`; não existe acesso público à porta. Confira a porta real com `docker compose --profile linux-ops port linux-ops-mcp 8000`, sempre no contexto canônico do Compose. Não assuma `18765` quando o operador personalizar a configuração. O Secure MCP Tunnel é um serviço separado, ainda não instalado nem cadastrado. OAuth e autorização no Core continuam obrigatórios. O procedimento detalhado e o rollback isolado estão em `linux-ops-mcp/docs/03-private-tunnel-oauth-go-live.md`.
+
+
+## P2.1 / P2.2a — base de governanca de deploy, offline (2026-11-15)
+
+- Fonte de continuidade: [roadmap mestre ATLAS](../docs/12-roadmap-e-evolucao/mcp-linux-control/README.md) e [contrato P2-P4](../docs/12-roadmap-e-evolucao/mcp-linux-control/02-atlas-deploy-control-plane-p2.md).
+- `linux_ops_mcp/deploy_policy.py`: politica pura de preview deny-by-default integrada pela PR #191, com allowlist, SHA exato, gates de evidencia, TTL e hash de proposta **nao autorizativa**.
+- `linux_ops_mcp/deploy_attestation.py`: gate puro P2.2a em `main`, validando o formato de provas independentes de GitHub Workflow/commit, host deploy revision/saude e Core principal humano com permissoes `linux_ops.deploy.view` + `linux_ops.deploy.prepare`. Ainda nao busca dados verdadeiros: futuramente a API backend busca, atesta e monta os objetos, sem aceitar provas da chamada MCP. **Nao** importado por `server.py`.
+- Testes locais em 2026-11-15 (Python 3.13): `PYTHONPATH=linux-ops-mcp pytest -q linux-ops-mcp/tests/test_deploy_attestation.py linux-ops-mcp/tests/test_deploy_policy.py` -> **76 PASS**. GitHub CI do novo commit e verificador independente a validar; nao equivale a teste de API real, HML ou PROD.
+- Nenhuma migration, journal persistente, recurso Core registrado, provider HTTP GitHub, leitor local de SHA, endpoint PREPARE, ferramenta de ACT, executor privilegiado ou deploy do host foi criado nesta entrega. A politica em memoria de producao continua nao habilitada.
