@@ -176,6 +176,6 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 
 **Dependencias nao entregues:** provador de revisao efetivamente em execucao por servico (`HostProof`), catalogo backend de workflow IDs exigidos, concessoes reais no Core, journal persistente, API PREPARE e UI nominativa. **A2.2b e um incremento parcial seguro, nao o aceite completo de A2.2.** Ausencia de qualquer elemento segue bloqueando o deploy.
 
-**Rastreabilidade e proposta de persistencia:** [03-atlas-deploy-journal-p2b.md](./03-atlas-deploy-journal-p2b.md) detalha uso candidato do PostgreSQL `it_portal`, constraints para `requester_subject/idempotency_key`, status transacionais e log append-only de eventos, sem migration aplicada. Nao escolher numero de migration antes de coordernar com o roadmap paralelo Delpi Remote.
+**Rastreabilidade e proposta de persistencia:** [03-atlas-deploy-journal-p2b.md](./03-atlas-deploy-journal-p2b.md) detalha uso candidato do PostgreSQL `it_portal`, constraints para `requester_subject/idempotency_key`, status transacionais e log append-only de eventos, sem migration aplicada. Nao escolher numero de migration antes de coordenar com o roadmap paralelo Delpi Remote.
 
 **Proximo passo A2.2c:** autoridade de release no host e testes com evidencias reais controladas; migration e repository SQL com UNIQUE/transacoes/replay; API backend fail-closed com Core fresh e catalogo CI, mantendo toda escrita ACT e execucao do host OFF.
