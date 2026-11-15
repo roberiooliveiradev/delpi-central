@@ -63,7 +63,10 @@ SYNC_ASYNC_VERIFICATION: |
   calling `SpecialistInterop.discover_catalog` (specialist_interop.py
   :149) → `port.list_remote_tools` (adapter.py:103) →
   `DelpiMcpTransport` over `requests`/urllib3 with a custom
-  deadline_transport (per-recv inactivity bounds). `asyncio.gather`
+  deadline_transport — an ABSOLUTE socket deadline bound via
+  `bounded_request`/`deadline_scope` in whichever thread executes
+  the call (not a per-recv inactivity bound, which alone would not
+  prove a total-operation limit). `asyncio.gather`
   is NOT applicable — the only compatible fan-out is a bounded
   thread executor (concurrent.futures).
 
@@ -191,6 +194,23 @@ RISKS: |
     wait=False join)
   - N concurrent Keycloak exchanges (small N, monitor)
   - Determinism drift in failures ordering (submission-order emit)
+
+IMPLEMENTATION_STATUS (guarded experiment task):
+  Flag-gated experimental path landed inside
+  `McpCapabilityProvider.list_groups` (`_list_groups_parallel`):
+  bounded `ThreadPoolExecutor` (min(n_specialists, 4) workers),
+  one shared absolute deadline passed to every task as remaining
+  budget (reduction-only), caller-captured subject bearer bound via
+  `bind_subject_bearer` inside each worker and unbound in `finally`,
+  queued futures cancelled at join deadline while in-flight workers
+  stay bounded by their own transport deadline — late results
+  discarded as `mcp_timeout`, never adopted; groups/failures merge
+  in submission order. Feature flag `DELIA_PARALLEL_MCP_DISCOVERY`
+  (default false; production boot fails closed). Sequential remains
+  the default path; rollback = unset the flag. Provider interface
+  and consumer contract unchanged; bearer seam injected at
+  composition (application layer does not import infrastructure).
+  Real A/B evaluation evidence recorded separately in the ledger.
 
 DECISION: SUPERSEDED_BY_COORDINATION_REVIEW
   This historical inventory proposed the experiment. The current decision

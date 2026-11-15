@@ -170,7 +170,49 @@ def test_comprehension_catalog_block_bounded_projection():
     assert "provider_id" not in cap
     serialized = json.dumps(payload)
     assert "endpoint" not in serialized
-    assert "authorization" not in serialized.lower() or True
+    # DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01 (A3):
+    # replaces the inert ``… or True`` assertion. The projection is a
+    # metadata-only advisory surface — credential material, transport
+    # mechanics and executable-instruction fields are forbidden KEYS
+    # anywhere in the payload (the word "authorization" itself may
+    # legitimately appear inside a description, so key names are
+    # asserted, not substrings).
+    forbidden_keys = {
+        "access_token",
+        "refresh_token",
+        "bearer",
+        "bearer_token",
+        "token",
+        "client_secret",
+        "secret",
+        "password",
+        "authorization",
+        "headers",
+        "endpoint",
+        "base_url",
+        "url",
+        "remote_name",
+        "provider_id",
+        "session",
+        "instructions",
+    }
+
+    def _walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                assert key.lower() not in forbidden_keys, (
+                    f"forbidden projection field: {key}"
+                )
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    _walk(payload)
+    # Required comprehension fields preserved — the guard never
+    # strips legitimate vocabulary.
+    assert payload["capabilities"]
+    assert "anchor_contract" in payload
 
 
 def test_comprehension_catalog_block_typed_vocabularies():
