@@ -30,7 +30,7 @@ test.describe("Auditoria de Entradas — HML", () => {
     await historyRow.click();
 
     await expect(
-      page.getByRole("heading", { name: /Resultado da análise/i }),
+      page.getByRole("heading", { name: /Análise de |Resultado da análise/i }),
     ).toBeVisible({ timeout: 45_000 });
 
     const analysisMatch = page.url().match(/\/analyses\/([^/?#]+)/);
