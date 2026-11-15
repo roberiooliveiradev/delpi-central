@@ -27,8 +27,8 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 
 | Etapa | Status | SHA |
 |---|---|---|
-| U0 Inventário visual e matriz de conformidade | DONE | (este commit) |
-| U1 Base comum (vocabulário, formatação, badges, ícones, estados) | TODO | |
+| U0 Inventário visual e matriz de conformidade | DONE | `938ccd1edb` |
+| U1 Base comum (vocabulário, formatação, badges, ícones, estados) | DONE | (este commit) |
 | U2 Início | TODO | |
 | U3 Auditoria — entrada e execução | TODO | |
 | U4 Auditoria — resultado da análise | TODO | |
@@ -113,4 +113,5 @@ MFE (e plugin-ui, se tocado) pelas tags. Sem migration nesta trilha.
 | Data | Etapa | SHA | Status | Nota |
 |---|---|---|---|---|
 | 2026-11-14 | plano | — | READY | Doc 171. Revisão pedida pelo owner sobre os prints de PROD. |
-| 2026-11-14 | U0 | (este commit) | DONE | Matriz G/H/E/A/O/F no código HEAD≥2ce2d29c; G9 INCONCLUSIVO até U7; screenshots HML via u0-inventory.spec (não commitados). |
+| 2026-11-14 | U0 | `938ccd1edb` | DONE | Matriz G/H/E/A/O/F no código HEAD≥2ce2d29c; G9 INCONCLUSIVO até U7; screenshots HML via u0-inventory.spec (não commitados). |
+| 2026-11-14 | U1 | (este commit) | DONE | Vocabulário/R$/severidade/ícones/estados/ajuda em entryAuditPresentation + SeverityBadge + LoadingState + CSS grids. |

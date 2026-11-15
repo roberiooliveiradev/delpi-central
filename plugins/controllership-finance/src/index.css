@@ -605,6 +605,83 @@
   grid-column: 1 / -1;
 }
 
+/* UI review — formulário da auditoria: uma linha no desktop (E1 / §18). */
+.dashboard-controllership-finance .cf-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-controllership-finance .cf-filters-grid__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-controllership-finance .cf-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-controllership-finance .cf-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* UI review — grade de SectionCards de gráficos (A4 / G8). */
+.dashboard-controllership-finance .cf-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+@media (max-width: 768px) {
+  .dashboard-controllership-finance .cf-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* UI review — 6 KPIs → 3 → 2 → 1 (A2 / §18). */
+.dashboard-controllership-finance .cf-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
+@media (max-width: 1280px) {
+  .dashboard-controllership-finance .cf-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-controllership-finance .cf-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-controllership-finance .cf-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-controllership-finance .cf-severity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-controllership-finance .cf-action-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* UX-013 — gatilhos destrutivos (Descartar/Inativar/Encerrar) mantêm
    variante ghost mas herdam cor semântica de perigo (padrão do kit). */
 .dashboard-controllership-finance .cf-action-btn--danger {

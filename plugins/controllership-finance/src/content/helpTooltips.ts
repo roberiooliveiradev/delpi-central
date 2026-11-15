@@ -619,11 +619,25 @@ export const CF_HELP = {
     page:
       "Auditoria de Entradas compara os documentos de entrada registrados no Protheus com os XML fiscais do mesmo escopo. A análise é de apoio à conferência: ocorrências indicam o que revisar e não alteram o ERP.",
     create:
-      "Escolha período, filiais e tipos de documento. O processamento mostra a etapa real de cada filial e a contagem de XML lidos quando a origem informa o total esperado — nenhum percentual é estimado.",
+      "Escolha período (De ≤ Até), filiais e tipos de documento. «Executar auditoria» inicia o processamento; o andamento mostra a etapa real de cada filial e a contagem de XML lidos quando a origem informa o total esperado — nenhum percentual é estimado.",
+    whatAudits:
+      "A auditoria confere valor, impostos, CST/origem, CFOP, chave de acesso e coerência entre Protheus e XML no período e filiais escolhidos. Não grava no ERP.",
     history:
       "Análises anteriores preservam período, escopo e situação. Abra uma linha para consultar indicadores, filtros, ocorrências e demais conjuntos da conferência.",
     analysis:
       "Indicadores e tabelas refletem apenas as filiais concluídas. Filiais indisponíveis permanecem explícitas e valores ausentes aparecem como «—», nunca como zero.",
+    kpiDocuments:
+      "Quantidade de notas conferidas no período (recebidas no recorte), excluindo XML indisponível e lançadas fora do período.",
+    kpiGross:
+      "Soma do valor bruto (Protheus) das notas conferidas no período.",
+    kpiPending:
+      "Ocorrências ainda pendentes de tratamento humano. O subtítulo mostra quantas já foram resolvidas.",
+    kpiHigh:
+      "Ocorrências de severidade Alta no recorte atual. Clique para filtrar a tabela.",
+    kpiHighDiff:
+      "Soma do módulo das diferenças monetárias das ocorrências Alta (pendentes e resolvidas).",
+    kpiUnmatched:
+      "Notas sem correspondente no Protheus ainda em aberto (a resolver).",
     occurrences:
       "Ocorrências são diferenças ou condições encontradas pela regra de auditoria. Resolver registra o tratamento humano; reabrir devolve o item à fila sem apagar o histórico.",
     detail:
@@ -631,7 +645,15 @@ export const CF_HELP = {
     clara:
       "A CLARA lê a mesma análise pelas rotas da BFF. Copie uma sugestão e cole no chat para pedir explicação, foco no que pede ação ou comparação com a análise anterior — sem alterar o ERP.",
     conformity:
-      "Conformidade resume notas limpas versus divergentes. «Lançadas fora do período» é informação neutra: a nota existe no Protheus, mas a emissão ficou fora do recorte da análise.",
+      "Conformidade resume notas limpas versus divergentes. «Lançadas fora do período» é informação neutra: a nota existe no Protheus, mas o recebimento ficou fora do recorte da análise.",
+    severity:
+      "Severidade com ícone e tom: Alta (crítico), Média (atenção), Baixa (neutro), Info (informativo). O donut e a tabela usam a mesma paleta de status.",
+    export:
+      "Baixa a planilha XLSX desta análise com o recorte atual.",
+    rerun:
+      "Abre a entrada da auditoria para executar de novo o mesmo tipo de conferência.",
+    newAnalysis:
+      "Volta à entrada para criar uma análise com outro período ou escopo.",
   },
   receivedDocuments: {
     page:
