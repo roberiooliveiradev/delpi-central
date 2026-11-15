@@ -1929,3 +1929,16 @@ Agent, structured output, MCPToolset, process_tool_call, ModelRetry, usage/tool 
 | `T2-INVESTIGATION-TOKEN-CAPTURE` | `OPEN_LOW (novo)` | `external_usage` input/output=0 para o run de Investigação (provider não ecoa usage via wrapper); tokens só medidos no run de Compreensão — custo total exato UNAVAILABLE; `model_calls`/`elapsed_ms` capturados |
 
 **NEXT=`COORDINATION_C3_T2_TWO_AGENT_AB_INDEPENDENT_ACCEPTANCE_REVIEW`** — variante implementada, testada e comparada; veredito comparativo `INCONCLUSIVE` (proposta melhor, outcome env-dominado); flag permanece OFF; R2 não iniciado.
+
+### 2026-11-14 — INDEPENDENT_REVIEW_TWO_AGENT_AB_2026_11_14_BUDGET_EXCEPTION: residuais vigentes
+
+| ID | Estado | Condição |
+|---|---|---|
+| `T2-AGENT2-COMPREHENSION-RUNTIME` | `EXPERIMENTAL_ACCEPT_WITH_RESIDUAL` | Implementado flag-gated; sem promoção |
+| `T2-COMPREHENSION-EXCEPTION-USAGE-ACCOUNTING` | `TO_PROVE / OPEN_MEDIUM` | `artifact_kept` após plano aceito não retorna usage; teste de budget global + exceções por classe obrigatório |
+| `R3-MCP-AUTH-FLAKINESS` | `OPEN_ENV` | Causa de falha de catálogo e ambiente de avaliação, 16 vs 19 falhas nos braços |
+| `R4-AUTH-DENY-ORACLE` | `OPEN_LOW` | Identidade de avaliação legitimamente sem permissão |
+| `T2-INVESTIGATION-TOKEN-CAPTURE` | `OPEN_LOW` | Usage/custo fim-a-fim ainda indisponíveis |
+| `T2-TWO-AGENT-OUTCOME-COST-GENERALIZATION` | `INCONCLUSIVE` | A/B comparável com catálogo válido, corpus e custo por objetivo comprovado |
+
+`R1=CLOSED_WITH_RESIDUAL`, `R2-R6=OPEN`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_TWO_AGENT_BUDGET_EXCEPTION_BOUNDARY_AND_R3_AUTH_EVAL_READINESS`.**
