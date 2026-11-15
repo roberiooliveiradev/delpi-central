@@ -74,3 +74,12 @@ GitHub workflow tem `permissions: contents: read`, sem segredo de producao, e na
 **Gate de inspeção de runtime ainda pendente:** ler com `docker inspect --type container --format` apenas Name, ID, ImageID, labels Compose project/service e State/Health; nunca imprimir Env, Mounts, NetworkSettings, volumes, credenciais ou JSON completo. Confirmar labels reais (nao inferir do Compose), image ID valido, nome exato e comportamento do healthcheck. Se divergirem, negar selecao do piloto e revisar catalogo. Tambem verificar que o SHA da imagem ainda **nao prova provenance do commit**.
 
 **Efeitos operacionais registrados:** usuario executou somente `docker ps`; nao ha relato de build, restart, deploy, schema, habilitacao de tools, Docker socket no MCP ou autorizacao ACT. Nenhum emissor signer ou proxy read-only foi instalado. O proximo passo e consulta filtrada com `docker inspect` + evidencia de status do workflow GitHub, mantendo HML e PROD intactos.
+
+
+## 7. Mudanca do piloto de leitura por ownership (2026-11-15)
+
+O operador informou explicitamente que **nao autoriza utilizar `delpi-hml-engineering` como piloto**, pois pertence ao desenvolvedor Roberto e esta em alteracao. Este servico esta excluido do escopo atual do ATLAS, assim como componentes de Engenharia associados que estejam sob o trabalho do mesmo owner.
+
+**Novo candidato de leitura READ-ONLY:** `delpi-hml-public-hub`, container observado no inventario humano como `Up 24 hours (healthy)`. A configuracao versionada `infra/docker-compose.hml.yml` define `service=public-hub`, `project=delpi-hml`, `container_name=delpi-hml-public-hub`, `ports: !override []`, `depends_on: !override {}`, `volumes: !override []`, rede HML isolada e healthcheck `wget` em `http://127.0.0.1/`.
+
+**Gate de aceite do novo candidato:** proprietario e janela de alteracoes ainda precisam ser confirmados antes de qualquer deploy, restart, build ou atestacao operante; no momento **somente** `docker inspect --type container --format` filtrado para campos Name, labels Compose, ImageID, ContainerID e State/Health. Nao executar comando de escrita no Public Hub e nao presumir que o seu status healthy prove seguranca de implantar. O teste READ pode ser realizado sem intervir nos trabalhos de outros times.
