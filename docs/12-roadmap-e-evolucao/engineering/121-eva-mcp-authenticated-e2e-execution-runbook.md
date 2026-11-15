@@ -122,3 +122,27 @@ eval user (engineering.access, senha em cofre)
   documentada IAM+Segurança.
 - Não usar contas de terceiros ou superadmin para teste quando uma
   identidade de avaliação mínima bastar.
+
+## 8. Atualização 2026-11-15 (G7) — caminho autenticado comprovado
+
+`RUNBOOK_STATUS` parcialmente atualizado pelas evidências G7
+(Doc 119 §94.11):
+
+- **Receita funcional provada em produção local:** password grant
+  no client `delpi-central` (usuário humano) → token-exchange
+  RFC 8693 via `delia-api` (`DELIA_EXCHANGE_CLIENT_*`) com
+  `audience=mcp-engineering` → JWT `aud=https://…/engineering-api/mcp`
+  + `scope mcp:tools` → MCP streamable-HTTP responde
+  `initialize`/`tools/list`/`tools/call` (6 tools semânticas).
+- **AuthZ confirmada:** identidade sem `engineering.access`
+  (`ti_delpi`) → `403 authz`; superadmin (`user@local.com`) → OK.
+- **Pendente:** usuário eval dedicado §5 (deploy01.smoke ou
+  equivalente) — superadmin serviu à prova G7, mas a identidade
+  mínima de avaliação segue como alvo de governança.
+- **Lacuna operacional registrada:** admin Keycloak
+  (`KEYCLOAK_ADMIN*` em `infra/.env`) diverge da credencial
+  efetiva (login admin-cli/master falhou) — recuperação/reset do
+  admin é débito de Infra, documentado aqui.
+- **Observação operacional:** atualização de credencial via DB
+  Keycloak exige restart do serviço (user cache) — feito com
+  autorização do owner; serviço recuperou em ~15s.

@@ -4646,3 +4646,62 @@ corrigido antes do commit.
 (RQ-11): rebuild de imagem no SHA `aa01adca0a`, rollback tag da
 imagem vigente, health+recursos pós-deploy e 1 PDF sequencial.
 `MCP_E2E autenticado` permanece BLOCKED (Doc 121 §5).
+
+### 94.11 G7 — Deploy produtivo isolado, MCP autenticado E2E (leituras) e bloqueio governado do teste OCR
+
+`TASK_ID: EVA-G7-PRODUCTION-DEPLOY-RESOURCE-ADMISSION-AND-MCP-E2E-01`
+(2026-11-15 — executado por Devin na sessão Cursor, autorizações
+explícitas do owner por etapa)
+
+**Gate C (deploy):** autorizado pelo owner com plano cirúrgico —
+worktree limpa nova em `aa01adca0a` (removida após o build),
+`up-prod-sequential.sh --build engineering-api` com
+`INSTALL_VISION_EXTRAS=true` → `compose build` isolado +
+`up -d --no-deps` (engineering-api não tem `depends_on`;
+zero efeito colateral nos demais 28 containers).
+
+**Resultado do deploy:**
+
+| Campo | Valor |
+|---|---|
+| Imagem nova | `1719b07a2ec6` (`infra-engineering-api:latest`) |
+| Imagem anterior | `c21f1ef3b1b7` → tag `infra-engineering-api:rollback-pre-g6` |
+| SHA implantado | `aa01adca0a` (G6 completo — `visual_admission.py` e `resource_monitor.py` confirmados no container) |
+| Health | `healthy` em ~14s; gateway 200; startup logs limpos |
+| Dependências | nenhuma recriada (Up 13–38h preservado) |
+
+**Identidade autenticada (fronteira resolvida nesta task):**
+caminho canônico comprovado — password grant
+`delpi-central` (usuário humano) → **token-exchange RFC 8693**
+`delia-api` → `audience=mcp-engineering` → JWT com
+`aud=https://…/engineering-api/mcp` + `scope mcp:tools`.
+Negativo provado: `ti_delpi` (autentica, sem `engineering.access`)
+→ `403 authz` tipado — boundary de autorização funciona.
+Registro operacional: senha de `user@local.com` (superadmin Core)
+foi redefinida a pedido explícito do owner via DB do Keycloak
+(admin API indisponível — credencial admin divergente do `.env`,
+lacuna operacional registrada); restart do `infra-keycloak-1`
+necessário para flush do user cache — saudável em ~15s.
+
+**Fase E — verificação MCP read-only (PASS):**
+
+- `tools/list` → 6 tools semânticas;
+- `read(drawing.runtime_status)` → métricas live
+  (host `/proc/meminfo` + cgroup container, escopos rotulados);
+- `read(drawing.job_list)` → `[]` owner-scoped;
+- `analyze(existing_only)` → `404 no_existing_result` tipado;
+- nenhuma consulta iniciou OCR (0 workers, 0 jobs criados).
+
+**Fase F — BLOCKED_RESOURCE_LIMIT (governado, decisão do owner):**
+o gate respondeu `RESOURCE_LIMIT` — orçamento medido
+`~2,2GB < 2,56GB` exigidos (host `available ~3,3GB` após liberação
+de ~600MB em containers não essenciais + drop_caches; restart do
+Keycloak havia elevado o consumo em ~900MB). O owner optou por
+**não** sacrificar tooling de IDE/agentes para cruzar o
+threshold; os 23 containers foram restaurados (gateway 200,
+stack íntegra). O gate fail-closed comportou-se exatamente como
+projetado — esta é a prova operacional de que a admissão
+**não** admite OCR sob pressão real de memória.
+
+**Estado final:** `CODE_DEPLOYED + MCP_AUTHENTICATED_READS_PASS +
+OCR_TEST_BLOCKED_RESOURCE_LIMIT`. Homologação: pendente.
