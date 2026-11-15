@@ -541,3 +541,18 @@ Fonte oficial verificada: https://developers.openai.com/api/docs/guides/secure-m
 - Analise do codigo atual (main): `infra/scripts/keycloak_linux_ops_client.py:335-350` primeiro carrega `Config`, obtem token administrativo `KC_ADMIN_TOKEN` ou `KEYCLOAK_ADMIN/KEYCLOAK_ADMIN_PASSWORD` via `mint_admin_token()`; depois chama `server_version()`, `KcAdmin.call` para auditar o realm `delpi`, client scopes e cliente `mcp-linux-ops`. O handler `except` retorna o nome da classe para `ProvisioningError`, deliberadamente ocultando detalhe original. **O erro nao prova ausencia do cliente** nem necessidade de refazer gateway.
 - Proximo gate: diagnostico SOMENTE LEITURA com print de fase e HTTP code derivado da cadeia `__cause__` de excecoes, sem imprimir body, URL com credenciais, token ou senha e sem `--apply`. Distinguir falha `mint_admin_token` (master auth), `serverinfo` (admin rights/routing) e `GET /admin/realms/delpi/*` (RBAC/URL). Somente apos identificacao orientar correcoes pontuais.
 - Client OAuth nao provisionado nem login ChatGPT comprovados; mantenha `ATLAS_HTTPS_VERIFIED`, `KEYCLOAK_ADMIN_CHECK_FAIL_CLOSED`.
+
+
+## 32. Diagnostico do 403 master-password e alternativa pelo Keycloak Admin Console (2026-11-15)
+
+**Evidencia concreta reportada pelo operador:** `--check` protegido retornou `[linux-ops-keycloak] FAIL_CLOSED: ProvisioningError`. Script de diagnostico somente leitura instrumentado por etapa identificou:
+
+- Etapa: `login administrativo no realm master`;
+- Tipo: `ProvisioningError`, origem `HTTPError`;
+- Status HTTP: `403`.
+
+**Interpretacao restrita:** acesso da rotina de login administrativo por password grant (`admin-cli`, `/auth/realms/master/protocol/openid-connect/token`) foi recusado. Nao atribuir automaticamente a senha incorreta, Cloudflare/WAF, permissao do usuario ou configuracao do Keycloak sem outra evidencia. Falha ocorreu **antes** de qualquer auditoria de estado do cliente `mcp-linux-ops`. Nenhuma escrita Keycloak foi executada pelo `--check`.
+
+**Caminho operacional escolhido pelo operador:** tem acesso ao painel Keycloak via navegador e solicitou acompanhamento na interface. Nao flexibilizar o realm `master` ou flows do `admin-cli`. Usar realm `delpi`, localizar `mcp-linux-ops` existente antes de criar. Com backup do Keycloak: criar no proprio console somente cliente OIDC confidential `mcp-linux-ops`, Standard Flow ON, PKCE S256, demais grant flows OFF, callback URI exata copiada pelo botao da UI ChatGPT, Web Origins vazias, sem service accounts. Reutilizar somente client scopes compartilhados existentes `mcp:tools`, `audience-delpi`, `profile`, `email`, atribuidos como DEFAULT. Criar/validar client scope **dedicado** `mcp-audience-linux-ops`, mapper Audience `included.custom.audience=https://minhadelpi.com.br/apps/linux-ops-mcp/mcp`, access token ON, ID token OFF, atribuir Default apenas ao cliente ATLAS. **Nao modificar mappers compartilhados**. Conferir que audience-delpi mapeia aud=delpi-central.
+  
+Finalizar com Client Secret no formulario do ChatGPT, metodo `client_secret_post`, `openid profile email mcp:tools`, e validar login humano + `initialize` + `tools/list` + `get_host_health` read-only. **Apenas instrucoes documentadas, sem aplicacao no Keycloak pelo agente.** O `--check` automatico continuara recusado enquanto o bloqueio do login administrativo persistir; a verificacao manual e alternativa valida, mas exige evidencias de IAM e comportamento.
