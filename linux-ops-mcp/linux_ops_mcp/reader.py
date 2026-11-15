@@ -250,4 +250,9 @@ class ItPortalReader:
             raise ReadError("malformed_upstream_response") from None
         if not isinstance(payload, dict) or "data" not in payload:
             raise ReadError("malformed_upstream_response")
-        return validate_observation(payload["data"])
+        observation = validate_observation(payload["data"])
+        # The upstream must return the same registered server ID that we
+        # requested. Never leak observations for a different asset.
+        if observation is not None and observation.get("server_id") != self.settings.server_id:
+            raise ReadError("unexpected_observation_server")
+        return observation
