@@ -30,8 +30,8 @@ Fonte: [plan.md](./plan.md). Autoridade: instruções oficiais do arquiteto e `.
 | N0 Inventário | DONE | `b33cf37a4e` |
 | N1 Superfície MCP e inteligência | DONE | `e2badedc42` |
 | N2 Corpus (texto das fontes e manifesto) | DONE | `d833b46a06` |
-| N3 Citação legível | DONE | (commit N3) |
-| N4 Testes de trava | TODO | |
+| N3 Citação legível | DONE | `1e8bdfc1f6` |
+| N4 Testes de trava | DONE | (commit N4) |
 | N5 HML → PROD e republicação do corpus | TODO | |
 
 ## 4. Etapas
@@ -83,7 +83,8 @@ BFF: imagem anterior pela tag. Corpus: republicar a versão anterior (o pipeline
 | 2026-11-14 | N0 | `b33cf37a4e` | DONE | Inventário em `ab07b642`+. Y4: nenhuma parada. Evidência histórica e docs desta trilha ficam de fora da troca (abaixo). |
 | 2026-11-14 | N1 | `e2badedc42` | DONE | Instruções, missão, tool `knowledge`, `ecosystem`/`knowledge_domains` versão `2026.11.14.1` e diretiva de citação (`display_citation`). `get_context(persona)` inalterado no resto. |
 | 2026-11-14 | N2 | `d833b46a06` | DONE | S1–S7 nas fontes e nos docs do eixo. Código só na ficha §Identificação. `source_id` e nomes de arquivo intactos. Índices e docstrings do manifesto/ingestão sem o código. Rebase sobre as fichas TES. |
-| 2026-11-14 | N3 | (commit N3) | DONE | `source_title` e `display_citation` aditivos na busca e no item. `citation_locator` intacto. Contrato na descrição da tool `knowledge`. |
+| 2026-11-14 | N3 | `1e8bdfc1f6` | DONE | `source_title` e `display_citation` aditivos na busca e no item. `citation_locator` intacto. Contrato na descrição da tool `knowledge`. |
+| 2026-11-14 | N4 | (commit N4) | DONE | Trava do corpus e da superfície MCP. Suíte BFF local: 1370 passed, 199 skipped; PG 79 skipped (sem Postgres local). Nenhuma falha nova. |
 
 ## 8. Inventário N0 (HEAD de partida `ab07b642`)
 
