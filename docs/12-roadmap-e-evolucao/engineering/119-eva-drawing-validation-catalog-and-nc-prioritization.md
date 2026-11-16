@@ -5517,3 +5517,59 @@ Os 95 tokens do job G19 **continham tudo**: descrições PI (`CA18…`), descri�
 ### Estados G20
 
 `G20_ROOT_CAUSE_PASS` · `G20_EXTRACTION_CODE_PASS` · `G20_ATTRIBUTE_RECALL_PASS` (12/12 códigos, 8/8 desc MP, 4/4 desc PI, 8/8 itens, 8/8 qty, 8/8 pais) · `G20_HIERARCHY_PASS` · `G20_DESCRIPTION_PASS` · `G20_QUANTITY_PASS` (abstenção correta) · `G20_REGRESSION_PASS` · `G20_VERIFIER_PASS` (ACCEPT_WITH_RESIDUAL r1) · Deploy **não autorizado** — candidato a decisão de Coordination.
+
+## §94.24 — G21: deploy controlado e validação produtiva E2E da Tabela de Estrutura
+
+**TASK_ID:** `EVA-E1-VAL01-G21-PRODUCTION-DEPLOY-REAL-DRAWING-ATTRIBUTE-AND-MCP-E2E-01` · **Estado:** `G21_PASS_WITH_RESIDUAL` (ChatGPT E2E pendente de owner)
+
+### Etapa 1 — Integridade do artefato
+
+- `BASE_HEAD`: `0b0bea01c9` · `ORIGIN_MAIN`: `ead46831787` · `CANDIDATE_SHA`: `ead46831787` (contém G20 integralmente).
+- `git diff 537c2cd3c7..ead46831787` nos 4 paths G20 → **vazio** (byte-idêntico). Atestado determinístico de identidade do delta pós-r2.
+- Verificador r3 (delta-identity) → `INCONCLUSIVE`: motor `cursor/composer-2.5` sem quota (`ActionRequiredError`), 2 tentativas. Mitigação: atestado `git diff` + md5 do arquivo implantado == blob do repo + 410 testes no estado final.
+- Vereditos vigentes: r1 + r2 `ACCEPT_WITH_RESIDUAL` (8/8 ACs, 0 OCs) sobre o diff funcional completo; delta posterior = docstring + doc.
+
+### Etapa 2 — Testes e delta
+
+- `python -m pytest tests/ -k 'drawing or understanding or bom or table or g18 or g20'` → **410 passed, 1 skipped** no código final (inclui `537c2cd3c7`).
+- Delta: somente `engineering-api` (understanding, comparator, testes, fixture, Doc 119). Sem migration, sem Keycloak/Core, sem api-delpi, sem acesso a banco alheio, sem hardcode por produto.
+
+### Etapa 3 — Deploy isolado
+
+- `git pull --ff-only` no srv-api → `ead4683178`; `./infra/scripts/up-prod-sequential.sh --build engineering-api`.
+- `IMAGE_BEFORE`: `5b7bc9c50302` → retag `infra-engineering-api:rollback-pre-g21` (rollback imutável presente).
+- `IMAGE_AFTER`: `3e2da085b217` · container `Up (healthy)` · `/health` → `200 {"status":"online"}`.
+- G20 no container: `md5(understanding.py)` == blob `ead46831787` (`91b60cbe…`); `_apply_token_group_anchors` presente; `SyntaxWarnings: 0`; fixture 95 tokens na imagem.
+- Demais serviços: não alterados por este deploy (apenas `delpi-engineering-api` recriado).
+
+### Etapa 4 — Documento e OCR
+
+- `DOCUMENT_IDENTITY`: `/tmp/90263680.pdf` SHA-256 `496e2579…13417` — **inalterado**, revisão 00.
+- `OCR_REUSED: YES` — 95 tokens do job G19 (fixture `g20_90263680_ocr_tokens.json` na própria imagem); `NEW_OCR_EXECUTIONS: 0`; `DUPLICATE_JOBS: 0`. Nenhum job de percepção novo foi necessário: reinterpretação de tokens persistidos pelo contrato novo.
+
+### Etapa 5 — Extração produtiva (container `delpi-engineering-api` prod)
+
+| Atributo | Esperado | Extraído | Resultado |
+|---|---:|---:|---|
+| PI | 4 | 4 (âncoras `parent_code`) | PASS |
+| Descrições PI | 4 | 4 (`CA18*` do desenho — **não** TOTVS) | PASS |
+| MP (ocorrências) | 8 | 8 | PASS |
+| Descrições MP | 8 | 8 (`FIELD_IDENTIFIED` + bbox) | PASS |
+| Letras/itens | 8 | 8 (a–f; C/D repetidos sob pais distintos) | PASS |
+| Quantidades | 8 | 8 (`qty=1`, visual bruto) | PASS |
+| MP → PI | 8 | 8 `parent_state=IDENTIFIED` via `column_span` | PASS |
+
+Hierarquia idêntica à BOM vigente, obtida **por evidência geométrica** (mesclagem centrada + sequência de itens), não por consulta ao cadastro. Proveniência completa por campo (`bounding_box_px`, `association_method`, `association_state`).
+
+### Etapa 6 — Comparador G18 e E2E
+
+- BOM oficial: 12 ocorrências (repositório TOTVS via api-delpi — projeção `occurrence_id/quantity_raw/unit_raw` igual a `flatten_bom_occurrences`).
+- `match_candidates: 12` (`structural: 8` + `code_only: 4` PI) · `unverified_relations: 0` · `divergences: 0` formais.
+- `pi_description` ×8 MP: **CONFLICT_CANDIDATE** com `segment_differences` — `isolation_prefix CA↔CB` + `terminal_right 01↔36` (ex.: desenho `CA18MARR-00152/10/06-0000-0110` vs TOTVS `CB18MARR-00152/10/06-0000-3610`).
+- `description` PI/MP: CONFLICT_CANDIDATE literal (formatação) — equivalência semântica `OWNER_BLOCKED`.
+- `quantity`: `NOT_COMPARABLE` ×8 (`consumption_vs_assembly` — QTD=1 ≠ consumo); `automatic_nc: false`, `engineering_approval: NOT_APPROVED`, `global_situation: INCONCLUSIVE`.
+- `MCP_SERVER_READY: YES` (imagem com tools/bridge EVA saudável) · `CHATGPT_E2E: PENDING_OWNER_ACTION` — sessão autenticada com identidade delegada pertence à Coordination; executor não detém JWT humano.
+
+### Estados G21
+
+`G21_SHA_VERIFIED_PASS` · `G21_TESTS_PASS` · `G21_DEPLOY_PASS` · `G21_OCR_PASS` (reuse) · `G21_EXTRACTION_PASS` · `G21_DESCRIPTION_COMPARISON_PASS` · `G21_QUANTITY_COMPARISON_PASS` · `G21_VERIFIER_PASS`→ **residual** (r1/r2 aceitos; r3 INCONCLUSIVE por quota do motor — coberto por atestado determinístico) · `G21_CHATGPT_MCP_E2E_PASS` → **PENDING_OWNER_ACTION**. Veredito: **`G21_PASS_WITH_RESIDUAL`**.
