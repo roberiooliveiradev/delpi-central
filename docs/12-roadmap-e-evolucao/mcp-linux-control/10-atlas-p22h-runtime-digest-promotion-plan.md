@@ -1,7 +1,7 @@
 # ATLAS P2.2h | Plano de promoção por digest OCI e comprovação de runtime
 
 **Data:** 2026-11-16  
-**Status:** `RUNTIME_DRIFT_OPERATOR_CONFIRMED / PROMOTION_NOT_IMPLEMENTED / PROD_UNTOUCHED`  
+**Status:** `RUNTIME_DRIFT_OPERATOR_CONFIRMED / PREFLIGHT_CODE_PASS / COMPOSE_PIN_OPTION_READY / ACT_DISABLED / PROD_UNTOUCHED`  
 **Owner:** TI DELPI.  
 **Escopo deste incremento:** plano de pré-implantação, sem script de execução, aprovação, alteracao de Compose, container, banco ou gateway.
 
@@ -55,3 +55,37 @@ O serviço `public-hub` em `infra/docker-compose.yml` é **build-only** (`build.
 ## 5. Estado agora
 
 `P2.2g: CI_SIGNED_RELEASE_PASS`; `P2.2h: READBACK_DRIFT_CONFIRMED / PROMOTION_PENDING_GATES`. A única mudança atual é **documentação**. Sem CI de código novo, sem operação de container, sem update do ATLAS MCP ou de permissões. A etapa subsequente é o desenvolvimento do modo de promoção e seu teste isolado, seguido de revisão e aprovação **antes** do primeiro uso real em produção.
+
+## 6. Incremento P2.2h.1: seleção opcional do artefato e preflight fail-closed (16/11/2026)
+
+### Codigo integrado em `main`
+
+- `infra/docker-compose.yml`: `public-hub.image=${PUBLIC_HUB_RELEASE_IMAGE:-${COMPOSE_PROJECT_NAME:-infra}-public-hub}`. Sem override, mantém o nome local equivalente ao padrão `projeto-serviço` do Compose. Com override **somente por executor autorizado no futuro**, aceita referência de imagem por digest; `build`, `container_name`, rede e dependências permanecem os mesmos.
+- `infra/docker-compose.hml.yml`: `image=${PUBLIC_HUB_HML_RELEASE_IMAGE:-delpi-hml/public-hub:local}`, preservando a identidade local de HML. Producao e HML mantêm nomes diferentes e perfis isolados.
+- Scripts canônicos `up-prod-sequential.sh` e `up-hml-sequential.sh`: **forçam as variáveis de override vazias** ao lidar com Public Hub. Portanto, o deploy sequencial legado não pode habilitar implicitamente uma release assinada. Os arquivos de exemplos canônicos documentam valores vazios por padrão. Nenhum novo Compose ou `.env` alternativo foi criado.
+- `infra/scripts/public-hub-release-preflight.sh`: novo comando **somente leitura**, com enum fixo `prod|hml`, SHA Git completo, digest OCI completo e `ImageID` esperado do estado anterior. Verifica atestação do GitHub com issuer, signer workflow, ref main e SHA, compara `ImageID` real do container, estado `running`, labels Compose e revisão OCI; imprime um hash de plano **apenas informativo**, sem aprovar ações. `--apply` é rejeitado antes de qualquer chamada. Nenhum `docker pull`, `build`, `tag`, `up`, `stop`, `rm` ou SSH.
+- `infra/scripts/tests/test_public_hub_release_preflight.py`: **22 testes** de caminho positivo simulado, assinatura negada, drift de ImageID, arquivo de contrato Compose, projeto inadequado, container parado, SHA/digest malformado e tentativa de `--apply`.
+- `.github/workflows/atlas-public-hub-p22h-preflight.yml`: CI offline dedicado. Executa os testes via mocks e usa `docker compose config` em runner GitHub para renderizar **PROD e HML**, cada um com imagem local padrão e override imutável por digest, sem criar contêiner, pull ou deploy. Requer explicitamente `--profile public-hub` em HML (descoberto e corrigido na primeira execução).
+
+### Evidências
+
+- **Local isolado:** `pytest -q` dos 22 testes em ambiente sem Docker/GH real: 22 PASS, com stubs do contrato Compose. `bash -n` do novo script PASS. Confere lógica do pré-verificador, mas não é evidência de assinatura acessível ao host.
+- **GitHub Actions:** [ATLAS P2.2h run 43871507381](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43871507381) concluiu com `success`: job de 22 testes e regressão de proveniência, mais renderização real de Compose PROD/HML, local e pinado.
+- **Architecture Enforcement:** verificar o status final do run [43871507384](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43871507384). Não confundir aprovação do CI com revisão independente do `delpi-verifier`.
+- **Verificador independente:** não disponível no ambiente do executor desta sessão; **não executado**. A revisão deve ser feita antes de autorizar execução do novo caminho produtivo.
+- O workflow de release original para o commit de configuração `3869d8db846ed320d492b79cd9c71fcf7383a56e` falhou em um teste Vitest preexistente e intermitente `PostActivity.test.tsx` (139/140); a imagem anteriormente assinada para `f81ddd...` permanece válida. Nenhuma nova assinatura foi presumida.
+
+### Consulta futura somente leitura, no checkout atualizado
+
+```bash
+bash infra/scripts/public-hub-release-preflight.sh --plan prod \
+  f81ddd0075de1e4ef8bb68ca58791e9c43e70759 \
+  sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a \
+  sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb
+```
+
+Esse comando **não altera** containers, baixa imagem, nem consome credenciais com permissão de escrita, mas requer `gh` autenticado para ler as attestations e Docker CLI/inspect. `[PLAN_OK_NO_DEPLOY]` apenas indica que a proveniência no GHCR foi validada e o estado local não mudou desde a leitura enviada pelo operador; **não significa** `PROMOTION_APPROVED`, `HOST_PROVENANCE_PASS`, health ou readiness. Se o ImageID tiver mudado, bloquear, nunca ajustar silenciosamente o valor esperado.
+
+### Próximos gates
+
+`P2.2h.2`: integrar backend Core, journal com aprovação nominativa fora do ChatGPT e executor isolado. Validar rollback, smoke e `verify-public-hub-release.sh` no **container realmente ativado**. Somente com gates externos, verificador independente e aprovação do owner se poderá implementar/usar ACT. O estado continua `ACT_DISABLED`; o código atual **não oferece execução de deploy**.
