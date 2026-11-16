@@ -171,6 +171,8 @@ class FullReadOnlyReadinessReviewer:
             or checked.environment != target.environment
             or checked.service_id != target.service_id
             or checked.expires_at != ci.challenge_expires_at
+            or ci.challenge_issued_at is None
+            or checked.issued_at != ci.challenge_issued_at
             or checked.observed_at < ci.challenge_checked_at
         ):
             raise FullReadinessError("ATLAS_FULL_CHALLENGE_FINAL_DRIFT")

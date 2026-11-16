@@ -135,6 +135,7 @@ def test_consistent_realistic_snapshots_still_block_prepare_and_act():
     assert report.release_verified_at == NOW-timedelta(seconds=10)
     assert report.challenge_checked_at == NOW+timedelta(seconds=1)
     assert report.challenge_expires_at == NOW+timedelta(seconds=60)
+    assert report.challenge_issued_at == NOW-timedelta(seconds=30)
     assert report.ci_signature_verified is True
     assert not report.challenge_consumed
     assert not report.challenge_reserved

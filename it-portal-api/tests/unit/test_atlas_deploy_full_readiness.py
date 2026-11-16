@@ -313,6 +313,7 @@ def release_result(**changes):
         release_verified_at=NOW-timedelta(seconds=12),
         challenge_checked_at=NOW,
         challenge_expires_at=NOW+timedelta(seconds=25),
+        challenge_issued_at=NOW-timedelta(seconds=30),
         ci_signature_verified=True,
     ), **changes)
 
@@ -414,6 +415,14 @@ def test_full_review_rejects_final_challenge_changed_or_consumed():
     rel,ch=fail_full(
         "ATLAS_FULL_CHALLENGE_FINAL_DRIFT",
         challenge=FakeChallenge(data=challenge_result(one_shot_consumed=True)),
+    )
+    assert len(rel.calls)==1 and len(ch.calls)==1
+
+
+def test_full_review_denies_challenge_reissued_with_same_expiry():
+    rel,ch=fail_full(
+        "ATLAS_FULL_CHALLENGE_FINAL_DRIFT",
+        challenge=FakeChallenge(data=challenge_result(issued_at=NOW-timedelta(seconds=15))),
     )
     assert len(rel.calls)==1 and len(ch.calls)==1
 
