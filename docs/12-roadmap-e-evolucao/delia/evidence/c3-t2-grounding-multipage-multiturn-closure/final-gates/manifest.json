@@ -1,0 +1,38 @@
+{
+  "TASK_ID": "DELIA-C3-T2-SUFFICIENCY-COLLECTION-INTEGRITY-AND-MULTITURN-FINAL-GATES-01",
+  "GENERATED_AT_UTC": "2026-11-16T03:42:08Z",
+  "LIVE_EVALUATION_ID": "or-qwen14b-00bb3f24aebb",
+  "MODEL_ID": "qwen/qwen3-14b",
+  "CONFIG_FINGERPRINT": "e4a5b706a3b3156b",
+  "LIVE_MULTITURN_CHAIN": true,
+  "TWO_AGENT_EXPERIMENT_EVAL_ONLY": true,
+  "SCENARIOS": [
+    "INT2_G2_aggregation_active_scope",
+    "INT2_R5_multipage_full_enumeration",
+    "INT2_R6_clarification_needed",
+    "INT2_R6_same_conversation_recovery"
+  ],
+  "PUBLISHED_BLOBS": {
+    "delia-api/app/application/capability_provision/semantic_capability_support.py": {
+      "sha256": "86ea654d54518162d1985e388368f140c7a69d507dacbbf0cb185768d4b4109e",
+      "bytes": 217390
+    },
+    "delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py": {
+      "sha256": "5935668c98357f0ce812c2ee57f4bb16c128b2a60d74dc0dbcb80f6220be12bc",
+      "bytes": 148932
+    },
+    "delia-api/tests/test_c3_t2_final_gates_sufficiency_collection_multiturn.py": {
+      "sha256": "388ad0a28a8ba9a622d01665088ab5d5338430063efeddc0045ec9a3d5424488",
+      "bytes": 16756
+    },
+    "delia-api/scripts/int1_openrouter_qwen14b_instrumented_eval.py": {
+      "sha256": "fe35f7763437399701bf3c54979c95385e2103178d858333523812ebf5b26872",
+      "bytes": 44982
+    },
+    "delia-api/scripts/run_int1_openrouter_qwen14b_instrumented_eval.sh": {
+      "sha256": "9fd452846b293da2f08c65384a6ff1e77e31f230d0ad2b352e091d249f71c25a",
+      "bytes": 14165
+    }
+  },
+  "PACKAGE_SUBDIR": "final-gates/"
+}

@@ -2128,3 +2128,24 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `OPEN_LOW` | GROUNDED com obrigação INCONCLUSIVE possível |
 
 **NEXT:** `COORDINATION_C3_T2_FINAL_EVIDENCE_CI_NEGATIVE_VERIFIER_INDEPENDENT_REVIEW`. Deploy/promo/fase NÃO autorizados.
+
+### 2026-11-16 — Final gates sufficiency / collection / multiturn
+
+**TASK:** `DELIA-C3-T2-SUFFICIENCY-COLLECTION-INTEGRITY-AND-MULTITURN-FINAL-GATES-01`
+**LIVE_EVAL:** `or-qwen14b-00bb3f24aebb` (two-agent eval-only + live multiturn chain)
+**EVIDENCE:** `evidence/c3-t2-grounding-multipage-multiturn-closure/final-gates/`
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `CLOSED_PROVEN` | EXTEND em `_attempt_demonstrates_anchored` / scope material; S1–S10 PASS; live G2 SATISFIED+GROUNDED (109) |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `PARTIAL_REMEDIATED / OPEN_LOW` | `params`↔`arguments` leaf alias + presentation aggregation path; residual: âncoras entity-class sem eco owner ainda INCONCLUSIVE honesto |
+| `R5-N3-OWNER-COMPOSITION` | `CONTRACT_TEST_PASS` | `_joint_collection_coverage` + `test_r5_n3_cross_owner_pages_not_united` (REUSE, sem novo engine) |
+| `R5-N4-FILTER-DRIFT` | `CONTRACT_TEST_PASS` | `test_r5_n4_divergent_filters_not_united` |
+| `R5-N5-SCOPE-DRIFT` | `CONTRACT_TEST_PASS` | `test_r5_n5_divergent_authz_scope_not_united` |
+| `R5_MULTIPAGE_UNION` | `PROVEN_IN_SAMPLE` | live INT2_R5 GROUNDED+SATISFIED (3× MCP:read) |
+| `R6-MULTI-TURN-RECOVERY` | `PROVEN_SAME_CONVERSATION` | turn1 clarificação → turn2 prior=`live_turn1_published_response`; GROUNDED+SATISFIED 90260921 |
+| `R6-PRIOR-ROLE-FILTER` | `CLOSED_PROVEN` | `_prior_turns_blob` filtra por `TurnKind` (`USER_INPUT` only; `DELIA_RESULT` fail-closed); testes com `ConversationContextTurn` real |
+| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | sem identidade restrita legítima — não fabricada |
+| `R6-N6/N7` | `PENDING` | dependem de R4 |
+
+**NEXT:** `COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.

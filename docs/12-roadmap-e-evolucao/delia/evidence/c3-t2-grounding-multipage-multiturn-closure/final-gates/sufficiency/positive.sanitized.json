@@ -1,0 +1,1044 @@
+{
+  "evaluation_id": "or-qwen14b-00bb3f24aebb",
+  "scenario_id": "INT2_G2_aggregation_active_scope",
+  "model": "qwen/qwen3-14b",
+  "config_fingerprint": "e4a5b706a3b3156b",
+  "live_multiturn_chain": true,
+  "result": {
+    "elapsed_s": 65.3,
+    "error": null,
+    "grounding": "GroundingStatus.GROUNDED",
+    "mcp_invoke_targets": [
+      "MCP:read",
+      "MCP:read",
+      "MCP:read"
+    ],
+    "declared_answer": {
+      "schema_version": "1",
+      "status": "complete",
+      "answer": "Existem 109 processos de transformação ativos.",
+      "evidence_refs": [
+        0,
+        1,
+        2
+      ],
+      "unmet_obligations": [],
+      "limitations": [],
+      "clarification_question": null
+    },
+    "investigation_plan": {
+      "goal_class": "analyze",
+      "comparison_requested": false,
+      "expected_delivery": "aggregation",
+      "business_subject": "processos de transformação",
+      "declared": true,
+      "target_identities": [],
+      "evidence_needed": [
+        {
+          "description": "Contagem de processos ativos",
+          "evidence_source": "process",
+          "operation": "read",
+          "required_scope": [
+            "action=search",
+            "params.status=ativo",
+            "__container__=params"
+          ]
+        }
+      ]
+    },
+    "obligation_coverage": [
+      {
+        "obligations": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "process",
+            "operation": "read",
+            "required_scope": [
+              "action=search",
+              "params.status=ativo",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Contagem de processos ativos": "SATISFIED"
+        }
+      },
+      {
+        "obligations": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "process",
+            "operation": "read",
+            "required_scope": [
+              "action=search",
+              "params.status=ativo",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Contagem de processos ativos": "SATISFIED"
+        }
+      }
+    ],
+    "goal_declarations": [
+      {
+        "goal_class": "analyze",
+        "expected_delivery": "aggregation",
+        "target_identities": [],
+        "evidence_needed": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "teo.read",
+            "operation": "read",
+            "required_args": {
+              "entity": "process",
+              "action": "search",
+              "params": {
+                "status": "ativo"
+              }
+            }
+          }
+        ],
+        "business_subject": "processos de transformação",
+        "accepted": false
+      },
+      {
+        "goal_class": "analyze",
+        "expected_delivery": "aggregation",
+        "target_identities": [],
+        "evidence_needed": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "process",
+            "operation": "read",
+            "required_args": {
+              "action": "search",
+              "params": {
+                "status": "ativo"
+              }
+            }
+          }
+        ],
+        "business_subject": "processos de transformação",
+        "accepted": true
+      }
+    ],
+    "comprehension": {
+      "usage": {
+        "requests": 4,
+        "tool_calls": 2,
+        "input_tokens": "<redacted>",
+        "output_tokens": "<redacted>"
+      },
+      "handoff_error": null
+    },
+    "limitations": [
+      "result_truncated",
+      "multiple_observations_without_compose",
+      "experiment_variant=split",
+      "comprehension_llm_requests=4"
+    ],
+    "content_head": "Existem 109 processos de transformação ativos.",
+    "llm_runs": {
+      "count": 3,
+      "input_tokens": "<redacted>",
+      "output_tokens": "<redacted>",
+      "elapsed_ms": 55533,
+      "interrupted": 0
+    },
+    "provider_request_b3": {
+      "boundary": "pydantic_ai_provider_request_pre_http",
+      "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+      "pydantic_ai_provider_boundary": "PROVEN",
+      "http_wire_bytes": "NOT_OBSERVED",
+      "tool_count": 2,
+      "tool_order": [
+        "declare_investigation_goal",
+        "request_user_clarification"
+      ],
+      "tools": [
+        {
+          "name": "declare_investigation_goal",
+          "description_length": 2710,
+          "description_sha256": "028ead2ddc2a3782053f7ceb773dace114ed937ded60c031f8b9df19f6d47d09",
+          "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427",
+          "schema_property_count": 6,
+          "required_fields": [
+            "goal_class"
+          ],
+          "tool_order": 0,
+          "description_has_process_wbs": false,
+          "description_has_bom_negative": false,
+          "description_mentions_get_product_structure": true
+        },
+        {
+          "name": "request_user_clarification",
+          "description_length": 211,
+          "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c",
+          "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b",
+          "schema_property_count": 2,
+          "required_fields": [
+            "question"
+          ],
+          "tool_order": 1,
+          "description_has_process_wbs": false,
+          "description_has_bom_negative": false,
+          "description_mentions_get_product_structure": false
+        }
+      ],
+      "tool_choice_policy": "UNFORCED",
+      "model_request_parameters": {
+        "allow_text_output": true,
+        "allow_image_output": false,
+        "output_mode": "auto",
+        "function_tool_count": 2,
+        "declared_function_tool_count": 2,
+        "output_tool_names": [
+          "final_result"
+        ],
+        "has_tool_choice_field": false,
+        "tool_choice": null
+      },
+      "user_prompt": "Quantos processos de transformação estão ativos?",
+      "agent_instructions_sha256": "79867dd5062c505aaae27ef387f3716f5b065d221301074843feb689fcb05fdd",
+      "agent_instructions_length": 14260,
+      "request_fingerprint": "1ac25e6ecfe0c076"
+    },
+    "prior": [],
+    "context_source": null,
+    "conversation_correlation": null
+  },
+  "event_count": 11,
+  "events_heads": [
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "scenario_start",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798728694,
+      "payload": {
+        "question": "Quantos processos de transformação estão ativos?",
+        "prior": [],
+        "expected": {
+          "delivery": "aggregation",
+          "plan_declared": true,
+          "coverage": "evaluated",
+          "verdict_rule": "scoped metric must come from owner evidence or be honestly partial — never inferred"
+        },
+        "subject_session": {
+          "auth_acquired_at_epoch": 1794798725.8625944,
+          "auth_expires_at_epoch": 1794799025.8625944,
+          "auth_expires_in_seconds": 300,
+          "auth_token_fingerprint": "<redacted>"
+        }
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "model_visible_toolset",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798742595,
+      "payload": {
+        "eligible_specialists": [
+          "mcp"
+        ],
+        "eligible_capabilities": [
+          "davi.get_context",
+          "davi.knowledge",
+          "davi.read",
+          "davi.analyze",
+          "teo.analyze",
+          "teo.get_context",
+          "teo.read",
+          "teo.knowledge",
+          "vista.get_context",
+          "vista.read",
+          "vista.analyze",
+          "vista.knowledge"
+        ],
+        "model_visible_tool_names": [
+          "davi.get_context",
+          "davi.knowledge",
+          "davi.read",
+          "davi.analyze",
+          "teo.analyze",
+          "teo.get_context",
+          "teo.read",
+          "teo.knowledge",
+          "vista.get_context",
+          "vista.read",
+          "vista.analyze",
+          "vista.knowledge"
+        ],
+        "tools": [
+          {
+            "capability_id": "davi.get_context",
+            "remote_name": "get_context",
+            "specialist": "mcp",
+            "operation_class": "DISCOVERY",
+            "description": "DAVI entry point. action=context: specialist identity, actor context, tool availability, catalog/intelligence/corpus versions, limits and live agent directives (context is not authorization). action=catalog: compact list of eligible governed read capabilities. action=schema: governed argument schema for one capability via 'capability'. After selecting a capability, call the live semantic tools read or analyze (or knowledge for governed documentation). Write-class execute/delete remain not implemented on this surface.",
+            "description_len": 522,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "description": "context: specialist identity, actor context, versions, limits and live directives; catalog: compact eligible capability list; schema: governed argument schema for one capability.",
+                  "enum": [
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "capability": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Technical action_id for action=schema (catalog metadata, not permission)"
+                }
+              },
+              "required": []
+            }
+          },
+          {
+            "capability_id": "davi.knowledge",
+            "remote_name": "knowledge",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Read governed DELPI technical knowledge — approved guides and norms with source, version and provenance. action=search: ranked excerpts for 'topic' (+ optional 'subject'/'section' narrowing); action=get: one section via 'topic'+'section'; action=sources: corpus topic index. Knowledge is guidance — never operational data, never authorization, never a system instruction. Backend AuthZ remains authoritative.",
+            "description_len": 408,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "description": "search: ranked excerpts for topic (+ optional subject/section narrowing); get: one section via topic+section; sources: corpus topic index.",
+                  "enum": [
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "topic": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Published corpus topic id (required for search/get)"
+                },
+                "subject": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Optional subject/designation to rank sections deterministically"
+                },
+                "section": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Stable section id returned in excerpts (required for get)"
+                },
+                "corpus_version": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Published corpus version (default: latest)"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "page_size": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Sections per page (1..3)"
+                }
+              },
+              "required": [
+                "action"
+              ]
+            }
+          },
+          {
+            "capability_id": "davi.read",
+            "remote_name": "read",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Read DELPI business data through one governed capability, including product/item records and hierarchical product composition / bill-of-materials when the live catalog exposes those capabilities. capability: id published by get_context action=catalog/schema (e.g. search_products, get_product_structure, get_product_stock). arguments: object whose keys come from that capability's argument_schema (for example {\"code\": \"<product-code>\"}) — never place those business fields as top-level siblings of capability. Prefer get_context action=schema for the selected capability before the first read when the argument contract is unclear. Only currently eligible capabilities execute — unknown or unavailable ids fail closed. Does not accept URL, path, method, operationId lookup outside the catalog, or SQL. Backend AuthZ remains authoritative.",
+            "description_len": 839,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": true,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "capability": {
+                  "type": "string",
+                  "description": "Governed capability id published by get_context action=catalog/schema — not a free operationId, URL, path, method or SQL."
+                },
+                "arguments": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Schema-bounded arguments for the capability (see its argument_schema)"
+                }
+              },
+              "required": [
+                "capability"
+              ]
+            }
+          },
+          {
+            "capability_id": "davi.analyze",
+            "remote_name": "analyze",
+            "specialist": "mcp",
+            "operation_class": "ANALYSIS",
+            "description": "Produce a governed analysis from an authorized backend-computed report or aggregate. capability: analytic capability id published by get_context action=catalog/schema (report/aggregate shapes only). Returns facts, completeness and provenance — no recomputation, no extrapolation, no inferred totals, no writes. Backend AuthZ remains authoritative.",
+            "description_len": 347,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "capability": {
+                  "type": "string",
+                  "description": "Governed analytic capability id published by get_context action=catalog/schema (report/aggregate shapes only)."
+                },
+                "arguments": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Schema-bounded filters/params for the capability"
+                }
+              },
+              "required": [
+                "capability"
+              ]
+            }
+          },
+          {
+            "capability_id": "teo.analyze",
+            "remote_name": "analyze",
+            "specialist": "mcp",
+            "operation_class": "ANALYSIS",
+            "description": "Analysis views. Snapshot views: meta|summary|processes|instances|rows (filial_id/setor_id/competencia filters). Live dashboard: dashboard_summary_live|dashboard_process_ranking|dashboard_alerts|dashboard_evolution|dashboard_by_family|dashboard_due_dates|dashboard_strategic_indicators|processes_calculated. Process-scoped (processo_id): process_revision_comparison|decomposition_link_validation|decomposition_draft_suggestion|diagram_validation|diagram_bpmn_xml. Revision-scoped (revisao_id): revision_allocation_diagnostic|revision_diagram_merged|revision_decomposition_merged. impact_effort_matrix accepts processo_id|instancia_id|revisao_id (competencia/horizonte_meses optional). Scope requirements: consolidated views need no ids; view=filial requires filial_id and rejects setor_id; view=department (alias: departamento) requires filial_id AND setor_id — get both via read entity=department first. Filters may ride flat args or the params object (Semantic V3). view=meeting_minute_transcript: non-persisting transcript analysis (params.minute_id + params.data). READ-only — never persists.",
+            "description_len": 1095,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "view": {
+                  "type": "string",
+                  "description": "Canonical analysis view.",
+                  "enum": [
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "params": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "View-scoped parameters object."
+                },
+                "filial_id": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Branch (filial) id filter."
+                },
+                "setor_id": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Department (setor) id filter."
+                },
+                "processo_id": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Process id (process-scoped views)."
+                },
+                "revisao_id": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Revision id (revision-scoped views)."
+                },
+                "instancia_id": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Instance id (instance-scoped views)."
+                },
+                "familia_processo": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Process family name filter."
+                },
+                "competencia": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Competency period filter."
+                },
+                "competencia_inicio": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Competency range start."
+                },
+                "competencia_fim": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Competency range end."
+                },
+                "horizonte_meses": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Month horizon for forecast views."
+                },
+                "limit": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Result row cap for ranked views."
+                }
+              },
+              "required": [
+                "view"
+              ]
+            }
+          },
+          {
+            "capability_id": "teo.get_context",
+            "remote_name": "get_context",
+            "specialist": "mcp",
+            "operation_class": "DISCOVERY",
+            "description": "Semantic discovery — context is never authorization. section=overview (default): authenticated user + current workspace refs + discovery hint. section=self: personal context + signature profile. section=workspace: current process/instance/revision/area refs (navigation hint — authoritative facts still require read()). section=catalog: full capability catalog (entities, workflows, write schemas, execution policies, agent_directives); optional entity filters one entity contract.",
+            "description_len": 481,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "section": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Discovery section (default: overview)."
+                },
+                "entity": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Entity filter for section=catalog — projects one entity contract instead of the full catalog."
+                }
+              },
+              "required": []
+            }
+          },
+          {
+            "capability_id": "teo.read",
+            "remote_name": "read",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Semantic read — never writes. Process-engineering domain (processes, WBS/decomposition, BPMN, resources) — not product/item materials composition or bill-of-materials. entity + typed action + params object. Domain entities (process, instance, revision, measurement, investment, shared_resource, resource_cost, resource_link, meeting_minute, process_document, decomposition_tree (process WBS/decomposition tree; id=processo_id — hierarchical process mapeamento macro, not a materials/product bill-of-materials), instance_decomposition_scope, revision_decomposition_overlay, process_diagram, instance_diagram_scope, revision_diagram_overlay, process_bpmn_document, impact_effort_matrix, branch, department): action=search|get — search lists records; get fetches ONE record and requires params.id (never search-all when an id is needed). Search accepts only entity-declared fields (department: filial_id only; branch: none; process: filial_id/setor_id/status/familia_processo/q/has_improvement/page/page_size) — unsupported fields are rejected INVALID_FIELD; per-entity contract via get_context entity=<name>. Do not invent params. Specialized entities: process_context (get: processo_id + optional instancia_id/revisao_id — authoritative process intelligence), process_timeline (get: processo_id — needs an already-identified process, not discovery), solution (catalog|context), helpdesk (session|capabilities|tickets|ticket|attachment|catalog), meeting_minute (pending_signatures|audit|versions|participants|signers|generate_from_transcript), directory_user (search: q required ≥2 chars, optional limit≤20, include_self — Core directory for Delpi user_id resolution before meeting_minute participants/signers; ambiguity=true means ask the user, never pick by name alone), evidence (list), task (my_tasks|task|process_tasks; my_tasks params: status, scope=received|delegated|created|visible (default received = assigned to the caller; delegated = created and assigned to someone else; created = every t…",
+            "description_len": 2283,
+            "description_has_process_wbs": true,
+            "description_has_bom_negative": true,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "entity": {
+                  "type": "string",
+                  "description": "Domain or specialized entity to read (see description for the closed vocabulary)."
+                },
+                "action": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Typed entity action — search|get for domain entities; specialized entities declare their own closed action set."
+                },
+                "params": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Action-scoped parameters: id for get; filters/pagination for search; action-specific fields for specialized routes."
+                }
+              },
+              "required": [
+                "entity"
+              ]
+            }
+          },
+          {
+            "capability_id": "teo.knowledge",
+            "remote_name": "knowledge",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Versioned knowledge — guidance, never domain truth or AuthZ. source=methodology: TÉO process-methodology playbooks (params: method, task, guide_version v1|v2, intent, context facts). Omit guide_version for the frozen v1 catalog. teo-method-playbooks-v2 adds Lean Six Sigma (DMAIC, Pareto, MSA, FMEA and the other family tools) without replacing SIPOC, Lean, Ishikawa or 5 Whys. Belts are competence references, not certifications. Do not invent statistical results. source=product_guide: Portal/Transformômetro usage guides (params: topic, section).",
+            "description_len": 549,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Knowledge family to project.",
+                  "enum": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "params": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ],
+                  "description": "Source-scoped parameters (method/task/intent/ context for methodology; topic/section for product_guide)."
+                }
+              },
+              "required": [
+                "source"
+              ]
+            }
+          },
+          {
+            "capability_id": "vista.get_context",
+            "remote_name": "get_context",
+            "specialist": "mcp",
+            "operation_class": "DISCOVERY",
+            "description": "Contexto da VISTA: identidade do assistente, principal, capabilities efetivas do usuário autenticado (derivadas de autorização real — o catálogo informa, nunca concede), modelo de confirmação e catalogVersion. action=context (default) ou action=catalog para o catálogo canônico completo.",
+            "description_len": 287,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string"
+                }
+              },
+              "required": []
+            }
+          },
+          {
+            "capability_id": "vista.read",
+            "remote_name": "read",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Leitura por vocabulário fechado entity+action: playlist.list|get|context, playlist_history.history, data_route.search, data_model.inspect, display_format.list — catálogo autoritativo de formatos de visualização de dados (display modes, tipos de bloco, formatos de valor), slide_preset.list, media_asset.list, slide_template.list|get|export_mdd, product_guide.guide. filters aceita apenas chaves declaradas por ação — chave desconhecida falha tipada (VALIDATION_ERROR). Entidade/ação desconhecida → UNKNOWN_ENTITY/UNKNOWN_ACTION. Capabilities planejadas retornam NOT_IMPLEMENTED honesto.",
+            "description_len": 586,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "entity": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "filters": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "pagination": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                }
+              },
+              "required": [
+                "entity",
+                "action"
+              ]
+            }
+          },
+          {
+            "capability_id": "vista.analyze",
+            "remote_name": "analyze",
+            "specialist": "mcp",
+            "operation_class": "ANALYSIS",
+            "description": "Análises fechadas do owner: data_block_preview, data_model_preview, intent_materialization (intenção NL → ops tipadas candidatas). Nada persiste; resposta inclui evidenceClass (preview|calculation). Ops candidatas seguem para o envelope governado — nunca persistem por si.",
+            "description_len": 272,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "analysis": {
+                  "type": "string"
+                },
+                "subject_refs": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "parameters": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                }
+              },
+              "required": [
+                "analysis"
+              ]
+            }
+          },
+          {
+            "capability_id": "vista.knowledge",
+            "remote_name": "knowledge",
+            "specialist": "mcp",
+            "operation_class": "READ",
+            "description": "Registro canônico de guias de produto (GUIDANCE_NOT_DOMAIN_TRUTH). action=get: um guia por topic (+section opcional); sem topic = índice. action=search: projeção limitada do índice filtrada por query. Nunca estado de domínio nem autorização.",
+            "description_len": 241,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "section": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "query": {
+                  "type": [
+                    "<max_depth>",
+                    "<max_depth>"
+                  ]
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "action"
+              ]
+            }
+          }
+        ],
+        "tool_count": 12,
+        "capture_boundary": "catalog_projection_pre_envelope_hint"
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "provider_request_b3",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798742671,
+      "payload": {
+        "boundary": "pydantic_ai_provider_request_pre_http",
+        "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+        "pydantic_ai_provider_boundary": "PROVEN",
+        "http_wire_bytes": "NOT_OBSERVED",
+        "tool_count": 2,
+        "tool_order": [
+          "declare_investigation_goal",
+          "request_user_clarification"
+        ],
+        "tools": [
+          {
+            "name": "declare_investigation_goal",
+            "description_length": 2710,
+            "description_sha256": "028ead2ddc2a3782053f7ceb773dace114ed937ded60c031f8b9df19f6d47d09",
+            "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427",
+            "schema_property_count": 6,
+            "required_fields": [
+              "goal_class"
+            ],
+            "tool_order": 0,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "description_mentions_get_product_structure": true
+          },
+          {
+            "name": "request_user_clarification",
+            "description_length": 211,
+            "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c",
+            "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b",
+            "schema_property_count": 2,
+            "required_fields": [
+              "question"
+            ],
+            "tool_order": 1,
+            "description_has_process_wbs": false,
+            "description_has_bom_negative": false,
+            "description_mentions_get_product_structure": false
+          }
+        ],
+        "tool_choice_policy": "UNFORCED",
+        "model_request_parameters": {
+          "allow_text_output": true,
+          "allow_image_output": false,
+          "output_mode": "auto",
+          "function_tool_count": 2,
+          "declared_function_tool_count": 2,
+          "output_tool_names": [
+            "final_result"
+          ],
+          "has_tool_choice_field": false,
+          "tool_choice": null
+        },
+        "user_prompt": "Quantos processos de transformação estão ativos?",
+        "agent_instructions_sha256": "79867dd5062c505aaae27ef387f3716f5b065d221301074843feb689fcb05fdd",
+        "agent_instructions_length": 14260,
+        "request_fingerprint": "1ac25e6ecfe0c076",
+        "full_artifact_relpath": "or-qwen14b-00bb3f24aebb/provider_request_b3/INT2_G2_aggregation_active_scope.json"
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "comprehension_pass",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798771386,
+      "payload": {
+        "usage": {
+          "requests": 4,
+          "tool_calls": 2,
+          "input_tokens": "<redacted>",
+          "output_tokens": "<redacted>"
+        },
+        "handoff_error": null
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "tool_observation",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798779705,
+      "payload": {
+        "call_sequence_number": 1,
+        "capability_id": "teo.read",
+        "status": "SUCCESS",
+        "investigation_progress_class": "NEW_INFORMATION",
+        "evidence_citable": true,
+        "authorization_denied": "<redacted>",
+        "coverage_note": null,
+        "authoritative_root_code": null,
+        "provenance_specialist": "teo",
+        "provenance_capability": "read",
+        "action_id": "read",
+        "limitations": [
+          "result_truncated"
+        ],
+        "uncovered_user_identifiers": null,
+        "pagination": {
+          "page": null,
+          "page_size": null,
+          "has_more": true,
+          "total_count": 109,
+          "items_in_page": 40,
+          "pagination_args": [
+            "params"
+          ]
+        },
+        "continuation_note": "Owner result is truncated or an incomplete page. If the tool schema exposes page/page_size (or equivalent), call again with the next page parameters to continue — do not treat a single page as the full population. This capability declares pagination-capable argument  `params` — pass the next page through it (for example as its page/page_size selector), preserving the same filters and scope across pages.",
+        "owner_result_content_head": "1.\n  Processo id: 8fe16420-748a-40cf-a8bf-f578e413a9e6\n  Codigo processo: PROC-0105\n  Nome processo: G5 E2E Processo g5e2e-mvb3ecyu\n  Status processo: ativo\n  Todas filiais ativas: False\n  Data de criação: 2026-10-16T11:58:18.877434-03:00\n  Data de atualização: 2026-10-16T11:58:19.442890-03:00\n  Deletado: False\n  Filial ids: (vazio)\n  Setor ids: (vazio)\n  Filiais: (vazio)\n  Setores: (vazio)\n  Setu"
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "tool_observation",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798783687,
+      "payload": {
+        "call_sequence_number": 2,
+        "capability_id": "teo.read",
+        "status": "SUCCESS",
+        "investigation_progress_class": "NEW_INFORMATION",
+        "evidence_citable": true,
+        "authorization_denied": "<redacted>",
+        "coverage_note": null,
+        "authoritative_root_code": null,
+        "provenance_specialist": "teo",
+        "provenance_capability": "read",
+        "action_id": "read",
+        "limitations": [
+          "result_truncated"
+        ],
+        "uncovered_user_identifiers": null,
+        "pagination": {
+          "page": 2,
+          "page_size": 40,
+          "has_more": true,
+          "total_count": 109,
+          "items_in_page": 40,
+          "next_page": 3,
+          "pagination_args": [
+            "params"
+          ]
+        },
+        "continuation_note": "Owner result is truncated or an incomplete page. If the tool schema exposes page/page_size (or equivalent), call again with the next page parameters to continue — do not treat a single page as the full population. This capability declares pagination-capable argument  `params` — pass the next page through it (for example as its page/page_size selector), preserving the same filters and scope across pages.",
+        "owner_result_content_head": "1.\n  Processo id: 17c8c525-be48-4328-9b0c-25dc94ebc901\n  Codigo processo: PROC-0065\n  Nome processo: G8 E2E Migração stale\n  Status processo: ativo\n  Todas filiais ativas: False\n  Data de criação: 2026-10-09T09:55:57.876896-03:00\n  Data de atualização: 2026-10-09T09:56:42.297331-03:00\n  Deletado: False\n  Filial ids: (vazio)\n  Setor ids: (vazio)\n  Filiais: (vazio)\n  Setores: (vazio)\n  Setup stats:\n"
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "tool_observation",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798788596,
+      "payload": {
+        "call_sequence_number": 3,
+        "capability_id": "teo.read",
+        "status": "SUCCESS",
+        "investigation_progress_class": "NEW_INFORMATION",
+        "evidence_citable": true,
+        "authorization_denied": "<redacted>",
+        "coverage_note": null,
+        "authoritative_root_code": null,
+        "provenance_specialist": "teo",
+        "provenance_capability": "read",
+        "action_id": "read",
+        "limitations": [
+          "result_truncated"
+        ],
+        "uncovered_user_identifiers": null,
+        "pagination": {
+          "page": 3,
+          "page_size": 40,
+          "has_more": false,
+          "total_count": 109,
+          "items_in_page": 29,
+          "pagination_args": [
+            "params"
+          ]
+        },
+        "continuation_note": "Owner result is truncated or an incomplete page. If the tool schema exposes page/page_size (or equivalent), call again with the next page parameters to continue — do not treat a single page as the full population. This capability declares pagination-capable argument  `params` — pass the next page through it (for example as its page/page_size selector), preserving the same filters and scope across pages.",
+        "owner_result_content_head": "1.\n  Processo id: 0b7ad21e-7157-455c-9d25-1ad71cee5bd7\n  Codigo processo: PROC-0029\n  Nome processo: App - Importados\n  Status processo: ativo\n  Todas filiais ativas: False\n  Data de criação: 2026-06-11T08:49:00.131151-03:00\n  Data de atualização: 2026-06-11T08:49:00.131151-03:00\n  Deletado: False\n  Filial ids:\n    - 02\n  Setor ids:\n    - compras\n  Filiais:\n    - Filial id: 442fd447-1953-4687-8708"
+      }
+    },
+    {
+      "schema_version": "int1_decision_trace_v1",
+      "event_type": "mcp_invoke",
+      "evaluation_id": "or-qwen14b-00bb3f24aebb",
+      "scenario_id": "INT2_G2_aggregation_active_scope",
+      "correlation_id": "or-qwen14b-00bb3f24aebb-INT2_G2_aggregation_active_scope",
+      "timestamp_unix_ms": 1794798794011,
+      "payload": {
+        "call_sequence_number": 1,
+        "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+        "elapsed_s": 1.75,
+        "argument_keys": [
+          "entity",
+          "action",
+          "params"
+        ],
+        "argument_types": {
+          "entity": {
+            "type": "str",
+            "json_kind": "string"
+          },
+          "action": {
+            "type": "str",
+            "json_kind": "string"
+          },
+          "params": {
+            "type": "dict",
+            "json_kind": "object"
+          }
+        },
+        "argument_values_sanitized": {
+          "entity": "process",
+          "action": "search",
+          "params": {
+            "status": "ativo"
+          }
+        },
+        "result_snippet_head": "RemoteToolOutcome(content_text='{\"success\": true, \"message\": \"Registros.\", \"data\": {\"total\": 109, \"items\": [{\"processo_id\": \"8fe16420-748a-40cf-a8bf-f578e413a9e6\", \"codigo_processo\": \"PROC-0105\", \"nome_processo\": \"G5 E2E Processo g5e2e-mvb3ecyu\", \"descricao_processo\": null, \"gestor_responsavel\": null, \"objetivo_processo\": null, \"status_processo\": \"ativo\", \"familia_processo\": null, \"agrupador_ferramenta\": null, \"todas_filiais_ativas\": false, \"created_at\": \"2026-10-16T11:58:18.877434-03:00\", \"upda",
+        "error": null
+      }
+    }
+  ]
+}

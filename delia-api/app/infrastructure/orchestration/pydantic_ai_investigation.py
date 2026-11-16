@@ -93,6 +93,7 @@ from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
+    TurnKind,
 )
 from app.infrastructure.config.cri_instruction_resource import (
     CriInstructionResourceError,
@@ -1173,16 +1174,103 @@ _RECORD_CODEY_RE = re.compile(
 )
 
 
+_NON_USER_PRIOR_KIND_TOKENS = frozenset(
+    {
+        "delia_result",
+        "assistant",
+        "system",
+        "tool",
+        "function",
+        "model",
+        "agent",
+        "developer",
+    }
+)
+
+
+def _prior_turn_is_user_authorized(turn: object) -> bool:
+    """True when the turn may authorize record identifiers (R6).
+
+    The real contract is ``ConversationContextTurn.kind`` /
+    ``TurnKind`` (``USER_INPUT`` vs ``DELIA_RESULT``). Provider-style
+    ``role``/``speaker`` appear only in harness fixtures — accepted as
+    a secondary signal, never as a substitute that ignores ``kind``.
+    Unknown shapes fail closed (do not authorize).
+    """
+    if isinstance(turn, str):
+        # Bare strings are harness fixtures treated as user text.
+        return bool(turn.strip())
+    kind = getattr(turn, "kind", None)
+    if kind is TurnKind.USER_INPUT:
+        return True
+    if kind is TurnKind.DELIA_RESULT:
+        return False
+    if isinstance(turn, Mapping):
+        raw_kind = turn.get("kind")
+        if raw_kind is not None:
+            token = str(
+                getattr(raw_kind, "value", raw_kind) or ""
+            ).strip().casefold()
+            if token == "user_input":
+                return True
+            if token in _NON_USER_PRIOR_KIND_TOKENS:
+                return False
+        role = str(
+            turn.get("role") or turn.get("speaker") or ""
+        ).strip().casefold()
+        if role in {"user", "human"}:
+            return True
+        if role in _NON_USER_PRIOR_KIND_TOKENS:
+            return False
+        # Mapping without kind/role: fail closed.
+        return False
+    role = str(
+        getattr(turn, "role", None)
+        or getattr(turn, "speaker", None)
+        or ""
+    ).strip().casefold()
+    if role in {"user", "human"}:
+        return True
+    if role in _NON_USER_PRIOR_KIND_TOKENS:
+        return False
+    # Legacy role-less objects with content only (unit fixtures): keep
+    # authorizing so historical harness turns without kind still work.
+    content = str(
+        getattr(turn, "content", None)
+        or getattr(turn, "text", "")
+        or ""
+    )
+    return bool(content.strip()) and kind is None
+
+
 def _prior_turns_blob(prior_turns: object) -> str:
+    """Authorized user-context text from prior turns (R6).
+
+    Only ``USER_INPUT`` (and legacy user-role / role-less harness turns)
+    may authorize record identifiers. ``DELIA_RESULT`` and
+    assistant/tool/system content never expand the authorized set — a
+    model-invented code in an earlier result turn must not legitimize
+    the same fabrication later.
+    """
     parts: list[str] = []
     for turn in prior_turns or ():
-        parts.append(
-            str(
+        if not _prior_turn_is_user_authorized(turn):
+            continue
+        if isinstance(turn, str):
+            parts.append(turn)
+            continue
+        if isinstance(turn, Mapping):
+            content = str(
+                turn.get("content") or turn.get("text") or ""
+            )
+        else:
+            content = str(
                 getattr(turn, "content", None)
                 or getattr(turn, "text", "")
                 or ""
             )
-        )
+        if content:
+            parts.append(content)
     return " ".join(parts)
 
 
@@ -1362,8 +1450,6 @@ def _prior_message_history(
         TextPart,
         UserPromptPart,
     )
-    from app.application.model_invocation.contracts import TurnKind
-
     if not prior_turns or turns_limit <= 0:
         return []
     history = []

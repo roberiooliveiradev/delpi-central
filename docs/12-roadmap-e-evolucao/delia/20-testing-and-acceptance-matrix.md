@@ -3149,3 +3149,16 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 ### C3/T2 evidence closure (2026-11-15)
 
 Pacote `evidence/c3-t2-grounding-multipage-multiturn-closure/` + `tests/test_c3_t2_evidence_closure_negatives.py` registram negativos G2/REF05/R5/R6 e evidências live sanitizadas (`90d11af2c834`, `e12d13cf3f56`, `4136fe9b93c0`). R5-N3/N4/N5 permanecem PENDING.
+
+### 2026-11-16 — Final gates sufficiency / collection / multiturn
+
+**TASK:** `DELIA-C3-T2-SUFFICIENCY-COLLECTION-INTEGRITY-AND-MULTITURN-FINAL-GATES-01`.
+
+| Gate | Oráculo | Evidência |
+|---|---|---|
+| WS-1 suficiência / âncoras | `PASS` | EXTEND obligation eval; S1–S10; live G2 `00bb3f24aebb` GROUNDED+SATISFIED |
+| WS-2 R5-N3/N4/N5 | `CONTRACT_TEST_PASS` | `_joint_collection_coverage` REUSE + testes finais; live R5 PASS |
+| WS-3 same-conversation R6 | `LIVE_PASS` | prior=`live_turn1_published_response`; recovery GROUNDED+SATISFIED |
+| R4 AuthZ deny | `PENDING` | identidade restrita não provisionada |
+
+**NEXT=`COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`.**

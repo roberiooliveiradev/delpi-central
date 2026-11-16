@@ -2829,6 +2829,78 @@ def _required_scope_pairs(args: object) -> tuple[str, ...]:
     return tuple(tokens)
 
 
+# Presentation-class evidence_source / view tokens — they name how the
+# model hoped to acquire a metric, not a business entity kind. When the
+# delivery is ``aggregation`` and an authoritative owner metric exists
+# under matching material filters, these must not veto a READ that
+# actually demonstrated the count (G2 anchor mismatch).
+_PRESENTATION_EVIDENCE_SOURCES = frozenset(
+    {
+        "summary",
+        "analysis",
+        "aggregate",
+        "aggregation",
+        "count",
+        "metric",
+        "kpi",
+        "dashboard",
+        "view",
+    }
+)
+_CONSULTATION_OPERATIONS = frozenset(
+    {
+        SpecialistOperationClass.READ.value.casefold(),
+        SpecialistOperationClass.ANALYSIS.value.casefold(),
+        SpecialistOperationClass.DISCOVERY.value.casefold(),
+    }
+)
+# Argument containers that owners treat as equivalent carriers for the
+# same leaf filter/identity keys (TEO ``params.code`` ↔ DAVI
+# ``arguments.code``). Never conflate with nested business keys.
+_SCOPE_CONTAINER_ALIASES: tuple[tuple[str, str], ...] = (
+    ("params", "arguments"),
+    ("arguments", "params"),
+)
+
+
+def _scope_values_for_key(
+    scope_map: Mapping[str, set[str]], key: str
+) -> set[str] | None:
+    """Lookup a scope path, accepting params↔arguments container alias."""
+    values = scope_map.get(key)
+    if values is not None:
+        return values
+    for left, right in _SCOPE_CONTAINER_ALIASES:
+        prefix = left + "."
+        if key.startswith(prefix):
+            alt = right + "." + key[len(prefix) :]
+            values = scope_map.get(alt)
+            if values is not None:
+                return values
+    return None
+
+
+def _material_required_scope(
+    required_scope: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Filter presentation-only scope tokens for aggregation checks.
+
+    ``view=*`` and presentation evidence containers do not define the
+    business query set; material filters (``params.status``, identity
+    leaves) and their container markers remain.
+    """
+    kept: list[str] = []
+    for token in required_scope:
+        if token.startswith("view="):
+            continue
+        if token.startswith("__container__="):
+            name = token.partition("=")[2]
+            if name in _PRESENTATION_EVIDENCE_SOURCES:
+                continue
+        kept.append(token)
+    return tuple(kept)
+
+
 def _required_scope_state(
     required_scope: tuple[str, ...],
     invocation_scope: tuple[str, ...] | None,
@@ -2843,6 +2915,10 @@ def _required_scope_state(
     truncated — scope equivalence is unknowable, so the evidence can
     bind but never demonstrate. ``ok``: every declared pair is echoed
     and no extra business argument exists under declared containers.
+
+    Leaf paths under ``params`` / ``arguments`` are treated as
+    interchangeable carriers of the same filter/identity value when the
+    owner contracts publish either container for the same leaf.
     """
     if not required_scope:
         return "ok"
@@ -2862,17 +2938,28 @@ def _required_scope_state(
     unproven = False
     for token in required_scope:
         if token.startswith("__container__="):
-            prefix = token.partition("=")[2] + "."
-            declared = {
-                pair for pair in required_scope
-                if pair.startswith(prefix)
-            }
-            observed = {
-                f"{key}={value}"
-                for key, values in scope_map.items()
-                for value in values
-                if key.startswith(prefix)
-            }
+            name = token.partition("=")[2]
+            prefixes = [name + "."]
+            for left, right in _SCOPE_CONTAINER_ALIASES:
+                if name == left:
+                    prefixes.append(right + ".")
+            declared: set[str] = set()
+            for prefix in prefixes:
+                # Normalize declared pairs to the primary prefix for
+                # set comparison against observed leaves.
+                primary = name + "."
+                for pair in required_scope:
+                    if pair.startswith(prefix):
+                        leaf = pair[len(prefix) :]
+                        declared.add(f"{primary}{leaf}")
+            observed: set[str] = set()
+            for prefix in prefixes:
+                primary = name + "."
+                for key, values in scope_map.items():
+                    if key.startswith(prefix):
+                        leaf = key[len(prefix) :]
+                        for value in values:
+                            observed.add(f"{primary}{leaf}={value}")
             if observed - declared:
                 unproven = True
             continue
@@ -2881,7 +2968,7 @@ def _required_scope_state(
                 unproven = True
             continue
         key, sep, value = token.partition("=")
-        values = scope_map.get(key)
+        values = _scope_values_for_key(scope_map, key)
         if values is None:
             unproven = True
         elif value not in values:
@@ -3265,6 +3352,44 @@ def _attempt_declares_aggregate_metric(
     return False
 
 
+def _presentation_source_allows_aggregation(
+    evidence_source: str | None,
+) -> bool:
+    """True when the declared source names a presentation/metric view.
+
+    Under ``delivery=aggregation``, a READ that returns an owner
+    aggregate under matching material filters may demonstrate the
+    obligation even when Comprehension proposed ``summary`` /
+    ``analysis`` rather than the entity vocabulary of the capability
+    that actually delivered the total (G2 / INT3 depth).
+    """
+    if evidence_source is None:
+        return False
+    return evidence_source.casefold() in _PRESENTATION_EVIDENCE_SOURCES
+
+
+def _consultation_operations_compatible(
+    declared: str | None, observed: str | None
+) -> bool:
+    """READ / ANALYSIS / DISCOVERY are interchangeable for aggregation.
+
+    ACT remains strict: READ never demonstrates ACT. Unknown/None
+    observed does not invent compatibility.
+    """
+    if declared is None:
+        return True
+    if observed is None:
+        return False
+    if declared == observed:
+        return True
+    if (
+        declared in _CONSULTATION_OPERATIONS
+        and observed in _CONSULTATION_OPERATIONS
+    ):
+        return True
+    return False
+
+
 def _attempt_demonstrates_anchored(
     attempt: GovernedCapabilityAttempt,
     obligation: MaterialObligation,
@@ -3285,6 +3410,12 @@ def _attempt_demonstrates_anchored(
     acquisition → bound/INCONCLUSIVE); an ``aggregation`` obligation
     requires an authoritative metric or provably complete collection
     — never a count invented from an unverifiable window.
+
+    Under ``aggregation``, presentation-class evidence sources
+    (``summary``/``analysis``/…) and consultation-class operations
+    (READ↔ANALYSIS) do not veto an owner aggregate that already
+    satisfies the material filter scope — the metric is the
+    demonstration, not the presentation vocabulary of the plan.
     """
     if attempt.status is not GovernedCapabilityStatus.SUCCESS:
         return False
@@ -3292,14 +3423,31 @@ def _attempt_demonstrates_anchored(
         return False
     if "discovery_metadata_observation" in attempt.limitations:
         return False
+    aggregation_presentation = (
+        delivery == "aggregation"
+        and _presentation_source_allows_aggregation(
+            obligation.evidence_source
+        )
+    )
     if obligation.evidence_source is not None:
-        if (
-            obligation.evidence_source.casefold()
-            not in _attempt_anchor_tokens(attempt)
-        ):
-            return False
+        source = obligation.evidence_source.casefold()
+        tokens = _attempt_anchor_tokens(attempt)
+        if source not in tokens:
+            if not aggregation_presentation:
+                return False
+            # Presentation source under aggregation: require business
+            # evidence (entity/items/total) — never satisfy from a
+            # discovery-metadata or empty observation.
+            if not _is_business_evidence_attempt(attempt):
+                return False
     if obligation.operation is not None:
-        if _attempt_operation_class(attempt) != obligation.operation:
+        observed = _attempt_operation_class(attempt)
+        if aggregation_presentation:
+            if not _consultation_operations_compatible(
+                obligation.operation, observed
+            ):
+                return False
+        elif observed != obligation.operation:
             return False
         if obligation.operation == (
             SpecialistOperationClass.ACT.value.casefold()
@@ -3358,12 +3506,22 @@ def _attempt_satisfies_obligation(
     pertinence is not deterministically verifiable and must never be
     presumed demonstrated. Capability names alone never prove that
     the requested business fact was acquired (doc 237 R-E2).
+
+    For ``aggregation``, presentation-only scope tokens (``view=*``)
+    are stripped before the material filter check so a ``view=summary``
+    plan does not permanently veto a READ that queried the same
+    business filters and returned an authoritative total.
     """
     item = _obligation_item(obligation)
     needle = item.description
     if not needle:
         return False
-    if _attempt_scope_state(attempt, item.required_scope) != "ok":
+    scope = item.required_scope
+    if delivery == "aggregation" and _presentation_source_allows_aggregation(
+        item.evidence_source
+    ):
+        scope = _material_required_scope(scope)
+    if _attempt_scope_state(attempt, scope) != "ok":
         # A declared required scope that is contradicted or unproven
         # can never be demonstrated by this attempt — coverage of a
         # different/unknown query scope is not the requested one.
@@ -3399,6 +3557,7 @@ def _attempt_satisfies_obligation(
 def _attempt_binds_obligation(
     attempt: GovernedCapabilityAttempt,
     obligation: "MaterialObligation | str | Mapping",
+    delivery: str | None = None,
 ) -> bool:
     """BOUND-not-demonstrated check (RC5 EVIDENCE_BOUND state).
 
@@ -3408,6 +3567,11 @@ def _attempt_binds_obligation(
     anchored attempt whose echo cannot be checked (absent metadata) or
     whose demonstration failed on completeness/postcondition. An
     echoed DIFFERENT kind or operation disproves the bind outright.
+
+    Presentation-class sources under ``aggregation`` bind to business
+    evidence of a consultation-class capability when material filters
+    are not contradicted — demonstration still requires the aggregate
+    metric path in ``_attempt_satisfies_obligation``.
     """
     item = _obligation_item(obligation)
     if not item.description:
@@ -3420,10 +3584,14 @@ def _attempt_binds_obligation(
         return False
     if "discovery_metadata_observation" in attempt.limitations:
         return False
-    if (
-        _attempt_scope_state(attempt, item.required_scope)
-        == "contradicted"
-    ):
+    scope = item.required_scope
+    aggregation_presentation = (
+        delivery == "aggregation"
+        and _presentation_source_allows_aggregation(item.evidence_source)
+    )
+    if aggregation_presentation:
+        scope = _material_required_scope(scope)
+    if _attempt_scope_state(attempt, scope) == "contradicted":
         # The invocation provably queried a different business scope —
         # the evidence cannot speak for the obligated scope, so it
         # does not even bind (same rule as a contradicted identity).
@@ -3433,7 +3601,13 @@ def _attempt_binds_obligation(
         tokens = _attempt_anchor_tokens(attempt)
         source = item.evidence_source.casefold()
         if source not in tokens:
-            if _attempt_surface_anchor_match(attempt, source):
+            if aggregation_presentation and _is_business_evidence_attempt(
+                attempt
+            ):
+                # Presentation source under aggregation: business
+                # evidence of a consultation capability may bind.
+                pass
+            elif _attempt_surface_anchor_match(attempt, source):
                 # Envelope-surface match: bound only — a generic
                 # envelope name never demonstrates evidence kind.
                 pass
@@ -3443,12 +3617,16 @@ def _attempt_binds_obligation(
             # else: nothing verifiable — bound, unproven.
         if item.operation is not None:
             operation_class = _attempt_operation_class(attempt)
-            if (
-                operation_class is not None
-                and operation_class != item.operation
-            ):
-                # Operation class recorded and contradicts — disproven.
-                return False
+            if operation_class is not None:
+                if aggregation_presentation:
+                    if not _consultation_operations_compatible(
+                        item.operation, operation_class
+                    ):
+                        return False
+                elif operation_class != item.operation:
+                    # Operation class recorded and contradicts —
+                    # disproven.
+                    return False
         keys = _obligation_identity_keys(item.description)
         if keys:
             invoked = _attempt_invocation_identity_keys(attempt)
@@ -3660,7 +3838,9 @@ def _evaluate_material_obligations(
             )
             continue
         bound = any(
-            _attempt_binds_obligation(attempt, obligation)
+            _attempt_binds_obligation(
+                attempt, obligation, delivery=delivery
+            )
             for attempt in business
         )
         if bound:

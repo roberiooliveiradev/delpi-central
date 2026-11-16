@@ -314,12 +314,16 @@ docker exec -i -e DELIA_APP_ROOT=/app -e DELIA_EVAL_TRACE_DIR=/traces \
 # INT-2 typed-objective runs: export DELIA_EVAL_CORPUS=INT2.
 SCENARIO_IDS="${DELIA_EVAL_SCENARIO_IDS:-}"
 EVAL_CORPUS="${DELIA_EVAL_CORPUS:-INT1}"
+# Optional: chain R6 clarification→recovery using the live turn-1
+# published response as prior (same evaluation_id / subject session).
+LIVE_MULTITURN_CHAIN="${DELIA_EVAL_LIVE_MULTITURN_CHAIN:-}"
 docker exec -i \
   -e DELIA_APP_ROOT=/app \
   -e DELIA_EVAL_TRACE_DIR=/traces \
   -e DELIA_EVAL_ARTIFACT_DIR=/traces/artifacts \
   -e "DELIA_EVAL_SCENARIO_IDS=${SCENARIO_IDS}" \
   -e "DELIA_EVAL_CORPUS=${EVAL_CORPUS}" \
+  -e "DELIA_EVAL_LIVE_MULTITURN_CHAIN=${LIVE_MULTITURN_CHAIN}" \
   "${EVAL_NAME}" \
   python scripts/int1_openrouter_qwen14b_instrumented_eval.py \
   | tee "${ARTIFACT_DIR}/eval-output.jsonl"

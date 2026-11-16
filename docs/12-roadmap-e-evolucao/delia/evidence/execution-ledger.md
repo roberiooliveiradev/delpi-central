@@ -7157,3 +7157,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESIDUAIS:** R5-N3/N4/N5 PENDING (sem fingerprint de owner/filtro no aggregator); R4 AuthZ deny PENDING; INT3 obligation depth / G2 anchor mismatch OPEN_LOW.
 - **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
 - **NEXT:** `COORDINATION_C3_T2_FINAL_EVIDENCE_CI_NEGATIVE_VERIFIER_INDEPENDENT_REVIEW`
+
+### 2026-11-16 — C3/T2: Final gates sufficiency / collection / multiturn
+
+- **TASK:** `DELIA-C3-T2-SUFFICIENCY-COLLECTION-INTEGRITY-AND-MULTITURN-FINAL-GATES-01`
+- **BASE:** `5c4977f0e081` (= origin/main no reanchor); WIP CF/helpdesk/tv preservado fora do commit.
+- **WS-1:** EXTEND `_attempt_demonstrates_anchored` + `_material_required_scope` + `params`↔`arguments` alias; S1–S10 PASS; live G2 `or-qwen14b-00bb3f24aebb` GROUNDED+SATISFIED (109).
+- **WS-2:** REUSE `_joint_collection_coverage`; R5-N3/N4/N5 CONTRACT_TEST_PASS; live R5 GROUNDED+SATISFIED (3× read).
+- **WS-3:** `_prior_turns_blob` filtra por `TurnKind` (`USER_INPUT` only); harness `DELIA_EVAL_LIVE_MULTITURN_CHAIN`; same-conversation recovery GROUNDED+SATISFIED (prior=live turn-1 published).
+- **RESIDUAIS:** R4 AuthZ deny PENDING; INT3 depth OPEN_LOW residual (entity anchors sem eco); R6-N6/N7 PENDING.
+- **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
+- **NEXT:** `COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`

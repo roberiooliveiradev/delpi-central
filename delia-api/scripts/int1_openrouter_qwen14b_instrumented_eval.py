@@ -1099,31 +1099,82 @@ def main() -> int:
     if not subject_session.access_token:
         raise SystemExit("refused: subject token empty")
 
+    # Same-conversation R6 chain (C3/T2 final gates): when both
+    # clarification and recovery scenarios are selected and the env
+    # flag is set, turn-2 prior_turns come from the live turn-1
+    # published response — not a predetermined assistant fixture.
+    live_multiturn_chain = (
+        (os.environ.get("DELIA_EVAL_LIVE_MULTITURN_CHAIN") or "")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"}
+    )
+    live_clarification: dict | None = None
+
     summary = {
         "evaluation_id": evaluation_id,
         "model": settings.llm_model,
         "runtime_profile": settings.runtime_profile,
         "config_fingerprint": settings.runtime_config_fingerprint,
         "secure_eval_gate": gate.get("SECURE_EVAL_GATE"),
+        "live_multiturn_chain": live_multiturn_chain,
         "scenarios": {},
     }
 
     for spec in scenarios:
-        scenario_holder["id"] = spec["id"]
-        scenario_holder["correlation"] = f"{evaluation_id}-{spec['id']}"
-        print(f"== starting {spec['id']}", flush=True)
+        effective = dict(spec)
+        if (
+            live_multiturn_chain
+            and effective["id"] == "INT2_R6_multiturn_structure_recovery"
+            and live_clarification is not None
+        ):
+            published = str(live_clarification.get("content") or "").strip()
+            if not published:
+                raise SystemExit(
+                    "refused: live multiturn chain — turn-1 published "
+                    "content empty; cannot forge assistant prior"
+                )
+            effective["prior"] = (
+                ("user", live_clarification["question"]),
+                ("assistant", published),
+            )
+            effective["id"] = "INT2_R6_same_conversation_recovery"
+            effective["expected"] = {
+                **dict(effective.get("expected") or {}),
+                "verdict_rule": (
+                    "same evaluation_id + live turn-1 published "
+                    "clarification as prior; recover objective+code; "
+                    "revalidate authz; grounded structure or honest gap"
+                ),
+                "context_source": "live_turn1_published_response",
+                "parent_scenario_id": live_clarification["scenario_id"],
+            }
+        scenario_holder["id"] = effective["id"]
+        scenario_holder["correlation"] = (
+            f"{evaluation_id}-{effective['id']}"
+        )
+        print(f"== starting {effective['id']}", flush=True)
         if not subject_session_is_fresh(subject_session):
             subject_session = acquire_subject_access_session()
         res = run_scenario(
             handler=handler,
             mcp=mcp,
             evaluation_id=evaluation_id,
-            scenario=spec,
+            scenario=effective,
             token=subject_session.access_token,
             subject_session=subject_session,
         )
-        b3 = b3_box.get(spec["id"])
-        summary["scenarios"][spec["id"]] = {
+        if spec["id"] == "INT2_R6_clarification_needed":
+            live_clarification = {
+                "scenario_id": effective["id"],
+                "question": effective["question"],
+                "content": res.get("content") or "",
+                "grounding": res.get("grounding"),
+                "limitations": res.get("limitations"),
+                "mcp_invoke_targets": res.get("mcp_invoke_targets"),
+            }
+        b3 = b3_box.get(effective["id"])
+        summary["scenarios"][effective["id"]] = {
             "elapsed_s": res.get("elapsed_s"),
             "error": res.get("error"),
             "grounding": res.get("grounding"),
@@ -1137,10 +1188,26 @@ def main() -> int:
             "content_head": (res.get("content") or "")[:160],
             "llm_runs": res.get("llm_runs"),
             "provider_request_b3": public_b3_summary(b3) if b3 else None,
+            "prior": list(effective.get("prior") or ()),
+            "context_source": (
+                (effective.get("expected") or {}).get("context_source")
+            ),
+            "conversation_correlation": {
+                "evaluation_id": evaluation_id,
+                "turn1_scenario_id": (
+                    live_clarification.get("scenario_id")
+                    if live_clarification
+                    else None
+                ),
+                "turn2_scenario_id": effective["id"],
+                "same_subject_session": True,
+            }
+            if effective["id"] == "INT2_R6_same_conversation_recovery"
+            else None,
         }
         print(
-            f"== {spec['id']}: "
-            f"{json.dumps(summary['scenarios'][spec['id']], ensure_ascii=False)}",
+            f"== {effective['id']}: "
+            f"{json.dumps(summary['scenarios'][effective['id']], ensure_ascii=False)}",
             flush=True,
         )
 
