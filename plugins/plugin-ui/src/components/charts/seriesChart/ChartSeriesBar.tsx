@@ -1,3 +1,5 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   isSeriesChartFiniteValue,
@@ -6,12 +8,17 @@ import {
   resolveGoalThresholdColor,
   seriesValueExtent,
   type SeriesChartColorScale,
+  type SeriesChartPoint,
 } from "../seriesChartOptions";
 import {
   chartPartDomProps,
   isChartPartRefEqual,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import {
+  seriesChartPointKey,
+  type SeriesChartPointSelection,
+} from "../seriesChartPointSelection";
 import { resolveSeriesChartCategoryBarSlot } from "./layout";
 import type { SeriesChartSharedProps } from "./types";
 
@@ -27,6 +34,8 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
   colorScale?: SeriesChartColorScale | null;
   /** Valor da linha de meta (`by_goal`). */
   goalValue?: number | null;
+  /** Seleção de ponto/categoria (U14R2). Sem isto, paint idêntico ao legado. */
+  pointSelection?: SeriesChartPointSelection | null;
 };
 
 /**
@@ -45,6 +54,7 @@ export function ChartSeriesBar({
   categoryColors,
   colorScale,
   goalValue = null,
+  pointSelection = null,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, toY, axisMin, axisMax, orientation, toValueX } = layout;
@@ -62,6 +72,8 @@ export function ChartSeriesBar({
     (colorScale?.mode === "by_value" ||
       (colorScale?.mode === "by_goal" && goalOk) ||
       Boolean(categoryColors && categoryColors.length > 0));
+  const pointSelectable = Boolean(pointSelection?.onPointSelect);
+  const selectedKey = pointSelection?.selectedPointKey ?? null;
 
   const resolveFill = (point: (typeof points)[number], index: number): string => {
     if (!usePerBarColor) return seriesColor;
@@ -90,11 +102,32 @@ export function ChartSeriesBar({
     return resolveSeriesCategoryColor(slotIndex, seriesColor, categoryColors);
   };
 
+  const activatePoint = (point: SeriesChartPoint, index: number) => {
+    if (!pointSelection?.onPointSelect) return;
+    const key = seriesChartPointKey(point, index, pointSelection.pointKey);
+    if (selectedKey != null && selectedKey === key) {
+      pointSelection.onPointSelect(null, null);
+      return;
+    }
+    pointSelection.onPointSelect(point, index);
+  };
+
+  const onPointKeyDown = (
+    event: ReactKeyboardEvent<SVGGElement>,
+    point: SeriesChartPoint,
+    index: number,
+  ) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    event.stopPropagation();
+    activatePoint(point, index);
+  };
+
   return (
     <g
       {...chartPartDomProps(ref, interaction?.selectedPart)}
       onPointerDown={
-        interactive
+        interactive && !pointSelectable
           ? (event) => {
               event.stopPropagation();
               interaction?.onPartPointerDown?.(ref, event);
@@ -102,7 +135,7 @@ export function ChartSeriesBar({
           : undefined
       }
       onDoubleClick={
-        interactive
+        interactive && !pointSelectable
           ? (event) => {
               event.stopPropagation();
               event.preventDefault();
@@ -112,8 +145,8 @@ export function ChartSeriesBar({
       }
     >
       {points.map((point, index) => {
-        if (!isSeriesChartFiniteValue(point.value)) return null;
-        const raw = Number(point.value);
+        if (!isSeriesChartFiniteValue(point.value) && !pointSelectable) return null;
+        const raw = isSeriesChartFiniteValue(point.value) ? Number(point.value) : 0;
         const value = Math.min(axisMax, Math.max(axisMin, raw));
         const slotIndex =
           typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
@@ -127,43 +160,76 @@ export function ChartSeriesBar({
           seriesCount,
         });
         const fill = resolveFill(point, index);
+        const key = seriesChartPointKey(point, index, pointSelection?.pointKey);
+        const isSelected = selectedKey != null && selectedKey === key;
+        const isDimmed = selectedKey != null && selectedKey !== key;
+        const label = (point.label ?? "").trim() || `Categoria ${index + 1}`;
+        const ariaLabel = `${label}: ${
+          Number.isFinite(raw) ? raw.toLocaleString("pt-BR") : "—"
+        }`;
+        const barClass = [
+          cn.seriesBar,
+          selected && !pointSelectable ? `${cn.root}__part--selected` : "",
+          pointSelectable && isSelected ? `${cn.root}__series-bar--selected` : "",
+          pointSelectable && isDimmed ? `${cn.root}__series-bar--dimmed` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
 
-        if (horizontal && toValueX) {
-          const x0 = toValueX(Math.min(axisMin, 0));
-          const x1 = toValueX(value);
-          const x = Math.min(x0, x1);
-          const width = Math.max(0, Math.abs(x1 - x0));
+        const rectProps = horizontal && toValueX
+          ? (() => {
+              const x0 = toValueX(Math.min(axisMin, 0));
+              const x1 = toValueX(value);
+              const x = Math.min(x0, x1);
+              const width = Math.max(pointSelectable ? 4 : 0, Math.abs(x1 - x0));
+              return {
+                x: x || baselineX,
+                y: slot.y,
+                width,
+                height: slot.height,
+              };
+            })()
+          : (() => {
+              const y = toY(value);
+              const height = Math.max(pointSelectable ? 4 : 0, baselineY - y);
+              return {
+                x: slot.x,
+                y: pointSelectable && height <= 4 ? baselineY - 4 : y,
+                width: slot.width,
+                height,
+              };
+            })();
+
+        if (!pointSelectable) {
+          if (!isSeriesChartFiniteValue(point.value)) return null;
           return (
             <rect
-              key={`hbar-${seriesIndex}-${slotIndex}`}
-              x={x || baselineX}
-              y={slot.y}
-              width={width}
-              height={slot.height}
+              key={`bar-${seriesIndex}-${slotIndex}`}
+              {...rectProps}
               fill={fill}
               rx={1}
-              className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
-                .filter(Boolean)
-                .join(" ")}
+              className={barClass}
             />
           );
         }
 
-        const y = toY(value);
-        const height = Math.max(0, baselineY - y);
         return (
-          <rect
+          <g
             key={`bar-${seriesIndex}-${slotIndex}`}
-            x={slot.x}
-            y={y}
-            width={slot.width}
-            height={height}
-            fill={fill}
-            rx={1}
-            className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
-              .filter(Boolean)
-              .join(" ")}
-          />
+            role="button"
+            tabIndex={0}
+            aria-pressed={isSelected}
+            aria-label={ariaLabel}
+            data-point-key={key}
+            style={{ cursor: "pointer", outline: "none" }}
+            onClick={(event) => {
+              event.stopPropagation();
+              activatePoint(point, index);
+            }}
+            onKeyDown={(event) => onPointKeyDown(event, point, index)}
+          >
+            <rect {...rectProps} fill={fill} rx={1} className={barClass} />
+          </g>
         );
       })}
     </g>

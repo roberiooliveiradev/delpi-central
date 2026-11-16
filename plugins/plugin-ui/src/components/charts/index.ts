@@ -49,6 +49,10 @@ export { LineSeriesChart, type LineSeriesChartProps } from "./LineSeriesChart";
 export { AreaSeriesChart, type AreaSeriesChartProps } from "./AreaSeriesChart";
 export { BarSeriesChart, type BarSeriesChartProps } from "./BarSeriesChart";
 export {
+  seriesChartPointKey,
+  type SeriesChartPointSelection,
+} from "./seriesChartPointSelection";
+export {
   ComparativeAreaChart,
   comparativeAreaChartBemClasses,
   type ComparativeAreaChartPoint,

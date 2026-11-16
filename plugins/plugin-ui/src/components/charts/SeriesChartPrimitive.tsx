@@ -61,6 +61,7 @@ import {
   SERIES_CHART_VIEW_W,
   type SeriesChartLayout,
 } from "./seriesChart";
+import type { SeriesChartPointSelection } from "./seriesChartPointSelection";
 
 export type SeriesPlotRenderProps = {
   chartType: SeriesChartKind;
@@ -82,6 +83,8 @@ export type SeriesPlotRenderProps = {
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
   strokeWidth?: number;
+  /** Só consumido por paint de barras (BarSeriesChart). */
+  pointSelection?: SeriesChartPointSelection | null;
 };
 
 export type SeriesChartPrimitiveProps = {
@@ -94,6 +97,8 @@ export type SeriesChartPrimitiveProps = {
   interaction?: SeriesChartInteraction | null;
   emptyMessage?: string;
   className?: string;
+  /** Seleção de ponto — apenas BarSeriesChart liga isto. */
+  pointSelection?: SeriesChartPointSelection | null;
   renderPlotArea: (props: SeriesPlotRenderProps) => ReactNode;
 };
 
@@ -107,6 +112,7 @@ export function SeriesChartPrimitive({
   interaction,
   emptyMessage = "Sem série",
   className,
+  pointSelection = null,
   renderPlotArea,
 }: SeriesChartPrimitiveProps) {
   const cn = useSeriesChartClasses();
@@ -445,6 +451,7 @@ export function SeriesChartPrimitive({
     interaction,
     chartParts,
     strokeWidth,
+    pointSelection,
   };
 
   const legend = (

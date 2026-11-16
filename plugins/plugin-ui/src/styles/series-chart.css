@@ -447,6 +447,20 @@
   stroke-width: 2;
 }
 
+/* U14R2 — seleção de barra (aditivo; só com onPointSelect). */
+.delpi-ui-series-chart__series-bar--dimmed {
+  opacity: 0.35;
+}
+
+.delpi-ui-series-chart__series-bar--selected {
+  filter: drop-shadow(0 0 2px var(--primary, #089bdb));
+}
+
+.delpi-ui-series-chart g[role="button"]:focus-visible .delpi-ui-series-chart__series-bar {
+  outline: 2px solid var(--primary, #089bdb);
+  outline-offset: 2px;
+}
+
 /* Velocímetro — clipa título/plot na moldura (legenda fica dentro do gauge; sem overflow de série). */
 .delpi-ui-series-chart-shell:has(.delpi-ui-series-chart[data-chart-type="gauge"]) {
   overflow: hidden;

@@ -29,6 +29,7 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import type { SeriesChartPointSelection } from "../seriesChartPointSelection";
 import type { SeriesChartKindProps } from "./types";
 
 export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
@@ -45,6 +46,8 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   strokeWidth?: number;
   /** Rosca: raio interno relativo (só `pie`). */
   pieInnerRadiusRatio?: number;
+  /** Seleção de barra/categoria (só `bar` / `horizontal_bar`). */
+  pointSelection?: SeriesChartPointSelection | null;
 };
 
 const NON_CARTESIAN: ReadonlySet<SeriesChartKindProps["chartType"]> = new Set([
@@ -73,6 +76,7 @@ export function ChartPlotAreaGroup({
   chartParts,
   strokeWidth,
   pieInnerRadiusRatio = 0,
+  pointSelection = null,
 }: ChartPlotAreaGroupProps) {
   const smoothLines = Boolean(config.smoothLines);
   const markerMode = config.markerMode ?? "all";
@@ -126,6 +130,7 @@ export function ChartPlotAreaGroup({
                 seriesIndex={origin}
                 layoutSeriesIndex={index}
                 seriesCount={seriesList.length}
+                pointSelection={pointSelection}
               />
               );
             })}
@@ -139,6 +144,7 @@ export function ChartPlotAreaGroup({
             categoryColors={config.categoryColors}
             colorScale={config.colorScale}
             goalValue={goalValue}
+            pointSelection={pointSelection}
           />
         )
       ) : null}
