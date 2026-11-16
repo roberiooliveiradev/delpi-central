@@ -7,6 +7,7 @@ export { BackLink, type BackLinkProps } from "./BackLink";
 export {
   ClearFiltersButton,
   type ClearFiltersButtonDensity,
+  type ClearFiltersButtonVariant,
   type ClearFiltersButtonProps,
 } from "./ClearFiltersButton";
 export {

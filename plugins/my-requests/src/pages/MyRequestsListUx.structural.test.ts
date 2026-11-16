@@ -47,9 +47,40 @@ describe("Shell compartilhado — componentes do kit, não locais", () => {
       "MyRequestsListToolbarPopover",
       "MyRequestsFilterRulesBuilder",
       "MyRequestsSortLevelsBuilder",
+      "MyRequestsClearFiltersButton",
     ]) {
       expect(shell).toContain(token);
     }
+  });
+
+  it("FilterX âmbar do kit imediatamente à esquerda de Filtros", () => {
+    /* O controle compartilhado é o único clear — sem link textual
+       «Limpar tudo» nem botão local duplicado. */
+    const iClear = shell.indexOf("MyRequestsClearFiltersButton");
+    const iFilter = shell.indexOf("filterBuilderToggle");
+    expect(iClear).toBeGreaterThan(-1);
+    expect(iFilter).toBeGreaterThan(iClear);
+    expect(shell).toContain('variant="icon"');
+    expect(shell).not.toContain("onClearAll");
+    expect(shell).not.toContain("onClearChips");
+    /* binding vem do kit — o MFE não define ClearFiltersButton local */
+    expect(mrUi).toContain("MyRequestsClearFiltersButton = ClearFiltersButton");
+    /* semântica do consumidor: busca + chips + avançados, page → 1,
+       preservando sort/pageSize/colunas/layout */
+    const mine = readFileSync(resolve(dir, "MinePage.tsx"), "utf-8");
+    const queue = readFileSync(resolve(dir, "WorkQueuePage.tsx"), "utf-8");
+    for (const page of [mine, queue]) {
+      expect(page).toContain("onClearFilters={clearAllFilters}");
+      expect(page).toContain("filtersActive");
+      expect(page).not.toContain("onClearChips");
+    }
+    expect(mine).toMatch(
+      /clearAllFilters[\s\S]*?q:\s*""[\s\S]*?status:\s*""[\s\S]*?page:\s*1/,
+    );
+    /* Fila também limpa o escopo Minhas */
+    expect(queue).toMatch(
+      /clearAllFilters[\s\S]*?mineScope:\s*""[\s\S]*?page:\s*1/,
+    );
   });
 
   it("usa a seção bound do MFE (createDashboardDataTableKit) — nunca DataTable cru", () => {

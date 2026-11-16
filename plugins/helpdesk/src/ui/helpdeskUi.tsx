@@ -40,6 +40,7 @@ import {
   dataTableBemClasses,
   FieldLabel,
   HintAction,
+  ClearFiltersButton,
   IconButton,
   ConfirmModalPanel,
   ModalShell,
@@ -220,6 +221,13 @@ export const helpdeskDataTableClassNames = tableClassNames;
 
 export function HelpdeskIconButton(props: ComponentProps<typeof IconButton>) {
   return <IconButton {...props} />;
+}
+
+/** Controle canônico «limpar filtros» do kit (variant="icon" = FilterX âmbar UX V3). */
+export function HelpdeskClearFiltersButton(
+  props: ComponentProps<typeof ClearFiltersButton>,
+) {
+  return <ClearFiltersButton {...props} />;
 }
 
 export function HelpdeskDataTable<T extends object>(

@@ -219,8 +219,10 @@ export function ticketListViewModelFromFilters(
   const parsedLevels = parseTicketSortLevels(filters.sort);
   const sorts: TicketListSortLevel[] = parsedLevels;
   const activeFilterLabels: string[] = [];
-  if (filters.requester_mine) activeFilterLabels.push("Meus chamados");
-  else if (filters.requester_id.trim()) activeFilterLabels.push("Requerente");
+  /* «Meus chamados» já aparece como chip de escopo ativo na barra de
+   * status — repeti-lo aqui duplicaria visualmente (UX V3 follow-up). */
+  if (!filters.requester_mine && filters.requester_id.trim())
+    activeFilterLabels.push("Requerente");
   if (filters.status.trim()) {
     activeFilterLabels.push(`Status: ${STATUS_FILTER_LABELS[filters.status] ?? filters.status}`);
   }

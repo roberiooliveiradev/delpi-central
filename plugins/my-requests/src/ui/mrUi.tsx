@@ -2,6 +2,7 @@ import { createElement, type ComponentProps } from "react";
 
 import {
   attachmentPreviewStripBemClasses,
+  ClearFiltersButton,
   createCompactPagination,
   createDashboardAttachmentPreviewStrip,
   createDashboardDataCardsGrid,
@@ -297,3 +298,9 @@ export const myRequestsRoomConversationClassNames = roomConversationKit.classNam
 
 /** Typeahead genérico do kit (avatar/chips via slots no consumidor). */
 export const MyRequestsEntityDirectoryPicker = EntityDirectoryPicker;
+
+/**
+ * ClearFiltersButton do kit — controle canônico «limpar filtros»
+ * (`variant="icon"` = FilterX âmbar das toolbars de listagem UX V3).
+ */
+export const MyRequestsClearFiltersButton = ClearFiltersButton;

@@ -248,6 +248,19 @@ export function MinePage() {
     patchFilters(next);
   }, [filterRules, filters, patchFilters]);
 
+  /* FilterX âmbar: limpa busca + chips + filtros avançados; preserva
+   * sort/pageSize (URL) e colunas/layout (preferências). */
+  const clearAllFilters = useCallback(() => {
+    setFilterRules([]);
+    patchFilters({
+      q: "",
+      typeCode: "",
+      status: "",
+      branch: "",
+      page: 1,
+    });
+  }, [patchFilters]);
+
   /* -------------------------------------------------------- */
 
   useEffect(() => {
@@ -536,7 +549,13 @@ export function MinePage() {
           patchFilters({ status: value === filters.status ? "" : value, page: 1 }),
         )}
         chipsLabel="Status"
-        onClearChips={() => patchFilters({ status: "", page: 1 })}
+        onClearFilters={clearAllFilters}
+        filtersActive={!!(
+          filters.q ||
+          filters.typeCode ||
+          filters.status ||
+          filters.branch
+        )}
         sort={{
           fields: sortCatalog.fields,
           levels: sortLevels,
