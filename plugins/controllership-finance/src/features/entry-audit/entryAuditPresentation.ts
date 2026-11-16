@@ -152,7 +152,24 @@ export function formatDocumentType(type: string | null | undefined): string {
 
 export function formatDocumentTypes(types: string[] | null | undefined): string {
   if (!types?.length) return "—";
-  return types.map(formatDocumentType).join(", ");
+  // H5 / AC-KPI-4: mesma ordem canônica do hero (NF-e antes de CT-e).
+  return formatDocumentTypesJoined(types) || "—";
+}
+
+/**
+ * Abrevia chave de acesso (tipicamente 44 dígitos) para caber na tabela —
+ * valor completo no title. Não aplica a datas/textos curtos de negócio.
+ */
+export function abbreviateAccessKey(
+  value: string | null | undefined,
+): { short: string; full: string } | null {
+  const full = (value ?? "").trim();
+  if (!full) return null;
+  const digits = full.replace(/\D/g, "");
+  const looksLikeAccessKey = digits.length >= 20 && digits.length / full.length >= 0.8;
+  if (!looksLikeAccessKey) return null;
+  if (full.length <= 16) return { short: full, full };
+  return { short: `${full.slice(0, 6)}…${full.slice(-4)}`, full };
 }
 
 /** Preferir nome curto das options; fallback «Filial {code}». */

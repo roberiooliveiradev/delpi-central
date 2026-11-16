@@ -1547,6 +1547,68 @@ export function HorizontalValueBars(props: AnyProps) {
   );
 }
 
+export function BarSeriesChart(props: AnyProps) {
+  const points = Array.isArray(props.points) ? props.points : [];
+  const onPointSelect =
+    typeof props.onPointSelect === "function"
+      ? (props.onPointSelect as (point: unknown, index: number | null) => void)
+      : null;
+  return el(
+    "div",
+    {
+      "data-testid": "bar-series-chart",
+      "data-series": Array.isArray(props.seriesList)
+        ? String(props.seriesList.length)
+        : "1",
+      "data-selected": props.selectedPointKey
+        ? String(props.selectedPointKey)
+        : undefined,
+    },
+    ...points.map((point, index) => {
+      const item = point as { label?: string; value?: number };
+      return el(
+        "button",
+        {
+          type: "button",
+          key: String(index),
+          "aria-label": `${item.label ?? index}: ${item.value ?? "—"}`,
+          "aria-pressed":
+            props.selectedPointKey != null &&
+            typeof props.pointKey === "function"
+              ? String(
+                  (props.pointKey as (p: unknown, i: number) => string)(
+                    point,
+                    index,
+                  ),
+                ) === String(props.selectedPointKey)
+              : props.selectedPointKey != null &&
+                  String(props.selectedPointKey) === String(item.label),
+          onClick: onPointSelect
+            ? () => {
+                const key =
+                  typeof props.pointKey === "function"
+                    ? (props.pointKey as (p: unknown, i: number) => string)(
+                        point,
+                        index,
+                      )
+                    : String(item.label ?? index);
+                if (
+                  props.selectedPointKey != null &&
+                  String(props.selectedPointKey) === key
+                ) {
+                  onPointSelect(null, null);
+                } else {
+                  onPointSelect(point, index);
+                }
+              }
+            : undefined,
+        },
+        item.label ?? String(index),
+      );
+    }),
+  );
+}
+
 export function ComparativeAreaChart(props: AnyProps) {
   return el("div", { "data-testid": "comparative-area-chart" }, JSON.stringify(props.data ?? []));
 }

@@ -31,7 +31,7 @@ import {
 } from "../../api/entryAuditApi";
 import {
   CfActionButton,
-  CfComparativeAreaChart,
+  CfBarSeriesChart,
   CfDistributionDonut,
   CfHorizontalValueBars,
   CfLoadingCard,
@@ -60,14 +60,13 @@ import { EntryAuditSeverityBadge } from "./EntryAuditSeverityBadge";
 import {
   ENTRY_AUDIT_ACTION_ICONS,
   ENTRY_AUDIT_TABS,
+  abbreviateAccessKey,
   auditStatusBadgeVariant,
   alignEntryAuditDailySeries,
   conformityRatio,
   displayValue,
-  entryAuditDailyPointAriaLabel,
   entryAuditPreviousPeriodLabel,
   entryAuditTabResource,
-  type EntryAuditDailyChartPoint,
   formatEntryAuditChartDay,
   formatAuditStatus,
   entryAuditFieldLabel,
@@ -389,6 +388,38 @@ export function EntryAuditAnalysisPage({
   const goHome = () => navigatePluginPath(basePath);
   const goEntry = () => navigatePluginPath(`${basePath}/entry-audit`);
 
+  const renderBoundedValueCell = (
+    raw: unknown,
+    row: EntryAuditOccurrence,
+    ariaName: string,
+  ): ReactNode => {
+    const text = formatOccurrenceValue(raw, row);
+    const key = abbreviateAccessKey(typeof raw === "string" ? raw : null);
+    if (key) {
+      return (
+        <span className="cf-access-key-cell" title={key.full}>
+          <span className="cf-access-key-cell__text">{key.short}</span>
+          <button
+            type="button"
+            className="cf-access-key-cell__copy"
+            aria-label={`Copiar valor ${ariaName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              void navigator.clipboard.writeText(key.full);
+            }}
+          >
+            Copiar
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span className="cf-cell-ellipsis" title={text === "—" ? undefined : text}>
+        {text}
+      </span>
+    );
+  };
+
   const occurrenceColumns: DataTableColumn<EntryAuditOccurrence>[] = [
     {
       key: "severity",
@@ -440,13 +471,15 @@ export function EntryAuditAnalysisPage({
       key: "protheus",
       header: "Protheus",
       sortable: true,
-      render: (row) => formatOccurrenceValue(row.protheus_value, row),
+      className: "cf-col-ellipsis",
+      render: (row) => renderBoundedValueCell(row.protheus_value, row, "Protheus"),
     },
     {
       key: "xml",
       header: "XML",
       sortable: true,
-      render: (row) => formatOccurrenceValue(row.xml_value, row),
+      className: "cf-col-ellipsis",
+      render: (row) => renderBoundedValueCell(row.xml_value, row, "XML"),
     },
     {
       key: "difference",
@@ -516,12 +549,6 @@ export function EntryAuditAnalysisPage({
     if (points.length <= 1) return { points: [], includePrevious: false };
     return { points, includePrevious };
   }, [analysis, daily, summary?.previous]);
-
-  const dailySelectedName = useMemo(() => {
-    if (!filters.day) return null;
-    const match = dailyChart.points.find((point) => point.day === filters.day);
-    return match?.name ?? formatEntryAuditChartDay(filters.day);
-  }, [dailyChart.points, filters.day]);
 
   const previousPeriodLegend = useMemo(
     () =>
@@ -825,7 +852,7 @@ export function EntryAuditAnalysisPage({
           />
         </div>
         <CfMetricKpiCard
-          label="Ocorrências pendentes"
+          label="Pendentes"
           titleHint={CF_HELP.entryAudit.kpiPending}
           value={String(kpis.pending)}
           hint={`${kpis.resolved} resolvidas`}
@@ -977,52 +1004,62 @@ export function EntryAuditAnalysisPage({
                 <span className="cf-analysis-daily-chart__y-label" aria-hidden>
                   Ocorrências
                 </span>
-                <CfComparativeAreaChart
-                  data={dailyChart.points}
-                  height={240}
-                  smooth={false}
-                  series={
+                <CfBarSeriesChart
+                  points={dailyChart.points.map((point) => ({
+                    label: point.name,
+                    value: point.current,
+                  }))}
+                  seriesList={
                     dailyChart.includePrevious
                       ? [
                           {
-                            dataKey: "current",
                             name: "Este período",
                             color: "var(--delpi-ui-accent, #2563eb)",
+                            points: dailyChart.points.map((point) => ({
+                              label: point.name,
+                              value: point.current,
+                            })),
                           },
                           {
-                            dataKey: "previous",
                             name: previousPeriodLegend
                               ? `Período anterior (${previousPeriodLegend})`
                               : "Período anterior",
                             color: "var(--delpi-ui-muted, #94a3b8)",
+                            points: dailyChart.points.map((point) => ({
+                              label: point.name,
+                              value: point.previous ?? 0,
+                            })),
                           },
                         ]
-                      : [
-                          {
-                            dataKey: "current",
-                            name: "Este período",
-                            color: "var(--delpi-ui-accent, #2563eb)",
-                          },
-                        ]
+                      : undefined
                   }
-                  valueFormatter={(value) => value.toLocaleString("pt-BR")}
-                  onPointSelect={(point) => {
-                    const day =
-                      typeof point.day === "string" && point.day
-                        ? point.day
-                        : "";
-                    if (!day) return;
-                    navigateWith({
-                      day: filters.day === day ? "" : day,
-                    });
+                  selectedPointKey={filters.day || null}
+                  pointKey={(_point, index) =>
+                    dailyChart.points[index]?.day ?? String(index)
+                  }
+                  onPointSelect={(_point, index) => {
+                    if (index == null) {
+                      navigateWith({ day: "" });
+                      return;
+                    }
+                    const day = dailyChart.points[index]?.day ?? "";
+                    navigateWith({ day });
                   }}
-                  pointAriaLabel={(point) =>
-                    entryAuditDailyPointAriaLabel(
-                      point as EntryAuditDailyChartPoint,
-                      dailyChart.includePrevious,
-                    )
-                  }
-                  selectedName={dailySelectedName}
+                  emptyMessage="Sem evolução diária para exibir."
+                  options={{
+                    title: "Ocorrências",
+                    showTitle: false,
+                    showLegend: dailyChart.includePrevious,
+                    showAxes: true,
+                    showXAxisLabels: true,
+                    showYAxisLabels: true,
+                    showXAxisTitle: false,
+                    showYAxisTitle: false,
+                    showDataLabels: false,
+                    showGrid: true,
+                    seriesColor: "var(--delpi-ui-accent, #2563eb)",
+                    seriesName: "Este período",
+                  }}
                 />
               </div>
             </CfSectionCard>
@@ -1152,7 +1189,7 @@ export function EntryAuditAnalysisPage({
           onRowClick={openOccurrence}
           loading={rowsLoading}
           hidePaginationWhenSinglePage
-          columnPreferencesKey="controllership-finance:entry-audit:occurrences:columns:v1"
+          columnPreferencesKey="controllership-finance:entry-audit:occurrences:columns:v2"
           fontSizePreferencesKey="controllership-finance:entry-audit:occurrences:font:v1"
           viewLayoutPreferencesKey="controllership-finance:entry-audit:occurrences:layout:v1"
           defaultColumnVisibility={{
@@ -1160,7 +1197,7 @@ export function EntryAuditAnalysisPage({
             document: true,
             supplier: true,
             rule: true,
-            field: true,
+            field: false,
             protheus: true,
             xml: true,
             difference: true,
@@ -1207,7 +1244,7 @@ export function EntryAuditAnalysisPage({
           }
           loading={rowsLoading}
           hidePaginationWhenSinglePage
-          columnPreferencesKey={`controllership-finance:entry-audit:${tab}:columns:v1`}
+          columnPreferencesKey={`controllership-finance:entry-audit:${tab}:columns:v2`}
           fontSizePreferencesKey={`controllership-finance:entry-audit:${tab}:font:v1`}
           viewLayoutPreferencesKey={`controllership-finance:entry-audit:${tab}:layout:v1`}
           renderCard={(row) =>

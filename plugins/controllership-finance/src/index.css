@@ -742,7 +742,7 @@
   align-self: center;
 }
 
-/* AC-TAB-3: Fornecedor/Regra com teto e reticências em 1440. */
+/* AC-TAB-3 / U14R H2: teto + reticências (Fornecedor/Regra/Protheus/XML). */
 .dashboard-controllership-finance .cf-col-ellipsis,
 .dashboard-controllership-finance td.cf-col-ellipsis {
   max-width: 180px;
@@ -754,6 +754,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dashboard-controllership-finance .cf-access-key-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 180px;
+}
+
+.dashboard-controllership-finance .cf-access-key-cell__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-controllership-finance .cf-access-key-cell__copy {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cf-accent, var(--delpi-ui-accent, #2563eb));
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .dashboard-controllership-finance .cf-analysis-breakdowns {

@@ -12,6 +12,7 @@ import {
   formatBranchLabel,
   formatBranches,
   formatDifference,
+  abbreviateAccessKey,
   formatDocumentType,
   formatDocumentTypes,
   formatEntryAuditChartDay,
@@ -46,7 +47,12 @@ describe("entryAuditPresentation", () => {
     expect(formatTheme("header")).toBe("Cabeçalho da nota");
     expect(formatTheme("item")).toBe("Itens da nota");
     expect(formatDocumentType("nfe")).toBe("NF-e");
-    expect(formatDocumentTypes(["cte", "nfe"])).toBe("CT-e, NF-e");
+    expect(formatDocumentTypes(["cte", "nfe"])).toBe("NF-e e CT-e");
+    expect(abbreviateAccessKey("12345678901234567890123456789012345678901234")).toEqual({
+      short: "123456…1234",
+      full: "12345678901234567890123456789012345678901234",
+    });
+    expect(abbreviateAccessKey("2024-01-15T10:30:00")).toBeNull();
     expect(
       formatBranchLabel("01", [{ code: "01", name: "Matriz", state: "SC" }]),
     ).toBe("Filial 01 · SC");

@@ -633,7 +633,7 @@ export const CF_HELP = {
     kpiGross:
       "Soma do valor bruto (Protheus) das notas conferidas no período.",
     kpiPending:
-      "Ocorrências ainda pendentes de tratamento humano. O subtítulo mostra quantas já foram resolvidas.",
+      "Ocorrências ainda pendentes de tratamento humano (título curto «Pendentes» para caber numa linha). O subtítulo mostra quantas já foram resolvidas.",
     kpiHigh:
       "Ocorrências de severidade Alta no recorte atual. Clique para filtrar a tabela.",
     kpiHighDiff:
@@ -649,7 +649,7 @@ export const CF_HELP = {
     conformity:
       "Notas limpas são as conferidas sem divergência; divergentes têm ao menos uma ocorrência. «Explicadas» conta os sem par já justificados. O percentual do gauge considera limpas e divergentes.",
     dailyEvolution:
-      "Ocorrências por dia de recebimento no período — todos os dias do recorte aparecem no eixo (dia sem ocorrência = 0). Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
+      "Ocorrências por dia de recebimento no período — barras por dia; todos os dias do recorte aparecem no eixo (dia sem ocorrência = 0). Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
     postedOutside:
       "Contagem de notas encontradas no Protheus com recebimento fora do recorte De–Até desta análise (regra posted_outside_period). Não entram nas notas conferidas nem no percentual de conformidade; consulte a aba homônima para a lista.",
     severity:

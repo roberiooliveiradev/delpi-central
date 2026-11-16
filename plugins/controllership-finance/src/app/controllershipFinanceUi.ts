@@ -5,6 +5,7 @@
 import {
   ActionButton,
   ChartCard,
+  BarSeriesChart,
   ComparativeAreaChart,
   HelpTooltip,
   HorizontalValueBars,
@@ -190,6 +191,11 @@ export function CfComparativeAreaChart(
   props: ComponentProps<typeof ComparativeAreaChart>,
 ) {
   return createElement(ComparativeAreaChart, { prefix: UI_PREFIX, ...props });
+}
+export function CfBarSeriesChart(
+  props: ComponentProps<typeof BarSeriesChart>,
+) {
+  return createElement(BarSeriesChart, { ...props });
 }
 export const CfDistributionDonut = createDashboardDistributionDonut({
   prefix: UI_PREFIX,

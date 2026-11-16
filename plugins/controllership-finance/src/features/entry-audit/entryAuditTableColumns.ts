@@ -4,12 +4,14 @@ import type { EntryAuditDocument, EntryAuditTes } from "../../api/entryAuditApi"
 import type { DataTableColumn } from "../../app/cfDataTableUi";
 import type { EntryAuditOption } from "../../api/entryAuditApi";
 import {
+  abbreviateAccessKey,
   displayValue,
   formatBranchLabel,
   formatMoneyBRL,
   formatNoteSeries,
   type EntryAuditTab,
 } from "./entryAuditPresentation";
+import { createElement } from "react";
 
 type DocRow = EntryAuditDocument | EntryAuditTes;
 
@@ -167,7 +169,33 @@ function baseDocumentColumns(
     sortableColumn(
       "access_key",
       "Chave de acesso",
-      (row) => displayValue("access_key" in row ? row.access_key : undefined),
+      (row) => {
+        const raw =
+          "access_key" in row && row.access_key != null
+            ? String(row.access_key)
+            : "";
+        const key = abbreviateAccessKey(raw);
+        if (!key) return "—";
+        if (key.full.length <= 16) return key.short;
+        return createElement(
+          "span",
+          { className: "cf-access-key-cell", title: key.full },
+          createElement("span", { className: "cf-access-key-cell__text" }, key.short),
+          createElement(
+            "button",
+            {
+              type: "button",
+              className: "cf-access-key-cell__copy",
+              "aria-label": "Copiar chave de acesso",
+              onClick: (event: { stopPropagation: () => void }) => {
+                event.stopPropagation();
+                void navigator.clipboard.writeText(key.full);
+              },
+            },
+            "Copiar",
+          ),
+        );
+      },
       sortWhitelist,
     ),
   );
