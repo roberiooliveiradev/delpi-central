@@ -41,8 +41,6 @@ MCP_TOOL_ANALYZE = "analyze"
 MCP_TOOL_ANALYZE_TITLE = "Analyze DELPI information"
 MCP_TOOL_EXECUTE = "execute"
 MCP_TOOL_EXECUTE_TITLE = "Execute governed DELPI writes"
-MCP_TOOL_EXECUTE = "execute"
-MCP_TOOL_EXECUTE_TITLE = "Execute governed DELPI writes"
 # Owner-typed operation classes, emitted on the wire as
 # _meta["delpi/toolClass"] (DELPI MCP vocabulary). Classification only —
 # never a permission grant for any consumer.

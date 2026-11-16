@@ -15,6 +15,7 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
+    MCP_TOOL_EXECUTE,
 )
 from app.application.external_capabilities.davi_agent_intelligence_service import (
     DaviAgentIntelligenceService,
@@ -46,11 +47,12 @@ _SEMANTIC_TOOLS = (
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
+    MCP_TOOL_EXECUTE,
 )
 _AVAILABLE_TOOLS = _SEMANTIC_TOOLS
 # Sibling-pattern tools decided for later waves — reported honestly as
 # unavailable so the model never invents them.
-_PLANNED_TOOLS = ("execute", "delete")
+_PLANNED_TOOLS = ("delete",)
 
 _BUDGET_KEYS = (
     "execute_max_items",
@@ -70,6 +72,14 @@ def _catalog_version() -> Any:
 def _limits() -> dict[str, Any]:
     budgets = load_dynamic_read_budgets()
     return {key: budgets.get(key) for key in _BUDGET_KEYS if key in budgets}
+
+
+def _write_capabilities() -> tuple[str, ...]:
+    from app.application.external_capabilities.governed_writes.orchestrator import (
+        WRITE_CAPABILITIES,
+    )
+
+    return tuple(sorted(WRITE_CAPABILITIES))
 
 
 def _context(actor_id: str | None) -> dict[str, Any]:
@@ -111,6 +121,15 @@ def _context(actor_id: str | None) -> dict[str, Any]:
                 for name in _AVAILABLE_TOOLS
             ],
             "unavailable": unavailable,
+        },
+        "governed_writes": {
+            "policy": "confirm_before_act",
+            "flow": (
+                "PREPARE via execute(capability, arguments) → review the "
+                "exact diff/impact → ACT in a LATER user-confirmed turn via "
+                "execute(capability, proposal_handle, confirm=true)."
+            ),
+            "capabilities": sorted(_write_capabilities()),
         },
         "versions": {
             "catalog_allowlist": _catalog_version(),
