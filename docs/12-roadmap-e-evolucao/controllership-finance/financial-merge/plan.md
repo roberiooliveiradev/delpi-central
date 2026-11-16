@@ -82,3 +82,31 @@ Cada fase com o verificador (`delpi-verifier`) antes do commit e do deploy; AC v
 - **Quebrar o Questor do LNF e da Auditoria** em PROD (D3) — a `financial-api` é dependência viva da CF-API.
 - **Números diferentes** entre Despesas por CC do Financeiro e o R10 — usuários comparando telas.
 - **Consumidores externos** (TV, IA) apontando para rotas que mudam.
+
+## 6. Decisões do owner (16/11/2026)
+
+| # | Decisão | Status |
+|---|---|---|
+| D1 | As 9 permissões `financial.*` **não** são herdadas: as áreas financeiras ficam sob `controllership-finance.access`; `manage` segue para gestão. Ampliação de audiência aceita pelo owner | DECIDIDO |
+| D2 | Todos com acesso veem as duas filiais (sem permissão por filial) | DECIDIDO |
+| D3 | As rotas do Financeiro vão para a `controllership-finance-api` (ADR-004) | DECIDIDO — confirmar se a integração Questor fica na `financial-api` |
+| D4 | **Duas páginas**, não uma: o R10 é parte do Fechamento mensal; a do Financeiro é acompanhamento diário. Ver §7 | DECIDIDO (revisto) |
+| D5 | Notas Fiscais (Questor) no card «Notas fiscais» | a confirmar |
+| D6 | `dashboard-financial`, `financeiro-centro-custo` e `financeiro-inadimplencia` seguem no ar; desativar só com autorização do owner, depois da centralização | DECIDIDO |
+| D7 | Indicadores e Gestão à vista entram no Portal | DECIDIDO |
+| — | Exportar: `access` ou `manage` | a confirmar |
+| — | Plugin `financial` (`/apps/financial`): redireciona no corte; desativar só com autorização | a confirmar |
+
+## 7. Despesas por centro de custo — Financeiro × R10 (conferido no código)
+
+Não seguem o mesmo padrão; são motores diferentes na api-delpi e respondem perguntas diferentes:
+
+| | Financeiro (acompanhamento) | R10 (Fechamento mensal) |
+|---|---|---|
+| Rota api-delpi | `GET /financeiro/despesas-centro-custo/*` | `GET /financeiro/cost-center-expenses` (+ `/export`) |
+| Fonte | view `dbo.vw_fin_despesas_centro_custo` (`despesas_centro_custo_sql.py`) | `SD1010` direto + SB1, SA2, CTT (`cost_center_expenses_sql.py`) |
+| Eixo de data | `data_emissao` (D1_EMISSAO) | `D1_DTDIGIT` (data de digitação = competência; BR-R10-001) |
+| Seleção | view exige centro de custo preenchido; exclusão de MP opcional | seleção oficial: tira benefícios, 13 TES excluídas e MP; o que sai vai para «investigação», com total separado e nunca somado (`list_cost_center_expenses_use_case.py`) |
+| Saídas | resumo, série, ranking de CC e fornecedores, lançamentos, filtros | lista com universo cálculo/investigação, findings `POSSIBLE_DIVERGENCE`, export, CLARA |
+
+O doc 126 §4 já registrava: a view é `REUSE_PARTIAL` — «Não transplantar seleção da view» (set/2026 f01: 448 linhas na view; 269 de 353 do R10 cobertas). Consequência para a fusão: as duas páginas ficam, com nomes e ajuda que deixem claro a diferença (eixo de data e seleção), para o usuário não comparar números que não são comparáveis. O M0 mede a diferença em 2026-10 só para documentar a ajuda, não para escolher motor.
