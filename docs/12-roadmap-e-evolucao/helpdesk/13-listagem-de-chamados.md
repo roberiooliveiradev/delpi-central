@@ -1,5 +1,8 @@
 # 13 — Listagem de chamados
 
+> **UX V3 PO-approved TARGET (15/11/2026):** [Layout conjunto das listagens](../my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md) — mover botões Filtros/Ordenar/Colunas/Tabela|Cards para a **última linha à direita** do Hero, separar page size na tabela e preservar contrato GLPI. Planejado, não implantado.
+
+
 > **Cross-MFE UX parity (15/11/2026, TARGET):** [My Requests × Helpdesk × Plugin UI](../my-requests/UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md). Generalizar apenas editor visual de filtros, multi-sort, composição, paginação e demais primitivas neutras ainda privadas no Plugin UI; Helpdesk deve migrar para export público juntamente com My Requests, preservando contratos GLPI e resultados atuais. Não introduzir import runtime do MFE My Requests.
 
 
