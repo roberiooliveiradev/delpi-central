@@ -3093,6 +3093,14 @@ services:
       IT_PORTAL_DB_USER: ${IT_PORTAL_DB_USER:-}
       IT_PORTAL_DB_PASSWORD: ${IT_PORTAL_DB_PASSWORD:-}
       IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP: ${IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP:-true}
+      # ATLAS: independent, default-OFF schema gate, separate from standard
+      # Portal TI migrations. Do not enable before DB owner approves V016.
+      IT_PORTAL_ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED: ${IT_PORTAL_ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED:-false}
+      # ATLAS journal read: disabled until V016, Core grant and reader role.
+      IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED: ${IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED:-false}
+      # No fallback to the API's write-capable database credentials.
+      IT_PORTAL_ATLAS_JOURNAL_READ_DB_USER: ${IT_PORTAL_ATLAS_JOURNAL_READ_DB_USER:-}
+      IT_PORTAL_ATLAS_JOURNAL_READ_DB_PASSWORD: ${IT_PORTAL_ATLAS_JOURNAL_READ_DB_PASSWORD:-}
       # G2-S2: sem ativacao explicita, a API nao ingere snapshots Windows.
       IT_PORTAL_WORKSTATION_INGEST_ENABLED: ${IT_PORTAL_WORKSTATION_INGEST_ENABLED:-false}
       IT_PORTAL_WORKSTATION_COLLECTOR_BINDINGS: ${IT_PORTAL_WORKSTATION_COLLECTOR_BINDINGS:-}
