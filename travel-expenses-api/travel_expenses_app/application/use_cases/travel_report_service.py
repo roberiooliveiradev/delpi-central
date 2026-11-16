@@ -292,7 +292,8 @@ class TravelReportService:
             raise TravelReportError("Inclua ao menos uma despesa antes de enviar.")
         if any(not exp.get("amountBrl") or exp["amountBrl"] <= 0 for exp in detail["expenses"]):
             raise TravelReportError("Corrija as despesas sem valor antes de enviar.")
-        cc = (report.get("createdByEmail") or "").strip()
+        actor_id, actor_email, actor_name = self._actor(user)
+        cc = (actor_email or "").strip()
         if not cc or "@" not in cc:
             raise TravelReportError("Solicitante sem e-mail cadastrado para receber a cópia.")
         recipient = "financeiro@delpi.com.br"
@@ -309,11 +310,10 @@ class TravelReportService:
             raise TravelReportError("Envio não confirmado. Consulte a TI antes de tentar novamente.")
         self.repo.finalize_finance_dispatch(report_id, "sent")
         self.repo.update_report(report_id, {"status": "submitted"})
-        actor_id, email, name = self._actor(user)
         self.repo.add_audit({
             "report_id": report_id, "event_type": "sent_to_finance",
             "from_status": "draft", "to_status": "submitted",
-            "actor_user_id": actor_id, "actor_name": name, "actor_email": email,
+            "actor_user_id": actor_id, "actor_name": actor_name, "actor_email": actor_email,
             "payload": {"to": recipient, "cc": cc},
         })
         return self._with_completeness(self.repo.get_report(report_id))
