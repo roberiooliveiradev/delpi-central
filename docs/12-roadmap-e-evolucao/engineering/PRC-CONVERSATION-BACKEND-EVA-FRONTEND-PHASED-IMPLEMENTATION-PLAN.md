@@ -185,3 +185,57 @@ negativo: 401/403/404/409/413/422, não-autor upload 403, IDOR cross-request
 
 **Pendências:** smoke HML autenticado; OpenAPI/doc Engineering API;
 ledger Engineering + Issue #207.
+
+## 8. P2 executado — integração semântica EVA (commit `f7ef23e3ed`)
+
+**Executor:** Devin · **TASK_ID:** `EVA-PRC-CONVERSATION-P2-SEMANTIC-MCP-INTEGRATION-01`
+
+**Catálogo:** `SEMANTIC_TOOL_NAMES` = 6 (intocado). Três actions
+`product_registration.*` adicionadas ao registry com `status=proven`:
+
+| Action | Tool | Risk | Phases | Requires |
+|---|---|---|---|---|
+| `comment_list` | `read` | read | — | `request_id` (+page/page_size) |
+| `comment_create` | `execute` | moderate | act, prepare | `request_id` + `body` |
+| `comment_update` | `execute` | moderate | act, prepare | `request_id` + `comment_id` + `body` + `expected_version` |
+
+**Dispatch:** `_READ_DISPATCH` + `_EXECUTE_DISPATCH` →
+`prc_semantic.read_action`/`execute_action` → MESMOS use cases REST
+(`list_comments`, `create_comment`, `update_comment`). Autor sempre
+`prc_actor_from_principal(context.user)` — `authorUserId` do payload
+ignorado (testado). PREPARE valida sem persistir. Update exige CAS
+`expected_version` no caminho semântico.
+
+**Fronteira de injeção:** corpos de mensagem são dados — registrado
+nas notes do catálogo; nenhum conteúdo lido é promovido a instrução,
+permissão ou confirmação (boundary do modelo, não do transporte).
+
+**Anexos:** `ATTACHMENT_WRITE_CAPABILITY=NOT_IMPLEMENTED` — sem
+transporte binário MCP aprovado; metadados de anexos já chegam via
+`comment_list`. Nenhuma sétima tool criada.
+
+**Testes (38/38):** `test_prc_eva_parity.py` +`TestConversationParity`
+8 casos — dispatch+tool count, list paridade, escopo negado espelhado,
+create→readback REST (autor=delegado), PREPARE não-persiste,
+idempotência replay, update autor+CAS stale, não-autor 403, IDOR
+cross-request, frozen terminal. Regressão eva/prc: 618 pass, 1 falha
+pré-existente ortogonal (`test_eva_val01_structure_table_roundtrip`,
+módulo drawing — sem interseção com o diff).
+
+**HML:** engineering-api rebuilt (mesma imagem base + SHA f7ef23e3ed);
+catálogo in-container: 6 tools, 3 actions `proven` com dispatch
+registrado. Integração semântica exercida in-container contra Postgres
+real: list (comentário P1 visível), create (autor=subject delegado,
+spoof ignorado), update CAS, replay idempotente mesmo commentId,
+readback total=2. **Smoke MCP-over-HTTP autenticado: TEST_NOT_RUN**
+— sem identidade legítima: sessão-fixture contém placeholders
+(`hml-fixture-unreachable-glpi`, não JWT), senha hml-tester desconhecida
+e P2 proíbe nova cirurgia manual no KC. Reencaminhado ao owner de
+infra: provisionar `infra/.env.hml` no checkout HML (resolve issuer +
+credenciais de teste pelo bootstrap canônico).
+
+**Verificador:** r1 `INCONCLUSIVE` (engine sem login — registrado em
+`verdicts.jsonl`). **Issue #207:** `gh` sem auth e sem conector
+disponível — atualização bloqueada, evidência versionada neste doc.
+
+**NEXT_ACTION:** P3 — Plugin UI + adapters My Requests/Engenharia.
