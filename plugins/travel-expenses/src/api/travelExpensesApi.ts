@@ -195,11 +195,16 @@ export async function downloadPackagePdf(reportId: string) {
   return httpBlob(`${API_BASE}/reports/${reportId}/package.pdf`);
 }
 
-export async function getMileageRate(expenseDate: string): Promise<number> {
+export async function getMileageRate(expenseDate: string, signal?: AbortSignal): Promise<number> {
   const data = await httpGet<Envelope<{ rateBrlPerKm: number }>>(
     `${API_BASE}/mileage-rate?date=${encodeURIComponent(expenseDate)}`,
+    { signal },
   );
-  return data.data.rateBrlPerKm;
+  const rate = data.data?.rateBrlPerKm;
+  if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+    throw new Error("A API retornou uma tarifa inválida para a data selecionada.");
+  }
+  return rate;
 }
 
 export async function sendToFinance(reportId: string): Promise<ReportDetail> {
