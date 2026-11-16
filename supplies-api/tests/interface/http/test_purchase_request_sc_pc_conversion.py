@@ -89,4 +89,26 @@ def test_conversion_fails_closed_on_invalid_source_or_upstream(mock_resolve, moc
             "/purchase-requests/sc-pc-conversion?branch=01",
             headers={"Authorization": "Bearer tok"},
         )
+        assert response.status_code == 503
+        assert response.get_json()["code"] == "totvs_unavailable"
+
+        gateway.get.side_effect = DelpiApiGatewayError(
+            "api-delpi timeout", status_code=504, code="upstream_timeout",
+        )
+        response = create_app().test_client().get(
+            "/purchase-requests/sc-pc-conversion?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+        assert response.status_code == 504
+        assert response.get_json()["code"] == "upstream_timeout"
+        assert "Protheus" in response.get_json()["detail"]
+
+        gateway.get.side_effect = DelpiApiGatewayError(
+            "producer_error", status_code=500,
+        )
+        response = create_app().test_client().get(
+            "/purchase-requests/sc-pc-conversion?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
         assert response.status_code == 502
+        assert response.get_json()["code"] == "upstream_failure"
