@@ -1335,7 +1335,8 @@ def _detect_embedded_revision_history(
     TODA a página no span-x das colunas e numa faixa abaixo do
     cabeçalho — o box do carimbo é derivado dos rótulos e pode
     cortar linhas do histórico. Linha só vira entrada com
-    `revision_value` no formato \d{2} (ou letra + data) — narrativa
+    `revision_value` no formato NN de dois dígitos (ou letra +
+    data) — narrativa
     e callouts do desenho não são evidência de alteração. Nunca
     promove a maior revisão a vigente; entradas preservadas em
     ordem documental."""
