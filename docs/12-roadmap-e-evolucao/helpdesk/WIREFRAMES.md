@@ -1,5 +1,8 @@
 # Wireframes — Meus Chamados de TI
 
+> **UX V3 — decisão visual aprovada (15/11/2026):** [Wireframe Helpdesk e paridade com My Requests](../my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md). Filtros → Ordenar → Colunas → Tabela/Cards no canto inferior direito do Hero; itens/página na tabela; remoção de helps `?` redundantes. **TARGET**, não implementado nesta revisão.
+
+
 > **Produto:** Meus Chamados de TI
 > **Id técnico:** `helpdesk` · `basePath` `/apps/helpdesk`
 > **API:** `/apps/helpdesk-api` (o navegador não chama o GLPI nem a api-delpi)
