@@ -157,6 +157,19 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     await expect(chips).toHaveCount(1);
     await expect(controlsRow).toHaveCount(1);
 
+    /* Sem filtros removíveis ativos o FilterX NÃO existe na toolbar —
+     * não é só disabled: não reserva largura alguma. */
+    await expect(
+      controlsRow.getByRole("button", { name: /limpar filtros/i }),
+    ).toHaveCount(0);
+
+    /* Aplica um chip de status → FilterX aparece imediatamente. */
+    await chips.getByRole("button").first().click();
+    const clearBtn = controlsRow
+      .getByRole("button", { name: /limpar filtros/i })
+      .first();
+    await expect(clearBtn).toHaveCount(1);
+
     const searchBox = await heroToolbar
       .locator("input[type=search]")
       .boundingBox();
@@ -196,9 +209,6 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       /* linha visual (bucket ~28px) ×100000 + x — jitter de y na
        * mesma linha não inverte a ordem. */
       b ? Math.round(b.y / 28) * 100000 + Math.round(b.x) : -1;
-    const clearBtn = controlsRow
-      .getByRole("button", { name: /limpar filtros/i })
-      .first();
     const pClear = pos(await clearBtn.boundingBox());
     const pFiltros = pos(await boxOf(/filtros avançados/i));
     const pOrdenar = pos(await boxOf(/^Ordenar/i));
@@ -225,6 +235,23 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     /* token warning #f59e0b mix com texto — faixa âmbar/laranja */
     const clearBox = await clearBtn.boundingBox();
     expect(clearBox).toBeTruthy();
+    /* Geometria: botão quadrado do design system (36×36), ícone
+     * centralizado — regressão «deformado/estreito» do follow-up. */
+    expect(Math.abs(clearBox!.width - clearBox!.height)).toBeLessThanOrEqual(2);
+    expect(clearBox!.width).toBeGreaterThanOrEqual(32);
+    const svgBox = await clearBtn.locator("svg").first().boundingBox();
+    expect(svgBox).toBeTruthy();
+    /* SVG preservado e centralizado (centros coincidem) */
+    expect(
+      Math.abs(
+        svgBox!.x + svgBox!.width / 2 - (clearBox!.x + clearBox!.width / 2),
+      ),
+    ).toBeLessThanOrEqual(2);
+    expect(
+      Math.abs(
+        svgBox!.y + svgBox!.height / 2 - (clearBox!.y + clearBox!.height / 2),
+      ),
+    ).toBeLessThanOrEqual(2);
 
     /* Cada um dos controles inteiramente dentro do hero. */
     for (const name of [/limpar filtros/i, /filtros avançados/i, /^Ordenar/i, /^Colunas/i]) {
@@ -245,6 +272,13 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     expect(cardsBox!.x + cardsBox!.width).toBeLessThanOrEqual(
       heroBox!.x + heroBox!.width + 2,
     );
+
+    /* Limpar: o FilterX remove o filtro aplicado e desaparece da
+     * toolbar — sort/page size/colunas/layout preservados. */
+    await clearBtn.click();
+    await expect(
+      controlsRow.getByRole("button", { name: /limpar filtros/i }),
+    ).toHaveCount(0);
 
     /* Grade logo abaixo do hero, embedded, sem seção-card duplicada. */
     const section = page.locator(SECTION);

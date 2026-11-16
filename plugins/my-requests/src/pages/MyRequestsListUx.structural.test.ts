@@ -61,6 +61,10 @@ describe("Shell compartilhado — componentes do kit, não locais", () => {
     expect(iClear).toBeGreaterThan(-1);
     expect(iFilter).toBeGreaterThan(iClear);
     expect(shell).toContain('variant="icon"');
+    /* Visibilidade condicional — sem filtros removíveis o botão não
+       existe na toolbar (não basta disabled; não pode reservar largura). */
+    expect(shell).toContain("onClearFilters && filtersActive");
+    expect(shell).not.toContain("disabled={!filtersActive}");
     expect(shell).not.toContain("onClearAll");
     expect(shell).not.toContain("onClearChips");
     /* binding vem do kit — o MFE não define ClearFiltersButton local */

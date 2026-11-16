@@ -188,6 +188,10 @@ describe("Helpdesk list UX structural", () => {
     /* O controle compartilhado do kit (variant icon = FilterX âmbar). */
     expect(row).toContain('variant="icon"');
     expect(row).toContain("clearListFilters");
+    /* Visibilidade condicional — só renderiza com filtro removível
+       ativo; nunca `disabled` reservando largura na toolbar. */
+    expect(row).toContain("filterActive ?");
+    expect(row).not.toContain("disabled={!filterActive}");
     /* A linha é alinhada à direita via CSS do MFE (layout glue, sem kit copiado). */
     expect(css).toMatch(
       /\.helpdesk-list-controls-row[\s\S]*?justify-content:\s*flex-end/,
