@@ -1,6 +1,6 @@
 /** PRC-REF-023-UI-FIX-07 — estrutura da página de acompanhamento PRC
  * do solicitante. Garante a ficha compartilhada única (não uma segunda
- * implementação local), hero + duas abas, documentos dentro da ficha,
+ * implementação local), hero + página única de seções verticais,
  * correção contextual e zero privilégio/acesso de Engenharia. */
 
 import { describe, expect, it } from "vitest";
@@ -46,10 +46,11 @@ describe("PrcCasePage — composição compartilhada", () => {
     expect(page).toMatch(/PrcWorkflowProgress/);
   });
 
-  it("expõe exatamente Ficha técnica e Histórico, ficha como inicial", () => {
-    expect(page).toMatch(/key: "sheet", label: "Ficha técnica"/);
-    expect(page).toMatch(/key: "history", label: "Histórico"/);
-    expect(page).toMatch(/useState<CaseTab>\("sheet"\)/);
+  it("página única — sem abas Ficha técnica | Histórico (P3-FIX RQ-01)", () => {
+    expect(page).not.toMatch(/CaseTab|CASE_TABS/);
+    expect(page).not.toMatch(/mode="tabs"/);
+    expect(page).not.toMatch(/role="tabpanel"/);
+    expect(page).not.toMatch(/MyRequestsUnderlineNav/);
     // Solicitante não recebe abas de atendimento técnico.
     expect(page).not.toMatch(/Verificação TOTVS/i);
     expect(page).not.toMatch(/Revisões/);
@@ -57,13 +58,15 @@ describe("PrcCasePage — composição compartilhada", () => {
     expect(page).not.toMatch(/revisions/i);
   });
 
-  it("documentos vivem somente na aba Ficha técnica", () => {
-    const sheetIdx = indexOfOrFail(page, 'tab === "sheet"');
+  it("seções verticais: ficha → documentos → conversa → linha do tempo", () => {
+    const sheetIdx = indexOfOrFail(page, "PrcTechnicalSheetView");
     const docsIdx = indexOfOrFail(page, "Documentos de apoio");
-    const historyIdx = indexOfOrFail(page, 'tab === "history"');
-    // Ordem: bloco ficha → Documentos → bloco histórico.
+    const convIdx = indexOfOrFail(page, "Conversa sobre a solicitação");
+    const timelineIdx = indexOfOrFail(page, "Linha do tempo");
+    // Ordem canônica do acompanhamento na mesma página rolável.
     expect(docsIdx).toBeGreaterThan(sheetIdx);
-    expect(historyIdx).toBeGreaterThan(docsIdx);
+    expect(convIdx).toBeGreaterThan(docsIdx);
+    expect(timelineIdx).toBeGreaterThan(convIdx);
     // Uma única renderização de documentos.
     expect(page.match(/Documentos de apoio/g)).toHaveLength(1);
     expect(page).toMatch(/MyRequestsAttachmentPreviewStrip/);

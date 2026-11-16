@@ -799,6 +799,7 @@ export function ConversationPanel({
             >
               <PanelMessageThread
                 messages={threadItems}
+                showMineIdentity
                 listAriaLabel="Mensagens da solicitação"
                 emptyLabel="Nenhuma mensagem ainda. Inicie a conversa."
                 portalScopeClassName={portalScopeClassName}

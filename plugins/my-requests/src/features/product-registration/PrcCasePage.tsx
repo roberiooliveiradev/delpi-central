@@ -1,13 +1,14 @@
 /** PRC-REF-023-F04/UI-FIX-07 — acompanhamento do caso PRC pelo
  * solicitante.
  *
- * Hero consolidado + duas abas (Ficha técnica · Histórico) sobre o
- * mesmo ``requestId`` da Engineering API. A ficha técnica é a
- * composição única `PrcTechnicalSheetView` do kit — mesma leitura do
- * Portal Engenharia — e os documentos de apoio vivem dentro dela.
- * Correção só edita os alvos devolvidos pelo analista (REF-022),
- * contextual na própria ficha; o backend valida escopo de objeto,
- * estado, versão e idempotência. */
+ * Hero consolidado + página única de seções verticais (ficha técnica,
+ * documentos, conversa e linha do tempo) sobre o mesmo ``requestId``
+ * da Engineering API — mesmo padrão das demais solicitações do
+ * módulo. A ficha técnica é a composição única `PrcTechnicalSheetView`
+ * do kit — mesma leitura do Portal Engenharia. Correção só edita os
+ * alvos devolvidos pelo analista (REF-022), contextual na própria
+ * ficha; o backend valida escopo de objeto, estado, versão e
+ * idempotência. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -69,20 +70,12 @@ import {
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   MyRequestsStatusBadge,
-  MyRequestsUnderlineNav,
 } from "../../ui/mrUi";
 
 type Props = {
   requestId: string;
   onBack: () => void;
 };
-
-type CaseTab = "sheet" | "history";
-
-const CASE_TABS: { key: CaseTab; label: string }[] = [
-  { key: "sheet", label: "Ficha técnica" },
-  { key: "history", label: "Histórico" },
-];
 
 const PRC_SOURCE = "my-requests";
 
@@ -93,7 +86,6 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   const [canUpload, setCanUpload] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<CaseTab>("sheet");
   const [newFiles, setNewFiles] = useState<PrcSupportFile[]>([]);
   const [fileError, setFileError] = useState("");
   /* FIX-08 — edição livre pré-atendimento: o backend só emite
@@ -384,28 +376,8 @@ export function PrcCasePage({ requestId, onBack }: Props) {
             <PrcWorkflowProgress status={detail.status} />
           </MyRequestsSectionCard>
 
-          <MyRequestsUnderlineNav
-            mode="tabs"
-            aria-label="Seções do acompanhamento"
-            activeId={tab}
-            items={CASE_TABS.map((t) => ({
-              id: t.key,
-              label: t.label,
-              controlId: `prc-case-panel-${t.key}`,
-              tabId: `prc-case-tab-${t.key}`,
-              onSelect: () => setTab(t.key),
-            }))}
-          />
-
-          <div
-            role="tabpanel"
-            id={`prc-case-panel-${tab}`}
-            aria-labelledby={`prc-case-tab-${tab}`}
-            className="delpi-prc"
-          >
-            {tab === "sheet" ? (
-              <>
-                {canCorrect ? (
+          <div className="delpi-prc">
+            {canCorrect ? (
                   <MyRequestsSectionCard
                     title="Corrigir campos devolvidos"
                     hint="Apenas os campos indicados pela Engenharia podem ser modificados."
@@ -505,12 +477,8 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                   ) : null}
                 </MyRequestsSectionCard>
                 ) : null}
-              </>
-            ) : null}
 
-            {tab === "history" ? (
-              <>
-                <ConversationPanel
+            <ConversationPanel
                   requestId={detail.id}
                   api={prcConversationApi}
                   canComment={!conversationFrozen}
@@ -535,8 +503,6 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                   avatarByUserId={avatarByUserId}
                 />
               </MyRequestsSectionCard>
-              </>
-            ) : null}
           </div>
         </>
       ) : null}
