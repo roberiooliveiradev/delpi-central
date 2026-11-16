@@ -52,6 +52,21 @@ class Settings:
         "IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED", default="false"
     ).lower() == "true"
 
+    # V016 migration is a second, independent gate. Ordinary Portal TI
+    # migrations remain supported; ATLAS DDL needs explicit owner release.
+    ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED: bool = _get_env(
+        "IT_PORTAL_ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED", default="false"
+    ).lower() == "true"
+
+    # A dedicated read-only PostgreSQL identity is mandatory for journal GET.
+    # Never fall back to the API's write-capable IT_PORTAL_DB_* credentials.
+    ATLAS_JOURNAL_READ_DB_USER: str = _get_env(
+        "IT_PORTAL_ATLAS_JOURNAL_READ_DB_USER", default=""
+    )
+    ATLAS_JOURNAL_READ_DB_PASSWORD: str = _get_env(
+        "IT_PORTAL_ATLAS_JOURNAL_READ_DB_PASSWORD", default=""
+    )
+
     RUN_MIGRATIONS_ON_STARTUP: bool = _get_env(
         "IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP", default="false"
     ).lower() in ("1", "true", "yes")
