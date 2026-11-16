@@ -1,4 +1,4 @@
-import { httpGet, suppliesApiUrl } from "./httpClient";
+import { httpGet, httpGetBlob, suppliesApiUrl } from "./httpClient";
 
 export type PerformanceComponent = {
   index: number | null;
@@ -68,4 +68,28 @@ export function getSupplierPerformance(
     ),
     { signal },
   );
+}
+
+export async function downloadSupplierPerformanceXlsx(
+  filters: { branches: string[]; from: string; to: string },
+  supplier?: { supplier_code: string; supplier_store: string } | null,
+): Promise<void> {
+  const params = new URLSearchParams(buildSupplierPerformanceQuery(filters));
+  if (supplier) {
+    params.set("supplier_code", supplier.supplier_code);
+    params.set("supplier_store", supplier.supplier_store);
+  }
+  const blob = await httpGetBlob(
+    suppliesApiUrl(`/analytics/supplier-performance/export?${params.toString()}`),
+  );
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = supplier
+    ? `idf-${supplier.supplier_code}-${supplier.supplier_store}.xlsx`
+    : "idf-fornecedores.xlsx";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
 }
