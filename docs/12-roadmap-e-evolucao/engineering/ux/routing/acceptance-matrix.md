@@ -4,7 +4,7 @@
 **Owner do aceite visual:** Product Owner do Portal Engenharia. **Executor:** agente de implementação. **Verificação:** independente, conforme governança canônica.  
 **Escopo:** componentes reais, UX, fidelidade composicional, estados e acessibilidade; preservar leitura oficial e motor determinístico.
 
-## 1. Matriz de aceite objetiva
+**Atualização de referência 2026-11-16:** o Product Owner aprovou um único painel PNG com **3 abas × 2 temas** (Operações, Balanceamento, Análise visual; dark e light). O SVG anterior está `SUPERSEDED`. O PNG original foi anexado no chat como `Painel DELPI em modos escuro e claro(1).png`, mas a publicação binária no repositório ainda é `ASSET_UPLOAD_PENDING` para `references/routing-all-tabs-dark-light-approved.png`. Este documento não finge possuir o PNG; Gate 0 exige verificar sua existência no GitHub antes da implementação dirigida por pixels. As métricas da arte são ilustrativas: não usar como valores oficiais nem expected outputs de negócio.\n\n## 1. Matriz de aceite objetiva
 
 | AC | Estado / viewport | Critério de aceite bloqueante | Evidência exigida |
 |---|---|---|---|
