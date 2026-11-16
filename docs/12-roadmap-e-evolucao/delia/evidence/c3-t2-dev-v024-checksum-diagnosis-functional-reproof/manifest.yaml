@@ -1,0 +1,28 @@
+task_id: DELIA-C3-T2-DEV-V024-CHECKSUM-ROOT-CAUSE-AND-FUNCTIONAL-REPROOF-01
+evaluated_sha: "66c98025e7324b8ca661cd533e22b4574b95cc50"
+environment: DEV
+generated_at_utc: "2026-11-16"
+files:
+  - dev-migration-diagnosis.md
+  - v024-git-history.md
+  - v024-database-state.sanitized.md
+  - v024-schema-comparison.md
+  - root-cause-and-owner.md
+  - dev-correction-decision.md
+  - davi-health-before-after.md
+  - live_int2_reproof.sanitized.json
+  - test-commands-and-results.md
+  - ci-evidence.md
+  - scope-reconciliation.md
+blocked:
+  - delia-http-turn1.sanitized.json
+  - delia-http-turn2.sanitized.json
+  - delia-g2/davi grounded read (DAVI env-blocked)
+decision_required: DEV plugins_hub V024 reconciliation (owner: engineering/api-delpi env)
+restrictions:
+  migration_edit: FORBIDDEN (honored)
+  checksum_rewrite: FORBIDDEN (honored)
+  db_schema_mutation: NOT_AUTHORIZED (honored — none executed)
+  production_deploy: NOT_AUTHORIZED
+  two_agent_promotion: NOT_AUTHORIZED
+  phase_advancement: "NO"
