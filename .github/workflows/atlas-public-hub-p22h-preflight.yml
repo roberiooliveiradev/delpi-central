@@ -1,0 +1,101 @@
+name: ATLAS P2.2h Public Hub Signed Promotion Preflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/atlas-public-hub-p22h-preflight.yml"
+      - "infra/docker-compose.yml"
+      - "infra/docker-compose.hml.yml"
+      - "infra/.env.prod.example"
+      - "infra/env.hml.example"
+      - "infra/scripts/up-prod-sequential.sh"
+      - "infra/scripts/up-hml-sequential.sh"
+      - "infra/scripts/public-hub-release-preflight.sh"
+      - "infra/scripts/tests/test_public_hub_release_preflight.py"
+  pull_request:
+    paths:
+      - ".github/workflows/atlas-public-hub-p22h-preflight.yml"
+      - "infra/docker-compose.yml"
+      - "infra/docker-compose.hml.yml"
+      - "infra/.env.prod.example"
+      - "infra/env.hml.example"
+      - "infra/scripts/up-prod-sequential.sh"
+      - "infra/scripts/up-hml-sequential.sh"
+      - "infra/scripts/public-hub-release-preflight.sh"
+      - "infra/scripts/tests/test_public_hub_release_preflight.py"
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-readonly-contract:
+    name: 22 fail-closed preflight tests, no production access
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install isolated test dependencies
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Check shell syntax
+        run: |
+          bash -n infra/scripts/public-hub-release-preflight.sh
+          bash -n infra/scripts/up-prod-sequential.sh
+          bash -n infra/scripts/up-hml-sequential.sh
+      - name: Verify promotion cannot execute from preflight
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \
+            infra/scripts/tests/test_public_hub_release_preflight.py \
+            infra/scripts/tests/test_public_hub_provenance.py
+
+  compose-release-contract:
+    name: Validate canonical Compose local and pinned modes, offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render production Compose in both modes (no Docker writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd infra
+          PUBLIC_HUB_RELEASE_IMAGE='' docker compose -f docker-compose.yml \
+            --env-file .env.prod.example config --no-env-resolution --format json \
+            > "$RUNNER_TEMP/atlas-prod-local.json"
+          PUBLIC_HUB_RELEASE_IMAGE='ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+            docker compose -f docker-compose.yml --env-file .env.prod.example \
+            config --no-env-resolution --format json > "$RUNNER_TEMP/atlas-prod-release.json"
+          python - "$RUNNER_TEMP/atlas-prod-local.json" "$RUNNER_TEMP/atlas-prod-release.json" <<'PY'
+          import json,sys
+          legacy=json.load(open(sys.argv[1], encoding='utf-8'))['services']['public-hub']
+          pinned=json.load(open(sys.argv[2], encoding='utf-8'))['services']['public-hub']
+          expected='ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:'+'a'*64
+          assert legacy['image'].endswith('-public-hub') and '@sha256:' not in legacy['image']
+          assert pinned['image']==expected
+          assert legacy.get('build')==pinned.get('build')
+          assert legacy['container_name']==pinned['container_name']=='delpi-public-hub'
+          print('Canonical PROD Compose resolves legacy and digest-pinned image explicitly')
+          PY
+      - name: Render HML Compose in both modes (no Docker writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd infra
+          PUBLIC_HUB_HML_RELEASE_IMAGE='' docker compose -f docker-compose.hml.yml \
+            --env-file env.hml.example config --no-env-resolution --format json \
+            > "$RUNNER_TEMP/atlas-hml-local.json"
+          PUBLIC_HUB_HML_RELEASE_IMAGE='ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+            docker compose -f docker-compose.hml.yml --env-file env.hml.example \
+            config --no-env-resolution --format json > "$RUNNER_TEMP/atlas-hml-release.json"
+          python - "$RUNNER_TEMP/atlas-hml-local.json" "$RUNNER_TEMP/atlas-hml-release.json" <<'PY'
+          import json,sys
+          local=json.load(open(sys.argv[1], encoding='utf-8'))['services']['public-hub']
+          pinned=json.load(open(sys.argv[2], encoding='utf-8'))['services']['public-hub']
+          assert local['image']=='delpi-hml/public-hub:local'
+          assert pinned['image']=='ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:'+'a'*64
+          assert local['container_name']==pinned['container_name']=='delpi-hml-public-hub'
+          print('Canonical HML Compose resolves legacy and digest-pinned image explicitly')
+          PY

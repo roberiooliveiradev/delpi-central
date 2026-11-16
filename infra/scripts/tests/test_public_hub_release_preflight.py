@@ -144,3 +144,22 @@ def test_script_never_has_host_mutation_apis():
     for prohibited in ('docker pull ', 'docker compose ', 'docker build ', 'docker tag ',
                        'docker run ', 'docker stop ', 'docker rm ', 'docker exec ', 'ssh '):
         assert prohibited not in code
+
+
+def test_compose_release_override_is_opt_in_and_legacy_deploy_is_forced_local():
+    root = Path(__file__).resolve().parents[3]
+    prod = (root / 'infra/docker-compose.yml').read_text()
+    hml = (root / 'infra/docker-compose.hml.yml').read_text()
+    prod_section = prod.split('\n  public-hub:\n', 1)[1].split('\n  inspecoes-entrada:\n', 1)[0]
+    hml_section = hml.split('\n  public-hub:\n', 1)[1].split('\n  gateway:\n', 1)[0]
+    assert 'image: ${PUBLIC_HUB_RELEASE_IMAGE:-${COMPOSE_PROJECT_NAME:-infra}-public-hub}' in prod_section
+    assert 'image: ${PUBLIC_HUB_HML_RELEASE_IMAGE:-delpi-hml/public-hub:local}' in hml_section
+    assert 'target: production' in prod_section
+    assert 'container_name: delpi-public-hub' in prod_section
+    assert 'container_name: delpi-hml-public-hub' in hml_section
+    prod_runner = (root / 'infra/scripts/up-prod-sequential.sh').read_text()
+    hml_runner = (root / 'infra/scripts/up-hml-sequential.sh').read_text()
+    assert 'export PUBLIC_HUB_RELEASE_IMAGE=""' in prod_runner
+    assert 'export PUBLIC_HUB_HML_RELEASE_IMAGE=""' in hml_runner
+    assert 'PUBLIC_HUB_RELEASE_IMAGE=' in (root / 'infra/.env.prod.example').read_text()
+    assert 'PUBLIC_HUB_HML_RELEASE_IMAGE=' in (root / 'infra/env.hml.example').read_text()
