@@ -15,6 +15,7 @@ export type PluginView =
   | "integrations"
   | "integration_detail"
   | "action_plans"
+  | "atlas_deployments"
   | "help"
   | "not_found";
 
@@ -27,6 +28,7 @@ export type NavId =
   | "networks"
   | "integrations"
   | "action_plans"
+  | "atlas_deployments"
   | "help";
 
 export type ResolvedRoute = {
@@ -82,6 +84,7 @@ export function resolveRoute(pathname: string, basePath: string): ResolvedRoute 
     return { view: "not_found" };
   }
   if (segments.length === 1 && segments[0] === "action-plans") return { view: "action_plans" };
+  if (segments.length === 1 && segments[0] === "atlas-deployments") return { view: "atlas_deployments" };
   if (segments.length === 1 && segments[0] === "help") return { view: "help" };
   return { view: "not_found" };
 }
@@ -101,6 +104,7 @@ const NAV_SEGMENTS: Record<NavId, string> = {
   networks: "/networks",
   integrations: "/integrations",
   action_plans: "/action-plans",
+  atlas_deployments: "/atlas-deployments",
   help: "/help",
 };
 
