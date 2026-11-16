@@ -1609,16 +1609,26 @@ def _normative_block(
     """
     draw_desc = (drawing or {}).get("item_description")
     bom_desc = (bom or {}).get("component_description")
-    parent = (drawing or {}).get("parent_code") or (
-        bom or {}).get("parent_code")
-    parent_code = str(parent) if parent else None
-    parent_is_pi = bool(parent_code) and is_pi50_code(parent_code)
+    # G24-R3 (F01): identidades de pai independentes por fonte.
+    # O pai do DESENHO resolve somente a descrição PI visual; o pai da
+    # BOM resolve somente a descrição oficial. Nenhuma fonte serve de
+    # fallback silencioso para a outra.
+    d_parent_raw = (drawing or {}).get("parent_code")
+    b_parent_raw = (bom or {}).get("parent_code")
+    d_parent = str(d_parent_raw) if d_parent_raw else None
+    b_parent = str(b_parent_raw) if b_parent_raw else None
+    d_parent_is_pi = bool(d_parent) and is_pi50_code(d_parent)
+    b_parent_is_pi = bool(b_parent) and is_pi50_code(b_parent)
     pi_draw = (
-        (drawing or {}).get("parent_description") if parent_is_pi else None
+        (drawing or {}).get("parent_description") if d_parent_is_pi else None
     )
     pi_bom = (
-        (bom_desc_by_code or {}).get(parent_code) if parent_is_pi else None
+        (bom_desc_by_code or {}).get(b_parent) if b_parent_is_pi else None
     )
+    parent_verified = (drawing or {}).get("parent_verified")
+    draw_assoc_verified = parent_verified is True
+    same_parent = bool(d_parent and b_parent and d_parent == b_parent)
+    divergent = bool(d_parent and b_parent and d_parent != b_parent)
     ptype = "PI" if code and is_pi50_code(code) else "MP"
     block: dict[str, Any] = {}
     if draw_desc and code:
@@ -1631,31 +1641,70 @@ def _normative_block(
             description_raw=bom_desc, description_source="TOTVS")
     if pi_draw:
         block["pi_drawing_normative"] = evaluate_description(
-            product_code=parent_code, product_type="PI",
+            product_code=d_parent, product_type="PI",
             description_raw=pi_draw, description_source="DRAWING")
     if pi_bom:
         block["pi_totvs_normative"] = evaluate_description(
-            product_code=parent_code, product_type="PI",
+            product_code=b_parent, product_type="PI",
             description_raw=pi_bom, description_source="TOTVS")
-    if parent_is_pi and ptype == "MP":
-        parent_ambiguous = bool(
-            drawing and drawing.get("parent_verified") is False)
+    if d_parent or b_parent:
+        if divergent:
+            div_status, div_reason = (
+                "DIVERGENCE_CANDIDATE",
+                "visual and official parents differ — not the same PI")
+        elif same_parent and draw_assoc_verified:
+            div_status, div_reason = (
+                "SAME_PARENT_VERIFIED",
+                "parents equal and visual association verified")
+        elif same_parent:
+            div_status, div_reason = (
+                "SAME_PARENT_UNVERIFIED",
+                "parents equal but visual association not proven")
+        elif d_parent:
+            div_status, div_reason = (
+                "BOM_PARENT_ABSENT", "official parent missing")
+        else:
+            div_status, div_reason = (
+                "DRAWING_PARENT_ABSENT", "visual parent missing")
+        block["parent_divergence"] = {
+            "status": div_status,
+            "same_parent": same_parent,
+            "drawing_parent_code": d_parent,
+            "bom_parent_code": b_parent,
+            "occurrence_id": occurrence_id,
+            "drawing_association_state": (
+                "VERIFIED" if draw_assoc_verified else "TO_VERIFY"),
+            "official_association_source": "BOM",
+            "review_status": "PENDING_ENGINEERING",
+            "reason": div_reason,
+        }
+    if ptype == "MP" and (d_parent_is_pi or b_parent_is_pi):
         comparisons = []
-        for pi_d, pi_s, mp_d, mp_s in (
-            (pi_draw, "DRAWING", draw_desc, "DRAWING"),
-            (pi_bom, "TOTVS", bom_desc, "TOTVS"),
-            (pi_draw, "DRAWING", bom_desc, "TOTVS"),
-        ):
+        pairs = (
+            # (pi desc, pi code, pi src, mp desc, mp src, gate)
+            (pi_draw, d_parent, "DRAWING", draw_desc, "DRAWING",
+             not draw_assoc_verified),
+            (pi_bom, b_parent, "TOTVS", bom_desc, "TOTVS",
+             False),  # relação oficial — gate próprio da BOM
+            (pi_draw, d_parent, "DRAWING", bom_desc, "TOTVS",
+             divergent or not draw_assoc_verified),
+        )
+        reasons = {
+            0: "visual parent association not verified — drawing "
+               "coherence stays inconclusive",
+            2: "cross-source comparison requires proven occurrence "
+               "correspondence (verified parent, no divergence)",
+        }
+        for i, (pi_d, pi_c, pi_s, mp_d, mp_s, gated) in enumerate(pairs):
             cmp_ = evaluate_pi_mp_coherence(
                 pi_description=pi_d, mp_descriptions=[mp_d] if mp_d else [],
-                pi_code=parent_code, mp_code=code,
+                pi_code=pi_c, mp_code=code,
                 pi_source=pi_s, mp_source=mp_s,
                 occurrence_id=occurrence_id)
-            if parent_ambiguous and cmp_["status"] != "INCONCLUSIVE":
+            if gated and cmp_["status"] != "INCONCLUSIVE":
                 cmp_["status"] = "INCONCLUSIVE"
-                cmp_["reason"] = (
-                    "parent association not verified — ambiguous "
-                    "relation never picks a PI arbitrarily")
+                cmp_["reason"] = reasons.get(
+                    i, "association not proven for this source pair")
             comparisons.append(cmp_)
         block["pi_bom_coherence"] = comparisons
     return block or None

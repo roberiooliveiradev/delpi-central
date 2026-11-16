@@ -460,3 +460,154 @@ def test_r1_contract_version_and_review_status():
     r = ev("50213206", "PI", "CA18BRAN-00512/10/10-0000-0000")
     assert r["contract_version"] == "normative_description.v1"
     assert r["no_business_write"] is True
+
+
+# ============ G24-R3 — identidade de pais por fonte (F01) ============
+
+def _r3_block(**kw):
+    from engineering_app.application.drawing.bom_structure_comparator import (
+        _normative_block)
+    return _normative_block(**kw)
+
+
+PI_A = "CA18MARR-00152/10/06-0000-0110"   # 50233507
+PI_B = "CB1,50VERD-00300/06/06-0000-0000"  # 50233508
+MPD = "TERM. BANDEIRA 6,30X0,80 0,50-1,50MM2 ESTANHADO"
+
+
+def test_r3_divergent_parents_independent_lookups():
+    """T01: pai visual 50233508, oficial 50233507 → lookups separados."""
+    b = _r3_block(
+        code="10080136", occurrence_id="O3",
+        bom={"component_code": "10080136", "component_description": MPD,
+             "parent_code": "50233507"},
+        drawing={"item_description": MPD, "parent_code": "50233508",
+                 "parent_verified": True, "parent_description": PI_B},
+        bom_desc_by_code={"50233507": PI_A, "50233508": PI_B})
+    assert b["pi_drawing_normative"]["product_code"] == "50233508"
+    assert b["pi_totvs_normative"]["product_code"] == "50233507"
+    div = b["parent_divergence"]
+    assert div["status"] == "DIVERGENCE_CANDIDATE"
+    assert div["same_parent"] is False
+    tt = next(c for c in b["pi_bom_coherence"]
+              if c["source_pair"] == {"pi": "TOTVS", "mp": "TOTVS"})
+    assert tt["pi_code"] == "50233507"  # pai OFICIAL, nunca o visual
+
+
+def test_r3_divergent_reverse_direction():
+    """T02: pai visual 50233507, oficial 50233508 — simétrico."""
+    b = _r3_block(
+        code="10080136", occurrence_id="O4",
+        bom={"component_code": "10080136", "component_description": MPD,
+             "parent_code": "50233508"},
+        drawing={"item_description": MPD, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_A},
+        bom_desc_by_code={"50233507": PI_A, "50233508": PI_B})
+    assert b["pi_drawing_normative"]["product_code"] == "50233507"
+    assert b["pi_totvs_normative"]["product_code"] == "50233508"
+    assert b["parent_divergence"]["status"] == "DIVERGENCE_CANDIDATE"
+
+
+def test_r3_drawing_parent_absent_no_fallback():
+    """T03: sem pai visual → TOTVS avaliado; nenhum fallback."""
+    b = _r3_block(
+        code="10080136", occurrence_id="O5",
+        bom={"component_code": "10080136", "component_description": MPD,
+             "parent_code": "50233507"},
+        drawing=None,
+        bom_desc_by_code={"50233507": PI_A})
+    assert "pi_drawing_normative" not in b
+    assert b["pi_totvs_normative"]["product_code"] == "50233507"
+    assert b["parent_divergence"]["status"] == "DRAWING_PARENT_ABSENT"
+    dd = next(c for c in b["pi_bom_coherence"]
+              if c["source_pair"]["pi"] == "DRAWING")
+    assert dd["status"] == "INCONCLUSIVE"
+
+
+def test_r3_bom_parent_absent_no_fallback():
+    """T04: sem pai oficial → desenho avaliado; nenhum fallback."""
+    b = _r3_block(
+        code="10080136", occurrence_id="O6",
+        bom=None,
+        drawing={"item_description": MPD, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_A},
+        bom_desc_by_code={})
+    assert "pi_totvs_normative" not in b
+    assert b["pi_drawing_normative"]["product_code"] == "50233507"
+    assert b["parent_divergence"]["status"] == "BOM_PARENT_ABSENT"
+
+
+def test_r3_same_parent_unverified_not_proven():
+    """T06: pais iguais + associação não verificada ≠ comprovada."""
+    b = _r3_block(
+        code="10080136", occurrence_id="O7",
+        bom={"component_code": "10080136", "component_description": MPD,
+             "parent_code": "50233507"},
+        drawing={"item_description": MPD, "parent_code": "50233507",
+                 "parent_verified": False, "parent_description": PI_A},
+        bom_desc_by_code={"50233507": PI_A})
+    div = b["parent_divergence"]
+    assert div["status"] == "SAME_PARENT_UNVERIFIED"
+    assert div["same_parent"] is True
+    dd = next(c for c in b["pi_bom_coherence"]
+              if c["source_pair"] == {"pi": "DRAWING", "mp": "DRAWING"})
+    assert dd["status"] == "INCONCLUSIVE"
+    cross = next(c for c in b["pi_bom_coherence"]
+                 if c["comparison_type"] == "CROSS_SOURCE")
+    assert cross["status"] == "INCONCLUSIVE"
+
+
+def test_r3_divergent_cross_source_never_concludes():
+    """T15: descrições iguais + pais divergentes → sem falso PASS."""
+    same = "CABO EPR 125/150°C 18AWG BN 600V"
+    b = _r3_block(
+        code="10380040", occurrence_id="O8",
+        bom={"component_code": "10380040", "component_description": same,
+             "parent_code": "50213207"},
+        drawing={"item_description": same, "parent_code": "50213206",
+                 "parent_verified": True,
+                 "parent_description": "CB18VERD-00512/10/10-0000-0000"},
+        bom_desc_by_code={
+            "50213206": "CB18VERD-00512/10/10-0000-0000",
+            "50213207": "CB18VERD-00512/10/10-0000-0000"})
+    cross = next(c for c in b["pi_bom_coherence"]
+                 if c["comparison_type"] == "CROSS_SOURCE")
+    assert cross["status"] == "INCONCLUSIVE"
+    assert "correspondence" in cross["reason"]
+
+
+def test_r3_same_parent_verified_all_pairs_run():
+    """T07: pais iguais + verificado → 3 pares com suas fontes."""
+    cabo = "CABO EPR 125/150°C 18AWG BN 600V"
+    b = _r3_block(
+        code="10380040", occurrence_id="O9",
+        bom={"component_code": "10380040", "component_description": cabo,
+             "parent_code": "50213206"},
+        drawing={"item_description": cabo, "parent_code": "50213206",
+                 "parent_verified": True,
+                 "parent_description": "CB18VERD-00512/10/10-0000-0000"},
+        bom_desc_by_code={
+            "50213206": "CB18VERD-00512/10/10-0000-0000"})
+    assert b["parent_divergence"]["status"] == "SAME_PARENT_VERIFIED"
+    comps = b["pi_bom_coherence"]
+    assert len(comps) == 3
+    dd = next(c for c in comps if c["source_pair"]["pi"] == "DRAWING")
+    # PI diz EPR, cabo diz EPR → coerência de material PASS
+    iso = next(x for x in dd["checks"] if x["rule_id"] == "COH-ISO-MATERIAL")
+    assert iso["status"] == "PASS"
+
+
+def test_r3_pi_under_pa_still_no_pa_subject():
+    """T09: regressão R1 — PA não vira sujeito PI."""
+    b = _r3_block(
+        code="50213206", occurrence_id="O1",
+        bom={"component_code": "50213206",
+             "component_description": "CA18BRAN-00512/10/10-0000-0000",
+             "parent_code": "90263680"},
+        drawing={"item_description": "CA18BRAN-00512/10/10-0000-0000",
+                 "parent_code": "90263680", "parent_verified": True,
+                 "parent_description": "CHICOTE DE LIGACAO"},
+        bom_desc_by_code={})
+    assert b.get("pi_drawing_normative") is None
+    assert b.get("pi_totvs_normative") is None
+    assert "pi_bom_coherence" not in b
