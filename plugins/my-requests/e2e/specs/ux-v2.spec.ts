@@ -29,7 +29,7 @@ test.describe("Minhas Solicitações UX V2 — listas governadas", () => {
     ).toBeVisible({ timeout: 15_000 });
 
     const filtersTrigger = page
-      .getByRole("button", { name: /filtros/i })
+      .getByRole("button", { name: /filtros avançados/i })
       .first();
     await expect(filtersTrigger).toBeVisible();
     await filtersTrigger.click();
@@ -105,7 +105,7 @@ test.describe("Minhas Solicitações UX V2 — listas governadas", () => {
     }
 
     await page
-      .getByRole("button", { name: /filtros/i })
+      .getByRole("button", { name: /filtros avançados/i })
       .first()
       .waitFor({ state: "visible", timeout: 20_000 });
     const sortTrigger = page.getByRole("button", { name: /ordenar/i }).first();

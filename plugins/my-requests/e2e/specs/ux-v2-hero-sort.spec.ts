@@ -110,7 +110,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroToolbar.getByRole("searchbox").or(heroToolbar.locator("input[type=search]")),
     ).toHaveCount(1);
     await expect(
-      heroToolbar.getByRole("button", { name: /filtros/i }),
+      heroToolbar.getByRole("button", { name: /filtros avançados/i }),
     ).toBeVisible();
     await expect(
       heroToolbar.getByRole("button", { name: /ordenar/i }),
@@ -200,7 +200,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       .getByRole("button", { name: /limpar filtros/i })
       .first();
     const pClear = pos(await clearBtn.boundingBox());
-    const pFiltros = pos(await boxOf(/^Filtros$/i));
+    const pFiltros = pos(await boxOf(/filtros avançados/i));
     const pOrdenar = pos(await boxOf(/^Ordenar/i));
     const pColunas = pos(await boxOf(/^Colunas/i));
     const pTabela = pos(
@@ -227,7 +227,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     expect(clearBox).toBeTruthy();
 
     /* Cada um dos controles inteiramente dentro do hero. */
-    for (const name of [/limpar filtros/i, /^Filtros$/i, /^Ordenar/i, /^Colunas/i]) {
+    for (const name of [/limpar filtros/i, /filtros avançados/i, /^Ordenar/i, /^Colunas/i]) {
       const box = await controlsRow
         .getByRole("button", { name })
         .first()
