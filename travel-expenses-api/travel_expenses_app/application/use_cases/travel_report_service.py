@@ -328,9 +328,13 @@ class TravelReportService:
         expense_date = _parse_date(body.get("expenseDate") or body.get("expense_date"))
         if not expense_date:
             raise TravelReportError("Informe a data da despesa.")
-        amount = _parse_amount(body.get("amountBrl") if "amountBrl" in body else body.get("amount_brl") or 0)
+        transport = self._expense_transport_fields(category_id=category_id, expense_date=expense_date, body=body)
+        amount = transport.get("amount_brl")
+        if amount is None:
+            amount = _parse_amount(body.get("amountBrl") if "amountBrl" in body else body.get("amount_brl"))
         expense = self.repo.create_expense(
             {
+                **transport,
                 "report_id": report_id,
                 "expense_date": expense_date,
                 "category_id": category_id,
@@ -378,6 +382,16 @@ class TravelReportService:
             changes["merchant"] = str(body.get("merchant") or "").strip()
         if "notes" in body:
             changes["notes"] = str(body.get("notes") or "").strip()
+        next_category = changes.get("category_id", expense["categoryId"])
+        next_date = changes.get("expense_date", _parse_date(expense["expenseDate"]))
+        if any(key in body for key in ("transportMode", "distanceKm", "categoryId", "category_id", "expenseDate", "expense_date")):
+            transport_body = {
+                "transportMode": body.get("transportMode", expense.get("transportMode")),
+                "distanceKm": body.get("distanceKm", expense.get("distanceKm")),
+            }
+            changes.update(self._expense_transport_fields(
+                category_id=next_category, expense_date=next_date, body=transport_body,
+            ))
         return self.repo.update_expense(expense_id, changes) or expense
 
     def delete_expense(self, user, report_id: str, expense_id: str) -> None:
