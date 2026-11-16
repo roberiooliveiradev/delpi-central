@@ -172,19 +172,22 @@ describe("Helpdesk list UX structural", () => {
     /* Busca sozinha na faixa primária — sem barra de ações junto ao campo. */
     expect(controls).not.toContain("helpdesk-list-primary-bar__actions");
     expect(css).not.toContain(".helpdesk-list-primary-bar__actions");
-    /* Ordem canônica na linha (UX V3 follow-up):
-       FilterX âmbar → Filtros → Ordenar → Colunas → Tabela|Cards. */
+    /* Ordem canônica na linha (UX V3 page-size refinement):
+       FilterX âmbar → Filtros → Ordenar → Colunas → Por página →
+       Tabela|Cards. */
     const row = controls.slice(iRow);
     const iClear = row.indexOf("HelpdeskClearFiltersButton");
     const iFilter = row.indexOf("TicketListFilterPopover");
     const iSort = row.indexOf("TicketListSortPopover");
     const iCols = row.indexOf("TableColumnVisibilityMenu");
+    const iSize = row.indexOf("HelpdeskTablePageSizeSelect");
     const iToggle = row.indexOf("HelpdeskSegmentToggle");
     expect(iClear).toBeGreaterThan(-1);
     expect(iFilter).toBeGreaterThan(iClear);
     expect(iSort).toBeGreaterThan(iFilter);
     expect(iCols).toBeGreaterThan(iSort);
-    expect(iToggle).toBeGreaterThan(iCols);
+    expect(iSize).toBeGreaterThan(iCols);
+    expect(iToggle).toBeGreaterThan(iSize);
     /* O controle compartilhado do kit (variant icon = FilterX âmbar). */
     expect(row).toContain('variant="icon"');
     expect(row).toContain("clearListFilters");
@@ -196,15 +199,12 @@ describe("Helpdesk list UX structural", () => {
     expect(css).toMatch(
       /\.helpdesk-list-controls-row[\s\S]*?justify-content:\s*flex-end/,
     );
-    /* «Por página» na região superior da lista, fora do hero. */
-    expect(page).toContain("helpdesk-list-table-meta");
-    expect(page).toContain("HelpdeskTablePageSizeSelect");
-    expect(css).toMatch(
-      /\.helpdesk-list-table-meta[\s\S]*?justify-content:\s*flex-end/,
-    );
-    expect(page.indexOf("helpdesk-list-table-meta")).toBeGreaterThan(
-      page.indexOf("</HelpdeskPageHero>"),
-    );
+    /* «Por página» integrado à linha de controles do hero — uma única
+       instância, sem a região meta acima da tabela. */
+    /* única instância JSX (import + uso = 2 ocorrências do nome). */
+    expect(page.match(/<HelpdeskTablePageSizeSelect/g)).toHaveLength(1);
+    expect(page).not.toContain("helpdesk-list-table-meta");
+    expect(css).not.toContain("helpdesk-list-table-meta");
     /* Rodapé só com navegação — sem seletor duplicado. */
     const footer = read("../components/Pagination.tsx");
     expect(footer).not.toContain("onPageSizeChange");

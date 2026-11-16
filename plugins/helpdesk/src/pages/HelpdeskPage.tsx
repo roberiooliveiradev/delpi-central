@@ -664,7 +664,8 @@ function TicketListPage() {
             </div>
 
             {/* Última linha do hero — controles à direita, ordem canônica:
-                FilterX → Filtros → Ordenar → Colunas → Tabela|Cards (UX V3). */}
+                FilterX → Filtros → Ordenar → Colunas → Por página →
+                Tabela|Cards (UX V3). */}
             <div className="helpdesk-list-controls-row">
               {filterActive ? (
                 <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
@@ -724,6 +725,15 @@ function TicketListPage() {
                   />
                 </HintAction>
               )}
+              <HintAction hint={helpTooltips.listUi.pageSize} ariaLabel="Ajuda: Por página">
+                <HelpdeskTablePageSizeSelect
+                  pageSize={filters.page_size}
+                  pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
+                  onPageSizeChange={(page_size) =>
+                    commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
+                  }
+                />
+              </HintAction>
               {forceCards ? null : (
                 <HintAction hint={helpTooltips.listUi.viewLayout} ariaLabel="Ajuda: Tabela ou Cards">
                   <HelpdeskSegmentToggle
@@ -747,19 +757,6 @@ function TicketListPage() {
       </HelpdeskPageHero>
 
       <div className="helpdesk-list-shell">
-        {view === "list" ? (
-          <div className="helpdesk-list-table-meta">
-            <HintAction hint={helpTooltips.listUi.pageSize} ariaLabel="Ajuda: Por página">
-              <HelpdeskTablePageSizeSelect
-                pageSize={filters.page_size}
-                pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
-                onPageSizeChange={(page_size) =>
-                  commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
-                }
-              />
-            </HintAction>
-          </div>
-        ) : null}
         {view === "loading" ? (
           <HelpdeskLoadingCard
             title="Carregando chamados…"

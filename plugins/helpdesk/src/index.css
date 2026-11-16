@@ -432,14 +432,6 @@
 }
 
 /* Região superior da lista — «Por página» fora do hero (UX V3). */
-.dashboard-helpdesk .helpdesk-list-table-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
 .dashboard-helpdesk .helpdesk-list-secondary-bar {
   display: flex;
   flex-wrap: wrap;
@@ -452,15 +444,6 @@
    encolher e quebrar dentro do hero (UX V3). */
 .dashboard-helpdesk .helpdesk-list-secondary-bar > .delpi-ui-help-tooltip--wrap,
 .dashboard-helpdesk .helpdesk-list-controls-row > .delpi-ui-help-tooltip--wrap,
-.dashboard-helpdesk .helpdesk-list-table-meta > .delpi-ui-help-tooltip--wrap {
-  display: flex;
-  flex-wrap: wrap;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-  flex: 0 1 auto;
-}
-
 .dashboard-helpdesk .helpdesk-list-secondary-bar > .delpi-ui-help-tooltip--wrap > *,
 .dashboard-helpdesk .helpdesk-list-controls-row > .delpi-ui-help-tooltip--wrap > * {
   min-width: 0;

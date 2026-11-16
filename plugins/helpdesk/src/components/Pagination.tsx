@@ -54,7 +54,7 @@ export type HelpdeskListPaginationFooterProps = {
 };
 
 /** Rodapé da lista: navegação de páginas do kit (UX V3 — «Por página»
- * vive na região superior da lista, `helpdesk-list-table-meta`). */
+ * vive na linha de controles do hero, `helpdesk-list-controls-row`). */
 export function HelpdeskListPaginationFooter({
   page,
   pageSize,
