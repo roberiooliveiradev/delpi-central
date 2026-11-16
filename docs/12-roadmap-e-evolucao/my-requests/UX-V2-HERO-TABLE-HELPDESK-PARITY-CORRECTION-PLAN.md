@@ -2,7 +2,7 @@
 
 **TASK_ID:** `MYREQ-UX-V2-HERO-TOOLBAR-HEADER-SORT-PARITY-HML-01`  
 **Origem:** revisão visual do Product Owner (15/11/2026), prints HML Minhas/Fila e referência Meus Chamados de TI  
-**Estado:** `TARGET / APPROVED_FOR_IMPLEMENTATION_PLANNING` — documentação aprovada; **não** implementado nesta task de registro.  
+**Estado:** `EXECUTED / HML_DEPLOY_PASS` — implementado em `96e9b5bf30` + `9488209013`, deployado em HML (plugin-ui `aff11127e23b`, my-requests `9612c8cb0899`) e validado com E2E Chromium real 36/36 em 4 viewports + inspeção de screenshots (claro/escuro/zoom200). Evidência completa em `UX-V2-HERO-TOOLBAR-EXECUTION-EVIDENCE.md`.  
 **Branch:** `main` exclusivamente. **Ambiente alvo:** HML. **Produção:** `NOT_AUTHORIZED`.
 
 ## 1. Evidências visuais e diagnóstico
