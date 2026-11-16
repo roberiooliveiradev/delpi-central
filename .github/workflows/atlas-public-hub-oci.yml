@@ -1,4 +1,4 @@
-name: ATLAS Public Hub OCI Revision Contract
+name: ATLAS Public Hub OCI Revision and Signed Release
 
 on:
   push:
@@ -11,6 +11,15 @@ on:
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
       - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/verify-public-hub-release.sh"
+      - "infra/scripts/tests/test_verify_public_hub_release.py"
+      - "plugins/public-hub/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/transformometro-meeting-minutes-presentation/**"
+      - "plugins/cipa-meeting-minutes-presentation/**"
+      - "plugins/vite/**"
+      - "plugins/plugin-ui/src/components/signature/**"
+      - "plugins/plugin-ui/src/overlayLayers.ts"
       - "infra/scripts/up-hml-sequential.sh"
       - "infra/scripts/up-prod-sequential.sh"
       - "infra/scripts/tests/test_public_hub_provenance.py"
@@ -24,6 +33,15 @@ on:
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
       - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/verify-public-hub-release.sh"
+      - "infra/scripts/tests/test_verify_public_hub_release.py"
+      - "plugins/public-hub/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/transformometro-meeting-minutes-presentation/**"
+      - "plugins/cipa-meeting-minutes-presentation/**"
+      - "plugins/vite/**"
+      - "plugins/plugin-ui/src/components/signature/**"
+      - "plugins/plugin-ui/src/overlayLayers.ts"
       - "infra/scripts/up-hml-sequential.sh"
       - "infra/scripts/up-prod-sequential.sh"
       - "infra/scripts/tests/test_public_hub_provenance.py"
@@ -46,9 +64,10 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check pytest
           bash -n infra/scripts/public-hub-provenance.sh
+          bash -n infra/scripts/verify-public-hub-release.sh
           bash -n infra/scripts/up-hml-sequential.sh
           bash -n infra/scripts/up-prod-sequential.sh
-          python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py
+          python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py infra/scripts/tests/test_verify_public_hub_release.py
       - name: Verify actual checkout input policy before Docker build
         run: |
           source infra/scripts/public-hub-provenance.sh
@@ -85,3 +104,111 @@ jobs:
             fi
           done
           echo "Docker build denied all missing, malformed and abbreviated SHAs"
+
+  validate-public-hub-source:
+    name: Public Hub lint, tests and TypeScript/Vite build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/public-hub/package-lock.json
+      - name: Validate source before release
+        working-directory: plugins/public-hub
+        run: |
+          npm ci
+          npm run ci
+
+  validate-final-image-on-pr:
+    name: Build final production image without publishing
+    if: github.event_name == 'pull_request'
+    needs: [verify-public-hub-oci, validate-public-hub-source]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build final image in ephemeral runner
+        run: |
+          docker build --pull --target production \
+            --build-arg "SOURCE_REVISION=$GITHUB_SHA" \
+            -f plugins/public-hub/Dockerfile \
+            -t atlas-public-hub-final:pr plugins
+          actual="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' atlas-public-hub-final:pr)"
+          test "$actual" = "$GITHUB_SHA"
+          docker run --rm --entrypoint /bin/sh atlas-public-hub-final:pr -c \
+            'test -s /usr/share/nginx/html/index.html && nginx -t'
+
+  publish-signed-final-image:
+    name: Build, publish and sign immutable final image (main only)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [verify-public-hub-oci, validate-public-hub-source]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      IMAGE: ghcr.io/roberiooliveiradev/delpi-public-hub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish exactly one final artifact
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: plugins
+          file: plugins/public-hub/Dockerfile
+          target: production
+          platforms: linux/amd64
+          pull: true
+          push: true
+          provenance: false
+          build-args: |
+            SOURCE_REVISION=${{ github.sha }}
+          tags: ghcr.io/roberiooliveiradev/delpi-public-hub:sha-${{ github.sha }}
+      - name: Verify the published artifact itself
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          ref="${IMAGE}@${DIGEST}"
+          docker pull "$ref"
+          actual="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$ref")"
+          origin="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' "$ref")"
+          test "$actual" = "$GITHUB_SHA"
+          test "$origin" = "https://github.com/roberiooliveiradev/delpi-central"
+          docker run --rm --entrypoint /bin/sh "$ref" -c \
+            'test -s /usr/share/nginx/html/index.html && nginx -t'
+      - name: Sign SLSA provenance for the exact OCI manifest
+        id: attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ghcr.io/roberiooliveiradev/delpi-public-hub
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Verify GitHub signed attestation with pinned commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          gh attestation verify "oci://${IMAGE}@${DIGEST}" \
+            --repo roberiooliveiradev/delpi-central \
+            --signer-workflow roberiooliveiradev/delpi-central/.github/workflows/atlas-public-hub-oci.yml \
+            --source-ref refs/heads/main \
+            --source-digest "$GITHUB_SHA" \
+            --predicate-type https://slsa.dev/provenance/v1 \
+            --cert-oidc-issuer https://token.actions.githubusercontent.com \
+            --deny-self-hosted-runners
+          printf 'Verified: %s@%s from %s\n' "$IMAGE" "$DIGEST" "$GITHUB_SHA"
