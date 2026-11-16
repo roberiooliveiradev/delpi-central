@@ -162,9 +162,15 @@ do diff; a suíte rodou 2643/2643 no ambiente do executor). Registro:
 
 ## 8. Riscos residuais
 
-- Helpdesk fora do inventário `docker-compose.hml.yml` — E2E Helpdesk
-  em HML `TEST_NOT_RUN` (paridade avaliada por composição/componentes
-  compartilhados, não por screenshot side-by-side).
+- **Helpdesk HML `TEST_NOT_RUN` (bloqueio real, evidenciado):** o
+  serviço existe no HML (`delpi-helpdesk`, remoteEntry 200), mas o
+  usuário `hml-tester` não tem o plugin liberado — `/apps/helpdesk`
+  renderiza "Aplicação indisponível" (gate de permissão do portal
+  funcionando). Sem credencial autorizada com grant Helpdesk, a
+  comparação visual side-by-side fica indisponível; a paridade foi
+  validada por composição compartilhada (mesmo `PageHero`,
+  `DataTableSection`, popovers e CSS do kit servindo os dois MFEs) e
+  pela regressão da spec `ux-v2.spec.ts`.
 - 403 real negativo não exercitado (sem usuário de teste negado nesta
   rodada) — fail-closed 401 já comprovado no pacote anterior.
 - Merge multi-fonte segue bounded (≤100) — honesto por contrato.
