@@ -7,8 +7,8 @@
 
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
-| **P1** | 0 + 1 | Inventário, tokens claro/escuro, controle de tema, layout da página, demos no catálogo | PluginUI: DEV → **PROD** (componentes genéricos) | **PRONTO PARA EXECUÇÃO** |
-| P2 | 2 | Abertura, cabeçalho, progresso, botão de tema, quadro da pergunta | PluginUI → PROD | A gerar após aceite do P1 |
+| **P1** | 0 + 1 | Inventário, tokens claro/escuro, controle de tema, layout da página, demos no catálogo | PluginUI: DEV → **PROD** (componentes genéricos) | **ACEITO COM RESÍDUOS** — commit `7abe0b338b`, deploy PROD e HML em 16/11/2026 (ver §3) |
+| **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§4) |
 | P3 | 3 | Escala de notas, “Não se aplica”, texto aberto | PluginUI → PROD | A gerar |
 | P4 | 4 | Rodapé de ações, revisão, tela de resultado | PluginUI → PROD | A gerar |
 | P5 | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | A gerar |
@@ -126,3 +126,91 @@ Qualquer outro arquivo: fora do escopo.
 | A6 | Nenhuma regressão em MFE existente | Conferência de pelo menos um MFE após deploy |
 | A7 | Diagnóstico do logo 403 registrado | Seção no relatório |
 | A8 | Verificador independente aprovado | Veredito sem edição |
+
+---
+
+## 3. Revisão do P1 (16/11/2026)
+
+**Veredito do coordenador:** `ACCEPT_WITH_RESIDUAL`. Conferido no código (`7abe0b338b`): hook sem persistência e sem tocar `document`, escopo de tema com contexto, layout com as medidas, 23 tokens nos dois temas iguais à UI-03 §3.2, `--delpi-ui-focus-ring` no mesmo formato (sombra) já usado pelo kit, nenhum nome `form-actions*`, nenhum termo da Pesquisa. Verificador independente: `ACCEPT_WITH_RESIDUAL`, sem ordens de correção. Deploy PROD e HML confirmados pelo executor.
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| R1 | Entre 600 e ~792 px a coluna perde a margem lateral (`max-width: 760px` com `margin: auto`, sem respiro) | **Corrigir no P2** |
+| R2 | Com `colorScheme` fixo (`light`/`dark`), o contexto ainda expõe `toggle()`, que não muda nada visualmente | **Corrigir no P2** (expor `canToggle`) |
+| R3 | `up-hml-sequential.sh` aborta por drift do compose HML (`helpdesk`/`helpdesk-api` fora das fases) — deploy feito com o compose direto | Owner de infraestrutura; fora da Pesquisa |
+| R4 | Permissões nos clones do servidor: scripts `664` (sem execução) e `public-hub/public/*.svg` `660`/`670` (causa do logo 403, D3) | Pacote de infraestrutura a programar antes do P6 |
+| R5 | `tsc --noEmit` com 2 erros pré-existentes em testes não tocados | Fora do escopo |
+
+## 4. Pacote P2 — Cartão base, abertura, cabeçalho, progresso, tema e pergunta
+
+**Fase do plano:** 2. **Pré-requisito:** P1 aceito.
+
+### 4.1 Objetivo
+
+Criar no kit os componentes de **estrutura de conteúdo** do formulário — cartão base, logo, botão de tema, barra de progresso, cartão de abertura, cartão de cabeçalho e cartão de pergunta —, nos dois temas, e corrigir os resíduos R1 e R2 do P1. Ainda **sem** escalas de nota, campos de resposta, rodapé ou revisão.
+
+### 4.2 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/plugin-ui/src/components/forms/questionnaire/` | Novos: `FormCard.tsx`, `FormLogo.tsx`, `FormThemeToggle.tsx`, `FormProgress.tsx`, `FormIntroCard.tsx`, `FormHeaderCard.tsx`, `QuestionCard.tsx` + testes; ajustar `QuestionnaireThemeScope.tsx` (R2), `index.ts` |
+| `plugins/plugin-ui/src/styles/questionnaire.css` | Estilos dos novos componentes; correção R1 |
+| `plugins/plugin-ui/src/styles/questionnaireCssContract.test.ts` | Estender o contrato às novas classes |
+| `plugins/plugin-ui/src/components/forms/index.ts` | Exports |
+| `plugins/plugin-ui/src/catalog/visualComponents.ts`, `src/catalog/demos/questionnaire.tsx`, `src/app/catalog.css` | Inventário (`addedAt`) e demos |
+| `plugins/plugin-ui/docs/component-catalog.md` | Documentação |
+
+### 4.3 Entregáveis
+
+Medidas, cores e textos de referência: [UI-03 §3.3–§3.5](./UI-03-FORMULARIO-PUBLICO.md#33-estrutura-da-página) e a [referência visual](./UI-03-REFERENCIA-VISUAL.html). **Nenhum texto fixo**: todo rótulo, título e nome acessível entra por propriedade.
+
+**a) `FormCard`** — cartão base reutilizado pelos demais (e pelos pacotes seguintes): fundo `--delpi-ui-surface`, borda `1px --delpi-ui-border` (**obrigatória** no escuro), raio 12 px, sombra `--delpi-ui-form-card-shadow`, padding 20 px (estreito) / 28 px × 32 px (≥ 600 px), coluna com espaço 12 px. Props: `as?` (`"div" | "section" | "fieldset"`), `tone?: "default" | "invalid"` (borda `--delpi-ui-danger`), `className`, `children`.
+
+**b) `FormLogo`** — `({ src, alt, size: "sm" | "md" | "lg" })` → altura 34 / 40 / 44 px, largura automática; envolve a imagem num selo com fundo `--delpi-ui-form-logo-bg` (transparente no claro; branco com padding 6 × 10 px e raio 8 px no escuro).
+
+**c) `FormThemeToggle`** — usa `useQuestionnaireColorScheme()`; botão redondo 44 × 44 px, borda `--delpi-ui-form-border-soft`, fundo da superfície, ícone `--delpi-ui-muted`; ícone **lua** no claro e **sol** no escuro (`lucide-react`, como os demais componentes do kit); `aria-label` **obrigatório por prop**; `aria-pressed` refletindo o escuro. **Não renderiza** quando o escopo não permite troca (R2).
+
+**d) `FormProgress`** — `({ done, total, label, ariaLabel })`: trilho `--delpi-ui-form-track` 6 px, raio 3 px, preenchimento `--delpi-ui-accent`; `role="progressbar"` com `aria-valuemin=0`, `aria-valuemax=100`, `aria-valuenow` = `round(100 × done ÷ total)` (0 se `total` = 0); `label` (texto pronto, ex.: “3 de 12”) exibido pelo componente que o usa.
+
+**e) `FormIntroCard`** — tela de abertura: `logo`, `headerAction?` (botão de tema, à direita do logo), `eyebrow?` (12 px, maiúsculas, `--delpi-ui-muted`), `title` (26 px, 700), `context?: { label, value }` (bloco `--delpi-ui-form-tint`, raio 10 px, padding 14 × 16 px; omitido se ausente), `description?` (16 px), `items?: { icon, content }[]` (lista com ícone 18 px em `--delpi-ui-accent`, espaço 12 px), `action: ReactNode` (o botão primário entra pronto — o `ActionButton` do kit ou o futuro botão do P4), `footnote?` (12 px, `--delpi-ui-muted`).
+
+**f) `FormHeaderCard`** — cabeçalho das etapas e da revisão: linha do `logo` com `meta?` (≥ 600 px, ex.: prazo) e `headerAction?` à direita; `title` (20 px / 28 px, 700); `subtitle?` (14–15 px, `--delpi-ui-muted`, aceita `ReactNode` para destaque em negrito); divisor `--delpi-ui-form-track`; `step?: { label, progressLabel }` (linha com rótulo da etapa à esquerda e texto do progresso à direita) e `progress?: { done, total, ariaLabel }` usando `FormProgress`.
+
+**g) `QuestionCard`** — `fieldset` + `legend` sobre `FormCard`: `eyebrow?` (rótulo do tema, 12 px, maiúsculas, `letter-spacing .06em`, `--delpi-ui-muted`), `number?`, `prompt` (16 px / 17 px ≥ 600 px, 600, altura de linha 1,4), `required` (asterisco em `--delpi-ui-danger` com `aria-hidden` + texto acessível por prop `requiredLabel`), `optionalLabel?` (peso normal, `--delpi-ui-muted`), `error?` (13 px, 600, `--delpi-ui-danger`, ligado por `aria-describedby` com id gerado; liga `tone="invalid"`), `children` (a resposta, nos próximos pacotes).
+
+**h) R1** — a partir de 600 px a coluna mantém respiro lateral até caber 760 px (ex.: `width: min(760px, 100% - 32px)` centralizada).
+
+**i) R2** — o contexto passa a expor `canToggle: boolean` (`true` só em `colorScheme="auto"`); com esquema fixo, `toggle()` não faz nada e `FormThemeToggle` não aparece.
+
+**j) Demos no catálogo** — abertura completa, cabeçalho com progresso em 3 de 12 e cartões de pergunta nos estados normal, opcional e com erro, nos dois temas lado a lado (textos de exemplo neutros, sem a Pesquisa).
+
+### 4.4 Invariantes
+
+Mesmos do P1 (§2.5), mais: os componentes não importam nada da Pesquisa nem do `public-hub`; `FormCard` não substitui nem altera `SectionCard` ou outros cartões existentes; ícones só do `lucide-react` já usado pelo kit.
+
+### 4.5 Testes mínimos
+
+1. `QuestionCard`: `fieldset/legend`; asterisco com `aria-hidden` e texto acessível; `optionalLabel`; erro ligado por `aria-describedby` e cartão com tom inválido.
+2. `FormProgress`: `aria-valuenow` correto (0, parcial, 100; `total` 0 → 0).
+3. `FormThemeToggle`: alterna o tema do escopo; ícone e `aria-pressed` mudam; não renderiza com esquema fixo.
+4. `QuestionnaireThemeScope`: `canToggle` true só em `auto`; `toggle()` sem efeito no fixo.
+5. `FormLogo`: tamanhos e selo (classe/token) presentes.
+6. `FormIntroCard`/`FormHeaderCard`: omitem blocos opcionais ausentes; renderizam `headerAction`/`meta`.
+7. Contrato do CSS estendido: novas classes só com `var(--delpi-ui-*)` para cor; sem seletor global nem `!important`.
+8. `componentRegistry.test.ts` verde.
+
+### 4.6 Critérios de aceite
+
+| # | Critério | Evidência esperada |
+|---|---|---|
+| B1 | Os sete componentes exportados, documentados e no catálogo com `addedAt` | Diff + catálogo |
+| B2 | Visual conforme UI-03 §3.3–§3.5 em 375 e 1280 px, nos dois temas | Capturas das demos no relatório |
+| B3 | R1 corrigido (respiro lateral entre 600 e 792 px) | Captura em ~700 px |
+| B4 | R2 corrigido (`canToggle`, botão oculto no fixo) | Testes 3–4 |
+| B5 | Acessibilidade: semântica, nomes por prop, foco visível, alvos ≥ 44 px no botão de tema | Testes + revisão |
+| B6 | Zero texto fixo e zero referência à Pesquisa nos componentes | `grep` no relatório |
+| B7 | Auditorias de §1.3 sem item novo; build e `verify-host-exports` ok | Saídas |
+| B8 | Deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Verificação pós-deploy |
+| B9 | Verificador independente aprovado | Veredito sem edição |
+
+**Deploy em HML:** enquanto o resíduo R3 existir, é aceito o mesmo procedimento do P1 (compose direto com os parâmetros do script), registrado no relatório.
