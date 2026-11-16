@@ -213,4 +213,11 @@ Mesmos do P1 (§2.5), mais: os componentes não importam nada da Pesquisa nem do
 | B8 | Deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Verificação pós-deploy |
 | B9 | Verificador independente aprovado | Veredito sem edição |
 
+### 4.7 Ajustes da revisão da declaração (16/11/2026)
+
+1. **`legend` sem `display: contents`** (perde o nome acessível do grupo em alguns navegadores): o `legend` é o primeiro filho do `fieldset`, visível, sem flutuação e sem padding, e contém o rótulo do tema (bloco pequeno) + número + enunciado + marca de obrigatória/opcional. O nome do grupo fica “Qualidade 1. Como você avalia…”.
+2. **Texto só para leitor de tela:** seguir o padrão do kit (classe com escopo do componente, como `.delpi-ui-underline-nav__label--sr-only`), ex.: `.delpi-ui-form-question__sr-only` em `questionnaire.css`; nada global.
+3. **`FormProgress.label`:** quando usado no `FormHeaderCard`, o texto do progresso aparece **uma vez**, na linha da etapa; o componente não repete o rótulo.
+4. **Alterações concorrentes:** o working tree tem mudanças de outra tarefa em `src/index.ts` e `src/styles.css` do plugin-ui. O P2 **não** altera esses arquivos; o commit inclui só os arquivos do §4.2 (conferir com `git diff --cached --stat` antes do commit).
+
 **Deploy em HML:** enquanto o resíduo R3 existir, é aceito o mesmo procedimento do P1 (compose direto com os parâmetros do script), registrado no relatório.
