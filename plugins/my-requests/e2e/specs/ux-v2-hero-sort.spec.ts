@@ -194,12 +194,18 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroBox!.x + heroBox!.width + 2,
     );
 
-    /* «Itens por página» abaixo do hero, na região da grade (heroBox
-     * já estabilizado acima). */
+    /* «Itens por página» abaixo do hero, na região da grade. O hero tem
+     * animação de entrada (translateY+scale, 280ms) que replaya quando o
+     * nó remonta após o filtro — o bounding box fica inflado/deslocado
+     * durante o replay. Aguarda as animações e re-meço o box estável. */
+    await hero.evaluate((el) =>
+      Promise.all(el.getAnimations().map((a) => a.finished)),
+    );
+    const heroBoxSettled = await hero.boundingBox();
     const metaBox = await tableMeta.boundingBox();
     expect(metaBox).toBeTruthy();
     expect(metaBox!.y).toBeGreaterThanOrEqual(
-      heroBox!.y + heroBox!.height - 2,
+      heroBoxSettled!.y + heroBoxSettled!.height - 2,
     );
 
     /* Ordem visual FilterX → Filtros → Ordenar → Colunas → Tabela|Cards.

@@ -96,7 +96,13 @@
 }
 
 .delpi-ui-page-hero__actions {
-  flex: 0 0 auto;
+  /* flex-basis auto + shrink 1: mantém o tamanho natural quando há
+   * espaço; em telas estreitas encolhe até o container para que o
+   * flex-wrap interno empilhe os botões em vez de clippá-los (o hero
+   * tem overflow:hidden). min-width:0 libera shrink abaixo de
+   * min-content. */
+  flex: 0 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
