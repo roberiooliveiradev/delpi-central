@@ -906,3 +906,22 @@ ENV_BLOCKER            = dev postgres checksum drift V024__prc_record_flags
 - **Fase futura:** `execute` e `delete` seguem `PLANNED_NOT_IMPLEMENTED`, embora direção arquitetural para até seis tools esteja aprovada; sem alteração de RBAC, identity, MCP resource ou bounded context. Paridade integral das funcionalidades do portal segue TARGET.
 
 **Next bounded task:** `DAVI-SI-W011-GOAL-WRITES-CONTRACT-AND-SAFETY-01` (READ_ONLY_INVENTORY / CONTRACT_SPEC / NO_CODE / NO_DEPLOY / NO_WRITE). Avaliar owner API, proteção user-JWT-only, `settings.manage`, PREPARE/ACT, proposal selada, OCC/idempotência/audit/postcondition antes da implementação do primeiro `execute`. Revalidar origin/main e `.cursor` no início da tarefa.
+
+### 23.5 W012 — execute PREPARE/ACT de metas mergeado; escrita produtiva ainda gated (2026-11-16)
+
+**PR #201 (`davi-si-w012-governed-execute`) mergeado em `main` @ `f0ca31a425`** via fast-forward autorizado (`DAVI-SI-W012-PR201-MERGE-EXECUTION-01`). Diff efetivo = 2 commits (`dc6b9d7958` feat + `f0ca31a425` security closure), 47 arquivos, exclusivamente W012 — api-delpi (`governed_writes/`, MCP `execute`, schemas, testes), `shared/strategic_indicators_client` (write verbs JWT-only), `strategic-indicators-api` (OCC: `xmin`/`expected_max_version`, advisory lock, guarded UPDATE, 409), `infra` (env/compose) e runbook.
+
+**Entregue (PROVEN):**
+- MCP `execute` como 5ª tool (`ACT`, `readOnlyHint=false`, `idempotentHint=false`); 4 capabilities `si.goal.create/update/activate/deactivate`; delete e demais capabilities permanecem bloqueados (`capability_not_allowed`).
+- PREPARE selado server-side (HMAC opaco, actor-bound, TTL 15min, single-use) + ACT `confirm=true` + consume atômico (`take_for_act` sob `RLock`, consume-before-write) + postcondition read-back autoritativo.
+- `DAVI_GOVERNED_WRITE_HMAC_SECRET` **obrigatório e exclusivo** — sem fallback `JWT_SECRET`/`DAVI_CANDIDATE_HMAC_SECRET`; ausente → write fail-closed, READ intacta.
+- Owner OCC atômico comprovado (live Postgres: stale `xmin` → `UPDATE 0`; lock serializado; stale `expected_max_version` → insert 0).
+- `unknown_result` documentado: reconciliar via read autoritativa; proposta consumida nunca re-executa.
+
+**Gates produtivos pendentes (NÃO concluídos nesta wave):**
+- `DAVI_GOVERNED_WRITE_HMAC_SECRET` precisa estar definido no ambiente antes de qualquer ACT em produção.
+- Topologia single-worker/single-replica da api-delpi é pré-requisito do proposal store em memória; scale-out exige store compartilhado/sticky.
+- **Auditoria durável = GAP declarado**: eventos `governed_write_*` são stdout→docker logs (~30MB rotacionados); decisão de trilha persistente (sink de observabilidade ou tabela append-only owner api-delpi, correlação `proposal_id`) requer ADR. Publicação produtiva de ACT deve permanecer bloqueada até adoção.
+- Verifier independente = `INCONCLUSIVE` ambiental (devin CLI sem login); checks GitHub não consultáveis sem `gh` auth — evidência executor-side apenas.
+
+**Next bounded tasks:** W013 (departments/indicators/settings/change-requests + reads faltantes), W014 (batch/infra ops), W015 (tool `delete` separada), W016 (paridade portal-integral) — todos sob gates próprios da Coordination.
