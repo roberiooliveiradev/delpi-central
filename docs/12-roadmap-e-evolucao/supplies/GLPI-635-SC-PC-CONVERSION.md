@@ -50,3 +50,38 @@ Média consolidada = soma dos dias de SCs validamente convertidas / quantidade d
 - Primeiro PC não equivale a conversão integral do pedido.
 - Links interfiliais ou registros excluídos podem exigir revisão de dados.
 - Leitura SQL segue o padrão NOLOCK do indicador de aprovações existente. Exige conferência antes de decisão gerencial.
+
+## Correção em 16/11/2026: tela em produção com HTTP 502
+
+Evidência: DevTools mostra GET /apps/supplies-api/purchase-requests/sc-pc-conversion retornando 502 após carregamento prolongado. Os avisos Cloudflare de ERR_BLOCKED_BY_CLIENT e iframe são independentes. A causa operacional exata ainda depende dos logs da execução de produção.
+
+Diagnóstico estático: supplies-api tinha DELPI_API_TIMEOUT padrão de 30 s e convertia indiscriminadamente indisponibilidade SQL, falha HTTP e timeout em 502. A consulta TOTVS original partia de SC1010 histórico com C1_EMISSAO <= final, juntava alçadas/PCs com RTRIM em colunas de índice e repetia toda a coorte para agregação e tabela.
+
+Alterações desta correção:
+- Primeiro filtra comprovantes SCR010 com CR_DATALIB no período e status 03, depois junta somente SCs dessa coorte.
+- Usa comparação direta das chaves de filial, SC e item (trailing spaces são ignorados em igualdade SQL Server); elimina funções RTRIM nas colunas de junção.
+- Para a página, executa uma única consulta/batch SQL: materializa a coorte uma vez em #sc_pc_conversion (tabela TEMPORÁRIA local da sessão, não faz escrita em SC1010/SCR010/SC7010), lê resumo e página, remove a #temp.
+- A leitura summary_only=true dos indicadores estratégicos continua consulta SELECT pura, sem #temp.
+- Classifica separadamente upstream_timeout (HTTP 504), base indisponível (HTTP 503), falha upstream (HTTP 502), com log de código/status na BFF sem detalhes sensíveis.
+- Carrega por padrão o mês corrente, permitindo o usuário ampliar o período até 367 dias.
+
+Regra preservada: início na última liberação comprovada da alçada, final na emissão do primeiro PC. Sem inferir aprovação por C1_EMISSAO. Pendências e dados inconsistentes fora da média.
+
+### Diagnóstico pós-deploy (somente leitura)
+
+Executar na raiz do repositório:
+
+```bash
+cd infra
+docker compose -f docker-compose.yml --env-file .env logs --since=10m --tail=120 api-delpi supplies-api | grep -Ei 'glpi635|conversao|sc.pc|timeout|banco|database|query'
+```
+
+Verificar também o **status HTTP exato** do request na aba Network, a duração, filtro por período curto (mês atual), e uma única SC válida conhecida. Se 503/502 persistir, preservar logs sanitizados do serviço api-delpi para identificar erro ODBC/SQL ou indisponibilidade. Não aumentar timeout indiscriminadamente. Validar custo da consulta e leitura concorrente no SQL Server antes de ampliar cargas.
+
+### Critérios de aceitação
+
+- Nenhum 502/504 no período mensal com filiais autorizadas; resposta com source=SC1010+SCR010+SC7010 e period_anchor=final_approval_date.
+- Total, paginação e média não contam itens ou PCs duplicados.
+- SC sem PC não é 0 dia; PC anterior à liberação não entra no cálculo.
+- Consulta ampliada até o limite de 367 dias permanece funcional após otimização.
+- Runs CI focadas de API, BFF, TypeScript/build e revisão de amostras reais concluídas.

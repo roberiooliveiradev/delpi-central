@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { ApiRequestError } from "../../api/httpClient";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import { navigatePluginPath, navigatePluginView } from "../../app/pluginNavigation";
 import { buildPurchaseOrderDetailPath, buildPurchaseRequestDetailPath } from "../../app/pluginRoutes";
@@ -41,7 +42,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
     [session.allowedUnits],
   );
   const [branch, setBranch] = useState("all");
-  const [dateFrom, setDateFrom] = useState(() => todayLocal().slice(0, 4) + "-01-01");
+  const [dateFrom, setDateFrom] = useState(() => todayLocal().slice(0, 7) + "-01");
   const [dateTo, setDateTo] = useState(todayLocal);
   const [requestNumber, setRequestNumber] = useState("");
   const [applied, setApplied] = useState<ScPcConversionFilters | null>(null);
@@ -76,7 +77,15 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         setData(null);
-        setError(err instanceof Error ? err.message : "Falha na consulta.");
+        if (err instanceof ApiRequestError && err.code === "upstream_timeout") {
+          setError("O Protheus demorou mais que o limite da consulta. Tente um período menor ou outra unidade.");
+        } else if (err instanceof ApiRequestError && err.code === "totvs_unavailable") {
+          setError("A consulta ao Protheus está indisponível. Verifique o serviço de dados e tente novamente.");
+        } else if (err instanceof ApiRequestError && err.code === "upstream_failure") {
+          setError("Falha na API de dados do indicador. A equipe de TI pode conferir o log da api-delpi.");
+        } else {
+          setError(err instanceof Error ? err.message : "Falha na consulta.");
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);

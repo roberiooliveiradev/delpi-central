@@ -8,7 +8,7 @@ from typing import Any
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_sql import (
     PAGE_SIZE, MAX_PAGE_SIZE, build_conversion_cohort,
-    build_conversion_page_sql, build_conversion_summary_sql,
+    build_conversion_batch_sql, build_conversion_summary_sql,
 )
 
 
@@ -45,13 +45,26 @@ class PurchaseRequestScPcConversionRepository(BaseRepository):
             date_to=date_to, request_number=request_number,
         )
         with self as repo:
-            summaries = repo.execute_query(
-                build_conversion_summary_sql(cohort), tuple(params),
-            )
-            records = [] if summary_only else repo.execute_query(
-                build_conversion_page_sql(cohort),
-                tuple(params) + ((page - 1) * page_size, page_size),
-            )
+            if summary_only:
+                # Strategic Indicators never needs a page; stay pure SELECT.
+                summaries = repo.execute_query(
+                    build_conversion_summary_sql(cohort), tuple(params),
+                )
+                records = []
+            else:
+                # Prevent two full SC/SCR/SC7 scans per browser request.
+                # execute_query_multiple already handles NOCOUNT and multiple
+                # resultsets on the same SQL Server connection.
+                datasets = repo.execute_query_multiple(
+                    build_conversion_batch_sql(cohort),
+                    tuple(params) + ((page - 1) * page_size, page_size),
+                )
+                if len(datasets) != 2:
+                    raise RuntimeError(
+                        "Unexpected SC/PC conversion SQL result-set count"
+                    )
+                summaries = datasets[0]["data"]
+                records = datasets[1]["data"]
 
         consolidated = next(
             (row for row in summaries if row.get("branch") is None), None,

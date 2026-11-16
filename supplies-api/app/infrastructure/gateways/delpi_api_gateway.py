@@ -167,7 +167,9 @@ class DelpiApiGateway:
             )
         except requests.Timeout as exc:
             logger.warning("delpi_api_timeout path=%s", path)
-            raise DelpiApiGatewayError("api-delpi timeout") from exc
+            raise DelpiApiGatewayError(
+                "api-delpi timeout", status_code=504, code="upstream_timeout"
+            ) from exc
         except requests.RequestException as exc:
             logger.exception("delpi_api_request_failed path=%s", path)
             raise DelpiApiGatewayError("api-delpi request failed") from exc
