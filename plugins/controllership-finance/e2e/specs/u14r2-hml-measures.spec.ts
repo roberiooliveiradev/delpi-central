@@ -228,9 +228,15 @@ test.describe("U14R2 K4 — medições HML", () => {
   });
 
   test("390: panorama geometria", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+    test.skip(test.info().project.name !== "desktop", "desktop");
+    // Abre em 1440 (lista estável) e mede geometria após resize.
+    await page.setViewportSize({ width: 1440, height: 900 });
     const opened = await openFirstAnalysis(page);
     test.skip(!opened, "sem análise");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator(".cf-analysis-panorama")).toBeVisible({
+      timeout: 30_000,
+    });
     const report = await page.evaluate(() => {
       const panoramaEl = document.querySelector(".cf-analysis-panorama");
       if (!panoramaEl) throw new Error("panorama ausente");
