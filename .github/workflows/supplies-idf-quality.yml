@@ -1,6 +1,17 @@
 name: Supplies IDF focused quality
 
 on:
+  push:
+    branches:
+      - "feat/**"
+    paths:
+      - "api-delpi/app/**/supplier_performance*"
+      - "api-delpi/tests/test_supplier_performance*"
+      - "supplies-api/app/**/supplier_performance*"
+      - "supplies-api/tests/test_supplier_performance*"
+      - "plugins/supplies/src/api/supplierPerformance.ts"
+      - "plugins/supplies/src/features/supplier-performance/**"
+      - ".github/workflows/supplies-idf-quality.yml"
   pull_request:
     paths:
       - "api-delpi/app/application/use_cases/supplies/get_supplier_performance*"
