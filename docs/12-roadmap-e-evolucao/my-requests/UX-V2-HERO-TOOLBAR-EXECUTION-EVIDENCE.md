@@ -149,6 +149,7 @@ Motor `cursor` (Composer), executor `swe-2-high` — independência OK.
 | Rodada | Escopo | Veredito |
 |---|---|---|
 | 1 | `31efa88ba2..3a36472864` | `ACCEPT_WITH_RESIDUAL` |
+| 2 | `3a36472864..959c337579` (delta docs + PNGs) | `ACCEPT_WITH_RESIDUAL` |
 
 Rodada 1: **zero ordens de correção**. AC01–AC08, AC10, AC12–AC14 PASS
 em verificação estática (código, diffs, testes alvo 40/40, builds 3/3).
@@ -159,6 +160,14 @@ versionados). O verificador reproduziu plugin-ui com 2639/2643 (4
 timeouts flake em `RichTextEditor`/`ColorPickerPopover`, arquivos fora
 do diff; a suíte rodou 2643/2643 no ambiente do executor). Registro:
 `registro: OK`.
+
+Rodada 2: delta exclusivamente documental (estado do plano, este
+documento, screenshots versionados, follow-ups). Verificador confirmou
+plano `EXECUTED`, 8 PNGs válidos e evidência completa; manteve
+`TEST_NOT_RUN` para E2E HML/popovers por restrição de contrato, sem
+novas ordens de correção. Commits concorrentes no range segregados.
+Veredito registrado em `.git/delpi-verifier/verdicts.jsonl` (head
+`959c337579`).
 
 ## 8. Riscos residuais
 
