@@ -371,9 +371,11 @@ describe("PostActivityPage", () => {
     expect(screen.queryByText("Produzindo")).not.toBeInTheDocument();
     expect(screen.queryByText(/Linha do tempo/)).not.toBeInTheDocument();
     expect(screen.getByText("Paradas")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Sem motivo/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Sem motivo/ }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
     expect(screen.getByText(/·\s*sem motivo/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Informar motivo" }),
