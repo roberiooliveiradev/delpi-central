@@ -121,8 +121,18 @@ Keycloak (identidade), Core (AuthZ live), api-delpi (fonte oficial), BFF (delega
 ## 11. DEPLOY
 
 ```text
-COMMIT_SHA    (a preencher após push)
-DEPLOY        canonical: pull --ff-only + up-prod-sequential.sh --build engineering-api
+COMMIT_SHA    bcdb4643fc7abf0b04f93cdc460e35364dd11059
+PUSH_VERIFIED origin/main == bcdb4643fc (ff-only, linear; re-materializado
+              via merge-tree após sessão concorrente ter trocado a
+              branch local — commit órfão 380935839e permanece como
+              ancestral na branch davi-si-w012-governed-execute, merge
+              futuro trivial por conteúdo idêntico)
+DEPLOY        canonical: fetch + merge --ff-only +
+              up-prod-sequential.sh --build engineering-api
+DEPLOY_SHA    bcdb4643fc
+DEPLOY_STATUS SUCCESS — delpi-engineering-api healthy; guided_analysis
+              confirmado no container (branding/registry/JSON);
+              MCP unauth → 401
 POSTCONDITION initialize.instructions contém guided workflow; 6 tools;
               knowledge(routing.guided_analysis) v1.8 servido
 ROLLBACK      git revert + mesmo script
