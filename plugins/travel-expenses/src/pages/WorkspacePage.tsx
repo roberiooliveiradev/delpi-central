@@ -256,7 +256,12 @@ export function WorkspacePage({
                   <span className="te-expense-row__date">{formatDate(expense.expenseDate)}</span>
                   <span className="te-expense-meta">
                     <strong>{CATEGORY_LABELS[expense.categoryId] || expense.categoryId}</strong>
-                    <small>{expense.merchant || "Sem estabelecimento"}</small>
+                    <small>
+                      {expense.categoryId === "ground_transport" && expense.transportMode
+                        ? (expense.transportMode === "own_vehicle" ? "Veículo próprio" : expense.transportMode === "ride_hailing" ? "Carro de aplicativo" : "Transporte público")
+                        : expense.merchant || "Sem estabelecimento"}
+                      {expense.transportMode === "own_vehicle" && expense.distanceKm != null ? ` · ${expense.distanceKm} km` : ""}
+                    </small>
                   </span>
                   <span className="te-amount">{formatBrl(expense.amountBrl)}</span>
                   <span className="te-expense-row__receipt te-muted">
@@ -275,7 +280,8 @@ export function WorkspacePage({
           {report.completeness.missingReceiptCount > 0 ? (
             <p className="te-muted">Há {report.completeness.missingReceiptCount} despesa(s) sem comprovante. O aviso não impede o envio.</p>
           ) : null}
-          <ActionButton variant="primary" disabled={sending || !report.expenses.length} onClick={() => void onSendToFinance()}>
+          {report.dispatchStatus ? <p className="te-muted">Já existe uma tentativa de envio ({report.dispatchStatus}). Para evitar duplicidade, um novo envio exige verificação da TI.</p> : null}
+          <ActionButton variant="primary" disabled={sending || !report.expenses.length || Boolean(report.dispatchStatus)} onClick={() => void onSendToFinance()}>
             <Send size={16} /> {sending ? "Enviando…" : "Enviar ao Financeiro"}
           </ActionButton>
         </TravelSectionCard>
