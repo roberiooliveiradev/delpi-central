@@ -894,3 +894,15 @@ ENV_BLOCKER            = dev postgres checksum drift V024__prc_record_flags
                          (engineering/PRC) derruba startup do api-delpi —
                          pré-existente, fora do escopo desta fatia
 ```
+
+### 23.4 Rebaseline W010 — merge, deploy e ChatGPT live READ (2026-11-16)
+
+**Fonte detalhada e próxima wave:** `../strategic-indicators/01-davi-mcp-full-portal-parity-plan.md` §§11–12. Este complemento atualiza o snapshot anterior de §23.3 sem apagar evidências históricas.
+
+- **Code/deploy:** executor reportou merge `76449a73bb152a23cfbbd37fe203dadbf18e5574`, deployed checkout `4018a7d58c` e rollback `a8304d4483`. São evidências de relatório de execução, não inspeção direta do SHA implantado nesta passagem.
+- **ChatGPT MCP live, conexão end-user:** `get_context(context/catalog/schema)` retornou usuário autenticado, catálogo v31 (102 elegíveis), quatro tools semânticas e cinco SI capabilities. `read` executou **5/5 consultas positivas** com `status=ok`: executive summary, departments, indicators, goals e goal history. Curvas mensais por filial foram retornadas; nenhum write.
+- **AuthZ:** duas identidades em dev com 200/403 reportadas pelo executor; negative second-user **no próprio ChatGPT/produção = PENDING**. Não confundir discovery, API health, HTTP 200 e autorização de negócio.
+- **Decision:** `DAVI-SI-W010-CHATGPT-READ-ACCEPT-01` = aceite da evidência de READ positiva; **W011 (contrato/segurança PREPARE→ACT para metas) fica autorizado apenas para inventário/design, sem implementação de escrita**.
+- **Fase futura:** `execute` e `delete` seguem `PLANNED_NOT_IMPLEMENTED`, embora direção arquitetural para até seis tools esteja aprovada; sem alteração de RBAC, identity, MCP resource ou bounded context. Paridade integral das funcionalidades do portal segue TARGET.
+
+**Next bounded task:** `DAVI-SI-W011-GOAL-WRITES-CONTRACT-AND-SAFETY-01` (READ_ONLY_INVENTORY / CONTRACT_SPEC / NO_CODE / NO_DEPLOY / NO_WRITE). Avaliar owner API, proteção user-JWT-only, `settings.manage`, PREPARE/ACT, proposal selada, OCC/idempotência/audit/postcondition antes da implementação do primeiro `execute`. Revalidar origin/main e `.cursor` no início da tarefa.
