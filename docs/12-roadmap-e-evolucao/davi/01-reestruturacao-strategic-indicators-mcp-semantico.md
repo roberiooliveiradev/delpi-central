@@ -925,3 +925,11 @@ ENV_BLOCKER            = dev postgres checksum drift V024__prc_record_flags
 - Verifier independente = `INCONCLUSIVE` ambiental (devin CLI sem login); checks GitHub não consultáveis sem `gh` auth — evidência executor-side apenas.
 
 **Next bounded tasks:** W013 (departments/indicators/settings/change-requests + reads faltantes), W014 (batch/infra ops), W015 (tool `delete` separada), W016 (paridade portal-integral) — todos sob gates próprios da Coordination.
+
+### 23.6 W012 — auditoria persistente no owner + confirmação conversacional TÉO (2026-11-16)
+
+**Auditoria durável (GAP de §23.5 FECHADO):** `736bf7cd18` — as 4 mutações de meta gravam `indicator_goal.created|updated|activated|deactivated` em `strategic_indicators.settings_audit` **na mesma transação** da mutação (commit/rollback juntos). `payload_after._audit_meta` carrega `write_origin=davi-mcp` + `correlation_id=<proposal_id>` + `superseded_goal_ids`; zero migrations novas (schema V003/V033 reutilizado); portal chama sem os parâmetros opcionais.
+
+**Decisão de consentimento (Coordination, `DAVI-SI-W012-TEO-CONVERSATIONAL-CONFIRMATION-PRODUCTION-01`):** DAVI adota o padrão TÉO `confirm_before_act` **conversacional** — usuário confirma na própria conversa ChatGPT em turno posterior ao PREPARE; pedido inicial nunca é confirmação. A proposta de página externa Portal/MFE (ADR `02-adr-...` §9) foi `SUPERSEDED`; consent challenge VISTA = `REJECTED_FOR_DAVI`. **Residual aceito e registrado:** `confirm=true` é mediado pelo modelo e não constitui prova criptográfica independente do ato humano — não equivale ao step-up VISTA/CLARA; compensações = proposta selada + actor-bind + AuthZ/OCC owner + auditoria persistente + read-back.
+
+**Implementação conforme (sem refatoração):** `execution_policy="confirm_before_act"` já selada na proposta; ACT requer `confirm=true` fail-closed; descrição da tool `execute` e diretivas do agente reforçadas para exigir confirmação explícita em mensagem posterior ao PREPARE.

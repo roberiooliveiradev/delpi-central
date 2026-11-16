@@ -1,10 +1,31 @@
-# ADR proposta — Consentimento humano confiável para ACT do DAVI (W012)
+# ADR — Consentimento humano para ACT do DAVI (W012)
 
-> **Status:** `PROPOSTA` — aguardando decisão da Coordination.
-> **TASK_ID:** `DAVI-SI-W012-TRUSTED-CONSENT-CONTRACT-01`
-> **Base:** `main` @ `736bf7cd18`.
-> **Escopo:** contrato e decisão arquitetural. **Nenhum código, migration ou
-> deploy** nesta entrega. ACT produtivo permanece bloqueado.
+> **Status:** `DECIDIDA` — ver §0 (decisão congelada pela Coordination em
+> `DAVI-SI-W012-TEO-CONVERSATIONAL-CONFIRMATION-PRODUCTION-01`).
+> **TASK_ID original:** `DAVI-SI-W012-TRUSTED-CONSENT-CONTRACT-01`
+> **Base:** `main` @ `9e0f92c0de`.
+> O corpo deste documento preserva a investigação VISTA/CLARA como histórico
+> e evidência — a recomendação da §9 **não é mais a decisão vigente**.
+
+## 0. Decisão congelada (supersede §9)
+
+| Item | Status |
+|---|---|
+| Página externa Portal/MFE para consentimento (§9 original) | `SUPERSEDED` |
+| Confirmação conversacional explícita — padrão TÉO `confirm_before_act` | `APPROVED` |
+| Consent challenge externo VISTA como fluxo obrigatório para DAVI | `REJECTED_FOR_DAVI` |
+| `confirm=true` mediado pelo modelo não é prova independente do ato humano | `ACCEPTED_RESIDUAL` — risco aceito e documentado para o fluxo conversacional, sem equivalência ao step-up VISTA |
+| Confirmação explícita em turno **posterior** ao PREPARE (pedido inicial nunca confirma) | `REQUIRED` |
+| JWT individual, AuthZ SI, OCC, auditoria persistente, HMAC dedicado, single-use, postcondition | `REQUIRED` |
+
+Fluxo aprovado: usuário solicita → PREPARE apresenta diff completo (inclusive
+efeitos indiretos) → DAVI pede confirmação explícita → usuário responde
+afirmativamente em novo turno → ACT com handle selado → verificação no owner.
+Sem página externa, sem segundo MCP, sem consent challenge.
+
+A investigação abaixo permanece válida como referência de padrões; a opção
+"canal externo" fica documentada como alternativa futura caso o residual
+conversacional seja revisto.
 
 ## 1. Problema
 
