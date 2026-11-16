@@ -509,6 +509,75 @@ services:
       delpi.environment: homologation
       delpi.project: delpi-hml
 
+  helpdesk:
+    extends:
+      file: docker-compose.yml
+      service: helpdesk
+    profiles: [helpdesk, platform]
+    image: delpi-hml/helpdesk:local
+    container_name: delpi-hml-helpdesk
+    ports: !override []
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/assets/remoteEntry.js || wget -q -O /dev/null -T 3 http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.5
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
+  helpdesk-api:
+    extends:
+      file: docker-compose.yml
+      service: helpdesk-api
+    profiles: [helpdesk-api, helpdesk, platform]
+    image: delpi-hml/helpdesk-api:local
+    container_name: delpi-hml-helpdesk-api
+    ports: !override []
+    env_file: !override
+      - path: env.hml.example
+        required: true
+      - path: .env.hml
+        required: false
+    depends_on: !override {}
+    networks: !override
+      - delpi-hml
+    volumes: !override []
+    environment:
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      HELPDESK_API_ROOT_PATH: /apps/helpdesk-api
+      HELPDESK_RUN_MIGRATIONS_ON_STARTUP: "true"
+      # GLPI permanece inalcançável em HML — mesmo padrão do TOTVS
+      # (api-delpi). Sem credenciais GLPI próprias de homologação e sem
+      # reaproveitar secrets de produção, o BFF responde indisponível
+      # (view error/unavailable do MFE, chrome da lista visível) —
+      # nunca bate no GLPI real nem em credencial alheia.
+      GLPI_BASE_URL: http://glpi-disabled.hml.invalid
+      GLPI_OAUTH_CLIENT_ID: ""
+      GLPI_OAUTH_CLIENT_SECRET: ""
+      GLPI_LEGACY_UPLOAD_ENABLED: "false"
+      GLPI_PROFILE_SYNC_ENABLED: "false"
+      GLPI_DASHBOARD_READER_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 768m
+    cpus: 0.75
+    labels:
+      delpi.environment: homologation
+      delpi.project: delpi-hml
+
   engineering-api:
     extends:
       file: docker-compose.yml
