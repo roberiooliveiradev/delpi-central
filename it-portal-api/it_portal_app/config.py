@@ -45,6 +45,13 @@ class Settings:
         _get_env("IT_PORTAL_DB_STATEMENT_TIMEOUT_MS", default="10000")
     )
 
+    # ATLAS P2.2h.2d: only enables authenticated GET journal reads after
+    # DB owner migrated the candidate schema and Core registered view grant.
+    # Default OFF; no effect on manual Git/Compose deployments or ACT.
+    ATLAS_JOURNAL_READ_ENABLED: bool = _get_env(
+        "IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED", default="false"
+    ).lower() == "true"
+
     RUN_MIGRATIONS_ON_STARTUP: bool = _get_env(
         "IT_PORTAL_RUN_MIGRATIONS_ON_STARTUP", default="false"
     ).lower() in ("1", "true", "yes")
