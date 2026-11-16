@@ -106,21 +106,82 @@ jobs:
           echo "Docker build denied all missing, malformed and abbreviated SHAs"
 
   validate-public-hub-source:
-    name: Public Hub lint, tests and TypeScript/Vite build
+    name: Public Hub tests, production build and changed-source lint
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Both sides are needed for a fail-closed changed-source lint gate.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: npm
           cache-dependency-path: plugins/public-hub/package-lock.json
-      - name: Validate source before release
+      - name: Install locked dependencies
         working-directory: plugins/public-hub
+        run: npm ci
+      - name: Public Hub automated tests (required)
+        working-directory: plugins/public-hub
+        run: npm run test
+      - name: TypeScript and Vite production build (required)
+        working-directory: plugins/public-hub
+        run: npm run build
+      - name: Enforce ESLint on new or modified Public Hub source (required)
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        shell: bash
         run: |
-          npm ci
-          npm run ci
+          set -euo pipefail
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid lint comparison base"; exit 1; }
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid lint comparison head"; exit 1; }
+          git cat-file -e "${BASE_SHA}^{commit}"
+          git cat-file -e "${GITHUB_SHA}^{commit}"
+          git diff --name-only --diff-filter=ACMR -z "$BASE_SHA" "$GITHUB_SHA" \
+            -- plugins/public-hub > "$RUNNER_TEMP/atlas-public-hub-changed-files"
+          mapfile -d '' -t changed < "$RUNNER_TEMP/atlas-public-hub-changed-files"
+          files=()
+          for path in "${changed[@]}"; do
+            case "$path" in
+              plugins/public-hub/*.ts|plugins/public-hub/*.tsx)
+                [[ -f "$path" && ! -L "$path" ]] || { echo "Changed source is unavailable"; exit 1; }
+                files+=("./${path#plugins/public-hub/}")
+                ;;
+            esac
+          done
+          if (("${#files[@]}" == 0)); then
+            echo "No Public Hub TypeScript sources changed in this revision."
+          else
+            echo "Enforcing zero ESLint errors/warnings on ${#files[@]} changed source file(s)."
+            (cd plugins/public-hub && ./node_modules/.bin/eslint --max-warnings=0 -- "${files[@]}")
+          fi
+      - name: Report full-source ESLint inventory (legacy debt; not a release gate)
+        working-directory: plugins/public-hub
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          ./node_modules/.bin/eslint . --format json > "$RUNNER_TEMP/atlas-public-hub-eslint.json" || status=$?
+          # Exit code 2 means a configuration/runtime failure, not legacy lint debt.
+          if [[ "$status" -gt 1 ]]; then
+            echo "ESLint itself failed; refusing an unverified inventory"
+            exit "$status"
+          fi
+          node --input-type=module - "$RUNNER_TEMP/atlas-public-hub-eslint.json" <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const findings = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          if (!Array.isArray(findings)) throw new Error('Unexpected ESLint inventory');
+          const errors = findings.reduce((sum, file) => sum + file.errorCount, 0);
+          const warnings = findings.reduce((sum, file) => sum + file.warningCount, 0);
+          console.log('Full Public Hub ESLint inventory: ' + errors + ' errors, ' + warnings + ' warnings.');
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              '### Public Hub legacy ESLint inventory\n\n' + errors + ' errors / ' + warnings + ' warnings. ' +
+              'Only new or modified TypeScript files are a strict lint gate; ' +
+              'all unit tests, TypeScript, Vite and the final Docker image remain mandatory.\n');
+          }
+          NODE
 
   validate-final-image-on-pr:
     name: Build final production image without publishing
