@@ -5573,3 +5573,39 @@ Hierarquia idêntica à BOM vigente, obtida **por evidência geométrica** (mesc
 ### Estados G21
 
 `G21_SHA_VERIFIED_PASS` · `G21_TESTS_PASS` · `G21_DEPLOY_PASS` · `G21_OCR_PASS` (reuse) · `G21_EXTRACTION_PASS` · `G21_DESCRIPTION_COMPARISON_PASS` · `G21_QUANTITY_COMPARISON_PASS` · `G21_VERIFIER_PASS`→ **residual** (r1/r2 aceitos; r3 INCONCLUSIVE por quota do motor — coberto por atestado determinístico) · `G21_CHATGPT_MCP_E2E_PASS` → **PENDING_OWNER_ACTION**. Veredito: **`G21_PASS_WITH_RESIDUAL`**.
+
+## §94.25 — G22: drift OCR vs saída MCP real (native_table_cells)
+
+**TASK_ID:** `EVA-E1-VAL01-G22-LIVE-MCP-DRAWING-ATTRIBUTE-EXTRACTION-DRIFT-RECOVERY-01` · **Estado:** código corrigido; deploy e E2E live pendentes de gate
+
+### Causa-raiz provada (pipeline real reproduzido no container)
+
+O job real `aj-7ac2f01425ac4e78` usou `detection: native_table_cells` (SLANet), não o `token_cluster` corrigido no G20. Matriz de fronteira:
+
+| Campo | PDF | OCR (95 tok) | SLANet cells | Saída | Fronteira |
+|---|---|---|---|---|---|
+| MP description | presente | presente (x917–1430) | **vazia** | null | `TABLE_BOUNDARY_GAP` |
+| PI description 50213206/07 | presente | presente | presente (col1 rowspan=1) | sem pgd | `OCCURRENCE_ASSOCIATION_GAP` |
+
+- **`regions.component_table.box_px`** = `_hierarchical_code_pair_crop` → `rmax_códigos + 0.18w ≈ x1148` → virava `crop_box` do SLANet → raster sem a coluna de descrição → col5 vazia → `native_cells_preferable` (consistent) substituía as linhas token-cluster que tinham as descrições.
+- **`_anchor_description`** só lia irmãos `rowspan>1`; âncora `column_span` (PI de uma linha) nunca recebia `parent_group_description`.
+
+### Correção (menor diff, módulo canônico)
+
+- `understanding.py`: `_typed_cells_extent` + união do envelope tipado ao `column_crop` — células tipadas nunca saem do crop; ruído não tipado (carimbo) continua excluído (P12 preservado).
+- `_anchor_description`: passe 2 aceita célula `rowspan=1` tipada `parent_description`; mesclada `rowspan>1` continua preferida.
+
+### Evidência pós-correção (PDF real + SLANet reais)
+
+- Region box `[49,1415,1635,1799]`; SLANet 55 células, col6=`Descrição` com texto real.
+- Final: `detection: native_table_cells`, **8/8 descrições MP** (CABO EPR/TERM/ISOLADOR), **4/4 `parent_group_description`** CA18*, 8/8 pais IDENTIFIED.
+- Comparador: `pi_description` CONFLICT_CANDIDATE ×8 (CA↔CB + terminal 01↔36), `description` MP 4 MATCH + 4 CONFLICT literais, `parent_relation` MATCH 8/8, `auto_nc: false`.
+
+### Testes
+
+- `tests/test_g22_native_table_drift.py` (5): PI rowspan=1 recebe pgd, mesclada preferida, descrição de componente nunca vira de grupo, region cobre coluna tipada, ruído não tipado excluído.
+- Regressão: **415 PASS** (410 + 5 novos).
+
+### Estado
+
+`G22_ROOT_CAUSE_PASS` · `G22_PI_DESCRIPTION_PASS` (4/4) · `G22_MP_DESCRIPTION_PASS` (8/8, caminho real) · `G22_ENGINE_SELECTION_PASS` (native reconciliado por envelope tipado) · `G22_HIERARCHY_PASS` · `G22_G18_COMPARISON_PASS` · `G22_REGRESSION_PASS`. Deploy **não autorizado** neste pacote; E2E ChatGPT `PENDING_OWNER_ACTION` após gate.
