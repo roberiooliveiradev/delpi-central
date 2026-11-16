@@ -5903,3 +5903,42 @@ Confirmado: Keycloak=identidade, Core=AuthZ, TOTVS=cadastro, Engenharia=norma, E
 ### 94.31.3 Residual
 
 Fechamento independente pendente de engine autenticada. Deploy **não autorizado** neste pacote — Coordination decide sobre `READY_FOR_DEPLOY_REVIEW`.
+
+## §94.32 — G24-R3.1: consistência de gate × checks e aceite produtivo
+
+**TASK_ID:** `EVA-E1-VAL01-G24-R31-GATED-CHECK-CONSISTENCY-AND-PRODUCTION-DEPLOY-01` · **Referência:** Issue #131 #6922886993 · **Deploy:** gated — ver §94.32.4.
+
+### 94.32.1 F02 — causa-raiz e correção
+
+**Causa-raiz:** o gate do G24-R3 atuava **após** a avaliação — executava `evaluate_pi_mp_coherence` e, se gated, sobrescrevia `status` para `INCONCLUSIVE`, mas `checks[]` podia reter `PASS`/`VIOLATION_CANDIDATE`. Consumidores podiam ler resultados individuais como conclusivos sem associação comprovada.
+
+**Correção (menor diff em `_normative_block`):**
+- Gate **antes** da avaliação: comparação bloqueada emite objeto `INCONCLUSIVE` com `checks: []` e `reason` explícita — as regras dependentes **não são executadas**.
+- Gate cross endurecido: além de `divergent`/`not draw_assoc_verified`, exige `b_parent_is_pi` — `BOM_PARENT_ABSENT` (ou pai oficial não-PI) também torna o cross inconclusivo, pois a correspondência com a ocorrência oficial é incomprovável.
+- Forma do objeto bloqueado idêntica ao `_wrap` de `evaluate_pi_mp_coherence` — contrato `normative_description.v1` preservado, mudança aditiva.
+- Evidência de parsing **preservada**: os blocos `pi_*_normative`/`drawing|totvs_description_normative` continuam avaliados; apenas a conclusão *da comparação* é bloqueada.
+
+**Invariante estabelecido:** `blocked(comparison) ⟹ status=INCONCLUSIVE ∧ ∀c∈checks: c.status ∉ {PASS, VIOLATION_CANDIDATE}`.
+
+### 94.32.2 Independência dos pares (RQ24-R31-03)
+
+| Par | Gate | Comportamento |
+|---|---|---|
+| D×D | `not parent_verified` | associação visual não comprovada → INCONCLUSIVE |
+| T×T | nenhum (relação oficial própria) | divergência do pai visual **não** bloqueia; BOM inválida/ausente → INCONCLUSIVE natural |
+| CROSS | `divergent ∨ not verified ∨ not b_parent_is_pi` | exige correspondência comprovada entre ocorrências |
+
+### 94.32.3 Evidências
+
+- **11 testes novos** (`test_r31_t*`): cobrem T01–T15 do pacote, verificando `status` **e** itens de `checks[]`; T06 expôs e fechou o gap `BOM_PARENT_ABSENT` no gate cross.
+- **54/54** testes do arquivo; **suíte 1427 pass, 1 deselect (test_d16 pré-existente), 21 skip** — zero falhas novas.
+- Regressão F01 verificada: pais por fonte, `parent_divergence` e lookups independentes intactos.
+- Verificador: `INCONCLUSIVE` r1 — engine devin `Not logged in` (bloqueio de infra persistente). Request `.git/delpi-verifier/requests/g24-r31-gated-checks-r1.md`.
+
+### 94.32.4 Gate de deploy
+
+Per §14 do pacote: a diretriz permanente de deploy **não** substitui o gate explícito de exceção do verificador. `G24_R31_CODE_PASS: YES` · `TESTS_PASS: YES` · `CONTRACT_PASS: YES` · `SECURITY_PASS: YES` · `VERIFIER_VERDICT: INCONCLUSIVE` · `VERIFIER_EXCEPTION_APPROVED: NO` → **`DEPLOY_BLOCKED / OWNER_ACTION_REQUIRED`**. Código publicado em `main`; deploy aguarda exceção aceita pelo owner competente ou verificação efetiva.
+
+### 94.32.5 Residual
+
+Fechamento independente e deploy produtivo pendentes da mesma ação do owner: autenticar engine do verificador (`devin auth login` / quota cursor) ou aceitar exceção documentada com evidências compensatórias e rollback.
