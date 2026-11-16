@@ -73,3 +73,18 @@ class SupplierPerformanceResponse(BaseModel):
     data: SupplierPerformancePayload
     error: dict | None = None
     meta: dict
+
+
+class SupplierPerformanceExportPayload(SupplierPerformancePayload):
+    """Fresh detail rows in their own grains, not a fabricated PO↔inspection join."""
+    inspections: list[dict]
+    deliveries: list[dict]
+    supplier_selected: dict[str, str] | None = None
+
+
+class SupplierPerformanceExportResponse(BaseModel):
+    success: bool
+    message: str
+    data: SupplierPerformanceExportPayload
+    error: dict | None = None
+    meta: dict
