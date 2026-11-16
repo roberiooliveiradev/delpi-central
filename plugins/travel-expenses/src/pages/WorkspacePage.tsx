@@ -503,13 +503,36 @@ function ExpenseDrawer({
             ))}
           </select>
         </label>
+        {categoryId === "ground_transport" ? (
+          <label className="te-field te-field--wide">
+            Tipo de deslocamento
+            <select disabled={!editable} value={transportMode} onChange={(event) => setTransportMode(event.target.value)}>
+              <option value="">Selecione o transporte</option>
+              <option value="own_vehicle">Veículo próprio</option>
+              <option value="ride_hailing">Carro de aplicativo</option>
+              <option value="public_transport">Transporte público</option>
+            </select>
+          </label>
+        ) : null}
+        {ownVehicle ? (
+          <>
+            <label className="te-field">
+              Quilometragem percorrida (km)
+              <input inputMode="decimal" disabled={!editable} value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} placeholder="Ex.: 270" />
+            </label>
+            <label className="te-field">
+              Tarifa vigente
+              <input value={mileageRate !== null ? formatBrl(mileageRate) + "/km" : "Carregando tarifa…"} readOnly />
+            </label>
+          </>
+        ) : null}
         <label className="te-field">
           Estabelecimento
           <input value={merchant} disabled={!editable} onChange={(event) => setMerchant(event.target.value)} />
         </label>
         <label className="te-field">
           Valor (BRL)
-          <input value={amount} disabled={!editable} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} />
+          <input value={ownVehicle ? (mileageTotal !== null ? formatBrl(mileageTotal) : "") : amount} disabled={!editable || ownVehicle} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} placeholder="R$ 0,00" />
         </label>
         <label className="te-field te-field--wide">
           Nota
