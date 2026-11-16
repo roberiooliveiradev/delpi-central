@@ -1,5 +1,8 @@
 # Documentação — `@delpi/plugin-ui`
 
+> **Contrato visual cross-MFE UX V3 (TARGET, 15/11/2026):** [Hero/list toolbar e DataTable — My Requests × Helpdesk](../../../docs/12-roadmap-e-evolucao/my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md). Componentes reutilizáveis, responsive, acessibilidade e posicionamento pertencem ao Plugin UI; aplicar Abstraction Gate. Ainda não implementado.
+
+
 Índice da biblioteca de UI compartilhada entre plugins MFE.
 
 | Documento | Conteúdo |
