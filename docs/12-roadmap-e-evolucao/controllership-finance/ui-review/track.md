@@ -376,3 +376,9 @@ PROD conferido em 1440: Panorama 338 px; marcadores da legenda 9–10 px; «73%�
 | Report | [report-u14r2.md](./report-u14r2.md) |
 
 Pedido ao owner: conferência visual em PROD (Pendentes, tabela 1440, barras+day).
+
+### Revisão do Claude sobre U14R2 (16/11) — ACCEPT_WITH_RESIDUAL
+
+PROD, 1440×900 e 390×844. PASS: «Pendentes» sem corte; tabela de ocorrências em 1.341 px (chave `columns:v2`, «Campo» oculto); barras com 7 dias; clique em 10/11 → `day=2026-11-10` e KPIs filtram (41 notas, 39 pendentes); novo clique limpa.
+
+Residuais → U15: fundo branco do BarSeriesChart no tema escuro (padrão do deck; o kit aceita `theme`/`backgroundColor`); com `day` selecionado o gráfico diário zera os outros dias (filtra a si mesmo); no celular o título do hero corta e «Nova análise» sai da tela; KPIs um por linha em 390; dia 0 com lasca de barra.
