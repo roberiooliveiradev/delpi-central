@@ -23,7 +23,11 @@ const SHOT = (name: string) =>
 const HERO = ".delpi-ui-page-hero";
 const TOOLBAR_HOST = '[data-testid="request-list-toolbar-host"]';
 const TOOLBAR = ".delpi-ui-table-toolbar";
+const CONTROLS_ROW = ".delpi-ui-table-toolbar__controls";
+const CHIPS_ROW = ".delpi-ui-table-toolbar__chips";
+const TABLE_META = ".delpi-ui-table-section__table-meta";
 const SECTION = ".delpi-ui-table-section--embedded";
+const HELP_ICON = ".delpi-ui-help-tooltip__trigger";
 
 async function loginAndGoto(page: Page, path: string): Promise<void> {
   await loginAsDev(page);
@@ -98,8 +102,9 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     await expect(page.locator(TOOLBAR)).toHaveCount(1);
     await expect(page.locator(`${TOOLBAR_HOST} ${TOOLBAR}`)).toHaveCount(1);
 
-    /* Controles exigidos no hero: busca, Filtros, Ordenar, Colunas,
-     * itens/página, chips, Tabela|Cards. */
+    /* Controles exigidos no hero (UX V3): busca dominante, chips e a
+     * última linha à direita Filtros → Ordenar → Colunas → Tabela|Cards.
+     * «Itens por página» NÃO está no hero — vive na região da grade. */
     const heroToolbar = page.locator(`${TOOLBAR_HOST} ${TOOLBAR}`);
     await expect(
       heroToolbar.getByRole("searchbox").or(heroToolbar.locator("input[type=search]")),
@@ -114,14 +119,82 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroToolbar.getByRole("button", { name: /colunas/i }),
     ).toBeVisible();
     await expect(
+      heroToolbar.getByRole("button", { name: /tabela|cards/i }).first(),
+    ).toBeVisible();
+
+    /* Page size fora do hero, dentro da região superior da grade. */
+    await expect(
       heroToolbar.getByRole("button", {
         name: "Itens por página",
         exact: true,
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
+    const tableMeta = page.locator(TABLE_META);
+    await expect(tableMeta).toHaveCount(1);
     await expect(
-      heroToolbar.getByRole("button", { name: /tabela|cards/i }).first(),
+      tableMeta.getByRole("button", {
+        name: "Itens por página",
+        exact: true,
+      }),
     ).toBeVisible();
+    const metaBox = await tableMeta.boundingBox();
+    const heroBoxPre = await hero.boundingBox();
+    expect(metaBox).toBeTruthy();
+    expect(metaBox!.y).toBeGreaterThanOrEqual(
+      heroBoxPre!.y + heroBoxPre!.height - 2,
+    );
+
+    /* Sem ícones "?" na toolbar/paginação — ajuda acessível sem glyph. */
+    await expect(page.locator(`${TOOLBAR_HOST} ${HELP_ICON}`)).toHaveCount(0);
+    await expect(
+      page.locator(`${SECTION} ${HELP_ICON}`),
+    ).toHaveCount(0);
+
+    /* V3: chips abaixo da busca; linha de controles é a última do hero,
+     * alinhada à direita, com a ordem canônica dos quatro controles. */
+    const chips = page.locator(`${TOOLBAR_HOST} ${CHIPS_ROW}`);
+    const controlsRow = page.locator(`${TOOLBAR_HOST} ${CONTROLS_ROW}`);
+    await expect(chips).toHaveCount(1);
+    await expect(controlsRow).toHaveCount(1);
+
+    const searchBox = await heroToolbar
+      .locator("input[type=search]")
+      .boundingBox();
+    const chipsBox = await chips.boundingBox();
+    const rowBox = await controlsRow.boundingBox();
+    const heroBox = await hero.boundingBox();
+    expect(searchBox && chipsBox && rowBox && heroBox).toBeTruthy();
+    /* chips abaixo da busca; controles abaixo dos chips, dentro do hero */
+    expect(chipsBox!.y).toBeGreaterThanOrEqual(searchBox!.y + searchBox!.height - 2);
+    expect(rowBox!.y).toBeGreaterThanOrEqual(chipsBox!.y + chipsBox!.height - 2);
+    expect(rowBox!.y + rowBox!.height).toBeLessThanOrEqual(
+      heroBox!.y + heroBox!.height + 2,
+    );
+    /* alinhamento à direita (margem esquerda ampla em desktop) */
+    expect(rowBox!.x + rowBox!.width).toBeGreaterThanOrEqual(
+      heroBox!.x + heroBox!.width - 40,
+    );
+
+    /* Ordem visual Filtros → Ordenar → Colunas → Tabela|Cards. */
+    const xOf = async (name: RegExp) => {
+      const box = await controlsRow
+        .getByRole("button", { name })
+        .first()
+        .boundingBox();
+      return box?.x ?? -1;
+    };
+    const xFiltros = await xOf(/filtros/i);
+    const xOrdenar = await xOf(/^Ordenar/i);
+    const xColunas = await xOf(/^Colunas/i);
+    const xToggle = await controlsRow
+      .getByRole("button", { name: "Tabela", exact: true })
+      .first()
+      .boundingBox()
+      .then((b) => b?.x ?? -1);
+    expect(xFiltros).toBeGreaterThanOrEqual(0);
+    expect(xOrdenar).toBeGreaterThan(xFiltros);
+    expect(xColunas).toBeGreaterThan(xOrdenar);
+    expect(xToggle).toBeGreaterThan(xColunas);
 
     /* Grade logo abaixo do hero, embedded, sem seção-card duplicada. */
     const section = page.locator(SECTION);
