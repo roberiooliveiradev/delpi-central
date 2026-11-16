@@ -30,3 +30,14 @@ Data: 2026-11-16. **Escopo:** correção monetária, modal de Deslocamento e env
 - Em `finance_dispatches` com status `failed` ou `sending`, **não** reenviar automaticamente. Conferir Graph / Itens Enviados e registrar evidência; retomar via procedimento operacional aprovado, sem alteração manual rotineira de dados.
 - Status de entrega `sent` significa aceitação da API Graph (HTTP 202), **não leitura pelo Financeiro**.
 - Sem testes reais de credenciais SMTP/Graph na PR, a integração só pode ser validada no ambiente autorizado.
+
+
+## Correção complementar — 16/11/2026: tarifa não carrega no cadastro
+- Evidência: captura em produção do modal Nova despesa; relatório sem período definido e campo Data vazio, Deslocamento > Veículo próprio, tarifa permanecia em “Carregando tarifa…”.
+- Causa do defeito de UX: o efeito de consulta no frontend retornava antecipadamente quando `expenseDate` estava vazio, mas o campo de tarifa apresentava “Carregando” para qualquer valor `null`. Falhas HTTP também eram descartadas silenciosamente sem indicação ao usuário.
+- Correção: para **nova** despesa, preferir a data inicial do relatório e, na ausência desta, preencher com a data local do navegador, visível e editável. Na edição, manter a data gravada.
+- Estados explícitos: data não informada = “Informe a data da despesa”; solicitação em andamento = “Consultando tarifa”; tarifa carregada = valor formatado por km; falha ou resposta inválida = mensagem de erro + “Tentar novamente”.
+- A consulta usa abort/timeout de 12 segundos e cancela respostas obsoletas ao trocar data ou modalidade. Tarifa só é considerada válida quando corresponde exatamente à data selecionada.
+- O cálculo de reembolso continua sendo revalidado no backend com tarifa histórica por data. Não houve mudança em banco, na tarifa fixada na V004, em comprovantes ou no e-mail ao Financeiro.
+- O console da captura exibia `ERR_BLOCKED_BY_CLIENT` sem evidência de requisição à rota `/mileage-rate`; isso pode ser bloqueio local de recursos por extensão e **não comprova** falha da API.
+- Testes de regressão em `src/utils/dates.test.ts` e `src/utils/mileageRateState.test.ts`; validação pelo CI do MFE. Deploy restrito a `travel-expenses` (API sem alterações).
