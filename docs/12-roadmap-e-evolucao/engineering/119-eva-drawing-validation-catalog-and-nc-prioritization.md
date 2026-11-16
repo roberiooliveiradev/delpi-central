@@ -5942,3 +5942,61 @@ Per §14 do pacote: a diretriz permanente de deploy **não** substitui o gate ex
 ### 94.32.5 Residual
 
 Fechamento independente e deploy produtivo pendentes da mesma ação do owner: autenticar engine do verificador (`devin auth login` / quota cursor) ou aceitar exceção documentada com evidências compensatórias e rollback.
+
+## §94.33 — G24-R3.2: liberação produtiva F01+F02 e handoff E2E
+
+**TASK_ID:** `EVA-E1-VAL01-G24-R32-PRODUCTION-RELEASE-AND-CHATGPT-MCP-HANDOFF-01` · **Decisão:** Issue #131 #6924877828 · **Deploy:** EXECUTADO.
+
+### 94.33.1 Gates
+
+| Gate | Estado |
+|---|---|
+| `TARGET_SHA_VERIFIED` | `e233c469e1` ∈ `origin/main` |
+| `RELEASE_DELTA_REVIEWED` | delta `prod→9e0f92c0de` inventariado: F01+F02 + commits concorrentes revisados (atlas gated default-OFF, helpdesk, delia, line-balance engineering) |
+| `CONTRACT_COMPATIBILITY` | `normative_description.v1` aditivo |
+| `TEST_BASELINE` | 54/54 G24 · 1427 pass suíte · 1 falha pré-existente D16 |
+| `VERIFIER` | `INCONCLUSIVE` — engine devin `Not logged in` (7ª ocorrência), cursor quota |
+| `VERIFIER_EXCEPTION` | **ACEITA via decisão Coordination #6924877828** — pacote emitido com conhecimento explícito do INCONCLUSIVE e deploy expresso no escopo |
+| `INFRA_APPROVAL` | mesma decisão #6924877828 (EXECUTION_OWNER inclui Infraestrutura DELPI) |
+| `ROLLBACK_READY` | `infra-engineering-api:rollback-pre-g24r32` = `56adb5c10241` (imagem anterior tagueada) |
+
+### 94.33.2 Deploy
+
+- Comando: `bash infra/scripts/up-prod-sequential.sh --build engineering-api` — somente `delpi-engineering-api` recriado; demais 29 serviços intocados (sem Keycloak/Core/DAVI/api-delpi, sem migrations).
+- Imagem antes: `56adb5c10241` → depois: `5de35970fb77`.
+- `/health` = 200, container `healthy`.
+- **Nota arquitetural:** `/app` é bind-mount do working tree — o código executado é `origin/main` (`9e0f92c0de`), comprovado por inspeção de fonte no container (`G24-R3.1` e `parent_divergence` presentes).
+
+### 94.33.3 Smoke produtivo (dentro do container deployado)
+
+| Cenário | Resultado |
+|---|---|
+| A — associação comprovada | `SAME_PARENT_VERIFIED`, 3 pares avaliados, checks conclusivos legítimos |
+| B — pais divergentes | `DIVERGENCE_CANDIDATE`; PI drawing `50233508` / PI TOTVS `50233507`; cross `INCONCLUSIVE`+`checks=[]`; T×T independente PASS |
+| C — `parent_verified=False` | D×D e cross `INCONCLUSIVE`, zero checks conclusivos |
+| D — pai oficial ausente | `BOM_PARENT_ABSENT`, sem fallback, cross `INCONCLUSIVE`+`checks=[]`, `pi_totvs_normative` ausente |
+| E — regras preservadas | 1038 `OWNER_BLOCKED` (MABR/MM≠MM2/E-D idem, cobertos pela suíte) |
+
+`SMOKE A–E: ALL PASS` · `BUSINESS_DATA_WRITES: 0` · `AUTOMATIC_NC: false`.
+
+### 94.33.4 Handoff E2E (ChatGPT — Coordination)
+
+```text
+PRODUCT_CODE: 90263680
+PDF_SHA256: 496e25797c8e62fc0f98bd82179846d8b7712078665e58116b68f32a84613417
+DEPLOYED_RELEASE: 9e0f92c0de (inclui e233c469e1 F02 + 14b49e1a08 F01)
+DEPLOYED_IMAGE: 5de35970fb77 | ENGINEERING_HEALTH: 200/healthy
+ROLLBACK_IMAGE: infra-engineering-api:rollback-pre-g24r32 (56adb5c10241)
+NORMATIVE_CONTRACT: normative_description.v1
+MCP_READY: YES — drawing.runtime_status / drawing.job_list / product.drawing_understanding
+READY_FOR_CHATGPT_E2E: YES
+```
+
+Aceite esperado: 4 PI, 8 MP por ocorrência, 3 pares tipados por MP, `parent_divergence` visível, cross bloqueado sem checks conclusivos, PA nunca PI, `OWNER_BLOCKED` preservado. **Job COMPLETED ≠ homologação normativa.**
+
+### 94.33.5 Residual
+
+- Verificador independente efetivo permanece pendente (exceção aceita pela Coordination — fechar pendência quando engine autenticada).
+- D1–D6 aguardam ratificação da Engenharia DELPI.
+- Falha D16 permanece atribuída à frente D16.
+- E1/VAL-01 **não** encerrada — aguarda aceite E2E autenticado.
