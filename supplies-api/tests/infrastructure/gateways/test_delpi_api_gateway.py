@@ -56,3 +56,19 @@ def test_get_timeout_raises():
     gateway = DelpiApiGateway(base_url="http://delpi-api.test", timeout_seconds=1.0)
     with pytest.raises(DelpiApiGatewayError):
         gateway.get("/slow", access_token="tok")
+
+
+def test_get_real_timeout_is_explicitly_classified_for_conversion():
+    import requests
+    from unittest.mock import patch
+
+    gateway = DelpiApiGateway(base_url="http://delpi-api.test", timeout_seconds=1.0)
+    with patch(
+        "app.infrastructure.gateways.delpi_api_gateway.requests.request",
+        side_effect=requests.Timeout("client exceeded timeout"),
+    ):
+        with pytest.raises(DelpiApiGatewayError) as raised:
+            gateway.get("/supplies/purchase-requests/sc-pc-conversion", access_token="tok")
+    assert raised.value.status_code == 504
+    assert raised.value.code == "upstream_timeout"
+
