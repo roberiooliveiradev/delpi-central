@@ -1,184 +1,207 @@
-# Página 03 — Formulário Público para Responder Pesquisa
+# Página 03 — Formulário Público da Pesquisa (UI-03)
 
-> **Estado:** ESPECIFICAÇÃO DE UI / WIREFRAME PROPOSTO — **NÃO IMPLEMENTADO**. Entrega 1. Ref observada: `main` / `c135a9823e054ce1234f73eee627548043737264` em 11/11/2026; confirmar HEAD/branch/working tree antes de implementar. Owner visual: `plugins/commercial` ou `plugins/public-hub` conforme indicado. Autoridade de regra e dados: `commercial-api`.
->
-> **Fontes:** [índice mestre](./REQUIREMENTS-INDEX.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) e plano Word integral; código existente: `plugins/public-hub/README.md`, `src/shell/PublicShell.tsx`, `src/shell/types.ts`, `src/apps/customer-experience/{pages.tsx,FormPage.tsx,api.ts}`.
+> **Estado:** ESPECIFICAÇÃO VIGENTE — padrão visual **APROVADO PELO SOLICITANTE EM 16/11/2026** (“é exatamente assim que eu quero o formulário para respostas”). Entrega 1.
+> **Implementação:** existe uma versão funcional anterior em `plugins/public-hub/src/apps/commercial/` (commit `7d275ed2`, homologação desde 14/11/2026) com o **visual antigo**. Esta especificação exige **REWORK visual** dessa versão; regras funcionais e contratos de rede permanecem os mesmos.
+> **Referência visual normativa:** [`UI-03-REFERENCIA-VISUAL.html`](./UI-03-REFERENCIA-VISUAL.html) (abrir no navegador; arquivo estático, sem lógica). Em caso de divergência, **este Markdown prevalece**.
+> **Histórico:** a redação anterior deste documento (decisões de 11/11/2026) está no histórico do Git; as decisões substituídas e mantidas estão registradas em [BUSINESS-DECISIONS — Q21](./BUSINESS-DECISIONS.md#q21--padrão-visual-do-formulário-público-16112026). Não reabrir os pontos abaixo sem nova decisão do solicitante.
 
-**Regra visual obrigatória:** reaproveitar exclusivamente componentes de `@delpi/plugin-ui/index` e wrappers/compostos já usados no Portal, sem implementar novo componente visual nativo da página. Layout semântico e ligação de dados React são permitidos; se uma necessidade realmente não estiver coberta, registrar lacuna e passar pelo Abstraction Gate antes de alterar o PluginUI. Não criar CSS/kit de design paralelo.
+## 1. Resumo
 
-## 1. Responsabilidade e localização
+| Item | Definição |
+|---|---|
+| Quem usa | Contato da empresa cliente convidada, **fora** do Portal, sem login. Canal principal: **celular**, a partir de link recebido por WhatsApp, Teams ou e-mail |
+| Problema que resolve | Coletar uma resposta definitiva por empresa e campanha, com as 15 perguntas literais do plano Word, com baixo esforço e sem erro de preenchimento |
+| Rota | `/p/commercial/form/{token}` no `plugins/public-hub` (página `commercial.form`) |
+| Autoridade | `commercial-api` — valida token, janela, obrigatoriedade e unicidade; o frontend é só interface |
+| Rede | `GET /public/satisfaction-surveys/{token}` e `POST /public/satisfaction-surveys/{token}/response` — **sem alteração de contrato** |
+| Estilo | Formulário *clean* no padrão Microsoft Forms / Google Forms: fundo claro, faixa da marca no topo, uma pergunta por cartão branco, escalas numéricas simples |
 
-**Uma página pública** em `plugins/public-hub`, caminho candidato **`/p/commercial/form/{token}`**, sem login do Portal/Keycloak e sem novos serviços ou MFE. Já existe `PublicShell`, roteamento por token e registro `publicRegistry`. A nova página será registrada em `src/shell/registry.ts` como `commercial.form` e consumirá **somente** os endpoints da `commercial-api` `GET /public/satisfaction-surveys/{token}` e `POST /public/satisfaction-surveys/{token}/response`. O gateway já encaminha `/p/` ao public-hub conforme README (validar no HEAD/deploy da execução).
-
-**Não usar o formulário de Customer Experience como contrato de dados:** sua implementação atual em `FormPage.tsx` exige nome do respondente e usa tipos de formulário personalizável; a pesquisa DELPI é fixa, vinculada somente à **empresa convidada**. Reusar padrões visuais, shell e estados, **sem** importar lógica/endpoint/identificação pessoal indevidos.
-
-**Fonte única das perguntas para este formulário:** [catálogo literal das 15 perguntas no contrato](./SURVEY-FIRST-RELEASE-CONTRACT.md#14-catálogo-textual-canônico-das-15-perguntas--conferência-com-o-word-em-11112026). O wireframe abaixo é abreviado apenas para visualização; no formulário real, mostrar **a pergunta integral do Word** como rótulo acessível para cada uma das dez dimensões, das duas notas e das três abertas, preservando a sequência canônica. Não tratar a redação resumida do wireframe como pergunta publicada. As escalas e a alternativa “Não se aplica” seguem Q08; opção N/A não é texto literal do Word. `questionnaire_version` deve vir da autoridade da API; o ID técnico concreto permanece PENDING.
-
-## 2. Wireframe — abertura e formulário, desktop
-
-```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ DELPI                                                                     │
-│ Pesquisa de Satisfação do Cliente                                         │
-│ Sua avaliação ajuda a melhorar nossos produtos e serviços.               │
-│ Prazo da pesquisa: [período quando permitido pela API]                    │
-│ Aviso de finalidade/privacidade aprovado                                 │
-│                                          [Iniciar pesquisa]                │
-├───────────────────────────────────────────────────────────────────────────┤
-│ AVALIAÇÃO DOS SERVIÇOS — 10 DIMENSÕES                                    │
-│ Qualidade           [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Prazo de entrega    [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Atendimento         [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Agilidade           [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Comunicação         [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Suporte técnico     [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Suporte comercial   [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Flexibilidade       [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Confiabilidade      [1] [2] [3] [4] [5] [Não se aplica]                   │
-│ Parceria            [1] [2] [3] [4] [5] [Não se aplica]                   │
-├───────────────────────────────────────────────────────────────────────────┤
-│ SATISFAÇÃO GERAL*                   [1] [2] [3] [4] [5]                  │
-│ RECOMENDAÇÃO (NPS)*                [0] [1] [2] ... [9] [10]             │
-├───────────────────────────────────────────────────────────────────────────┤
-│ COMENTÁRIOS — opcionais                                                  │
-│ Pontos fortes                [____________________________________]      │
-│ O que melhorar               [____________________________________]      │
-│ Necessidades não atendidas   [____________________________________]      │
-│                                           [Revisar respostas]             │
-└───────────────────────────────────────────────────────────────────────────┘
-* Obrigatórias: seleção de uma alternativa em cada uma das dez dimensões e resposta nas duas notas gerais; os três comentários são opcionais. **No produto, exibir o texto integral das 15 perguntas do catálogo canônico; o wireframe usa títulos resumidos.**
-```
-
-**DECISÃO POSTERIOR DO SOLICITANTE (11/11/2026):** substituir a proposta anterior de formulário único por **três seções/etapas principais de preenchimento**, percorridas sequencialmente, para reduzir a fadiga. Depois, manter uma **quarta tela de revisão obrigatória**, com retorno para corrigir respostas, seguida de confirmação definitiva e sucesso. O wireframe contínuo acima é apenas referência do conteúdo; **não** é a navegação aprovada. Não criar quinze passos individuais.
-
-**DISTRIBUIÇÃO APROVADA PELO SOLICITANTE (11/11/2026):** exatamente **três etapas com cinco perguntas cada**, preservando a ordem literal do catálogo canônico: **etapa 1** = dimensões 01–05 (Qualidade, Prazo de entrega, Atendimento, Agilidade, Comunicação); **etapa 2** = dimensões 06–10 (Suporte técnico, Suporte comercial, Flexibilidade, Confiabilidade, Parceria); **etapa 3** = perguntas 11–15 (Satisfação geral 1–5, Recomendação 0–10 e as três perguntas abertas opcionais: Pontos fortes, Oportunidades de melhoria, Necessidades não atendidas). Após essas etapas, **revisão final obrigatória** e confirmação definitiva. Não substituir as perguntas literais por estes títulos resumidos.
-
-**PROGRESSO APROVADO PELO SOLICITANTE (11/11/2026):** exibir indicador percentual no topo das três etapas, atualizado **a cada escolha obrigatória concluída**, usando **exatamente 12 avaliações como denominador**: dez dimensões (nota de 1–5 ou seleção explícita de “Não se aplica”) + satisfação geral (1–5) + recomendação (0–10). Fórmula: `percentual = 100 × número de avaliações obrigatórias com seleção válida / 12`, arredondado somente para exibição; acompanhar por texto “X de 12 avaliações concluídas”. A seleção de `0` em recomendação é resposta válida; nenhuma seleção inicial conta como concluída. **Os três comentários opcionais não entram no numerador nem no denominador**: preenchê-los ou deixá-los vazios não altera o percentual, não bloqueia avanço/revisão e não impede alcançar 100%. Percentual de 100% indica preenchimento completo das avaliações obrigatórias, **não** envio ou gravação da resposta; a revisão e a confirmação definitiva permanecem obrigatórias. Ao voltar e alterar uma seleção, recalcular o progresso com base nas escolhas atuais; nenhum rascunho é persistido no backend.
-
-**Fluxo de navegação aprovado em nível funcional:** abertura pública → etapa 1/3 → etapa 2/3 → etapa 3/3 → revisão obrigatória → confirmação e sucesso. Ter **Anterior/Próxima** nas etapas com identificação clara da seção; permitir retorno para corrigir sem apagar respostas. Não efetuar POST nas transições entre seções. A revisão inclui as 15 perguntas e respostas/ausências opcionais, com aviso de imutabilidade depois da confirmação.
-
-### Decisão aprovada — avançar somente com a etapa completa (11/11/2026)
-
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** a navegação para a próxima etapa da UI-03 só é permitida depois que **todas as avaliações obrigatórias da etapa atual** tiverem escolha explícita; não deixar pendências para resolver somente na revisão final.
-
-- **Etapa 1 (perguntas 01–05):** exigir seleção em cada uma das cinco dimensões, por nota inteira de 1–5 **ou** “Não se aplica”; ambas contam como respondida, e deixar em branco não conta.
-- **Etapa 2 (perguntas 06–10):** mesmo critério nas cinco dimensões seguintes.
-- **Etapa 3 (perguntas 11–15):** exigir somente satisfação geral de 1–5 e recomendação de 0–10; os três comentários abertos continuam **opcionais**, sem bloquear avanço ou revisão quando vazios.
-- O botão **Próxima / Revisar respostas** deve validar a etapa atual, indicar visualmente os campos ainda sem seleção e conduzir o foco à primeira pendência para correção. Evitar perda dos campos já preenchidos e permitir **Anterior / Voltar e corrigir**; ao regressar e alterar uma seleção, o progresso deve refletir o estado atual.
-- O **percentual de progresso** é calculado sobre as **12 escolhas obrigatórias**, atualizado a cada seleção válida e independente da etapa; os três comentários opcionais não contam no cálculo. `0` em recomendação é resposta válida; 100% indica preenchimento, não envio. Decisão funcional **aprovada**, sem alterar a revisão final e confirmação.
-- **Segurança:** avanço entre etapas é somente estado local do formulário. **Não gravar rascunhos nem enviar respostas parciais** no backend; a `commercial-api` valida novamente todas as seleções e a janela/token no envio definitivo, com persistência única e resposta imutável.
-- **Estado:** decisão funcional e UX **APROVADA/DOCUMENTADA**, implementação e testes **PENDING**.
-
-### Decisão aprovada — edição direta por seção na revisão final (11/11/2026)
-
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** a tela de revisão final apresenta as respostas agrupadas em **três seções**, na ordem canônica, cada qual com **botão “Editar” próprio**. Esse botão retorna **diretamente** à etapa correspondente (1, 2 ou 3) para correção, sem exigir que o cliente percorra outras etapas para trás.
-
-- Seção 1: cinco dimensões 01–05; seção 2: cinco dimensões 06–10; seção 3: satisfação geral, recomendação e três comentários opcionais. Exibir notas, “Não se aplica” e indicação de comentário não preenchido, sem transformar opcionais em obrigatórios.
-- **Preservar as 15 respostas em memória local** ao sair da revisão, editar e retornar; não limpar outras seções. Na etapa editada, manter a validação das avaliações obrigatórias antes de permitir **“Voltar à revisão”**, com foco acessível nas pendências. O retorno deve ir à **revisão final**, sem obrigar novamente a passagem pelas etapas posteriores já completas; caso alguma esteja incompleta, bloquear envio e orientar a correção.
-- Recalcular o indicador de progresso aprovado (12 avaliações obrigatórias) após mudanças e reapresentar os valores atualizados na revisão. Diferenciar claramente **edição antes do envio** de resposta definitiva, que permanece imutável.
-- Não criar segundo formulário ou modal de edição. Reutilizar os controles do `plugins/public-hub` e componentes oficiais compatíveis; botões “Editar” com rótulo acessível que indique a seção de destino, navegação por teclado e preservação de foco quando apropriado.
-- **Sem gravação parcial:** transitar para editar ou voltar à revisão não chama a API; somente o botão definitivo **Confirmar e enviar** executa a operação única autorizada pelo token, após validação no backend. Testar correção das três seções, campos opcionais vazios, retorno sem perda, teclado e confirmação sem duplicidade.
-- **Status:** decisão funcional/UX **APROVADA e documentada**. UI-03, integração e testes **NÃO IMPLEMENTADOS**.
-
-## 3. Wireframe — revisão, envio e estados
+## 2. Fluxo
 
 ```text
-┌─ Revisar respostas ───────────────────────────────────────────────────────┐
-│ 10 dimensões: notas/N.A. | Satisfação geral: 4 | NPS: 9                 │
-│ Pontos fortes: ...  Melhorias: ...  Necessidades: ...                   │
-│ Após confirmar, esta resposta NÃO poderá ser editada.                    │
-│ [Voltar e corrigir]                     [Confirmar e enviar]            │
-└───────────────────────────────────────────────────────────────────────────┘
-                    ↓ POST atômico autorizado por token
-┌─ Confirmação ─────────────────────────────────────────────────────────────┐
-│ ✓ Obrigado por participar! Sua pesquisa foi registrada.                  │
-│ Não há segunda resposta para a empresa nesta campanha.                   │
-└───────────────────────────────────────────────────────────────────────────┘
-
-Estados alternativos via backend:
-[Campanha ainda não aberta] [Campanha encerrada]
-[Resposta já registrada] [Link inválido/indisponível]
-[Erro de conexão — tentar novamente com dados locais mantidos na sessão]
+Abertura ──Começar──▶ Etapa 1/3 ──Avançar──▶ Etapa 2/3 ──Avançar──▶ Etapa 3/3 ──Revisar respostas──▶ Revisão
+                      (perg. 1–5)            (perg. 6–10)           (perg. 11–15)                      │
+                         ▲  Voltar              ▲  Voltar              ▲                                 │ Editar (por seção)
+                         └──────────────────────┴──────────────────────┴─────────────────────────────────┘
+Revisão ──Enviar respostas (único POST)──▶ Agradecimento
+Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta já registrada · link inválido · indisponível
 ```
 
-### Decisão aprovada — confirmação com agradecimento simples (11/11/2026)
+- **Etapa 1:** perguntas 1–5 (Qualidade, Prazo de entrega, Atendimento, Agilidade, Comunicação).
+- **Etapa 2:** perguntas 6–10 (Suporte técnico, Suporte comercial, Flexibilidade, Confiabilidade, Parceria).
+- **Etapa 3:** pergunta 11 (Satisfação geral, 1–5), 12 (Recomendação, 0–10) e 13–15 (abertas, opcionais).
+- Transições entre etapas, revisão e edição são **estado local**; nenhuma chamada de rede até **Enviar respostas**.
 
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** após a **confirmação efetiva da gravação pela `commercial-api`**, substituir a experiência de preenchimento/revisão por uma **tela simples de agradecimento**: título **“Obrigado por participar!”**, mensagem breve informando que a avaliação foi registrada e valorizando a contribuição para melhorar produtos, serviços e relacionamento da DELPI. **Não exibir resumo das notas, respostas, comentários ou identificadores da empresa nessa tela**; não oferecer botão para responder novamente nem direcionar para páginas internas do Portal.
+## 3. Padrão visual aprovado (16/11/2026)
 
-- **Condição de sucesso:** a tela só aparece com confirmação autoritativa do backend após persistência da única resposta definitiva. Não inferir sucesso pelo clique, percentual de progresso 100%, estado local, timeout ou início do POST. Se a resposta já houver sido registrada, exibir o **estado específico “Resposta já registrada”**, não simular novo envio com sucesso.
-- **Mensagem de conclusão:** apresentar de modo acessível que o processo terminou e que a resposta não poderá ser alterada. Reutilizar padrões visuais do `PublicShell` e componentes já existentes no PluginUI, sem UI paralela, navegação adicional ou novo serviço.
-- **Privacidade:** a tela terminal não deve mostrar notas, comentários, token, dados de contato ou dados de cliente; não incluir publicidade, rastreamento de terceiros ou links a páginas de gestão.
-- **Estados alternativos permanecem distintos:** erro de conexão/timeout, campanha não aberta, encerrada, link inválido e duplicidade não produzem falso agradecimento. Se a API retornar um estado incerto após falha de rede, não refazer gravação automaticamente; orientar tentativa segura conforme contrato de unicidade do backend.
-- **Testes:** sucesso somente após commit, ausência de resumo, ausência de segundo envio, tratamento de conflitos e erro de rede, teclado/leitor de tela e celular. Após sucesso, desativar aviso de saída com respostas não salvas.
-- **Status:** **APROVADO/DOCUMENTADO**; UI-03 e integração reais ainda **NÃO IMPLEMENTADOS / NÃO TESTADOS**.
+### 3.1 Princípios
 
-### Decisão aprovada — apresentação numérica das escalas 1–5 (11/11/2026)
+1. **Tema claro fixo.** O formulário não oferece alternância claro/escuro e não segue o tema do sistema operacional.
+2. **Uma pergunta por cartão**, com o tema em letra pequena acima e a pergunta numerada com o **texto literal** do catálogo canônico.
+3. **Escala numérica limpa:** só os números nos botões; o significado fica nas pontas (“1 · Muito insatisfeito” / “5 · Muito satisfeito”) e, depois da escolha, numa linha de confirmação (“Sua nota: 4 · Satisfeito”).
+4. **“Não se aplica” discreto:** opção em formato de pílula com indicador redondo, abaixo da escala (celular) ou à direita após um divisor (computador). Nunca uma linha inteira com o mesmo peso das notas.
+5. **Título público fixo:** “Pesquisa de Satisfação de Clientes”. O **nome interno da campanha não aparece** para o cliente.
+6. **Ações sempre à mão no celular:** rodapé fixo com Voltar / Avançar.
+7. Sem gradientes, sem ilustrações, sem emojis, sem estrelas.
 
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** nas dez perguntas de dimensão e na pergunta de **satisfação geral**, usar **seleção numérica explícita de 1, 2, 3, 4 ou 5**, com **o significado da escala sempre visível**. Não substituir esses controles por estrelas, emojis ou símbolos sem valor numérico. Para as dez dimensões, oferecer **“Não se aplica”** como alternativa **exclusiva dentro do mesmo grupo de resposta**, claramente separada visualmente das cinco notas. Na satisfação geral, manter apenas 1–5, sem “Não se aplica”, conforme contrato.
+### 3.2 Tokens
 
-- **Legenda canônica da escala 1–5 (conforme Word):** 1 = Muito insatisfeito; 2 = Insatisfeito; 3 = Neutro; 4 = Satisfeito; 5 = Muito satisfeito. Exibir a interpretação para cada escolha, não depender somente de rótulos de extremos; fornecer nome acessível a cada opção.
-- **Seleção única:** marcar uma nota desmarca “Não se aplica” e vice-versa. Antes de qualquer seleção, a questão está **sem resposta** (não presumir nota padrão ou N/A). A escolha explícita de “Não se aplica” satisfaz o preenchimento obrigatório da dimensão, mas não compõe média da dimensão; não aplicar essa alternativa às duas notas gerais.
-- **Recomendação é outra escala:** a pergunta 12 mantém seleção numérica **0–10** com seus rótulos e comportamento próprio. Esta aprovação **não** altera a escala da recomendação nem a redação literal das 15 perguntas.
-- **Responsividade e acesso:** botões/controles com seleção visível, alvos adequados ao toque, foco e teclado, agrupamento semântico e contraste. Reutilizar primitiva comprovada do `@delpi/plugin-ui` compatível com `plugins/public-hub`; os nomes/exportações exatos dos controles continuam **TO_INVENTORY**. Não criar conjunto paralelo de estrelas/ratings.
-- **Interação com decisões anteriores:** a escolha válida atualiza imediatamente a contagem das 12 avaliações; a etapa só avança quando suas obrigatórias estão respondidas; revisão oferece “Editar” por seção. A API continua autoridade para validação final.
-- **Status:** experiência **APROVADA E DOCUMENTADA**, implementação/testes **PENDING**.
+Usar os tokens de marca já existentes em `plugins/public-hub/src/shell/brand-tokens.css` quando houver equivalente; os demais valores abaixo são locais do formulário (`form.css`).
 
-## 4. Inventário e escolha dos componentes visuais
-
-| Região | Componente/fonte existente | Aplicação |
+| Token | Valor | Uso |
 |---|---|---|
-| Shell, branding, responsividade e estado de load | `PublicShell`, `PublicLoadingSplash`, `PublicFallback` | `plugins/public-hub/src/shell/*` já implementados; **não duplicar** |
-| Página fullpage | `PublicPageDefinition` com `chrome: "fullpage"` | Registro em `src/shell/registry.ts` seguindo `customer-experience/pages.tsx` |
-| Blocos/organização | Padrões visuais do `public-hub/src/apps/customer-experience/FormPage.tsx`/`form.css`; `SectionCard` do PluginUI **se compatível com o shell público** | Reusar estrutura/estilo existente; evitar importar CSS Comercial autenticado |
-| Escalas e escolhas 1–5, N.A., NPS 0–10 | Componentes de controles de formulário **do PluginUI a confirmar no pacote exportado**; referência de comportamento de rating em `FormPage.tsx` | **TO_INVENTORY** para nomes exatos dos controles; não declarar que existe `RatingGroup` sem verificar |
-| Três comentários | Campo de texto longo do kit PluginUI existente, **a conferir exports/uso público** | Não construir textarea estilizado novo |
-| Ações e revisão | `ActionButton` do PluginUI se compatível; padrões de botões/confirm do formulário público existente | Componentes oficiais, sem modal próprio |
-| Ilustrações ícones | `LucideIconByName` exportado por PluginUI | Já usado no formulário público do Customer Experience |
-| Confirmação/erros | `PublicFallback` para falha inicial; feedback da view adaptado ao kit/padrão público | Diferenciar inválido, encerrado, enviado e conflito; não substituir tudo por 404 |
+| Marca / primária | `#0c6fb0` (`--pub-accent` claro) | Faixa do topo, botão primário, nota selecionada, barra de progresso |
+| Marca escura | `#0a5a8f` | Texto “Sua nota…”, texto de “Não se aplica” selecionado, hover do primário |
+| Fundo da página | `#f3f4f6` | Abaixo da faixa |
+| Cartão | `#ffffff`, borda `1px #e1e4e8`, raio `12px`, sombra `0 1px 2px rgba(16,24,40,.06)` | Todos os blocos |
+| Texto principal | `#1f2328` | Perguntas, valores |
+| Texto secundário | `#57606a` (contraste ≥ 4,5:1 sobre branco) | Rótulos, legendas, ajuda |
+| Borda de controle | `#c4ccd5` | Botões de nota, “Não se aplica”, campos de texto |
+| Fundo suave | `#eaf3fb` | Bloco da empresa na abertura; “Não se aplica” selecionado |
+| Erro | `#b42318` | Asterisco de obrigatória, mensagens e borda do cartão pendente |
+| Sucesso | `#1a7f37` | Círculo do agradecimento |
+| Aviso | fundo `#fff8e6`, borda `#f0d58c`, texto `#5c4400` | Aviso de imutabilidade na revisão |
+| Foco | contorno `3px #8fc3ea`, afastamento `2px` | Todo elemento interativo (`:focus-visible`) |
+| Fonte | `'Segoe UI', Inter, system-ui, -apple-system, sans-serif` | Toda a página |
 
-**Verificação importante:** o formulário público de referência usa JSX/HTML e CSS próprios; isso **não autoriza copiar seus elementos nativos estilizados** como componentes novos. Na implementação verificar as exportações e compatibilidade do PluginUI para cada campo, botão e grupo de escolha. Se faltar uma primitiva, registrar gap e aplicar Abstraction Gate, em vez de criar componentes exclusivos dentro da página. A semântica `form`, `label`, `fieldset` e `input` acessível pode ser usada como infraestrutura quando a biblioteca não fornecer encapsulamento, mas o visual deve vir da biblioteca/padrões existentes.
+### 3.3 Estrutura da página
 
-### Decisão aprovada — aviso de saída sem rascunho persistente (11/11/2026)
-
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** alertar o cliente sobre possível perda das respostas ao tentar abandonar o formulário **depois de iniciar o preenchimento e antes da confirmação definitiva**, sem persistir rascunhos no navegador ou no backend. Preservar as respostas apenas **na memória da página aberta**, enquanto o usuário navega entre as três etapas, revisa e corrige; não gravar em `localStorage`, `sessionStorage`, IndexedDB, cookie, URL, telemetria ou endpoints de rascunho.
-
-- **Navegação interna do formulário:** os botões Próxima, Anterior e Editar seção **não** disparam alerta de saída nem apagam escolhas; são transições da mesma experiência. Se houver um comando próprio de sair/cancelar, mostrar confirmação explícita e acessível antes de descartar o preenchimento.
-- **Saída, recarga e fechamento do navegador:** quando houver respostas ainda não enviadas, utilizar o mecanismo nativo de alerta antes de descarregar a página (`beforeunload`) **somente enquanto houver alterações não enviadas**, respeitando as restrições de ativação do navegador. Browsers podem não mostrar o aviso em todos os casos (especialmente celular, encerramento do aplicativo ou falhas); o texto do diálogo pode ser controlado pelo próprio navegador e **não é garantido**. Não prometer recuperação após recarga, fechamento ou interrupção.
-- **Saída por navegação interna do public-hub:** se o roteador permitir interceptação segura, exibir confirmação conforme os padrões existentes antes de deixar a rota, sem criar modal paralelo. Verificar o contrato do roteador e eventos reais na implementação; não bloquear fechamento do navegador por meios artificiais.
-- **Confirmação e estados terminais:** desativar o alerta depois que a API confirmar o envio definitivo ou apresentar um estado terminal sem dados a preservar. Durante erro de rede, manter os valores em memória para tentativa explícita enquanto a página continuar aberta; não declarar envio concluído antes do commit. Evitar avisos indevidos ao navegar para a tela de sucesso.
-- **Segurança/privacidade:** o token de convite e as respostas não são expostos a terceiros ou mecanismos persistentes. Nenhuma submissão parcial é feita; a `commercial-api` mantém validação final de token, unicidade e período da campanha.
-- **Testes de aceite:** navegar pelas três etapas/revisão sem alerta, tentar sair após responder, recarregar, fechar, retornar, confirmar envio, simular erro de rede, teclado e navegadores mobile/desktop; registrar limitações verificadas da plataforma.
-- **Estado:** decisão UX/funcional **APROVADA E DOCUMENTADA**; implementação e testes **PENDING**.
-
-## 5. Regras de UX e validações
-
-- **15 perguntas, mesma ordem/texto oficial do Word**: em **cada uma das dez dimensões** é obrigatória uma **seleção explícita**, entre nota inteira de 1–5 **ou** `Não se aplica` (sem exigir nota numérica quando a alternativa for N/A). Não permitir deixar dimensão em branco ao enviar; diferenciar estado inicial sem seleção de N/A marcado. Satisfação geral 1–5 e recomendação 0–10 também obrigatórias; três abertas opcionais. Backend valida as dez escolhas, sem aceitar omissão/estado intocado. O rascunho está **somente na memória do navegador** até o envio, sem API de salvar parcial.
-- **Nunca perguntar nome, e-mail ou CPF do respondente.** A associação é à empresa pelo token gerado na campanha. Não expor código/loja, carteira, outros clientes nem dados internos.
-- Revisão obrigatória antes do envio final; usuário pode voltar e corrigir antes de confirmar; após sucesso, imutável.
-- Desabilitar múltiplos cliques enquanto POST estiver pendente, mas **não usar disable como única garantia**: banco/servidor controlam unicidade e janela. Resposta concorrente retorna estado “já registrada”, sem duplicar.
-- Controles acessíveis pelo teclado, foco visível, legendas da escala, rótulos por dimensão, alternativa `Não se aplica` explícita, contraste e zoom. No celular, opções se acomodam sem rolagem horizontal excessiva; NPS deve ter alvos táteis adequados.
-- Texto de privacidade/finalidade deve ser validado pelo responsável LGPD; não publicar uma declaração jurídica inventada. Sem analytics de terceiros ou propagação de token em logs/referer.
-- Erro de rede mantém estado local para tentativa explícita, sem prometer que a resposta foi salva antes do commit.
-- Sem edição das quinze perguntas no Portal e sem fluxo de envio de convites nesta página.
-
-## 6. Contrato de rede / segurança
-
-| Momento | Endpoint da commercial-api | Retorno seguro |
+| Região | Celular (< 600 px) | Computador (≥ 600 px) |
 |---|---|---|
-| Abrir link | `GET /public/satisfaction-surveys/{token}` | Perguntas oficiais/versionamento, estado da janela e informações mínimas necessárias |
-| Confirmar envio | `POST /public/satisfaction-surveys/{token}/response` | Confirmação depois de persistir; conflito `already_submitted` sem vazar identidade |
+| Faixa da marca | Altura 112 px (etapas/revisão) ou 168 px (abertura/agradecimento), cor primária, largura total | Altura 220 px |
+| Coluna de conteúdo | Margem lateral 16 px; sobrepõe a faixa em 80 px (112 px na abertura) | Largura 760 px, centralizada; sobrepõe a faixa em 160 px |
+| Espaço entre cartões | 12 px | 16 px |
+| Padding do cartão | 20 px | 28 px vertical / 32 px horizontal |
+| Rodapé de ações | **Fixo** na base (`position: sticky`), fundo branco, borda superior e sombra leve; botão primário ocupa a largura restante | No fim da coluna, alinhado à direita; mensagem de pendência à esquerda |
 
-`fetch` sem bearer/cookie interno; classe/cliente HTTP isolado em `plugins/public-hub/src/apps/commercial/api.ts`. A exceção pública no middleware da `commercial-api` deve ser delimitada estritamente a métodos/paths e validação de token, e o gateway precisa encaminhar os endpoints corretamente.
+**Cabeçalho das etapas (cartão superior):** logo Minha Delpi (34 px de altura no celular, 44 px no computador) · título “Pesquisa de Satisfação de Clientes” (20 px / 28 px, negrito) · “Respondendo por **{empresa}**” · divisor · linha “Etapa N de 3 · {nome da etapa}” com “X de 12” à direita · barra de progresso (6 px, raio 3 px). No computador, “Responda até {data}” aparece à direita do logo.
+
+**Logo:** o shell público atual desenha logo e botão de tema próprios. Para esta página, **o shell não deve desenhar logo nem botão de tema**; o logo entra dentro do cartão do cabeçalho (ver §5).
+
+### 3.4 Componentes do formulário
+
+**Cartão de pergunta**
+- Rótulo do tema: 12 px, maiúsculas, `letter-spacing .06em`, cor secundária (ex.: QUALIDADE).
+- Pergunta: “{n}. {texto literal}” em 16 px (17 px no computador), peso 600, altura de linha 1,4; asterisco vermelho nas obrigatórias; “(opcional)” em cor secundária, peso normal, nas abertas.
+- Semântica: `fieldset` com `legend`; cada opção com nome acessível completo (ex.: “4 — Satisfeito”).
+- Pendente após tentativa de avançar: borda do cartão em vermelho + mensagem “Selecione uma nota ou “Não se aplica”.” (13 px, 600). Nas perguntas 11 e 12: “Selecione uma nota.”
+
+**Escala 1–5 (perguntas 1–11)**
+- Celular: grade de 5 colunas iguais, espaço 8 px, altura 48 px. Computador: botões de 64 × 52 px, espaço 10 px.
+- Botão normal: fundo branco, borda `#c4ccd5`, raio 8 px, número 17–18 px peso 600. Selecionado: fundo e borda primária, número branco. `aria-pressed` (ou `radio` nativo estilizado) refletindo a seleção.
+- Legenda das pontas abaixo da escala, 12–13 px, cor secundária: “1 · Muito insatisfeito” à esquerda e “5 · Muito satisfeito” à direita.
+- Após escolha: “Sua nota: {n} · {significado}” (13–14 px, 600, marca escura). Significados: 1 Muito insatisfeito · 2 Insatisfeito · 3 Neutro · 4 Satisfeito · 5 Muito satisfeito.
+
+**Não se aplica (perguntas 1–10 apenas)**
+- Pílula de 44 px de altura (52 px no computador), raio total, padding 16 px, borda `#c4ccd5`, com indicador redondo de 18 px à esquerda.
+- Selecionado: borda primária, fundo `#eaf3fb`, texto marca escura em 600, indicador preenchido (anel de 6 px na cor primária).
+- Exclusivo com as notas do mesmo grupo: escolher nota desmarca N/A e vice-versa.
+- Posição: abaixo da linha de confirmação no celular; à direita da escala, após divisor vertical de 1 px, no computador.
+
+**Escala de recomendação 0–10 (pergunta 12)**
+- Legenda **acima** da escala: “0 · Nada provável” à esquerda e “10 · Extremamente provável” à direita.
+- Celular: grade de 6 colunas — 0 a 5 na primeira linha e 6 a 10 na segunda —, botões de 46 px de altura, espaço 8 px. Computador: uma linha com os 11 botões.
+- Mesmo estilo de normal/selecionado da escala 1–5, **sem cores por faixa** (nada de vermelho/amarelo/verde), para não induzir a nota. `0` é resposta válida.
+- Após escolha: “Sua nota: {n}”.
+
+**Perguntas abertas (13–15)**
+- Rótulo “Sua resposta” (13 px, secundário) ligado ao campo; `textarea` com altura mínima de 96 px, padding 12 px, borda `#c4ccd5`, raio 8 px, 15 px, redimensionável na vertical; texto de exemplo “Escreva sua resposta”.
+- Sem contador de caracteres nesta entrega; o limite de tamanho continua o do backend e, se excedido, a mensagem de erro aparece no próprio cartão.
+
+**Barra de progresso:** trilho `#e6eaef`, preenchimento primário, `role="progressbar"` com valor atual; texto “X de 12” (cabeçalho) e “12 de 12 avaliações obrigatórias concluídas” (revisão).
+
+**Botões**
+- Primário: altura 48 px, raio 8 px, fundo primário, texto branco 16 px peso 600; no celular ocupa a largura disponível no rodapé.
+- Secundário: mesma altura, fundo branco, borda `#d0d7de`, texto principal.
+- “Editar” da revisão: 36 px de altura, borda `#d0d7de`, texto primário com ícone de lápis; nome acessível “Editar etapa N”.
+- Enquanto envia: primário desabilitado com texto “Enviando…”; nunca reenviar automaticamente.
+
+### 3.5 Telas
+
+| Tela | Conteúdo, de cima para baixo |
+|---|---|
+| **Abertura** | Faixa 168 px · cartão: logo (44 px) · rótulo “PESQUISA DE SATISFAÇÃO” · título “Pesquisa de Satisfação de Clientes” (26 px) · bloco suave “Respondendo em nome da empresa / **{empresa}**” · frase de propósito · lista com ícones de traço: “15 perguntas em 3 etapas, com revisão antes de enviar”, “Responda até **{data de término}**”, “Não pedimos seus dados pessoais” · botão **Começar** (largura total) · texto de privacidade (12 px) |
+| **Etapas 1–3** | Cabeçalho com progresso · 5 cartões de pergunta · rodapé fixo: mensagem de pendência (se houver) e **Voltar** (etapas 2 e 3) / **Avançar** (etapas 1 e 2) ou **Revisar respostas** (etapa 3) |
+| **Revisão** | Faixa 112 px · cartão: logo · “Revise suas respostas” · orientação · barra 100% · três cartões de seção (“Avaliação dos serviços — parte 1”, “— parte 2”, “Visão geral e comentários”), cada um com **Editar** e linhas “tema → valor” (“4 · Satisfeito”, “Não se aplica”, “9”; aberta vazia em itálico “Não respondida”; aberta preenchida em bloco abaixo do rótulo) · aviso amarelo “Depois de enviar, as respostas não poderão ser alteradas.” · rodapé **Voltar** / **Enviar respostas** |
+| **Agradecimento** | Faixa 168 px · cartão centralizado: logo · círculo verde 72 px com ✓ · “Obrigado por participar!” · “Sua avaliação foi registrada. Ela ajuda a Delpi a melhorar produtos, serviços e o relacionamento com sua empresa.” · “Você já pode fechar esta página.” Sem resumo de notas, sem botões |
+| **Estados alternativos** | Mesmo layout do agradecimento (faixa + cartão centralizado + logo), sem círculo verde; título e mensagem atuais de `SurveyStateView` mantidos; período exibido como “Período da pesquisa: dd/mm/aaaa a dd/mm/aaaa” quando aplicável; “Tentar novamente” só em indisponibilidade temporária. **Não exibir o nome interno da campanha** |
+
+### 3.6 Textos (microcopy vigente)
+
+| Lugar | Texto |
+|---|---|
+| Título público | Pesquisa de Satisfação de Clientes |
+| Empresa (abertura) | Respondendo em nome da empresa · **{nome}** |
+| Empresa (etapas) | Respondendo por **{nome}** |
+| Propósito | Sua avaliação ajuda a Delpi a melhorar produtos, serviços e o relacionamento com sua empresa. |
+| Prazo | Responda até **{dd/mm/aaaa}** (data de término no fuso America/Sao_Paulo, **sem hora**) |
+| Botões | Começar · Avançar · Voltar · Revisar respostas · Editar · Enviar respostas · Enviando… · Tentar novamente |
+| Pendência no rodapé | Falta 1 avaliação nesta etapa. / Faltam {n} avaliações nesta etapa. |
+| Revisão | Revise suas respostas · Confira antes de enviar. Use “Editar” para corrigir uma etapa sem perder as demais respostas. |
+| Aberta vazia na revisão | Não respondida |
+| Privacidade | **PENDENTE:** texto a ser fornecido/validado pelo responsável LGPD. Até lá, não publicar declaração jurídica inventada; a frase “Não pedimos seus dados pessoais” é fato do produto e pode ser exibida |
+
+**Empresa ausente:** se a API devolver `companyName` nulo, omitir o bloco/linha da empresa (não exibir “—” nem código/loja).
+
+### 3.7 Responsividade e acessibilidade
+
+- Ponto de quebra único em 600 px. Testar em 360, 375, 390, 768 e 1280 px de largura; **nenhuma palavra pode quebrar no meio** e não pode haver rolagem horizontal.
+- Alvos de toque ≥ 44 × 44 px (exceto “Editar”, 36 px, com área clicável ampliada por padding).
+- Teclado: Tab percorre as opções na ordem; Espaço/Enter seleciona; Enter **nunca** envia o formulário; foco vai para a primeira pendência ao tentar avançar.
+- Leitor de tela: grupos com `legend`, opções com nome completo (“4 — Satisfeito”), progresso anunciado, mensagens de erro ligadas ao grupo (`aria-describedby`), estados terminais com `role="status"`/`"alert"`.
+- Zoom de 200% sem perda de conteúdo.
+
+## 4. Regras funcionais vigentes (inalteradas desde 11/11/2026)
+
+1. **Obrigatoriedade:** cada dimensão (1–10) exige nota 1–5 **ou** “Não se aplica”; perguntas 11 e 12 exigem nota; 13–15 opcionais. Nenhuma opção vem pré-selecionada.
+2. **Progresso:** `100 × avaliações obrigatórias respondidas ÷ 12`; comentários não contam; recalcular a cada mudança; 100% não significa enviado.
+3. **Avanço por etapa:** Avançar/Revisar só com a etapa completa; senão marcar pendências, mostrar a contagem no rodapé e levar o foco à primeira.
+4. **Revisão obrigatória** com **Editar** por seção, que leva direto à etapa e volta com **Voltar à revisão**, preservando todas as respostas.
+5. **Envio único:** só “Enviar respostas” faz o POST; botão desabilitado enquanto envia, mas a unicidade é garantida pela API; conflito mostra “Resposta já registrada”, nunca falso sucesso.
+6. **Agradecimento** somente após confirmação da API.
+7. **Sem rascunho persistente:** respostas só na memória da página (nada em `localStorage`, `sessionStorage`, IndexedDB, cookie ou URL); aviso nativo de saída (`beforeunload`) enquanto houver respostas não enviadas, desligado após o envio ou em estado terminal.
+8. **Privacidade:** nunca pedir nome, e-mail ou CPF do respondente; não exibir código/loja, token, dados internos, nome interno da campanha; sem rastreamento de terceiros.
+
+## 5. Implementação (para o pedido de execução)
+
+**Escopo:** somente `plugins/public-hub`. Nenhuma alteração de backend, contrato, migração ou permissão.
+
+| Área | O que fazer |
+|---|---|
+| `src/apps/commercial/FormPage.tsx` | Reescrever a marcação conforme §3 (cabeçalho, cartões, escalas, N/A, rodapé fixo, revisão, agradecimento). **Manter** a lógica de estado, validação, foco, `beforeunload` e envio existentes |
+| `src/apps/commercial/form.css` | Substituir pelo padrão de §3.2–§3.4 (tema claro fixo; não usar variáveis do tema escuro) |
+| `src/apps/commercial/SurveyStateView.tsx` | Aplicar o layout de estados alternativos (§3.5); remover exibição do nome da campanha |
+| `src/apps/commercial/surveyForm.ts` | Reaproveitar sem mudança de regra; ajustar apenas textos de etapa se necessário |
+| `src/apps/commercial/pages.tsx` + shell | Página deve renderizar **sem botão de tema e sem logo do shell** e **forçar tema claro**. Menor solução sugerida: opção opcional na definição da página (ex.: `theme: "light"` e/ou `chrome` sem decoração) tratada em `PublicShell`, com padrão inalterado para as demais apps públicas. Aplicar Abstraction Gate e preservar as outras páginas |
+| Logo | Usar `/p/logoMinhaDelpi.svg`. **Bloqueio observado:** em HML, em 16/11/2026, o arquivo respondeu **403** (nginx) — investigar o `public-hub/nginx.conf`/gateway antes de aceitar a entrega |
+| Testes | Atualizar `FormPage.test.tsx`/`surveyForm.test.ts`: seleção e exclusividade N/A, pendência e foco, progresso 12, Editar por seção, envio único, agradecimento, estados alternativos, ausência do nome da campanha, ausência do botão de tema; manter os testes de rede (`api.test.ts`) |
+
+**Fora do escopo desta entrega:** contador de caracteres, salvar rascunho, tema escuro, personalização de perguntas, envio de convites, imagem de fundo na faixa.
+
+**Regra visual da página pública (substitui a regra de 11/11/2026):** o formulário público tem **visual próprio** em `form.css`, por rodar fora do Portal, mas deve reutilizar o shell (`PublicShell`, rotas e carregamento), os tokens de marca do `public-hub` e a lógica já existente. Não criar novo kit de componentes nem copiar CSS do Portal autenticado.
+
+## 6. Estado observado em HML (16/11/2026) — gaps a corrigir
+
+Observado no link de uma empresa pendente (sem envio de resposta).
+
+| # | Gap | Origem |
+|---|---|---|
+| G1 | Logo do shell quebrado: `GET /p/logoMinhaDelpi.svg` → **403** | Observado (requisição no navegador) |
+| G2 | No celular, rótulos das notas quebram no meio da palavra (“Insatisfeit/o”) | Observado em 375 px |
+| G3 | “Não se aplica” ocupa linha inteira com o mesmo peso das notas | Observado |
+| G4 | Perguntas sem nome do tema e sem separação; etapa vira um bloco contínuo | Observado |
+| G5 | Recomendação 0–10 quebra 6+5 sem legenda 0/10 | Observado em 375 px |
+| G6 | Abertura com informações soltas e prazo com hora (“01/11/2026 00:00 a 31/12/2026 23:59”) | Observado |
+| G7 | Botão de tema sobrepõe o topo do conteúdo no celular | Observado |
+| G8 | Nome interno da campanha exibido ao cliente (ex.: “HML - Validacao…”) | Observado |
+| G9 | Link de convite usa o endereço interno de HML (`https://192.168.1.237:18443`), inacessível fora da rede | Observado; configuração `PUBLIC_BASE_URL` de HML. **Não é ajuste de tela**; requisito do gate de produção (endereço público acessível externamente) |
 
 ## 7. Critérios de aceite
 
-1. Link gerado por Marketing abre via `/p/commercial/form/{token}` fora do Portal autenticado.
-2. Textos, ordem e escalas exatas da fonte Word; revisão antes do POST.
-3. Sem pedido de identificação pessoal; uma única resposta por empresa/campanha e estado “já respondido”.
-4. Fuso/data no backend; link expirado/antes do período apresenta mensagem apropriada.
-5. Erros de rede, formulário inválido e indisponibilidade de API não causam confirmação falsa.
-6. Layout mobile/tablet/desktop, teclado, zoom, foco e leitores de tela; componentes e estilos do kit público reutilizados, sem componentes visuais nativos novos.
-7. Token protegido, sem terceiros/telemetria/log e sem acesso de cliente a rotas internas.
-8. Testes de frontend, backend público e concorrência; **nenhuma capability de submissão externa via CAIO**.
-
-**Referências de execução:** `plugins/public-hub/src/shell/{routing.ts,registry.ts,PublicShell.tsx,types.ts}`, `src/apps/customer-experience/{pages.tsx,FormPage.tsx,api.ts}`, `commercial-api/commercial_app/middleware/auth_middleware.py`, `SURVEY-FIRST-RELEASE-CONTRACT.md`.
+1. Visual igual à [referência](./UI-03-REFERENCIA-VISUAL.html) nas seis telas, em celular (375 px) e computador (1280 px), em tema claro, sem botão de tema.
+2. Gaps G1–G8 resolvidos; G9 registrado no plano de produção.
+3. 15 perguntas com texto e ordem literais do catálogo; nenhuma seleção inicial.
+4. Regras de §4 verificadas por testes automatizados e em HML, sem POST antes de “Enviar respostas”.
+5. Acessibilidade de §3.7 verificada (teclado, leitor de tela, zoom 200%, alvos de toque).
+6. Demais páginas públicas do `public-hub` sem regressão visual (shell e tema).
+7. Homologação visual pelo solicitante em HML; **nenhuma publicação em produção** sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).

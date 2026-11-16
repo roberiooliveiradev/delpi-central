@@ -15,7 +15,7 @@ O [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) permanece como **visão 
 |---|---|
 | Página principal — Resultados | [UI-01](./UI-01-RESULTADOS-PESQUISA.md) |
 | Página de Configuração e detalhe de campanha | [UI-02](./UI-02-CONFIGURACAO-PESQUISAS.md) |
-| Página pública de respostas | [UI-03](./UI-03-FORMULARIO-PUBLICO.md) |
+| Página pública de respostas | [UI-03](./UI-03-FORMULARIO-PUBLICO.md) — especificação vigente com padrão visual aprovado em 16/11/2026 ([referência visual](./UI-03-REFERENCIA-VISUAL.html)); visual próprio no `public-hub`, fora da regra “só PluginUI” |
 | Integração no Início: card Marketing | [UI-04](./UI-04-INICIO-CARD-MARKETING.md) |
 | Integração na Visão Geral: seção Pesquisa de Satisfação do Cliente | [UI-05](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md) |
 

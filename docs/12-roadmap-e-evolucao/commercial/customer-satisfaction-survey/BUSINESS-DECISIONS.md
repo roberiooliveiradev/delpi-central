@@ -208,6 +208,27 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Resposta pelo plano:** Monitorar IGS, NPS, taxa de resposta (respondentes ÷ convidados), médias por dimensão, percentuais satisfeitos (4–5) e críticos (1–2), evolução semestral/anual, planos de ação concluídos (concluídos ÷ identificados); consolidar em até cinco dias após a pesquisa, incluindo comentários e clientes críticos (seções 8–9, página 4). O processo proposto também cobre classificação, ação e retorno aos clientes com críticas relevantes.
 **PENDING:** Owner e aceitação formal, evidência de medição do prazo, indicadores mínimos da primeira entrega e testes de segurança/operacionais. Não interpretar o prazo como SLA de processamento automático em tempo real.
 **Impacto:** Base objetiva para critérios de aceite, sem aprovação automática de backlog técnico.
+## F. Experiência visual
+
+### Q21 — Padrão visual do formulário público (16/11/2026)
+
+**Decisão do solicitante (16/11/2026), após revisão do formulário em HML e de maquete navegável:** o formulário de respostas adota o padrão *clean* de formulários como Microsoft Forms/Google Forms — “é exatamente assim que eu quero o formulário para respostas”. Especificação vigente e referência visual: [UI-03](./UI-03-FORMULARIO-PUBLICO.md) e [UI-03-REFERENCIA-VISUAL.html](./UI-03-REFERENCIA-VISUAL.html).
+
+**Decisões de 11/11/2026 substituídas:**
+
+| Antes (11/11/2026) | Agora (16/11/2026) |
+|---|---|
+| Seguir o tema do shell público (claro/escuro, com botão de tema) | **Tema claro fixo**, sem botão de tema |
+| Significado escrito sob cada nota 1–5 (opção A da apresentação numérica) | Legenda apenas nas pontas (1 · Muito insatisfeito / 5 · Muito satisfeito) **mais** confirmação do significado da nota escolhida (“Sua nota: 4 · Satisfeito”) |
+| Reaproveitar exclusivamente componentes do PluginUI, sem CSS próprio | Formulário público com **visual próprio** em `form.css` do `public-hub`, reutilizando shell, tokens de marca e lógica existentes; sem novo kit de componentes |
+| Título com o nome da campanha | **Título público fixo** “Pesquisa de Satisfação de Clientes”; nome interno da campanha não aparece ao cliente |
+
+**Decisões novas:** “Não se aplica” como opção discreta separada das notas; recomendação 0–10 com legenda “0 · Nada provável / 10 · Extremamente provável”, em duas linhas (0–5 e 6–10) no celular e sem cores por faixa; uma pergunta por cartão com o tema acima; rodapé de ações fixo no celular; microcopy de botões “Começar / Avançar / Voltar / Revisar respostas / Editar / Enviar respostas”; prazo exibido como data de término sem hora.
+
+**Mantidas sem alteração:** três etapas de cinco perguntas, progresso sobre 12 avaliações obrigatórias, avanço só com etapa completa, revisão com Editar por seção, envio único, agradecimento simples após confirmação da API, aviso de saída sem rascunho persistente, privacidade e contratos de rede.
+
+**Estado:** decisão **APROVADA**; implementação (rework visual de `plugins/public-hub/src/apps/commercial/`) **PENDENTE**.
+
 ## Já definido pelas fontes — não perguntar novamente sem necessidade
 
 - Periodicidade desejada: duas campanhas por ano, janelas maio/junho e novembro/dezembro.

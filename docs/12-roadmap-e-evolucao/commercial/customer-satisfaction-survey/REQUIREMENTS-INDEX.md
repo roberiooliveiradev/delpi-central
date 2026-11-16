@@ -113,7 +113,7 @@
 | [FRONTEND-FIRST-RELEASE-PLAN.md](./FRONTEND-FIRST-RELEASE-PLAN.md) | Planejamento do frontend: navegação interna, formulário público, resultados, contratos e testes | Na implementação do plugin Comercial |
 | [UI-01-RESULTADOS-PESQUISA.md](./UI-01-RESULTADOS-PESQUISA.md) | Página de Resultados: wireframe, filtros, indicadores, gráficos, tabelas e inventário PluginUI | Especificar/desenvolver resultados |
 | [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md) | Página de Configuração: campanhas, participantes, cópia de convites, estados e componentes | Especificar/desenvolver gestão |
-| [UI-03-FORMULARIO-PUBLICO.md](./UI-03-FORMULARIO-PUBLICO.md) | Página pública: 15 questões, revisão e submissão, reuso public-hub/PluginUI | Especificar/desenvolver formulário |
+| [UI-03-FORMULARIO-PUBLICO.md](./UI-03-FORMULARIO-PUBLICO.md) | **Especificação vigente (16/11/2026)** do formulário público: padrão visual clean aprovado, telas, tokens, microcopy, regras e gaps observados em HML; referência visual em [UI-03-REFERENCIA-VISUAL.html](./UI-03-REFERENCIA-VISUAL.html) | Antes do rework visual do formulário |
 | [UI-04-INICIO-CARD-MARKETING.md](./UI-04-INICIO-CARD-MARKETING.md) | Integração no Início: card Marketing, navegação e capacidade | Inserir entrada no hub existente |
 | [UI-05-VISAO-GERAL-SECAO-PESQUISA.md](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md) | Integração na Visão Geral: seção única de indicadores consolidados | Integrar resumo existente |
 | [UI-06-RESPOSTAS-POR-EMPRESA.md](./UI-06-RESPOSTAS-POR-EMPRESA.md) | Lista privada respondentes/pendentes; avatar; navegação para UI-07 | Especificar/desenvolver consulta identificada |
