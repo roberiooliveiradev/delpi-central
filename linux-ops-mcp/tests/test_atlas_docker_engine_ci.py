@@ -17,6 +17,9 @@ import httpx
 import pytest
 
 from linux_ops_mcp.deploy_host_receipt import verify_host_receipt
+from linux_ops_mcp.deploy_host_runtime_v2 import (
+    issue_host_runtime_receipt_v2, verify_host_runtime_receipt_v2,
+)
 from linux_ops_mcp.deploy_host_signer import (
     SignedReleaseRecord, _DOMAIN, issue_host_receipt,
 )
@@ -103,3 +106,30 @@ def test_real_engine_release_image_binding_and_signed_receipt():
     assert not proof.checkout_clean
     assert not proof.migrations_safe
     assert not proof.rollback_ready
+
+    async def sign_v2():
+        transport = httpx.AsyncHTTPTransport(uds="/var/run/docker.sock")
+        try:
+            return await issue_host_runtime_receipt_v2(
+                target=TARGET, release_record=signed,
+                inspector=DockerReadOnlyInspect(transport=transport),
+                release_key=RELEASE_KEY, host_key=HOST_KEY,
+                challenge=CHALLENGE, now=now,
+            )
+        finally:
+            await transport.aclose()
+
+    receipt_v2 = asyncio.run(sign_v2())
+    snapshot = verify_host_runtime_receipt_v2(
+        receipt_v2, secret=HOST_KEY, target=TARGET,
+        expected_challenge=CHALLENGE, now=now,
+    )
+    assert snapshot.running_image_id == measured.image_id
+    assert snapshot.container_id == measured.container_id
+    assert snapshot.container_name == TARGET.container_name
+    assert snapshot.compose_project == TARGET.compose_project
+    assert snapshot.signature_verified and snapshot.challenge_bound
+    assert not snapshot.checkout_clean
+    assert not snapshot.migrations_safe
+    assert not snapshot.rollback_ready
+    assert not snapshot.challenge_consumed
