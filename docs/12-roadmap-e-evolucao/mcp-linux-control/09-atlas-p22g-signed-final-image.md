@@ -1,6 +1,6 @@
 # ATLAS P2.2g | Imagem final e atestacao assinada do Public Hub
 
-**Data:** 2026-11-16. **Estado:** candidato em branch/PR; producao nao alterada. **Owner:** TI DELPI.
+**Data:** 2026-11-16. **Estado atual:** PR #193 mesclada; `CI_SIGNED_RELEASE_PASS / PROD_NOT_PROMOTED / HOST_NOT_VERIFIED`. **Owner:** TI DELPI.
 
 ## Objetivo e escopo
 
@@ -75,3 +75,22 @@ O novo CI da PR deve ainda demonstrar que os 140 testes e a build TypeScript/Vit
 **Enforcement transversal paralelo:** [run 43859759564](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43859759564) de arquitetura marcou `IMMUTABLE_MIGRATION_MUTATION` para `api-delpi/migrations/plugins/engineering/V024__prc_record_flags.sql`, sem qualquer modificacao nesse arquivo no diff da PR. O checkout do job era um merge virtual do commit `675b...` com `main` em `e76018eea9191b11e64eac3cb43b7839ce72480c`. Essa revisao de main mudou a migration (blob `70cdd37c...` versus `bd11a049...` na base da PR), mas em `3ba6c292f64c82e318a2b4be73c91c4a0e633bfe` ela voltou ao blob `bd11a049...`, confirmado por consulta GitHub. **Nenhum guardrail foi alterado/desativado; reexecutar CI sobre merge virtual atualizado.**
 
 O verificador independente `delpi-verifier`, emissao assinada apos `main`, verificacao no runtime, grants e PREPARE/ACT **ainda nao estao concluidos**. Mesmo com CI verde, a PR permanece rascunho e nao autoriza deploy automatico nem promocao do host.
+
+## P2.2g encerramento no CI: release assinada comprovada (16/11/2026)
+
+**Confirmacoes observadas no GitHub (autoridade CI, nao host):**
+- PR [#193](https://github.com/roberiooliveiradev/delpi-central/pull/193) mesclada em `main`, merge commit `139b1eab2cbe95480f95c79c53f52b8ec2e0a791`. O primeiro [run pos-merge 43860978683](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43860978683) bloqueou corretamente a release: 139/140 testes, com um teste intermitente de restauracao do CT-99. Nenhuma imagem assinada foi produzida por esse run.
+- Correcao restrita ao **teste** `plugins/public-hub/src/apps/production-control/CockpitHandoff.test.tsx`, commit direto `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`: a assercao antiga checava a ausencia de CT-99 no picker **antes de a enumeracao assíncrona finalizar**, podendo passar prematuramente e deixar CT-63 visivel. A nova assercao aguarda estado positivo `.pcp-pub__hero-code = CT-99`, exige picker CT-63 ausente e confirma que nao aparece botao de detalhes de OP inexistente. Nenhuma funcao runtime modificada ou teste removido.
+- [GitHub Actions 43863936825](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43863936825), evento `push`, ref `main`, SHA **`f81ddd0075de1e4ef8bb68ca58791e9c43e70759`**: workflow **completed/success**, jobs `Full Git SHA label...`, `Public Hub tests...`, `Build, publish and sign immutable final image (main only)` com **success**. Os 140 testes Vitest, Vite bundle, lint estrito dos fontes alterados e testes do gate OCI passaram. `Build final production image without publishing` = skipped esperado, pois reservado a PR.
+- Publicacao efetiva **GHCR tag `ghcr.io/roberiooliveiradev/delpi-public-hub:sha-f81ddd0075de1e4ef8bb68ca58791e9c43e70759`**. **Digest do manifesto (sujeito assinado): `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`**. **Docker image config digest/ID da imagem publicada: `sha256:1a4cfd5d0370e35739cb679d3c0170845e55213488c2c5f7c7d249afba5365a9`**. O manifesto e o ID Docker sao identificadores diferentes e nao podem ser permutados.
+- `actions/attest@v4` emitiu atestacao com certificado publico Sigstore, incluiu registro no Rekor e publicou a atestacao em [GitHub Attestation #68104175](https://github.com/roberiooliveiradev/delpi-central/attestations/68104175) e no registry. O step `gh attestation verify` do **mesmo run** concluiu **success**, com `--repo`, `--signer-workflow`, `--source-ref refs/heads/main`, `--source-digest f81ddd...`, emissor OIDC oficial, SLSA v1 e `--deny-self-hosted-runners`.
+
+**Estado operacional separado:** existe evidencia de release publicada/assinada/validada pelo CI, mas **nao existe evidencia de promocao desta release ao srv-api**. A unica leitura de runtime PROD informada anteriormente foi `ImageID=sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb` na revisao `03cecb7ed90946c799a66ca9b22b45beb221282e`. E diferente do ImageID da release assinada. Esse readback anterior nao e observacao atual, e **nao** permite afirmar que a versao produtiva foi alterada, corresponde ao digest assinado ou esta saudavel. Nenhum deploy PROD/HML foi executado pelo assistente neste incremento.
+
+**Gate seguinte P2.2h, ainda nao implementado:** preparar plano versionado, aprovado e fail-closed de **promocao por digest fixo** (sem `docker compose build` local), owner/rollback, readback OCI da imagem efetivamente ativa no container `delpi-public-hub`, health e smoke, verificacao independente `delpi-verifier` e auditoria. O verificador read-only existente pode ser exercitado **apos** a promocao aprovada com:
+
+```bash
+bash infra/scripts/verify-public-hub-release.sh f81ddd0075de1e4ef8bb68ca58791e9c43e70759 sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a prod
+```
+
+**Esperado antes de promocao:** `[BLOCKED]` por ausencia de imagem local vinculada ao digest ou ImageID do container divergente. Isso nao e falha do CI; e bloqueio seguro do gate de runtime. **Nao fazer `docker pull`/deploy como efeito implicito desta verificacao.** PREPARE/ACT, grants Core, migracoes e executor continuam inativos.
