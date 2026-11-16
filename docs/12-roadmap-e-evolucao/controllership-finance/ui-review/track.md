@@ -40,6 +40,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U10 Desempenho BFF e perfis | DONE | `aefd74682d` |
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
 | U14 Refinamento visual + defeitos da seleção + CLARA fora do Portal (F0–F5, com verificador) | DONE | [prompt](./prompts/U14-acabamento-visual.md) · [report](./report-u14.md) |
+| U15 Polimento (tema gráfico, daily AC-SEL-3, hero 390, KPIs 2 col) | DONE | [prompt](./prompts/U15-polimento.md) · [report](./report-u15.md) · residual P4b kit |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | DONE | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 | U13 Residuais da U12 (X1–X3) | DONE | `f546acd388` + tag `rollback-ui-review-u13-controllership-finance` |
@@ -382,3 +383,16 @@ Pedido ao owner: conferência visual em PROD (Pendentes, tabela 1440, barras+day
 PROD, 1440×900 e 390×844. PASS: «Pendentes» sem corte; tabela de ocorrências em 1.341 px (chave `columns:v2`, «Campo» oculto); barras com 7 dias; clique em 10/11 → `day=2026-11-10` e KPIs filtram (41 notas, 39 pendentes); novo clique limpa.
 
 Residuais → U15: fundo branco do BarSeriesChart no tema escuro (padrão do deck; o kit aceita `theme`/`backgroundColor`); com `day` selecionado o gráfico diário zera os outros dias (filtra a si mesmo); no celular o título do hero corta e «Nova análise» sai da tela; KPIs um por linha em 390; dia 0 com lasca de barra.
+
+### U15 — polimento (P1–P4) — DONE
+
+| Item | Valor |
+|---|---|
+| HEAD | BFF `7639a2abab` · MFE `7e2f650a90` |
+| Verifier | ACCEPT_WITH_RESIDUAL (r1; P4b residual kit) |
+| Tags | `rollback-ui-review-u15-controllership-finance-api` · `rollback-ui-review-u15-controllership-finance` |
+| PROD | BFF → MFE (`2026-11-16T03:33:51Z`–`03:34:03Z`) |
+| Report | [report-u15.md](./report-u15.md) |
+| Residual | P4b — lasca dia 0 em `ChartSeriesBar` (exige kit; proibido nesta U15) |
+
+Pedido ao owner: conferência visual em PROD (tema escuro do gráfico, daily com day, hero 390, KPIs 2 col).
