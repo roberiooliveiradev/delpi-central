@@ -30,6 +30,8 @@ class InMemoryTravelReportRepository:
         self.expenses: dict[str, dict[str, Any]] = {}
         self.receipts: dict[str, dict[str, Any]] = {}
         self.audit: list[dict[str, Any]] = []
+        self.mileage_rates = {date(2026, 1, 1): 1.20}
+        self.dispatches: dict[str, dict[str, Any]] = {}
 
     def list_categories(self) -> list[dict[str, Any]]:
         return [item for item in self.categories if item["active"]]
@@ -157,6 +159,9 @@ class InMemoryTravelReportRepository:
             "merchant": payload.get("merchant") or "",
             "amountBrl": float(payload["amount_brl"]),
             "notes": payload.get("notes") or "",
+            "transportMode": payload.get("transport_mode"),
+            "distanceKm": float(payload["distance_km"]) if payload.get("distance_km") is not None else None,
+            "rateBrlPerKm": float(payload["rate_brl_per_km"]) if payload.get("rate_brl_per_km") is not None else None,
             "sortOrder": int(payload.get("sort_order") or 0),
             "createdAt": now,
             "updatedAt": now,
@@ -199,6 +204,9 @@ class InMemoryTravelReportRepository:
             "merchant": "merchant",
             "amount_brl": "amountBrl",
             "notes": "notes",
+            "transport_mode": "transportMode",
+            "distance_km": "distanceKm",
+            "rate_brl_per_km": "rateBrlPerKm",
         }
         for key, camel in mapping.items():
             if key in changes:
@@ -258,3 +266,22 @@ class InMemoryTravelReportRepository:
 
     def list_audit(self, report_id: str) -> list[dict[str, Any]]:
         return [deepcopy(event) for event in self.audit if event["reportId"] == report_id]
+
+    def get_mileage_rate(self, expense_date: date):
+        valid = [d for d in self.mileage_rates if d <= expense_date]
+        return self.mileage_rates[max(valid)] if valid else None
+
+    def get_dispatch(self, report_id: str):
+        return deepcopy(self.dispatches.get(report_id))
+
+    def reserve_finance_dispatch(self, report_id: str, recipient: str, cc: str) -> bool:
+        if report_id in self.dispatches:
+            return False
+        self.dispatches[report_id] = {
+            "status": "sending", "recipient_email": recipient, "cc_email": cc,
+        }
+        return True
+
+    def finalize_finance_dispatch(self, report_id: str, status: str, error: str | None = None):
+        self.dispatches[report_id]["status"] = status
+        self.dispatches[report_id]["last_error"] = error
