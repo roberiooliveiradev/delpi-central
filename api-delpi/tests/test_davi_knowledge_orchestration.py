@@ -46,7 +46,7 @@ def test_orchestration_projection_contract_and_budget() -> None:
     assert ko["scope"] == "READ_ONLY_AGENT_ROUTING_NOT_AUTHORIZATION"
     assert set(ko["routing"]) == _INTENTS
     assert DaviAgentIntelligenceService.directives_serialized_size() <= DAVI_AGENT_DIRECTIVES_MAX_BYTES
-    assert DaviAgentIntelligenceService.agent_directives()["read_only"] is True
+    assert DaviAgentIntelligenceService.agent_directives()["read_only"] is False
 
 
 def test_source_authority_and_provider_evidence_are_separate() -> None:

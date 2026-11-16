@@ -65,6 +65,7 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
             valid_to=request.valid_to,
             notes=request.notes.strip() if request.notes else None,
             actor_user_id=request.actor_user_id,
+            expected_max_version=request.expected_max_version,
         )
 
     def _validate_request(

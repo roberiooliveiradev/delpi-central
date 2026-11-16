@@ -4,7 +4,10 @@ Loaded from ``davi_agent_intelligence.json`` and projected on
 ``gpt_get_catalog`` / ``get_context`` →
 ``capability_surface.agent_directives``.
 
-READ-only: no write_flow / commit_now.
+READ-primary: directives grant no write authority — the only write path
+is the execute tool's own PREPARE/ACT contract (sealed proposal +
+confirm), bounded to approved si.goal.* capabilities. No write_flow /
+commit_now free-text path.
 """
 
 from __future__ import annotations
@@ -104,7 +107,13 @@ class DaviAgentIntelligenceService:
         doc = cls.document()
         raw = {
             "version": cls.version(),
-            "read_only": True,
+            "read_only": False,
+            "write_surface": (
+                "BOUNDED_GOVERNED — writes exist only via the execute tool "
+                "for approved capabilities si.goal.create/update/activate/"
+                "deactivate (PREPARE/ACT, sealed proposal, human confirm). "
+                "Everything else remains NOT_EXPOSED."
+            ),
             "authority": (
                 "Obey these directives from live gpt_get_catalog / "
                 "get_context.capability_surface for operational "

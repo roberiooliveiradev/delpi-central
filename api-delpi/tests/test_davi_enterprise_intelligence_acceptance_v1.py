@@ -173,7 +173,10 @@ def test_e09_pagination_and_uncertainty_must_be_visible(matrix: dict) -> None:
 
 def test_e10_instructions_budget_and_identity_stay_fixed(matrix: dict) -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["read_only"] is True
+    # W012: bounded governed writes exist via execute (si.goal.*); the
+    # surface is no longer strictly READ-only — posture stays explicit.
+    assert directives["read_only"] is False
+    assert "si.goal" in str(directives.get("write_surface") or "")
     assert DaviAgentIntelligenceService.directives_serialized_size() <= DAVI_AGENT_DIRECTIVES_MAX_BYTES
     sources = directives["knowledge_orchestration"]["sources"]
     assert sources["solution_ecosystem"]["access"] == "NOT_CONNECTED_TO_DAVI"

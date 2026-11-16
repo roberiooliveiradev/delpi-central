@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import date
+from typing import Iterator
 
+from si_app.application.services.strategic_indicators.indicator_goal_conflict_error import (
+    StrategicIndicatorsGoalConflictError,
+)
 from si_app.application.services.strategic_indicators.period_resolution import (
     competence_reference_date,
 )
@@ -10,6 +15,9 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 )
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
+)
+from si_app.infrastructure.providers.database.plugins_postgres_connection import (
+    plugins_connection,
 )
 from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.catalog_admin_cascade import (
     delete_indicator_goal_hard,
@@ -24,6 +32,56 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
     PluginBaseRepository,
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 ):
+    @contextmanager
+    def _unit_of_work(self) -> Iterator[None]:
+        """Bind nested execute/fetch calls to one pooled connection/transaction.
+
+        Without an injected connection each ``execute``/``fetch_*`` acquires
+        its own pool lease and auto-commits per statement, so multi-statement
+        mutations (deactivate + insert + targets) are not atomic. Injecting
+        the leased connection disables per-statement auto-commit and this
+        wrapper performs a single commit/rollback for the whole mutation.
+        """
+        if self._injected_connection is not None:
+            yield
+            return
+        with plugins_connection() as connection:
+            self._injected_connection = connection
+            try:
+                yield
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+            finally:
+                self._injected_connection = None
+
+    @staticmethod
+    def _scope_lock_key(
+        *, indicator_id: str, goal_year: int, goal_scope_branch: str
+    ) -> str:
+        return f"si_goal_scope:{indicator_id}:{goal_year}:{goal_scope_branch}"
+
+    def _lock_goal_scope(
+        self,
+        *,
+        indicator_id: str,
+        goal_year: int,
+        goal_scope_branch: str,
+    ) -> None:
+        """Serialize concurrent writers of the same goal scope inside the
+        current transaction (row locks alone do not cover INSERT gaps)."""
+        self.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s)::bigint)",
+            (
+                self._scope_lock_key(
+                    indicator_id=indicator_id,
+                    goal_year=goal_year,
+                    goal_scope_branch=goal_scope_branch,
+                ),
+            ),
+        )
+
     @staticmethod
     def _resolved_goal_scope_filter(
         *,
@@ -161,7 +219,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.updated_by_user_id,
                 ig.updated_by_email,
                 ig.created_at,
-                ig.updated_at
+                ig.updated_at,
+                ig.xmin::text AS row_xmin
             FROM strategic_indicators.indicator_goals ig
             INNER JOIN strategic_indicators.department_indicators di
                 ON di.indicator_id = ig.indicator_id
@@ -225,7 +284,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 ig.updated_by_user_id,
                 ig.updated_by_email,
                 ig.created_at,
-                ig.updated_at
+                ig.updated_at,
+                ig.xmin::text AS row_xmin
             FROM strategic_indicators.indicator_goals ig
             INNER JOIN strategic_indicators.department_indicators di
                 ON di.indicator_id = ig.indicator_id
@@ -705,23 +765,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
+        expected_max_version: int | None = None,
     ) -> dict:
         goal_scope_branch = normalize_goal_scope_branch(goal_scope_branch)
 
-        version_query = """
-            SELECT COALESCE(MAX(version), 0) AS max_version
-            FROM strategic_indicators.indicator_goals
-            WHERE indicator_id = %s
-              AND goal_year = %s
-              AND goal_scope_branch = %s
-        """
-        row = self.fetch_one(
-            version_query,
-            (indicator_id, goal_year, goal_scope_branch),
-        )
-        next_version = int((row or {}).get("max_version") or 0) + 1
+        with self._unit_of_work():
+            # Serialize writers of this scope so the MAX(version) computation
+            # and the active-goal swap cannot interleave with another create.
+            self._lock_goal_scope(
+                indicator_id=indicator_id,
+                goal_year=goal_year,
+                goal_scope_branch=goal_scope_branch,
+            )
 
-        try:
             self._deactivate_active_goals_for_scope(
                 indicator_id=indicator_id,
                 goal_year=goal_year,
@@ -729,6 +785,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 actor_user_id=actor_user_id,
             )
 
+            # Guarded insert: next version is computed inside the same
+            # statement that inserts, and the optional optimistic precondition
+            # (expected MAX(version) of the scope) is enforced atomically —
+            # a stale expectation inserts zero rows instead of overwriting.
             created = self.execute_returning_one(
                 """
                 INSERT INTO strategic_indicators.indicator_goals (
@@ -749,8 +809,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_user_id,
                     updated_by_email
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                SELECT
+                    %s, %s, %s, %s, %s, %s, %s,
+                    mv.max_version + 1,
+                    TRUE, %s, %s, %s, %s, %s, %s, %s
+                FROM (
+                    SELECT COALESCE(MAX(version), 0) AS max_version
+                    FROM strategic_indicators.indicator_goals
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                      AND goal_scope_branch = %s
+                ) mv
+                WHERE %s::int IS NULL OR mv.max_version = %s
+                RETURNING *, xmin::text AS row_xmin
                 """,
                 (
                     indicator_id,
@@ -760,7 +831,6 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     goal_periodicity,
                     goal_mode,
                     goal_scope_branch,
-                    next_version,
                     valid_from,
                     valid_to,
                     notes,
@@ -768,8 +838,18 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     None,
                     actor_user_id,
                     None,
+                    indicator_id,
+                    goal_year,
+                    goal_scope_branch,
+                    expected_max_version,
+                    expected_max_version,
                 ),
             )
+            if created is None:
+                raise StrategicIndicatorsGoalConflictError(
+                    "O escopo da meta foi alterado desde a leitura "
+                    "(expected_max_version desatualizado)."
+                )
 
             if goal_mode == "monthly_curve":
                 self.replace_monthly_targets(
@@ -777,14 +857,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     monthly_targets=monthly_targets,
                 )
 
-            self.commit()
-            created["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=created["id"]
-            )
-            return created
-        except Exception:
-            self.rollback()
-            raise
+        created["monthly_targets"] = self.list_monthly_targets(
+            indicator_goal_id=created["id"]
+        )
+        return created
 
     def update_indicator_goal(
         self,
@@ -802,8 +878,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         valid_to: str | None,
         notes: str | None,
         actor_user_id: str | None,
+        expected_row_xmin: str | None = None,
     ) -> dict:
-        try:
+        with self._unit_of_work():
             if indicator_id or goal_year is not None or goal_scope_branch is not None:
                 current = self.fetch_goal_identity(goal_id)
                 if not current:
@@ -839,6 +916,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                         "Já existe meta para este indicador, ano e escopo."
                     )
 
+            # Guarded update: the optional ``expected_row_xmin`` optimistic
+            # precondition is evaluated in the same atomic statement as the
+            # mutation, so a row changed since the caller's read is refused.
             updated = self.execute_returning_one(
                 """
                 UPDATE strategic_indicators.indicator_goals
@@ -857,7 +937,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_email = %s,
                     updated_at = NOW()
                 WHERE id = %s
-                RETURNING *
+                  AND (%s::text IS NULL OR xmin::text = %s)
+                RETURNING *, xmin::text AS row_xmin
                 """,
                 (
                     indicator_id,
@@ -873,8 +954,17 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     actor_user_id,
                     None,
                     goal_id,
+                    expected_row_xmin,
+                    expected_row_xmin,
                 ),
             )
+            if updated is None:
+                if expected_row_xmin is not None:
+                    raise StrategicIndicatorsGoalConflictError(
+                        "A meta foi alterada ou excluída desde a leitura "
+                        "(expected_row_xmin desatualizado)."
+                    )
+                raise ValueError("Meta não encontrada.")
 
             if goal_mode == "monthly_curve":
                 self.replace_monthly_targets(
@@ -890,33 +980,38 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     (goal_id,),
                 )
 
-            self.commit()
-            updated["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=goal_id
-            )
-            return updated
-        except Exception:
-            self.rollback()
-            raise
+        updated["monthly_targets"] = self.list_monthly_targets(
+            indicator_goal_id=goal_id
+        )
+        return updated
 
     def activate_indicator_goal(
         self,
         *,
         goal_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
     ) -> dict:
-        target = self.fetch_one(
-            """
-            SELECT id, indicator_id, goal_year, goal_scope_branch
-            FROM strategic_indicators.indicator_goals
-            WHERE id = %s
-            """,
-            (goal_id,),
-        )
-        if not target:
-            raise ValueError("Meta não encontrada.")
+        with self._unit_of_work():
+            target = self.fetch_one(
+                """
+                SELECT id, indicator_id, goal_year, goal_scope_branch
+                FROM strategic_indicators.indicator_goals
+                WHERE id = %s
+                """,
+                (goal_id,),
+            )
+            if not target:
+                raise ValueError("Meta não encontrada.")
 
-        try:
+            # Serialize writers of this scope: the deactivate+activate pair
+            # must not interleave with a concurrent activate or create.
+            self._lock_goal_scope(
+                indicator_id=target["indicator_id"],
+                goal_year=target["goal_year"],
+                goal_scope_branch=target.get("goal_scope_branch") or "",
+            )
+
             self.execute(
                 """
                 UPDATE strategic_indicators.indicator_goals
@@ -928,6 +1023,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 WHERE indicator_id = %s
                   AND goal_year = %s
                   AND goal_scope_branch = %s
+                  AND id <> %s
                 """,
                 (
                     actor_user_id,
@@ -935,9 +1031,12 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     target["indicator_id"],
                     target["goal_year"],
                     target.get("goal_scope_branch") or "",
+                    goal_id,
                 ),
             )
 
+            # Guarded activate: a stale ``expected_xmin`` refuses the change
+            # before any sibling is deactivated (single transaction).
             row = self.execute_returning_one(
                 """
                 UPDATE strategic_indicators.indicator_goals
@@ -947,22 +1046,27 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     updated_by_email = %s,
                     updated_at = NOW()
                 WHERE id = %s
-                RETURNING *
+                  AND (%s::text IS NULL OR xmin::text = %s)
+                RETURNING *, xmin::text AS row_xmin
                 """,
                 (
                     actor_user_id,
                     None,
                     goal_id,
+                    expected_xmin,
+                    expected_xmin,
                 ),
             )
-            self.commit()
-            row["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=goal_id
-            )
-            return row
-        except Exception:
-            self.rollback()
-            raise
+            if row is None:
+                raise StrategicIndicatorsGoalConflictError(
+                    "A meta foi alterada ou excluída desde a leitura "
+                    "(expected_xmin desatualizado)."
+                )
+
+        row["monthly_targets"] = self.list_monthly_targets(
+            indicator_goal_id=goal_id
+        )
+        return row
 
     def delete_indicator_goal(
         self,
@@ -991,7 +1095,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         goal_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
     ) -> dict:
+        # Guarded deactivate: a stale ``expected_xmin`` refuses the change
+        # atomically in the same statement as the mutation.
         row = self.execute_returning_one(
             """
             UPDATE strategic_indicators.indicator_goals
@@ -1001,14 +1108,24 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 updated_by_email = %s,
                 updated_at = NOW()
             WHERE id = %s
-            RETURNING *
+              AND (%s::text IS NULL OR xmin::text = %s)
+            RETURNING *, xmin::text AS row_xmin
             """,
             (
                 actor_user_id,
                 None,
                 goal_id,
+                expected_xmin,
+                expected_xmin,
             ),
         )
+        if row is None:
+            if expected_xmin is not None:
+                raise StrategicIndicatorsGoalConflictError(
+                    "A meta foi alterada ou excluída desde a leitura "
+                    "(expected_xmin desatualizado)."
+                )
+            raise ValueError("Meta não encontrada.")
         row["monthly_targets"] = self.list_monthly_targets(
             indicator_goal_id=goal_id
         )

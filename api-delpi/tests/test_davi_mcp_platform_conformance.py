@@ -17,6 +17,7 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_ANALYZE,
+    MCP_TOOL_EXECUTE,
     MCP_TOOL_READ,
 )
 from app.interface.mcp.server import create_mcp_server
@@ -26,6 +27,7 @@ _DAVI_TOOLS = (
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
+    MCP_TOOL_EXECUTE,
 )
 
 

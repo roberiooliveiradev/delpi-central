@@ -126,10 +126,11 @@ def test_user_scoped_get_sends_only_user_jwt() -> None:
         def __exit__(self, *args):
             return False
 
-        def request(self, method, url, headers=None):
+        def request(self, method, url, headers=None, json=None):
             captured["method"] = method
             captured["url"] = url
             captured["headers"] = dict(headers or {})
+            captured["json"] = json
             return _FakeResponse()
 
     client = StrategicIndicatorsApiClient(
@@ -175,7 +176,7 @@ def test_legacy_service_scoped_get_still_applies_service_headers() -> None:
         def __exit__(self, *args):
             return False
 
-        def request(self, method, url, headers=None):
+        def request(self, method, url, headers=None, json=None):
             captured["headers"] = dict(headers or {})
             return _FakeResponse()
 
@@ -212,7 +213,7 @@ def test_http_error_carries_status_code() -> None:
         def __exit__(self, *args):
             return False
 
-        def request(self, method, url, headers=None):
+        def request(self, method, url, headers=None, json=None):
             return _ErrorResponse()
 
     client = StrategicIndicatorsApiClient(

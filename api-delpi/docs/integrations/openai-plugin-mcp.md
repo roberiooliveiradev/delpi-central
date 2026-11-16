@@ -35,7 +35,7 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Keycloak client | `mcp-api-delpi` |
 | MCP resource | `https://minhadelpi.com.br/apps/api-delpi/mcp` |
 | V1 Product Master capability | `search_products` (operationId; behind discover→execute) |
-| Dynamic READ MCP broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN**); semantic tools `get_context` + `knowledge` added by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION` (productive MCP surface = **exactly 4 tools**) |
+| Dynamic READ MCP broker | `discover_delpi_information` + `execute_delpi_information` (**CURRENT PROVEN**); semantic tools `get_context` + `knowledge` added by `DAVI-V2-WAVE-001-SEMANTIC-TOOLS-FOUNDATION` (productive MCP surface = **exactly 5 tools** — `get_context` + `knowledge` + `read` + `analyze` + `execute`; `execute` bounded to governed `si.goal.*` writes via `DAVI-SI-W012-GOVERNED-EXECUTE-GOALS-01`) |
 
 ## Architecture status
 

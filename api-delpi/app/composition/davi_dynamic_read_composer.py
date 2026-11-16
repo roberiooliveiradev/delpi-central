@@ -62,6 +62,46 @@ class _RequestBoundCatalogActionExecutor:
             )
 
 
+def davi_execute_wired(
+    *,
+    actor_id: str | None = None,
+    actor_email: str | None = None,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Execute tool wiring: request-bound identity + governed write runner."""
+    from app.application.external_capabilities.governed_writes.orchestrator import (
+        davi_execute,
+    )
+
+    return davi_execute(
+        actor_id=actor_id,
+        actor_email=actor_email,
+        authorization=authorization,
+        **kwargs,
+    )
+
+
+def davi_execute_wired(
+    *,
+    actor_id: str | None = None,
+    actor_email: str | None = None,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Execute tool wiring: request-bound identity + governed write runner."""
+    from app.application.external_capabilities.governed_writes.orchestrator import (
+        davi_execute,
+    )
+
+    return davi_execute(
+        actor_id=actor_id,
+        actor_email=actor_email,
+        authorization=authorization,
+        **kwargs,
+    )
+
+
 def davi_read_wired(
     *,
     authorization: str | None = None,

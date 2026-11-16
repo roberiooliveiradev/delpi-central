@@ -27,6 +27,8 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_KNOWLEDGE_TITLE,
     MCP_TOOL_ANALYZE,
     MCP_TOOL_ANALYZE_TITLE,
+    MCP_TOOL_EXECUTE,
+    MCP_TOOL_EXECUTE_TITLE,
     MCP_TOOL_READ,
     MCP_TOOL_READ_TITLE,
 )
@@ -41,8 +43,12 @@ from app.application.external_capabilities.dynamic_information.errors import (
     OWNER_EXECUTION_ERROR_CODE,
     GovernedExecutionError,
 )
+from app.application.external_capabilities.governed_writes.errors import (
+    GovernedWriteError,
+)
 from app.composition.davi_dynamic_read_composer import (
     davi_analyze_wired,
+    davi_execute_wired,
     davi_knowledge_wired,
     davi_read_wired,
 )
@@ -60,12 +66,14 @@ from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interface.mcp.schemas import (
     GetContextInput,
     AnalyzeInput,
+    ExecuteInput,
     KnowledgeInput,
     ReadInput,
     get_context_input_json_schema,
     get_context_output_json_schema,
     analyze_input_json_schema,
     analyze_output_json_schema,
+    execute_input_json_schema,
     knowledge_input_json_schema,
     knowledge_output_json_schema,
     read_input_json_schema,
@@ -122,6 +130,17 @@ def _actor_id() -> str | None:
 
         user = current_mcp_context().user
         return str(getattr(user, "id", None) or "") or None
+    except Exception:
+        return None
+
+
+def _actor_email() -> str | None:
+    try:
+        from delpi_mcp.identity import current_mcp_context
+
+        user = current_mcp_context().user
+        email = getattr(user, "email", None)
+        return str(email) if email else None
     except Exception:
         return None
 
@@ -204,6 +223,8 @@ class ApiDelpiMCPServer(MCPServer):
             elif info.name == MCP_TOOL_ANALYZE:
                 input_schema = analyze_input_json_schema()
                 output_schema = analyze_output_json_schema()
+            elif info.name == MCP_TOOL_EXECUTE:
+                input_schema = execute_input_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,
@@ -231,6 +252,8 @@ class ApiDelpiMCPServer(MCPServer):
                 ReadInput.model_validate(arguments or {})
             elif name == MCP_TOOL_ANALYZE:
                 AnalyzeInput.model_validate(arguments or {})
+            elif name == MCP_TOOL_EXECUTE:
+                ExecuteInput.model_validate(arguments or {})
         except ValidationError as exc:
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
@@ -262,8 +285,9 @@ def create_mcp_server() -> MCPServer:
             "capabilities. action=schema: governed argument schema for one "
             "capability via 'capability'. After selecting a capability, call "
             "the live semantic tools read or analyze (or knowledge for "
-            "governed documentation). Write-class execute/delete remain "
-            "not implemented on this surface."
+            "governed documentation). Governed write-class capabilities are "
+            "executed exclusively through the execute tool (PREPARE/ACT); "
+            "delete remains not implemented on this surface."
         ),
         annotations=ToolAnnotations.model_validate(
             tool_annotations_payload(
@@ -533,6 +557,94 @@ def create_mcp_server() -> MCPServer:
             )
         except Exception as exc:
             log_error(f"mcp analyze failed: {exc}")
+            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
+
+    @mcp.tool(
+        name=MCP_TOOL_EXECUTE,
+        title=MCP_TOOL_EXECUTE_TITLE,
+        description=(
+            "Execute an approved governed write capability via PREPARE/ACT. "
+            "PREPARE: pass 'capability' plus 'arguments'; returns a sealed "
+            "proposal (proposal_handle), the exact diff and the "
+            "consequential impact — no business mutation. ACT: pass "
+            "'capability', the 'proposal_handle' (or 'proposal_id') and "
+            "confirm=true; the sealed server-side proposal is the single "
+            "authority — arguments cannot be changed at ACT. Approved "
+            "capabilities: si.goal.create, si.goal.update, "
+            "si.goal.activate, si.goal.deactivate (Strategic Indicators "
+            "goals; backend AuthZ remains authoritative on every call). "
+            "This tool never accepts URLs, methods, paths or SQL."
+        ),
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_EXECUTE_TITLE,
+                read_only=False,
+                destructive=False,
+                idempotent=True,
+            )
+        ),
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
+        structured_output=True,
+    )
+    def execute_tool(
+        capability: str,
+        arguments: dict[str, Any] | None = None,
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
+        confirm: bool | None = None,
+    ) -> CallToolResult:
+        try:
+            params = ExecuteInput(
+                capability=capability,
+                arguments=arguments,
+                proposal_handle=proposal_handle,
+                proposal_id=proposal_id,
+                confirm=confirm,
+            )
+        except ValidationError:
+            return validation_error_tool_result("Invalid execute parameters.")
+        try:
+            data = davi_execute_wired(
+                capability=params.capability,
+                arguments=params.arguments,
+                proposal_handle=params.proposal_handle,
+                proposal_id=params.proposal_id,
+                confirm=params.confirm,
+                actor_id=_actor_id(),
+                actor_email=_actor_email(),
+                authorization=_authorization(),
+            )
+            return CallToolResult(
+                content=[
+                    TextContent(
+                        type="text",
+                        text=(
+                            "Proposal prepared." if data.get("phase") == "prepare"
+                            else "Write executed and verified."
+                        ),
+                    )
+                ],
+                structuredContent=data,
+                isError=False,
+            )
+        except GovernedWriteError as exc:
+            return typed_error_tool_result(
+                exc.code or OWNER_EXECUTION_ERROR_CODE,
+                exc.message or "Execute rejected.",
+                recoverable=exc.code in {
+                    "validation",
+                    "capability_not_allowed",
+                    "confirmation_required",
+                    "proposal_required",
+                    "proposal_expired",
+                    "proposal_stale",
+                    "conflict",
+                },
+            )
+        except PermissionError as exc:
+            return _authz_error_result(exc)
+        except Exception as exc:
+            log_error(f"mcp execute failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     if document_transport_spike_enabled():

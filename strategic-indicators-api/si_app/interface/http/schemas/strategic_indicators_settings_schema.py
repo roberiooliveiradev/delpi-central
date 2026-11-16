@@ -161,6 +161,10 @@ class CreateIndicatorGoalBodySchema(BaseModel):
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None
+    # Optional optimistic-concurrency precondition: current MAX(version) of
+    # the (indicator_id, goal_year, goal_scope_branch) scope. When sent and
+    # the scope advanced since the read, the insert is refused with 409.
+    expected_max_version: Optional[int] = None
 
     @model_validator(mode="after")
     def validate_goal_mode(self):
@@ -191,6 +195,10 @@ class UpdateIndicatorGoalBodySchema(BaseModel):
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None
+    # Optional optimistic-concurrency precondition: ``row_xmin`` captured
+    # from a goal list/history read. When sent and the row changed since,
+    # the update is refused with 409.
+    expected_row_xmin: Optional[str] = None
 
     @model_validator(mode="after")
     def validate_goal_mode(self):

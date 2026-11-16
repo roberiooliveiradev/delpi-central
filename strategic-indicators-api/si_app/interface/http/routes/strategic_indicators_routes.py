@@ -56,6 +56,9 @@ from si_app.application.use_cases.strategic_indicators.update_settings_use_case 
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
+from si_app.application.services.strategic_indicators.indicator_goal_conflict_error import (
+    StrategicIndicatorsGoalConflictError,
+)
 
 from si_app.application.dto.strategic_indicators.get_trends_real_request import (
     GetStrategicIndicatorsTrendsRealRequest,
@@ -154,6 +157,9 @@ def _serialize_goal_item(item: dict) -> dict:
         "updated_by_email": item.get("updated_by_email"),
         "created_at": item.get("created_at"),
         "updated_at": item.get("updated_at"),
+        # Optimistic-concurrency token for guarded writes (PREPARE/ACT
+        # callers such as DAVI); opaque, changes on every row update.
+        "row_xmin": item.get("row_xmin"),
     }
 
 
@@ -780,12 +786,14 @@ def create_indicator_goal(
                 valid_to=body.valid_to,
                 notes=body.notes,
                 actor_user_id=actor_user_id,
-    
+                expected_max_version=body.expected_max_version,
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -823,12 +831,14 @@ def update_indicator_goal(
                 valid_to=body.valid_to,
                 notes=body.notes,
                 actor_user_id=actor_user_id,
-    
+                expected_row_xmin=body.expected_row_xmin,
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsIndicatorGoalValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -843,6 +853,13 @@ def update_indicator_goal(
 def activate_indicator_goal(
     goal_id: str,
     request: Request,
+    expected_xmin: str | None = Query(
+        None,
+        description=(
+            "Precondição otimista opcional: row_xmin capturado na leitura. "
+            "Se a linha mudou desde então, a ativação é recusada com 409."
+        ),
+    ),
 ):
     try:
         actor_user_id = _extract_actor(request)
@@ -851,9 +868,11 @@ def activate_indicator_goal(
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-
+            expected_xmin=expected_xmin,
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -868,6 +887,13 @@ def activate_indicator_goal(
 def deactivate_indicator_goal(
     goal_id: str,
     request: Request,
+    expected_xmin: str | None = Query(
+        None,
+        description=(
+            "Precondição otimista opcional: row_xmin capturado na leitura. "
+            "Se a linha mudou desde então, a desativação é recusada com 409."
+        ),
+    ),
 ):
     try:
         actor_user_id = _extract_actor(request)
@@ -876,9 +902,11 @@ def deactivate_indicator_goal(
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-
+            expected_xmin=expected_xmin,
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:

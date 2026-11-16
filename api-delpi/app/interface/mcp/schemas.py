@@ -278,6 +278,102 @@ def analyze_input_json_schema() -> dict:
     return schema
 
 
+class ExecuteInput(BaseModel):
+    """Closed input for governed writes (PREPARE / ACT).
+
+    PREPARE: ``capability`` + ``arguments``. ACT: ``capability`` +
+    ``proposal_handle`` (or ``proposal_id``) + ``confirm=true``. The model
+    never resends the payload at ACT — the sealed server-side proposal is
+    the single authority for the change.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description=(
+            "Approved governed write capability id (e.g. si.goal.create, "
+            "si.goal.update, si.goal.activate, si.goal.deactivate) — not a "
+            "URL, path, method or SQL."
+        ),
+    )
+    arguments: dict[str, Any] | None = Field(
+        default=None,
+        description="PREPARE arguments for the capability (closed schema per capability).",
+    )
+    proposal_handle: str | None = Field(
+        default=None,
+        max_length=256,
+        description="Opaque proposal handle returned by PREPARE (ACT only).",
+    )
+    proposal_id: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Proposal id recovery key (ACT only).",
+    )
+    confirm: bool | None = Field(
+        default=None,
+        description="Must be true to execute a prepared proposal (ACT only).",
+    )
+
+
+def execute_input_json_schema() -> dict:
+    schema = ExecuteInput.model_json_schema()
+    schema["title"] = "executeArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
+class ExecuteInput(BaseModel):
+    """Closed input for governed writes (PREPARE / ACT).
+
+    PREPARE: ``capability`` + ``arguments``. ACT: ``capability`` +
+    ``proposal_handle`` (or ``proposal_id``) + ``confirm=true``. The model
+    never resends the payload at ACT — the sealed server-side proposal is
+    the single authority for the change.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description=(
+            "Approved governed write capability id (e.g. si.goal.create, "
+            "si.goal.update, si.goal.activate, si.goal.deactivate) — not a "
+            "URL, path, method or SQL."
+        ),
+    )
+    arguments: dict[str, Any] | None = Field(
+        default=None,
+        description="PREPARE arguments for the capability (closed schema per capability).",
+    )
+    proposal_handle: str | None = Field(
+        default=None,
+        max_length=256,
+        description="Opaque proposal handle returned by PREPARE (ACT only).",
+    )
+    proposal_id: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Proposal id recovery key (ACT only).",
+    )
+    confirm: bool | None = Field(
+        default=None,
+        description="Must be true to execute a prepared proposal (ACT only).",
+    )
+
+
+def execute_input_json_schema() -> dict:
+    schema = ExecuteInput.model_json_schema()
+    schema["title"] = "executeArguments"
+    schema["additionalProperties"] = False
+    return schema
+
+
 def analyze_output_json_schema() -> dict:
     schema = AnalyzeOutput.model_json_schema()
     schema["title"] = "analyzeOutput"

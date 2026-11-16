@@ -2,7 +2,7 @@
   "version": "2026.11.07.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / get_context",
-  "read_only": true,
+  "read_only": false,
   "actions_runtime": {
     "principle": "TRY_TOOL_BEFORE_CLAIMING_UNAVAILABLE",
     "rules": [
@@ -55,14 +55,14 @@
     "authority": "Persona é UX: não concede permissão, não altera tools, contratos nem AuthZ."
   },
   "surface_parity": {
-    "mcp_tools": 4,
+    "mcp_tools": 5,
     "gpt_actions_legacy": 2,
-    "note": "Capability parity ≠ transport count. W1–W9 semantic surface: get_context + knowledge + read + analyze are LIVE. Write-class execute/delete remain PLANNED_NOT_IMPLEMENTED. Product Master capability search_products via read/analyze. Descriptive for the Agent, not alternate SoT (tool counts owned by MCP server / GPT façade). Same DaviAgentIntelligenceService. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only). Stock/BOM/shipping/etc. via MCP read/analyze; gpt_get_catalog carries live directives, not those operations."
+    "note": "Capability parity ≠ transport count. get_context + knowledge + read + analyze are LIVE. execute is LIVE bounded to si.goal.create/update/activate/deactivate (PREPARE/ACT, confirm_before_act, owner AuthZ + OCC). delete remains PLANNED_NOT_IMPLEMENTED. search_products via read/analyze. Descriptive, not alternate SoT. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only); gpt_get_catalog carries live directives, not those operations."
   },
   "anti_patterns": [
     "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
     "Alegar tools/MCP indisponíveis sem tentar neste turno.",
-    "Afirmar que criou/alterou/excluiu/gravou dados DELPI (READ-only).",
+    "Afirmar que criou/alterou/excluiu/gravou dados DELPI sem um execute ACT com verified=true neste turno.",
     "Enumerar inventário dinâmico (operationIds elegíveis) no chat como catálogo fixo.",
     "Tratar persona, cargo ou catálogo como AuthZ.",
     "Expandir GPT Actions com novas ops em vez de Plugin/MCP.",
@@ -73,11 +73,11 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "writes": "NOT_EXPOSED — superfície externa READ-only",
+    "writes": "BOUNDED — somente capabilities aprovadas si.goal.* via execute (PREPARE/ACT, confirmação humana); todo o restante continua NOT_EXPOSED",
     "sql_arbitrary": "FORBIDDEN",
     "generic_proxy": "FORBIDDEN",
-    "prepare_act": "NOT on DAVI external surface (cost simulation remains DEFER)",
-    "commit_now": "N/A — no write path"
+    "prepare_act": "LIVE somente para capabilities aprovadas si.goal.* via execute; demais domínios permanecem sem write path",
+    "commit_now": "Somente via execute ACT com proposal selada + confirm=true; nunca por texto livre"
   },
   "knowledge_orchestration": {
     "principle": "ROUTE_TO_SMALLEST_SUFFICIENT_TRUTH_SET",
@@ -450,16 +450,22 @@
       "note": "Product Master extended READs via read/analyze; semantic capabilities are catalog metadata, not endpoints/operationIds/tools. product.invoice.history resolves direction semanticamente: entrada → inbound, saída → outbound — nunca aceite selector arbitrário do caller. Local físico != saldo em estoque; bloqueio de inventário != disponibilidade; pedidos de venda em aberto != pedidos de compra / ordens de produção; NF de entrada/saída != relatório financeiro; movimentação interna != faturamento; part number do fornecedor != histórico de preço. Zero linhas / agregado zero = resposta canônica, nunca prova de inexistência do produto."
     },
     "write_request": {
-      "mcp_tools": [],
+      "mcp_tools": [
+        "execute"
+      ],
       "gpt_operations": [
         "gpt_get_catalog"
       ],
       "pipeline": [
-        "state_read_only",
-        "discover_may_return_zero",
-        "never_claim_persisted"
+        "approved_capability_gate",
+        "prepare_show_diff",
+        "explicit_human_confirmation",
+        "act_via_proposal_handle",
+        "verified_postcondition",
+        "never_claim_persisted_without_verify"
       ],
-      "confirmation_policy": "read_only_deny_write"
+      "confirmation_policy": "confirm_before_act",
+      "note": "Somente si.goal.create/update/activate/deactivate são executáveis; qualquer outra escrita (delete, demais entidades, SQL genérico) continua negada — reportar limite."
     },
     "system_metadata": {
       "mcp_tools": [
@@ -774,5 +780,6 @@
         "status": "canonical"
       }
     ]
-  }
+  },
+  "write_surface": "BOUNDED_GOVERNED — execute PREPARE/ACT apenas para si.goal.create/update/activate/deactivate; demais writes NOT_EXPOSED"
 }

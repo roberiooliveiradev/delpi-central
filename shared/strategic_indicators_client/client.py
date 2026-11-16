@@ -307,6 +307,97 @@ class StrategicIndicatorsApiClient:
             authorization=authorization,
         )
 
+    # -- User-parity writes (DAVI governed ACT surface) --------------------
+    #
+    # Same identity contract as the user-parity reads: the caller's own JWT
+    # only, never the internal service token. ``expected_*`` arguments carry
+    # the optional optimistic-concurrency preconditions enforced atomically
+    # by the owner API.
+
+    def create_user_indicator_goal(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/indicator-goals",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def update_user_indicator_goal(
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "PUT",
+            f"/strategic-indicators/indicator-goals/{goal_id}",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def activate_user_indicator_goal(
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        expected_xmin: str | None = None,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/indicator-goals/{goal_id}/activate",
+            params={"expected_xmin": expected_xmin},
+            authorization=authorization,
+        )
+
+    def deactivate_user_indicator_goal(
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        expected_xmin: str | None = None,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/indicator-goals/{goal_id}/deactivate",
+            params={"expected_xmin": expected_xmin},
+            authorization=authorization,
+        )
+
+    def _write_user_scoped(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        json_body: Mapping[str, Any] | None = None,
+        authorization: str | None,
+    ) -> dict[str, Any]:
+        """Non-GET call on a user-facing SI route carrying only the user JWT.
+
+        Fail-closed: without a user Authorization header there is no
+        legitimate identity to evaluate, so the request is refused locally.
+        No retries — a timed-out write may have committed; callers reconcile
+        via postcondition reads instead of blind resubmission.
+        """
+        token = (authorization or "").strip()
+        if not token:
+            raise StrategicIndicatorsApiError(
+                "Escrita em Strategic Indicators exige o token do usuário autenticado."
+            )
+        return self._request(
+            method,
+            path,
+            params=params,
+            headers={"Authorization": token},
+            json_body=json_body,
+        )
+
     def _get_user_scoped(
         self,
         path: str,
@@ -351,6 +442,7 @@ class StrategicIndicatorsApiClient:
         *,
         params: Mapping[str, Any] | None,
         headers: Mapping[str, str],
+        json_body: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         query = ""
         if params:
@@ -365,7 +457,12 @@ class StrategicIndicatorsApiClient:
         url = f"{self._base_url}{path}{query}"
         try:
             with httpx.Client(timeout=self._timeout) as client:
-                response = client.request(method, url, headers=dict(headers))
+                response = client.request(
+                    method,
+                    url,
+                    headers=dict(headers),
+                    json=dict(json_body) if json_body is not None else None,
+                )
         except httpx.HTTPError as exc:
             raise StrategicIndicatorsApiError(
                 f"Falha de rede ao consultar Strategic Indicators API: {exc}"

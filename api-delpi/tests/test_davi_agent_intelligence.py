@@ -28,9 +28,12 @@ def _clear_caches():
     clear_read_only_intent_guard_cache()
 
 
-def test_intelligence_document_is_read_only() -> None:
+def test_intelligence_document_bounded_write_posture() -> None:
     doc = DaviAgentIntelligenceService.document()
-    assert doc.get("read_only") is True
+    # W012: bounded governed writes exist via execute (si.goal.*); the
+    # surface is no longer strictly READ-only — posture must be explicit.
+    assert doc.get("read_only") is False
+    assert "si.goal" in str(doc.get("write_surface") or "")
     assert "write_flow" not in doc
     assert "commit_now" not in doc
     assert DaviAgentIntelligenceService.version()
@@ -49,7 +52,8 @@ def test_intelligence_document_is_read_only() -> None:
 
 def test_agent_directives_projection_read_only_and_compact() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives.get("read_only") is True
+    assert directives.get("read_only") is False
+    assert "si.goal" in str(directives.get("write_surface") or "")
     assert directives.get("version") == DaviAgentIntelligenceService.version()
     assert "write_flow" not in directives
     assert "commit_now" not in directives
@@ -134,4 +138,5 @@ def test_authority_boundary_wording_not_authz() -> None:
     authority = str(directives.get("authority") or "")
     assert "NOT AuthZ" in authority or "not AuthZ" in authority.lower()
     assert "RBAC" in authority
-    assert directives.get("read_only") is True
+    assert directives.get("read_only") is False
+    assert "si.goal" in str(directives.get("write_surface") or "")

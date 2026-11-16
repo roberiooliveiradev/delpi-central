@@ -192,7 +192,10 @@ def test_directives_stay_within_budget_and_preserve_operational() -> None:
 
 def test_mcp_initialize_instructions_still_bounded() -> None:
     assert "VISTA" in DAVI_MCP_INSTRUCTIONS
-    assert "READ-only" in DAVI_MCP_INSTRUCTIONS
+    # W012: bounded governed writes — the instruction keeps the writes
+    # path explicitly gated instead of claiming a READ-only surface.
+    assert "bounded governed writes" in DAVI_MCP_INSTRUCTIONS
+    assert "execute" in DAVI_MCP_INSTRUCTIONS
 
 
 # ---------------------------------------------------------------------------
@@ -210,8 +213,8 @@ def test_profile_contains_no_operational_fields() -> None:
 
 def test_no_new_tools_or_authz_surface() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["read_only"] is True
-    assert directives["surface_parity"]["mcp_tools"] == 4
+    assert directives["read_only"] is False
+    assert directives["surface_parity"]["mcp_tools"] == 5
     assert "write_flow" not in directives
     assert "commit_now" not in directives
 

@@ -18,6 +18,7 @@ import pytest
 
 from app.application.external_capabilities.constants import (
     MCP_TOOL_ANALYZE,
+    MCP_TOOL_EXECUTE,
     MCP_TOOL_GET_CONTEXT,
     MCP_TOOL_KNOWLEDGE,
     MCP_TOOL_READ,
@@ -166,6 +167,7 @@ def test_surface_registers_six_tools_with_closed_schemas():
         MCP_TOOL_KNOWLEDGE,
         MCP_TOOL_READ,
         MCP_TOOL_ANALYZE,
+        MCP_TOOL_EXECUTE,
     ]
     az = by_name[MCP_TOOL_ANALYZE]
     assert az.input_schema["additionalProperties"] is False
@@ -181,12 +183,25 @@ def test_surface_registers_six_tools_with_closed_schemas():
     assert kn.input_schema["additionalProperties"] is False
     assert kn.input_schema["required"] == ["action"]
     assert kn.output_schema is not None
+    ex = by_name[MCP_TOOL_EXECUTE]
+    assert ex.input_schema["additionalProperties"] is False
+    assert set(ex.input_schema["properties"]) == {
+        "capability",
+        "arguments",
+        "proposal_handle",
+        "proposal_id",
+        "confirm",
+    }
+    assert ex.annotations.read_only_hint is False
+    assert ex.annotations.destructive_hint is not True
+    assert ex.annotations.idempotent_hint is True
     # Owner-typed classes on the wire — metadata, never permission.
     assert ctx.meta["delpi/toolClass"] == "DISCOVERY"
     assert kn.meta["delpi/toolClass"] == "READ"
+    assert ex.meta["delpi/toolClass"] == "ACT"
     assert ctx.annotations.read_only_hint is True
     assert kn.annotations.read_only_hint is True
-    assert ctx.securitySchemes == kn.securitySchemes
+    assert ctx.securitySchemes == kn.securitySchemes == ex.securitySchemes
 
 
 # ---------------------------------------------------------------------------

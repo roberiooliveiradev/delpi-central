@@ -201,7 +201,8 @@ def test_sql_aliases_cover_aggregate_movement_scan() -> None:
 
 def test_specialist_additions_keep_read_only_authority() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["read_only"] is True
+    assert directives["read_only"] is False
+    assert "si.goal" in str(directives.get("write_surface") or "")
     assert "write_flow" not in directives
     authority = directives["authority"]
     assert "NOT AuthZ" in authority
@@ -312,7 +313,7 @@ def test_vista_handoff_document_exists_and_is_complete() -> None:
 
 def test_narrative_additions_keep_tools_and_authz_unchanged() -> None:
     directives = DaviAgentIntelligenceService.agent_directives()
-    assert directives["read_only"] is True
-    assert directives["surface_parity"]["mcp_tools"] == 4
+    assert directives["read_only"] is False
+    assert directives["surface_parity"]["mcp_tools"] == 5
     size = DaviAgentIntelligenceService.directives_serialized_size()
     assert size <= DAVI_AGENT_DIRECTIVES_MAX_BYTES, size
