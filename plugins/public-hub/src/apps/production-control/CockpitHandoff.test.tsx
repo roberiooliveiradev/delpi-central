@@ -746,16 +746,20 @@ describe("seletor de postos sensorizados (E4/RQ-11)", { timeout: 30000 }, () => 
       />,
     );
 
-    // Sem OP publicada, o CT-99 sai do picker assim que o vínculo confirma.
-    await waitFor(() =>
+    // CT-99 não aparece no picker ANTES de a enumeração responder:
+    // apenas checar sua ausência produziria falso positivo na primeira render.
+    // Aguarda prova positiva da seleção restaurada no cabeçalho real do posto.
+    await waitFor(() => {
       expect(
-        screen.queryByRole("button", { name: /CT-99/ }),
-      ).not.toBeInTheDocument(),
-    );
-    // Nenhuma OP é fabricada: o cockpit cai no fluxo real do posto
-    // (identificação da bancada, sessão, etc.).
+        screen.getByText("CT-99", { selector: ".pcp-pub__hero-code" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /CT-63/ }),
+      ).not.toBeInTheDocument();
+    });
+    // O CT sensorizado não fabrica uma OP quando a fila publicada está vazia.
     expect(
-      screen.queryByRole("button", { name: /CT-63/ }),
+      screen.queryByRole("button", { name: /^Detalhes$/i }),
     ).not.toBeInTheDocument();
   });
 });
