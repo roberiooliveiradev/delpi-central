@@ -2,6 +2,7 @@
 
 > **Estado:** ESPECIFICAÇÃO VIGENTE — padrão visual **APROVADO PELO SOLICITANTE EM 16/11/2026** (“é exatamente assim que eu quero o formulário para respostas”). Entrega 1.
 > **Implementação:** existe uma versão funcional anterior em `plugins/public-hub/src/apps/commercial/` (commit `7d275ed2`, homologação desde 14/11/2026) com o **visual antigo**. Esta especificação exige **REWORK visual** dessa versão; regras funcionais e contratos de rede permanecem os mesmos.
+> **Arquitetura de componentes (Q22, 16/11/2026):** todo o formulário é construído com componentes do **PluginUI** (`@delpi/plugin-ui`) — os que faltam são **criados no PluginUI** — e importado pelo `public-hub`. O kit é genérico, para ser reaproveitado em outros formulários. Ver §5.
 > **Referência visual normativa:** [`UI-03-REFERENCIA-VISUAL.html`](./UI-03-REFERENCIA-VISUAL.html) (abrir no navegador; arquivo estático, sem lógica). Em caso de divergência, **este Markdown prevalece**.
 > **Histórico:** a redação anterior deste documento (decisões de 11/11/2026) está no histórico do Git; as decisões substituídas e mantidas estão registradas em [BUSINESS-DECISIONS — Q21](./BUSINESS-DECISIONS.md#q21--padrão-visual-do-formulário-público-16112026). Não reabrir os pontos abaixo sem nova decisão do solicitante.
 
@@ -43,10 +44,11 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 5. **Título público fixo:** “Pesquisa de Satisfação de Clientes”. O **nome interno da campanha não aparece** para o cliente.
 6. **Ações sempre à mão no celular:** rodapé fixo com Voltar / Avançar.
 7. Sem gradientes, sem ilustrações, sem emojis, sem estrelas.
+8. **Tudo vem do PluginUI.** Nenhum componente visual é desenhado dentro do `public-hub`; a página só monta o formulário com o kit e aplica os tokens do tema claro (§5).
 
 ### 3.2 Tokens
 
-Usar os tokens de marca já existentes em `plugins/public-hub/src/shell/brand-tokens.css` quando houver equivalente; os demais valores abaixo são locais do formulário (`form.css`).
+Os valores abaixo são o **tema claro de referência do kit de formulário do PluginUI**: ficam como tokens do kit (`--delpi-ui-*` existentes ou novos `--delpi-ui-form-*`), com o CSS dos componentes em `plugins/plugin-ui/src/styles/`. O `public-hub` **só mapeia** esses tokens na raiz da página (a partir de `brand-tokens.css` quando houver equivalente) — nunca escreve CSS de componente.
 
 | Token | Valor | Uso |
 |---|---|---|
@@ -162,23 +164,73 @@ Usar os tokens de marca já existentes em `plugins/public-hub/src/shell/brand-to
 7. **Sem rascunho persistente:** respostas só na memória da página (nada em `localStorage`, `sessionStorage`, IndexedDB, cookie ou URL); aviso nativo de saída (`beforeunload`) enquanto houver respostas não enviadas, desligado após o envio ou em estado terminal.
 8. **Privacidade:** nunca pedir nome, e-mail ou CPF do respondente; não exibir código/loja, token, dados internos, nome interno da campanha; sem rastreamento de terceiros.
 
-## 5. Implementação (para o pedido de execução)
+## 5. Implementação — kit de formulário no PluginUI (Q22)
 
-**Escopo:** somente `plugins/public-hub`. Nenhuma alteração de backend, contrato, migração ou permissão.
+**Decisão (16/11/2026):** usar ou criar **todos** os componentes no PluginUI e importá-los no microfrontend; de preferência, o **formulário inteiro** (fluxo em etapas) é um componente do PluginUI, alimentado por uma definição de perguntas, para ser reaproveitado em **outros formulários e fluxos**.
 
-| Área | O que fazer |
+### 5.1 Por que é viável (evidência no código, 16/11/2026)
+
+| Fato | Evidência |
 |---|---|
-| `src/apps/commercial/FormPage.tsx` | Reescrever a marcação conforme §3 (cabeçalho, cartões, escalas, N/A, rodapé fixo, revisão, agradecimento). **Manter** a lógica de estado, validação, foco, `beforeunload` e envio existentes |
-| `src/apps/commercial/form.css` | Substituir pelo padrão de §3.2–§3.4 (tema claro fixo; não usar variáveis do tema escuro) |
-| `src/apps/commercial/SurveyStateView.tsx` | Aplicar o layout de estados alternativos (§3.5); remover exibição do nome da campanha |
-| `src/apps/commercial/surveyForm.ts` | Reaproveitar sem mudança de regra; ajustar apenas textos de etapa se necessário |
-| `src/apps/commercial/pages.tsx` + shell | Página deve renderizar **sem botão de tema e sem logo do shell** e **forçar tema claro**. Menor solução sugerida: opção opcional na definição da página (ex.: `theme: "light"` e/ou `chrome` sem decoração) tratada em `PublicShell`, com padrão inalterado para as demais apps públicas. Aplicar Abstraction Gate e preservar as outras páginas |
-| Logo | Usar `/p/logoMinhaDelpi.svg`. **Bloqueio observado:** em HML, em 16/11/2026, o arquivo respondeu **403** (nginx) — investigar o `public-hub/nginx.conf`/gateway antes de aceitar a entrega |
-| Testes | Atualizar `FormPage.test.tsx`/`surveyForm.test.ts`: seleção e exclusividade N/A, pendência e foco, progresso 12, Editar por seção, envio único, agradecimento, estados alternativos, ausência do nome da campanha, ausência do botão de tema; manter os testes de rede (`api.test.ts`) |
+| O `public-hub` já consome o PluginUI em tempo de execução via Module Federation | `plugins/public-hub/vite.config.ts` (`pluginUiRemote()`); `customer-experience/FormPage.tsx` e `production-control` importam de `@delpi/plugin-ui/index` |
+| A regra do repositório já manda o visual de componente para o kit | `.cursor/rules/plugins-reusable-components.mdc`: CSS de componente só em `plugins/plugin-ui/src/styles/**` (dual-class `prefixo` + `.delpi-ui-*`); o app mapeia tokens e faz layout de página; override novo falha em `MFE_PLUGIN_UI_OVERRIDE` |
+| Já existem peças reaproveitáveis | `ActionButton`, `TextAreaField`/`FormFieldShell`, `StateBox`/`InfoStatePanel`, `JourneyProgressBar` (avaliar), `SegmentToggle` |
+| Há um segundo formulário público candidato a reaproveitar o kit | `public-hub/src/apps/customer-experience/FormPage.tsx` (tipos: nota em estrelas, texto curto/longo, sim/não, escolha única/múltipla) — **não migrar nesta entrega** |
+| Nomes propostos não colidem com exports atuais | Busca em `plugins/plugin-ui/src` por `QuestionCard`, `RatingScale`, `GuidedForm`… sem ocorrência (busca é descoberta, não prova absoluta) |
 
-**Fora do escopo desta entrega:** contador de caracteres, salvar rascunho, tema escuro, personalização de perguntas, envio de convites, imagem de fundo na faixa.
+### 5.2 Camada 1 — componentes de apresentação (PluginUI)
 
-**Regra visual da página pública (substitui a regra de 11/11/2026):** o formulário público tem **visual próprio** em `form.css`, por rodar fora do Portal, mas deve reutilizar o shell (`PublicShell`, rotas e carregamento), os tokens de marca do `public-hub` e a lógica já existente. Não criar novo kit de componentes nem copiar CSS do Portal autenticado.
+Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em `plugins/plugin-ui/src/styles/`. Nomes são **propostos**; o implementador pode ajustar ao padrão do kit, registrando no `component-catalog.md`/`export-catalog.md`.
+
+| Componente | Responsabilidade | Contrato mínimo (props) |
+|---|---|---|
+| `FormPageLayout` | Faixa da marca + coluna central + espaçamento entre cartões (§3.3) | `band: "compact" \| "tall"`, `children` |
+| `FormHeaderCard` | Logo, título, linha de contexto, metadado à direita, etapa e progresso | `logo`, `title`, `subtitle`, `meta?`, `stepLabel?`, `progress?: { done, total }` |
+| `QuestionCard` | Cartão `fieldset` com rótulo do tema, pergunta numerada, obrigatória/opcional e erro | `number?`, `eyebrow?`, `prompt`, `required`, `optionalLabel?`, `error?`, `children` |
+| `RatingScale` | Escala numérica genérica (serve 1–5 e 0–10) com legenda das pontas, confirmação da escolha e “Não se aplica” opcional | `min`, `max`, `value`, `onChange`, `valueLabels?` (ex.: 1→“Muito insatisfeito”), `endLabels`, `endLabelsPosition: "below" \| "above"`, `narrowColumns?` (ex.: 6 para 0–10), `selectionCaption?`, `notApplicable?: { label, selected, onSelect }`, `ariaLabel`, `invalid?` |
+| (texto aberto) | Reusar `TextAreaField` do kit dentro de `QuestionCard`; se o visual não bater, ajustar **no kit** | — |
+| `FormStepFooter` | Rodapé de ações: fixo em tela estreita, mensagem de pendência, Voltar/Avançar (via `ActionButton`) | `message?`, `back?: { label, onClick }`, `next: { label, onClick, busy? }` |
+| `FormReviewSection` | Seção da revisão com título, botão Editar e linhas rótulo → valor | `title`, `onEdit`, `editLabel`, `rows: { label, value, muted?, block? }[]` |
+| `FormResultPanel` | Tela final ou de estado (sucesso, informação, erro) centralizada | `tone`, `title`, `message`, `hint?`, `action?` |
+
+### 5.3 Camada 2 — formulário guiado completo (PluginUI)
+
+`GuidedQuestionnaire` (nome proposto): componente que monta **todo o fluxo** abertura → etapas → revisão → envio → resultado a partir de uma **definição declarativa**, usando só a camada 1.
+
+| Entrada | Conteúdo |
+|---|---|
+| `intro` | título, empresa/contexto, frase, lista de itens, rótulo do botão de início, texto de rodapé |
+| `steps[]` | `{ id, title, questions[] }`; cada questão: `{ key, kind: "scale" \| "text", number, eyebrow, prompt, required, scale?: { min, max, valueLabels, endLabels, endLabelsPosition, narrowColumns, notApplicable } }` |
+| `texts` | microcopy (padrões em português de §3.6, sobrescrevíveis) |
+| `onSubmit(answers)` | função do app; devolve o resultado (enviado, já registrado, erro…) para o kit exibir a tela certa |
+| `renderResult?` | permite ao app escolher título/mensagem por resultado |
+
+**Comportamento genérico do kit:** estado das respostas só em memória; validação de obrigatórias por etapa com foco na primeira pendência; progresso = obrigatórias respondidas ÷ total de obrigatórias; revisão com Editar por etapa e “Voltar à revisão”; Enter nunca envia; um envio por vez; aviso `beforeunload` enquanto houver respostas não enviadas; sem `localStorage`/`sessionStorage`/cookie/URL.
+
+**Fica fora do kit (domínio):** as 15 perguntas e a divisão 5/5/5 (`surveyForm.ts`), as chamadas à `commercial-api` (`api.ts`), a tradução dos resultados da API em telas, regras de negócio e a validação final — que continua na `commercial-api`.
+
+### 5.4 Camada 3 — página da Pesquisa no `public-hub`
+
+| Arquivo | O que fica |
+|---|---|
+| `src/apps/commercial/FormPage.tsx` | Adaptador fino: converte o questionário da API na definição do `GuidedQuestionnaire`, passa `onSubmit` → `submitPublicSurvey`, mapeia resultados |
+| `src/apps/commercial/SurveyStateView.tsx` | Usa `FormPageLayout` + `FormResultPanel`; remove o nome da campanha |
+| `src/apps/commercial/form.css` | **Removido** ou reduzido a mapeamento de tokens `--delpi-ui-*` / layout de página; nenhum seletor de componente |
+| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo do shell, com **tema claro forçado**. Menor solução: opção opcional na definição da página (ex.: `theme: "light"` e/ou `chrome` sem decoração), padrão inalterado para as demais apps |
+| `surveyForm.ts`, `api.ts` | Mantidos (regra de etapas e rede) |
+
+### 5.5 Ordem de execução sugerida e cuidados
+
+1. **PluginUI:** camada 1 com testes e registro no catálogo; depois camada 2 com testes de comportamento (validação, foco, progresso, revisão, envio único, `beforeunload`, teclado).
+2. **Publicação do remote do PluginUI em HML** e verificação de que o `public-hub` carrega os novos exports.
+3. **public-hub:** adaptador da pesquisa + opção de tema/chrome no shell; remoção do CSS próprio.
+4. **Verificar regressão** das demais páginas públicas e dos MFEs que usam o PluginUI (o kit é compartilhado).
+
+- **Logo:** `/p/logoMinhaDelpi.svg`; em HML (16/11/2026) respondeu **403** — investigar `public-hub/nginx.conf`/gateway antes do aceite.
+- **Exposição em produção:** o remote do PluginUI é compartilhado por todo o Portal. Componentes novos e inertes no PluginUI não expõem a pesquisa, mas **qualquer deploy do PluginUI em PROD** deve seguir a regra de ambientes da Pesquisa ([README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026)) e ser avaliado pelo owner; a página pública da pesquisa continua só em DEV/HML.
+- **Reaproveitamento futuro (não nesta entrega):** migrar o formulário de Customer Experience para o kit (exige `ChoiceList` para escolha única/múltipla e decisão sobre estrelas × escala numérica) e eventual construtor de formulários por usuários — ambos precisam de decisão própria.
+
+**Fora do escopo desta entrega:** contador de caracteres, rascunho salvo, tema escuro, personalização das perguntas, envio de convites, imagem na faixa, `ChoiceList`, migração do Customer Experience.
 
 ## 6. Estado observado em HML (16/11/2026) — gaps a corrigir
 
@@ -203,5 +255,6 @@ Observado no link de uma empresa pendente (sem envio de resposta).
 3. 15 perguntas com texto e ordem literais do catálogo; nenhuma seleção inicial.
 4. Regras de §4 verificadas por testes automatizados e em HML, sem POST antes de “Enviar respostas”.
 5. Acessibilidade de §3.7 verificada (teclado, leitor de tela, zoom 200%, alvos de toque).
-6. Demais páginas públicas do `public-hub` sem regressão visual (shell e tema).
-7. Homologação visual pelo solicitante em HML; **nenhuma publicação em produção** sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).
+6. Demais páginas públicas do `public-hub` e MFEs consumidores do PluginUI sem regressão visual (shell, tema e kit).
+7. Formulário montado **só** com componentes exportados pelo PluginUI; nenhum CSS de componente no `public-hub` (auditorias `scripts/ci/audit_platform_guardrails.py --check --base` e `scripts/ci/audit_mfe_plugin_ui_css.py` sem item novo); componentes registrados no catálogo do kit com testes próprios.
+8. Homologação visual pelo solicitante em HML; **nenhuma publicação em produção** sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).

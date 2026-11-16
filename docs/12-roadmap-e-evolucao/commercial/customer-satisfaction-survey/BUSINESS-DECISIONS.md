@@ -220,7 +220,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 |---|---|
 | Seguir o tema do shell público (claro/escuro, com botão de tema) | **Tema claro fixo**, sem botão de tema |
 | Significado escrito sob cada nota 1–5 (opção A da apresentação numérica) | Legenda apenas nas pontas (1 · Muito insatisfeito / 5 · Muito satisfeito) **mais** confirmação do significado da nota escolhida (“Sua nota: 4 · Satisfeito”) |
-| Reaproveitar exclusivamente componentes do PluginUI, sem CSS próprio | Formulário público com **visual próprio** em `form.css` do `public-hub`, reutilizando shell, tokens de marca e lógica existentes; sem novo kit de componentes |
+| Reaproveitar exclusivamente componentes do PluginUI, sem CSS próprio | ~~Visual próprio em `form.css` do `public-hub`~~ — **substituído no mesmo dia pela Q22**: componentes no PluginUI |
 | Título com o nome da campanha | **Título público fixo** “Pesquisa de Satisfação de Clientes”; nome interno da campanha não aparece ao cliente |
 
 **Decisões novas:** “Não se aplica” como opção discreta separada das notas; recomendação 0–10 com legenda “0 · Nada provável / 10 · Extremamente provável”, em duas linhas (0–5 e 6–10) no celular e sem cores por faixa; uma pergunta por cartão com o tema acima; rodapé de ações fixo no celular; microcopy de botões “Começar / Avançar / Voltar / Revisar respostas / Editar / Enviar respostas”; prazo exibido como data de término sem hora.
@@ -228,6 +228,18 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 **Mantidas sem alteração:** três etapas de cinco perguntas, progresso sobre 12 avaliações obrigatórias, avanço só com etapa completa, revisão com Editar por seção, envio único, agradecimento simples após confirmação da API, aviso de saída sem rascunho persistente, privacidade e contratos de rede.
 
 **Estado:** decisão **APROVADA**; implementação (rework visual de `plugins/public-hub/src/apps/commercial/`) **PENDENTE**.
+
+### Q22 — Formulário construído no PluginUI e reaproveitável (16/11/2026)
+
+**Decisão do solicitante (16/11/2026):** “Usar ou criar todos os componentes em PluginUI e importar eles para o micro front-end específico. De preferência, criar todo o formulário em PluginUI, utilizando os próprios componentes do PluginUI, e reimportá-lo para a página específica. […] podemos criar outros formulários para outros fluxos e reaproveitar esse fluxo.”
+
+- **Substitui** a parte da Q21 que permitia visual próprio em `form.css` no `public-hub`.
+- **Arquitetura:** (1) componentes de apresentação no PluginUI; (2) componente de formulário guiado completo no PluginUI, alimentado por definição declarativa de etapas e perguntas; (3) página da Pesquisa no `public-hub` como adaptador fino (perguntas da API, envio à `commercial-api`, tema claro). Detalhe em [UI-03 §5](./UI-03-FORMULARIO-PUBLICO.md#5-implementação--kit-de-formulário-no-pluginui-q22).
+- **Coerente com a regra existente** `.cursor/rules/plugins-reusable-components.mdc` (CSS de componente só no kit; app só mapeia tokens e faz layout de página).
+- **Abstraction Gate:** necessidade real (pesquisa) + segundo consumidor existente (formulário público de Customer Experience) + pedido explícito de reaproveitamento. Regras de negócio permanecem na `commercial-api`; o kit só faz validação de interface.
+- **Não decidido / fora desta entrega:** migração do Customer Experience para o kit, componente de escolha única/múltipla, construtor de formulários por usuários.
+
+**Estado:** decisão **APROVADA**; implementação **PENDENTE**.
 
 ## Já definido pelas fontes — não perguntar novamente sem necessidade
 
