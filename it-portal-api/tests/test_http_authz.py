@@ -145,6 +145,7 @@ def test_capabilities_reflect_effective_permissions(client, principal):
         "can_manage_networks": False,
         "can_view_integrations": False,
         "can_manage_integrations": False,
+        "can_view_atlas_deployments": False,
     }
     principal.permissions = []
     assert client.get("/me/capabilities").status_code == 403

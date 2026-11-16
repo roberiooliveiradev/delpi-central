@@ -13,6 +13,7 @@ from delpi_auth.credential_guard import check_credentials
 from it_portal_app.config import settings
 from it_portal_app.core.responses import fail
 from it_portal_app.domain.errors import DomainError
+from it_portal_app.interface.http.routes.atlas_deploy_read_routes import router as atlas_deploy_read_router
 from it_portal_app.interface.http.routes.action_plans_routes import (
     router as action_plans_router,
 )
@@ -134,6 +135,7 @@ app.add_middleware(
 )
 
 app.include_router(overview_router)
+app.include_router(atlas_deploy_read_router)
 app.include_router(servers_router)
 app.include_router(workstations_router)
 app.include_router(workstation_snapshots_router)

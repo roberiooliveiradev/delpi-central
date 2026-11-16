@@ -689,6 +689,53 @@ export type Capabilities = {
   can_manage_networks: boolean;
   can_view_integrations: boolean;
   can_manage_integrations: boolean;
+  /** Backend capability hint; GET independently revalidates Core RBAC. */
+  can_view_atlas_deployments?: boolean;
+};
+
+/** P2.2h.2d GET-only ATLAS journal data. No approval or ACT method. */
+export type AtlasDeployEnvironment = "prod" | "hml";
+export type AtlasJournalQuery = {
+  environment?: AtlasDeployEnvironment;
+  status?: string;
+  page?: number;
+  page_size?: number;
+};
+export type AtlasJournalEntry = {
+  id: string;
+  requester_subject: string;
+  request_id: string;
+  environment: AtlasDeployEnvironment;
+  service_id: "public-hub";
+  status: string;
+  target_commit_sha: string;
+  base_commit_sha: string;
+  manifest_digest: string;
+  previous_image_id: string;
+  target_image_id: string;
+  rollback_image_id: string;
+  binding_sha256: string;
+  created_at: string;
+  expires_at: string;
+  expired: boolean;
+  approved_by: string | null;
+  approved_at: string | null;
+  revision: number;
+  can_approve: false;
+  can_execute: false;
+};
+export type AtlasJournalEvent = {
+  sequence: number;
+  event_type: string;
+  actor_subject: string | null;
+  occurred_at: string;
+};
+export type AtlasJournalDetail = AtlasJournalEntry & { events: AtlasJournalEvent[] };
+export type AtlasJournalPage = {
+  items: AtlasJournalEntry[];
+  total: number;
+  page: number;
+  page_size: number;
 };
 
 export type ArchiveFilter = "active" | "archived" | "all";
@@ -771,6 +818,10 @@ export type ActionPlanListQuery = {
 
 export const itPortalApi = {
   capabilities: (signal?: AbortSignal) => apiGet<Capabilities>(apiUrl("/me/capabilities"), signal),
+  listAtlasDeployments: (query: AtlasJournalQuery, signal?: AbortSignal) =>
+    apiGet<AtlasJournalPage>(apiUrl("/atlas/deployments", query), signal),
+  getAtlasDeployment: (id: string, signal?: AbortSignal) =>
+    apiGet<AtlasJournalDetail>(apiUrl(`/atlas/deployments/${encodeURIComponent(id)}`), signal),
   dashboard: (signal?: AbortSignal) => apiGet<Dashboard>(apiUrl("/dashboard"), signal),
   windowsServicesHealth: (signal?: AbortSignal) =>
     apiGet<WindowsServicesHealth>(apiUrl("/dashboard/windows-services-health"), signal),

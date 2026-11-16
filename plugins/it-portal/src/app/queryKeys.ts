@@ -11,6 +11,9 @@ import type {
 
 export const queryKeys = {
   capabilities: ["it-portal", "capabilities"] as const,
+  atlasDeployments: (query: { environment?: "prod" | "hml"; status?: string; page?: number; page_size?: number }) =>
+    ["it-portal", "atlas", "deployments", query] as const,
+  atlasDeployment: (id: string) => ["it-portal", "atlas", "deployment", id] as const,
   dashboard: ["it-portal", "dashboard"] as const,
   windowsServicesHealth: ["it-portal", "dashboard", "windows-services-health"] as const,
   workstations: ["it-portal", "workstations"] as const,

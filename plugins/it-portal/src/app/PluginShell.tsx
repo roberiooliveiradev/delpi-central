@@ -1,4 +1,4 @@
-import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Network, Server, Monitor, Workflow } from "lucide-react";
+import { AppWindow, BookOpen, ClipboardList, Database, LayoutDashboard, Network, Server, Monitor, Workflow, ShieldCheck } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -32,6 +32,7 @@ const NAV_ICONS: Record<NavId, ReactNode> = {
   networks: <Network size={16} strokeWidth={1.75} aria-hidden="true" />,
   integrations: <Workflow size={16} strokeWidth={1.75} aria-hidden="true" />,
   action_plans: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
+  atlas_deployments: <ShieldCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
   help: <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
@@ -66,6 +67,7 @@ export function PluginShell({ view, children }: { view: PluginView; children: Re
     if (capabilities.can_view_networks) ids.push("networks");
     if (capabilities.can_view_integrations) ids.push("integrations");
     if (capabilities.can_view_action_plans) ids.push("action_plans");
+    if (capabilities.can_view_atlas_deployments === true) ids.push("atlas_deployments");
     ids.push("help");
     return ids;
   }, [capabilities]);

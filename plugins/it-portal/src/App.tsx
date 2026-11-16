@@ -10,6 +10,7 @@ import { PortalProvider, usePortal } from "./app/PortalContext";
 import { ForbiddenState, LoadingBlock, QueryErrorState } from "./app/QueryStates";
 import { normalizeBasePath, resolveRoute } from "./app/routes";
 import { ActionPlansPage } from "./features/action-plans/ActionPlansPage";
+import { AtlasJournalPage } from "./features/deploy-approvals/AtlasJournalPage";
 import { DatabaseDetailPage } from "./features/databases/DatabaseDetailPage";
 import { DatabasesPage } from "./features/databases/DatabasesPage";
 import { HelpPage } from "./features/help/HelpPage";
@@ -119,6 +120,8 @@ function PortalRoutes({ pathnameFromHost }: { pathnameFromHost?: string }) {
     );
   } else if (route.view === "action_plans") {
     content = capabilities.can_view_action_plans ? <ActionPlansPage /> : <ForbiddenState />;
+  } else if (route.view === "atlas_deployments") {
+    content = capabilities.can_view_atlas_deployments === true ? <AtlasJournalPage /> : <ForbiddenState />;
   } else if (route.view === "help") {
     content = <HelpPage />;
   } else {
