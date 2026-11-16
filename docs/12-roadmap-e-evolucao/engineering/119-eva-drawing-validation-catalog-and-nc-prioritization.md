@@ -5877,3 +5877,29 @@ Confirmado: Keycloak=identidade, Core=AuthZ, TOTVS=cadastro, Engenharia=norma, E
 - `test_d16_attendance_flags::test_isolation_between_requests` = **PRE_EXISTING_FAILURE** (intake PRC retorna 422 em segunda submissão; falha idêntica na baseline G24 anterior a qualquer código meu) → owner: frente D16/PRC.
 - `test_rbac_resolution` e `test_lmp_domain`: passam (falha anterior era artefato de mount).
 - `CODE_CHANGED: NO` · `DEPLOY_EXECUTED: NO` (pacote de verificação).
+
+## §94.31 — G24-R3: integridade da identidade do PI pai por fonte
+
+**TASK_ID:** `EVA-E1-VAL01-G24-R3-PARENT-SOURCE-IDENTITY-INTEGRITY-01` · **Decisão:** Issue #131 #6922638626 · **NO_DEPLOY** neste pacote.
+
+### 94.31.1 F01 — causa-raiz e correção
+
+**Causa-raiz:** `parent = drawing.parent_code or bom.parent_code` produzia um único código usado tanto para `pi_drawing_normative` quanto para `pi_totvs_normative`/`pi_bom`. Pai visual divergente fazia a descrição oficial do PI errado ser avaliada e vinculada à ocorrência MP.
+
+**Correção (menor diff em `_normative_block`):**
+- `d_parent` ← `drawing.parent_code`; `b_parent` ← `bom.parent_code` — nunca fallback entre fontes.
+- `pi_draw` resolve por `d_parent` (se 50xx); `pi_bom` resolve por `b_parent` (se 50xx) — a descrição oficial é sempre a do pai oficial.
+- Novo bloco tipado `parent_divergence`: `DIVERGENCE_CANDIDATE | SAME_PARENT_VERIFIED | SAME_PARENT_UNVERIFIED | DRAWING_PARENT_ABSENT | BOM_PARENT_ABSENT`, com os dois códigos, `occurrence_id`, `drawing_association_state` e `PENDING_ENGINEERING`.
+- Coerência por par com gate próprio: **D×D** exige `parent_verified`; **T×T** usa a relação oficial da BOM (sem gate visual); **CROSS** exige `same_parent` + `parent_verified` — divergente ou não verificado → `INCONCLUSIVE` com razão explícita. Sem falso `PASS` por identidade presumida.
+
+### 94.31.2 Evidências
+
+- **8 testes novos (T01–T15)**: divergência nos dois sentidos, pai ausente em cada fonte, mesmos pais não-verificados, cross-source com descrições idênticas e pais divergentes, regressão PA-não-PI. T01 provaria o defeito no código R1 (`pi_totvs` era `50233508`).
+- **43/43** testes G24+R1+R3; **suíte 1416 pass, 1 fail (test_d16 pré-existente), 21 skip** — zero falhas novas.
+- Contrato `normative_description.v1` preservado; `parent_divergence` é campo aditivo; `pi_bom_coherence` mantém lista de 3 comparações.
+- Regras normativas intocadas: 1038/MABR `OWNER_BLOCKED`, `MM≠MM2`, E/D não inferida, `automatic_nc=false`.
+- Verificador: `INCONCLUSIVE` r1 — engine devin sem auth, cursor sem quota (mesmo bloqueio de infra do G24-R2). Request `.git/delpi-verifier/requests/g24-r3-parent-identity-r1.md`.
+
+### 94.31.3 Residual
+
+Fechamento independente pendente de engine autenticada. Deploy **não autorizado** neste pacote — Coordination decide sobre `READY_FOR_DEPLOY_REVIEW`.
