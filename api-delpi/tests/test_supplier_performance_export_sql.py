@@ -43,8 +43,8 @@ def test_sql_is_read_only_bounded_parameterized_and_grains_match_screen():
 @pytest.mark.parametrize("source", ["inspections", "deliveries"])
 def test_export_refuses_truncation(source):
     repository = SupplierPerformanceExportRepository()
-    with patch.object(repository, "__enter__", return_value=repository), patch.object(
-        repository, "__exit__", return_value=False
+    with patch.object(SupplierPerformanceExportRepository, "__enter__", return_value=repository), patch.object(
+        SupplierPerformanceExportRepository, "__exit__", return_value=False
     ), patch.object(repository, "execute_query") as execute:
         if source == "inspections":
             execute.return_value = [{}] * (MAX_EXPORT_ROWS_PER_SOURCE + 1)
