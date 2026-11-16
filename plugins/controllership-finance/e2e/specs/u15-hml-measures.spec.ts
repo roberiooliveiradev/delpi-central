@@ -107,11 +107,11 @@ test.describe("U15 — medições HML", () => {
 
     const dayBtn = page
       .locator('[aria-label="Evolução diária de ocorrências"] [role="button"]')
-      .filter({ hasNotText: /^$/ })
       .nth(1);
+    await expect(dayBtn).toBeVisible({ timeout: 15_000 });
     await dayBtn.click();
     await expect(page).toHaveURL(/day=/, { timeout: 15_000 });
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1200);
 
     const after = await page.evaluate(() => {
       const group = document.querySelector(
@@ -180,6 +180,8 @@ test.describe("U15 — medições HML", () => {
     write("hero-kpi-390.json", report);
     expect(report.heroScrollWidth).toBeLessThanOrEqual(report.heroClientWidth + 1);
     expect(report.actionsOutsideHero).toBe(0);
+    // Reticências no current do PagePath: overflow do texto com ellipsis (não corte sem hint).
+    expect(report.pathCurrentOverflow).toBe(true);
     expect(report.kpiColumns).toBe(2);
   });
 });
