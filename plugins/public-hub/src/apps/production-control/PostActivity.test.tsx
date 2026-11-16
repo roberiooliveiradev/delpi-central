@@ -746,6 +746,13 @@ describe("PostActivityPage", () => {
         screen.getByRole("button", { name: "Informar motivo" }),
       ).toBeInTheDocument(),
     );
+    // Data arrives before the mount effect chooses the pending-first filter.
+    // Assert the filter is settled before inspecting classified stop visibility.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Sem motivo/i })).toHaveAttribute(
+        "aria-pressed", "true",
+      ),
+    );
     expect(screen.queryByText("Setup de máquina")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Todas" }));
     expect(await screen.findByText("Setup de máquina")).toBeInTheDocument();
