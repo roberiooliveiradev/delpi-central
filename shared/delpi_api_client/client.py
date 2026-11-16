@@ -259,6 +259,19 @@ class DelpiApiClient:
     def get_supplies_otd(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/supplies/otd", params=params, authorization=authorization)
 
+    def get_supplies_sc_pc_conversion(
+        self,
+        *,
+        params: Mapping[str, str | None | list[str]] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        """Internal summary-only metric (GLPI #635); server verifies signed service caller."""
+        return self._get(
+            "/supplies/purchase-requests/sc-pc-conversion",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_stock_value(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/supplies/stock-value", params=params, authorization=authorization)
 
