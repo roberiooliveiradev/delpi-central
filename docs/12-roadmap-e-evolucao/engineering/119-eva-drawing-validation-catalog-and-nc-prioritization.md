@@ -6000,3 +6000,132 @@ Aceite esperado: 4 PI, 8 MP por ocorrência, 3 pares tipados por MP, `parent_div
 - D1–D6 aguardam ratificação da Engenharia DELPI.
 - Falha D16 permanece atribuída à frente D16.
 - E1/VAL-01 **não** encerrada — aguarda aceite E2E autenticado.
+
+## §94.34 — G25: auditoria de cobertura normativa PI/MP e gaps do motor
+
+**TASK_ID:** `EVA-E1-VAL01-G25-PI-MP-NORMATIVE-COVERAGE-INVENTORY-AND-GAP-ANALYSIS-01` · **Decisão:** Issue #131 #6925677148 · **MODO:** READ_ONLY — zero código, zero deploy.
+
+### 94.34.1 Identidade das fontes (sem drift)
+
+| Fonte | Path | SHA-256 | Versão |
+|---|---|---|---|
+| Norma PI | `api-delpi/docs/api/padroes-totvs/codigos-intermediarios-pi.md` | `ee81169f…baf269` | resumo oficial verbatim (freeze-002); original `ENTENDENDO CÓDIGO INTERMEDIÁRIO…pdf` não versionado |
+| Norma MP | `api-delpi/docs/api/padroes-totvs/normas-tecnicas-descricao-materias-primas.md` | `66aa9c13…4bd2` | integral verbatim (freeze-002) |
+| Conhecimento EVA | `eva_engineering_knowledge.json` v1.8, `product.drawing_criteria` rev 1.3 | — | resumo estrutural; **não é a norma** |
+| Motor | `normative_description.py` `normative_description.v1` | `NORM_REFS` confere | `EVALUATED_SHA: 2c3ab3c709` |
+
+`SOURCE_VERSION_DRIFT: NONE` — hashes em `NORM_REFS` = docs governados atuais.
+
+### 94.34.2 Matriz normativa PI (família 50xx)
+
+| Segundo a norma (pág.) | Campo | Regra motor | Teste | Status |
+|---|---|---|---|---|
+| p3 | Família 5021–5058 | `is_pi50_code` (prefixo 50xx) | sim | IMPLEMENTED |
+| p13 | Sequência xxxx | n/a — vem do código, não da descrição | — | NOT_APPLICABLE |
+| p4–5 | Isolação CA/CB/CF/CT/CV → PVC/EPR/Silicone/Teflon/Especial | `PI50-ISO-01` + `_PI_ISOLATION` | sim | IMPLEMENTED |
+| p4–5 | Bitola (AWG ou mm², decimal `,`) | `PI50-GAUGE-01` | sim | IMPLEMENTED |
+| p6 | Cor 4 letras — tabela fechada 13 cores | `PI50-COLOR-01` + `_PI_COLORS` | sim | IMPLEMENTED (fora da tabela → OWNER_BLOCKED, ex.: MABR→D2) |
+| p7 | Comprimento mm | `PI50-LEN-01` | sim | IMPLEMENTED |
+| p8–9 | Decape E/D `xx/xx` mm | `PI50-DECAPE-01` | sim | IMPLEMENTED |
+| p10–11 | Terminal/Isolador E/D — 2 últimos dígitos, ordem TE/IE/TD/ID | `PI50-TERM-01` estrutural; semântica posição=D4 | sim | PARTIALLY (posição física nunca inferida — correto) |
+| p13–14 | Gramática completa | `_PI50_FULL` / `parse_pi50_segments` | sim | IMPLEMENTED |
+
+`PI_RULES: 8 implementadas, 1 parcial (semântica E/D → D4), 0 incorretas`.
+
+### 94.34.3 Matriz normativa MP — cobertura por grupo/subtipo
+
+| Seção norma | Estruturas | Campos | Motor | Status |
+|---|---|---|---|---|
+| 1001–1005 Cabos | 1 | ITEM, MATERIAL, TEMP, ÁREA, COR, TENSÃO, OBS, CERT | `_eval_cable` — 7 checks | PARTIALLY (sem check OBS; cert vocab sem `NM`/variantes; cor literal ok) |
+| 1006 Cabos PP c/ plug | 1 | 10 campos | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1007 Cabos PP | 1 | 10 campos | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1008 PINO | 1 | 10 | — | NOT_IMPLEMENTED (cai no avaliador FASTON/BANDEIRA → type INCONCLUSIVE) |
+| 1008 FORQUILHA | 1 | 12 | — | NOT_IMPLEMENTED idem |
+| 1008 ILHÓS/TUBULAR | 1 | 9 | — | NOT_IMPLEMENTED idem |
+| 1008 LINGUETA | 1 | 9 | — | NOT_IMPLEMENTED idem |
+| 1008 FASTON/BANDEIRA | 1 | 9 | `_eval_terminal_1008` — 7 checks | IMPLEMENTED (única estrutura 1008) |
+| 1008 OLHAL/ANZOL | 1 | 12 | — | NOT_IMPLEMENTED idem |
+| 1008 GENÉRICO | 1 | 7 | — | NOT_IMPLEMENTED idem |
+| 1008 LUVA/EMENDA | 1 | 9 | — | NOT_IMPLEMENTED idem |
+| 1009 ISOLADOR | 1 | 7 | `_eval_isolator_1009` — 6 checks | IMPLEMENTED |
+| 1009 INSERTO | 1 | 7 | roteado p/ isolador | **IMPLEMENTED_INCORRECTLY → falso VIOLATION** |
+| 1009 CONECTOR | 1 | 6 | roteado p/ isolador | **IMPLEMENTED_INCORRECTLY → falso VIOLATION** |
+| 1011 Etiquetas/Anilhas/Cartões | 3 | 8 (obrigatórios explícitos!) | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1012 Tubo flexível/cortado/corrugado | 3 | 7–9 | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1013/1050 Termoencolhível geral/cortado | 2 | 9–10 | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1015 Prensa-cabos (4 variantes rosca) | 4 | 6–8 | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1016 Resistores | 1 | 6 | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1025 Termistores | 1 | 7 | — | NOT_IMPLEMENTED → NOT_APPLICABLE |
+| 1038 (sem seção na norma) | — | — | `OWNER_BLOCKED` | correto — não estender 1001–1005 sem ratificação (D1) |
+
+**Subtipos/estruturas normativas:** ~19 documentadas · **cobertas corretamente:** 3 (cabo 1001-1005, FASTON/BANDEIRA, isolador) · **incorretas:** 2 (INSERTO, CONECTOR) · **não implementadas:** ~14.
+
+### 94.34.4 Caracterização (exemplos verbatim da norma × motor em produção)
+
+| Fixture (exemplo oficial) | NORM_EXPECTED | CURRENT_ENGINE | Gap |
+|---|---|---|---|
+| `CB1,50VERD-00255/06/06-6314-0111` | conforme | PASS | — |
+| `CA18PRET-…` | conforme | PASS | — |
+| `CA18MABR-…` | fora da tabela | OWNER_BLOCKED | — (D2 correto) |
+| `CABO PVC 70°C 0,75MM2 PT 450/750V BWF ESTANHADO NM 247-3` | conforme | INCONCLUSIVE (cert: `NM` ausente do vocab) | G-03 |
+| `TERM. PINO RETO …` | conforme PINO | INCONCLUSIVE (type+dims+range) | G-02 |
+| `TERM. FORQUILHA/ILHOS/LINGUETA/OLHAL/LUVA/BALA …` | conforme | INCONCLUSIVE (sem avaliador do subtipo) | G-02 |
+| `ISOLADOR NYLON RETO 6,3 PT UL94 V2` | conforme | PASS | — |
+| `INSERTO FEMEA 10 POLOS HAN D …` | conforme INSERTO | **VIOLATION_CANDIDATE** (prefix) | **G-01** |
+| `CONECTOR MODULAR 3 VIAS AL C/TRAVA UL` | conforme CONECTOR | **VIOLATION_CANDIDATE** (prefix) | **G-01** |
+| 1006/1007/1011/1012/1013/1015/1016/1025 exemplos | conforme | NOT_APPLICABLE | G-04 (fail-closed ok) |
+| 1038 `CABO PP 2X1,5MM2` | sem norma ratificada | OWNER_BLOCKED | — (D1 correto) |
+
+### 94.34.5 Catálogo de gaps
+
+| GAP_ID | Sev | Esperado × Atual | Impacto | Fix recomendado |
+|---|---|---|---|---|
+| G-01 | **ALTA** | INSERTO/CONECTOR 1009 têm normas próprias × roteados ao avaliador ISOLADOR → `VIOLATION_CANDIDATE` no prefixo | **falsa violação** em descrição conforme | classificação de subtipo 1009 antes do avaliador (ISOLADOR/INSERTO/CONECTOR); INSERTO≠ISOLADOR nunca como falha de prefixo |
+| G-02 | ALTA | 6/8 subtipos 1008 têm estruturas próprias (PINO, FORQUILHA, ILHÓS/TUBULAR, LINGUETA, OLHAL/ANZOL, GENÉRICO, LUVA/EMENDA) × único avaliador FASTON/BANDEIRA aplica campos de FASTON a todos | campos avaliados fora de contexto; type sempre INCONCLUSIVE; risco de falso negativo/positivo | avaliador por subtipo com dispatch por `TIPO` documentado; sem avaliador → INCONCLUSIVE explícito (não aplicar regra de outro subtipo) |
+| G-03 | MÉDIA | cert vocab `_CABLE_CERTS` não inclui `NM` (NM 247-3/NBR NM) nem variantes (`UL94`, `NBR13249`) × norma usa essas certificações nos exemplos | INCONCLUSIVE em descrição oficial conforme | estender vocab conforme exemplos normativos (NM, NBR números, UL94, DIN46228) — é dado da norma, não extensão inventada |
+| G-04 | MÉDIA | 8 grupos normados (1006, 1007, 1011, 1012, 1013/1050, 1015, 1016, 1025) → NOT_APPLICABLE | zero cobertura (fail-closed correto, mas norma existe) | lotes por grupo — norma já define estruturas (categoria B, não precisa D-item) |
+| G-05 | BAIXA | campo OBSERVAÇÕES das normas não avaliado (free-form) | cobertura parcial 1001-1005 | registrar como OPTIONAL/UNDETERMINED — norma não tipifica conteúdo |
+| G-06 | BAIXA | `COH-GAUGE` só compara AWG; PI em mm² × MP mm² nunca comparado | coerência de bitola mm² silenciosa | estender para mm²×mm² (mesma unidade; mm²≠AWG nunca convertido) |
+| G-07 | INFO | classificação REQUIRED/CONDITIONAL/OPTIONAL: norma só explicita em 1011 ("Campos obrigatórios", "Dimensões (opcional)"), 1012 ("SE TIVER"), 1009 inserto ("BITOLA Opcional") | demais campos = estrutura exigida mas obrigatoriedade individual UNDETERMINED | mapear UNDETERMINED→INCONCLUSIVE (já é o comportamento — documentar); D3 só para campos realmente ambíguos |
+
+### 94.34.6 Separação PI × MP — contaminação
+
+`CROSS_NORM_CONTAMINATION: NONE` — cores PI (4 letras, tabela fechada) e MP (abrev. 1ª+última letra) em conjuntos separados (`_PI_COLORS` × `_COLOR_ABBR`); isolação PI decodifica material via tabela da própria norma antes da coerência; nenhuma equivalência PRETA↔PT presumida; `MM` nunca virou `MM2`. Coerência implementa só ISO-MATERIAL e GAUGE-AWG — atributos semanticamente comparáveis.
+
+### 94.34.7 Semântica de campo ausente (§8 do pacote)
+
+Motor atual: **todo** campo ausente → INCONCLUSIVE (Caso A/B/C/D colapsam). Correto como fail-closed enquanto a norma não marca obrigatoriedade campo-a-campo; a única seção com exigência explícita é 1011 — que está não-implementada, logo nenhum Caso B é confundível hoje. Ao implementar 1011, prefixo/modelo/material/cor/bitola/texto deverão poder virar VIOLATION_CANDIDATE por ausência (norma declara "Campos obrigatórios") — registrar como requisito do lote 1011.
+
+### 94.34.8 Métricas (denominadores explícitos)
+
+```text
+PI: seções=1, regras≈9 → 8 IMPLEMENTED, 1 PARTIAL, 0 INCORRECT, 0 NOT_IMPLEMENTED
+MP: seções/grupos normados=12 códigos (1001-05,1006,1007,1008,1009,1011,1012,1013,1015,1016,1025,1050)
+MP_SUBTYPES: ≈19 estruturas → 3 IMPLEMENTED, 2 INCORRECT, 14 NOT_IMPLEMENTED
+MP_GROUP_COVERAGE: 4/12 grupos com algum tratamento (1001-05, 1008, 1009, 1038=blocked)
+MP_SUBTYPE_COVERAGE: 3/19 ≈ 16%
+MP_RULES: ~21 regras motor vs ~150 campos normativos inventariados
+TEST_COVERAGE: 54 testes G24 cobrem PI + cabo + FASTON/BANDEIRA + isolador + F01/F02;
+               0 testes para os 14 subtipos não implementados (correto — nada a testar)
+FIELD_REQUIREMENT: REQUIRED explícita só em 1011 (não impl.);
+                   CONDITIONAL: 1012 abertura, 1050 comprimento; OPTIONAL: 1011 dimensões, 1009 bitola;
+                   UNDETERMINED: ~90% dos campos (INCONCLUSIVE = comportamento correto)
+FALSE_VIOLATION_RISKS: G-01 (confirmado em produção)
+FALSE_PASS_RISKS: nenhum identificado (fail-closed em todos os caminhos incertos)
+```
+
+### 94.34.9 Lotes propostos (próxima implementação — fora deste pacote)
+
+| Lote | Escopo | Categoria | Risco |
+|---|---|---|---|
+| **L1** | G-01: dispatch subtipo 1009 (ISOLADOR/INSERTO/CONECTOR) + avaliadores INSERTO/CONECTOR | A — correção de implementação incorreta | falsa violação **ativa** — prioridade máxima |
+| **L2** | G-02: dispatch subtipo 1008 + avaliadores PINO/FORQUILHA/ILHÓS/LINGUETA/OLHAL-ANZOL/GENÉRICO/LUVA-EMENDA | B — regra documentada ausente | campos avaliados fora de contexto |
+| **L3** | G-03: vocab certificações conforme exemplos normativos (NM, NBR-num, UL94, DIN46228) | A — correção | INCONCLUSIVE indevido |
+| **L4** | G-06: coerência bitola mm²×mm² | B — extensão documentada | cobertura de coerência |
+| **L5** | G-04 por frequência: 1011 (única c/ REQUIRED explícita) → 1013/1050 → 1012 → 1015 → 1006/1007 → 1016/1025 | B — regras documentadas | normal, fail-closed já seguro |
+
+`ARCHITECTURE_DECISION_REQUIRED: NO` — mesmos módulos, contrato e owner; nenhuma nova autoridade. `D1–D6` inalterados (D1/D2/D4 continuam legítimos; G-01/G-02/G-03 **não** são itens D — a norma já determina o comportamento).
+
+### 94.34.10 Governança
+
+`CODE_CHANGED: NO` · `DEPLOY_EXECUTED: NO` · `BUSINESS_DATA_WRITES: 0` · `AUTOMATIC_NC: false` · `ENGINEERING_APPROVAL: NOT_APPROVED` (motor segue CANDIDATE). Caracterização executada no container produtivo — leitura apenas.
