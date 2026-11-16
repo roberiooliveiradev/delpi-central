@@ -1,0 +1,80 @@
+name: Supplies IDF focused quality
+
+on:
+  pull_request:
+    paths:
+      - "api-delpi/app/application/use_cases/supplies/get_supplier_performance*"
+      - "api-delpi/app/infrastructure/persistence/totvs/supplies_repositories/supplier_performance*"
+      - "api-delpi/app/interface/http/routes/supplies/supplier_performance_router.py"
+      - "api-delpi/app/interface/http/schemas/supplier_performance_schema.py"
+      - "api-delpi/tests/test_supplier_performance*"
+      - "supplies-api/app/interfaces/http/routes/supplier_performance_routes.py"
+      - "supplies-api/app/infrastructure/export/supplier_performance_xlsx.py"
+      - "supplies-api/tests/test_supplier_performance*"
+      - "plugins/supplies/src/api/supplierPerformance.ts"
+      - "plugins/supplies/src/features/supplier-performance/**"
+      - ".github/workflows/supplies-idf-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  api-idf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - name: Install API test dependencies
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r api-delpi/requirements.txt
+      - name: Inspect IDF API tests
+        working-directory: api-delpi
+        run: |
+          pytest -q tests/test_supplier_performance.py \
+            tests/test_supplier_performance_route.py \
+            tests/test_supplier_performance_sql.py \
+            tests/test_supplier_performance_export.py \
+            tests/test_supplier_performance_export_sql.py
+
+  bff-idf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: supplies-api/requirements.txt
+      - name: Install BFF test dependencies
+        run: |
+          pip install -e './shared[flask]'
+          pip install -r supplies-api/requirements.txt
+      - name: Inspect IDF BFF and Excel tests
+        working-directory: supplies-api
+        run: |
+          pytest -q tests/test_supplier_performance_routes.py \
+            tests/test_supplier_performance_export.py
+
+  mfe-idf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: plugins/supplies/package-lock.json
+      - name: Install frontend
+        working-directory: plugins/supplies
+        run: npm ci
+      - name: Test IDF UI
+        working-directory: plugins/supplies
+        run: npx vitest run src/features/supplier-performance
+      - name: Build frontend
+        working-directory: plugins/supplies
+        run: npm run build
