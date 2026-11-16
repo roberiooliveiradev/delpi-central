@@ -232,3 +232,31 @@ com identidade legítima — checklist em §G7 do prompt da task.
 Pedido `ux-v3-p1-prd-deploy-r1.md`; veredito `INCONCLUSIVE` nas duas
 engines (devin sem auth, cursor sem quota) — restrição de ambiente,
 registrada em `verdicts.jsonl`.
+
+## F. Regressão residual HELPDESK-UXV3-FILTERX-GEOMETRY (16/11/2026 — `a85c6522b9`)
+
+PO reportou FilterX deformado só no Helpdesk em PRD (My Requests ok).
+Diagnóstico provado com CSS real de PRD: a regra do MFE
+`.helpdesk-list-controls-row > .delpi-ui-help-tooltip--wrap > * { min-width: 0 }`
+zerava o `min-width` do `IconButton` (18×36 medidos; `flex-shrink` irrelevante —
+a largura intrínseca era 16 px de SVG + borda). Fix no Plugin UI:
+`width/height` fixas 36 px no `.delpi-ui-icon-btn` (consumidor não consegue
+zerar largura explícita). Dedup G4: `Status:` sai de `activeFilterLabels`
+quando o valor tem chip rápido (sempre redundante — o filtro avançado usa
+`TICKET_STATUS_FILTERS`); mantido para status sem chip.
+
+| gate | resultado |
+|---|---|
+| reprodução (harness CSS PRD) | antes 18×36 `minWidth:0` → depois 36×36 |
+| plugin-ui testes | 2653/2653 (+ contrato `iconButtonGeometry`) |
+| helpdesk testes | verde (1 falha pré-existente helpTooltips budget) |
+| my-requests vitest | 235/237 (2 falhas pré-existentes ProcessIssue — fora do diff) |
+| tsc | limpo nos arquivos do diff (3 erros pré-existentes de outros tracks) |
+| builds | plugin-ui + helpdesk OK |
+| verificador | `INCONCLUSIVE` (devin sem auth) — `helpdesk-filterx-geometry-r1.md` |
+| HML deploy | plugin-ui `95bc6045fe40`, rollback `rollback-pre-filterx-fix-202611161245` |
+| HML E2E autenticado | 20/20 (ux-v2-hero-sort × viewports, FilterX 36×36/âmbar/ordem/clear) |
+| PRD deploy | plugin-ui `d0a4438c8f91` + helpdesk `3746301be434`, remoteEntry 200 ×4 |
+| PRD rollback tags | `rollback-pre-filterx-fix-202611161245` (plugin-ui 3e247e0c127c, helpdesk 35a90b2192d9) |
+| PRD smoke autenticado | `INCONCLUSIVE` — sem identidade autorizada no realm `delpi` |
+| writes TOTVS/negócio/RBAC/migrations | 0 |
