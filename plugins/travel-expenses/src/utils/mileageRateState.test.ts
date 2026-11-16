@@ -22,7 +22,7 @@ describe("mileage rate feedback (ticket #1597)", () => {
   it("shows a validated rate", () => {
     const resolved: MileageRateLookup = { date: selectedDate, status: "success", rate: 1.20, error: null };
     expect(rateForDate(resolved, selectedDate)).toBe(1.20);
-    expect(mileageRateLabel(resolved, selectedDate)).toBe("R$ 1,20/km");
+    expect(mileageRateLabel(resolved, selectedDate).replace(/\s/g, " ")).toBe("R$ 1,20/km");
   });
 
   it("never reuses a rate fetched for a previous date", () => {
