@@ -61,3 +61,17 @@ Inspecao cruzada de testes, codigo real e output do Testing Library:
 - **Nenhum teste foi ignorado, removido ou marcado como `skip`, e nenhuma logica runtime, API, politica de qualidade ou assinatura foi alterada**.
 
 O novo CI da PR deve ainda demonstrar que os 140 testes e a build TypeScript/Vite passam; o merge nao esta autorizado por esta documentacao. Revisao independente, release assinada e validacao de runtime continuam pendentes.
+
+### Fechamento do CI de codigo da PR #193, sem merge (16/11/2026)
+
+**Evidencia no GitHub:** [run 43859759666](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43859759666) no commit `675b5147e53dcc86d00baf6bcb8dd4baaade99f4`, workflow `ATLAS Public Hub OCI Revision and Signed Release`, `completed/success`. Jobs:
+- `Full Git SHA label, clean input and negative build gates`: PASS.
+- `Public Hub tests, production build and changed-source lint`: PASS, com **140 testes Vitest**, `tsc -b tsconfig.node.json` para configuracao Vite, `vite build` (comando identico ao Dockerfile) e ESLint estrito dos arquivos TypeScript alterados. O inventario global de ESLint permanece separado e nao elimina erros historicos.
+- `Build final production image without publishing`: PASS, imagem `production` construida no runner descartavel, com label SHA, `index.html` e `nginx -t` verificados.
+- `Build, publish and sign immutable final image (main only)`: SKIPPED por ser PR, conforme isolamento esperado. **Assinatura GHCR ainda nao existe** e imagem de producao nao foi alterada.
+
+**Limite explicito do TypeScript:** `npm run build` do pacote Public Hub inclui `tsc -b` de uma configuracao que resolve codigo de outros projetos, sem as respectivas dependencias instaladas no runner. Foram registrados 1.410 erros de resolucao/tipagem de workspace no log da tentativa (nao demonstram erros novos desta PR), portanto o gate da P2.2g verifica o tsconfig de build e o bundle Vite real, além do build Docker final. **Nao afirmar que typecheck completo de todos os pacotes passou.** O TypeScript integral exige preparacao do workspace e saneamento proprio fora deste incremento.
+
+**Enforcement transversal paralelo:** [run 43859759564](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43859759564) de arquitetura marcou `IMMUTABLE_MIGRATION_MUTATION` para `api-delpi/migrations/plugins/engineering/V024__prc_record_flags.sql`, sem qualquer modificacao nesse arquivo no diff da PR. O checkout do job era um merge virtual do commit `675b...` com `main` em `e76018eea9191b11e64eac3cb43b7839ce72480c`. Essa revisao de main mudou a migration (blob `70cdd37c...` versus `bd11a049...` na base da PR), mas em `3ba6c292f64c82e318a2b4be73c91c4a0e633bfe` ela voltou ao blob `bd11a049...`, confirmado por consulta GitHub. **Nenhum guardrail foi alterado/desativado; reexecutar CI sobre merge virtual atualizado.**
+
+O verificador independente `delpi-verifier`, emissao assinada apos `main`, verificacao no runtime, grants e PREPARE/ACT **ainda nao estao concluidos**. Mesmo com CI verde, a PR permanece rascunho e nao autoriza deploy automatico nem promocao do host.
