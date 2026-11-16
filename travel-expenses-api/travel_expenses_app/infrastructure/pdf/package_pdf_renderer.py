@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from html import escape
 from typing import Any
 
 from reportlab.lib import colors
@@ -192,9 +193,9 @@ class TravelPackagePdfRenderer:
         for expense in expenses:
             if expense.get("transportMode") == "own_vehicle":
                 story.append(Paragraph(
-                    f"Veículo próprio: {_text(expense.get('distanceKm'))} km x "
+                    f"Veículo próprio: {escape(_text(expense.get('distanceKm')))} km x "
                     f"{_money(expense.get('rateBrlPerKm'))}/km = {_money(expense.get('amountBrl'))}. "
-                    f"{_text(expense.get('notes'))}",
+                    f"{escape(_text(expense.get('notes')))}",
                     styles["Normal"],
                 ))
         story.append(Spacer(1, 18))
