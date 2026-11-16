@@ -161,6 +161,12 @@ def store_oci_prepared(
             _verify_at_db_clock(
                 intent=intent, candidate=candidate, ci=ci, host=host, now=now,
             )
+            # The signed host proof must be bound to the exact one-shot nonce
+            # consumed by this transaction, not just agree with the intent.
+            if (type(intent.host_challenge_sha256) is not str
+                    or not hmac.compare_digest(intent.host_challenge_sha256, digest)):
+                raise JournalRejected("OCI_CHALLENGE_BINDING_MISMATCH")
+
             expected = _expected_binding(intent, candidate)
             existing = conn.execute(
                 _SQL_READ, (generic.requester_subject, generic.request_id),

@@ -299,3 +299,8 @@ A role dedicada `it_portal_atlas_journal_reader` teve leitura validada nas tres 
 **Limites de aceite:** nenhuma proposta criada; nenhum PREPARE, aprovacao real, ACT, promocao OCI por digest ou rollback automatizado; somente visualizacao. Restam validacao independente `delpi-verifier`, teste completo de restauracao de backup, verificacao de triggers e testes negativos de API/segregacao (403 sem grant, 503 sem reader). A divergencia de collation do PostgreSQL foi identificada e **adiada por decisao do operador**, sem `REINDEX` nem `REFRESH COLLATION VERSION`; criar manutencao DBA separada. Esta fase **nao habilita** deploy automatico e nao altera o deploy manual existente.
 
 **Proximo incremento:** PREPARE real com atestacao confiavel, journal transacional e proposta assinada, seguido de aprovacao explicita e nominativa no Core, e somente apos os gates de host/rollback um executor ACT isolado. Registro detalhado: [V016 e aceite PROD VIEW](./16-atlas-journal-v016-core-view-activation-plan.md).
+
+
+## 27. P2.2h.2f: vinculo criptografico do nonce no journal OCI (PR para revisao, 16/11/2026)
+
+A proxima evolucao acrescenta a verificacao transacional de que o hash de challenge presente na prova do host corresponde **ao mesmo nonce** consumido na tabela de challenges, impedindo substituicao por prova de outro challenge. A [nota tecnica de P2.2h.2f](./17-atlas-p22h2f-challenge-binding-review.md) registra o caso negativo e as pendencias. O incremento inclui teste de regressao em PostgreSQL descartavel e nao habilita endpoints de PREPARE nem ACT. **Status:** candidato em branch/PR, aguardando CI, `delpi-verifier` independente e revisao humana; sem deploy de producao.

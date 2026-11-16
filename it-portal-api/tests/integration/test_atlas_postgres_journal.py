@@ -224,6 +224,19 @@ def oci_bundle(*, environment="prod", request_id="01234567-89ab-4def-8abc-012345
     return base, ci, host, sealed
 
 
+def _oci_bound_to_nonce(bundle, nonce):
+    """Construct valid evidence for the exact persisted one-shot challenge."""
+    i, c, h, s = bundle
+    digest = hashlib.sha256(bytes.fromhex(nonce)).hexdigest()
+    bound_intent = replace(i, host_challenge_sha256=digest)
+    bound_host = replace(h, challenge_sha256=digest)
+    bound_seal = seal_oci_candidate(
+        intent=bound_intent, ci=c, host=bound_host,
+        now=s.issued_at, backend_policy_enabled=True,
+    )
+    return bound_intent, c, bound_host, bound_seal
+
+
 def _oci_store(conn, bundle, nonce):
     i, c, h, s = bundle
     return store_oci_prepared(
@@ -246,6 +259,7 @@ def test_oci_binding_atomic_create_and_identical_retry(pg):
     i, _, _, candidate = bundle
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     first = _oci_store(pg, bundle, nonce)
     again = _oci_store(pg, bundle, nonce)
     assert first.result == "created_pending_approval"
@@ -269,7 +283,7 @@ def test_oci_binding_has_production_hml_isolation(pg, environment):
     i, c, h, sealed = oci_bundle(environment=environment)
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
-    assert _oci_store(pg, (i, c, h, sealed), nonce).result == "created_pending_approval"
+    assert _oci_store(pg, _oci_bound_to_nonce((i, c, h, sealed), nonce), nonce).result == "created_pending_approval"
     env, service = pg.execute(
         "SELECT environment,service_id FROM it_portal.atlas_deploy_oci_bindings"
     ).fetchone()
@@ -280,6 +294,8 @@ def test_oci_same_request_conflicting_manifest_is_rejected(pg):
     i, ci, host, sealed = bundle = oci_bundle()
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
+    i, ci, host, sealed = bundle
     _oci_store(pg, bundle, nonce)
     changed = replace(i, manifest_digest="sha256:" + "a" * 63 + "b")
     ci2 = replace(ci, manifest_digest=changed.manifest_digest)
@@ -295,6 +311,7 @@ def test_oci_replay_requires_same_challenge(pg):
     i = bundle[0]
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     _oci_store(pg, bundle, nonce)
     another = issue_challenge(pg, requester_subject=i.requester_subject,
                               environment=i.environment, service_id=i.service_id)
@@ -308,8 +325,9 @@ def test_oci_different_request_cannot_reuse_consumed_nonce(pg):
     i = bundle[0]
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     _oci_store(pg, bundle, nonce)
-    other = oci_bundle(request_id=str(uuid4()))
+    other = _oci_bound_to_nonce(oci_bundle(request_id=str(uuid4())), nonce)
     with pytest.raises(JournalRejected, match="CHALLENGE_MISSING_OR_CONSUMED"):
         _oci_store(pg, other, nonce)
     assert _oci_counts(pg) == (1, 1, 1, 1)
@@ -319,6 +337,7 @@ def test_oci_legacy_proposal_without_binding_denied_on_replay(pg):
     i, _, _, sealed = bundle = oci_bundle()
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     store_prepared(pg, intent=PrepareIntent(
         requester_subject=i.requester_subject, request_id=i.request_id,
         environment=i.environment, service_id=i.service_id,
@@ -352,7 +371,7 @@ def test_oci_binding_and_parent_identity_cannot_be_modified(pg):
     i = bundle[0]
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
-    _oci_store(pg, bundle, nonce)
+    _oci_store(pg, _oci_bound_to_nonce(bundle, nonce), nonce)
     with pytest.raises(psycopg.errors.CheckViolation):
         pg.execute(
             "UPDATE it_portal.atlas_deploy_oci_bindings SET base_image_id=%s",
@@ -388,6 +407,33 @@ def test_oci_invalid_signature_and_stale_host_leave_database_untouched(pg):
     assert consumed_at is None
 
 
+def test_oci_host_proof_cannot_substitute_another_challenge(pg):
+    original_intent, ci, host, candidate = oci_bundle()
+    nonce = issue_challenge(
+        pg, requester_subject=original_intent.requester_subject,
+        environment=original_intent.environment,
+        service_id=original_intent.service_id,
+    )
+    actual_digest = hashlib.sha256(bytes.fromhex(nonce)).hexdigest()
+    unrelated_digest = "1" * 64 if actual_digest != "1" * 64 else "2" * 64
+    unrelated_intent = replace(original_intent, host_challenge_sha256=unrelated_digest)
+    unrelated_host = replace(host, challenge_sha256=unrelated_digest)
+    unrelated_candidate = seal_oci_candidate(
+        intent=unrelated_intent, ci=ci, host=unrelated_host,
+        now=candidate.issued_at, backend_policy_enabled=True,
+    )
+    with pytest.raises(JournalRejected, match="OCI_CHALLENGE_BINDING_MISMATCH"):
+        store_oci_prepared(
+            pg, intent=unrelated_intent, ci=ci, host=unrelated_host,
+            candidate=unrelated_candidate, signed_receipt_challenge=nonce,
+            backend_policy_enabled=True,
+        )
+    assert _oci_counts(pg) == (1, 0, 0, 0)
+    assert pg.execute(
+        "SELECT consumed_at IS NULL FROM it_portal.atlas_deploy_challenges"
+    ).fetchone()[0] is True
+
+
 def test_oci_default_policy_disabled_before_sql(pg):
     bundle = oci_bundle()
     i, ci, host, candidate = bundle
@@ -403,6 +449,7 @@ def test_oci_event_insert_failure_rolls_back_all_three_writes(pg):
     i, ci, host, candidate = bundle = oci_bundle()
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     pg.execute("""
         CREATE FUNCTION it_portal.atlas_ci_block_event() RETURNS trigger
         LANGUAGE plpgsql AS $$
@@ -430,6 +477,7 @@ def test_oci_concurrent_retry_serializes_one_binding(pg, schema_ready):
     i = bundle[0]
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
     barrier = Barrier(2)
 
     def worker():
@@ -477,7 +525,7 @@ def test_atlas_readonly_list_and_detail_use_real_disposable_pg(pg, schema_ready)
         pg, requester_subject=i.requester_subject,
         environment=i.environment, service_id=i.service_id,
     )
-    stored = _oci_store(pg, bundle, nonce)
+    stored = _oci_store(pg, _oci_bound_to_nonce(bundle, nonce), nonce)
     reader = _journal_reader(schema_ready)
     listed = reader.list_proposals(environment="prod", page=1, page_size=5)
     assert listed["total"] == 1
@@ -539,7 +587,7 @@ def test_atlas_readonly_rejects_injection_by_parameter_not_sql_concatenation(pg,
         pg, requester_subject=i.requester_subject,
         environment=i.environment, service_id=i.service_id,
     )
-    _oci_store(pg, bundle, nonce)
+    _oci_store(pg, _oci_bound_to_nonce(bundle, nonce), nonce)
     reader = _journal_reader(schema_ready)
     injection = "prod' OR TRUE --"
     assert reader.list_proposals(environment=injection)["total"] == 0
