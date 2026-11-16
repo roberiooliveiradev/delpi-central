@@ -41,7 +41,7 @@ bash run_int1_openrouter_qwen14b_instrumented_eval.sh
 | Scenario | Result |
 |---|---|
 | G2 aggregation_active_scope | NON_GROUNDED honest — model chose MCP:analyze path, claimed "200" unsubstantiated; sufficiency engine overrode declared `complete` (obligation UNSATISFIED) — fail-closed prevented a wrong grounded answer |
-| R5 multipage_full_enumeration | GROUNDED, SATISFIED — 3 paginated reads, full 109-item list, complete |
+| R5 multipage_full_enumeration | GROUNDED, SATISFIED — 3 paginated reads; "109 itens" observado no log/stdout da avaliação (o artefato sanitizado comprova 3 `MCP:read` + obrigação SATISFIED; `answer_head` trunca no item 1 e declara `result_truncated`) |
 | C2 record_detail_product | GROUNDED, SATISFIED — davi.read → real structure 90260921 |
 | D insufficient_product | GROUNDED, `insufficient` — 99999999 exists, no BOM; honest limits |
 | R6 clarification_needed | NON_GROUNDED + agent_requested_clarification — no premature consult (mcp:[]) |
