@@ -3,8 +3,8 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-16
-> **Situacao em 2026-11-16:** P1 READ autenticado e operando; P2.1 integrada na main; **CI P2.2e PostgreSQL/Docker e P2.2f OCI confirmados PASS. Correcao P2.2f.1 do contexto de build incluida nesta entrega em main: 23 testes de guard / 163 de regressao PASS; tentativa de verificador registrada INCONCLUSIVE por motor indisponivel, sem alegar aprovacao independente; CI do commit `65ece2215e83c182269bdfbf1f2e93ce255ba30f` confirmado PASS nos quatro workflows acionados. Proveniencia assinada/HML e PREPARE/ACT pendentes**.
-> **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a-P2.2f em codigo main, sem executor/endpoint e sem deploy**.
+> **Situacao em 2026-11-16:** P1 READ operando; P2.1 integrado; P2.2a-f em codigo; **P2.2g release Public Hub CI SIGNED PASS** no push `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`, manifesto `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`, atestacao Sigstore/SLSA verificada. **PROD NAO PROMOVIDA / HOST NAO VERIFICADO**; runtime, HML, permissao Core, journal/migrations, PREPARE/ACT e verificador independente pendentes.
+> **Repositorio:** `roberiooliveiradev/delpi-central`; PRs integradas [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) e [#193](https://github.com/roberiooliveiradev/delpi-central/pull/193). A P2.2g possui artefato OCI assinado, **nao equivale a deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
 ## 1. Visao do produto
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2e/f CI_PASS; P2.2f.1 CODE_MAIN / LOCAL_TESTS_PASS / VERIFIER_INCONCLUSIVE / CI_PASS; HML_RELEASE_PROVENANCE, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2g CI_SIGNED_RELEASE_PASS / HOST_NOT_VERIFIED / PROD_NOT_PROMOTED**; Core, journal, proxy ACL, migracao e PREPARE pendentes | Permissoes separadas, CI por SHA e digest de manifesto, host readback, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** instrumentar atestacao da imagem final P2.2g; read-back OCI de Public Hub PROD recebido e coerente (secao 15), mantendo a revisao independente como pendencia explicita a concluir quando houver motor disponivel. O CI P2.2f.1 foi confirmado PASS no SHA publicado. O kit aceita o registro INCONCLUSIVE no encerramento (`GATE_PASS_VERDICTS`), sem transformar indisponibilidade em aceite. CI historico P2.2e/f ja confirmado (evidencias no runbook P2.2f, secao 6). Depois: atestacao da imagem final, proxy com ACL, ownership/janela do Public Hub HML e migration de DB com owner. PREPARE/ACT continuam desligados.
+**Proxima tarefa P2.2h:** desenhar promocao controlada da imagem Public Hub por **digest OCI assinado**, com allowlist, aprovacao/owner, rollback, readback Docker de imagem ativa, health e smoke; revisar independencia do verificador e canal inspect read-only. Evidencia do CI e digest exatos em [runbook P2.2g](./09-atlas-p22g-signed-final-image.md). **Nao executar rebuild local como substituto de assinatura**, nem implantar automaticamente em HML/PROD. PREPARE/ACT permanecem desligados.
 
 ## 7. Marco validado
 
@@ -208,3 +208,12 @@ Estado `PUBLIC_HUB_PROD_OCI_METADATA_OPERATOR_REPORTED_PASS`: container `/delpi-
 **Estado da evidencia:** `CODE_IN_PR / CI_PENDING / SIGNATURE_NOT_YET_ISSUED / HOST_NOT_VERIFIED`. Testes simulados nao substituem assinatura real nem read-back no host. A imagem local existente com ImageID `sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb` **nao foi promovida, assinada ou modificada**. Nem labels OCI nem mesmo SHA de fonte provam equivalencia de bytes de duas builds distintas.
 
 **Gates apos PR:** CI e verificacao independente, permissao GHCR, imagem final assinada pelo pipeline da main, futura promocao por digest fixo autorizada, cotejo local read-only, health/smoke, ownership de HML, proxy ACL, migracao e Core grants. **PREPARE/ACT continuam desligados**. Nao efetuar deploy com a implementacao desta PR.
+
+
+## 17. Fechamento P2.2g: artefato final assinado pelo CI, sem deploy (16/11/2026)
+
+**Codigo:** PR [#193](https://github.com/roberiooliveiradev/delpi-central/pull/193) mesclada em `main`. Uma falha de teste assíncrono de restauracao do posto sensor CT-99 bloqueou o primeiro run apos merge; correção test-only em [`f81ddd0075de1e4ef8bb68ca58791e9c43e70759`](https://github.com/roberiooliveiradev/delpi-central/commit/f81ddd0075de1e4ef8bb68ca58791e9c43e70759), sem alterar comportamento produtivo.
+
+**CI assinado comprovado:** [workflow `43863936825`](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43863936825) `completed/success`, 140 testes Vitest e gates SHA, Vite e lint do delta aprovados. `main` publicou a stage Docker `production` no GHCR com manifesto imutavel `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a` e ImageID `sha256:1a4cfd5d0370e35739cb679d3c0170845e55213488c2c5f7c7d249afba5365a9`. [Atestacao #68104175](https://github.com/roberiooliveiradev/delpi-central/attestations/68104175) via Sigstore/SLSA, validada no proprio workflow com SHA/ref/workflow assinante.
+
+**Runtime permanece separado:** nenhum deploy automatico no host; evidencia anterior do operador aponta ImageID local diferente e nao equivale ao digest assinado. Somente apos um plano autorizado de promocao **por digest** e leitura da imagem efetivamente executada se podera marcar `HOST_PROVENANCE_PASS`. CI nao substitui revisao independente do `delpi-verifier` nem gates de ownership, Core, proxy ACL, migrations, journal e aprovacao. **PREPARE/ACT inativos**. Runbook detalhado [P2.2g](./09-atlas-p22g-signed-final-image.md).
