@@ -26,6 +26,15 @@ import re
 from collections import Counter
 from typing import Any
 
+from engineering_app.application.drawing.description_rules import (
+    diff_pi50_descriptions,
+    is_pi50_code,
+)
+from engineering_app.application.drawing.quantity_normalization import (
+    compare_quantity,
+    normalize_bom_consumption,
+)
+
 _CODE_IN_TEXT_RE = re.compile(r"\d{8,11}")
 # Famílias de itens DELPI: PI=5, MP=1, PA=9, CONJ/submontagem=7.
 _CODE_PREFIX_TYPES = {"5": "PI", "1": "MP", "9": "PA", "7": "CONJ"}
@@ -412,6 +421,9 @@ def _drawing_occurrences(
                     "parent_code": parent,
                     "parent_verified": verified,
                     "parent_source": parent_source,
+                    "parent_description": row.get(
+                        "parent_group_description"
+                    ),
                     "extraction_source": "typed_table_cell",
                     "flaggable": code[:1] in _FLAGGABLE_PREFIXES,
                     "item": row.get("item"),
@@ -535,6 +547,7 @@ def compare_bom_to_drawing(
     bom_error: dict[str, Any] | None = None,
     code_contexts: list[dict] | None = None,
     page_coverage: dict | None = None,
+    pa_unit: str | None = None,
 ) -> dict[str, Any]:
     """Diff bidirecional por ocorrência estrutural.
 
@@ -583,6 +596,7 @@ def compare_bom_to_drawing(
                 coverage={"bom_available": False},
                 component_table=component_table,
                 page_coverage=page_coverage,
+                pa_unit=pa_unit,
                 code_contexts=code_contexts,
             ),
         }
@@ -644,6 +658,7 @@ def compare_bom_to_drawing(
                 coverage=_unread_coverage,
                 component_table=component_table,
                 page_coverage=page_coverage,
+                pa_unit=pa_unit,
                 code_contexts=code_contexts,
             ),
         }
@@ -1118,6 +1133,7 @@ def compare_bom_to_drawing(
             coverage=coverage,
             component_table=component_table,
             page_coverage=page_coverage,
+            pa_unit=pa_unit,
             code_contexts=code_contexts,
         ),
     }
@@ -1212,6 +1228,8 @@ def _occurrence_attributes(
     code_result: str,
     code_uncertainty: str | None,
     ambiguous: bool,
+    pa_unit: str | None = None,
+    bom_desc_by_code: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Atributos da mesma ocorrência. Ausência de política oficial
     permanece NOT_COMPARABLE/NOT_CHECKED — nunca vira divergência."""
@@ -1287,44 +1305,162 @@ def _occurrence_attributes(
             "um dos lados não trouxe descrição observável",
             "descrição ausente não é divergência",
         )
-    attrs.append(
-        _attr_result(
-            "description",
-            expected=(bom or {}).get("component_description"),
+    desc_attr = _attr_result(
+        "description",
+        expected=(bom or {}).get("component_description"),
+        observed=(drawing or {}).get("item_description"),
+        result=desc_result,
+        rule="exact_normalized_text",
+        page=page,
+        region=region,
+        evidence=evidence,
+        uncertainty=desc_unc,
+        limitation=desc_limit,
+        next_action=(
+            "revisão humana do candidato — não é aprovação"
+            if desc_result == "MATCH_CANDIDATE"
+            else (
+                "revisão técnica da diferença literal — não promover a NC"
+                if desc_result == "CONFLICT_CANDIDATE"
+                else "não inventar descrição ausente"
+            )
+        ),
+    )
+    # PI 50xx: diferença literal explicada segmento a segmento
+    # (norma codigos-intermediarios-pi) — evidência, não NC.
+    if (
+        is_pi50_code(expected_code or observed_code)
+        and (bom or {}).get("component_description")
+        and (drawing or {}).get("item_description")
+    ):
+        seg = diff_pi50_descriptions(
             observed=(drawing or {}).get("item_description"),
-            result=desc_result,
+            expected=(bom or {}).get("component_description"),
+        )
+        desc_attr["norm_reference"] = (
+            "api-delpi/docs/api/padroes-totvs/"
+            "codigos-intermediarios-pi.md"
+        )
+        desc_attr["segment_diff_status"] = seg.get("status")
+        desc_attr["segment_differences"] = seg.get("segment_differences")
+    attrs.append(desc_attr)
+    # Descrição do bloco-pai (PI) vista no desenho × descrição oficial
+    # do pai — propaga a célula mesclada sem criar relação inventada.
+    if drawing is not None or bom is not None:
+        pi_parent_code = (drawing or {}).get("parent_code") or (
+            bom or {}
+        ).get("parent_code")
+        pi_obs = (drawing or {}).get("parent_description")
+        pi_exp = (bom_desc_by_code or {}).get(pi_parent_code)
+        if pi_obs and pi_exp:
+            pi_result, pi_limit, pi_unc = (
+                (
+                    "MATCH_CANDIDATE",
+                    "igualdade literal normalizada — sem política "
+                    "semântica aprovada",
+                    None,
+                )
+                if _norm_desc(pi_obs) == _norm_desc(pi_exp)
+                else (
+                    "CONFLICT_CANDIDATE",
+                    "descrição do bloco-pai difere do cadastro — "
+                    "equivalência semântica é OWNER_BLOCKED",
+                    "diferença literal não prova descrição incorreta",
+                )
+            )
+        else:
+            pi_result, pi_limit, pi_unc = (
+                "NOT_CHECKED",
+                "descrição do bloco-pai ausente no desenho ou no "
+                "cadastro — não é divergência",
+                "descrição ausente não é divergência",
+            )
+        pi_attr = _attr_result(
+            "pi_description",
+            expected=pi_exp,
+            observed=pi_obs,
+            result=pi_result,
             rule="exact_normalized_text",
             page=page,
             region=region,
             evidence=evidence,
-            uncertainty=desc_unc,
-            limitation=desc_limit,
+            uncertainty=pi_unc,
+            limitation=pi_limit,
             next_action=(
                 "revisão humana do candidato — não é aprovação"
-                if desc_result == "MATCH_CANDIDATE"
+                if pi_result == "MATCH_CANDIDATE"
                 else (
-                    "revisão técnica da diferença literal — não promover a NC"
-                    if desc_result == "CONFLICT_CANDIDATE"
+                    "revisão técnica da diferença literal — não "
+                    "promover a NC"
+                    if pi_result == "CONFLICT_CANDIDATE"
                     else "não inventar descrição ausente"
                 )
             ),
         )
-    )
-    attrs.append(
-        _attr_result(
-            "quantity",
-            expected=(bom or {}).get("quantity_raw"),
-            observed=(drawing or {}).get("quantity"),
-            result="NOT_COMPARABLE",
-            rule="consumption_quantity_vs_assembly_quantity",
-            page=page,
-            region=region,
-            evidence=evidence,
-            uncertainty="conceitos distintos",
-            limitation=_QTY_LIMITATION,
-            next_action=_QTY_NEXT,
+        if pi_obs and pi_exp and is_pi50_code(pi_parent_code):
+            seg = diff_pi50_descriptions(
+                observed=pi_obs, expected=pi_exp
+            )
+            pi_attr["norm_reference"] = (
+                "api-delpi/docs/api/padroes-totvs/"
+                "codigos-intermediarios-pi.md"
+            )
+            pi_attr["segment_diff_status"] = seg.get("status")
+            pi_attr["segment_differences"] = seg.get(
+                "segment_differences"
+            )
+        attrs.append(pi_attr)
+    qty_normalization = normalize_bom_consumption(
+        (bom or {}).get("quantity_raw"),
+        (bom or {}).get("unit_raw"),
+        pa_unit=pa_unit,
+    ) if bom is not None else None
+    qty_cmp = (
+        compare_quantity(
+            drawing_quantity=(drawing or {}).get("quantity"),
+            drawing_unit=(drawing or {}).get("unit"),
+            normalization=qty_normalization,
         )
+        if qty_normalization
+        else {"result": "NOT_COMPARABLE", "reason": "sem lado BOM"}
     )
+    qty_result = (
+        qty_cmp["result"]
+        if qty_cmp["result"] != "NOT_COMPARABLE"
+        else "NOT_COMPARABLE"
+    )
+    qty_attr = _attr_result(
+        "quantity",
+        expected=(bom or {}).get("quantity_raw"),
+        observed=(drawing or {}).get("quantity"),
+        result=qty_result,
+        rule=(
+            "normalized_consumption_comparison"
+            if qty_result != "NOT_COMPARABLE"
+            else "consumption_quantity_vs_assembly_quantity"
+        ),
+        page=page,
+        region=region,
+        evidence=evidence,
+        uncertainty="conceitos distintos",
+        limitation=(
+            None
+            if qty_result != "NOT_COMPARABLE"
+            else (qty_cmp.get("reason") or _QTY_LIMITATION)
+        ),
+        next_action=(
+            _QTY_NEXT if qty_result == "NOT_COMPARABLE"
+            else (
+                "revisão humana do candidato — não é aprovação"
+                if qty_result == "MATCH_CANDIDATE"
+                else "revisão técnica da diferença normalizada"
+            )
+        ),
+    )
+    if qty_normalization:
+        qty_attr["normalization"] = qty_normalization
+        qty_attr["comparison"] = qty_cmp
+    attrs.append(qty_attr)
     unit_expected = (bom or {}).get("unit_raw")
     unit_observed = (drawing or {}).get("unit")
     attrs.append(
@@ -1449,12 +1585,16 @@ def _record_from(
     code_result: str,
     code_uncertainty: str | None,
     ambiguous: bool = False,
+    pa_unit: str | None = None,
+    bom_desc_by_code: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     attributes = _occurrence_attributes(
         bom, drawing,
         code_result=code_result,
         code_uncertainty=code_uncertainty,
         ambiguous=ambiguous,
+        pa_unit=pa_unit,
+        bom_desc_by_code=bom_desc_by_code,
     )
     overall = _overall_result(attributes)
     code = (
@@ -1606,10 +1746,18 @@ def _build_validation_report(
     component_table: dict | None,
     page_coverage: dict | None,
     code_contexts: list[dict] | None,
+    pa_unit: str | None = None,
 ) -> dict[str, Any]:
     """Ledger por ocorrência + consolidado. Sempre DRAFT/CANDIDATE."""
     finding_types = {
         (f.get("type"), f.get("item_code")): f for f in findings
+    }
+    # Descrição oficial por código — para o atributo pi_description
+    # (descrição do bloco-pai do desenho × descrição oficial do pai).
+    bom_desc_by_code = {
+        str(o.get("component_code")): o.get("component_description")
+        for o in bom_occurrences
+        if o.get("component_code")
     }
     used_drawing: set[int] = set()
     records: list[dict[str, Any]] = []
@@ -1638,6 +1786,8 @@ def _build_validation_report(
                     side="bom",
                     bom=bom,
                     drawing=drawing,
+                    pa_unit=pa_unit,
+                    bom_desc_by_code=bom_desc_by_code,
                     code_result="AMBIGUOUS",
                     code_uncertainty=(
                         "par OCR similar — não é ausência nem componente extra"
@@ -1655,6 +1805,8 @@ def _build_validation_report(
                     side="bom",
                     bom=bom,
                     drawing=drawing,
+                    pa_unit=pa_unit,
+                    bom_desc_by_code=bom_desc_by_code,
                     code_result="MATCH_CANDIDATE",
                     code_uncertainty=None,
                 )
@@ -1667,6 +1819,8 @@ def _build_validation_report(
                 side="bom",
                 bom=bom,
                 drawing=None,
+                pa_unit=pa_unit,
+                bom_desc_by_code=bom_desc_by_code,
                 code_result=(
                     "CONFLICT_CANDIDATE" if bom_only else "NOT_CHECKED"
                 ),
@@ -1710,6 +1864,8 @@ def _build_validation_report(
                 side="drawing",
                 bom=None,
                 drawing=drawing,
+                pa_unit=pa_unit,
+                bom_desc_by_code=bom_desc_by_code,
                 code_result=result,
                 code_uncertainty=uncertainty,
             )

@@ -3316,6 +3316,27 @@ def rows_from_native_cells(
     group_anchor_ids: set[int] = set()
     group_y_anchors: list[tuple[float, str]] = []
     anchor_cell_cys: dict[tuple[int, str], float] = {}
+    # G18/RQ01: descrição do bloco-pai (PI) — célula mesclada irmã do
+    # código, mesmo rowspan (layout DELPI: col código + col descrição).
+    anchor_descs: dict[tuple[int, str], str] = {}
+
+    def _anchor_description(
+        row_index: int, code: str, cell: dict
+    ) -> str | None:
+        row_cells = grouped.get(row_index) or []
+        for sib in row_cells:
+            if sib is cell:
+                continue
+            if int(sib.get("rowspan") or 1) <= 1:
+                continue
+            text = _norm(sib.get("text") or "")
+            if not text or _CODE_FIND_RE.search(text):
+                continue
+            return text
+        # fallback: resto do próprio texto da âncora sem o código
+        text = _norm(cell.get("text") or "")
+        remainder = _norm(text.replace(code, "", 1)) if code else ""
+        return remainder or None
 
     def _group_anchor_cy(cell: dict) -> float | None:
         tcs = cell.get("token_centers") or []
@@ -3335,6 +3356,9 @@ def rows_from_native_cells(
     ) -> None:
         group_anchors.append((row_index, code, span, source))
         group_anchor_ids.add(id(cell))
+        desc = _anchor_description(row_index, code, cell)
+        if desc:
+            anchor_descs[(row_index, code)] = desc
         if source == "rowspan_anchor":
             anchor_col_rows.setdefault(
                 int(cell.get("col") or 0), set()
@@ -3715,7 +3739,7 @@ def rows_from_native_cells(
             return best[0], best[0] + best[1]
         return row_index, row_index + span
 
-    group_windows: list[tuple[int, int, str, str]] = []
+    group_windows: list[tuple[int, int, str, str, str | None]] = []
     for i, (arow, acode, aspan, asource) in enumerate(group_anchors):
         if asource == "rowspan_anchor":
             nxt = (
@@ -3738,14 +3762,26 @@ def rows_from_native_cells(
             )
         else:
             start, end = arow, arow + aspan
-        group_windows.append((start, end, acode, asource))
+        group_windows.append(
+            (start, end, acode, asource, anchor_descs.get((arow, acode)))
+        )
     # Janelas não podem se sobrepor: a próxima âncora corrigida
     # também delimita o bloco anterior.
     for i in range(len(group_windows) - 1):
-        s, e, c, src = group_windows[i]
+        s, e, c, src, adsc = group_windows[i]
         nxt_start = group_windows[i + 1][0]
         if e > nxt_start:
-            group_windows[i] = (s, nxt_start, c, src)
+            group_windows[i] = (s, nxt_start, c, src, adsc)
+    # Descrição por código só é fallback quando toda âncora do mesmo
+    # código carrega a mesma descrição (sem ambiguidade silenciosa).
+    _descs_by_code: dict[str, list[str]] = {}
+    for (_ar, _ac), _ad in anchor_descs.items():
+        _descs_by_code.setdefault(_ac, []).append(_ad)
+    _desc_by_anchor_code = {
+        code: descs[0]
+        for code, descs in _descs_by_code.items()
+        if len(set(descs)) == 1
+    }
     rows_out: list[dict] = []
     prev_dominant_cy: float | None = None
     for row_index in sorted(grouped):
@@ -4100,10 +4136,12 @@ def rows_from_native_cells(
         # trocar filhos que já estão acima do rótulo do próprio grupo.
         group = None
         group_source = None
-        for wstart, wend, acode, asource in group_windows:
+        group_desc = None
+        for wstart, wend, acode, asource, adesc in group_windows:
             if wstart <= row_index < wend:
                 group = acode
                 group_source = asource
+                group_desc = adesc
         row_cy_val = None
         for kind in ("item", "component_code", "quantity"):
             cy = (fields.get(kind) or {}).get("source_cy_px")
@@ -4153,7 +4191,7 @@ def rows_from_native_cells(
                 if src_row is None or src_row == row_index:
                     continue
                 src_group = None
-                for wstart, wend, acode, _asrc in group_windows:
+                for wstart, wend, acode, _asrc, _adsc in group_windows:
                     if wstart <= src_row < wend:
                         src_group = acode
                 if src_group is not None and src_group != group:
@@ -4168,6 +4206,9 @@ def rows_from_native_cells(
                 "col_types": {str(k): v for k, v in col_types.items()},
                 "parent_group_candidate": group,
                 "parent_group_source": group_source,
+                "parent_group_description": group_desc
+                if group_desc
+                else _desc_by_anchor_code.get(group),
                 "association_conflict": bool(conflicting_fields),
                 "band_detached": any(
                     c.get("_detached_band") for c in row_cells
@@ -4618,6 +4659,7 @@ def drawing_structure_occurrences(
                     else "UNKNOWN"
                 ),
                 "parent_evidence": row.get("parent_group_source"),
+                "parent_description": row.get("parent_group_description"),
                 "item": row.get("item"),
                 "quantity": row.get("quantity"),
                 "unit": unit,

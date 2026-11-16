@@ -505,6 +505,7 @@ async def analyze_product_drawing(
         ),
         tokens=drawing_tokens,
         drawing_pages=extraction.page_count,
+        pa_unit=str(product.get("unit") or "") or None,
         code_contexts=(
             (understanding or {}).get("code_contexts")
             if isinstance(understanding, dict)

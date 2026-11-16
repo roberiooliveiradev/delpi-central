@@ -5402,3 +5402,46 @@ O owner determina que a EVA confronte **código + descrição do PI**, **letra/p
 **Saída obrigatória:** \`BASE_HEAD, EVALUATED_SHA, FINAL_HEAD, ORIGIN_MAIN, PUSH_VERIFIED, GIT_STATUS; AC01..AC08; CONTRACTS_REUSED, CONTRACT_CHANGES, PDF_SHA, DRAWING_REVISION, BOM_EFFECTIVITY; 4_PI/8_MP ledger; DESCRIPTION_FINDINGS, QUANTITY_COMPARABILITY; TESTS_UNIT/INTEGRATION/NEGATIVE/HOLDOUT/AUTHZ, VERIFIER_RUN/VERDICT/SHA, RESIDUAL_SEARCH, DOCS/ISSUE, OCR_EXECUTIONS, DEPLOY_EXECUTED, OWNER_APPROVAL, BLOCKERS, NEXT_BOUNDED_STEP\`.
 
 **Estados:** \`E1_G18_CODE_PASS\`, \`E1_G18_PASS_WITH_RESIDUAL\`, \`E1_G18_REWORK_REQUIRED\`, \`E1_G18_OWNER_BLOCKED\`. **Não fechar \`VAL01_COMPLETED\`** até thresholds, GT, generalização e homologação técnica ampla. E2–E7 permanecem congeladas.
+
+---
+
+## 94.21 G18 — Validação inteligente da Tabela de Estrutura (implementação + verificação)
+
+- **TASK_ID:** `EVA-E1-VAL01-G18-DRAWING-TABLE-MP-PI-DESCRIPTION-QUANTITY-VALIDATION-01`
+- **HEAD base:** `3b9f94b46a` · **worktree:** `.worktrees/eva-g18` (isolada — revert externo de arquivos detectado no worktree principal às 22:24; trabalho refeito fora da zona de colisão)
+- **Escopo:** 4 módulos + 1 novo + 1 suíte de testes; sem nova tool MCP, sem OCR, sem escrita TOTVS, sem deploy.
+
+### Implementação (AC01–AC08)
+
+| Camada | Mudança | ACs |
+|---|---|---|
+| `description_rules.py` | `parse_pi50_segments` + `diff_pi50_descriptions` + `is_pi50_code` — decoder segment-wise PI 50xx (norma `codigos-intermediarios-pi.md`) | AC06 |
+| `quantity_normalization.py` (novo) | Owner governado MI/MT/PC: consumo BOM ÷ base `1 MI = 1000 peças` (playbook-conversao-unidades-protheus.md); fora de base/unidade aprovada → `NOT_COMPARABLE`; `QTD` do desenho nunca vira metro | AC07 |
+| `understanding.py` | `parent_group_description` propagada da célula mesclada irmã do código-âncora (mesmo rowspan); fallback só se não-ambíguo; `parent_description` nas ocorrências | AC01–AC03 |
+| `bom_structure_comparator.py` | attr `pi_description` (observado×oficial do pai), `segment_differences` anexados ao attr `description`/`pi_description` quando PI 50xx, `quantity` com `normalization`+`comparison` (MATCH/CONFLICT_CANDIDATE apenas PC↔PC/UN) | AC06–AC08 |
+| `drawing_analysis_service.py` | `pa_unit = product.unit` (B1_UM) threaded ao comparador | AC05/AC07 |
+
+### Evidência caso 90263680 (container, BOM oficial real × descrições observadas do PDF)
+
+- `50233507` description → `CONFLICT_CANDIDATE`, segs: `isolation_prefix CA≠CB`, `terminal_right 01≠36`.
+- `10380042`/`10080136` pi_description → `CONFLICT_CANDIDATE` com os mesmos segmentos (descrição do bloco-pai propagada).
+- `10080136` quantity → `MATCH_CANDIDATE` (`1000 PC / 1000 (MI)` = 1 PC/peça = QTD 1 do desenho).
+- `10380042` quantity → `NOT_COMPARABLE` (`152 MT / 1000` normalizado; `QTD=1` não é metro — correto por contrato).
+- `engineering_approval: NOT_APPROVED`, `automatic_nc: false` — diferenças são candidatas, nunca NC automática.
+
+### Testes
+
+- `tests/test_g18_pi_description_quantity_validation.py` — 15 testes GREEN (decoder, diff, normalização, integração, caso real, negativos).
+- Regressão: 66 comparator GREEN; 302 drawing-scoped GREEN; suíte completa **1295 pass / 3 fail pré-existentes ambientais** (`test_d16_attendance_flags`, `test_lmp_domain`, `test_rbac_resolution` — fora do diff, mesmos conhecidos de G17 + cache RBAC).
+
+### Verificador independente (obrigatório)
+
+- `delpi-verifier` (motor cursor/composer-2.5, rodada 1): **ACCEPT_WITH_RESIDUAL**, zero ordens de correção; AC-01..AC-08 = PASS com evidência de código + smoke; residual = suíte pytest/prova no container não reproduzíveis pelo guard do verificador (executor as executou e registrou).
+
+### Limitações e pendências
+
+- `global_situation` permanece semântica de findings estruturais; divergências de atributo vivem em `occurrence_records[].result`/`attributes` — contrato preservado (66 testes de regressão dependem).
+- Sem OCR nesta task: `component_table` real do PDF 90263680 depende de execução autorizada; prova aqui usou descrições observadas fornecidas pelo usuário + BOM oficial real.
+- Base `MI=1000` e par PC↔PC são as únicas conversões aprovadas; demais unidades/PA não-MI → `NOT_COMPARABLE` até homologação da Engenharia.
+- Revisão/efetividade da BOM × revisão do desenho: domínio separado preservado (`revision_domain_equivalence` continua OWNER_BLOCKED).
+- Deploy: **não autorizado** — pacote fica como candidato até decisão de Coordination.

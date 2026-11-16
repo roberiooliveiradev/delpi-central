@@ -164,3 +164,98 @@ def validate_pi_description(
                "segmentos canônicos identificados (prefixo concatenado).")
         ),
     )
+
+
+# ------------------------------------------------------------------
+# G18/RQ06 — parser segment-wise + diff explicável PI 50xx
+# Gramática estrita: ISO + gauge + COLOR4 - len / decE / decD - TTIITT
+# (norma: api-delpi/docs/api/padroes-totvs/codigos-intermediarios-pi.md)
+# ------------------------------------------------------------------
+_PI50_FULL = re.compile(
+    r"^\s*(CA|CB|CF|CT|CV)\s*([0-9][0-9,.]*)\s*([A-Z]{4})\s*"
+    r"-\s*0*(\d{3,5})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})\s*"
+    r"-\s*(\d{4})\s*-\s*(\d{4})\s*$",
+    re.IGNORECASE,
+)
+_PI50_SEGMENTS = (
+    "isolation_prefix",
+    "gauge",
+    "color",
+    "length_mm",
+    "decape_left_mm",
+    "decape_right_mm",
+    "terminal_left",
+    "isolator_left",
+    "terminal_right",
+    "isolator_right",
+)
+
+
+def is_pi50_code(code: Any) -> bool:
+    """Família PI intermediária 50xx (regra por prefixo do código)."""
+    return bool(_PI_FAMILY.match(str(code or "").strip()))
+
+
+def parse_pi50_segments(
+    description: str | None,
+) -> dict[str, Any] | None:
+    """Decodifica a descrição canônica PI 50xx em segmentos.
+
+    Retorna ``None`` quando a descrição não segue a gramática —
+    ausência de parse nunca é prova de descrição incorreta.
+    """
+    if not description:
+        return None
+    m = _PI50_FULL.match(str(description).strip().upper())
+    if not m:
+        return None
+    iso, gauge, color, length, dec_l, dec_r, pair_l, pair_r = m.groups()
+    return {
+        "isolation_prefix": iso,
+        "isolation_material": _PI_ISOLATION.get(iso),
+        "gauge": gauge,
+        "color": color,
+        "length_mm": int(length),
+        "decape_left_mm": int(dec_l),
+        "decape_right_mm": int(dec_r),
+        "terminal_left": pair_l[:2],
+        "isolator_left": pair_l[2:],
+        "terminal_right": pair_r[:2],
+        "isolator_right": pair_r[2:],
+    }
+
+
+def diff_pi50_descriptions(
+    *,
+    observed: str | None,
+    expected: str | None,
+) -> dict[str, Any]:
+    """Diff segmento a segmento entre descrição do desenho e oficial.
+
+    ``segment_differences`` é evidência para a Engenharia — nunca
+    promoção automática a não conformidade.
+    """
+    obs = parse_pi50_segments(observed)
+    exp = parse_pi50_segments(expected)
+    if not obs or not exp:
+        return {
+            "status": "INCONCLUSIVE",
+            "observed": observed,
+            "expected": expected,
+            "segment_differences": None,
+            "limitation": (
+                "descrição fora da gramática PI 50xx — "
+                "apenas comparação literal é válida"
+            ),
+        }
+    diffs = [
+        {"segment": k, "observed": obs[k], "expected": exp[k]}
+        for k in _PI50_SEGMENTS
+        if obs[k] != exp[k]
+    ]
+    return {
+        "status": "SEGMENT_DIFFERENCES" if diffs else "SEGMENT_MATCH",
+        "observed": observed,
+        "expected": expected,
+        "segment_differences": diffs,
+    }
