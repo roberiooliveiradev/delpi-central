@@ -179,3 +179,56 @@ Veredito: `INCONCLUSIVE` por restrição de ambiente (engine devin sem auth,
 cursor sem quota — mesmo bloqueio do ciclo anterior). Registrado em
 `verdicts.jsonl`. Evidência primária: E2E HML 36/36 + probes geométricos +
 estruturais + builds.
+
+---
+
+# Anexo — Deploy controlado PRD `CROSS-MFE-UXV3-P1-PRODUCTION-CONTROLLED-DEPLOY-01`
+
+## A. Isolamento do release
+
+- Baseline PRD: `5782cd10dd` (imagens anteriores construídas desse SHA).
+- Branch `release/uxv3-p1-prd` @ `c656ec3ca4` = baseline + cherry-picks
+  do pacote (`30fba42e82`, `929291374a`, `1fbea4178d`, `7c0e308131`,
+  `a7218deeca`, `53c670eb05`, `c176dac339` + docs link).
+- Commits docs-only `8e0754988c`/`dec43da0ea` pulados (conflitos em
+  arquivos `.md` editados por outros tracks — sem impacto de runtime).
+- **Prova de isolamento:** `git diff origin/main -- plugins/plugin-ui
+  plugins/my-requests plugins/helpdesk` = 0 arquivos não-md. As três
+  árvores são byte-idênticas ao código homologado em HML.
+- Checkout PRD restaurado a `main` após o build (preserva o fluxo
+  FF-pull dos outros tracks).
+
+## B. Ordem e resultado do deploy
+
+| Etapa | Imagem nova | Container | Verificação |
+|---|---|---|---|
+| 1. plugin-ui | `infra-plugin-ui` `3e247e0c127c` | Up, 0 erros | `icon-btn--amber` + `flex:0 1 auto` no CSS |
+| 2. my-requests | `infra-my-requests` `830882f7f285` | Up, 0 erros | `Limpar filtros` + remoteEntry 200 |
+| 3. helpdesk | `infra-helpdesk` `35a90b2192d9` | Up, 0 erros | `Limpar filtros`/`filterActive` + remoteEntry 200 |
+
+Imagens anteriores: plugin-ui `70b89d6ce531`, my-requests `882dcf2025c0`,
+helpdesk `6e2c3a1a4930` — tags `rollback-pre-uxv3-p1-prd-202611161518`.
+
+## C. Monitoramento
+
+- remoteEntry ×3 = 200 via gateway; portal login 200; engineering
+  remoteEntry 200 (consumidor cruzado íntegro).
+- Gateway: 0 5xx no período; logs nginx dos MFEs limpos.
+- Atividade concorrente observada (restarts de supplies, api-delpi,
+  engineering-api por outros tracks — saudáveis, fora do escopo).
+
+## D. Smoke autenticado
+
+`INCONCLUSIVE` — não há identidade de teste autorizada no realm PRD
+(`HML_TEST_*` existe só no realm HML; o submit no realm `delpi` de
+minhadelpi.com.br não progride). Sem criação de credencial artificial,
+conforme política. Evidência não-autenticada: bundles, remoteEntry,
+CSS/tokens, federation e logs comprovados acima. Fluxo funcional
+autenticado permanece **não comprovado** até o owner executar o smoke
+com identidade legítima — checklist em §G7 do prompt da task.
+
+## E. Verificação independente
+
+Pedido `ux-v3-p1-prd-deploy-r1.md`; veredito `INCONCLUSIVE` nas duas
+engines (devin sem auth, cursor sem quota) — restrição de ambiente,
+registrada em `verdicts.jsonl`.
