@@ -3,7 +3,8 @@
 > **Estado:** ESPECIFICAÇÃO VIGENTE — padrão visual **APROVADO PELO SOLICITANTE EM 16/11/2026** (“é exatamente assim que eu quero o formulário para respostas”). Entrega 1.
 > **Implementação:** existe uma versão funcional anterior em `plugins/public-hub/src/apps/commercial/` (commit `7d275ed2`, homologação desde 14/11/2026) com o **visual antigo**. Esta especificação exige **REWORK visual** dessa versão; regras funcionais e contratos de rede permanecem os mesmos.
 > **Arquitetura de componentes (Q22, 16/11/2026):** todo o formulário é construído com componentes do **PluginUI** (`@delpi/plugin-ui`) — os que faltam são **criados no PluginUI** — e importado pelo `public-hub`. O kit é genérico, para ser reaproveitado em outros formulários. Ver §5.
-> **Referência visual normativa:** [`UI-03-REFERENCIA-VISUAL.html`](./UI-03-REFERENCIA-VISUAL.html) (abrir no navegador; arquivo estático, sem lógica). Em caso de divergência, **este Markdown prevalece**.
+> **Temas (Q23, 16/11/2026):** o formulário inteiro — todos os componentes e subcomponentes — tem **dois visuais, claro e escuro**. Tokens inventariados em §3.2.
+> **Referência visual normativa:** [`UI-03-REFERENCIA-VISUAL.html`](./UI-03-REFERENCIA-VISUAL.html) (abrir no navegador; arquivo estático, sem lógica; seis telas em tema claro e as mesmas seis em tema escuro). Em caso de divergência, **este Markdown prevalece**.
 > **Histórico:** a redação anterior deste documento (decisões de 11/11/2026) está no histórico do Git; as decisões substituídas e mantidas estão registradas em [BUSINESS-DECISIONS — Q21](./BUSINESS-DECISIONS.md#q21--padrão-visual-do-formulário-público-16112026). Não reabrir os pontos abaixo sem nova decisão do solicitante.
 
 ## 1. Resumo
@@ -15,7 +16,7 @@
 | Rota | `/p/commercial/form/{token}` no `plugins/public-hub` (página `commercial.form`) |
 | Autoridade | `commercial-api` — valida token, janela, obrigatoriedade e unicidade; o frontend é só interface |
 | Rede | `GET /public/satisfaction-surveys/{token}` e `POST /public/satisfaction-surveys/{token}/response` — **sem alteração de contrato** |
-| Estilo | Formulário *clean* no padrão Microsoft Forms / Google Forms: fundo claro, faixa da marca no topo, uma pergunta por cartão branco, escalas numéricas simples |
+| Estilo | Formulário *clean* no padrão Microsoft Forms / Google Forms, em tema claro e escuro: fundo neutro, faixa da marca no topo, uma pergunta por cartão branco, escalas numéricas simples |
 
 ## 2. Fluxo
 
@@ -37,48 +38,72 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 
 ### 3.1 Princípios
 
-1. **Tema claro fixo.** O formulário não oferece alternância claro/escuro e não segue o tema do sistema operacional.
+1. **Dois temas, claro e escuro (Q23).** Todo o formulário e cada componente do kit funcionam nos dois. Regra de escolha: a do `public-hub` (`data-theme` fixado pelo cliente → preferência salva → preferência do aparelho). O **botão de tema fica dentro do cartão do cabeçalho**, à direita do logo (não flutuando sobre o conteúdo).
 2. **Uma pergunta por cartão**, com o tema em letra pequena acima e a pergunta numerada com o **texto literal** do catálogo canônico.
 3. **Escala numérica limpa:** só os números nos botões; o significado fica nas pontas (“1 · Muito insatisfeito” / “5 · Muito satisfeito”) e, depois da escolha, numa linha de confirmação (“Sua nota: 4 · Satisfeito”).
 4. **“Não se aplica” discreto:** opção em formato de pílula com indicador redondo, abaixo da escala (celular) ou à direita após um divisor (computador). Nunca uma linha inteira com o mesmo peso das notas.
 5. **Título público fixo:** “Pesquisa de Satisfação de Clientes”. O **nome interno da campanha não aparece** para o cliente.
 6. **Ações sempre à mão no celular:** rodapé fixo com Voltar / Avançar.
 7. Sem gradientes, sem ilustrações, sem emojis, sem estrelas.
-8. **Tudo vem do PluginUI.** Nenhum componente visual é desenhado dentro do `public-hub`; a página só monta o formulário com o kit e aplica os tokens do tema claro (§5).
+8. **Tudo vem do PluginUI.** Nenhum componente visual é desenhado dentro do `public-hub`; a página só monta o formulário com o kit e mapeia os tokens dos dois temas (§5).
 
-### 3.2 Tokens
+### 3.2 Tokens — claro e escuro (inventário de 16/11/2026)
 
-Os valores abaixo são o **tema claro de referência do kit de formulário do PluginUI**: ficam como tokens do kit (`--delpi-ui-*` existentes ou novos `--delpi-ui-form-*`), com o CSS dos componentes em `plugins/plugin-ui/src/styles/`. O `public-hub` **só mapeia** esses tokens na raiz da página (a partir de `brand-tokens.css` quando houver equivalente) — nunca escreve CSS de componente.
+**Onde ficam:** o CSS dos componentes fica no PluginUI (`plugins/plugin-ui/src/styles/`) e lê **somente** tokens `--delpi-ui-*` — os existentes e novos `--delpi-ui-form-*`, sempre com valor de reserva do tema claro. O `public-hub` declara os valores dos dois temas na raiz da página, a partir de `plugins/public-hub/src/shell/brand-tokens.css` (que já tem bloco claro em `:root`, escuro em `:root[data-theme="dark"]` e `@media (prefers-color-scheme: dark)`). Nenhum CSS de componente no `public-hub`.
 
-| Token | Valor | Uso |
+**Inventário das fontes existentes:**
+
+| Fonte | O que já existe | Uso aqui |
 |---|---|---|
-| Marca / primária | `#0c6fb0` (`--pub-accent` claro) | Faixa do topo, botão primário, nota selecionada, barra de progresso |
-| Marca escura | `#0a5a8f` | Texto “Sua nota…”, texto de “Não se aplica” selecionado, hover do primário |
-| Fundo da página | `#f3f4f6` | Abaixo da faixa |
-| Cartão | `#ffffff`, borda `1px #e1e4e8`, raio `12px`, sombra `0 1px 2px rgba(16,24,40,.06)` | Todos os blocos |
-| Texto principal | `#1f2328` | Perguntas, valores |
-| Texto secundário | `#57606a` (contraste ≥ 4,5:1 sobre branco) | Rótulos, legendas, ajuda |
-| Borda de controle | `#c4ccd5` | Botões de nota, “Não se aplica”, campos de texto |
-| Fundo suave | `#eaf3fb` | Bloco da empresa na abertura; “Não se aplica” selecionado |
-| Erro | `#b42318` | Asterisco de obrigatória, mensagens e borda do cartão pendente |
-| Sucesso | `#1a7f37` | Círculo do agradecimento |
-| Aviso | fundo `#fff8e6`, borda `#f0d58c`, texto `#5c4400` | Aviso de imutabilidade na revisão |
-| Foco | contorno `3px #8fc3ea`, afastamento `2px` | Todo elemento interativo (`:focus-visible`) |
-| Fonte | `'Segoe UI', Inter, system-ui, -apple-system, sans-serif` | Toda a página |
+| `public-hub/src/shell/brand-tokens.css` | Tokens `--pub-*` claro/escuro (marca `--pub-primary #089bdb`, `--pub-secondary #003866`, `--pub-accent`, textos, cartão, campos, perigo, logo) e ponte parcial para `--delpi-ui-text/muted/surface/border/accent` | **Fonte principal** dos dois temas do formulário |
+| `plugin-ui/src/styles/*.css` | Tokens consumidos pelos componentes: `--delpi-ui-accent`, `-text`, `-border`, `-surface`, `-muted`/`-text-muted`, `-danger`, `-warning`, `-success`, `-on-accent`, `-focus-ring`, `-surface-muted`, `-control-border`, `-control-radius`, `-control-height`, `-radius`; reserva para `--primary`/`--surface`/`--text` do Portal | Reutilizar esses nomes; criar `--delpi-ui-form-*` só para o que não existe |
+| `portal/src/index.css` | Tema do Portal autenticado claro/escuro (`--primary`, `--surface`, `--text`, `--success`, `--danger`, `--warning`…) | Referência de cores de estado no escuro (sucesso `#2ecc71`, aviso `#fbbf24`); **não** é carregado no `public-hub` |
+
+**Tokens do formulário:**
+
+| Papel | Token do kit | Claro | Escuro | Origem |
+|---|---|---|---|---|
+| Fundo da página | `--delpi-ui-form-page-bg` (novo) | `#f3f4f6` | `#041b2e` | Novo / base escura de `--pub-stage-bg` |
+| Faixa da marca | `--delpi-ui-form-band-bg` (novo) | `#0c6fb0` | `#003866` | `--pub-accent` claro / `--pub-secondary` |
+| Superfície do cartão | `--delpi-ui-surface` | `#ffffff` | `#0a2438` | `--pub-card-bg` |
+| Borda do cartão | `--delpi-ui-border` | `#e1e4e8` | `rgba(255,255,255,.14)` ≈ `#2c4354` | Próximo de `--pub-card-border` |
+| Sombra do cartão | `--delpi-ui-form-card-shadow` (novo) | `0 1px 2px rgba(16,24,40,.06)` | `0 1px 2px rgba(0,0,0,.35)` | Novo |
+| Texto principal | `--delpi-ui-text` | `#1f2328` | `#f4f8fc` | Novo no claro / `--pub-text` escuro |
+| Texto secundário | `--delpi-ui-muted` | `#57606a` | `#b8c9d9` | Novo no claro / `--pub-text-soft` escuro |
+| Primária (nota escolhida, botão, progresso) | `--delpi-ui-accent` | `#0c6fb0` | `#30b8ec` | `--pub-accent` |
+| Texto sobre primária | `--delpi-ui-on-accent` | `#ffffff` | **`#041b2e`** | Branco sobre `#30b8ec` dá 2,3:1 — reprovado; texto escuro dá 7,7:1 |
+| Primária para texto (“Sua nota…”, N/A escolhido) | `--delpi-ui-form-accent-text` (novo) | `#0a5a8f` | `#7fd3f5` | Novo |
+| Fundo suave (empresa, N/A escolhido) | `--delpi-ui-form-tint` (novo) | `#eaf3fb` | `#103c55` | Mistura da primária com o cartão |
+| Borda dos controles (notas, N/A, campos) | `--delpi-ui-control-border` | **`#8c959f`** | `#788792` | Ajuste de acessibilidade, ver abaixo |
+| Borda neutra (botão secundário, Editar, tema) | `--delpi-ui-form-border-soft` (novo) | `#d0d7de` | `#788792` | `--pub-input-border` claro |
+| Fundo de campo de texto | `--delpi-ui-form-input-bg` (novo) | `#ffffff` | `#061622` | `--pub-input-bg` |
+| Trilho do progresso e divisores | `--delpi-ui-form-track` (novo) | `#e6eaef` | `#2c4354` | Novo |
+| Erro | `--delpi-ui-danger` | `#b42318` | `#ff9d9d` | `--pub-danger` |
+| Sucesso (círculo do agradecimento; ícone em `on-accent` do tema) | `--delpi-ui-success` | `#1a7f37` (ícone branco) | `#2ecc71` (ícone `#041b2e`) | Portal escuro |
+| Aviso (imutabilidade) | `--delpi-ui-form-warning-bg / -border / -text` (novos) | `#fff8e6` / `#f0d58c` / `#5c4400` | `#273736` / `#6a6230` / `#fde68a` | Derivado de `--warning` do Portal |
+| Foco | `--delpi-ui-focus-ring` | contorno 3 px `#8fc3ea` | contorno 3 px `#7fd3f5` | Novo |
+| Fundo do logo | `--delpi-ui-form-logo-bg` (novo) | transparente | `#ffffff` (selo com padding 6×10 px, raio 8 px) | Mesmo padrão de `--pub-logo-bg` no escuro; o logo azul-marinho não aparece sobre fundo escuro |
+| Fonte | `--delpi-ui-form-font` (novo) | `'Segoe UI', Inter, system-ui, -apple-system, sans-serif` | idem | — |
+
+**Ajustes de contraste (valem para os dois temas e substituem a maquete inicial):**
+- A borda das notas e do “Não se aplica” passou de `#c4ccd5` (1,6:1) para `#8c959f` (3,0:1) no claro; no escuro `#788792` dá 4,3:1. Controles precisam de 3:1 com o fundo (WCAG 1.4.11).
+- No escuro, o texto sobre a cor primária é `#041b2e`, nunca branco.
+- Medidos sobre o cartão: texto principal 15,8:1 (claro) / 14,9:1 (escuro); secundário 6,4:1 / 9,4:1; primária 5,4:1 / 7,0:1.
+- No escuro, o cartão (`#0a2438`) quase não se distingue do fundo (`#041b2e`, 1,1:1); por isso a **borda do cartão é obrigatória** no escuro.
 
 ### 3.3 Estrutura da página
 
 | Região | Celular (< 600 px) | Computador (≥ 600 px) |
 |---|---|---|
-| Faixa da marca | Altura 112 px (etapas/revisão) ou 168 px (abertura/agradecimento), cor primária, largura total | Altura 220 px |
+| Faixa da marca | Altura 112 px (etapas/revisão) ou 168 px (abertura/agradecimento), cor da faixa (`#0c6fb0` claro / `#003866` escuro), largura total | Altura 220 px |
 | Coluna de conteúdo | Margem lateral 16 px; sobrepõe a faixa em 80 px (112 px na abertura) | Largura 760 px, centralizada; sobrepõe a faixa em 160 px |
 | Espaço entre cartões | 12 px | 16 px |
 | Padding do cartão | 20 px | 28 px vertical / 32 px horizontal |
-| Rodapé de ações | **Fixo** na base (`position: sticky`), fundo branco, borda superior e sombra leve; botão primário ocupa a largura restante | No fim da coluna, alinhado à direita; mensagem de pendência à esquerda |
+| Rodapé de ações | **Fixo** na base (`position: sticky`), fundo da superfície, borda superior e sombra leve; botão primário ocupa a largura restante | No fim da coluna, alinhado à direita; mensagem de pendência à esquerda |
 
-**Cabeçalho das etapas (cartão superior):** logo Minha Delpi (34 px de altura no celular, 44 px no computador) · título “Pesquisa de Satisfação de Clientes” (20 px / 28 px, negrito) · “Respondendo por **{empresa}**” · divisor · linha “Etapa N de 3 · {nome da etapa}” com “X de 12” à direita · barra de progresso (6 px, raio 3 px). No computador, “Responda até {data}” aparece à direita do logo.
+**Cabeçalho das etapas (cartão superior):** logo Minha Delpi (34 px de altura no celular, 44 px no computador; no escuro, sobre selo branco) e **botão de tema** (44 × 44 px, redondo, ícone de lua no claro e de sol no escuro, nome acessível “Alternar entre tema claro e escuro”) na mesma linha · título “Pesquisa de Satisfação de Clientes” (20 px / 28 px, negrito) · “Respondendo por **{empresa}**” · divisor · linha “Etapa N de 3 · {nome da etapa}” com “X de 12” à direita · barra de progresso (6 px, raio 3 px). No computador, “Responda até {data}” aparece à direita do logo.
 
-**Logo:** o shell público atual desenha logo e botão de tema próprios. Para esta página, **o shell não deve desenhar logo nem botão de tema**; o logo entra dentro do cartão do cabeçalho (ver §5).
+**Logo e botão de tema:** o shell público atual desenha logo e botão de tema flutuantes. Para esta página, **o shell não desenha nenhum dos dois**; ambos entram no cartão do cabeçalho (abertura, etapas e revisão). O agradecimento e os estados alternativos mostram só o logo e seguem o tema já escolhido.
 
 ### 3.4 Componentes do formulário
 
@@ -90,13 +115,13 @@ Os valores abaixo são o **tema claro de referência do kit de formulário do Pl
 
 **Escala 1–5 (perguntas 1–11)**
 - Celular: grade de 5 colunas iguais, espaço 8 px, altura 48 px. Computador: botões de 64 × 52 px, espaço 10 px.
-- Botão normal: fundo branco, borda `#c4ccd5`, raio 8 px, número 17–18 px peso 600. Selecionado: fundo e borda primária, número branco. `aria-pressed` (ou `radio` nativo estilizado) refletindo a seleção.
+- Botão normal: fundo da superfície, borda de controle, raio 8 px, número 17–18 px peso 600. Selecionado: fundo e borda primária, número em `on-accent`. `aria-pressed` (ou `radio` nativo estilizado) refletindo a seleção.
 - Legenda das pontas abaixo da escala, 12–13 px, cor secundária: “1 · Muito insatisfeito” à esquerda e “5 · Muito satisfeito” à direita.
 - Após escolha: “Sua nota: {n} · {significado}” (13–14 px, 600, marca escura). Significados: 1 Muito insatisfeito · 2 Insatisfeito · 3 Neutro · 4 Satisfeito · 5 Muito satisfeito.
 
 **Não se aplica (perguntas 1–10 apenas)**
-- Pílula de 44 px de altura (52 px no computador), raio total, padding 16 px, borda `#c4ccd5`, com indicador redondo de 18 px à esquerda.
-- Selecionado: borda primária, fundo `#eaf3fb`, texto marca escura em 600, indicador preenchido (anel de 6 px na cor primária).
+- Pílula de 44 px de altura (52 px no computador), raio total, padding 16 px, borda de controle, com indicador redondo de 18 px à esquerda.
+- Selecionado: borda primária, fundo suave, texto em primária-para-texto, peso 600, indicador preenchido (anel de 6 px na cor primária).
 - Exclusivo com as notas do mesmo grupo: escolher nota desmarca N/A e vice-versa.
 - Posição: abaixo da linha de confirmação no celular; à direita da escala, após divisor vertical de 1 px, no computador.
 
@@ -107,15 +132,15 @@ Os valores abaixo são o **tema claro de referência do kit de formulário do Pl
 - Após escolha: “Sua nota: {n}”.
 
 **Perguntas abertas (13–15)**
-- Rótulo “Sua resposta” (13 px, secundário) ligado ao campo; `textarea` com altura mínima de 96 px, padding 12 px, borda `#c4ccd5`, raio 8 px, 15 px, redimensionável na vertical; texto de exemplo “Escreva sua resposta”.
+- Rótulo “Sua resposta” (13 px, secundário) ligado ao campo; `textarea` com altura mínima de 96 px, padding 12 px, fundo de campo, borda de controle, raio 8 px, 15 px, redimensionável na vertical; texto de exemplo “Escreva sua resposta”.
 - Sem contador de caracteres nesta entrega; o limite de tamanho continua o do backend e, se excedido, a mensagem de erro aparece no próprio cartão.
 
-**Barra de progresso:** trilho `#e6eaef`, preenchimento primário, `role="progressbar"` com valor atual; texto “X de 12” (cabeçalho) e “12 de 12 avaliações obrigatórias concluídas” (revisão).
+**Barra de progresso:** trilho, preenchimento primário, `role="progressbar"` com valor atual; texto “X de 12” (cabeçalho) e “12 de 12 avaliações obrigatórias concluídas” (revisão).
 
 **Botões**
-- Primário: altura 48 px, raio 8 px, fundo primário, texto branco 16 px peso 600; no celular ocupa a largura disponível no rodapé.
-- Secundário: mesma altura, fundo branco, borda `#d0d7de`, texto principal.
-- “Editar” da revisão: 36 px de altura, borda `#d0d7de`, texto primário com ícone de lápis; nome acessível “Editar etapa N”.
+- Primário: altura 48 px, raio 8 px, fundo primário, texto `on-accent` 16 px peso 600; no celular ocupa a largura disponível no rodapé.
+- Secundário: mesma altura, fundo da superfície, borda neutra, texto principal.
+- “Editar” da revisão: 36 px de altura, borda neutra, texto primário com ícone de lápis; nome acessível “Editar etapa N”.
 - Enquanto envia: primário desabilitado com texto “Enviando…”; nunca reenviar automaticamente.
 
 ### 3.5 Telas
@@ -152,6 +177,7 @@ Os valores abaixo são o **tema claro de referência do kit de formulário do Pl
 - Teclado: Tab percorre as opções na ordem; Espaço/Enter seleciona; Enter **nunca** envia o formulário; foco vai para a primeira pendência ao tentar avançar.
 - Leitor de tela: grupos com `legend`, opções com nome completo (“4 — Satisfeito”), progresso anunciado, mensagens de erro ligadas ao grupo (`aria-describedby`), estados terminais com `role="status"`/`"alert"`.
 - Zoom de 200% sem perda de conteúdo.
+- **Os dois temas** testados em todas as telas e estados (normal, selecionado, foco, erro, enviando), com os contrastes de §3.2; troca de tema não apaga respostas.
 
 ## 4. Regras funcionais vigentes (inalteradas desde 11/11/2026)
 
@@ -185,7 +211,7 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 | Componente | Responsabilidade | Contrato mínimo (props) |
 |---|---|---|
 | `FormPageLayout` | Faixa da marca + coluna central + espaçamento entre cartões (§3.3) | `band: "compact" \| "tall"`, `children` |
-| `FormHeaderCard` | Logo, título, linha de contexto, metadado à direita, etapa e progresso | `logo`, `title`, `subtitle`, `meta?`, `stepLabel?`, `progress?: { done, total }` |
+| `FormHeaderCard` | Logo, título, linha de contexto, metadado e ações à direita (botão de tema), etapa e progresso | `logo`, `title`, `subtitle`, `meta?`, `actions?`, `stepLabel?`, `progress?: { done, total }` |
 | `QuestionCard` | Cartão `fieldset` com rótulo do tema, pergunta numerada, obrigatória/opcional e erro | `number?`, `eyebrow?`, `prompt`, `required`, `optionalLabel?`, `error?`, `children` |
 | `RatingScale` | Escala numérica genérica (serve 1–5 e 0–10) com legenda das pontas, confirmação da escolha e “Não se aplica” opcional | `min`, `max`, `value`, `onChange`, `valueLabels?` (ex.: 1→“Muito insatisfeito”), `endLabels`, `endLabelsPosition: "below" \| "above"`, `narrowColumns?` (ex.: 6 para 0–10), `selectionCaption?`, `notApplicable?: { label, selected, onSelect }`, `ariaLabel`, `invalid?` |
 | (texto aberto) | Reusar `TextAreaField` do kit dentro de `QuestionCard`; se o visual não bater, ajustar **no kit** | — |
@@ -216,12 +242,13 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 | `src/apps/commercial/FormPage.tsx` | Adaptador fino: converte o questionário da API na definição do `GuidedQuestionnaire`, passa `onSubmit` → `submitPublicSurvey`, mapeia resultados |
 | `src/apps/commercial/SurveyStateView.tsx` | Usa `FormPageLayout` + `FormResultPanel`; remove o nome da campanha |
 | `src/apps/commercial/form.css` | **Removido** ou reduzido a mapeamento de tokens `--delpi-ui-*` / layout de página; nenhum seletor de componente |
-| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo do shell, com **tema claro forçado**. Menor solução: opção opcional na definição da página (ex.: `theme: "light"` e/ou `chrome` sem decoração), padrão inalterado para as demais apps |
+| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo **flutuantes** do shell; o botão de tema existente (`ThemeToggle`) é passado ao `FormHeaderCard`. Menor solução: opção opcional de `chrome` sem decoração na definição da página, padrão inalterado para as demais apps |
+| `src/shell/brand-tokens.css` (ou arquivo de tokens da página) | Declarar os valores claro/escuro dos tokens de §3.2, nos mesmos três blocos já existentes (`:root`, `:root[data-theme="dark"]`, `@media (prefers-color-scheme: dark)`) |
 | `surveyForm.ts`, `api.ts` | Mantidos (regra de etapas e rede) |
 
 ### 5.5 Ordem de execução sugerida e cuidados
 
-1. **PluginUI:** camada 1 com testes e registro no catálogo; depois camada 2 com testes de comportamento (validação, foco, progresso, revisão, envio único, `beforeunload`, teclado).
+1. **PluginUI:** camada 1 com testes (incluindo os dois temas) e registro no catálogo; depois camada 2 com testes de comportamento (validação, foco, progresso, revisão, envio único, `beforeunload`, teclado).
 2. **Publicação do remote do PluginUI em HML** e verificação de que o `public-hub` carrega os novos exports.
 3. **public-hub:** adaptador da pesquisa + opção de tema/chrome no shell; remoção do CSS próprio.
 4. **Verificar regressão** das demais páginas públicas e dos MFEs que usam o PluginUI (o kit é compartilhado).
@@ -230,7 +257,7 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 - **Exposição em produção:** o remote do PluginUI é compartilhado por todo o Portal. Componentes novos e inertes no PluginUI não expõem a pesquisa, mas **qualquer deploy do PluginUI em PROD** deve seguir a regra de ambientes da Pesquisa ([README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026)) e ser avaliado pelo owner; a página pública da pesquisa continua só em DEV/HML.
 - **Reaproveitamento futuro (não nesta entrega):** migrar o formulário de Customer Experience para o kit (exige `ChoiceList` para escolha única/múltipla e decisão sobre estrelas × escala numérica) e eventual construtor de formulários por usuários — ambos precisam de decisão própria.
 
-**Fora do escopo desta entrega:** contador de caracteres, rascunho salvo, tema escuro, personalização das perguntas, envio de convites, imagem na faixa, `ChoiceList`, migração do Customer Experience.
+**Fora do escopo desta entrega:** contador de caracteres, rascunho salvo, personalização das perguntas, envio de convites, imagem na faixa, `ChoiceList`, migração do Customer Experience.
 
 ## 6. Estado observado em HML (16/11/2026) — gaps a corrigir
 
@@ -244,13 +271,13 @@ Observado no link de uma empresa pendente (sem envio de resposta).
 | G4 | Perguntas sem nome do tema e sem separação; etapa vira um bloco contínuo | Observado |
 | G5 | Recomendação 0–10 quebra 6+5 sem legenda 0/10 | Observado em 375 px |
 | G6 | Abertura com informações soltas e prazo com hora (“01/11/2026 00:00 a 31/12/2026 23:59”) | Observado |
-| G7 | Botão de tema sobrepõe o topo do conteúdo no celular | Observado |
+| G7 | Botão de tema flutuante sobrepõe o topo do conteúdo no celular — passa para dentro do cartão do cabeçalho | Observado |
 | G8 | Nome interno da campanha exibido ao cliente (ex.: “HML - Validacao…”) | Observado |
 | G9 | Link de convite usa o endereço interno de HML (`https://192.168.1.237:18443`), inacessível fora da rede | Observado; configuração `PUBLIC_BASE_URL` de HML. **Não é ajuste de tela**; requisito do gate de produção (endereço público acessível externamente) |
 
 ## 7. Critérios de aceite
 
-1. Visual igual à [referência](./UI-03-REFERENCIA-VISUAL.html) nas seis telas, em celular (375 px) e computador (1280 px), em tema claro, sem botão de tema.
+1. Visual igual à [referência](./UI-03-REFERENCIA-VISUAL.html) nas seis telas, em celular (375 px) e computador (1280 px), **nos temas claro e escuro**, com o botão de tema no cabeçalho.
 2. Gaps G1–G8 resolvidos; G9 registrado no plano de produção.
 3. 15 perguntas com texto e ordem literais do catálogo; nenhuma seleção inicial.
 4. Regras de §4 verificadas por testes automatizados e em HML, sem POST antes de “Enviar respostas”.

@@ -218,7 +218,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 
 | Antes (11/11/2026) | Agora (16/11/2026) |
 |---|---|
-| Seguir o tema do shell público (claro/escuro, com botão de tema) | **Tema claro fixo**, sem botão de tema |
+| Seguir o tema do shell público (claro/escuro, com botão de tema) | ~~Tema claro fixo~~ — **substituído no mesmo dia pela Q23**: dois temas, com botão de tema no cabeçalho do formulário |
 | Significado escrito sob cada nota 1–5 (opção A da apresentação numérica) | Legenda apenas nas pontas (1 · Muito insatisfeito / 5 · Muito satisfeito) **mais** confirmação do significado da nota escolhida (“Sua nota: 4 · Satisfeito”) |
 | Reaproveitar exclusivamente componentes do PluginUI, sem CSS próprio | ~~Visual próprio em `form.css` do `public-hub`~~ — **substituído no mesmo dia pela Q22**: componentes no PluginUI |
 | Título com o nome da campanha | **Título público fixo** “Pesquisa de Satisfação de Clientes”; nome interno da campanha não aparece ao cliente |
@@ -238,6 +238,19 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 - **Coerente com a regra existente** `.cursor/rules/plugins-reusable-components.mdc` (CSS de componente só no kit; app só mapeia tokens e faz layout de página).
 - **Abstraction Gate:** necessidade real (pesquisa) + segundo consumidor existente (formulário público de Customer Experience) + pedido explícito de reaproveitamento. Regras de negócio permanecem na `commercial-api`; o kit só faz validação de interface.
 - **Não decidido / fora desta entrega:** migração do Customer Experience para o kit, componente de escolha única/múltipla, construtor de formulários por usuários.
+
+**Estado:** decisão **APROVADA**; implementação **PENDENTE**.
+
+### Q23 — Dois temas, claro e escuro, em todo o formulário (16/11/2026)
+
+**Decisão do solicitante (16/11/2026):** “Todos esses componentes e subcomponentes, o formulário como um todo, […] dois visuais: o visual claro […] e o visual no modo escuro. É importante que tenha esses dois visuais. […] inventariar os tokens que já temos nas páginas, os tokens de modo claro e de modo escuro.”
+
+- **Substitui** o “tema claro fixo” da Q21.
+- Todo componente do kit de formulário do PluginUI (Q22) é entregue e testado nos dois temas.
+- **Escolha do tema:** regra existente do `public-hub` (escolha do cliente → preferência salva → preferência do aparelho); botão de tema dentro do cartão do cabeçalho, não flutuante.
+- **Tokens:** inventário e valores claro/escuro em [UI-03 §3.2](./UI-03-FORMULARIO-PUBLICO.md#32-tokens--claro-e-escuro-inventário-de-16112026), com origem em `public-hub/src/shell/brand-tokens.css`, nos tokens `--delpi-ui-*` do PluginUI e no tema do Portal.
+- **Ajustes de acessibilidade incluídos:** borda dos controles mais escura (`#8c959f` no claro) para atingir 3:1; texto escuro sobre a cor primária no tema escuro; logo sobre selo branco no escuro.
+- Referência visual atualizada com as seis telas nos dois temas: [UI-03-REFERENCIA-VISUAL.html](./UI-03-REFERENCIA-VISUAL.html).
 
 **Estado:** decisão **APROVADA**; implementação **PENDENTE**.
 
