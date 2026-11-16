@@ -1,4 +1,4 @@
-name: ATLAS Public Hub OCI Revision Contract
+name: ATLAS Public Hub OCI Revision and Signed Release
 
 on:
   push:
@@ -11,6 +11,15 @@ on:
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
       - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/verify-public-hub-release.sh"
+      - "infra/scripts/tests/test_verify_public_hub_release.py"
+      - "plugins/public-hub/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/transformometro-meeting-minutes-presentation/**"
+      - "plugins/cipa-meeting-minutes-presentation/**"
+      - "plugins/vite/**"
+      - "plugins/plugin-ui/src/components/signature/**"
+      - "plugins/plugin-ui/src/overlayLayers.ts"
       - "infra/scripts/up-hml-sequential.sh"
       - "infra/scripts/up-prod-sequential.sh"
       - "infra/scripts/tests/test_public_hub_provenance.py"
@@ -24,6 +33,15 @@ on:
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
       - "infra/scripts/public-hub-provenance.sh"
+      - "infra/scripts/verify-public-hub-release.sh"
+      - "infra/scripts/tests/test_verify_public_hub_release.py"
+      - "plugins/public-hub/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/transformometro-meeting-minutes-presentation/**"
+      - "plugins/cipa-meeting-minutes-presentation/**"
+      - "plugins/vite/**"
+      - "plugins/plugin-ui/src/components/signature/**"
+      - "plugins/plugin-ui/src/overlayLayers.ts"
       - "infra/scripts/up-hml-sequential.sh"
       - "infra/scripts/up-prod-sequential.sh"
       - "infra/scripts/tests/test_public_hub_provenance.py"
@@ -46,9 +64,10 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check pytest
           bash -n infra/scripts/public-hub-provenance.sh
+          bash -n infra/scripts/verify-public-hub-release.sh
           bash -n infra/scripts/up-hml-sequential.sh
           bash -n infra/scripts/up-prod-sequential.sh
-          python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py
+          python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py infra/scripts/tests/test_verify_public_hub_release.py
       - name: Verify actual checkout input policy before Docker build
         run: |
           source infra/scripts/public-hub-provenance.sh
@@ -85,3 +104,181 @@ jobs:
             fi
           done
           echo "Docker build denied all missing, malformed and abbreviated SHAs"
+
+  validate-public-hub-source:
+    name: Public Hub tests, production build and changed-source lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Both sides are needed for a fail-closed changed-source lint gate.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/public-hub/package-lock.json
+      - name: Install locked dependencies
+        working-directory: plugins/public-hub
+        run: npm ci
+      - name: Public Hub automated tests (required)
+        working-directory: plugins/public-hub
+        run: npm run test
+      # The actual production Dockerfile uses Vite directly. The monorepo's
+      # full app tsc configuration follows transitive source paths in other
+      # projects with independent node_modules and legacy typecheck debt.
+      # Keep a strict TypeScript gate for this build config and test the exact
+      # production Vite bundle here, then build the complete Docker image.
+      - name: Type-check Vite build configuration (required)
+        working-directory: plugins/public-hub
+        run: ./node_modules/.bin/tsc -b tsconfig.node.json
+      - name: Vite production bundle (required, same command as Dockerfile)
+        working-directory: plugins/public-hub
+        run: ./node_modules/.bin/vite build
+      - name: Enforce ESLint on new or modified Public Hub source (required)
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid lint comparison base"; exit 1; }
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid lint comparison head"; exit 1; }
+          git cat-file -e "${BASE_SHA}^{commit}"
+          git cat-file -e "${GITHUB_SHA}^{commit}"
+          git diff --name-only --diff-filter=ACMR -z "$BASE_SHA" "$GITHUB_SHA" \
+            -- plugins/public-hub > "$RUNNER_TEMP/atlas-public-hub-changed-files"
+          mapfile -d '' -t changed < "$RUNNER_TEMP/atlas-public-hub-changed-files"
+          files=()
+          for path in "${changed[@]}"; do
+            case "$path" in
+              plugins/public-hub/*.ts|plugins/public-hub/*.tsx)
+                [[ -f "$path" && ! -L "$path" ]] || { echo "Changed source is unavailable"; exit 1; }
+                files+=("./${path#plugins/public-hub/}")
+                ;;
+            esac
+          done
+          if (("${#files[@]}" == 0)); then
+            echo "No Public Hub TypeScript sources changed in this revision."
+          else
+            echo "Enforcing zero ESLint errors/warnings on ${#files[@]} changed source file(s)."
+            (cd plugins/public-hub && ./node_modules/.bin/eslint --max-warnings=0 -- "${files[@]}")
+          fi
+      - name: Report full-source ESLint inventory (legacy debt; not a release gate)
+        working-directory: plugins/public-hub
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          ./node_modules/.bin/eslint . --format json > "$RUNNER_TEMP/atlas-public-hub-eslint.json" || status=$?
+          # Exit code 2 means a configuration/runtime failure, not legacy lint debt.
+          if [[ "$status" -gt 1 ]]; then
+            echo "ESLint itself failed; refusing an unverified inventory"
+            exit "$status"
+          fi
+          node --input-type=module - "$RUNNER_TEMP/atlas-public-hub-eslint.json" <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const findings = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          if (!Array.isArray(findings)) throw new Error('Unexpected ESLint inventory');
+          const errors = findings.reduce((sum, file) => sum + file.errorCount, 0);
+          const warnings = findings.reduce((sum, file) => sum + file.warningCount, 0);
+          console.log('Full Public Hub ESLint inventory: ' + errors + ' errors, ' + warnings + ' warnings.');
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              '### Public Hub legacy ESLint inventory\n\n' + errors + ' errors / ' + warnings + ' warnings. ' +
+              'Only new or modified TypeScript files are a strict lint gate; ' +
+              'all unit tests, TypeScript, Vite and the final Docker image remain mandatory.\n');
+          }
+          NODE
+
+  validate-final-image-on-pr:
+    name: Build final production image without publishing
+    if: github.event_name == 'pull_request'
+    needs: [verify-public-hub-oci, validate-public-hub-source]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build final image in ephemeral runner
+        run: |
+          docker build --pull --target production \
+            --build-arg "SOURCE_REVISION=$GITHUB_SHA" \
+            -f plugins/public-hub/Dockerfile \
+            -t atlas-public-hub-final:pr plugins
+          actual="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' atlas-public-hub-final:pr)"
+          test "$actual" = "$GITHUB_SHA"
+          docker run --rm --entrypoint /bin/sh atlas-public-hub-final:pr -c \
+            'test -s /usr/share/nginx/html/index.html && nginx -t'
+
+  publish-signed-final-image:
+    name: Build, publish and sign immutable final image (main only)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [verify-public-hub-oci, validate-public-hub-source]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      IMAGE: ghcr.io/roberiooliveiradev/delpi-public-hub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish exactly one final artifact
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: plugins
+          file: plugins/public-hub/Dockerfile
+          target: production
+          platforms: linux/amd64
+          pull: true
+          push: true
+          provenance: false
+          build-args: |
+            SOURCE_REVISION=${{ github.sha }}
+          tags: ghcr.io/roberiooliveiradev/delpi-public-hub:sha-${{ github.sha }}
+      - name: Verify the published artifact itself
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          ref="${IMAGE}@${DIGEST}"
+          docker pull "$ref"
+          actual="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$ref")"
+          origin="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' "$ref")"
+          test "$actual" = "$GITHUB_SHA"
+          test "$origin" = "https://github.com/roberiooliveiradev/delpi-central"
+          docker run --rm --entrypoint /bin/sh "$ref" -c \
+            'test -s /usr/share/nginx/html/index.html && nginx -t'
+      - name: Sign SLSA provenance for the exact OCI manifest
+        id: attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ghcr.io/roberiooliveiradev/delpi-public-hub
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Verify GitHub signed attestation with pinned commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          gh attestation verify "oci://${IMAGE}@${DIGEST}" \
+            --repo roberiooliveiradev/delpi-central \
+            --signer-workflow roberiooliveiradev/delpi-central/.github/workflows/atlas-public-hub-oci.yml \
+            --source-ref refs/heads/main \
+            --source-digest "$GITHUB_SHA" \
+            --predicate-type https://slsa.dev/provenance/v1 \
+            --cert-oidc-issuer https://token.actions.githubusercontent.com \
+            --deny-self-hosted-runners
+          printf 'Verified: %s@%s from %s\n' "$IMAGE" "$DIGEST" "$GITHUB_SHA"

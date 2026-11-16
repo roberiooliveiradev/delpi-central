@@ -199,3 +199,12 @@ O operador escolheu explicitamente producao, recebeu o comando canonico `git pul
 ## 15. Read-back OCI PROD informado pelo operador (16/11/2026)
 
 Estado `PUBLIC_HUB_PROD_OCI_METADATA_OPERATOR_REPORTED_PASS`: container `/delpi-public-hub` em `running`; `ImageID` do container e do image inspect identicos: `sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb`. Label OCI `revision=03cecb7ed90946c799a66ca9b22b45beb221282e`, `source=https://github.com/roberiooliveiradev/delpi-central`. Revisao corresponde ao commit de fechamento publicado antes do deploy manual. **Fonte: saida de comandos filtrados fornecida pelo operador; nao coleta autonoma.** Nao comprova assinatura de build, CI da imagem, smoke HTTP, healthcheck ou readiness. Proximo codigo P2.2g: construir/validar imagem final no CI e vincular evidencia assinada ao artefato exato; imagem recompilada no host nao herda assinatura de outro build. PREPARE/ACT seguem inativos.
+
+
+## 16. P2.2g: imagem final e proveniencia assinada (candidato em PR, 16/11/2026)
+
+**Escopo entregue em codigo de PR:** workflow OCI atualizado para testar frontend + stage final e, **somente em push main apos gates**, publicar por digest no GHCR, emitir atestacao GitHub Actions/Sigstore SLSA vinculada ao manifesto e verifica-la; script read-only compara comprovacao assinada, SHA/ref/workflow e a imagem efetivamente ativa. [Runbook P2.2g](./09-atlas-p22g-signed-final-image.md).
+
+**Estado da evidencia:** `CODE_IN_PR / CI_PENDING / SIGNATURE_NOT_YET_ISSUED / HOST_NOT_VERIFIED`. Testes simulados nao substituem assinatura real nem read-back no host. A imagem local existente com ImageID `sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb` **nao foi promovida, assinada ou modificada**. Nem labels OCI nem mesmo SHA de fonte provam equivalencia de bytes de duas builds distintas.
+
+**Gates apos PR:** CI e verificacao independente, permissao GHCR, imagem final assinada pelo pipeline da main, futura promocao por digest fixo autorizada, cotejo local read-only, health/smoke, ownership de HML, proxy ACL, migracao e Core grants. **PREPARE/ACT continuam desligados**. Nao efetuar deploy com a implementacao desta PR.

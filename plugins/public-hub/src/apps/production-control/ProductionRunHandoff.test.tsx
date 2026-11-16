@@ -407,7 +407,7 @@ describe("troca guiada de OP (E2)", () => {
       expect(screen.queryByText("Finalizar operação")).not.toBeInTheDocument(),
     );
     expect(
-      await screen.findByText("Por que a produção parou?"),
+      await screen.findByText("Informar motivo da parada"),
     ).toBeInTheDocument();
   });
 
@@ -639,7 +639,7 @@ describe("troca guiada de OP (E2)", () => {
 
     // Modal de motivo existente abre — classificação nunca é automática.
     expect(
-      await screen.findByText(/Por que a produção parou/i),
+      await screen.findByText(/Informar motivo da parada/i),
     ).toBeInTheDocument();
     expect(handoffPosts(calls)).toHaveLength(1);
   });
@@ -1133,7 +1133,7 @@ describe("troca guiada de OP (E2)", () => {
     });
     renderControls();
     // A parada sem motivo abre o modal de motivo automaticamente.
-    await screen.findByText(/Por que a produção parou/i);
+    await screen.findByText(/Informar motivo da parada/i);
 
     // Encerrar marca a retomada e mantém o modal de motivo.
     fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
@@ -1146,7 +1146,7 @@ describe("troca guiada de OP (E2)", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^Fechar$/i }).at(-1)!);
     await waitFor(() =>
       expect(
-        screen.queryByText(/Por que a produção parou/i),
+        screen.queryByText(/Informar motivo da parada/i),
       ).not.toBeInTheDocument(),
     );
     expect(screen.queryByText("Finalizar operação")).not.toBeInTheDocument();
@@ -1176,7 +1176,7 @@ describe("troca guiada de OP (E2)", () => {
         okEnvelope({ currentRun: RUN, nextOperation: NEXT_OP, available: true, block: null }),
     });
     renderControls();
-    await screen.findByText(/Por que a produção parou/i);
+    await screen.findByText(/Informar motivo da parada/i);
 
     fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
 

@@ -371,9 +371,11 @@ describe("PostActivityPage", () => {
     expect(screen.queryByText("Produzindo")).not.toBeInTheDocument();
     expect(screen.queryByText(/Linha do tempo/)).not.toBeInTheDocument();
     expect(screen.getByText("Paradas")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Sem motivo/ }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Sem motivo/ }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
     expect(screen.getByText(/·\s*sem motivo/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Informar motivo" }),
@@ -745,6 +747,13 @@ describe("PostActivityPage", () => {
       expect(
         screen.getByRole("button", { name: "Informar motivo" }),
       ).toBeInTheDocument(),
+    );
+    // Data arrives before the mount effect chooses the pending-first filter.
+    // Assert the filter is settled before inspecting classified stop visibility.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Sem motivo/i })).toHaveAttribute(
+        "aria-pressed", "true",
+      ),
     );
     expect(screen.queryByText("Setup de máquina")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Todas" }));
