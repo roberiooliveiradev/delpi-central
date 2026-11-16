@@ -29,3 +29,7 @@ Proibir ACT/rollback automatizado e qualquer mutacao de servicos PROD. Nao criar
 ## Fluxo de contribuicao adotado neste chat
 
 Para este trabalho, alteracoes sao realizadas em branch de funcionalidade, publicadas por Pull Request e revisadas antes de merge. Nenhum commit direto em `main` nem deploy automatico sem autorizacao. Esta orientacao explicita do solicitante prevalece sobre a rotina padrao de commit direto descrita em `AGENTS.md` para este chat.
+
+## Verificacao CI e ajuste de regressao
+
+Na primeira execucao GitHub Actions da PR #208, quatro checks passaram e o job PostgreSQL falhou em duas assercoes de hashes (casos `test_oci_binding_atomic_create_and_identical_retry` e `test_atlas_readonly_list_and_detail_use_real_disposable_pg`). A fixture `_oci_bound_to_nonce` recalcula corretamente a assinatura do candidate apos vincular o nonce, mas essas duas assercoes ainda comparavam a evidencia criada **antes** desse vinculo. A correcao faz cada teste comparar o registro com a mesma evidencia que enviou ao journal. Nao ha alteracao adicional na rotina SQL ou no contrato de seguranca. A verificacao deve ser repetida no PostgreSQL descartavel da PR e esta nota nao antecipa resultado.

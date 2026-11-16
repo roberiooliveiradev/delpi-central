@@ -260,6 +260,7 @@ def test_oci_binding_atomic_create_and_identical_retry(pg):
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
     bundle = _oci_bound_to_nonce(bundle, nonce)
+    i, _, _, candidate = bundle
     first = _oci_store(pg, bundle, nonce)
     again = _oci_store(pg, bundle, nonce)
     assert first.result == "created_pending_approval"
@@ -526,7 +527,9 @@ def test_atlas_readonly_list_and_detail_use_real_disposable_pg(pg, schema_ready)
         pg, requester_subject=i.requester_subject,
         environment=i.environment, service_id=i.service_id,
     )
-    stored = _oci_store(pg, _oci_bound_to_nonce(bundle, nonce), nonce)
+    bundle = _oci_bound_to_nonce(bundle, nonce)
+    i, ci, host, sealed = bundle
+    stored = _oci_store(pg, bundle, nonce)
     reader = _journal_reader(schema_ready)
     listed = reader.list_proposals(environment="prod", page=1, page_size=5)
     assert listed["total"] == 1
