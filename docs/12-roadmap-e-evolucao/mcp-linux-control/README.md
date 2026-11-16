@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** obter read-back filtrado da imagem do Public Hub PROD apos deploy manual confirmado pelo operador e instrumentar atestacao da imagem final P2.2g, mantendo a revisao independente como pendencia explicita a concluir quando houver motor disponivel. O CI P2.2f.1 foi confirmado PASS no SHA publicado. O kit aceita o registro INCONCLUSIVE no encerramento (`GATE_PASS_VERDICTS`), sem transformar indisponibilidade em aceite. CI historico P2.2e/f ja confirmado (evidencias no runbook P2.2f, secao 6). Depois: atestacao da imagem final, proxy com ACL, ownership/janela do Public Hub HML e migration de DB com owner. PREPARE/ACT continuam desligados.
+**Proxima tarefa:** instrumentar atestacao da imagem final P2.2g; read-back OCI de Public Hub PROD recebido e coerente (secao 15), mantendo a revisao independente como pendencia explicita a concluir quando houver motor disponivel. O CI P2.2f.1 foi confirmado PASS no SHA publicado. O kit aceita o registro INCONCLUSIVE no encerramento (`GATE_PASS_VERDICTS`), sem transformar indisponibilidade em aceite. CI historico P2.2e/f ja confirmado (evidencias no runbook P2.2f, secao 6). Depois: atestacao da imagem final, proxy com ACL, ownership/janela do Public Hub HML e migration de DB com owner. PREPARE/ACT continuam desligados.
 
 ## 7. Marco validado
 
@@ -194,3 +194,8 @@ Codigo publicado diretamente pelo conector GitHub em [65ece2215e](https://github
 ### Confirmacao do operador: Public Hub PROD (16/11/2026)
 
 O operador escolheu explicitamente producao, recebeu o comando canonico `git pull --ff-only` + `./infra/scripts/up-prod-sequential.sh --build public-hub` no checkout de producao e confirmou **"Feito"**. Estado: `PROD_PUBLIC_HUB_DEPLOY_OPERATOR_CONFIRMED`, com **SHA/ImageID/metadados e estado do container ainda nao coletados apos a execucao**. Confirmacao humana, sem logs de build nem leitura autonoma de runtime. Atualiza a situacao operacional posterior aos registros historicos de ausencia de deploy; nao transforma o deploy manual em atuacao do ATLAS nem comprova HML/P3/P4. As quatro tools READ, grants e PREPARE/ACT permanecem sem alteracao. Proximo incremento: read-back minimo da imagem PROD e P2.2g (imagem final, identificador imutavel e evidencia assinada do pipeline), sem aceitar etiquetas OCI como assinatura.
+
+
+## 15. Read-back OCI PROD informado pelo operador (16/11/2026)
+
+Estado `PUBLIC_HUB_PROD_OCI_METADATA_OPERATOR_REPORTED_PASS`: container `/delpi-public-hub` em `running`; `ImageID` do container e do image inspect identicos: `sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb`. Label OCI `revision=03cecb7ed90946c799a66ca9b22b45beb221282e`, `source=https://github.com/roberiooliveiradev/delpi-central`. Revisao corresponde ao commit de fechamento publicado antes do deploy manual. **Fonte: saida de comandos filtrados fornecida pelo operador; nao coleta autonoma.** Nao comprova assinatura de build, CI da imagem, smoke HTTP, healthcheck ou readiness. Proximo codigo P2.2g: construir/validar imagem final no CI e vincular evidencia assinada ao artefato exato; imagem recompilada no host nao herda assinatura de outro build. PREPARE/ACT seguem inativos.

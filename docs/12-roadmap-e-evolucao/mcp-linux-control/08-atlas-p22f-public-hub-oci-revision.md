@@ -183,3 +183,19 @@ A confirmacao cobre a execucao manual informada, nao comprova por si a revisao O
 O deploy manual autorizado de metadados nao habilita PREPARE/ACT, nao equivale ao piloto automatizado P3/P4 e nao conclui homologacao dos controles ATLAS. Os registros anteriores de ausencia de deploy sao historicos ao momento daquela entrega. O proximo incremento P2.2g deve comprovar imagem final e origem assinada do pipeline; uma recompilacao no host pode produzir outro artefato mesmo a partir do mesmo commit, logo assinatura de imagem CI nao pode ser atribuida automaticamente a imagem recompilada em producao.
 
 Este registro altera somente documentacao e dispensa nova tentativa de verificador conforme o contrato do kit, parte A, item 1.
+
+
+### 6.8 Resultado OCI PROD informado pelo operador (16/11/2026)
+
+Saida recebida apos consultas filtradas de container e imagem:
+
+```text
+Nome=/delpi-public-hub Estado=running Imagem=sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb
+Imagem=sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb RevisaoGit=03cecb7ed90946c799a66ca9b22b45beb221282e Origem=https://github.com/roberiooliveiradev/delpi-central
+```
+
+**Classificacao:** `PUBLIC_HUB_PROD_OCI_METADATA_OPERATOR_REPORTED_PASS`. Nome, estado running, igualdade dos dois ImageIDs, revisao Git completa e origem canonica estao coerentes. SHA `03cecb7ed90946c799a66ca9b22b45beb221282e` corresponde ao fechamento documental posterior ao codigo `65ece2215e83c182269bdfbf1f2e93ce255ba30f`, publicado antes do deploy. Esta e evidencia operacional **informada pelo operador**, sem acesso autonomo ao Docker.
+
+**Limites:** os rotulos OCI sao metadados autoafirmados; nao equivalem a verificacao criptografica. Estado `running` nao comprova health/readiness nem resposta HTTP. O job OCI atual constroi somente `provenance-contract`, nao a imagem `production` completa. O build produtivo foi feito pelo script local no host; uma imagem futura de CI pode ter outro ImageID mesmo com o mesmo SHA por diferencas de dependencias/base. Nao assinar retrospectivamente a imagem do host usando apenas estes rotulos.
+
+**Proximo incremento P2.2g:** CI da imagem final com comprovacao assinada do artefato e validacao do vinculo commit->artefato->imagem em execucao; separar identificador de imagem Docker, digest de manifesto OCI e checksum de arquivo exportado. O comprovante deve corresponder ao artefato efetivamente consumido, sem tratar recompilacao local como o mesmo build. Assinatura, verificador confiavel, journal/migrations, Core grants e aprovacao ainda nao implementados para runtime. Nenhum novo deploy, secret, endpoint ou permissao foi aplicado neste registro. Mudanca apenas documental, dispensando nova tentativa de verificador conforme contrato parte A, item 1.
