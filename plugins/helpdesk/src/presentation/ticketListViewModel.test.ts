@@ -25,9 +25,18 @@ describe("ticketListViewModelFromFilters", () => {
     expect(model.filterRoot.rules.map((rule) => rule.field)).toEqual(["q", "status"]);
     expect(model.sorts).toEqual([{ field: "created_at", direction: "asc" }]);
     expect(model.activeFilterLabels).toContain("Busca");
-    expect(model.activeFilterLabels.some((label) => label.startsWith("Status:"))).toBe(true);
+    /* «open» já aparece selecionado no chip rápido de status — o label
+     * «Status: …» não pode duplicar essa informação (UX V3 dedup). */
+    expect(model.activeFilterLabels.some((label) => label.startsWith("Status:"))).toBe(false);
     expect(model.primarySortLabel).toContain("Aberto");
     expect(model.viewMode).toBe("table");
+  });
+
+  it("mantém «Status: …» quando o valor não tem chip rápido", () => {
+    const model = ticketListViewModelFromFilters(
+      parseTicketListFilters("?status=custom_glpi_state"),
+    );
+    expect(model.activeFilterLabels).toEqual(["Status: custom_glpi_state"]);
   });
 
   it("mantém o default de ordenação quando a URL não traz sort", () => {

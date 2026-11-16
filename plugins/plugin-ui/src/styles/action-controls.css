@@ -199,8 +199,14 @@ a.delpi-ui-action-btn--link:visited {
   align-items: center;
   justify-content: center;
   /* Controle quadrado — nunca comprime numa linha de flex nem perde
-   * a largura mínima (o ícone ficaria espremido). */
+   * a largura mínima (o ícone ficaria espremido). width/height fixas:
+   * min-width/min-height sozinhos podem ser zerados por regras de
+   * consumidor tipo `wrap > * { min-width: 0 }` (especificidade maior)
+   * — foi assim que o FilterX encolheu a ~18px na toolbar do Helpdesk.
+   * Com largura fixa + flex-shrink:0 o botão é autônomo. */
   flex-shrink: 0;
+  width: 36px;
+  height: 36px;
   min-width: 36px;
   min-height: 36px;
   padding: 0;

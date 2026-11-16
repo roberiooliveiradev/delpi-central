@@ -12,6 +12,7 @@ import type { TicketSummary } from "../api/helpdeskApi";
 import {
   absoluteDateTimeLabel,
   TICKET_LIST_SORTABLE_COLUMNS,
+  TICKET_STATUS_FILTERS,
   type TicketListFilters,
   type TicketListSortKey,
 } from "./ticketView";
@@ -223,7 +224,13 @@ export function ticketListViewModelFromFilters(
    * status — repeti-lo aqui duplicaria visualmente (UX V3 follow-up). */
   if (!filters.requester_mine && filters.requester_id.trim())
     activeFilterLabels.push("Requerente");
-  if (filters.status.trim()) {
+  /* Status coberto por chip rápido já aparece selecionado na barra de
+   * escopo — repetir «Status: …» aqui duplicaria visualmente (mesmo
+   * motivo do requester_mine acima). Label só para valor sem chip. */
+  if (
+    filters.status.trim() &&
+    !TICKET_STATUS_FILTERS.some((f) => f.value === filters.status)
+  ) {
     activeFilterLabels.push(`Status: ${STATUS_FILTER_LABELS[filters.status] ?? filters.status}`);
   }
   if (filters.q.trim()) activeFilterLabels.push("Busca");
