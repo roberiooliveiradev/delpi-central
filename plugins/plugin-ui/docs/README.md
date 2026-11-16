@@ -1,5 +1,8 @@
 # Documentação — `@delpi/plugin-ui`
 
+> **UX V3 follow-up cross-MFE (16/11/2026, PO APPROVED / PLANNED):** [Ícone `FilterX` âmbar compartilhado + header sort](../../../docs/12-roadmap-e-evolucao/my-requests/UX-V3-FOLLOWUP-HEADER-SORT-AMBER-CLEAR-CROSS-MFE-PLAN.md). Owner do controle visual deve inventariar o `HelpdeskIconButton` existente e os exports públicos do kit, estender/reusar primitivo existente (Abstraction Gate); fornecer API compartilhada para My Requests Mine/Fila e Helpdesk. Posição: `[FilterX âmbar] [Filtros] [Ordenar] [Colunas] [Tabela|Cards]` na última linha à direita do Hero. Contraste/hover/foco/tooltip/a11y, tokens light/dark, sem CSS MFE duplicado. Nenhum novo componente deve ser declarado implementado antes de testes e deploy.
+
+
 > **Contrato visual cross-MFE UX V3 (TARGET, 15/11/2026):** [Hero/list toolbar e DataTable — My Requests × Helpdesk](../../../docs/12-roadmap-e-evolucao/my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md). Componentes reutilizáveis, responsive, acessibilidade e posicionamento pertencem ao Plugin UI; aplicar Abstraction Gate. Ainda não implementado.
 
 
