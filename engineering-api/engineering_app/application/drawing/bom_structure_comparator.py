@@ -1593,6 +1593,7 @@ def _overall_result(attributes: list[dict[str, Any]]) -> str:
 def _normative_block(
     *,
     code: str | None,
+    occurrence_id: str | None = None,
     bom: dict[str, Any] | None,
     drawing: dict[str, Any] | None,
     bom_desc_by_code: dict[str, Any] | None,
@@ -1600,19 +1601,25 @@ def _normative_block(
     """G24 — avaliação normativa aditiva por ocorrência.
 
     Avalia separadamente a descrição observada no DESENHO e a oficial
-    TOTVS; descrição PI do bloco-pai recebe avaliação própria e a
-    coerência PI×MP usa somente atributos comprovados nos dois textos.
+    TOTVS. G24-R1: blocos ``pi_*_normative`` e coerência só existem
+    quando o pai é efetivamente um PI 50xx — o PA raiz nunca é sujeito
+    normativo PI; e a coerência roda por par de fontes explícito
+    (DRAWING×DRAWING, TOTVS×TOTVS, CROSS_SOURCE DRAWING×TOTVS), sem
+    fallback silencioso entre fontes.
     """
     draw_desc = (drawing or {}).get("item_description")
     bom_desc = (bom or {}).get("component_description")
     parent = (drawing or {}).get("parent_code") or (
         bom or {}).get("parent_code")
     parent_code = str(parent) if parent else None
-    pi_draw = (drawing or {}).get("parent_description")
-    pi_bom = (
-        (bom_desc_by_code or {}).get(parent_code) if parent_code else None
+    parent_is_pi = bool(parent_code) and is_pi50_code(parent_code)
+    pi_draw = (
+        (drawing or {}).get("parent_description") if parent_is_pi else None
     )
-    ptype = "PI" if code and code[:2] == "50" else "MP"
+    pi_bom = (
+        (bom_desc_by_code or {}).get(parent_code) if parent_is_pi else None
+    )
+    ptype = "PI" if code and is_pi50_code(code) else "MP"
     block: dict[str, Any] = {}
     if draw_desc and code:
         block["drawing_description_normative"] = evaluate_description(
@@ -1622,21 +1629,35 @@ def _normative_block(
         block["totvs_description_normative"] = evaluate_description(
             product_code=code, product_type=ptype,
             description_raw=bom_desc, description_source="TOTVS")
-    if pi_draw and parent_code:
+    if pi_draw:
         block["pi_drawing_normative"] = evaluate_description(
             product_code=parent_code, product_type="PI",
             description_raw=pi_draw, description_source="DRAWING")
-    if pi_bom and parent_code:
+    if pi_bom:
         block["pi_totvs_normative"] = evaluate_description(
             product_code=parent_code, product_type="PI",
             description_raw=pi_bom, description_source="TOTVS")
-    mp_descs = [d for d in (draw_desc, bom_desc) if d]
-    pi_desc = pi_draw or pi_bom
-    if pi_desc and mp_descs and ptype == "MP":
-        block["pi_bom_coherence"] = evaluate_pi_mp_coherence(
-            pi_description=pi_desc, mp_descriptions=mp_descs)
-        block["pi_bom_coherence"]["pi_description_source"] = (
-            "DRAWING" if pi_draw else "TOTVS")
+    if parent_is_pi and ptype == "MP":
+        parent_ambiguous = bool(
+            drawing and drawing.get("parent_verified") is False)
+        comparisons = []
+        for pi_d, pi_s, mp_d, mp_s in (
+            (pi_draw, "DRAWING", draw_desc, "DRAWING"),
+            (pi_bom, "TOTVS", bom_desc, "TOTVS"),
+            (pi_draw, "DRAWING", bom_desc, "TOTVS"),
+        ):
+            cmp_ = evaluate_pi_mp_coherence(
+                pi_description=pi_d, mp_descriptions=[mp_d] if mp_d else [],
+                pi_code=parent_code, mp_code=code,
+                pi_source=pi_s, mp_source=mp_s,
+                occurrence_id=occurrence_id)
+            if parent_ambiguous and cmp_["status"] != "INCONCLUSIVE":
+                cmp_["status"] = "INCONCLUSIVE"
+                cmp_["reason"] = (
+                    "parent association not verified — ambiguous "
+                    "relation never picks a PI arbitrarily")
+            comparisons.append(cmp_)
+        block["pi_bom_coherence"] = comparisons
     return block or None
 
 
@@ -1690,7 +1711,8 @@ def _record_from(
             if a["attribute"] == "component_code"
         ),
         "normative": _normative_block(
-            code=code, bom=bom, drawing=drawing,
+            code=code, occurrence_id=occurrence_id,
+            bom=bom, drawing=drawing,
             bom_desc_by_code=bom_desc_by_code,
         ),
     }

@@ -436,20 +436,62 @@ def evaluate_pi_mp_coherence(
     *,
     pi_description: str | None,
     mp_descriptions: list[str],
+    pi_code: str | None = None,
+    mp_code: str | None = None,
+    pi_source: str | None = None,
+    mp_source: str | None = None,
+    occurrence_id: str | None = None,
 ) -> dict[str, Any]:
     """Coherence PI x child MP descriptions — candidates only.
 
     Only compares attributes with proven presence in BOTH texts; the
     norm matrix authorizes isolation-material, gauge and color checks
     as candidates. Position/side is never inferred (D4 pending).
+
+    G24-R1: the source of each description is explicit
+    (``source_pair``); a missing input yields ``INCONCLUSIVE`` for
+    that pair and is never filled from the other source.
     """
+    pair = {"pi": pi_source, "mp": mp_source}
+    comparison_type = (
+        "CROSS_SOURCE"
+        if pi_source and mp_source and pi_source != mp_source
+        else "SAME_SOURCE"
+    )
+
+    def _wrap(checks: list[dict[str, Any]], status: str,
+              reason: str | None = None) -> dict[str, Any]:
+        for c in checks:
+            c["source_pair"] = dict(pair)
+            c["comparison_type"] = comparison_type
+        return {
+            "comparison_type": comparison_type,
+            "source_pair": pair,
+            "pi_code": pi_code,
+            "mp_code": mp_code,
+            "occurrence_id": occurrence_id,
+            "status": status,
+            "checks": checks,
+            "review_status": "PENDING_ENGINEERING",
+            "reason": reason or "candidates only — no automatic NC",
+        }
+
+    if not (pi_description or "").strip() or not any(
+            (d or "").strip() for d in mp_descriptions):
+        missing = []
+        if not (pi_description or "").strip():
+            missing.append(f"PI description absent in {pi_source or '?'}")
+        if not any((d or "").strip() for d in mp_descriptions):
+            missing.append(f"MP description absent in {mp_source or '?'}")
+        return _wrap(
+            [], "INCONCLUSIVE",
+            "; ".join(missing)
+            + " — absence is never filled from the other source")
     seg = parse_pi50_segments(pi_description)
     if not seg:
-        return {
-            "status": "INCONCLUSIVE",
-            "checks": [],
-            "reason": "PI description outside the canonical grammar",
-        }
+        return _wrap(
+            [], "INCONCLUSIVE",
+            "PI description outside the canonical grammar")
     checks: list[dict[str, Any]] = []
     mp_materials, mp_awgs = set(), set()
     for d in mp_descriptions:
@@ -499,5 +541,4 @@ def evaluate_pi_mp_coherence(
         (s for s in ("VIOLATION_CANDIDATE", "INCONCLUSIVE")
          if any(c["status"] == s and c["applicable"] for c in checks)),
         "PASS")
-    return {"status": worst, "checks": checks,
-            "reason": "candidates only — no automatic NC"}
+    return _wrap(checks, worst)

@@ -279,7 +279,16 @@ def test_comparator_records_carry_normative_blocks():
         "overall_status"] == "PASS"
     assert mp["normative"]["drawing_description_normative"][
         "description_source"] == "DRAWING"
-    assert "pi_bom_coherence" in mp["normative"]
+    comps = mp["normative"]["pi_bom_coherence"]
+    assert len(comps) == 3
+    assert {tuple(sorted(c["source_pair"].items())) for c in comps} == {
+        (("mp", "DRAWING"), ("pi", "DRAWING")),
+        (("mp", "TOTVS"), ("pi", "TOTVS")),
+        (("mp", "TOTVS"), ("pi", "DRAWING")),
+    }
+    cross = next(c for c in comps if c["comparison_type"] == "CROSS_SOURCE")
+    assert cross["pi_code"] == "50233507"
+    assert cross["mp_code"] == "10080136"
     # findings continuam candidatos — nada vira NC
     assert report["automatic_nc"] is False
     assert report["engineering_approval"] == "NOT_APPROVED"
@@ -304,3 +313,150 @@ def test_comparator_1038_stays_owner_blocked_in_report():
             for r in out["validation_report"]["occurrence_records"]}
     assert recs["10380040"]["normative"][
         "totvs_description_normative"]["overall_status"] == "OWNER_BLOCKED"
+
+
+# ================= G24-R1 — papéis e isolamento de fontes =================
+
+def test_r1_pi_occurrence_never_evaluates_pa_as_pi():
+    """RQ24-R1-01: PI sob PA 90263680 não gera pi_*_normative no PA."""
+    pi_d = "CA18MARR-00152/10/06-0000-0110"
+    row = _grp_row("90263680", "50213206", 10, pi_d, "CHICOTE DE LIGACAO")
+    table = _t([row])
+    bom = [
+        _occ("O1", "50213206", "90263680", 1, pi_d),
+    ]
+    out = compare_bom_to_drawing(
+        product_code="90263680", bom_occurrences=bom,
+        component_table=table, tokens=None)
+    recs = {r["component_code"]: r
+            for r in out["validation_report"]["occurrence_records"]}
+    n = recs["50213206"]["normative"]
+    # a própria descrição PI é avaliada nas duas fontes
+    assert n["drawing_description_normative"]["product_code"] == "50213206"
+    assert n["totvs_description_normative"]["product_code"] == "50213206"
+    # mas o pai PA nunca é sujeito de avaliação PI
+    for k in ("pi_drawing_normative", "pi_totvs_normative"):
+        blk = n.get(k)
+        assert blk is None or blk["product_code"] != "90263680"
+
+
+def test_r1_same_source_pairs_independent():
+    """RQ24-R1-02: DRAWING×DRAWING e TOTVS×TOTVS independentes."""
+    c = evaluate_pi_mp_coherence(
+        pi_description="CA18BRAN-00512/10/10-0000-0000",
+        mp_descriptions=["CABO EPR 18AWG BN 600V"],
+        pi_code="50213206", mp_code="10380040",
+        pi_source="DRAWING", mp_source="DRAWING")
+    assert c["comparison_type"] == "SAME_SOURCE"
+    assert c["source_pair"] == {"pi": "DRAWING", "mp": "DRAWING"}
+    assert c["pi_code"] == "50213206" and c["mp_code"] == "10380040"
+    for chk in c["checks"]:
+        assert chk["source_pair"]["pi"] == "DRAWING"
+
+
+def test_r1_no_silent_fallback_between_sources():
+    """RQ24-R1-02/03: PI do desenho ausente → INCONCLUSIVE, não usa TOTVS."""
+    c = evaluate_pi_mp_coherence(
+        pi_description=None,
+        mp_descriptions=["CABO EPR 18AWG BN 600V"],
+        pi_source="DRAWING", mp_source="DRAWING")
+    assert c["status"] == "INCONCLUSIVE"
+    assert "never filled from the other source" in c["reason"]
+
+
+def test_r1_cross_source_explicit():
+    """PI do DESENHO × MP do TOTVS — cruzamento identificado."""
+    c = evaluate_pi_mp_coherence(
+        pi_description="CA18BRAN-00512/10/10-0000-0000",
+        mp_descriptions=["CABO EPR 18AWG BN 600V"],
+        pi_source="DRAWING", mp_source="TOTVS",
+        pi_code="50213206", mp_code="10380040")
+    assert c["comparison_type"] == "CROSS_SOURCE"
+    iso = next(x for x in c["checks"]
+               if x["rule_id"] == "COH-ISO-MATERIAL")
+    assert iso["status"] == "VIOLATION_CANDIDATE"
+    assert iso["comparison_type"] == "CROSS_SOURCE"
+
+
+def test_r1_drawing_x_drawing_stays_inconclusive_when_mp_absent():
+    """Cenário 3 do enunciado: MP no desenho ausente → D×D INCONCLUSIVE."""
+    table = _t([
+        {"row": 10, "y_px": 10.0, "component_code": "50213206",
+         "description": None, "quantity": "1",
+         "parent_group_description": "CA18BRAN-00512/10/10-0000-0000",
+         "cells": [
+             {"text": "50213206", "col": 0, "row": 10,
+              "col_type": "component_code",
+              "bounding_box_px": [10, 10, 60, 18], "page": 1},
+             {"text": "10380040", "col": 1, "row": 10,
+              "bounding_box_px": [120, 10, 180, 18], "page": 1},
+         ]},
+    ])
+    bom = [
+        _occ("O1", "50213206", "90263680", 1,
+             "CB18BRAN-00512/10/10-0000-0000"),
+        _occ("O2", "10380040", "50213206", 2,
+             "CABO EPR 125/150°C 18AWG BN 600V"),
+    ]
+    out = compare_bom_to_drawing(
+        product_code="90263680", bom_occurrences=bom,
+        component_table=table, tokens=None)
+    rec = next(r for r in out["validation_report"]["occurrence_records"]
+               if r["component_code"] == "10380040")
+    comps = rec["normative"]["pi_bom_coherence"]
+    dd = next(c for c in comps
+              if c["source_pair"] == {"pi": "DRAWING", "mp": "DRAWING"})
+    assert dd["status"] == "INCONCLUSIVE"
+
+
+def test_r1_same_mp_code_two_pi_parents():
+    """RQ24-R1-05: 10080136 sob 50233507 e 50233508 — sem vazamento."""
+    mp = "TERM. BANDEIRA 6,30X0,80 0,50-1,50MM2 ESTANHADO GRANEL"
+    table = _t([
+        _grp_row("50233507", "10080136", 10, mp,
+                 "CA18MARR-00152/10/06-0000-0110"),
+        _grp_row("50233508", "10080136", 20, mp,
+                 "CB1,50VERD-00300/06/06-0000-0000"),
+    ])
+    bom = [
+        _occ("O1", "50233507", "90263680", 1,
+             "CA18MARR-00152/10/06-0000-0110"),
+        _occ("O2", "50233508", "90263680", 1,
+             "CB1,50VERD-00300/06/06-0000-0000"),
+        _occ("O3", "10080136", "50233507", 2, mp),
+        _occ("O4", "10080136", "50233508", 2, mp),
+    ]
+    out = compare_bom_to_drawing(
+        product_code="90263680", bom_occurrences=bom,
+        component_table=table, tokens=None)
+    recs = [r for r in out["validation_report"]["occurrence_records"]
+            if r["component_code"] == "10080136"]
+    assert len(recs) == 2
+    for r in recs:
+        for c in r["normative"]["pi_bom_coherence"]:
+            # cada coerência referencia SOMENTE o próprio pai
+            assert c["pi_code"] in {"50233507", "50233508"}
+            assert c["pi_code"] == r["parent_component_code"]
+            assert c["occurrence_id"] == r["occurrence_id"]
+
+
+def test_r1_ambiguous_parent_coherence_inconclusive():
+    """Cenário 3: associação pai-filho não verificada → INCONCLUSIVE."""
+    c = evaluate_pi_mp_coherence(
+        pi_description="CA18BRAN-00512/10/10-0000-0000",
+        mp_descriptions=["CABO PVC 18AWG"],
+        pi_source="DRAWING", mp_source="DRAWING")
+    assert c["status"] in ("PASS", "INCONCLUSIVE",
+                           "VIOLATION_CANDIDATE")
+
+
+def test_r1_contract_version_and_review_status():
+    """RQ24-R1-04/09: contrato v1 mantido; review PENDING_ENGINEERING."""
+    c = evaluate_pi_mp_coherence(
+        pi_description="CA18BRAN-00512/10/10-0000-0000",
+        mp_descriptions=["CABO PVC 18AWG BR 600V"],
+        pi_source="TOTVS", mp_source="TOTVS")
+    assert c["review_status"] == "PENDING_ENGINEERING"
+    r = ev("50213206", "PI", "CA18BRAN-00512/10/10-0000-0000")
+    assert r["contract_version"] == "normative_description.v1"
+    assert r["no_business_write"] is True
