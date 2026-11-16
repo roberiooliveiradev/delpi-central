@@ -746,10 +746,6 @@
   font-size: 0.875rem;
 }
 
-.dashboard-travel-expenses .te-mileage-alert .delpi-ui-action-btn {
-  flex-shrink: 0;
-}
-
 .dashboard-travel-expenses .te-receipt-actions {
   display: flex;
   flex-direction: column;
