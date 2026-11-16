@@ -152,6 +152,7 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     env:
       IMAGE: ghcr.io/roberiooliveiradev/delpi-public-hub
     steps:
