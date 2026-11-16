@@ -174,6 +174,13 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     expect(rowBox!.x + rowBox!.width).toBeGreaterThanOrEqual(
       heroBox!.x + heroBox!.width - 40,
     );
+    /* e inteiramente dentro do hero — sem estourar a borda direita */
+    expect(rowBox!.x + rowBox!.width).toBeLessThanOrEqual(
+      heroBox!.x + heroBox!.width + 2,
+    );
+    expect(chipsBox!.x + chipsBox!.width).toBeLessThanOrEqual(
+      heroBox!.x + heroBox!.width + 2,
+    );
 
     /* Ordem visual Filtros → Ordenar → Colunas → Tabela|Cards. */
     const xOf = async (name: RegExp) => {
@@ -196,10 +203,29 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     expect(xColunas).toBeGreaterThan(xOrdenar);
     expect(xToggle).toBeGreaterThan(xColunas);
 
+    /* Cada um dos quatro controles inteiramente dentro do hero. */
+    for (const name of [/filtros/i, /^Ordenar/i, /^Colunas/i]) {
+      const box = await controlsRow
+        .getByRole("button", { name })
+        .first()
+        .boundingBox();
+      expect(box).toBeTruthy();
+      expect(box!.x + box!.width).toBeLessThanOrEqual(
+        heroBox!.x + heroBox!.width + 2,
+      );
+    }
+    const cardsBtn = controlsRow
+      .getByRole("button", { name: "Cards", exact: true })
+      .first();
+    const cardsBox = await cardsBtn.boundingBox();
+    expect(cardsBox).toBeTruthy();
+    expect(cardsBox!.x + cardsBox!.width).toBeLessThanOrEqual(
+      heroBox!.x + heroBox!.width + 2,
+    );
+
     /* Grade logo abaixo do hero, embedded, sem seção-card duplicada. */
     const section = page.locator(SECTION);
     await expect(section).toHaveCount(1);
-    const heroBox = await hero.boundingBox();
     const sectionBox = await section.boundingBox();
     expect(sectionBox).toBeTruthy();
     expect(sectionBox!.y).toBeGreaterThanOrEqual(heroBox!.y + heroBox!.height - 2);
