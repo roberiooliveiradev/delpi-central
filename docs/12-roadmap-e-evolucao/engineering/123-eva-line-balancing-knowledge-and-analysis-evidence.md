@@ -134,9 +134,14 @@ Resíduos do verificador (rodada 1) e disposição:
 ## Deploy
 
 ```text
-COMMIT_SHA         (push nesta sessão — ver git log)
+COMMIT_SHA         fe45768bba35b87e454f7e60205b0f42b7ecd279
+PUSH_VERIFIED      origin/main == fe45768bba (ff-only)
 DEPLOY_ENVIRONMENT PROD srv-api — up-prod-sequential.sh --build
                    engineering-api
+DEPLOY_SHA         fe45768bba
+DEPLOY_STATUS      SUCCESS — delpi-engineering-api healthy; código
+                   conferido no container (registry 341/507, domain/
+                   routing/, knowledge v1.7); MCP unauth → 401
 RUNTIME_POSTCONDITION 6 tools; analyze/knowledge novos tipos;
                    boundaries 401 sem auth
 ROLLBACK_READINESS git revert + mesmo script
