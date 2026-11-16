@@ -90,6 +90,7 @@ class BlockedReadinessReport:
     core_permission_verified: bool = False
     prepare_eligible: bool = False
     can_execute: bool = False
+    challenge_issued_at: datetime | None = None
 
 
 def _target_valid(target: object) -> bool:
@@ -229,5 +230,6 @@ class ReadOnlyReleaseReadinessReviewer:
             release_verified_at=timestamp.astimezone(timezone.utc),
             challenge_checked_at=now.astimezone(timezone.utc),
             challenge_expires_at=after.expires_at.astimezone(timezone.utc),
+            challenge_issued_at=after.issued_at.astimezone(timezone.utc),
             ci_signature_verified=True,
         )
