@@ -33,6 +33,7 @@ export function HelpPage({ basePath }: HelpPageProps) {
     { id: "overview", title: "Visão geral" },
     { id: "nonconformities", title: "Não conformidades" },
     { id: "product-registration", title: "Cadastro de produtos" },
+    { id: "products", title: "Produtos (catálogo)" },
     { id: "paths", title: "Caminhos e funcionalidades" },
     { id: "search", title: "Busca e favoritos" },
     { id: "states", title: "Estados das informações" },
@@ -234,6 +235,40 @@ export function HelpPage({ basePath }: HelpPageProps) {
                   term: "Histórico e revisões",
                   meaning:
                     "A aba Histórico mostra os eventos reais do atendimento; a aba Revisões exibe os snapshots publicados, somente para consulta.",
+                },
+              ]}
+            />
+          </EngineeringSectionCard>
+        </Manual.Section>
+
+        <Manual.Section id="manual-products">
+          <EngineeringSectionCard title="Produtos (catálogo)">
+            <Manual.Concepts
+              items={[
+                {
+                  term: "Ficha do produto",
+                  meaning:
+                    "Visão geral, estrutura, onde é usado, fornecedores, desenhos, histórico e roteiro — cada aba consulta a fonte oficial sob demanda; dados indisponíveis ou sem permissão aparecem como estados reais, nunca como vazio.",
+                },
+                {
+                  term: "Aba Roteiro",
+                  meaning:
+                    "Roteiro oficial de fabricação: operações únicas consolidadas por estágio da BOM (a mesma operação não se repete por componente), com centro de trabalho, recurso, tempos e componentes expansíveis.",
+                },
+                {
+                  term: "Estágio produtivo",
+                  meaning:
+                    "Cada par produto × nível da BOM é analisado separadamente — o seletor de estágio permite navegar sem misturar linhas de fabricação distintas.",
+                },
+                {
+                  term: "Balanceamento",
+                  meaning:
+                    "Calculadora determinística: você informa demanda, turno e pausas (parâmetros seus) e o motor oficial retorna takt, conteúdo de trabalho, mínimo teórico de postos e gargalo candidato — sempre marcados como cálculo, não como decisão aprovada.",
+                },
+                {
+                  term: "Cenários e simulações",
+                  meaning:
+                    "Cada execução preserva seus parâmetros para comparação lado a lado; distribuições em postos são identificadas como SIMULATION — hipóteses de alocação que exigem revisão da Engenharia.",
                 },
               ]}
             />

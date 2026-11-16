@@ -1844,6 +1844,64 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ChartCard(props: ChartCardProps): ReactElement;
 
+  /** `ConfigurableSeriesChart` — paint SVG oficial do kit para séries
+   * (bar/line/pie/…). Declaração mínima dos campos do contrato real
+   * (`seriesChartOptions.ts`); em runtime o remote resolve o componente. */
+  export type SeriesChartKind =
+    | "bar"
+    | "horizontal_bar"
+    | "line"
+    | "area"
+    | "pie"
+    | string;
+
+  export type SeriesChartPoint = {
+    label?: string;
+    value?: number | null;
+    size?: number | null;
+    sourceIndex?: number;
+    [key: string]: unknown;
+  };
+
+  export type SeriesChartSeriesSpec = {
+    name: string;
+    points: SeriesChartPoint[];
+    color?: string;
+    plotOn?: "primary" | "secondary";
+    sourceIndex?: number;
+  };
+
+  export type SeriesChartOptions = {
+    title?: string;
+    seriesName?: string;
+    showLegend?: boolean;
+    legendPosition?: "top" | "bottom" | "left" | "right" | "hidden";
+    showAxes?: boolean;
+    xAxisTitle?: string;
+    yAxisTitle?: string;
+    showGoalLine?: boolean;
+    goalLineValue?: number | null;
+    seriesColor?: string;
+    valueFormat?: string;
+    colorScale?: { mode?: "off" | "by_value" | "by_goal"; [key: string]: unknown };
+    [key: string]: unknown;
+  };
+
+  export type ConfigurableSeriesChartProps = {
+    chartType: SeriesChartKind;
+    points: SeriesChartPoint[];
+    seriesList?: SeriesChartSeriesSpec[];
+    options?: SeriesChartOptions | null;
+    emptyMessage?: string;
+    className?: string;
+    pieInnerRadiusRatio?: number;
+    [key: string]: unknown;
+  };
+
+  export function ConfigurableSeriesChart(
+    props: ConfigurableSeriesChartProps,
+  ): ReactElement;
+
   export type DetailCardClassNames = {
     card: string;
     header: string;

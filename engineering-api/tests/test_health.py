@@ -50,6 +50,9 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/products/{product_code}/drawing/pdf",
         "/v1/products/{product_code}/purchase-price-history",
         "/v1/products/{product_code}/routing",
+        # Doc 126 — BFF da calculadora do Portal; mesmo domínio EVA
+        # (build_balance_result), read-only, AuthZ engineering.access.
+        "/v1/products/{product_code}/line-balance",
         "/public/characters/{character_id}/avatar/{filename}",
         "/v1/nonconformities",
         "/v1/nonconformities/{record_id}",

@@ -52,6 +52,7 @@ import {
   productStatusLabel,
   productTypeLabel,
 } from "../productCopy";
+import { ProductRoutingTab } from "../routing/ProductRoutingTab";
 import {
   PRODUCT_PATHS,
   navigateProducts,
@@ -78,6 +79,7 @@ const TAB_ORDER: readonly { key: ProductTabKey; label: string }[] = [
   { key: "suppliers", label: PRODUCT_COPY.tabs.suppliers },
   { key: "drawings", label: PRODUCT_COPY.tabs.drawings },
   { key: "history", label: PRODUCT_COPY.tabs.history },
+  { key: "routing", label: PRODUCT_COPY.tabs.routing },
 ];
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -869,6 +871,8 @@ export function ProductDetailPage({ code }: ProductDetailPageProps) {
                 <EngineeringEmptyState message="Histórico de revisões cadastrais não possui contrato oficial na fonte — seção pendente de decisão do owner (doc 63 §2.7)." />
               </div>
             ) : null}
+
+            {tab === "routing" ? <ProductRoutingTab code={code} /> : null}
           </div>
         </>
       ) : null}

@@ -26,7 +26,8 @@ export type ProductTabKey =
   | "where-used"
   | "suppliers"
   | "drawings"
-  | "history";
+  | "history"
+  | "routing";
 
 export const PRODUCT_TAB_KEYS: readonly ProductTabKey[] = [
   "overview",
@@ -35,6 +36,7 @@ export const PRODUCT_TAB_KEYS: readonly ProductTabKey[] = [
   "suppliers",
   "drawings",
   "history",
+  "routing",
 ];
 
 /** Aceita também o identificador camelCase legado (`whereUsed`) em links
@@ -47,6 +49,9 @@ const TAB_ALIASES: Record<string, ProductTabKey> = {
   suppliers: "suppliers",
   drawings: "drawings",
   history: "history",
+  routing: "routing",
+  /** Alias PT aceito em links legados — contrato canônico é EN. */
+  roteiro: "routing",
 };
 
 /** `?tab=` → aba válida; ausente/inválida → `overview` (previsível). */

@@ -803,8 +803,8 @@ async def _analyze_routing_line_balance(
     roteiro oficial (mesma fonte delegada de read(routing.steps))."""
     from engineering_app.domain.routing.line_balance import (
         BALANCE_INPUT_FIELDS,
-        compute_balance,
-        group_routing,
+        build_balance_result,
+        parse_bom_levels,
     )
 
     code = str(params.get("product_code") or "").strip()
@@ -823,17 +823,25 @@ async def _analyze_routing_line_balance(
                 "allowed_fields": sorted(BALANCE_INPUT_FIELDS),
             },
         )
-    bom_levels = params.get("bom_levels")
-    if bom_levels is not None:
-        if not isinstance(bom_levels, (list, tuple)) or not all(
-            str(v).strip().isdigit() for v in bom_levels
-        ):
-            return _err(
-                "bom_levels deve ser uma lista de níveis inteiros.",
-                code="validation",
-                data={"error_kind": "validation"},
-            )
-        bom_levels = sorted({int(v) for v in bom_levels})
+    try:
+        bom_levels = parse_bom_levels(params.get("bom_levels"))
+    except ValueError:
+        return _err(
+            "bom_levels deve ser uma lista de níveis inteiros.",
+            code="validation",
+            data={"error_kind": "validation"},
+        )
+    max_depth = params.get("max_depth")
+    if max_depth is not None and not (
+        isinstance(max_depth, int)
+        and not isinstance(max_depth, bool)
+        and 1 <= max_depth <= 15
+    ):
+        return _err(
+            "max_depth deve ser um inteiro entre 1 e 15.",
+            code="validation",
+            data={"error_kind": "validation"},
+        )
 
     ctx = bridge._source_context(context)
     auxiliary = bridge.build_delegated_auxiliary_source()
@@ -843,7 +851,7 @@ async def _analyze_routing_line_balance(
         branch=str(params["branch"]).strip() or None
         if params.get("branch")
         else None,
-        max_depth=params.get("max_depth"),
+        max_depth=max_depth,
         page=None,
         page_size=None,
     )
@@ -869,110 +877,23 @@ async def _analyze_routing_line_balance(
         )
 
     items = ((result.get("data") or {}).get("items")) or []
-    grouped = group_routing(items)
-    stages = [
-        s
-        for s in grouped["stages"]
-        if bom_levels is None or s["bom_level"] in bom_levels
-    ]
-    if not stages:
+    data = build_balance_result(
+        items,
+        product_code=code,
+        branch=params.get("branch"),
+        max_depth=max_depth,
+        bom_levels=bom_levels,
+        demand=params.get("demand"),
+        available_minutes=params.get("available_minutes"),
+        batch_size=params.get("batch_size"),
+        num_stations=params.get("num_stations"),
+        question=question,
+    )
+    if not data["stages"]:
         return _ok(
-            {
-                "analysis_type": "routing.line_balance",
-                "question": question,
-                "product_code": code,
-                "data_class": "PARTIAL",
-                "stages": [],
-                "official_rows": grouped["rows_total"],
-                "limitations": [
-                    "Roteiro oficial vazio para o produto/escopo — "
-                    "ausência explícita, nenhuma operação fabricada."
-                ],
-                "source": "api-delpi /products/{code}/guide",
-            },
-            "Produto sem roteiro cadastrado no escopo informado.",
+            data, "Produto sem roteiro cadastrado no escopo informado."
         )
-
-    kw = {
-        "demand": params.get("demand"),
-        "available_minutes": params.get("available_minutes"),
-        "batch_size": params.get("batch_size"),
-        "num_stations": params.get("num_stations"),
-    }
-    stage_results = [
-        {
-            "product_code": s["product_code"],
-            "bom_level": s["bom_level"],
-            "branch": s["branch"],
-            "route_code": s["route_code"],
-            "operations": s["operations"],
-            **compute_balance(s["operations"], **kw),
-        }
-        for s in stages
-    ]
-    any_missing = sorted(
-        {
-            m
-            for s in stage_results
-            for m in s["missing_parameters"] + s["invalid_parameters"]
-        }
-    )
-    invalid_params = sorted(
-        {m for s in stage_results for m in s["invalid_parameters"]}
-    )
-    return _ok(
-        {
-            "analysis_type": "routing.line_balance",
-            "question": question,
-            "product_code": code,
-            "branch": params.get("branch"),
-            "method": (
-                "Roteiro oficial deduplicado por "
-                "(produto, operação, CT, recurso, nível); estágios "
-                "analisados isoladamente; takt = available_minutes/"
-                "demand; mínimo teórico = ceil(conteúdo/takt)."
-            ),
-            "data_class": "PARTIAL" if any_missing else "CALCULATED",
-            "official_rows": grouped["rows_total"],
-            "unique_operations": grouped["unique_operations"],
-            "parameters": {
-                k: {
-                    "value": kw[k],
-                    "data_class": (
-                        "UNKNOWN"
-                        if kw[k] in (None, "")
-                        else "INVALID"
-                        if k in invalid_params
-                        else "PROVIDED"
-                    ),
-                }
-                for k in kw
-            },
-            "stages": stage_results,
-            "missing_parameters": any_missing,
-            "invalid_parameters": invalid_params,
-            "limitations": [
-                "Operações repetidas por componente consolidadas — "
-                "linhas do payload são (produto, operação, componente), "
-                "não operações independentes.",
-                "Precedência, operadores, layout e disponibilidade não "
-                "são fornecidos pelo contrato — cenários são "
-                "SIMULATION e exigem revisão da Engenharia.",
-            ],
-            "filters_applied": {
-                "branch": params.get("branch"),
-                "max_depth": params.get("max_depth"),
-                "bom_levels": bom_levels,
-            },
-            "source": "api-delpi /products/{code}/guide — OBSERVED",
-            "provenance": (
-                "OBSERVED official routing × PROVIDED parameters → "
-                "CALCULATED deterministic metrics; scenarios are "
-                "SIMULATION, never official data."
-            ),
-        },
-        "Análise determinística de balanceamento de linha.",
-    )
+    return _ok(data, "Análise determinística de balanceamento de linha.")
 
 
 async def _analyze_product_drawing(

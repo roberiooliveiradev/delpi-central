@@ -346,3 +346,196 @@ def _ffd_scenario(operations: list[dict], takt: float) -> dict:
             "de equipamento — simulação até revisão da Engenharia.",
         ],
     }
+
+
+def parse_bom_levels(value: Any) -> list[int] | None:
+    """Normaliza o filtro de níveis da BOM.
+
+    ``None`` → sem filtro; lista de inteiros (ou dígitos) → níveis
+    únicos ordenados. Qualquer outro formato levanta ``ValueError`` —
+    o chamador da borda mapeia para o erro de validação do contrato.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, (list, tuple)) or not all(
+        str(v).strip().isdigit() for v in value
+    ):
+        raise ValueError("bom_levels deve ser uma lista de níveis inteiros.")
+    return sorted({int(v) for v in value})
+
+
+def build_balance_result(
+    items: list[dict],
+    *,
+    product_code: str,
+    branch: Any = None,
+    max_depth: Any = None,
+    bom_levels: list[int] | None = None,
+    demand: Any = None,
+    available_minutes: Any = None,
+    batch_size: Any = None,
+    num_stations: Any = None,
+    question: str | None = None,
+) -> dict:
+    """Monta o payload canônico da análise de balanceamento.
+
+    Único produtor do contrato de saída compartilhado pelas bordas
+    (MCP ``analyze(routing.line_balance)`` e REST
+    ``POST /v1/products/{code}/line-balance``) — agrupamento, estágios,
+    cálculo por estágio, eco rotulado de parâmetros e estados honestos
+    de escopo vazio vivem aqui, nunca duplicados por interface.
+    """
+    grouped = group_routing(items)
+    stages = [
+        s
+        for s in grouped["stages"]
+        if bom_levels is None or s["bom_level"] in bom_levels
+    ]
+    if not stages:
+        empty_params = {
+            "demand": demand,
+            "available_minutes": available_minutes,
+            "batch_size": batch_size,
+            "num_stations": num_stations,
+        }
+        empty_parsers = {
+            "demand": _positive_int,
+            "available_minutes": lambda v: _num(v)
+            if _num(v) and _num(v) > 0
+            else None,
+            "batch_size": _positive_int,
+            "num_stations": _positive_int,
+        }
+        empty_missing = sorted(
+            k for k in ("demand", "available_minutes")
+            if empty_params[k] in (None, "")
+        )
+        empty_invalid = sorted(
+            k
+            for k, v in empty_params.items()
+            if v not in (None, "") and empty_parsers[k](v) is None
+        )
+        return {
+            "analysis_type": "routing.line_balance",
+            "question": question,
+            "product_code": product_code,
+            "branch": branch,
+            "method": (
+                "Roteiro oficial deduplicado por "
+                "(produto, operação, CT, recurso, nível); estágios "
+                "analisados isoladamente; takt = available_minutes/"
+                "demand; mínimo teórico = ceil(conteúdo/takt)."
+            ),
+            "data_class": "PARTIAL",
+            "official_rows": grouped["rows_total"],
+            "unique_operations": 0,
+            "stages": [],
+            "parameters": {
+                k: {
+                    "value": v,
+                    "data_class": (
+                        "UNKNOWN"
+                        if v in (None, "")
+                        else "INVALID"
+                        if k in empty_invalid
+                        else "PROVIDED"
+                    ),
+                }
+                for k, v in empty_params.items()
+            },
+            "missing_parameters": empty_missing + empty_invalid,
+            "invalid_parameters": empty_invalid,
+            "limitations": [
+                "Roteiro oficial vazio para o produto/escopo — "
+                "ausência explícita, nenhuma operação fabricada."
+            ],
+            "filters_applied": {
+                "branch": branch,
+                "max_depth": max_depth,
+                "bom_levels": bom_levels,
+            },
+            "source": "api-delpi /products/{code}/guide",
+            "provenance": (
+                "OBSERVED official routing × PROVIDED parameters → "
+                "CALCULATED deterministic metrics; scenarios are "
+                "SIMULATION, never official data."
+            ),
+        }
+
+    kw = {
+        "demand": demand,
+        "available_minutes": available_minutes,
+        "batch_size": batch_size,
+        "num_stations": num_stations,
+    }
+    stage_results = [
+        {
+            "product_code": s["product_code"],
+            "bom_level": s["bom_level"],
+            "branch": s["branch"],
+            "route_code": s["route_code"],
+            "operations": s["operations"],
+            **compute_balance(s["operations"], **kw),
+        }
+        for s in stages
+    ]
+    any_missing = sorted(
+        {
+            m
+            for s in stage_results
+            for m in s["missing_parameters"] + s["invalid_parameters"]
+        }
+    )
+    invalid_params = sorted(
+        {m for s in stage_results for m in s["invalid_parameters"]}
+    )
+    return {
+        "analysis_type": "routing.line_balance",
+        "question": question,
+        "product_code": product_code,
+        "branch": branch,
+        "method": (
+            "Roteiro oficial deduplicado por "
+            "(produto, operação, CT, recurso, nível); estágios "
+            "analisados isoladamente; takt = available_minutes/"
+            "demand; mínimo teórico = ceil(conteúdo/takt)."
+        ),
+        "data_class": "PARTIAL" if any_missing else "CALCULATED",
+        "official_rows": grouped["rows_total"],
+        "unique_operations": grouped["unique_operations"],
+        "parameters": {
+            k: {
+                "value": kw[k],
+                "data_class": (
+                    "UNKNOWN"
+                    if kw[k] in (None, "")
+                    else "INVALID"
+                    if k in invalid_params
+                    else "PROVIDED"
+                ),
+            }
+            for k in kw
+        },
+        "stages": stage_results,
+        "missing_parameters": any_missing,
+        "invalid_parameters": invalid_params,
+        "limitations": [
+            "Operações repetidas por componente consolidadas — "
+            "linhas do payload são (produto, operação, componente), "
+            "não operações independentes.",
+            "Precedência, operadores, layout e disponibilidade não "
+            "são fornecidos pelo contrato — cenários são "
+            "SIMULATION e exigem revisão da Engenharia.",
+        ],
+        "filters_applied": {
+            "branch": branch,
+            "max_depth": max_depth,
+            "bom_levels": bom_levels,
+        },
+        "source": "api-delpi /products/{code}/guide — OBSERVED",
+        "provenance": (
+            "OBSERVED official routing × PROVIDED parameters → "
+            "CALCULATED deterministic metrics; scenarios are "
+            "SIMULATION, never official data."
+        ),
+    }

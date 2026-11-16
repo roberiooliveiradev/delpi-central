@@ -279,6 +279,118 @@ async def get_product_routing(
     )
 
 
+@router.post(
+    "/v1/products/{product_code}/line-balance",
+    operation_id="post_product_line_balance",
+    summary=(
+        "Análise determinística de balanceamento de linha — mesmo "
+        "domínio de analyze(routing.line_balance), read-only"
+    ),
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def post_product_line_balance(
+    product_code: str,
+    body: dict | None = None,
+):
+    """BFF da calculadora do Portal — delega o Bearer humano à fonte
+    oficial de roteiro e executa ``build_balance_result`` (domínio
+    EVA). Nenhum cálculo, dedup ou regra no consumidor."""
+    from engineering_app.domain.routing.line_balance import (
+        BALANCE_INPUT_FIELDS,
+        build_balance_result,
+        parse_bom_levels,
+    )
+
+    ctx, error = _human_context("post_product_line_balance")
+    if error:
+        return error
+    code = product_code.strip()
+    if not code:
+        return fail(
+            "product_code obrigatório.",
+            400,
+            operation_id="post_product_line_balance",
+        )
+    params = dict(body or {})
+    unknown = sorted(set(params) - BALANCE_INPUT_FIELDS)
+    if unknown:
+        return fail(
+            f"Parâmetros não suportados: {unknown}.",
+            400,
+            operation_id="post_product_line_balance",
+        )
+    if "product_code" in params and str(params["product_code"]).strip() != code:
+        return fail(
+            "product_code do corpo diverge do path.",
+            400,
+            operation_id="post_product_line_balance",
+        )
+    try:
+        bom_levels = parse_bom_levels(params.get("bom_levels"))
+    except ValueError:
+        return fail(
+            "bom_levels deve ser uma lista de níveis inteiros.",
+            400,
+            operation_id="post_product_line_balance",
+        )
+    max_depth = params.get("max_depth")
+    if max_depth is not None and not (
+        isinstance(max_depth, int)
+        and not isinstance(max_depth, bool)
+        and 1 <= max_depth <= 15
+    ):
+        return fail(
+            "max_depth deve ser um inteiro entre 1 e 15.",
+            400,
+            operation_id="post_product_line_balance",
+        )
+    branch = str(params["branch"]).strip() if params.get("branch") else None
+    result = await build_delegated_auxiliary_source().fetch_product_guide(
+        ctx,
+        code=code,
+        branch=branch,
+        max_depth=max_depth,
+        page=None,
+        page_size=None,
+    )
+    status = (result or {}).get("status")
+    if status == "forbidden":
+        return fail(
+            "Acesso negado pelo owner de produtos.",
+            403,
+            operation_id="post_product_line_balance",
+        )
+    if status == "not_found":
+        return fail(
+            f"Produto {code} não encontrado ou sem roteiro.",
+            404,
+            operation_id="post_product_line_balance",
+        )
+    if status != "available":
+        return fail(
+            "Fonte oficial de roteiro indisponível.",
+            502,
+            operation_id="post_product_line_balance",
+        )
+    items = ((result.get("data") or {}).get("items")) or []
+    data = build_balance_result(
+        items,
+        product_code=code,
+        branch=branch,
+        max_depth=max_depth,
+        bom_levels=bom_levels,
+        demand=params.get("demand"),
+        available_minutes=params.get("available_minutes"),
+        batch_size=params.get("batch_size"),
+        num_stations=params.get("num_stations"),
+    )
+    return ok(
+        data,
+        message="Análise determinística de balanceamento de linha.",
+        operation_id="post_product_line_balance",
+    )
+
+
 @router.get(
     "/v1/products/{product_code}/drawing",
     operation_id="get_product_drawing",

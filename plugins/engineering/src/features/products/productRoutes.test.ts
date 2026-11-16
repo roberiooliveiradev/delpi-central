@@ -102,6 +102,7 @@ describe("abas da ficha orientadas por URL (?tab=)", () => {
       "suppliers",
       "drawings",
       "history",
+      "routing",
     ]) {
       expect(parseProductTab(`?tab=${key}`)).toBe(key);
     }
@@ -109,6 +110,7 @@ describe("abas da ficha orientadas por URL (?tab=)", () => {
 
   it("normaliza legado camelCase e valores inválidos para overview", () => {
     expect(parseProductTab("?tab=whereUsed")).toBe("where-used");
+    expect(parseProductTab("?tab=roteiro")).toBe("routing");
     expect(parseProductTab("?tab=invented")).toBe("overview");
     expect(parseProductTab("?tab=")).toBe("overview");
   });

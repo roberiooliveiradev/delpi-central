@@ -148,3 +148,106 @@ def _rbac_payload(permissions, **overrides) -> dict:
     }
     data.update(overrides)
     return data
+
+
+def test_line_balance_reuses_domain(client, jwks_env, core_rbac, monkeypatch):
+    """POST /v1/products/{code}/line-balance — mesmo domínio EVA."""
+    stub = _install_stub(monkeypatch, _available())
+    token = jwks_env["make_token"]()
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={"demand": 500, "available_minutes": 420},
+        headers=_bearer(token),
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()["data"]
+    assert data["analysis_type"] == "routing.line_balance"
+    assert data["data_class"] == "CALCULATED"
+    assert data["parameters"]["demand"]["data_class"] == "PROVIDED"
+    assert data["parameters"]["demand"]["value"] == 500
+    assert stub.calls["access_token"] == token
+
+
+def test_line_balance_requires_auth(client):
+    resp = client.post("/v1/products/90264302/line-balance", json={})
+    assert resp.status_code == 401
+
+
+def test_line_balance_denied_without_engineering_access(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    core_rbac["behavior"] = ("data", _rbac_payload([]))
+    token = jwks_env["make_token"]()
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={"demand": 500, "available_minutes": 420},
+        headers=_bearer(token),
+    )
+    assert resp.status_code == 403
+
+
+def test_line_balance_rejects_unknown_fields(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_stub(monkeypatch, _available())
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={"demand": 500, "equipment_constraint": "no-laser"},
+        headers=_bearer(jwks_env["make_token"]()),
+    )
+    assert resp.status_code == 400
+    assert "equipment_constraint" in resp.text
+
+
+def test_line_balance_rejects_bad_bom_levels(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_stub(monkeypatch, _available())
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={"bom_levels": "all"},
+        headers=_bearer(jwks_env["make_token"]()),
+    )
+    assert resp.status_code == 400
+
+
+def test_line_balance_forbidden_maps_403(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_stub(monkeypatch, {"status": "forbidden", "data": None})
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={},
+        headers=_bearer(jwks_env["make_token"]()),
+    )
+    assert resp.status_code == 403
+
+
+def test_line_balance_not_found_maps_404(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_stub(monkeypatch, {"status": "not_found", "data": None})
+    resp = client.post(
+        "/v1/products/99999999/line-balance",
+        json={},
+        headers=_bearer(jwks_env["make_token"]()),
+    )
+    assert resp.status_code == 404
+
+
+def test_line_balance_unavailable_maps_502(
+    client, jwks_env, core_rbac, monkeypatch
+):
+    _install_stub(monkeypatch, {"status": "unavailable", "data": None})
+    resp = client.post(
+        "/v1/products/90264302/line-balance",
+        json={},
+        headers=_bearer(jwks_env["make_token"]()),
+    )
+    assert resp.status_code == 502
+
+
+def test_line_balance_openapi_declares_route(client):
+    spec = client.get("/openapi.json").json()
+    op = spec["paths"]["/v1/products/{product_code}/line-balance"]["post"]
+    assert op["operationId"] == "post_product_line_balance"

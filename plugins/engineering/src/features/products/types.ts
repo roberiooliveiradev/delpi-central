@@ -167,3 +167,154 @@ export type ProductPurchaseHistoryResult = {
   budget_history?: Record<string, unknown>[];
   [key: string]: unknown;
 };
+
+/** Linha do roteiro oficial (GET /v1/products/{code}/routing — SG2,
+ * pass-through do owner `/products/{code}/guide`). Cada linha é a tupla
+ * (produto, operação, componente): a MESMA operação aparece repetida
+ * por componente da BOM — consolidação visual espelha a identidade
+ * oficial (produto × nível × operação × CT × recurso). */
+export type ProductRoutingRow = {
+  branch?: string | null;
+  route_code?: string | null;
+  product_code?: string | null;
+  product_description?: string | null;
+  bom_level?: number | null;
+  operation_code?: string | null;
+  operation_description?: string | null;
+  work_center?: string | null;
+  resource_code?: string | null;
+  operation_type?: string | null;
+  mandatory_operation?: string | null;
+  mandatory_sequence?: string | null;
+  mandatory_report?: string | null;
+  /** Preparação por LOTE em horas — nunca somada ao tempo peça sem lote. */
+  setup_hours?: number | null;
+  /** Tempo padrão por peça em minutos (semântica do owner, exibida crua). */
+  standard_time_minutes_piece?: number | null;
+  component_code?: string | null;
+  component_description?: string | null;
+  component_sequence?: string | null;
+  [key: string]: unknown;
+};
+
+export type ProductRoutingResult = {
+  items: ProductRoutingRow[];
+  total?: number | null;
+  page?: number | null;
+  page_size?: number | null;
+  total_pages?: number | null;
+  [key: string]: unknown;
+};
+
+/* --- POST /v1/products/{code}/line-balance — domínio EVA -------------- */
+
+/** Operação consolidada pelo backend (identidade oficial) — o MFE só
+ * renderiza; dedup, takt e cenários são computados no domínio EVA. */
+export type LineBalanceOperation = {
+  operation_code: string;
+  operation_description?: string | null;
+  work_center?: string | null;
+  resource_code?: string | null;
+  operation_type?: string | null;
+  mandatory_operation?: string | null;
+  mandatory_sequence?: string | null;
+  mandatory_report?: string | null;
+  time_minutes_piece?: number | null;
+  setup_hours?: number | null;
+  effective_minutes_piece?: number | null;
+  components?: {
+    code: string;
+    description?: string | null;
+    sequence?: string | null;
+  }[];
+};
+
+export type LineBalanceStage = {
+  product_code: string;
+  bom_level: number;
+  branch?: string | null;
+  route_code?: string | null;
+  operations: LineBalanceOperation[];
+  operations_count: number;
+  operations_missing_time: string[];
+  setup_hours_total?: number | null;
+  setup_minutes_piece_amortized?: number | null;
+  work_content_minutes?: number | null;
+  takt_minutes?: number | null;
+  theoretical_min_stations?: number | null;
+  bottleneck_candidate?: {
+    operation_code: string;
+    operation_description?: string | null;
+    work_center?: string | null;
+    minutes_piece: number;
+  } | null;
+  over_takt_operations: {
+    operation_code: string;
+    work_center?: string | null;
+    minutes_piece: number;
+  }[];
+  station_check?: {
+    num_stations: number;
+    theoretical_min_stations?: number | null;
+    required_cycle_minutes?: number | null;
+    feasible?: boolean;
+    theoretical_efficiency?: number | null;
+  } | null;
+  balance_scenario?: {
+    type: string;
+    data_class: string;
+    stations_used: number;
+    stations: {
+      operations: string[];
+      load_minutes: number;
+      idle_minutes: number;
+    }[];
+    balance_efficiency?: number | null;
+    idle_minutes_total?: number | null;
+    caveats?: string[];
+  } | null;
+  missing_parameters: string[];
+  invalid_parameters: string[];
+  limitations: string[];
+};
+
+/** Payload canônico do domínio `build_balance_result` — classes de
+ * proveniência observadas pelo backend: OBSERVED (roteiro oficial),
+ * PROVIDED (parâmetros do usuário), CALCULATED (métricas) e
+ * SIMULATION (cenários hipotéticos). */
+export type ProductLineBalanceResult = {
+  analysis_type: string;
+  product_code: string;
+  branch?: string | null;
+  method?: string;
+  data_class: string;
+  official_rows?: number;
+  unique_operations?: number;
+  parameters?: Record<
+    string,
+    { value: unknown; data_class: string }
+  >;
+  stages: LineBalanceStage[];
+  missing_parameters?: string[];
+  invalid_parameters?: string[];
+  limitations?: string[];
+  filters_applied?: {
+    branch?: string | null;
+    max_depth?: number | null;
+    bom_levels?: number[] | null;
+  };
+  source?: string;
+  provenance?: string;
+};
+
+/** Vocabulário fechado do contrato POST — espelha BALANCE_INPUT_FIELDS
+ * do domínio; campos fora dele são rejeitados pelo backend. */
+export type LineBalanceRequest = {
+  branch?: string;
+  max_depth?: number;
+  bom_levels?: number[];
+  demand?: number;
+  available_minutes?: number;
+  batch_size?: number;
+  num_stations?: number;
+};

@@ -3,13 +3,16 @@
  * nem decide autorização; erros chegam já classificados pelo httpClient
  * e 404 vira estado "não encontrado" honesto na UI. */
 
-import { getBlob, getJson, HomeApiError } from "../../../api/httpClient";
+import { getBlob, getJson, postJson, HomeApiError } from "../../../api/httpClient";
 import type {
+  LineBalanceRequest,
   ProductDetailResult,
   ProductDrawingMetadata,
   ProductFilterOptions,
   ProductListResult,
+  ProductLineBalanceResult,
   ProductParentsResult,
+  ProductRoutingResult,
   ProductStructureResult,
   ProductSuppliersResult,
 } from "../types";
@@ -188,6 +191,76 @@ export async function fetchProductHistory(
 ): Promise<Record<string, unknown>> {
   const res = await getJson<Envelope<Record<string, unknown>>>(
     `${BASE}/${encodeURIComponent(code)}/purchase-price-history`,
+    signal,
+  );
+  return res.data;
+}
+
+/* --- Roteiro oficial + balanceamento (Doc 126) ----------------------- */
+
+const ROUTING_PAGE_SIZE = 500;
+/** Teto de segurança da paginação agregada — acima disso a resposta é
+ * reportada como parcial em vez de truncar silenciosamente. */
+const ROUTING_MAX_PAGES = 20;
+
+/** Roteiro oficial completo do produto — o owner pagina o payload e a
+ * primeira página NÃO representa o roteiro inteiro; aqui as páginas são
+ * agregadas até `total` (ou o teto de segurança). `branch` é filtro do
+ * contrato oficial — nunca filtrar filial no cliente após mesclar. */
+export async function fetchProductRouting(
+  code: string,
+  options: { branch?: string } = {},
+  signal?: AbortSignal,
+): Promise<ProductRoutingResult & { truncated?: boolean }> {
+  const base = `${BASE}/${encodeURIComponent(code)}/routing`;
+  const pageParams = (page: number) => {
+    const p = new URLSearchParams();
+    if (options.branch) p.set("branch", options.branch);
+    p.set("page", String(page));
+    p.set("page_size", String(ROUTING_PAGE_SIZE));
+    return p.toString();
+  };
+  const first = await getJson<Envelope<ProductRoutingResult>>(
+    `${base}?${pageParams(1)}`,
+    signal,
+  );
+  const data = first.data;
+  const items = Array.isArray(data?.items) ? [...data.items] : [];
+  const total = typeof data?.total === "number" ? data.total : items.length;
+  let page = 1;
+  let truncated = false;
+  while (items.length < total) {
+    if (page >= ROUTING_MAX_PAGES) {
+      truncated = true;
+      break;
+    }
+    page += 1;
+    const next = await getJson<Envelope<ProductRoutingResult>>(
+      `${base}?${pageParams(page)}`,
+      signal,
+    );
+    const more = Array.isArray(next.data?.items) ? next.data.items : [];
+    if (!more.length) {
+      truncated = items.length < total;
+      break;
+    }
+    items.push(...more);
+  }
+  return { ...data, items, total, truncated };
+}
+
+/** Análise determinística de balanceamento — POST ao BFF que executa o
+ * domínio EVA (`build_balance_result`); o MFE envia somente o
+ * vocabulário fechado do contrato e renderiza o resultado sem
+ * recalcular. */
+export async function postProductLineBalance(
+  code: string,
+  params: LineBalanceRequest,
+  signal?: AbortSignal,
+): Promise<ProductLineBalanceResult> {
+  const res = await postJson<Envelope<ProductLineBalanceResult>>(
+    `${BASE}/${encodeURIComponent(code)}/line-balance`,
+    params,
     signal,
   );
   return res.data;

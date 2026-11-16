@@ -22,6 +22,7 @@ export const PRODUCT_COPY = {
     suppliers: "Fornecedores",
     drawings: "Desenhos",
     history: "Histórico",
+    routing: "Roteiro",
   },
 } as const;
 
