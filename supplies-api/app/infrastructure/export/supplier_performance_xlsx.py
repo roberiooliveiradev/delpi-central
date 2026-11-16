@@ -36,7 +36,7 @@ SUMMARY_COLUMNS = (
     ("quality_contribution", "Peso Qualidade (pontos)", "points"),
     ("delivery.assessed_count", "Linhas recebidas", "int"),
     ("delivery.positive_count", "Linhas no prazo", "int"),
-    ("delivery.negative_count", "Linhas fora do prazo", "int"),
+    ("delivery.negative_count", "Fora do prazo / sem data", "int"),
     ("delivery.unknown_count", "Recebimentos sem data", "int"),
     ("delivery.index", "Entrega (%)", "percent"),
     ("delivery_contribution", "Peso Entrega (pontos)", "points"),
