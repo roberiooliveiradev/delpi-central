@@ -393,6 +393,9 @@ function ExpenseDrawer({
   const [categoryId, setCategoryId] = useState("");
   const [merchant, setMerchant] = useState("");
   const [amount, setAmount] = useState("");
+  const [transportMode, setTransportMode] = useState("");
+  const [distanceKm, setDistanceKm] = useState("");
+  const [mileageRate, setMileageRate] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const current = useMemo(
@@ -405,19 +408,47 @@ function ExpenseDrawer({
     setCategoryId(expense?.categoryId || categories[0]?.id || "other");
     setMerchant(expense?.merchant || "");
     setAmount(expense ? String(expense.amountBrl) : "");
+    setTransportMode(expense?.transportMode || "");
+    setDistanceKm(expense?.distanceKm != null ? String(expense.distanceKm) : "");
     setNotes(expense?.notes || "");
   }, [expense, categories, report.periodStart, open]);
 
+  useEffect(() => {
+    let active = true;
+    if (categoryId !== "ground_transport" || transportMode !== "own_vehicle" || !expenseDate) {
+      setMileageRate(null);
+      return;
+    }
+    getMileageRate(expenseDate)
+      .then((rate) => { if (active) setMileageRate(rate); })
+      .catch(() => { if (active) setMileageRate(null); });
+    return () => { active = false; };
+  }, [categoryId, transportMode, expenseDate]);
+
+  const ownVehicle = categoryId === "ground_transport" && transportMode === "own_vehicle";
+  const km = parseBrlInput(distanceKm);
+  const mileageTotal = mileageRate !== null && km !== null && km > 0
+    ? Math.round((mileageRate * km + Number.EPSILON) * 100) / 100
+    : null;
+
   async function save() {
     if (!editable) return;
+    const parsedAmount = ownVehicle ? mileageTotal : parseBrlInput(amount);
+    if (parsedAmount === null) {
+      onError(ownVehicle ? "Informe a quilometragem e aguarde a tarifa vigente." : "Informe um valor válido. Exemplo: R$ 324,00.");
+      return;
+    }
+
     setBusy(true);
     try {
       const payload = {
         expenseDate,
         categoryId,
         merchant,
-        amountBrl: Number(amount.replace(",", ".") || 0),
+        amountBrl: parsedAmount,
         notes,
+        transportMode: categoryId === "ground_transport" ? (transportMode || null) : null,
+        distanceKm: ownVehicle ? km : null,
       };
       const saved = expense
         ? await updateExpense(report.id, expense.id, payload)
