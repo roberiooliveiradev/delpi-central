@@ -1623,6 +1623,177 @@ export function ComparativeAreaChart(props: AnyProps) {
   return el("div", { "data-testid": "comparative-area-chart" }, JSON.stringify(props.data ?? []));
 }
 
+export const PERIOD_COMPARE_TYPES = ["column", "line", "area"] as const;
+
+export function usePersistedChartPreferences(options: {
+  storageKey: string;
+  defaults?: { chartType?: string };
+  allowedChartTypes?: readonly string[];
+}) {
+  const [preferences, setPreferences] = useState({
+    chartType: options.defaults?.chartType ?? "column",
+  });
+  return {
+    preferences,
+    setPreferences,
+    setChartType: (chartType: string) =>
+      setPreferences((prev) => ({ ...prev, chartType })),
+  };
+}
+
+export function applySeriesViewPreferences<T>(series: T): T {
+  return series;
+}
+
+export function buildChartSeriesConfigItems(
+  series: Array<{ dataKey: string; name: string; fill?: string }>,
+) {
+  return series.map((entry) => ({
+    dataKey: entry.dataKey,
+    name: entry.name,
+    fill: entry.fill,
+    visible: true,
+  }));
+}
+
+export function omitRecordKey(
+  record: Record<string, unknown> | undefined,
+  key: string,
+) {
+  if (!record) return record;
+  const next = { ...record };
+  delete next[key];
+  return next;
+}
+
+export function patchSeriesTrendStyle(
+  styles: Record<string, unknown> | undefined,
+  dataKey: string,
+  style: unknown,
+) {
+  return { ...(styles ?? {}), [dataKey]: style };
+}
+
+export function resetSeriesViewPreferences(
+  preferences: Record<string, unknown>,
+  dataKey?: string,
+) {
+  if (!dataKey) {
+    return {
+      ...preferences,
+      seriesFills: undefined,
+      hiddenSeries: undefined,
+      seriesTrend: undefined,
+      seriesTrendStyles: undefined,
+    };
+  }
+  return preferences;
+}
+
+export function seriesViewHasOverrides() {
+  return false;
+}
+
+export function runTabularExport() {
+  /* no-op in tests */
+}
+
+export function ChartViewShell(props: AnyProps) {
+  return el(
+    "div",
+    { "data-testid": "chart-view-shell", "data-chart-type-label": props.typeToggleLabel },
+    props.typeToggle as ReactNode,
+    props.exportActions as ReactNode,
+    props.seriesColors as ReactNode,
+    props.children as ReactNode,
+  );
+}
+
+export function ChartTypeSegmentToggle(props: AnyProps) {
+  const types = (props.family === "period_compare"
+    ? PERIOD_COMPARE_TYPES
+    : PERIOD_COMPARE_TYPES) as readonly string[];
+  return el(
+    "div",
+    {
+      role: "group",
+      "aria-label": "Tipo de gráfico",
+      "data-testid": "chart-type-segment-toggle",
+      "data-value": props.value,
+    },
+    ...types.map((type) =>
+      el(
+        "button",
+        {
+          key: type,
+          type: "button",
+          "aria-pressed": props.value === type ? "true" : "false",
+          onClick: () =>
+            (props.onChange as ((value: string) => void) | undefined)?.(type),
+        },
+        type,
+      ),
+    ),
+  );
+}
+
+export function ChartSeriesColorsPopover() {
+  return el("div", { "data-testid": "chart-series-colors-popover" });
+}
+
+export function MultiTypeSeriesChart(props: AnyProps) {
+  const data = Array.isArray(props.data) ? props.data : [];
+  const categoryKey = String(props.categoryKey ?? "periodo");
+  const onCategoryClick =
+    typeof props.onCategoryClick === "function"
+      ? (props.onCategoryClick as (category: string) => void)
+      : null;
+  return el(
+    "div",
+    {
+      "data-testid": "multi-type-series-chart",
+      "data-chart-type": props.chartType,
+      "data-category-fill": props.categoryFillKey
+        ? String(props.categoryFillKey)
+        : undefined,
+    },
+    ...data.map((row, index) => {
+      const item = row as Record<string, unknown>;
+      const category = String(item[categoryKey] ?? index);
+      const value = item.atual ?? item.value ?? "—";
+      return el(
+        "button",
+        {
+          type: "button",
+          key: `${category}-${index}`,
+          "aria-label": `${category}: ${value}`,
+          onClick: onCategoryClick ? () => onCategoryClick(category) : undefined,
+        },
+        category,
+      );
+    }),
+  );
+}
+
+export function createDashboardTabularExportButtons() {
+  return function TabularExportButtons(props: AnyProps) {
+    return el(
+      "div",
+      { "data-testid": "tabular-export-buttons", role: "group" },
+      el(
+        "button",
+        {
+          type: "button",
+          disabled: Boolean(props.disabled),
+          onClick: () =>
+            (props.onExport as ((format: string) => void) | undefined)?.("csv"),
+        },
+        "Exportar",
+      ),
+    );
+  };
+}
+
 function passthroughFactory() {
   return function Passthrough(props: AnyProps) {
     return el(

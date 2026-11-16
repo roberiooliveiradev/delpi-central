@@ -5,14 +5,13 @@
 import {
   ActionButton,
   ChartCard,
-  BarSeriesChart,
-  ComparativeAreaChart,
   HelpTooltip,
   HorizontalValueBars,
   chartCardBemClasses,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
   createDashboardDateField,
+  createDashboardTabularExportButtons,
   createFilterBarShell,
   createDashboardDetailCard,
   createDashboardDistributionDonut,
@@ -73,8 +72,6 @@ import {
   titleWithHelpBemClasses,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
-
-import { usePortalColorScheme } from "./usePortalColorScheme";
 
 export const UI_PREFIX = "cf";
 export const CF_PORTAL_SCOPE = "dashboard-controllership-finance";
@@ -189,22 +186,10 @@ export function CfHorizontalValueBars(
 ) {
   return createElement(HorizontalValueBars, { prefix: UI_PREFIX, ...props });
 }
-export function CfComparativeAreaChart(
-  props: ComponentProps<typeof ComparativeAreaChart>,
-) {
-  return createElement(ComparativeAreaChart, { prefix: UI_PREFIX, ...props });
-}
-export function CfBarSeriesChart(
-  props: ComponentProps<typeof BarSeriesChart>,
-) {
-  const scheme = usePortalColorScheme();
-  const options = {
-    ...props.options,
-    theme: props.options?.theme ?? scheme,
-    backgroundColor: props.options?.backgroundColor ?? "transparent",
-  };
-  return createElement(BarSeriesChart, { ...props, options });
-}
+export const CfTabularExportButtons = createDashboardTabularExportButtons({
+  prefix: UI_PREFIX,
+  groupAriaLabel: "Exportar dados",
+});
 export const CfDistributionDonut = createDashboardDistributionDonut({
   prefix: UI_PREFIX,
 });

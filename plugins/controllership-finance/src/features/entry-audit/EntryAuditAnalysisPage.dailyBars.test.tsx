@@ -1,5 +1,5 @@
 /**
- * U14R2 K2 — Evolução por dia em barras com clique → filtro day.
+ * U15R R1 — Evolução por dia (MultiTypeSeriesChart) com clique → filtro day.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -101,15 +101,15 @@ beforeEach(() => {
   });
 });
 
-describe("EntryAuditAnalysisPage daily bars (U14R2 K2)", () => {
-  it("clique na barra define day=; segundo clique limpa", async () => {
+describe("EntryAuditAnalysisPage daily evolution (U15R R1)", () => {
+  it("clique na categoria define day=; segundo clique limpa", async () => {
     render(
       <EntryAuditAnalysisPage
         basePath="/apps/controllership-finance"
         analysisId="a1"
       />,
     );
-    await screen.findByTestId("bar-series-chart");
+    await screen.findByTestId("multi-type-series-chart");
     const dayBtn = () =>
       screen.getByRole("button", { name: /08\/11:\s*2/i });
     fireEvent.click(dayBtn());
@@ -120,5 +120,19 @@ describe("EntryAuditAnalysisPage daily bars (U14R2 K2)", () => {
     await waitFor(() => {
       expect(window.location.search).not.toMatch(/day=/);
     });
+  });
+
+  it("oferece troca de tipo coluna/linha/área (period_compare)", async () => {
+    render(
+      <EntryAuditAnalysisPage
+        basePath="/apps/controllership-finance"
+        analysisId="a1"
+      />,
+    );
+    const toggle = await screen.findByTestId("chart-type-segment-toggle");
+    expect(toggle.getAttribute("data-value")).toBe("column");
+    expect(screen.getByRole("button", { name: /^column$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^line$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^area$/i })).toBeTruthy();
   });
 });

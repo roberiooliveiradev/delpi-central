@@ -83,6 +83,9 @@ describe("entryAuditPresentation", () => {
     const compact = formatMoneyBRLForKpi(1_060_126.08);
     expect(compact.display).toBe("R$ 1,06 mi");
     expect(compact.title).toMatch(/R\$\s*1\.060\.126,08/);
+    const thousands = formatMoneyBRLForKpi(136_125.47);
+    expect(thousands.display).toBe("R$ 136,1 mil");
+    expect(thousands.title).toMatch(/R\$\s*136\.125,47/);
     const small = formatMoneyBRLForKpi(170);
     expect(small.display).toMatch(/R\$\s*170,00/);
     expect(small.title).toBe(small.display);

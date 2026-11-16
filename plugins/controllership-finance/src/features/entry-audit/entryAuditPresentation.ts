@@ -261,8 +261,9 @@ export function formatMoneyBRL(value: number | null | undefined): string {
 }
 
 /**
- * Valor de KPI monetário: compacto a partir de 1 milhão («R$ 1,06 mi»)
- * para não quebrar no cartão; `title` guarda o valor completo (AC-KPI-1).
+ * Valor de KPI monetário (AC-KPI-1 / U15R R2): compactar conforme o espaço —
+ * ≥ 1 mi → «R$ 1,06 mi»; ≥ 1 mil → «R$ 136,1 mil»; abaixo → R$ completo.
+ * `title` sempre guarda o valor completo; nunca reticências no display.
  */
 export function formatMoneyBRLForKpi(value: number | null | undefined): {
   display: string;
@@ -272,15 +273,24 @@ export function formatMoneyBRLForKpi(value: number | null | undefined): {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return { display: full, title: full };
   }
-  if (Math.abs(value) < 1_000_000) {
-    return { display: full, title: full };
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    const millions = value / 1_000_000;
+    const compact = millions.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return { display: `R$ ${compact} mi`, title: full };
   }
-  const millions = value / 1_000_000;
-  const compact = millions.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return { display: `R$ ${compact} mi`, title: full };
+  if (abs >= 1_000) {
+    const thousands = value / 1_000;
+    const compact = thousands.toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    return { display: `R$ ${compact} mil`, title: full };
+  }
+  return { display: full, title: full };
 }
 
 /**

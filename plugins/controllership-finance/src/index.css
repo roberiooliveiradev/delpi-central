@@ -724,22 +724,9 @@
  * Altura igual via props size dos Cf* (ver EntryAuditAnalysisPage).
  */
 
-/* AC-GRA-3: eixo «Ocorrências» ao lado do gráfico diário. */
+/* U15R R1: Evolução por dia usa ChartViewShell (eixo Y do MultiTypeSeriesChart). */
 .dashboard-controllership-finance .cf-analysis-daily-chart {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 8px;
-  align-items: stretch;
-}
-
-.dashboard-controllership-finance .cf-analysis-daily-chart__y-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cf-text-muted, var(--text-muted, #64748b));
-  letter-spacing: 0.04em;
-  align-self: center;
+  min-width: 0;
 }
 
 /* AC-TAB-3 / U14R H2: kit usa width:max-content; forçar caber no wrap em 1440. */
@@ -869,24 +856,30 @@
   height: 100%;
 }
 
-/* AC-KPI-1/2: valor e título em uma linha (sem quebra de «R$ …,08»). */
+/* AC-KPI-1 / U15R R2: valor compacto numa linha — sem reticências (title = full). */
 .dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-value,
 .dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__value {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
   overflow-wrap: normal;
 }
 
-/* AC-KPI-2 / U14R2 H4: título numa linha sem reticências (texto já encurtado). */
+/* AC-KPI-2 / U15R R3: título cede espaço ao ícone (não invade com max-content). */
 .dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__label,
 .dashboard-controllership-finance .cf-kpi-grid .cf-kpi-title {
   white-space: nowrap;
   flex-wrap: nowrap;
-  overflow: visible;
+  overflow: hidden;
   text-overflow: clip;
-  max-width: none;
-  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  width: auto;
+}
+
+.dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-body,
+.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__body {
+  min-width: 0;
 }
 
 /* AC-KPI-3: aviso único abaixo da faixa. */
@@ -908,10 +901,11 @@
   }
 }
 
-/* U15 P4a: em 390, 2 KPIs por linha (como Comercial), não 1. */
+/* U15 P4a + U15R R3: 2 KPIs/linha; ícone menor para não cobrir o título. */
 @media (max-width: 480px) {
   .dashboard-controllership-finance .cf-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    --delpi-ui-kpi-icon-size: 28px;
   }
 }
 

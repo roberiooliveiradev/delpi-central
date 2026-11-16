@@ -649,7 +649,7 @@ export const CF_HELP = {
     conformity:
       "Notas limpas são as conferidas sem divergência; divergentes têm ao menos uma ocorrência. «Explicadas» conta os sem par já justificados. O percentual do gauge considera limpas e divergentes.",
     dailyEvolution:
-      "Ocorrências por dia de recebimento no período — barras por dia; todos os dias do recorte aparecem no eixo (dia sem ocorrência = 0). Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
+      "Ocorrências por dia de recebimento no período — coluna, linha ou área (preferência salva); todos os dias do recorte no eixo (dia sem ocorrência = 0). Clique no dia para filtrar a análise; clique de novo limpa. Quando há análise anterior válida, o período anterior é alinhado pelo índice do dia (dia 1 com dia 1), não pela data calendário.",
     postedOutside:
       "Contagem de notas encontradas no Protheus com recebimento fora do recorte De–Até desta análise (regra posted_outside_period). Não entram nas notas conferidas nem no percentual de conformidade; consulte a aba homônima para a lista.",
     severity:

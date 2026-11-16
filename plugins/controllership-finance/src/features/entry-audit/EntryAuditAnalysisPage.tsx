@@ -31,7 +31,6 @@ import {
 } from "../../api/entryAuditApi";
 import {
   CfActionButton,
-  CfBarSeriesChart,
   CfDistributionDonut,
   CfHorizontalValueBars,
   CfLoadingCard,
@@ -48,6 +47,7 @@ import {
   CfTrendDelta,
   CfUnderlineNav,
 } from "../../app/controllershipFinanceUi";
+import { EntryAuditDailyEvolutionChart } from "./EntryAuditDailyEvolutionChart";
 import {
   DataTableSection,
   renderCfRecordCard,
@@ -996,72 +996,13 @@ export function EntryAuditAnalysisPage({
               title="Evolução por dia"
               hint={CF_HELP.entryAudit.dailyEvolution}
             >
-              <div
-                className="cf-analysis-daily-chart"
-                role="group"
-                aria-label="Evolução diária de ocorrências"
-              >
-                <span className="cf-analysis-daily-chart__y-label" aria-hidden>
-                  Ocorrências
-                </span>
-                <CfBarSeriesChart
-                  points={dailyChart.points.map((point) => ({
-                    label: point.name,
-                    value: point.current,
-                  }))}
-                  seriesList={
-                    dailyChart.includePrevious
-                      ? [
-                          {
-                            name: "Este período",
-                            color: "var(--delpi-ui-accent, #2563eb)",
-                            points: dailyChart.points.map((point) => ({
-                              label: point.name,
-                              value: point.current,
-                            })),
-                          },
-                          {
-                            name: previousPeriodLegend
-                              ? `Período anterior (${previousPeriodLegend})`
-                              : "Período anterior",
-                            color: "var(--delpi-ui-muted, #94a3b8)",
-                            points: dailyChart.points.map((point) => ({
-                              label: point.name,
-                              value: point.previous ?? 0,
-                            })),
-                          },
-                        ]
-                      : undefined
-                  }
-                  selectedPointKey={filters.day || null}
-                  pointKey={(_point, index) =>
-                    dailyChart.points[index]?.day ?? String(index)
-                  }
-                  onPointSelect={(_point, index) => {
-                    if (index == null) {
-                      navigateWith({ day: "" });
-                      return;
-                    }
-                    const day = dailyChart.points[index]?.day ?? "";
-                    navigateWith({ day });
-                  }}
-                  emptyMessage="Sem evolução diária para exibir."
-                  options={{
-                    title: "Ocorrências",
-                    showTitle: false,
-                    showLegend: dailyChart.includePrevious,
-                    showAxes: true,
-                    showXAxisLabels: true,
-                    showYAxisLabels: true,
-                    showXAxisTitle: false,
-                    showYAxisTitle: false,
-                    showDataLabels: false,
-                    showGrid: true,
-                    seriesColor: "var(--delpi-ui-accent, #2563eb)",
-                    seriesName: "Este período",
-                  }}
-                />
-              </div>
+              <EntryAuditDailyEvolutionChart
+                points={dailyChart.points}
+                includePrevious={dailyChart.includePrevious}
+                previousPeriodLegend={previousPeriodLegend}
+                selectedDay={filters.day || ""}
+                onSelectDay={(day) => navigateWith({ day })}
+              />
             </CfSectionCard>
           ) : multiDay && !daily ? (
             <CfLoadingCard title="Carregando evolução diária…" />
