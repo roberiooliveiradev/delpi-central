@@ -1,0 +1,61 @@
+{
+  "TASK_ID": "DELIA-C3-T2-ENTITY-SUFFICIENCY-HTTP-MULTITURN-AND-VERIFIER-ACCEPTANCE-01",
+  "GENERATED_AT_UTC": "2026-11-16T11:22:54Z",
+  "BASE_SHA": "e38940c0c6b7ab26d25467b45500f9cc0b4193ad",
+  "IMPLEMENTATION_SHA_PENDING_COMMIT": true,
+  "MODEL_ID": "qwen/qwen3-14b",
+  "CONFIG_FINGERPRINT": "e4a5b706a3b3156b",
+  "HTTP_CONVERSATION_ID": "http-mt-42e226d1432a",
+  "G2_EVALUATION_ID": "or-qwen14b-aca443baae46",
+  "TWO_AGENT_EXPERIMENT_EVAL_ONLY": true,
+  "TEST_RESULTS": {
+    "directed_passed": 29,
+    "regression_passed": 119
+  },
+  "PUBLISHED_BLOBS": {
+    "delia-api/app/application/capability_provision/semantic_capability_support.py": {
+      "sha256": "e4a53b22d73ca23a49fced536315e56a2c530cfe0d1bb8072d26e8d1d53fa4a5",
+      "bytes": 219139
+    },
+    "delia-api/tests/test_c3_t2_final_gates_sufficiency_collection_multiturn.py": {
+      "sha256": "bf1b30228482849992a599860c002e7a39ebe455b6fa2bb76bbac4bd229a8fbc",
+      "bytes": 18871
+    },
+    "delia-api/tests/test_c3_t2_http_multiturn_boundary.py": {
+      "sha256": "e98a927725e47ceb294c0a6653157007a8afa5217fd72f11a512b83f6946dd00",
+      "bytes": 10944
+    },
+    "delia-api/scripts/c3_t2_http_multiturn_live_eval.py": {
+      "sha256": "3bf0f13b54f7134fa1332776802e29de4b00a2d8b864ad0fcca1938a6d795467",
+      "bytes": 7119
+    },
+    "delia-api/scripts/run_c3_t2_http_multiturn_live.sh": {
+      "sha256": "d95b77ae424886469ff27c8ee84a89b8404950cfc8df07b2b67bfdde3bfc8c43",
+      "bytes": 7030
+    },
+    "api-delpi/migrations/plugins/engineering/V024__prc_record_flags.sql": {
+      "sha256": "8f9c975396366117722a4f1a48c86217902a41fc54c3318eb95d607cad0cf73e",
+      "bytes": 4685
+    }
+  },
+  "EVIDENCE_FILE_HASHES": {
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/entity-sufficiency/contract-analysis.md": "9a0e9a44b78d66337d8cd4d4ba222ad886dc819c0abb10cc18c2c845601738d1",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/entity-sufficiency/negative-results.md": "4dbd3e2214d2ee3d43ce67ecd0b36367d47ed202bd90ac33fa24b771bd35ecd8",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/entity-sufficiency/positive.sanitized.json": "03af548df674161e5de2c2446b7a095439c4ec01e34fdf77e3680dddcafb2453",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/entity-sufficiency/root-cause.md": "096c3f547e4ce0712426881d5cabde9660ca81730467aafaa24c0b936267e3ac",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/correlation-proof.md": "9a8651f425d222e55d946be1b3c4e18b1bb2498bbae4fcdcbc8ff35fc80535da",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/http-contract.md": "0d05a9bd1d580aabf97984d95fc67b354de840a5faf8ff6e1044b684545a36b6",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/live-invariants.sanitized.json": "277d83eb374bd0b2f7f3ff4d4d0179991cce546eea9c0ac5066e398cf2b9ebf2",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/negative-results.md": "d72350f053d61b5f5e0233e75d99c5922a212fdb511291bb14789b029f368ad6",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/turn1-request.sanitized.json": "36d7bb33f9d55062f3c6a9375a3f07b71114f1e57526aa2594118008612b8418",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/turn1-response.sanitized.json": "16e29b6664dd3d97f5b13a5b10e5ba452eaee7c2b001fb22182c7b3a540947e3",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/turn2-request.sanitized.json": "93ecac9c0a21123237cbed27e68280caedeed00c665ed8906980a955e33a8b78",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/http-multiturn/turn2-response.sanitized.json": "2142500996ec01b6e7c22458ce0c915aa0b3d163d8ed13e6ad4269c950fe92e8",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/scope-reconciliation.md": "fa21cd201f06a12bb2a12853cea06ce3c7ae9e4196a4cb4b304f15fe9b3063f0",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/tests/commands-and-exit-codes.md": "593c4a8ad7fcba7253233d956de229bb6cb5e870b1a5b18d1ca41312acc16f5f",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/tests/directed-pytest.log": "b71db6006ecc410f6085db2500759568a2da5d0cdf2fd3f7165307654085abe2",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/tests/generalization-results.md": "c3f325a7c9b7f8848ac38072dbd8c478c22c4ac28569f9c8d04194846d529695",
+    "docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/tests/regression-pytest.log": "3967a3470f7eac359388222b353644d0c76efe416477cf10067638da7e665570"
+  },
+  "PRODUCTION_DEPLOY": "NOT_AUTHORIZED"
+}

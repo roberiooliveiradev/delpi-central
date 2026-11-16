@@ -1,0 +1,89 @@
+{
+  "evaluation_id": "or-qwen14b-aca443baae46",
+  "scenario_id": "INT2_G2_aggregation_active_scope",
+  "model": "qwen/qwen3-14b",
+  "config_fingerprint": "e4a5b706a3b3156b",
+  "grounding": "GroundingStatus.GROUNDED",
+  "declared_answer": {
+    "schema_version": "1",
+    "status": "complete",
+    "answer": "Existem 109 processos de transformação ativos.",
+    "evidence_refs": [
+      0
+    ],
+    "unmet_obligations": [],
+    "limitations": [
+      "result_truncated"
+    ],
+    "clarification_question": null
+  },
+  "investigation_plan": {
+    "goal_class": "analyze",
+    "comparison_requested": false,
+    "expected_delivery": "aggregation",
+    "business_subject": "processos de transformação",
+    "declared": true,
+    "target_identities": [],
+    "evidence_needed": [
+      {
+        "description": "Contagem de processos ativos",
+        "evidence_source": "process",
+        "operation": "read",
+        "required_scope": [
+          "entity=process",
+          "action=search",
+          "params.status=ativo",
+          "__container__=params"
+        ]
+      }
+    ]
+  },
+  "obligation_coverage": [
+    {
+      "obligations": [
+        {
+          "description": "Contagem de processos ativos",
+          "evidence_source": "process",
+          "operation": "read",
+          "required_scope": [
+            "entity=process",
+            "action=search",
+            "params.status=ativo",
+            "__container__=params"
+          ]
+        }
+      ],
+      "states": {
+        "Contagem de processos ativos": "SATISFIED"
+      }
+    },
+    {
+      "obligations": [
+        {
+          "description": "Contagem de processos ativos",
+          "evidence_source": "process",
+          "operation": "read",
+          "required_scope": [
+            "entity=process",
+            "action=search",
+            "params.status=ativo",
+            "__container__=params"
+          ]
+        }
+      ],
+      "states": {
+        "Contagem de processos ativos": "SATISFIED"
+      }
+    }
+  ],
+  "mcp_invoke_targets": [
+    "MCP:read"
+  ],
+  "content_head": "Existem 109 processos de transformação ativos.",
+  "limitations": [
+    "result_truncated",
+    "declared_limitation:result_truncated",
+    "experiment_variant=split",
+    "comprehension_llm_requests=3"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "http_status": 200,
+  "request_id": "adc15bf6-ce3f-405b-b39e-9bd6a1a4f329",
+  "session_id": "22915d09-ca59-4a8d-aa4d-aaea1d8052a2",
+  "user_turn_id": "e3d0bab6-c20b-4c4d-8d1e-93d0086e58cf",
+  "result_turn_id": "769e1546-efc1-400c-9656-5e5b13971cb8",
+  "grounding_status": "GROUNDED",
+  "epistemic_class": "OBSERVATION",
+  "limitations": [
+    "experiment_variant=split",
+    "comprehension_llm_requests=2"
+  ],
+  "content_head": "A estrutura do produto com código **90260921** é a seguinte:\n\n**Descrição:** 21010421 CHICOTE DE LIGACAO\n**Tipo:** PA (Peça Acessória)\n**Unidade:** MI (Milheiro)\n**Quantidade:** 1\n\n**Componentes:**\n1. **Código:** 10020003\n   **Descrição:** CABO PVC 105°C 0,50MM2 PT 750V ESTANHADO NBR 9117\n   **Tipo:** MP (Material)\n   **Unidade:** MT (Metro)\n   **Quantidade:** 175,0\n\nO chicote de ligação é compost",
+  "prior_user_turn_recovered": true,
+  "prior_assistant_turn_recovered": true,
+  "manually_injected_harness_prior_turns": false,
+  "context_kinds": [
+    "USER_INPUT",
+    "DELIA_RESULT"
+  ],
+  "provenance": {
+    "specialist_id": "davi",
+    "capability_group_id": "davi",
+    "remote_capability": "read",
+    "invocation_identity": [
+      "90260921"
+    ],
+    "invocation_vocabulary": [
+      "get_product_structure"
+    ],
+    "operation_class": "READ",
+    "is_complete": true
+  }
+}

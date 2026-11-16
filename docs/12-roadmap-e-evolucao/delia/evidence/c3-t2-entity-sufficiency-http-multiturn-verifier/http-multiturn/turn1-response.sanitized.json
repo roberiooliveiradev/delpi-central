@@ -1,0 +1,17 @@
+{
+  "http_status": 200,
+  "request_id": "9cc2d43e-9931-4b75-bfe3-8ea95487daa7",
+  "session_id": "8ecc0042-3246-4b5f-895a-3cb95220da91",
+  "user_turn_id": "f07aab09-b820-4686-b2c6-0834d3322e54",
+  "result_turn_id": "91606594-504e-4d39-aaa5-88d6ec3ab6d5",
+  "grounding_status": "NON_GROUNDED",
+  "epistemic_class": "HYPOTHESIS",
+  "limitations": [
+    "agent_requested_clarification",
+    "experiment_variant=split",
+    "comprehension_llm_requests=0",
+    "comprehension_handoff=comprehension_agent_error"
+  ],
+  "content_head": "Preciso saber qual registro consultar. Informe o identificador ou descreva o item.",
+  "clarification_detected": true
+}

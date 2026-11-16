@@ -1,0 +1,21 @@
+{
+  "path": "/interaction/turns",
+  "method": "POST",
+  "body": {
+    "input": "90260921",
+    "context": [
+      {
+        "kind": "USER_INPUT",
+        "content": "Quero ver a estrutura de um produto."
+      },
+      {
+        "kind": "DELIA_RESULT",
+        "content": "<turn1 published content>",
+        "epistemic_class": "HYPOTHESIS"
+      }
+    ]
+  },
+  "auth": "Bearer <redacted>",
+  "subject_fingerprint": "4903c6464e2cd62d",
+  "context_source": "canonical_http_context_field"
+}

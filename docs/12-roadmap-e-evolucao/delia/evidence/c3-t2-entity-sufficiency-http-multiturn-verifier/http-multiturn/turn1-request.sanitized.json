@@ -1,0 +1,9 @@
+{
+  "path": "/interaction/turns",
+  "method": "POST",
+  "body": {
+    "input": "Quero ver a estrutura de um produto."
+  },
+  "auth": "Bearer <redacted>",
+  "subject_fingerprint": "4903c6464e2cd62d"
+}

@@ -3368,6 +3368,45 @@ def _presentation_source_allows_aggregation(
     return evidence_source.casefold() in _PRESENTATION_EVIDENCE_SOURCES
 
 
+def _obligation_declared_entity_tokens(
+    obligation: MaterialObligation,
+) -> frozenset[str]:
+    """Business-entity tokens declared on the obligation contract.
+
+    Drawn only from mechanical ``required_scope`` pairs
+    (``entity=`` / ``entity_kind=``) — never from free-text description
+    parsing or specialist/tool names. Empty set means the presentation
+    path cannot prove entity congruence and must not SATISFY.
+    """
+    tokens: set[str] = set()
+    for pair in obligation.required_scope or ():
+        if not isinstance(pair, str):
+            continue
+        key, sep, value = pair.partition("=")
+        if not sep:
+            continue
+        key_cf = key.casefold()
+        if key_cf in {"entity", "entity_kind"} and value.strip():
+            tokens.add(value.strip().casefold())
+    return frozenset(tokens)
+
+
+def _attempt_business_entity_congruent(
+    attempt: GovernedCapabilityAttempt,
+    obligation: MaterialObligation,
+) -> bool:
+    """True when declared business entity intersects attempt anchors.
+
+    Uses owner-echoed / invocation vocabulary tokens
+    (``_attempt_anchor_tokens``) — the same mechanical surface that
+    entity-class ``evidence_source`` matching already trusts.
+    """
+    declared = _obligation_declared_entity_tokens(obligation)
+    if not declared:
+        return False
+    return bool(declared & _attempt_anchor_tokens(attempt))
+
+
 def _consultation_operations_compatible(
     declared: str | None, observed: str | None
 ) -> bool:
@@ -3436,9 +3475,13 @@ def _attempt_demonstrates_anchored(
             if not aggregation_presentation:
                 return False
             # Presentation source under aggregation: require business
-            # evidence (entity/items/total) — never satisfy from a
-            # discovery-metadata or empty observation.
+            # evidence AND declared business-entity congruence with the
+            # attempt's owner vocabulary — a sales_order total must
+            # never satisfy a process-count obligation merely because
+            # both share status=ativo and an authoritative metric.
             if not _is_business_evidence_attempt(attempt):
+                return False
+            if not _attempt_business_entity_congruent(attempt, obligation):
                 return False
     if obligation.operation is not None:
         observed = _attempt_operation_class(attempt)
@@ -3601,11 +3644,13 @@ def _attempt_binds_obligation(
         tokens = _attempt_anchor_tokens(attempt)
         source = item.evidence_source.casefold()
         if source not in tokens:
-            if aggregation_presentation and _is_business_evidence_attempt(
-                attempt
+            if (
+                aggregation_presentation
+                and _is_business_evidence_attempt(attempt)
+                and _attempt_business_entity_congruent(attempt, item)
             ):
                 # Presentation source under aggregation: business
-                # evidence of a consultation capability may bind.
+                # evidence congruent with the declared entity may bind.
                 pass
             elif _attempt_surface_anchor_match(attempt, source):
                 # Envelope-surface match: bound only — a generic

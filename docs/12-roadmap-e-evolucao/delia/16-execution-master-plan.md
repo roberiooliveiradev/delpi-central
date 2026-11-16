@@ -2380,3 +2380,8 @@ Task `DELIA-C3-T2-COMPREHENSION-INVESTIGATION-SPLIT-EXPERIMENT-AUTHORIZATION-AND
 ### 2026-11-15 — C3/T2: Final evidence / CI / negatives / verifier closure
 
 **TASK:** `DELIA-C3-T2-TWO-AGENT-FINAL-EVIDENCE-CI-NEGATIVE-AND-VERIFIER-CLOSURE-01`. Pacote GitHub-reviewable em `evidence/c3-t2-grounding-multipage-multiturn-closure/` (G2/R5/R6 sanitizados + matriz de negativos + logs). Testes de fechamento em `test_c3_t2_evidence_closure_negatives.py`. Suite `delia-api` e gates architecture EXIT=0; CI Architecture Enforcement success em `c0891eb1`/`550eae55`. Residuais R5-N3/N4/N5 e R4 permanecem PENDING/OPEN_LOW — **não** encerrados pelo push. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_FINAL_EVIDENCE_CI_NEGATIVE_VERIFIER_INDEPENDENT_REVIEW`.**
+
+### 2026-11-16 — C3/T2: Entity sufficiency + HTTP multiturn + verifier
+
+**TASK:** `DELIA-C3-T2-ENTITY-SUFFICIENCY-HTTP-MULTITURN-AND-VERIFIER-ACCEPTANCE-01` sobre `e38940c0c6`. **WS-1:** congruência de entidade na agregação de apresentação (fail-closed sem `entity=`); G2 live SATISFIED 109. **WS-2:** dois POSTs `/interaction/turns` com `context` canônico; turn-2 GROUNDED DAVI 90260921. **Verificador:** `ACCEPT_WITH_RESIDUAL` r1 (0 OC). Pacote: `evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_ENTITY_SUFFICIENCY_HTTP_MULTITURN_VERIFIER_INDEPENDENT_REVIEW`.**
+

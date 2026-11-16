@@ -49,6 +49,7 @@ def _agg_ob(
 ):
     if required_args is None:
         required_args = {
+            "entity": "process",
             "params": {"status": "ativo"},
             "view": "summary",
         }
@@ -104,6 +105,67 @@ def test_s1_g2_presentation_anchor_satisfied_by_teo_read_total():
     attempt = _teo_process_page(total=109)
     coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
     assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_s2_sales_orders_total_does_not_satisfy_process_obligation():
+    """S2 — authoritative sales_order metric ≠ process count."""
+    obligation = _agg_ob()
+    attempt = _attempt(
+        entity="sales_order",
+        vocabulary=("sales_order", "search"),
+        items=[{"id": f"SO-{i}"} for i in range(40)],
+        total=109,
+        specialist="other",
+        remote="other.read",
+        operation_class="READ",
+        scope=_invocation_scope(
+            {
+                "entity": "sales_order",
+                "action": "search",
+                "params": {"status": "ativo"},
+            }
+        ),
+        content="total_count=109",
+    )
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED
+
+
+def test_s3_product_total_does_not_satisfy_process_obligation():
+    """S3 — authoritative product metric ≠ process count."""
+    obligation = _agg_ob()
+    attempt = _attempt(
+        entity="product",
+        vocabulary=("product", "search"),
+        items=[{"code": f"P-{i}"} for i in range(40)],
+        total=109,
+        specialist="davi",
+        remote="davi.read",
+        operation_class="READ",
+        scope=_invocation_scope(
+            {
+                "entity": "product",
+                "action": "search",
+                "params": {"status": "ativo"},
+            }
+        ),
+        content="total_count=109",
+    )
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED
+
+
+def test_s2b_presentation_without_declared_entity_does_not_satisfy():
+    """Presentation aggregation without entity= in required_scope fails closed."""
+    obligation = _agg_ob(
+        required_args={
+            "params": {"status": "ativo"},
+            "view": "summary",
+        }
+    )
+    attempt = _teo_process_page(total=109)
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED
 
 
 def test_s2_params_vs_arguments_leaf_equivalence():

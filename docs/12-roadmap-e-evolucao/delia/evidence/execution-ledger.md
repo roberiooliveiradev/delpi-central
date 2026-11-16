@@ -7168,3 +7168,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESIDUAIS:** R4 AuthZ deny PENDING; INT3 depth OPEN_LOW residual (entity anchors sem eco); R6-N6/N7 PENDING.
 - **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
 - **NEXT:** `COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`
+
+### 2026-11-16 — C3/T2: Entity sufficiency + HTTP multiturn + verifier acceptance
+
+- **TASK:** `DELIA-C3-T2-ENTITY-SUFFICIENCY-HTTP-MULTITURN-AND-VERIFIER-ACCEPTANCE-01`
+- **BASE:** `e38940c0c6` (= origin/main no reanchor); WIP api-delpi/DAVI/engineering/tv preservado fora do commit.
+- **WS-1:** EXTEND `_attempt_business_entity_congruent` sob agregação de apresentação; S2/S3 fail-closed; live G2 `or-qwen14b-aca443baae46` GROUNDED+SATISFIED (`entity=process`, `teo.read`, 109).
+- **WS-2:** E2E HTTP real `POST /interaction/turns` ×2 + `context` canônico (`http-mt-42e226d1432a`); TURN2 GROUNDED via DAVI `get_product_structure` 90260921; boundary M1/M2/M4/M5/M10 PASS; M3/M6–M9 PENDING.
+- **ENV:** V024 restaurado ao checksum aplicado `8f9c97…` (DEV) para desbloquear DAVI; sem deploy produtivo.
+- **VERIFIER:** rodada 1 `ACCEPT_WITH_RESIDUAL` (AC-17 TEST_NOT_RUN no hook; AC-21/22 PENDING pré-push); 0 OC.
+- **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
+- **NEXT:** `COORDINATION_C3_T2_ENTITY_SUFFICIENCY_HTTP_MULTITURN_VERIFIER_INDEPENDENT_REVIEW`
