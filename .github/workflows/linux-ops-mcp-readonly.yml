@@ -8,6 +8,7 @@ on:
       - "shared/delpi_mcp/**"
       - "shared/pyproject.toml"
       - ".github/workflows/linux-ops-mcp-readonly.yml"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_host_receipt_bridge.py"
   push:
     branches: [main]
     paths:
@@ -16,6 +17,7 @@ on:
       - "shared/delpi_mcp/**"
       - "shared/pyproject.toml"
       - ".github/workflows/linux-ops-mcp-readonly.yml"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_host_receipt_bridge.py"
 
 permissions:
   contents: read
@@ -36,7 +38,7 @@ jobs:
       - name: Compile app (no import side effects)
         run: python -m compileall -q linux-ops-mcp/linux_ops_mcp
       - name: Unit tests and auth negatives
-        run: PYTHONPATH=linux-ops-mcp python -m pytest -q linux-ops-mcp/tests
+        run: PYTHONPATH=linux-ops-mcp:it-portal-api python -m pytest -q linux-ops-mcp/tests
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
