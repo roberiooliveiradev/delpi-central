@@ -83,6 +83,9 @@ jobs:
       - name: Install frontend
         working-directory: plugins/supplies
         run: npm ci
+      - name: Install shared UI package dependencies
+        working-directory: plugins/plugin-ui
+        run: npm ci
       - name: Test IDF UI
         working-directory: plugins/supplies
         run: npx vitest run src/features/supplier-performance
