@@ -16,16 +16,17 @@ def _summary(row: dict[str, Any] | None) -> dict[str, Any]:
     row = row or {}
     keys = (
         "approved_requests", "with_approval", "without_approval",
-        "converted_requests", "pending_requests",
-        "before_release", "invalid_order_dates", "sum_conversion_days",
+        "converted_requests", "pending_requests", "future_pending_requests",
+        "measured_requests", "before_release", "invalid_order_dates",
+        "sum_conversion_days", "sum_pending_days", "sum_measured_days",
         "same_day", "one_to_two_days", "three_to_five_days",
         "six_to_ten_days", "over_ten_days",
     )
     result = {key: int(row.get(key) or 0) for key in keys}
-    result["avg_days"] = (
-        float(row["avg_days"])
-        if row.get("avg_days") not in (None, "") else None
-    )
+    for key in ("avg_days", "avg_completed_days", "avg_pending_days"):
+        result[key] = (
+            float(row[key]) if row.get(key) not in (None, "") else None
+        )
     return result
 
 
@@ -94,6 +95,10 @@ class PurchaseRequestScPcConversionRepository(BaseRepository):
                     int(row["conversion_days"])
                     if row.get("conversion_days") not in (None, "") else None
                 ),
+                "pending_age_days": (
+                    int(row["pending_age_days"])
+                    if row.get("pending_age_days") not in (None, "") else None
+                ),
             }
             for row in records
         ]
@@ -102,6 +107,8 @@ class PurchaseRequestScPcConversionRepository(BaseRepository):
             "scope": "release_or_issue_without_approval_to_first_order",
             "unit": "calendar_days",
             "period_anchor": "effective_start_date",
+            "as_of_date": filters["as_of_date"],
+            "calculation_mode": "completed_or_pending_elapsed_as_of_today",
             "filters": filters,
             "summary": summary,
             "branch_breakdown": by_branch,
