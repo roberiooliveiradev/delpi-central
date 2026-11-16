@@ -119,3 +119,53 @@ Para cada wave: `git fetch`, HEAD/origin/main/status, authorities, RQ/AC, contra
 
 `DAVI-SI-PORTAL-PARITY-MATRIX-001`: READ-ONLY. Revalidar main e working tree, percorrer todos os fluxos MFE e controllers SI, registrar matriz exaustiva de paridade e dependências/safety das operações ACT, confirmar políticas de identidade, identificar primeiro menor diff cross-API. Não implementar, não deploy, não realizar writes. Retornar relatório com gaps, precedências e aceites. Após aprovação, iniciar SI-1 e SI-2 em waves delimitadas.
 
+
+## 11. Atualização de Coordination — 2026-11-16: W010 em produção e validação conversacional
+
+**Decision:** `DAVI-SI-W010-CHATGPT-READ-ACCEPT-01` — aceite da **validação READ positiva no ChatGPT**, não do CRUD completo. Evidência runtime foi obtida pela conexão DAVI MCP autenticada neste chat; o SHA de deploy continua evidência reportada pelo executor, distinta da validação do ChatGPT.
+
+**Persistência e deploy (execution report):**
+- Merge reportado: `76449a73bb152a23cfbbd37fe203dadbf18e5574`; deployed checkout reportado: `4018a7d58c` (merge ancestor, segundo relatório). Rollback reportado: `a8304d4483`.
+- Executor reportou dev-live: duas identidades com resultados distintos, 200 autorizado e 403 sem SI permissions; 401 JWT inválido; não confundir com teste negativo de segunda identidade **no ChatGPT**.
+- Limites: não reproduzimos aqui check de deployed SHA, e `tools/list` raw não foi realizado pelo executor com sessão OAuth. A invocação MCP autenticada deste chat é evidência adicional do provider path.
+
+**Prova ChatGPT neste chat, conexão DAVI end-user, catálogo v31:**
+- `get_context(action=context)`: usuário autenticado, exatamente 4 tools (`get_context`, `knowledge`, `read`, `analyze`); `execute/delete` = `PLANNED_NOT_IMPLEMENTED`.
+- `get_context(action=catalog)`: `catalog_version=31`, `eligible_action_count=102`, contendo os cinco SI action_ids.
+- `get_context(action=schema)`: `get_si_executive_summary`, `list_si_indicator_goals` e `list_si_indicator_goal_history` retornaram schemas limitados.
+- `read(get_si_executive_summary,{})`: `status=ok`; competência `2026-11`, IGD `6.82`, departments com dados efetivos.
+- `read(get_si_departments,{department_id:"commercial"})`: `status=ok`, depto Comercial score `8.71`.
+- `read(get_si_indicators,{department_id:"commercial"})`: `status=ok`, seis indicadores, incluindo ROL, seus valores e metas.
+- `read(list_si_indicator_goals,{goal_year:2026,department_id:"commercial",active_only:true})`: `status=ok`; curvas mensais por filial 01/02, versionadas.
+- `read(list_si_indicator_goal_history,{indicator_id:"commercial-rol",goal_year:2026})`: `status=ok`; registros de metas 01 e 02.
+- Nenhum write executado na validação; dados retornados não são autorização de negócio para futuras operações.
+
+**Gates:**
+
+| Gate | Classificação | Evidência/limite |
+|---|---|---|
+| W010 merge/deploy | PASS reportado | SHA do executor; deployed SHA não independente neste chat |
+| Autenticação e catálogo ChatGPT | PASS | get_context, catalog v31, 102 elegíveis |
+| SI READ positiva via ChatGPT | PASS | cinco capabilities, status=ok |
+| SI READ cross-user negative em dev | PASS reportado | duas identidades no relatório de execução |
+| Segunda identidade negativa no ChatGPT/prod | PENDING | não executada nesta sessão |
+| PREPARE, ACT, DELETE | PLANNED / TEST_NOT_RUN | nenhuma tool de escrita implementada |
+
+**Decision:** prosseguir ao **gate SI-2 de design/contract-first**, mantendo `read` e arquitetura existentes, **sem habilitar writes ainda**. Paridade completa com o portal segue TARGET.
+
+## 12. Próximo briefing bounded — W011 / contratos e segurança para PREPARE→ACT
+
+`TASK_ID: DAVI-SI-W011-GOAL-WRITES-CONTRACT-AND-SAFETY-01`
+
+`MODE: READ_ONLY_INVENTORY / CONTRACT_SPEC / NO_CODE / NO_DEPLOY / NO_WRITE`
+
+1. Revalidar origin/main/HEAD/status, `.cursor`, README DAVI, plano mestre, SI API/owner contracts e todos os consumidores do MFE. Identificar owner, source, use case e AuthZ para create/update/activate/deactivate de metas/curvas por ano e filial; confirmar o que o portal realmente permite.
+2. Comparar contratos MCP de TÉO e VISTA (e outros irmãos) para `execute`/proposal selada, confirmação, idempotência, concorrência, auditoria e authoritative postcondition; adotar princípios, não copiar internals cross-context.
+3. Matriz por operação: intenção, entrada mínima (incl. `monthly_targets`), saída allowlisted, target ID/version, efeitos colaterais, permission `strategic-indicators.settings.manage`, classificação `PREPARE|ACT`, erros, limites, consumer e provenance.
+4. Definir mecanismo seguro de principal end-user: JWT-only no hop SI, jamais `X-Delpi-Service-Token`; SI revalida AuthZ em PREPARE e ACT; avaliar stale RBAC e write risks. Não criar nova permissão DAVI.
+5. Especificar proposal selada server-side vinculada a ator, scope, payload hash, versão, validade e confirmação explícita; idempotência/replay; OCC ou alternativa owner-canonical; auditar actor/diff/correlation; pós-condição lida novamente na API SI. Marcar gaps reais: SI goal update sem OCC precondition, ausências de idempotency key e auditoria individual reportadas.
+6. Não incluir `delete` destrutivo nesta primeira execução; inventariar hard-delete e cascata para gate separado. Não converter `read` em write; preservar `get_context/knowledge/read/analyze`; `execute` só será registrado em implementação futura após approval de contrato.
+7. Preparar golden conversational scenarios: criar meta 2027 por filial, atualizar apenas um ponto mensal, ativar/desativar com versões, repetir commit, mudança concorrente, token revogado, usuário sem settings.manage, usuário sem SI app access. **Sem executar writes**.
+8. Devolver `Capability Decision` + `DAVI EXECUTION BRIEF` mínimo para W012 (implementação) com Abstraction Gate, RQ/AC, arquivos prováveis, testes e STOP conditions.
+
+**Acceptance W011:** cobertura completa dos contratos das operações escolhidas; paridade de permissões provada em código; matriz de risks/OCC/idempotency/audit fechada ou marcada TO_INVENTORY; sem novas ferramentas/serviços/código e sem execução de writes. Se conflitos de owner/AuthZ/identity, STOP e `ARCHITECTURE_DECISION_REQUIRED`. O restante do CRUD do portal continua no roadmap SI-3/SI-4.
