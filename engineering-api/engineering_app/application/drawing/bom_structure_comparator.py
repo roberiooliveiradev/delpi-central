@@ -26,6 +26,10 @@ import re
 from collections import Counter
 from typing import Any
 
+from engineering_app.application.drawing.normative_description import (
+    evaluate_description,
+    evaluate_pi_mp_coherence,
+)
 from engineering_app.application.drawing.description_rules import (
     diff_pi50_descriptions,
     is_pi50_code,
@@ -1586,6 +1590,56 @@ def _overall_result(attributes: list[dict[str, Any]]) -> str:
     return "MATCH_CANDIDATE"
 
 
+def _normative_block(
+    *,
+    code: str | None,
+    bom: dict[str, Any] | None,
+    drawing: dict[str, Any] | None,
+    bom_desc_by_code: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """G24 — avaliação normativa aditiva por ocorrência.
+
+    Avalia separadamente a descrição observada no DESENHO e a oficial
+    TOTVS; descrição PI do bloco-pai recebe avaliação própria e a
+    coerência PI×MP usa somente atributos comprovados nos dois textos.
+    """
+    draw_desc = (drawing or {}).get("item_description")
+    bom_desc = (bom or {}).get("component_description")
+    parent = (drawing or {}).get("parent_code") or (
+        bom or {}).get("parent_code")
+    parent_code = str(parent) if parent else None
+    pi_draw = (drawing or {}).get("parent_description")
+    pi_bom = (
+        (bom_desc_by_code or {}).get(parent_code) if parent_code else None
+    )
+    ptype = "PI" if code and code[:2] == "50" else "MP"
+    block: dict[str, Any] = {}
+    if draw_desc and code:
+        block["drawing_description_normative"] = evaluate_description(
+            product_code=code, product_type=ptype,
+            description_raw=draw_desc, description_source="DRAWING")
+    if bom_desc and code:
+        block["totvs_description_normative"] = evaluate_description(
+            product_code=code, product_type=ptype,
+            description_raw=bom_desc, description_source="TOTVS")
+    if pi_draw and parent_code:
+        block["pi_drawing_normative"] = evaluate_description(
+            product_code=parent_code, product_type="PI",
+            description_raw=pi_draw, description_source="DRAWING")
+    if pi_bom and parent_code:
+        block["pi_totvs_normative"] = evaluate_description(
+            product_code=parent_code, product_type="PI",
+            description_raw=pi_bom, description_source="TOTVS")
+    mp_descs = [d for d in (draw_desc, bom_desc) if d]
+    pi_desc = pi_draw or pi_bom
+    if pi_desc and mp_descs and ptype == "MP":
+        block["pi_bom_coherence"] = evaluate_pi_mp_coherence(
+            pi_description=pi_desc, mp_descriptions=mp_descs)
+        block["pi_bom_coherence"]["pi_description_source"] = (
+            "DRAWING" if pi_draw else "TOTVS")
+    return block or None
+
+
 def _record_from(
     *,
     occurrence_id: str,
@@ -1634,6 +1688,10 @@ def _record_from(
             a["next_action"]
             for a in attributes
             if a["attribute"] == "component_code"
+        ),
+        "normative": _normative_block(
+            code=code, bom=bom, drawing=drawing,
+            bom_desc_by_code=bom_desc_by_code,
         ),
     }
 
