@@ -102,26 +102,33 @@ test.describe("U14R2 K4 — medições HML", () => {
     expect(panorama.centerOutsideChart).toBe(0);
 
     const pending = await page.evaluate(() => {
-      const el = Array.from(document.querySelectorAll("*")).find((node) =>
-        /^\s*Pendentes\s*$/.test(node.textContent ?? ""),
-      ) as HTMLElement | undefined;
-      if (!el) return null;
+      const title = Array.from(
+        document.querySelectorAll(
+          ".cf-kpi-grid [class*='kpi-title'], .cf-kpi-grid [class*='kpi-card__label'], .cf-kpi-grid [class*='kpi-label']",
+        ),
+      ).find((node) => (node.textContent ?? "").trim() === "Pendentes") as
+        | HTMLElement
+        | undefined;
+      if (!title) return null;
       return {
-        text: el.textContent?.trim(),
-        scrollWidth: el.scrollWidth,
-        clientWidth: el.clientWidth,
+        text: title.textContent?.trim(),
+        scrollWidth: title.scrollWidth,
+        clientWidth: title.clientWidth,
       };
     });
     write("pending-title-1440.json", pending);
     expect(pending).toBeTruthy();
     expect(pending!.scrollWidth).toBeLessThanOrEqual(pending!.clientWidth + 1);
 
+    await page.getByRole("tab", { name: /Ocorrências/i }).click().catch(() => undefined);
+    await expect(page.locator("table").first()).toBeVisible({ timeout: 30_000 });
     const tableClean = await page.evaluate(() => {
       const table = document.querySelector("table");
       const scroller =
         table?.closest('[class*="table-scroll"], [class*="data-table"]') ??
         table?.parentElement;
-      const el = (scroller as HTMLElement | null) ?? (table as HTMLElement);
+      const el = (scroller as HTMLElement | null) ?? (table as HTMLElement | null);
+      if (!el) throw new Error("tabela ausente");
       return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
     });
     write("table-width-clean.json", tableClean);
@@ -182,12 +189,15 @@ test.describe("U14R2 K4 — medições HML", () => {
     });
     const opened = await openFirstAnalysis(page);
     test.skip(!opened, "sem análise");
+    await page.getByRole("tab", { name: /Ocorrências/i }).click().catch(() => undefined);
+    await expect(page.locator("table").first()).toBeVisible({ timeout: 30_000 });
     const table = await page.evaluate(() => {
       const t = document.querySelector("table");
       const scroller =
         t?.closest('[class*="table-scroll"], [class*="data-table"]') ??
         t?.parentElement;
-      const el = (scroller as HTMLElement | null) ?? (t as HTMLElement);
+      const el = (scroller as HTMLElement | null) ?? (t as HTMLElement | null);
+      if (!el) throw new Error("tabela ausente");
       return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
     });
     write("table-width-v1-legacy.json", table);

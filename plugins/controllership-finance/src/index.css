@@ -865,13 +865,15 @@
   overflow-wrap: normal;
 }
 
+/* AC-KPI-2 / U14R2 H4: título numa linha sem reticências (texto já encurtado). */
 .dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-title,
 .dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__label {
   white-space: nowrap;
   flex-wrap: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: none;
+  width: max-content;
 }
 
 /* AC-KPI-3: aviso único abaixo da faixa. */
