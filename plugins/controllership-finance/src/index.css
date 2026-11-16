@@ -743,8 +743,7 @@
 }
 
 /* AC-TAB-3 / U14R H2: kit usa width:max-content; forçar caber no wrap em 1440. */
-.dashboard-controllership-finance .cf-entry-audit-occurrences-table table.delpi-ui-table,
-.dashboard-controllership-finance .cf-entry-audit-occurrences-table table.delpi-ui-table--section {
+.dashboard-controllership-finance .cf-entry-audit-occurrences-table table {
   width: 100%;
   max-width: 100%;
   table-layout: fixed;
@@ -880,8 +879,8 @@
 }
 
 /* AC-KPI-2 / U14R2 H4: título numa linha sem reticências (texto já encurtado). */
-.dashboard-controllership-finance .cf-kpi-grid .delpi-ui-kpi-title,
-.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__label {
+.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-card__label,
+.dashboard-controllership-finance .cf-kpi-grid .cf-kpi-title {
   white-space: nowrap;
   flex-wrap: nowrap;
   overflow: visible;

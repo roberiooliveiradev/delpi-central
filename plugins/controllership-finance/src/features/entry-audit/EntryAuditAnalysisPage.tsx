@@ -389,7 +389,7 @@ export function EntryAuditAnalysisPage({
   const goEntry = () => navigatePluginPath(`${basePath}/entry-audit`);
 
   const renderBoundedValueCell = (
-    raw: unknown,
+    raw: string | number | null | undefined,
     row: EntryAuditOccurrence,
     ariaName: string,
   ): ReactNode => {
