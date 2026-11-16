@@ -79,8 +79,8 @@ Qualquer revogação de permissão, divergência de SHA, alteração do plano, d
 
 - Reusar OAuth humano existente do ATLAS (`mcp-linux-ops`), `iss`, `aud` MCP exata e `mcp:tools`; esse scope só habilita o transporte.
 - Propor permissões Core distintas: `linux_ops.deploy.view`, `linux_ops.deploy.prepare`, `linux_ops.deploy.approve`, `linux_ops.deploy.execute`. Código exato/cadastro dependem do catálogo de permissões existente.
-- `ACT` exige reconsulta Core fresca, usuário humano, approval backend, segregação de funções conforme criticidade, janelas operacionais e lista de serviços autorizados. Status de superadmin **não equivale** a consentimento para qualquer serviço.
-- `prod`: no mínimo aprovação nominativa fora do ChatGPT; segunda aprovação para alvos críticos ou migração de alto risco. `hml`: aprovação nominativa simplificada ainda preserva o gate.
+- `ACT` exige reconsulta Core fresca, usuário humano, approval backend, permissões de preparar/aprovar/executar verificadas individualmente, janelas operacionais e lista de serviços autorizados. **A mesma pessoa pode solicitar e aprovar**, desde que cada ação seja explícita, nominativa e auditada; separar permissões não significa exigir pessoas diferentes. Status de superadmin **não equivale** a consentimento para qualquer serviço.
+- `prod`: no mínimo aprovação nominativa explícita fora do ChatGPT, mesmo quando solicitante e aprovador são a mesma pessoa. Para alvos críticos ou migrações de alto risco, exigir gates técnicos adicionais (backup, rollback, health, janela, confirmação consciente do risco e auditoria); segunda aprovação humana **somente se uma política corporativa específica a exigir**, não como impedimento automático em TI de operador único. `hml`: aprovação nominativa simplificada ainda preserva o gate.
 - Guardas de backend não podem depender de `readOnlyHint`/`destructiveHint`, prompts ou prévia escrita por LLM.
 - Auditoria imutável na perspectiva do usuário MCP, com subject, hash, versão, ação, timestamps, result, sem bearer/secret.
 

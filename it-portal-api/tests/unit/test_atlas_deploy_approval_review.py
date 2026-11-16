@@ -69,7 +69,6 @@ def test_review_passes_only_as_non_authorizing_candidate():
     ({"principal_type": "service"}, "ATLAS_CORE_IDENTITY_DENIED"),
     ({"principal_type": "bot"}, "ATLAS_CORE_IDENTITY_DENIED"),
     ({"subject": "nobody"}, "ATLAS_CORE_IDENTITY_DENIED"),
-    ({"subject": REQUESTER}, "ATLAS_SELF_APPROVAL_DENIED"),
     ({"active": False}, "ATLAS_CORE_IDENTITY_DENIED"),
     ({"core_available": False}, "ATLAS_CORE_IDENTITY_DENIED"),
     ({"core_available": "yes"}, "ATLAS_CORE_IDENTITY_DENIED"),
@@ -107,6 +106,25 @@ def test_core_identity_or_permission_denials(changes, reason):
 ])
 def test_proposal_invariants_fail_closed(changes, reason):
     denied(reason, target=replace(proposal(), **changes))
+
+
+def test_single_operator_can_review_their_own_request_only_as_preview():
+    reviewer = replace(snapshot(), subject=REQUESTER)
+    outcome = check(actor=reviewer)
+    assert outcome.state == "review_candidate_only"
+    assert outcome.proposal_id == proposal().proposal_id
+    assert outcome.approval_enabled is False
+    assert outcome.execution_enabled is False
+    assert outcome.manual_deploy_blocked is False
+    denied(
+        "ATLAS_CORE_PERMISSION_DENIED",
+        actor=replace(reviewer, permissions=(ACCESS, REVIEW_VIEW)),
+    )
+    denied(
+        "ATLAS_CORE_STALE",
+        actor=replace(reviewer, fetched_at=NOW-timedelta(seconds=61)),
+    )
+    denied("ATLAS_REVIEW_NOT_PENDING", actor=reviewer, target=replace(proposal(), revoked=True))
 
 
 def test_cross_environment_remains_preview_only():

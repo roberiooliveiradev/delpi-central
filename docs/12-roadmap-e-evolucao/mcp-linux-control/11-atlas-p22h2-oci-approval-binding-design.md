@@ -60,7 +60,7 @@ O DDL é incompleto propositalmente como implementação: owner deve definir FK 
 
 ## Evidência de testes e próximos gates
 
-- 72 testes unitários offline (com casos de assinatura/commit/digest trocados, ambiente, host, challenge, drift, rollback, TTL, permissão vencida, autoaprovação e replay/revogação); nenhuma conexão com produção.
+- 72 testes unitários offline (com casos de assinatura/commit/digest trocados, ambiente, host, challenge, drift, rollback, TTL, permissão vencida, autoaprovação permitida com validações mantidas e replay/revogação); nenhuma conexão com produção.
 - `python -m py_compile` passa no novo módulo.
 - Ainda faltam: verificador independente `delpi-verifier` em outro modelo, revisão do owner do journal, migração de banco **somente após autorização**, testes de concorrência no PostgreSQL descartável, API PREPARE com RBAC Core, UI de aprovação e executor isolado testado em HML.
 - **ACT, PREPARE via API e promoção da release em PROD continuam desabilitados.**

@@ -122,8 +122,8 @@ def prepare_readonly_review(
         raise ApprovalReviewRejected("ATLAS_CORE_PERMISSION_DENIED")
     if not (_uuid4(proposal.proposal_id) and _uuid4(proposal.requester_subject)):
         raise ApprovalReviewRejected("ATLAS_PROPOSAL_ID_INVALID")
-    if actor.subject == proposal.requester_subject:
-        raise ApprovalReviewRejected("ATLAS_SELF_APPROVAL_DENIED")
+    # Single-operator IT: the requester may explicitly review their own proposal.
+    # Authorization still requires fresh, separately granted Core permissions.
     if proposal.service_id != "public-hub" or proposal.environment not in ("hml", "prod"):
         raise ApprovalReviewRejected("ATLAS_REVIEW_TARGET_DENIED")
     if (type(proposal.target_commit_sha) is not str
