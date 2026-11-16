@@ -23,18 +23,29 @@ def build_conversion_cohort(
         date_to=date_to, request_number=request_number,
     )
     placeholders = ", ".join("?" for _ in codes)
-    filters = (
-        f"SC1.C1_FILIAL IN ({placeholders}) "
-        "AND SC1.D_E_L_E_T_ = '' AND SC1.C1_EMISSAO <= ?"
-    )
-    params = [*codes, end.replace("-", "")]
+    # Restrict the cohort at the indexed approval ledger before reading SC/PC.
+    # Without this filter, a 2026 request may join the ENTIRE historical SC/SCR
+    # population and repeat the expensive work for summary + page.
+    filters = "SC1.D_E_L_E_T_ = '' AND SC1.C1_EMISSAO <= ?"
+    params = [*codes, start.replace("-", ""), end.replace("-", ""),
+              end.replace("-", "")]
     if number:
-        filters += " AND RTRIM(SC1.C1_NUM) = ?"
+        filters += " AND SC1.C1_NUM = ?"
         params.append(number)
-    # O intervalo seleciona LIBERAÇÕES. SCs criadas antes ainda são elegíveis.
+    # Final date guard is mandatory: a later reapproval must not leak into a
+    # prior reporting period just because one earlier approval matched.
     params += [start.replace("-", ""), end.replace("-", "")]
     sql = f"""
-WITH request_headers AS (
+WITH release_candidates AS (
+    SELECT SCR.CR_FILIAL AS branch, SCR.CR_NUM AS request_number
+    FROM SCR010 SCR WITH (NOLOCK)
+    WHERE SCR.D_E_L_E_T_ = '' AND SCR.CR_TIPO = 'SC'
+      AND SCR.CR_STATUS = '03'
+      AND SCR.CR_FILIAL IN ({placeholders})
+      AND SCR.CR_DATALIB >= ? AND SCR.CR_DATALIB <= ?
+    GROUP BY SCR.CR_FILIAL, SCR.CR_NUM
+),
+request_headers AS (
     SELECT RTRIM(SC1.C1_FILIAL) AS branch,
            RTRIM(SC1.C1_NUM) AS request_number,
            MIN(TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)) AS issue_date,
@@ -42,7 +53,9 @@ WITH request_headers AS (
            SUM(CASE WHEN RTRIM(SC1.C1_APROV) = 'L' THEN 0 ELSE 1 END) AS unapproved_items,
            SUM(CASE WHEN TRY_CONVERT(date, NULLIF(RTRIM(SC1.C1_EMISSAO), ''), 112)
                          IS NULL THEN 1 ELSE 0 END) AS invalid_issue_items
-    FROM SC1010 SC1 WITH (NOLOCK)
+    FROM release_candidates C
+    INNER JOIN SC1010 SC1 WITH (NOLOCK)
+      ON SC1.C1_FILIAL = C.branch AND SC1.C1_NUM = C.request_number
     WHERE {filters}
     GROUP BY RTRIM(SC1.C1_FILIAL), RTRIM(SC1.C1_NUM)
 ),
@@ -60,8 +73,8 @@ approval_history AS (
                     THEN 0 ELSE 1 END) AS unproven_entries
     FROM SCR010 SCR WITH (NOLOCK)
     INNER JOIN request_headers H
-      ON H.branch = RTRIM(SCR.CR_FILIAL)
-     AND H.request_number = RTRIM(SCR.CR_NUM)
+      ON SCR.CR_FILIAL = H.branch
+     AND SCR.CR_NUM = H.request_number
     WHERE SCR.D_E_L_E_T_ = '' AND SCR.CR_TIPO = 'SC'
     GROUP BY H.branch, H.request_number
 ),
@@ -83,15 +96,15 @@ linked_orders AS (
            TRY_CONVERT(date, NULLIF(RTRIM(C7.C7_EMISSAO), ''), 112) AS order_date
     FROM eligible_approved E
     INNER JOIN SC7010 C7 WITH (NOLOCK)
-      ON RTRIM(C7.C7_FILIAL) = E.branch
-     AND RTRIM(C7.C7_NUMSC) = E.request_number
+      ON C7.C7_FILIAL = E.branch
+     AND C7.C7_NUMSC = E.request_number
      AND C7.D_E_L_E_T_ = ''
     WHERE EXISTS (
         SELECT 1 FROM SC1010 SC1 WITH (NOLOCK)
         WHERE SC1.D_E_L_E_T_ = ''
-          AND RTRIM(SC1.C1_FILIAL) = E.branch
-          AND RTRIM(SC1.C1_NUM) = E.request_number
-          AND RTRIM(SC1.C1_ITEM) = RTRIM(C7.C7_ITEMSC)
+          AND SC1.C1_FILIAL = E.branch
+          AND SC1.C1_NUM = E.request_number
+          AND SC1.C1_ITEM = C7.C7_ITEMSC
     )
 ),
 order_rollup AS (
@@ -178,3 +191,28 @@ FROM measured
 ORDER BY final_approval_date DESC, branch, request_number DESC
 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
 """
+
+
+def build_conversion_batch_sql(cte: str) -> str:
+    """One SQL execution materializes the release cohort ONCE in a temp table.
+
+    Only a session-local #temp table is created in tempdb, never ERP tables.
+    Summary and page query that same materialization. SET NOCOUNT suppresses
+    intermediate row-count resultsets for the existing pyodbc reader.
+    """
+    summary = build_conversion_summary_sql("").replace(
+        "FROM measured", "FROM #sc_pc_conversion"
+    )
+    page = build_conversion_page_sql("").replace(
+        "FROM measured", "FROM #sc_pc_conversion"
+    )
+    return (
+        "SET NOCOUNT ON;\n"
+        + cte
+        + "\nSELECT * INTO #sc_pc_conversion FROM measured;\n"
+        + summary
+        + ";\n"
+        + page
+        + ";\nDROP TABLE #sc_pc_conversion;\n"
+    )
+
