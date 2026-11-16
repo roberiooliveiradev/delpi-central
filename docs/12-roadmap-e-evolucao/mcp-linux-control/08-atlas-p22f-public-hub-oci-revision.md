@@ -1,7 +1,7 @@
 # ATLAS P2.2f | Rastreabilidade OCI do Public Hub (sem deploy)
 
 **Data inicial:** 2026-11-15 · **Retomada:** 2026-11-16
-**Status atual:** P2.2f em `main`, **CI Docker de metadados confirmado PASS**. P2.2f.1 do guard incluida nesta entrega em main, testada; tentativa de revisao independente INCONCLUSIVE registrada, sem alegar ACCEPT; CI novo a confirmar. Imagem final/assinatura/HML pendentes. Nao executado build ou restart no srv-api; PREPARE/ACT inativos.
+**Status atual:** P2.2f em `main`, **CI Docker de metadados confirmado PASS**. P2.2f.1 do guard incluida nesta entrega em main, testada; tentativa de revisao independente INCONCLUSIVE registrada, sem alegar ACCEPT; CI novo confirmado PASS no commit `65ece2215e83c182269bdfbf1f2e93ce255ba30f` (secao 6.6). Imagem final/assinatura/HML pendentes. Nao executado build ou restart no srv-api; PREPARE/ACT inativos.
 
 As secoes 1–5 registram o corte de 15/11; a secao 6 e a atualizacao de continuidade e prevalece sobre os estados historicos de CI pendente.
 
@@ -115,7 +115,7 @@ python scripts/audit_documentation_structure.py
 git diff --check
 ```
 
-Aviso nao bloqueante do plugin pytest de anyio: `PytestRemovedIn10Warning`. O parse YAML e a chamada do helper no checkout real tambem passaram localmente. Na primeira execucao os comandos canonicos de enforcement com `--base e18ee9a31c08ed29092962c524bba95434d5255f` comparavam um diff vazio, nao validando o candidate local. Nesta publicacao devem rodar sobre o commit candidato completo antes de mover `main` remota; registrar o resultado efetivo no fechamento/CI, sem alterar scanners para fabricar aceite.
+Aviso nao bloqueante do plugin pytest de anyio: `PytestRemovedIn10Warning`. O parse YAML e a chamada do helper no checkout real tambem passaram localmente. Na primeira execucao os comandos canonicos de enforcement com `--base e18ee9a31c08ed29092962c524bba95434d5255f` comparavam um diff vazio, nao validando o candidate local. Antes de mover `main` remota, os dois comandos foram reexecutados sobre o commit candidato completo `65ece2215e83c182269bdfbf1f2e93ce255ba30f`: ambos exit 0, zero findings. Nenhum scanner foi alterado; ver fechamento/CI na secao 6.6.
 
 Responsabilidades materiais: **1 arquitetura** (helper operacional, sem novo owner), **2 seguranca** (falha fechada e nao revelar arquivos locais), **6 qualidade** (baseline/regressao), **7 delivery/runtime** (contexto Docker e CI). Sem alteracao de contratos HTTP, banco, UI ou telemetria.
 
@@ -146,13 +146,29 @@ Nenhum motor headless disponível (devin/agent).
 | 1 | INCONCLUSIVE | Nenhuma emitida; motor indisponivel, nao houve revisao independente |
 | 2 | INCONCLUSIVE | Nova tentativa antes da publicacao, mesmo codigo e 163 testes PASS; nenhuma OC, motor ainda indisponivel |
 
-**Entrega:** codigo implementado/testado nesta entrega em main; CI novo a confirmar. **REVIEW_RESULT=INCONCLUSIVE**, sem alegar aprovacao independente ou homologacao. A leitura completa de `agent-kit/hooks/verifier_hooks.py`, constante `GATE_PASS_VERDICTS`, confirmou que `INCONCLUSIVE` e um resultado admitido para encerrar a tentativa registrada. A indisponibilidade foi inicialmente interpretada como bloqueio absoluto de publicacao; essa interpretacao foi corrigida, sem mudar o kit, emitir ACCEPT ou habilitar runtime. Nenhuma nova operacao HML/PROD.
+**Entrega:** codigo implementado/testado nesta entrega em main; CI novo confirmado PASS no commit `65ece2215e83c182269bdfbf1f2e93ce255ba30f` (secao 6.6). **REVIEW_RESULT=INCONCLUSIVE**, sem alegar aprovacao independente ou homologacao. A leitura completa de `agent-kit/hooks/verifier_hooks.py`, constante `GATE_PASS_VERDICTS`, confirmou que `INCONCLUSIVE` e um resultado admitido para encerrar a tentativa registrada. A indisponibilidade foi inicialmente interpretada como bloqueio absoluto de publicacao; essa interpretacao foi corrigida, sem mudar o kit, emitir ACCEPT ou habilitar runtime. Nenhuma nova operacao HML/PROD.
 
 ### 6.5 Retomada e recuperacao
 
-1. Confirmar o workflow OCI no SHA desta entrega, separando-o dos runs historicos. Se falhar, corrigir a causa e revalidar; nao habilitar runtime por CI historico.
+1. CI desta entrega confirmado PASS conforme secao 6.6; manter a evidencia vinculada ao SHA. Qualquer alteracao de codigo posterior requer novos testes; CI nao habilita runtime por si.
 2. Concluir revisao independente em ambiente Devin/Cursor disponivel. O INCONCLUSIVE registrado permite o encerramento desta tentativa, mas nao e ACCEPT nem prova de seguranca/HML. Corrigir OCs conforme AGENTS; nao alterar o kit para simular revisao.
 3. P2.2g continua sendo build da **imagem final** + comprovacao assinada do pipeline, separada do release record de host e das chaves. Nao emitir HMAC de release a partir de labels autoafirmadas.
 4. Antes de rebuild HML: ownership/janela do Public Hub, plano de recuperacao, proxy restrito e aceite. Engineering de Roberto segue excluido. PREPARE/ACT, DB e grants permanecem inativos.
 
 **Rollback desta entrega:** nao houve operacao de runtime remota a desfazer. Se houver regressao de codigo/CI, criar commit corretivo ou reversao somente dos arquivos desta entrega; sem force push, reset/clean ou descarte de alteracoes concorrentes; nenhuma instrucao para apagar `.env` ou reetiquetar imagem antiga. A imagem HML historica nao foi modificada.
+
+
+### 6.6 Publicacao direta pelo GitHub e CI observado
+
+**Commit de codigo:** [65ece2215e83c182269bdfbf1f2e93ce255ba30f](https://github.com/roberiooliveiradev/delpi-central/commit/65ece2215e83c182269bdfbf1f2e93ce255ba30f), diretamente na `main`, com expected-head e sem force push. Base `e18ee9a31c08ed29092962c524bba95434d5255f`. A arvore publicada `8fbe0a8213a2ad85bb7edb69f3ae7bc82a360cb1` foi comparada a arvore local exata testada; read-back do helper confirmou blob `dac742ec18259c37847a99040f001f0874f3c0a2`. O checkout local e a branch remota ficaram sincronizados, sem arquivos de escopo pendentes.
+
+| Evidencia do SHA de codigo | Run | Resultado observado |
+| --- | --- | --- |
+| ATLAS Public Hub OCI Revision Contract | [43849195548](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43849195548) | `completed/success` |
+| Linux Ops MCP Readonly Tests | [43849195553](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43849195553) | `completed/success` |
+| Architecture Enforcement | [43849195523](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43849195523) | `completed/success` |
+| Cursor Rules Governance | [43849195596](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43849195596) | `completed/success` |
+
+**Gates locais do diff real:** `audit_architecture_phase3.py --check --base e18ee9a31c08ed29092962c524bba95434d5255f` e `audit_platform_guardrails.py` com mesma base: exit 0 / zero findings no commit candidato, antes de atualizar a ref remota. Suite selecionada: 163 PASS, incluindo 23 do guard. Tentativas independentes 1 e 2: INCONCLUSIVE, sem motor e sem OCs; nao alegar ACCEPT. O kit permaneceu intacto.
+
+Este fechamento altera apenas documentacao de evidencias; dispensa nova tentativa de verificador por ser somente texto, conforme `agent-kit/verifier/project-contract.md` parte A, item 1. Nenhum efeito de runtime, Docker ou banco foi executado no srv-api. Build/signature da imagem final, HML real, migration e ferramentas PREPARE/ACT continuam pendentes de seus gates. O pacote ZIP de handoff anterior tornou-se desnecessario: a fonte de codigo atual e a main.
