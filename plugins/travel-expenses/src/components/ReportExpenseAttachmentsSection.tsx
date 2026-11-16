@@ -37,7 +37,7 @@ export function ReportExpenseAttachmentsSection({ report, receiptPreviews }: Pro
                 <figure key={receipt.id} className="te-doc-attachment-item">
                   {showImage ? (
                     <img
-                      src={preview.previewUrl}
+                      src={preview?.previewUrl || undefined}
                       alt={receipt.originalName}
                       className="te-doc-attachment-image"
                     />
