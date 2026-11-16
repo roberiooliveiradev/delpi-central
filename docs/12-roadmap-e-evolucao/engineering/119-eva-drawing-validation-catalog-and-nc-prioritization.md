@@ -5408,7 +5408,7 @@ O owner determina que a EVA confronte **código + descrição do PI**, **letra/p
 ## 94.21 G18 — Validação inteligente da Tabela de Estrutura (implementação + verificação)
 
 - **TASK_ID:** `EVA-E1-VAL01-G18-DRAWING-TABLE-MP-PI-DESCRIPTION-QUANTITY-VALIDATION-01`
-- **HEAD base:** `3b9f94b46a` · **worktree:** `.worktrees/eva-g18` (isolada — revert externo de arquivos detectado no worktree principal às 22:24; trabalho refeito fora da zona de colisão)
+- **HEAD base:** `3b9f94b46a` (concorrente `bd5675c787` chegou durante a execução — rebase antes do push; parent real do commit `294c86c0a5`) · **worktree:** `.worktrees/eva-g18` (isolada — revert externo de arquivos detectado no worktree principal às 22:24; trabalho refeito fora da zona de colisão)
 - **Escopo:** 4 módulos + 1 novo + 1 suíte de testes; sem nova tool MCP, sem OCR, sem escrita TOTVS, sem deploy.
 
 ### Implementação (AC01–AC08)
