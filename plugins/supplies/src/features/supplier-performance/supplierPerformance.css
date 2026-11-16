@@ -91,7 +91,7 @@
 }
 .dashboard-supplies-portal .sp-idf-ranking__toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 280px);
   gap: 16px;
 }
 .dashboard-supplies-portal .sp-idf-supplier {
@@ -178,4 +178,15 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
+}
+
+.dashboard-supplies-portal .sp-idf-supplier-selector {
+  max-width: min(100%, 520px);
+  margin-top: 16px;
+}
+.dashboard-supplies-portal .sp-idf-supplier-selector .sp-field {
+  min-width: 0;
+}
+.dashboard-supplies-portal .sp-idf-ranking__toolbar {
+  justify-content: start;
 }
