@@ -356,6 +356,42 @@ def _connected_column_crop(
     )
 
 
+def _typed_cells_extent(
+    rows: list[dict], col_types: dict[int, str] | None
+) -> list[float] | None:
+    """Envelope das células tipadas da tabela.
+
+    O crop estrutural (SLANet) nunca pode excluir colunas tipadas —
+    elas são conteúdo comprovado da tabela. Células não tipadas
+    (ruído de carimbo absorvido pela linha) não expandem o envelope.
+    """
+    extents = []
+    for row in rows:
+        row_types = row.get("col_types") or {}
+        for cell in row.get("cells") or []:
+            col = cell.get("col")
+            col_type = None
+            if col is not None:
+                col_type = row_types.get(str(col)) or (
+                    (col_types or {}).get(int(col))
+                    if str(col).lstrip("-").isdigit()
+                    else None
+                )
+            if not col_type:
+                continue
+            extent = _polygon_extent(cell.get("bounding_box_px"))
+            if extent and extent[2] > extent[0] and extent[3] > extent[1]:
+                extents.append(extent)
+    if not extents:
+        return None
+    return [
+        min(e[0] for e in extents),
+        min(e[1] for e in extents),
+        max(e[2] for e in extents),
+        max(e[3] for e in extents),
+    ]
+
+
 def _hierarchical_code_pair_crop(
     tokens: list[dict], w: float, h: float
 ) -> list[float] | None:
@@ -1985,6 +2021,24 @@ def build_understanding(
             column_crop = hier_crop
             boundary_source = "hierarchical_code_columns"
         if column_crop:
+            # O recorte nunca exclui conteúdo tipado da tabela: se o
+            # par hierárquico de colunas de código ficou mais estreito
+            # que as células tipadas (ex.: coluna de descrição à
+            # direita), une o envelope tipado — células não tipadas
+            # (carimbo) continuam fora.
+            typed_extent = _typed_cells_extent(table_rows, col_types)
+            if typed_extent:
+                pad = max(w, h) * 0.02
+                column_crop = _clip_box(
+                    [
+                        min(column_crop[0], typed_extent[0] - pad),
+                        min(column_crop[1], typed_extent[1] - pad),
+                        max(column_crop[2], typed_extent[2] + pad),
+                        max(column_crop[3], typed_extent[3] + pad),
+                    ],
+                    w,
+                    h,
+                )
             trimmed = _trim_sheet_index_margin(
                 column_crop, tokens, w, h
             )
@@ -3542,10 +3596,29 @@ def rows_from_native_cells(
         row_index: int, code: str, cell: dict
     ) -> str | None:
         row_cells = grouped.get(row_index) or []
+        # Passe 1 — célula irmã mesclada verticalmente (rowspan>1):
+        # evidência mais forte de descrição do bloco pai.
         for sib in row_cells:
             if sib is cell:
                 continue
             if int(sib.get("rowspan") or 1) <= 1:
+                continue
+            text = _norm(sib.get("text") or "")
+            if not text or _CODE_FIND_RE.search(text):
+                continue
+            return text
+        # Passe 2 — conjunto de uma única linha (âncora rowspan=1 via
+        # column_span): a descrição do pai vive na célula irmã rowspan=1
+        # da coluna tipada parent_description — ela continua sendo a
+        # descrição do bloco, não a do componente.
+        for sib in row_cells:
+            if sib is cell:
+                continue
+            if int(sib.get("rowspan") or 1) > 1:
+                continue
+            if col_types.get(
+                int(sib.get("col") or 0)
+            ) != "parent_description":
                 continue
             text = _norm(sib.get("text") or "")
             if not text or _CODE_FIND_RE.search(text):
