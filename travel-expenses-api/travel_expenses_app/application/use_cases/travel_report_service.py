@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from travel_expenses_app.application.security import travel_expenses_permissions as perms
 from travel_expenses_app.application.services.package_storage import PackageStorageService
+from travel_expenses_app.application.services.finance_report_mailer import FinanceReportMailer
+from travel_expenses_app.domain.services.transport_pricing import ExpenseValueError, parse_amount, parse_distance_km, mileage_amount
 from travel_expenses_app.application.services.receipt_storage import (
     ReceiptStorageError,
     ReceiptStorageService,
@@ -29,14 +32,17 @@ def _parse_date(value: Any) -> date | None:
         return None
     if isinstance(value, date):
         return value
-    return date.fromisoformat(str(value)[:10])
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError) as exc:
+        raise TravelReportError('Data inválida. Informe uma data válida.') from exc
 
 
 def _parse_amount(value: Any) -> float:
-    amount = float(value)
-    if amount < 0:
-        raise TravelReportError("O valor da despesa não pode ser negativo.")
-    return amount
+    try:
+        return parse_amount(value)
+    except ExpenseValueError as exc:
+        raise TravelReportError(str(exc)) from exc
 
 
 class TravelReportService:
@@ -58,6 +64,8 @@ class TravelReportService:
         payload = dict(report)
         payload["expenses"] = expenses
         payload["completeness"] = completeness
+        dispatch = self.repo.get_dispatch(report["id"])
+        payload["dispatchStatus"] = dispatch["status"] if dispatch else None
         return payload
 
     def list_categories(self) -> list[dict[str, Any]]:
