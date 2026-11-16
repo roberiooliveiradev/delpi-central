@@ -12,6 +12,7 @@ describe("resolveRoute", () => {
     [`${BASE}/servers`, "servers"],
     [`${BASE}/workstations`, "workstations"],
     [`${BASE}/action-plans`, "action_plans"],
+    [`${BASE}/atlas-deployments`, "atlas_deployments"],
     [`${BASE}/help`, "help"],
     [`${BASE}/services`, "services"],
     [`${BASE}/databases`, "databases"],
@@ -61,6 +62,7 @@ describe("navigation helpers", () => {
   it("builds paths under the host base path", () => {
     expect(buildPath(BASE, "home")).toBe(BASE);
     expect(buildPath(BASE, "action_plans")).toBe(`${BASE}/action-plans`);
+    expect(buildPath(BASE, "atlas_deployments")).toBe(`${BASE}/atlas-deployments`);
     expect(buildPath(BASE, { serverId: SERVER_ID })).toBe(`${BASE}/servers/${SERVER_ID}`);
     expect(buildPath(BASE, { serviceId: SERVER_ID })).toBe(`${BASE}/services/${SERVER_ID}`);
     expect(buildPath(BASE, { databaseId: SERVER_ID })).toBe(`${BASE}/databases/${SERVER_ID}`);
