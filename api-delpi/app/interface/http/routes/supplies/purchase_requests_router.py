@@ -14,6 +14,7 @@ from delpi_auth.authorization import require_any_permission, require_auth
 from app.interface.http.supplies_bff_service_access import (
     PURCHASE_REQUESTS_API_CALLER,
     is_trusted_supplies_bff_call,
+    is_trusted_internal_caller,
     require_any_permission_or_trusted_caller,
 )
 
@@ -536,7 +537,10 @@ def get_supplies_sc_pc_conversion_route(
     summary_only: bool = Query(False),
 ):
     """GLPI #635: última liberação SCR -> primeiro PC; somente BFF autenticado."""
-    if not is_trusted_supplies_bff_call():
+    if not (is_trusted_supplies_bff_call() or (
+        summary_only and request_number is None
+        and is_trusted_internal_caller("strategic-indicators-api")
+    )):
         return error_response("Acesso negado.", status_code=403)
     try:
         result = PurchaseRequestScPcConversionRepository().get_conversion(
