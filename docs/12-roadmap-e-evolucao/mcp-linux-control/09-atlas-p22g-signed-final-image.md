@@ -50,3 +50,14 @@ Esta PR nao altera runtime. Se CI falhar, corrigir com commit novo na branch, se
 4. O build Docker final continua condicionado a todos os gates obrigatorios. A publicacao/assinatura permanece exclusiva de `push` em `main`.
 
 **Risco e limite:** a P2.2g nao soluciona os 47 erros anteriores em componentes React. Corrigi-los exige task propria de frontend, regressao visual e review de owners, sem misturar refatoracao com este pipeline de seguranca. O lint global completo continua disponivel por `cd plugins/public-hub && npm run lint` e suas contagens ficam visiveis no CI. Aceite real depende de novo run da PR, e nao de evidencia isolada da etapa antiga. Nenhuma alteracao de producao foi realizada.
+
+### Segunda rodada de CI: contrato dos testes de interface (16/11/2026)
+
+Na [execucao 43857596008](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43857596008), o job OCI de SHA/contexto concluiu PASS, mas a primeira execucao real do Vitest expos **8 falhas / 132 PASS** (140 testes), todas em duas suites preexistentes do Cockpit do Operador. O job interrompeu corretamente o build; **nao** se decidiu dispensar os testes.
+
+Inspecao cruzada de testes, codigo real e output do Testing Library:
+- `ProductionRunHandoff.test.tsx` procurava o titulo antigo `Por que a produção parou?`; o componente `DowntimeReasonModal.tsx` realmente renderiza `Informar motivo da parada`. Os cinco seletores legados (incluindo uma assercao negativa) foram alinhados com o titulo existente, **sem mudar o produto** ou remover fluxos de classificacao.
+- `CockpitHandoff.test.tsx` verificava somente a existencia da tela de detalhes, o que nao identifica a OP nem demonstra readback coerente. Os positivos agora exigem a identidade da OP B na rota; os cenarios de drift e GET falho exigem a permanencia na OP A. A rotina de montagem de teste limpa o `?view=` herdado, e a recuperacao de run orfao explicita a abertura do detalhe pela fila quando a interface nao navega automaticamente.
+- **Nenhum teste foi ignorado, removido ou marcado como `skip`, e nenhuma logica runtime, API, politica de qualidade ou assinatura foi alterada**.
+
+O novo CI da PR deve ainda demonstrar que os 140 testes e a build TypeScript/Vite passam; o merge nao esta autorizado por esta documentacao. Revisao independente, release assinada e validacao de runtime continuam pendentes.
