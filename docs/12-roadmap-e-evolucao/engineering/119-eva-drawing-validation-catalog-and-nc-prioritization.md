@@ -5481,7 +5481,7 @@ O owner determina que a EVA confronte **código + descrição do PI**, **letra/p
 
 - **TASK_ID:** `EVA-E1-VAL01-G20-DRAWING-TABLE-ATTRIBUTE-EXTRACTION-AND-RELATIONSHIP-RECOVERY-01`
 - **Base:** `5610c687ee` (origin/main) · OCR do G19 **reutilizado** (95 tokens, zero execuções produtivas novas).
-- **Verificador:** `delpi-verifier` (cursor/composer-2.5) r1 → **ACCEPT_WITH_RESIDUAL**, 8/8 ACs PASS, zero OCs. Residuais: caminho de ambiguidade sem teste E2E sintético (coberto por teste unitário do mecanismo); escopo misto no working tree (WIP alheio preservado, não commitado).
+- **Verificador:** `delpi-verifier` (cursor/composer-2.5) r1 → **ACCEPT_WITH_RESIDUAL**, 8/8 ACs PASS, zero OCs; r2 sobre o commit final `a772420f02` → **ACCEPT_WITH_RESIDUAL** (residuais não bloqueantes: SyntaxWarning docstring — corrigido em `537c2cd3c7`; pytest não executável no host do verificador — evidência do executor: 410 PASS no container; escopo misto no working tree preservado).
 
 ### Causa-raiz comprovada (primeira fronteira = B2/B3, não OCR)
 
