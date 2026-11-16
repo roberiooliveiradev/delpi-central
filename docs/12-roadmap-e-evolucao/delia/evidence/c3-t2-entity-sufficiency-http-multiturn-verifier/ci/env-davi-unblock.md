@@ -1,13 +1,16 @@
-# DEV env unblock (DAVI)
+# DEV env unblock (DAVI) — local only
 
 `delpi-api-delpi` was unhealthy due to checksum divergence on
-`api-delpi/migrations/plugins/engineering/V024__prc_record_flags.sql`.
+`V024__prc_record_flags.sql` (DB applied `8f9c97…` vs git tip `817a70…`
+from `3a95d6a3e7`).
 
-Live `engineering.schema_migrations` V024 checksum =
-`8f9c975396366117722a4f1a48c86217902a41fc54c3318eb95d607cad0cf73e`.
+For the live HTTP E2E, the applied content was restored **locally** long
+enough to boot DAVI, capture `http-mt-42e226d1432a`, then withdrawn from
+the published git tip because `IMMUTABLE_MIGRATION_MUTATION` forbids
+editing versioned migrations in CI.
 
-HEAD had been rewritten to `817a70…` by commit `3a95d6a3e7` (incorrect
-restore). File restored to applied content from `e94e3f9989`; local
-`docker restart delpi-api-delpi` → healthy; DAVI catalog 4 capabilities.
+Owner handoff (engineering/entry-audit / env): reconcile DEV
+`schema_migrations` vs git without rewriting V024 in history — prefer
+environment alignment or an incremental migration if DDL must change.
 
-Not a production deploy. No DB checksum mutation.
+`PRODUCTION_DEPLOY=NOT_AUTHORIZED`. No DB checksum mutation performed.
