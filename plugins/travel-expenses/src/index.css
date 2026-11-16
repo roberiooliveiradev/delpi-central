@@ -732,6 +732,24 @@
   color: var(--te-text-muted);
 }
 
+.dashboard-travel-expenses .te-mileage-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--te-border);
+  border-radius: 12px;
+  background: var(--te-surface);
+  color: var(--te-text);
+  font-size: 0.875rem;
+}
+
+.dashboard-travel-expenses .te-mileage-alert .delpi-ui-action-btn {
+  flex-shrink: 0;
+}
+
 .dashboard-travel-expenses .te-receipt-actions {
   display: flex;
   flex-direction: column;
