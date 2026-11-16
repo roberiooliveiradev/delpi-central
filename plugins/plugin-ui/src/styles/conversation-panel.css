@@ -1,0 +1,55 @@
+/* ConversationPanel (PRC conversa compartilhada) — layout do frame. */
+
+.delpi-ui-conversation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.delpi-ui-conversation-panel__frame {
+  min-height: 18rem;
+  max-height: 34rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e2e8f0));
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+.delpi-ui-conversation-panel__frame > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-conversation-panel__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.delpi-ui-conversation-panel__edit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.delpi-ui-conversation-panel__edit-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+}
+
+.delpi-ui-conversation-panel__attachments {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-conversation-panel__frame {
+    max-height: 26rem;
+  }
+}

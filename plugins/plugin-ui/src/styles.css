@@ -84,6 +84,7 @@
 @import "./styles/emoji-insert-menu.css";
 @import "./styles/activity-viewer.css";
 @import "./styles/message-thread.css";
+@import "./styles/conversation-panel.css";
 @import "./styles/entity-unfurl.css";
 @import "./styles/reaction-bar.css";
 @import "./styles/room-inbox.css";

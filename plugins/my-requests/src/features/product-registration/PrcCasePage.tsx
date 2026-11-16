@@ -17,6 +17,7 @@ import {
   PRC_ATTACHMENT_STATE_LABELS,
   PRC_STATUS_LABELS,
   PRC_TYPE_LABELS,
+  ConversationPanel,
   PrcRequestForm,
   PrcReturnedFieldsEditor,
   PrcTechnicalSheetView,
@@ -53,6 +54,8 @@ import {
   type PrcTimelineEvent,
 } from "./prcApi";
 import { ApiClientError } from "../../api/httpClient";
+import { downloadParticipantAvatarBlob } from "../../api/requestsApi";
+import { prcConversationApi } from "./prcConversationApi";
 import { usePrcCaseSync } from "../../app/PrcRealtimeProvider";
 import { RequestHistoryTimeline } from "../../components/RequestHistoryTimeline";
 import { useParticipantAvatarUrls } from "../../hooks/useParticipantAvatarUrls";
@@ -190,6 +193,16 @@ export function PrcCasePage({ requestId, onBack }: Props) {
   const canCorrect =
     detail?.status === "needs_correction" &&
     detail?.correctionExchange?.canCorrect === true;
+
+  /* PRC-CONVERSATION — o solicitante responde no mesmo requestId
+   * usado pela Engenharia; backend decide autorização efetiva. */
+  const conversationFrozen =
+    detail?.status === "completed" || detail?.status === "rejected";
+  const loadConversationAvatar = useCallback(
+    (userId: string, signal: AbortSignal) =>
+      downloadParticipantAvatarBlob(userId, { signal }).catch(() => null),
+    [],
+  );
 
   /* CORRECTION-09 — specs carregados sob demanda: o editor granular
    * usa os controles oficiais (enum vira select) por campo devolvido. */
@@ -496,7 +509,17 @@ export function PrcCasePage({ requestId, onBack }: Props) {
             ) : null}
 
             {tab === "history" ? (
-              <MyRequestsSectionCard title="Linha do tempo">
+              <>
+                <ConversationPanel
+                  requestId={detail.id}
+                  api={prcConversationApi}
+                  canComment={!conversationFrozen}
+                  conversationFrozen={conversationFrozen}
+                  loadAvatar={loadConversationAvatar}
+                  portalScopeClassName={MR_PORTAL_SCOPE}
+                  sectionTitle="Conversa sobre a solicitação"
+                />
+                <MyRequestsSectionCard title="Linha do tempo">
                 <RequestHistoryTimeline
                   items={historyViews.map((v) => ({
                     id: v.id,
@@ -512,6 +535,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                   avatarByUserId={avatarByUserId}
                 />
               </MyRequestsSectionCard>
+              </>
             ) : null}
           </div>
         </>

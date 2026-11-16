@@ -38,6 +38,7 @@ import {
   type PrcVerification,
 } from "../api/productRegistrationApi";
 import {
+  ConversationPanel,
   mapApiFieldsToCorrectionErrors,
   type PrcCorrectionTargetErrors,
 } from "@delpi/plugin-ui/index";
@@ -70,6 +71,7 @@ import {
   type PrcActionExtras,
 } from "../components/prcActionSpecs";
 import { PrcInformationExchangePanel } from "../components/PrcInformationExchangePanel";
+import { prcConversationApi } from "../api/prcConversationApi";
 import { PrcPersonCell } from "../components/PrcPersonCell";
 import { supplierOptionsFromTechnicalDraft } from "../prcInformationExchange";
 import { PrcRevisionsSection } from "../components/PrcRevisionsSection";
@@ -842,6 +844,18 @@ export function PrcDetailPage({
 
         {tab === "history" ? (
           <>
+            <ConversationPanel
+              requestId={detail.id}
+              api={prcConversationApi}
+              canComment={
+                detail.status !== "completed" && detail.status !== "rejected"
+              }
+              conversationFrozen={
+                detail.status === "completed" || detail.status === "rejected"
+              }
+              portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
+              sectionTitle="Conversa sobre a solicitação"
+            />
             <PrcInformationExchangePanel
               requestId={detail.id}
               requestStatus={detail.status}

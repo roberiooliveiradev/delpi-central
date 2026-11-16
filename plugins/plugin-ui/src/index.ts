@@ -119,6 +119,7 @@ export * from "./components/directory";
 export * from "./components/document";
 export * from "./components/deck";
 export * from "./components/collaboration";
+export * from "./components/conversation-panel";
 export {
   InteractionRoomPage,
   INTERACTION_ROOM_PAGE_LABELS_PT,
