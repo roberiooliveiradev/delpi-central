@@ -38,7 +38,10 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 
 ### 3.1 Princípios
 
-1. **Dois temas, claro e escuro (Q23).** Todo o formulário e cada componente do kit funcionam nos dois. Regra de escolha: a do `public-hub` (`data-theme` fixado pelo cliente → preferência salva → preferência do aparelho). O **botão de tema fica dentro do cartão do cabeçalho**, à direita do logo (não flutuando sobre o conteúdo).
+1. **Dois temas, claro e escuro (Q23).** Todo o formulário e cada componente do kit funcionam nos dois. **Regra de escolha (decisão de 16/11/2026):**
+   - **Toda abertura da página começa no modo automático do navegador** (`prefers-color-scheme`): aparelho em modo escuro → formulário escuro; em modo claro → formulário claro. Enquanto o cliente não usar o botão, a página acompanha mudanças do aparelho.
+   - O **botão de tema**, dentro do cartão do cabeçalho à direita do logo (não flutuando sobre o conteúdo), troca entre claro e escuro **durante aquela visita**.
+   - A escolha **não é salva**: não grava em `localStorage`/cookie e **ignora** preferência salva anteriormente pelo shell público (`pub-theme`). Ao reabrir o link, volta ao automático.
 2. **Uma pergunta por cartão**, com o tema em letra pequena acima e a pergunta numerada com o **texto literal** do catálogo canônico.
 3. **Escala numérica limpa:** só os números nos botões; o significado fica nas pontas (“1 · Muito insatisfeito” / “5 · Muito satisfeito”) e, depois da escolha, numa linha de confirmação (“Sua nota: 4 · Satisfeito”).
 4. **“Não se aplica” discreto:** opção em formato de pílula com indicador redondo, abaixo da escala (celular) ou à direita após um divisor (computador). Nunca uma linha inteira com o mesmo peso das notas.
@@ -177,7 +180,7 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 - Teclado: Tab percorre as opções na ordem; Espaço/Enter seleciona; Enter **nunca** envia o formulário; foco vai para a primeira pendência ao tentar avançar.
 - Leitor de tela: grupos com `legend`, opções com nome completo (“4 — Satisfeito”), progresso anunciado, mensagens de erro ligadas ao grupo (`aria-describedby`), estados terminais com `role="status"`/`"alert"`.
 - Zoom de 200% sem perda de conteúdo.
-- **Os dois temas** testados em todas as telas e estados (normal, selecionado, foco, erro, enviando), com os contrastes de §3.2; troca de tema não apaga respostas.
+- **Os dois temas** testados em todas as telas e estados (normal, selecionado, foco, erro, enviando), com os contrastes de §3.2; troca de tema não apaga respostas; reabrir a página volta ao tema do aparelho mesmo depois de usar o botão.
 
 ## 4. Regras funcionais vigentes (inalteradas desde 11/11/2026)
 
@@ -242,7 +245,7 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 | `src/apps/commercial/FormPage.tsx` | Adaptador fino: converte o questionário da API na definição do `GuidedQuestionnaire`, passa `onSubmit` → `submitPublicSurvey`, mapeia resultados |
 | `src/apps/commercial/SurveyStateView.tsx` | Usa `FormPageLayout` + `FormResultPanel`; remove o nome da campanha |
 | `src/apps/commercial/form.css` | **Removido** ou reduzido a mapeamento de tokens `--delpi-ui-*` / layout de página; nenhum seletor de componente |
-| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo **flutuantes** do shell; o botão de tema existente (`ThemeToggle`) é passado ao `FormHeaderCard`. Menor solução: opção opcional de `chrome` sem decoração na definição da página, padrão inalterado para as demais apps |
+| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo **flutuantes** do shell; o botão de tema vai no `FormHeaderCard`. O `ThemeToggle` atual **salva** a escolha em `localStorage` (`pub-theme`) e lê a preferência salva — para esta página é preciso um modo **sem persistência** (ex.: propriedade `persist={false}` ou controle do kit), que ao abrir remove `data-theme`, segue `prefers-color-scheme` e, ao clicar, só altera `data-theme` em memória, restaurando o estado ao sair da página. Menor solução: opção opcional de `chrome` sem decoração na definição da página, padrão inalterado para as demais apps |
 | `src/shell/brand-tokens.css` (ou arquivo de tokens da página) | Declarar os valores claro/escuro dos tokens de §3.2, nos mesmos três blocos já existentes (`:root`, `:root[data-theme="dark"]`, `@media (prefers-color-scheme: dark)`) |
 | `surveyForm.ts`, `api.ts` | Mantidos (regra de etapas e rede) |
 

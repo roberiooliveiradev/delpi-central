@@ -247,7 +247,7 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 
 - **Substitui** o “tema claro fixo” da Q21.
 - Todo componente do kit de formulário do PluginUI (Q22) é entregue e testado nos dois temas.
-- **Escolha do tema:** regra existente do `public-hub` (escolha do cliente → preferência salva → preferência do aparelho); botão de tema dentro do cartão do cabeçalho, não flutuante.
+- **Escolha do tema (complemento do solicitante, 16/11/2026):** toda abertura começa no **modo automático do navegador** (tema do aparelho); o botão de tema, no cartão do cabeçalho, permite trocar claro/escuro durante a visita, **sem salvar** a escolha — ao reabrir, volta ao automático. Difere do restante do `public-hub`, que salva a preferência.
 - **Tokens:** inventário e valores claro/escuro em [UI-03 §3.2](./UI-03-FORMULARIO-PUBLICO.md#32-tokens--claro-e-escuro-inventário-de-16112026), com origem em `public-hub/src/shell/brand-tokens.css`, nos tokens `--delpi-ui-*` do PluginUI e no tema do Portal.
 - **Ajustes de acessibilidade incluídos:** borda dos controles mais escura (`#8c959f` no claro) para atingir 3:1; texto escuro sobre a cor primária no tema escuro; logo sobre selo branco no escuro.
 - Referência visual atualizada com as seis telas nos dois temas: [UI-03-REFERENCIA-VISUAL.html](./UI-03-REFERENCIA-VISUAL.html).
