@@ -1,0 +1,9 @@
+........................................................................ [ 49%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_int2_typed_objective_obligation_contract.py::test_invalid_goal_class_gets_vocabulary_feedback_and_recovers
+  /usr/local/lib/python3.12/site-packages/pydantic_graph/_utils.py:67: DeprecationWarning: There is no current event loop
+    event_loop = asyncio.get_event_loop()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

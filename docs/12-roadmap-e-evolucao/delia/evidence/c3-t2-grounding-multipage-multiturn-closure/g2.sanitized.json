@@ -1,0 +1,186 @@
+{
+  "evaluation_id": "or-qwen14b-90d11af2c834",
+  "scenario_id": "INT2_G2_aggregation_active_scope",
+  "events": [
+    {
+      "event": "tool_observation",
+      "capability_id": "teo.analyze",
+      "status": "SUCCESS",
+      "pagination": null,
+      "limitations": [],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "teo"
+    },
+    {
+      "event": "tool_observation",
+      "capability_id": "teo.read",
+      "status": "SUCCESS",
+      "pagination": {
+        "page": null,
+        "page_size": null,
+        "has_more": true,
+        "total_count": 109,
+        "items_in_page": 40,
+        "pagination_args": [
+          "params"
+        ]
+      },
+      "limitations": [
+        "result_truncated"
+      ],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "teo"
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):analyze",
+      "argument_values_sanitized": {
+        "view": "summary",
+        "params": {
+          "status": "ativo"
+        }
+      },
+      "error": null,
+      "elapsed_s": 0.36
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+      "argument_values_sanitized": {
+        "entity": "process",
+        "action": "search",
+        "params": {
+          "status": "ativo"
+        }
+      },
+      "error": null,
+      "elapsed_s": 0.25
+    }
+  ],
+  "question": "Quantos processos de transformação estão ativos?",
+  "prior": [],
+  "expected": {
+    "delivery": "aggregation",
+    "plan_declared": true,
+    "coverage": "evaluated",
+    "verdict_rule": "scoped metric must come from owner evidence or be honestly partial — never inferred"
+  },
+  "finalization": {
+    "grounding": "GroundingStatus.GROUNDED",
+    "epistemic_class": "EpistemicClass.OBSERVATION",
+    "content_head": "Há um total de 109 processos de transformação ativos, conforme indicado na paginação da consulta. A primeira página mostrou 4 exemplos de processos ativos, mas o total declarado pela API é 109.",
+    "limitations": [
+      "insufficient_evidence",
+      "material_obligations_incomplete",
+      "related_observations_insufficient",
+      "obligation_inconclusive:Contagem de processos ativos",
+      "declared_limitation:A consulta foi truncada, mas a paginação declarou um total de 109 registros.",
+      "declared_status_overridden",
+      "experiment_variant=split",
+      "comprehension_llm_requests=3"
+    ],
+    "declared_answer": {
+      "schema_version": "1",
+      "status": "partial",
+      "answer": "Há um total de 109 processos de transformação ativos, conforme indicado na paginação da consulta. A primeira página mostrou 4 exemplos de processos ativos, mas o total declarado pela API é 109.",
+      "evidence_refs": [
+        1
+      ],
+      "unmet_obligations": [],
+      "limitations": [
+        "A consulta foi truncada, mas a paginação declarou um total de 109 registros."
+      ],
+      "clarification_question": null
+    },
+    "obligation_coverage": [
+      {
+        "obligations": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "summary",
+            "operation": "analysis",
+            "required_scope": [
+              "view=summary",
+              "params.status=ativo",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Contagem de processos ativos": "INCONCLUSIVE"
+        }
+      },
+      {
+        "obligations": [
+          {
+            "description": "Contagem de processos ativos",
+            "evidence_source": "summary",
+            "operation": "analysis",
+            "required_scope": [
+              "view=summary",
+              "params.status=ativo",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Contagem de processos ativos": "INCONCLUSIVE"
+        }
+      }
+    ],
+    "mcp_invoke_targets": [
+      "MCP:analyze",
+      "MCP:read"
+    ],
+    "investigation_plan": {
+      "goal_class": "analyze",
+      "comparison_requested": false,
+      "expected_delivery": "aggregation",
+      "business_subject": "processos de transformação",
+      "declared": true,
+      "target_identities": [],
+      "evidence_needed": [
+        {
+          "description": "Contagem de processos ativos",
+          "evidence_source": "summary",
+          "operation": "analysis",
+          "required_scope": [
+            "view=summary",
+            "params.status=ativo",
+            "__container__=params"
+          ]
+        }
+      ]
+    },
+    "error": null
+  },
+  "session_meta": {
+    "schema_version": "int1_decision_trace_v1",
+    "event_type": "evaluation_meta",
+    "evaluation_id": "or-qwen14b-90d11af2c834",
+    "scenario_id": "session",
+    "correlation_id": "or-qwen14b-90d11af2c834",
+    "timestamp_unix_ms": 1794783785400,
+    "payload": {
+      "task_id": "DELIA-C3-T2-INT2-TYPED-OBJECTIVE-DELIVERY-OBLIGATION-POPULATION-01",
+      "model_id": "qwen/qwen3-14b",
+      "model_profile": "openrouter_qwen",
+      "model_config_fingerprint": "e4a5b706a3b3156b",
+      "llm_base_host": "openrouter.ai",
+      "environment": "development",
+      "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+      "pydantic_ai": "2.50.0",
+      "two_agent_experiment": true,
+      "b3_capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+      "http_wire_bytes": "NOT_OBSERVED",
+      "scenarios": [
+        "INT2_G2_aggregation_active_scope",
+        "INT2_R6_clarification_needed",
+        "INT2_R6_multiturn_structure_recovery"
+      ],
+      "scenario_filter": "INT2_G2_aggregation_active_scope,INT2_R6_clarification_needed,INT2_R6_multiturn_structure_recovery"
+    }
+  }
+}

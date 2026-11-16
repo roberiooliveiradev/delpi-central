@@ -1,0 +1,4 @@
+Platform guardrails
+- base: c0891eb1a5^
+- findings: 0
+OK: nenhuma nova regressão transversal detectada

@@ -3145,3 +3145,7 @@ Positivos/negativos/holdouts separados; nenhuma resposta programada conta como g
 | FALSE_COMPLETE / FALSE_SATISFIED | `0` na bateria válida | Negativos clarification/unmet preservados |
 
 **NEXT=`COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`.**
+
+### C3/T2 evidence closure (2026-11-15)
+
+Pacote `evidence/c3-t2-grounding-multipage-multiturn-closure/` + `tests/test_c3_t2_evidence_closure_negatives.py` registram negativos G2/REF05/R5/R6 e evidências live sanitizadas (`90d11af2c834`, `e12d13cf3f56`, `4136fe9b93c0`). R5-N3/N4/N5 permanecem PENDING.

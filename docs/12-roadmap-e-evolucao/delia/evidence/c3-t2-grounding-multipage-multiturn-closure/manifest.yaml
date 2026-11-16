@@ -1,0 +1,48 @@
+TASK_ID: DELIA-C3-T2-TWO-AGENT-FINAL-EVIDENCE-CI-NEGATIVE-AND-VERIFIER-CLOSURE-01
+GENERATED_AT_UTC: 2026-11-16T00:54:57.991929+00:00
+REFERENCE_FUNCTIONAL_COMMIT: c0891eb1a5b18443a4e7d3da6ce831a24b61b3da
+REFERENCE_OC1_COMMIT: 550eae558ddfe61bac546d98a862f8e8c2e52eac
+BASE_SHA_AT_TASK_START: f77e580f0ddfec488bf757a1298e2b5e86dc5425
+EVALUATED_SHA_NOTE: "Live evals below were captured on the pre-publish working tree that became c0891eb1 (+ OC-1 550eae55). Battery artifacts are gitignored; this package is the GitHub-reviewable sanitized extract."
+MODEL_ID: qwen/qwen3-14b
+MODEL_FINGERPRINT: e4a5b706a3b3156b
+CONFIG_FINGERPRINT: e4a5b706a3b3156b
+EXPERIMENT_FLAG: "DELIA_TWO_AGENT_EXPERIMENT=true (eval only); default False + production fail-closed"
+CORPUS:
+  G2: or-qwen14b-90d11af2c834 / INT2_G2_aggregation_active_scope
+  R5: or-qwen14b-e12d13cf3f56 / INT2_R5_multipage_full_enumeration
+  R6_TURN1_POST_GATE: or-qwen14b-4136fe9b93c0 / INT2_R6_clarification_needed
+  R6_TURN1_PRE_GATE_INVENTED: or-qwen14b-e12d13cf3f56 / INT2_R6_clarification_needed
+  R6_TURN2: or-qwen14b-e12d13cf3f56 / INT2_R6_multiturn_structure_recovery
+OWNER_CONTRACTS:
+  - teo.read process search pagination
+  - davi.read product structure
+ARTIFACTS:
+  g2: g2.sanitized.json
+  r5: r5.sanitized.json
+  r6_turn1_clarification: r6_turn1_clarification.sanitized.json
+  r6_turn1_pre_gate_invented: r6_turn1_pre_gate_invented.sanitized.json
+  r6_turn2_recovery: r6_turn2_recovery.sanitized.json
+PUBLISHED_BLOBS_AT_HEAD:
+  delia-api/app/application/capability_provision/semantic_capability_support.py:
+    sha256: 1275fac61b3fdac593e7c27bef4b86d74b803e19a3b59dbf298f61f8ec32bee1
+    bytes: 210411
+  delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py:
+    sha256: d3ce745fef09cc6597640ad1de3866f54f4b1ce992902d71840f5984b71b1d82
+    bytes: 146074
+  delia-api/tests/test_int1_investigative_progress_rework.py:
+    sha256: 2dedd52f9e4cd2ae63e5d1f3eb3e40f902f3837a3d68e799d6929ff5acdd4baa
+    bytes: 24999
+  delia-api/tests/test_r6_invented_identifier_rejection.py:
+    sha256: 1050b57b4327cb7809104d3aae5d3058da716fb9868732127f4c7357589762ad
+    bytes: 2129
+  delia-api/tests/test_two_agent_experiment.py:
+    sha256: 6367edd58dc4c9ac48acb6ccc248937bab8e4f5f1478ae47c10d1145ead3a5d7
+    bytes: 28431
+  delia-api/tests/test_r45_pagination_integrity_rework.py:
+    sha256: c173051310e0abd6638ad65e784496be10e1de0c4c4dd31e82a00dee47ab06bf
+    bytes: 9678
+
+VERIFIER_REPORT: verifier-r1-devin.md
+VERIFIER_VERDICT: ACCEPT_WITH_RESIDUAL
+VERIFIER_ROUND: 1

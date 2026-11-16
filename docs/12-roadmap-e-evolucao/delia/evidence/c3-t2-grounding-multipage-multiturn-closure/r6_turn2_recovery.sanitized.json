@@ -1,0 +1,191 @@
+{
+  "evaluation_id": "or-qwen14b-e12d13cf3f56",
+  "scenario_id": "INT2_R6_multiturn_structure_recovery",
+  "events": [
+    {
+      "event": "tool_observation",
+      "capability_id": "davi.get_context",
+      "status": "SOURCE_UNAVAILABLE",
+      "pagination": null,
+      "limitations": [],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": null
+    },
+    {
+      "event": "tool_observation",
+      "capability_id": "davi.read",
+      "status": "SUCCESS",
+      "pagination": {
+        "page": null,
+        "page_size": null,
+        "has_more": null,
+        "total_count": 1,
+        "items_in_page": 1
+      },
+      "limitations": [],
+      "authoritative_root_code": "90260921",
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "davi"
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='davi', display_name='DAVI', owner_ref='api-delpi', protocol=<InteropProtocol.MCP: 'MCP'>):get_context",
+      "argument_values_sanitized": {
+        "action": "catalog"
+      },
+      "error": null,
+      "elapsed_s": 0.82
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='davi', display_name='DAVI', owner_ref='api-delpi', protocol=<InteropProtocol.MCP: 'MCP'>):get_context",
+      "argument_values_sanitized": {
+        "query": "90260921 Quero ver a estrutura de um produto. Qual é o código do produto?"
+      },
+      "error": null,
+      "elapsed_s": 0.39
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='davi', display_name='DAVI', owner_ref='api-delpi', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+      "argument_values_sanitized": {
+        "capability": "get_product_structure",
+        "arguments": {
+          "code": "90260921"
+        }
+      },
+      "error": null,
+      "elapsed_s": 0.26
+    }
+  ],
+  "question": "90260921",
+  "prior": [
+    [
+      "user",
+      "Quero ver a estrutura de um produto."
+    ],
+    [
+      "assistant",
+      "Qual é o código do produto?"
+    ]
+  ],
+  "expected": {
+    "delivery": "structure",
+    "plan_declared": true,
+    "coverage": "evaluated",
+    "verdict_rule": "recover objective+identifier from prior clarification; revalidate authz; grounded structure or honest gap"
+  },
+  "finalization": {
+    "grounding": "GroundingStatus.GROUNDED",
+    "epistemic_class": "EpistemicClass.OBSERVATION",
+    "content_head": "A estrutura do produto com código 90260921 é a seguinte:\n\n- **Código:** 90260921\n- **Descrição:** 21010421 CHICOTE DE LIGACAO\n- **Tipo:** PA\n- **Unidade:** MI\n- **Quantidade:** 1\n\n**Componentes:**\n1. **Código:** 10020003\n   - **Descrição:** CABO PVC 105°C 0,50MM2 PT 750V ESTANHADO NBR 9117\n   - **Tipo:** MP\n   - **Unidade:** MT\n   - **Quantidade:** 175.0",
+    "limitations": [
+      "experiment_variant=split",
+      "comprehension_llm_requests=3"
+    ],
+    "declared_answer": {
+      "schema_version": "1",
+      "status": "complete",
+      "answer": "A estrutura do produto com código 90260921 é a seguinte:\n\n- **Código:** 90260921\n- **Descrição:** 21010421 CHICOTE DE LIGACAO\n- **Tipo:** PA\n- **Unidade:** MI\n- **Quantidade:** 1\n\n**Componentes:**\n1. **Código:** 10020003\n   - **Descrição:** CABO PVC 105°C 0,50MM2 PT 750V ESTANHADO NBR 9117\n   - **Tipo:** MP\n   - **Unidade:** MT\n   - **Quantidade:** 175.0",
+      "evidence_refs": [
+        1
+      ],
+      "unmet_obligations": [],
+      "limitations": [],
+      "clarification_question": null
+    },
+    "obligation_coverage": [
+      {
+        "obligations": [
+          {
+            "description": "Estrutura do produto com código 90260921",
+            "evidence_source": "get_product_structure",
+            "operation": "read",
+            "required_scope": [
+              "arguments.code=90260921",
+              "capability=get_product_structure",
+              "__container__=arguments"
+            ]
+          }
+        ],
+        "states": {
+          "Estrutura do produto com código 90260921": "SATISFIED"
+        }
+      },
+      {
+        "obligations": [
+          {
+            "description": "Estrutura do produto com código 90260921",
+            "evidence_source": "get_product_structure",
+            "operation": "read",
+            "required_scope": [
+              "arguments.code=90260921",
+              "capability=get_product_structure",
+              "__container__=arguments"
+            ]
+          }
+        ],
+        "states": {
+          "Estrutura do produto com código 90260921": "SATISFIED"
+        }
+      }
+    ],
+    "mcp_invoke_targets": [
+      "MCP:get_context",
+      "MCP:get_context",
+      "MCP:read"
+    ],
+    "investigation_plan": {
+      "goal_class": "read",
+      "comparison_requested": false,
+      "expected_delivery": "record_detail",
+      "business_subject": "estrutura do produto",
+      "declared": true,
+      "target_identities": [
+        "90260921"
+      ],
+      "evidence_needed": [
+        {
+          "description": "Estrutura do produto com código 90260921",
+          "evidence_source": "get_product_structure",
+          "operation": "read",
+          "required_scope": [
+            "arguments.code=90260921",
+            "capability=get_product_structure",
+            "__container__=arguments"
+          ]
+        }
+      ]
+    },
+    "error": null
+  },
+  "session_meta": {
+    "schema_version": "int1_decision_trace_v1",
+    "event_type": "evaluation_meta",
+    "evaluation_id": "or-qwen14b-e12d13cf3f56",
+    "scenario_id": "session",
+    "correlation_id": "or-qwen14b-e12d13cf3f56",
+    "timestamp_unix_ms": 1794783431918,
+    "payload": {
+      "task_id": "DELIA-C3-T2-INT2-TYPED-OBJECTIVE-DELIVERY-OBLIGATION-POPULATION-01",
+      "model_id": "qwen/qwen3-14b",
+      "model_profile": "openrouter_qwen",
+      "model_config_fingerprint": "e4a5b706a3b3156b",
+      "llm_base_host": "openrouter.ai",
+      "environment": "development",
+      "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+      "pydantic_ai": "2.50.0",
+      "two_agent_experiment": true,
+      "b3_capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+      "http_wire_bytes": "NOT_OBSERVED",
+      "scenarios": [
+        "INT2_G2_aggregation_active_scope",
+        "INT2_R5_multipage_full_enumeration",
+        "INT2_R6_clarification_needed",
+        "INT2_R6_multiturn_structure_recovery"
+      ],
+      "scenario_filter": "INT2_G2_aggregation_active_scope,INT2_R5_multipage_full_enumeration,INT2_R6_clarification_needed,INT2_R6_multiturn_structure_recovery"
+    }
+  }
+}

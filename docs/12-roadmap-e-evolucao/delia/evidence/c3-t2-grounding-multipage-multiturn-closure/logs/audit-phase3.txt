@@ -1,0 +1,29 @@
+test_http_timeout_helper_rejects_missing_and_none (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_http_timeout_helper_rejects_missing_and_none) ... ok
+test_live_registry_has_no_operation_id_catalog_after_j_r8 (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_live_registry_has_no_operation_id_catalog_after_j_r8)
+J-R8 emptied parallel operationIds arrays → structural catalog findings = 0. ... ok
+test_non_routing_path_is_not_flagged_by_route_gate (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_non_routing_path_is_not_flagged_by_route_gate) ... ok
+test_provider_bias_is_blocked (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_provider_bias_is_blocked) ... ok
+test_provider_credential_literal_detected (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_provider_credential_literal_detected) ... ok
+test_provider_credential_safe_text_not_flagged (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_provider_credential_safe_text_not_flagged) ... ok
+test_provider_credential_short_placeholder_not_flagged (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_provider_credential_short_placeholder_not_flagged) ... ok
+test_registry_operation_ids_detected_even_when_cleanup_meta_denies_authority (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_registry_operation_ids_detected_even_when_cleanup_meta_denies_authority)
+A11-06 / J-R6: self-attestation cannot silence structural catalog scan. ... ok
+test_registry_operation_ids_empty_routes_ok (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_registry_operation_ids_empty_routes_ok) ... ok
+test_registry_state_tracks_manual_technical_metadata_only (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_registry_state_tracks_manual_technical_metadata_only) ... ok
+test_retry_helper_finds_write_methods (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_retry_helper_finds_write_methods) ... ok
+test_route_path_literal_is_blocked (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_route_path_literal_is_blocked) ... ok
+test_secret_literal_scanner_allows_placeholder (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_secret_literal_scanner_allows_placeholder) ... ok
+test_semantic_domain_rules_detected (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_domain_rules_detected) ... ok
+test_semantic_negative_fixture_path_outside_scope (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_negative_fixture_path_outside_scope) ... ok
+test_semantic_negative_generic_action_path_not_flagged (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_negative_generic_action_path_not_flagged) ... ok
+test_semantic_parameter_strategy_class_detected (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_parameter_strategy_class_detected) ... ok
+test_semantic_parameter_strategy_stub_without_path_branches_not_flagged (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_parameter_strategy_stub_without_path_branches_not_flagged) ... ok
+test_semantic_sibling_path_markers_content_detected (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_sibling_path_markers_content_detected) ... ok
+test_semantic_smoke_credential_default_detected (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_semantic_smoke_credential_default_detected) ... ok
+test_sensitive_identifier_avoids_safe_metadata (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_sensitive_identifier_avoids_safe_metadata) ... ok
+test_violation_fingerprint_is_stable (scripts.ci.test_audit_architecture_phase3.ArchitecturePhase3GateTests.test_violation_fingerprint_is_stable) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.003s
+
+OK

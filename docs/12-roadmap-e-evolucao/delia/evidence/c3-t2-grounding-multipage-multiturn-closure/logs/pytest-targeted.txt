@@ -1,0 +1,8 @@
+........................................................................ [ 56%]
+.......................................................                  [100%]
+=============================== warnings summary ===============================
+tests/test_two_agent_experiment.py::test_variant_b_surfaces_and_accepted_handoff
+  /usr/local/lib/python3.12/site-packages/pydantic_graph/_utils.py:67: DeprecationWarning: There is no current event loop
+    event_loop = asyncio.get_event_loop()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

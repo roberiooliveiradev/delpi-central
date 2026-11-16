@@ -7147,3 +7147,13 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **WS-3 R6:** invent gate rejeita `P12345`/placeholders (unitário + live pós-gate `or-qwen14b-4136fe9b93c0`: `plan=None`, pergunta «Qual é o código do produto…», sem owner call); clarificação pré-gate `90d11af2c834` também pediu código (após inventar P12345 na amostra `e12d13`); multiturn recovery `e12d13cf3f56` GROUNDED+SATISFIED estrutura 90260921.
 - **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; Agents 3/4 NOT_AUTHORIZED.
 - **NEXT:** `COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`.
+
+### 2026-11-15 — C3/T2: Final evidence / CI / negatives / verifier closure
+
+- **TASK:** `DELIA-C3-T2-TWO-AGENT-FINAL-EVIDENCE-CI-NEGATIVE-AND-VERIFIER-CLOSURE-01`
+- **REFERENCE:** functional `c0891eb1a5` + OC-1 `550eae558d` (ancestrais de origin/main); BASE task `f77e580f0d`
+- **ESCOPO:** pacote sanitizado em `docs/.../evidence/c3-t2-grounding-multipage-multiturn-closure/`; negativos G2/R5/R6 em `delia-api/tests/test_c3_t2_evidence_closure_negatives.py`; sem redesenho das três frentes.
+- **PROVAS:** suite dirigida + regressão `delia-api` EXIT=0; audits Phase3/guardrails EXIT=0; CI remoto Architecture Enforcement success nos commits de referência.
+- **RESIDUAIS:** R5-N3/N4/N5 PENDING (sem fingerprint de owner/filtro no aggregator); R4 AuthZ deny PENDING; INT3 obligation depth / G2 anchor mismatch OPEN_LOW.
+- **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
+- **NEXT:** `COORDINATION_C3_T2_FINAL_EVIDENCE_CI_NEGATIVE_VERIFIER_INDEPENDENT_REVIEW`

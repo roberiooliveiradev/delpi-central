@@ -1,0 +1,52 @@
+{
+  "evaluation_id": "or-qwen14b-4136fe9b93c0",
+  "scenario_id": "INT2_R6_clarification_needed",
+  "events": [],
+  "question": "Quero ver a estrutura de um produto.",
+  "prior": [],
+  "expected": {
+    "plan_declared": false,
+    "coverage": "clarification_or_honest_gap",
+    "verdict_rule": "ask only for the missing product code — do not invent"
+  },
+  "finalization": {
+    "grounding": "GroundingStatus.NON_GROUNDED",
+    "epistemic_class": "EpistemicClass.HYPOTHESIS",
+    "content_head": "Qual é o código do produto cuja estrutura você deseja visualizar?",
+    "limitations": [
+      "agent_requested_clarification",
+      "experiment_variant=split",
+      "comprehension_llm_requests=2"
+    ],
+    "declared_answer": null,
+    "obligation_coverage": [],
+    "mcp_invoke_targets": [],
+    "investigation_plan": null,
+    "error": null
+  },
+  "session_meta": {
+    "schema_version": "int1_decision_trace_v1",
+    "event_type": "evaluation_meta",
+    "evaluation_id": "or-qwen14b-4136fe9b93c0",
+    "scenario_id": "session",
+    "correlation_id": "or-qwen14b-4136fe9b93c0",
+    "timestamp_unix_ms": 1794784521211,
+    "payload": {
+      "task_id": "DELIA-C3-T2-INT2-TYPED-OBJECTIVE-DELIVERY-OBLIGATION-POPULATION-01",
+      "model_id": "qwen/qwen3-14b",
+      "model_profile": "openrouter_qwen",
+      "model_config_fingerprint": "e4a5b706a3b3156b",
+      "llm_base_host": "openrouter.ai",
+      "environment": "development",
+      "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+      "pydantic_ai": "2.50.0",
+      "two_agent_experiment": true,
+      "b3_capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+      "http_wire_bytes": "NOT_OBSERVED",
+      "scenarios": [
+        "INT2_R6_clarification_needed"
+      ],
+      "scenario_filter": "INT2_R6_clarification_needed"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+Architecture Phase 3 gate — base c0891eb1a5^ → HEAD
+[OK] Nenhuma nova regressão arquitetural da Fase 3.

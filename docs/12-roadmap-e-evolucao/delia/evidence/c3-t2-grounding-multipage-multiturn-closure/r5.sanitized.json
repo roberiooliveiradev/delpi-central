@@ -1,0 +1,237 @@
+{
+  "evaluation_id": "or-qwen14b-e12d13cf3f56",
+  "scenario_id": "INT2_R5_multipage_full_enumeration",
+  "events": [
+    {
+      "event": "tool_observation",
+      "capability_id": "teo.read",
+      "status": "SUCCESS",
+      "pagination": {
+        "page": null,
+        "page_size": null,
+        "has_more": true,
+        "total_count": 109,
+        "items_in_page": 40,
+        "pagination_args": [
+          "params"
+        ]
+      },
+      "limitations": [
+        "result_truncated"
+      ],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "teo"
+    },
+    {
+      "event": "tool_observation",
+      "capability_id": "teo.read",
+      "status": "SUCCESS",
+      "pagination": {
+        "page": 2,
+        "page_size": 40,
+        "has_more": true,
+        "total_count": 109,
+        "items_in_page": 40,
+        "next_page": 3,
+        "pagination_args": [
+          "params"
+        ]
+      },
+      "limitations": [
+        "result_truncated"
+      ],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "teo"
+    },
+    {
+      "event": "tool_observation",
+      "capability_id": "teo.read",
+      "status": "SUCCESS",
+      "pagination": {
+        "page": 3,
+        "page_size": 40,
+        "has_more": false,
+        "total_count": 109,
+        "items_in_page": 29,
+        "pagination_args": [
+          "params"
+        ]
+      },
+      "limitations": [
+        "result_truncated"
+      ],
+      "authoritative_root_code": null,
+      "authorization_denied": "[REDACTED]",
+      "provenance_specialist": "teo"
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+      "argument_values_sanitized": {
+        "entity": "process",
+        "action": "search",
+        "params": {}
+      },
+      "error": null,
+      "elapsed_s": 0.33
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+      "argument_values_sanitized": {
+        "entity": "process",
+        "action": "search",
+        "params": {
+          "page": 2,
+          "page_size": 40
+        }
+      },
+      "error": null,
+      "elapsed_s": 0.28
+    },
+    {
+      "event": "mcp_invoke",
+      "target": "SpecialistRef(specialist_id='teo', display_name='TEO', owner_ref='transformometro-api', protocol=<InteropProtocol.MCP: 'MCP'>):read",
+      "argument_values_sanitized": {
+        "entity": "process",
+        "action": "search",
+        "params": {
+          "page": 3,
+          "page_size": 40
+        }
+      },
+      "error": null,
+      "elapsed_s": 0.55
+    }
+  ],
+  "question": "Liste todos os processos de transformação cadastrados.",
+  "prior": [],
+  "expected": {
+    "delivery": "enumeration",
+    "plan_declared": true,
+    "coverage": "evaluated",
+    "verdict_rule": "walk pages while has_more; union without false COMPLETE on truncated collection; aggregation-only total is not a substitute when enumeration was asked"
+  },
+  "finalization": {
+    "grounding": "GroundingStatus.GROUNDED",
+    "epistemic_class": "EpistemicClass.OBSERVATION",
+    "content_head": "A seguir está a lista de todos os processos de transformação cadastrados:\n\n1. **Processo ID:** 8fe16420-748a-40cf-a8bf-f578e413a9e6\n   - Código: PROC-0105\n   - Nome: G5 E2E Processo g5e2e-mvb3ecyu\n   - Status: ativo\n   - Filial IDs: (vazio)\n   - Setor IDs: (vazio)\n   - Data de Criação: 2026-10-16T11:58:18.877434-03:00\n   - Data de Atualização: 2026-10-16T11:58:19.442890-03:00\n\n2. **Processo ID:** ",
+    "limitations": [
+      "result_truncated",
+      "multiple_observations_without_compose",
+      "declared_limitation:result_truncated",
+      "experiment_variant=split",
+      "comprehension_llm_requests=4"
+    ],
+    "declared_answer": {
+      "schema_version": "1",
+      "status": "complete",
+      "answer": "A seguir está a lista de todos os processos de transformação cadastrados:\n\n1. **Processo ID:** 8fe16420-748a-40cf-a8bf-f578e413a9e6\n   - Código: PROC-0105\n   - Nome: G5 E2E Processo g5e2e-mvb3ecyu\n   - Status: ativo\n   - Filial IDs: (vazio)\n   - Setor IDs: (vazio)\n   - Data de Criação: 2026-10-16T11:58:18.877434-03:00\n   - Data de Atualização: 2026-10-16T11:58:19.442890-03:00\n\n2. **Processo ID:** c374e235-dd12-4ae2-9317-51bfc2576a78\n   - Código: PROC-0104\n   - Nome: G7 E2E Processo g7e2e-mvb3dg6<truncated>",
+      "evidence_refs": [
+        0,
+        1,
+        2
+      ],
+      "unmet_obligations": [],
+      "limitations": [
+        "result_truncated"
+      ],
+      "clarification_question": null
+    },
+    "obligation_coverage": [
+      {
+        "obligations": [
+          {
+            "description": "Listagem de todos os registros de processos de transformação",
+            "evidence_source": "process",
+            "operation": "read",
+            "required_scope": [
+              "entity=process",
+              "action=search",
+              "params=<opaque:44136fa355b3678a>",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Listagem de todos os registros de processos de transformação": "SATISFIED"
+        }
+      },
+      {
+        "obligations": [
+          {
+            "description": "Listagem de todos os registros de processos de transformação",
+            "evidence_source": "process",
+            "operation": "read",
+            "required_scope": [
+              "entity=process",
+              "action=search",
+              "params=<opaque:44136fa355b3678a>",
+              "__container__=params"
+            ]
+          }
+        ],
+        "states": {
+          "Listagem de todos os registros de processos de transformação": "SATISFIED"
+        }
+      }
+    ],
+    "mcp_invoke_targets": [
+      "MCP:read",
+      "MCP:read",
+      "MCP:read"
+    ],
+    "investigation_plan": {
+      "goal_class": "read",
+      "comparison_requested": false,
+      "expected_delivery": "enumeration",
+      "business_subject": "processos de transformação",
+      "declared": true,
+      "target_identities": [],
+      "evidence_needed": [
+        {
+          "description": "Listagem de todos os registros de processos de transformação",
+          "evidence_source": "process",
+          "operation": "read",
+          "required_scope": [
+            "entity=process",
+            "action=search",
+            "params=<opaque:44136fa355b3678a>",
+            "__container__=params"
+          ]
+        }
+      ]
+    },
+    "error": null
+  },
+  "session_meta": {
+    "schema_version": "int1_decision_trace_v1",
+    "event_type": "evaluation_meta",
+    "evaluation_id": "or-qwen14b-e12d13cf3f56",
+    "scenario_id": "session",
+    "correlation_id": "or-qwen14b-e12d13cf3f56",
+    "timestamp_unix_ms": 1794783431918,
+    "payload": {
+      "task_id": "DELIA-C3-T2-INT2-TYPED-OBJECTIVE-DELIVERY-OBLIGATION-POPULATION-01",
+      "model_id": "qwen/qwen3-14b",
+      "model_profile": "openrouter_qwen",
+      "model_config_fingerprint": "e4a5b706a3b3156b",
+      "llm_base_host": "openrouter.ai",
+      "environment": "development",
+      "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+      "pydantic_ai": "2.50.0",
+      "two_agent_experiment": true,
+      "b3_capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+      "http_wire_bytes": "NOT_OBSERVED",
+      "scenarios": [
+        "INT2_G2_aggregation_active_scope",
+        "INT2_R5_multipage_full_enumeration",
+        "INT2_R6_clarification_needed",
+        "INT2_R6_multiturn_structure_recovery"
+      ],
+      "scenario_filter": "INT2_G2_aggregation_active_scope,INT2_R5_multipage_full_enumeration,INT2_R6_clarification_needed,INT2_R6_multiturn_structure_recovery"
+    }
+  }
+}

@@ -2115,3 +2115,16 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `OPEN_LOW` | Plano G2 às vezes ancora `summary/analysis` enquanto a prova vem de `teo.read` filtrado — publicação GROUNDED com filtro comprovado, obrigação INCONCLUSIVE (não FALSE_SATISFIED). |
 
 **NEXT:** `COORDINATION_C3_T2_GROUNDING_MULTIPAGE_MULTITURN_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+
+### 2026-11-15 — Final evidence closure residuals
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `R5-N3-OWNER-COMPOSITION` | `PENDING` | Aggregator owner-agnostic; sem contrato de união cross-owner |
+| `R5-N4-FILTER-DRIFT` | `PENDING` | Sem fingerprint de filtro no merge de páginas |
+| `R5-N5-SCOPE-DRIFT` | `PENDING` | Idem; AuthZ cross-user coberto por suites isoladas, não pelo aggregator |
+| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | Identidade deny ainda não provisionada |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` | Âncora params vs arguments |
+| `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `OPEN_LOW` | GROUNDED com obrigação INCONCLUSIVE possível |
+
+**NEXT:** `COORDINATION_C3_T2_FINAL_EVIDENCE_CI_NEGATIVE_VERIFIER_INDEPENDENT_REVIEW`. Deploy/promo/fase NÃO autorizados.
