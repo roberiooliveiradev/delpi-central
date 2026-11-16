@@ -12,6 +12,10 @@ on:
       - "supplies-api/tests/interface/http/test_purchase_request_sc_pc_conversion.py"
       - "supplies-api/tests/infrastructure/gateways/test_delpi_api_gateway.py"
       - "plugins/supplies/src/features/purchase-requests/ScPcConversionPage.tsx"
+      - "plugins/supplies/src/features/purchase-requests/scPcConversionApi.ts"
+      - "plugins/supplies/src/features/purchase-requests/scPcConversionApi.test.ts"
+      - "strategic-indicators-api/si_app/application/services/supplies/supplies_metrics_snapshot_service.py"
+      - "strategic-indicators-api/tests/test_supplies_sc_pc_conversion.py"
       - ".github/workflows/supplies-sc-pc-conversion.yml"
   pull_request:
     paths:
@@ -22,6 +26,10 @@ on:
       - "supplies-api/tests/interface/http/test_purchase_request_sc_pc_conversion.py"
       - "supplies-api/tests/infrastructure/gateways/test_delpi_api_gateway.py"
       - "plugins/supplies/src/features/purchase-requests/ScPcConversionPage.tsx"
+      - "plugins/supplies/src/features/purchase-requests/scPcConversionApi.ts"
+      - "plugins/supplies/src/features/purchase-requests/scPcConversionApi.test.ts"
+      - "strategic-indicators-api/si_app/application/services/supplies/supplies_metrics_snapshot_service.py"
+      - "strategic-indicators-api/tests/test_supplies_sc_pc_conversion.py"
       - ".github/workflows/supplies-sc-pc-conversion.yml"
 
 permissions:
@@ -84,3 +92,21 @@ jobs:
       - name: Compile production UI
         working-directory: plugins/supplies
         run: npm run build
+
+  strategic-indicators-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: strategic-indicators-api/requirements.txt
+      - name: Install strategic indicator dependencies
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r strategic-indicators-api/requirements.txt
+          pip install pytest
+      - name: Validate weighted SC-PC conversion contract
+        working-directory: strategic-indicators-api
+        run: python -m pytest -q tests/test_supplies_sc_pc_conversion.py

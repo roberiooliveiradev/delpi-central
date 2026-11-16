@@ -15,14 +15,16 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 def _summary(row: dict[str, Any] | None) -> dict[str, Any]:
     row = row or {}
     keys = (
-        "approved_requests", "converted_requests", "pending_requests",
+        "approved_requests", "with_approval", "without_approval",
+        "converted_requests", "pending_requests",
         "before_release", "invalid_order_dates", "sum_conversion_days",
         "same_day", "one_to_two_days", "three_to_five_days",
         "six_to_ten_days", "over_ten_days",
     )
     result = {key: int(row.get(key) or 0) for key in keys}
     result["avg_days"] = (
-        float(row["avg_days"]) if row.get("avg_days") is not None else None
+        float(row["avg_days"])
+        if row.get("avg_days") not in (None, "") else None
     )
     return result
 
@@ -67,37 +69,39 @@ class PurchaseRequestScPcConversionRepository(BaseRepository):
                 records = datasets[1]["data"]
 
         consolidated = next(
-            (row for row in summaries if row.get("branch") is None), None,
+            (row for row in summaries if row.get("branch") in (None, "")), None,
         )
         by_branch = {
             str(row["branch"]).strip(): _summary(row)
-            for row in summaries if row.get("branch") is not None
+            for row in summaries if row.get("branch") not in (None, "")
         }
         summary = _summary(consolidated)
         items = [
             {
                 "branch": str(row.get("branch") or "").strip(),
                 "request_number": str(row.get("request_number") or "").strip(),
-                "issue_date": row.get("issue_date"),
-                "final_approval_date": row.get("final_approval_date"),
-                "first_order_date": row.get("first_order_date"),
-                "first_order_number": row.get("first_order_number"),
+                "issue_date": row.get("issue_date") or None,
+                "final_approval_date": row.get("final_approval_date") or None,
+                "effective_start_date": row.get("effective_start_date") or None,
+                "start_date_source": row.get("start_date_source"),
+                "first_order_date": row.get("first_order_date") or None,
+                "first_order_number": row.get("first_order_number") or None,
                 "linked_order_count": int(row.get("linked_order_count") or 0),
                 "approval_levels": int(row.get("approval_levels") or 0),
                 "item_count": int(row.get("item_count") or 0),
                 "conversion_status": row.get("conversion_status"),
                 "conversion_days": (
                     int(row["conversion_days"])
-                    if row.get("conversion_days") is not None else None
+                    if row.get("conversion_days") not in (None, "") else None
                 ),
             }
             for row in records
         ]
         return {
             "source": "SC1010+SCR010+SC7010",
-            "scope": "confirmed_release_to_first_order",
+            "scope": "release_or_issue_without_approval_to_first_order",
             "unit": "calendar_days",
-            "period_anchor": "final_approval_date",
+            "period_anchor": "effective_start_date",
             "filters": filters,
             "summary": summary,
             "branch_breakdown": by_branch,

@@ -85,3 +85,30 @@ Verificar também o **status HTTP exato** do request na aba Network, a duração
 - SC sem PC não é 0 dia; PC anterior à liberação não entra no cálculo.
 - Consulta ampliada até o limite de 367 dias permanece funcional após otimização.
 - Runs CI focadas de API, BFF, TypeScript/build e revisão de amostras reais concluídas.
+
+## 16/11/2026 · Incidente 502 e SCs sem alçada
+
+### Causa verificável no código do produtor
+
+`BaseRepository._normalize_row` converte `NULL` em `""` em todos os campos de resposta SQL. O repositório #635 tentava executar `int(row["conversion_days"])` quando `conversion_days=""`, pois sua guarda verificava apenas `is not None`. Isso gera `ValueError` quando a SC está sem PC ou marcada como inconsistência. O endpoint api-delpi tratava como HTTP 500, repassado pelo BFF como 502. Outros dois problemas decorrentes da mesma normalização: `AVG(...)=NULL` convertido em `""` provocava `float("")`; e a linha total do ROLLUP `branch=NULL` convertida em `""` não era identificada, produzindo total zero.
+
+**Correção:** normalizar `None` e string vazia para campos numéricos opcionais, datas opcionais e primeira ordem; identificar a linha total por `branch in (None, "")`. Testes simulam exatamente a saída normalizada do BaseRepository. Não modificar `BaseRepository` global, para evitar regressões em outros domínios.
+
+### Nova regra validada pelo solicitante
+
+- **Com SCR de alçada:** início continua sendo a data da última aprovação válida `SCR010.CR_DATALIB`, somente para SC totalmente liberada e histórico comprovado.
+- **Sem SCR de alçada:** se **nenhuma** entrada ativa `CR_TIPO='SC'` existir para filial+número **e todos os itens da SC estiverem `C1_APROV='L'`**, o início da contagem é `SC1010.C1_EMISSAO`. Não inventar data de aprovação.
+- **Com SCR pendente, rejeitada, inválida ou incompleta:** nunca usar fallback para emissão da SC; não tratar ausência de evento final como ausência de alçada.
+- **Fim:** data de emissão do primeiro PC vinculado em SC7010, sem duplicar SC por linha de item ou por múltiplos PCs.
+- **Janela da tela:** filtrar por **início efetivo da contagem**, seja liberação SCR ou emissão SC sem alçada. O campo `start_date_source` distingue `approval_release` de `issue_without_approval`; `effective_start_date` fornece a data uniforme.
+- **Anomalias:** SC ainda sem PC segue pendente; PC anterior ao início ou data inválida não entra na média.
+- **Amostra:** a contagem de SCs sem SCR é uma presunção operacional de **ausência de alçada**, sustentada apenas pelo estado liberado de todos os itens e inexistência de SCR. Exige amostra de aceite de Compras para afastar perdas de histórico.
+- **Contrato novo:** `scope=release_or_issue_without_approval_to_first_order`, `period_anchor=effective_start_date`. APIs, frontend e fornecedor estratégico verificam o mesmo contrato.
+
+### Evidência SQL Server read-only
+
+Consulta direta à base DELPI em novembro/2026 mostrou **482 SCs com `C1_APROV=L` e sem registro SCR**: 134 na matriz 01 e 348 na filial 02. O SQL revisado completo, testado em leitura para 01 e período 01/11 a 16/11, retornou **153 SCs** elegíveis, sendo 19 com alçada e 134 sem SCR; 134 tinham primeiro PC válido e 15 estavam pendentes, com média de **0,60 dias** para convertidas. Esses valores são uma fotografia de validação da query, **não** confirmação do deploy funcional do produtor.
+
+### Deploy e checagens
+
+Após merge e testes CI, reconstruir **na ordem** `api-delpi`, `supplies-api`, `strategic-indicators-api`, `supplies` para alinhar o contrato de resposta, sem rebuild de plugins não relacionados. Validar tela com filiais 01 e 02, ambos os tipos de SC e uma SC sem PC. Se o 502 persistir, inspecionar os logs sanitizados de `api-delpi` e `supplies-api`, primeiro verificando ValueError, SQL/ODBC, erros de serviço e status upstream, sem expor tokens. Não solucionar GLPI #635 antes do aceite.

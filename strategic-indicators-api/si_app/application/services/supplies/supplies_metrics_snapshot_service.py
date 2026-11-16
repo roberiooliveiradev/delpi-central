@@ -250,7 +250,7 @@ class SuppliesMetricsSnapshotService:
             if (
                 not isinstance(payload, dict)
                 or payload.get("source") != "SC1010+SCR010+SC7010"
-                or payload.get("scope") != "confirmed_release_to_first_order"
+                or payload.get("scope") != "release_or_issue_without_approval_to_first_order"
             ):
                 return empty
             breakdown = payload.get("branch_breakdown") or {}

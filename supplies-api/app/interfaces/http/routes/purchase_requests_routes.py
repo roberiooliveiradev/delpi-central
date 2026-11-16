@@ -188,8 +188,8 @@ def get_portal_sc_pc_conversion():
     if (
         not isinstance(data, dict)
         or data.get("source") != "SC1010+SCR010+SC7010"
-        or data.get("scope") != "confirmed_release_to_first_order"
-        or data.get("period_anchor") != "final_approval_date"
+        or data.get("scope") != "release_or_issue_without_approval_to_first_order"
+        or data.get("period_anchor") != "effective_start_date"
         or not isinstance(data.get("summary"), dict)
         or not isinstance(data.get("branch_breakdown"), dict)
         or not isinstance(data.get("items"), list)
