@@ -87,7 +87,7 @@ Cor PI ≠ cor MP (4 letras vs abreviação curta).
 
 ## 10. Contratos de roteiros e inspeção — TO_INVENTORY / OWNER_BLOCKED
 
-- **Roteiros produtivos (SG2/operações/postos/recursos):** nenhum contrato encontrado em engineering-api nem em `/v1/products*`. Não existe hoje consulta oficial de roteiro → capacidade pendente de Contract Gate com api-delpi/TOTVS. **Não inventar operações pela aparência do desenho.**
+- **Roteiros produtivos (SG2/operações/postos/recursos):** ~~nenhum contrato encontrado em engineering-api nem em `/v1/products*`~~ **RESOLVIDO em 2026-11-16** — consulta oficial de roteiro existe: `read(routing.steps)` via `GET /products/{code}/guide` da api-delpi (SG2010 × SG1010 recursiva × SGF010), delegada pelo BFF com Bearer humano; REST `GET /v1/products/{code}/routing`; evidência completa em Doc 122. **Continua proibido inventar operações pela aparência do desenho** — usar sempre a capability oficial.
 - **Inspeção:** plugins `inspecoes-entrada` e `inspecoes-processo` existem (bounded contexts próprios) — contratos de inspeção ligada a desenho/produto TO_INVENTORY (owner: qualidade). `api-delpi` tem services de `quality_labels` (certificado/audit) — insumo candidato.
 
 ## 11. Matriz desenho × dados oficiais (critérios-alvo)
@@ -144,7 +144,7 @@ Sem acesso a desenho/estrutura sem permissão efetiva backend; sem token em URL;
 E1. Contract Gate extração PDF→texto/imagem (serviço neutro extraído de §3.1, owner definido) + fixtures ONDA14 como corpus.
 E2. Ação semântica `product.drawing_analysis` (read) — legibilidade/revisão/metadados × cadastro; relatório §14 mínimo.
 E3. Desenho × BOM (componentes/qty/UM/revisão) com classificações §11; descrições MP/PI com normas §7–8.
-E4. Contract Gates pendentes (PA norm, SG2 roteiro, inspeção) conforme owners.
+E4. Contract Gates pendentes (PA norm, inspeção) conforme owners. ~~SG2 roteiro~~ → resolvido: `read(routing.steps)` (Doc 122).
 E5. RAG de critérios versionados + evals de ground truth (precisão/FP/FN/citação) → homologação → rollout.
 
 ## 19. Critérios de aceite

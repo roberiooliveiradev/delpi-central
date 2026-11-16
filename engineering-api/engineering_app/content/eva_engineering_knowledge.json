@@ -180,7 +180,7 @@
    "guidance": [
     "Antes de analyze(product.drawing_analysis) com observacoes visuais, consulte estes criterios para fundamentar a comparacao.",
     "Observacoes visuais do consumidor sao hipoteses; concordancia/divergencia so sobre mesmo documento verificado.",
-    "Sem norma, roteiro ou inspecao: NOT_CHECKED/OWNER_BLOCKED, jamais conformidade inventada."
+    "Sem norma PA ou inspecao: NOT_CHECKED/OWNER_BLOCKED, jamais conformidade inventada. Roteiro oficial de fabricacao existe via read(routing.steps) — consultar quando pertinente, nunca inferir do desenho."
    ],
    "scope": "Criterios estruturais versionados — nao substitui norma completa nem aprovacao tecnica.",
    "superseded_rules": [

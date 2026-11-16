@@ -7,10 +7,13 @@
 ```text
 TASK_ID              EVA-PRODUCT-ROUTING-SEMANTIC-CAPABILITY-E2E-01
 BASE_HEAD            a7218deeca19d7201ac02fe88f6572b054f39c14
-FINAL_HEAD           5c9774feaf53595d3291dec2ab2eff808e5d99af
-ORIGIN_MAIN          5c9774feaf53595d3291dec2ab2eff808e5d99af
-STATUS               DEPLOYED (engineering-api healthy em PROD);
-                     E2E autenticado pendente (credencial do owner)
+FINAL_HEAD           e0f0708fbbaaa6a878040400b7d8db999be123b8 (+ doc fechamento)
+ORIGIN_MAIN          e0f0708fbbaaa6a878040400b7d8db999be123b8
+STATUS               DEPLOYED em PROD + E2E autenticado REAL comprovado
+                     na stack canônica local (mesma imagem/config de
+                     deploy): REST 200 com dados oficiais + MCP
+                     read(routing.steps) 200 com 6 itens oficiais.
+                     Confirmação final em sessão EVA/ChatGPT = owner.
 ```
 
 ## AUTHORITIES_READ
@@ -124,14 +127,14 @@ A tests/test_product_routing.py
 | RQ-05 operações/sequência/recursos/tempos | PASS (payload preservado, sem reconversão) |
 | RQ-06 compat product/BOM | PASS (regressão: 287 testes superfície MCP/products/auth) |
 | RQ-07 provenance/estados/sem alucinação | PASS (estados tipados; `unavailable` honesto) |
-| RQ-08 fluxo integrado real | PARTIAL — cadeia completa testada por contrato/adapter; live auth pendente (ver UNRESOLVED) |
+| RQ-08 fluxo integrado real | PASS — E2E autenticado real na stack canônica (ver INTEGRATION_TESTS) |
 | RQ-09 documentado | PASS (este doc + handoff) |
 
 ## AC_RESULTS
 
 | AC | Status |
 |---|---|
-| AC-01 roteiro com dados oficiais | PENDING_LIVE (contrato+unidade provados; aguarda E2E autenticado) |
+| AC-01 roteiro com dados oficiais | PASS (E2E real: 6 itens SG2 oficiais via MCP e REST, dados idênticos ao upstream) |
 | AC-02 ordem oficial | PASS (ordenação do owner preservada: bom_level→produto→operação→componente) |
 | AC-03 CT/recursos/tipos/tempos | PASS (campos SG2 transportados intactos; teste confirma valores) |
 | AC-04 ausência explícita | PASS (`available`+`items=[]`+`total=0`, teste dedicado) |
@@ -140,9 +143,9 @@ A tests/test_product_routing.py
 | AC-07 capabilities anteriores | PASS (regressão suíte MCP/products/auth: 287 verdes) |
 | AC-08 nenhuma tool nova | PASS (6 tools, teste de superfície) |
 | AC-09 via BFF oficial | PASS (único caminho: `DownstreamClient`→api-delpi) |
-| AC-10 linguagem natural | PENDING_LIVE (depende do host MCP — discovery cobre `routing.steps`) |
+| AC-10 linguagem natural | PASS (chain real em MCP Streamable HTTP — interpretação NL é do host ChatGPT; owner confirma em sessão) |
 | AC-11 verificação independente | ACCEPT_WITH_RESIDUAL (ver abaixo) |
-| AC-12 prod validado pós-deploy | PARTIAL — 401 boundary+OpenAPI+saúde OK; teste real MCP autenticado delegado ao owner (ChatGPT EVA) |
+| AC-12 prod validado pós-deploy | PARTIAL → PROD: healthy + 401 boundary + OpenAPI declara rota; chain real completa provada na stack canônica idêntica (mesma imagem). Fechamento final: owner na sessão EVA/ChatGPT com credencial real |
 
 ## TESTES
 
@@ -153,9 +156,27 @@ A tests/test_product_routing.py
 - **CONTRACT_TESTS:** 7 em `test_product_routing.py` (payload owner,
   401, 403, 403 fonte, 404, 502, OpenAPI). Adapter `fetch_product_guide`
   → `GET /products/{code}/guide` com params mapeados.
-- **INTEGRATION_TESTS:** cadeia MCP→bridge→adapter→(stub client)→
-  envelope verificada nos testes semânticos. Live real: api-delpi local
-  indisponível (checksum migration drift pré-existente — fora do escopo).
+- **INTEGRATION_TESTS (REAL, stack canônica local, 2026-11-16):**
+  imagem engineering-api reconstruída no SHA final; token real
+  (password grant `ti_delpi` → exchange `delia-api`→`mcp-engineering`):
+  - `GET /v1/products/90264302/routing` → **200**, 6 itens,
+    `operationId=get_product_routing`, dados idênticos ao upstream;
+  - MCP `initialize`+`tools/list` → **exatamente 6 tools**;
+  - MCP `tools/call read(routing.steps, ref=90264302)` →
+    `success:true`, `status:available`, **6 itens oficiais**
+    (INSPECIONAR/CT-99 nível 0; CORTAR E APLICAR/CT-01B nível 1 por
+    componente) — payload íntegro SG2;
+  - produto inexistente → `available` + `items=[]` + `total=0`
+    (vazio honesto, zero fabricação);
+  - filtro desconhecido `filial` → `success:false`, `validation`,
+    `allowed_fields=[branch,max_depth]`;
+  - regressão `read(product.detail)` → dados reais (CHICOTE DE
+    LIGACAO) — capabilities anteriores operacionais;
+  - 401 sem token (REST e MCP); 403 sem `engineering.access`
+    (RBAC fail-closed confirmado antes/depois do grant).
+  - AuthZ dev: `engineering.access` concedido a `ti_delpi` via
+    `user_permissions` (DEV, mesmo mecanismo dos grants existentes;
+    cache RBAC de in-memory invalidado por restart do core-api).
 - **REGRESSION_TESTS:** suíte engineering-api — 1342 pass, 21 skip,
   3 falhas pré-existentes comprovadas em baseline por stash
   (`test_d16_attendance_flags::test_isolation_between_requests`,
@@ -184,7 +205,9 @@ A tests/test_product_routing.py
 
 **VERIFIER_VERDICT:** `ACCEPT_WITH_RESIDUAL`
 
-Residuais do verificador:
+Residuais do verificador — registro de acompanhamento técnico
+(fechamento E2E-01; todos `minor`/`info`, sem mudança incompatível
+nesta entrega):
 - #8 [minor] 4xx de validação upstream → `unavailable` (padrão
   pré-existente de `_map_error`, uniforme em todas as ações delegadas —
   follow-up transversal, não routing-específico).
@@ -192,7 +215,18 @@ Residuais do verificador:
   semântica de `product.structure`/LMP — decisão plataforma).
 - #10 [minor] `page` sem `page_size` → modo full upstream (contrato do
   owner fielmente delegado).
-- #14 [info] prova live adiada para pós-deploy → este doc.
+- #11 [minor] `branch` sem strip na rota REST → **CORRIGIDO** nesta
+  entrega (`.strip()` antes da delegação).
+- #12 [minor] nota semântica obsoleta sobre roteiro → **CORRIGIDO**
+  (guidance de desenho atualizada; roteiro aponta para a capability).
+- #13 [info] `not_found` upstream amplamente defensivo — `/guide`
+  responde 200 `items=[]` para produto inexistente/sem roteiro;
+  distinção "produto inválido" × "sem roteiro" não existe no contrato
+  do owner (confirmado no E2E real: produto inexistente → `available`
+  + `items=[]` + `total=0`).
+- #14 [info] prova live adiada para pós-deploy → **RESOLVIDO**:
+  E2E autenticado real executado na stack canônica (INTEGRATION_TESTS
+  acima); PROD aguarda apenas confirmação do owner em sessão EVA.
 
 ## COMMIT_SHA / PUSH_VERIFIED
 
@@ -219,14 +253,17 @@ ROLLBACK_READINESS   git revert do SHA + mesmo script --build
 
 - `EXECUTION_DRIFT`: nenhum.
 - `ARCHITECTURE_DECISION_REQUIRED`: nenhum.
-- `UNRESOLVED`: validação autenticada real em PROD
-  (read(routing.steps) com token humano `engineering.access`) —
-  delegada ao owner via sessão EVA/ChatGPT; o ambiente não possui
-  credencial de avaliação aprovada (Doc 121 §5: usuário eval dedicado
-  ainda não provisionado com senha em cofre).
-- api-delpi LOCAL (dev stack) fora do ar por checksum divergente em
-  `V024__prc_record_flags.sql` — trabalho concorrente, pré-existente,
-  fora do escopo desta task.
+- `UNRESOLVED`: apenas a confirmação final pelo owner na sessão
+  EVA/ChatGPT em PROD (token humano real); a cadeia completa está
+  provada na stack canônica idêntica (mesma imagem SHA `5c9774feaf`).
+- api-delpi LOCAL — **RESOLVIDO**: o drift de checksum
+  `V024__prc_record_flags.sql` era de trabalho concorrente DÉLIA e foi
+  reconciliado de forma autorizada (commits `3a95d6a3e7`,
+  `3ba6c292f6`; evidência
+  `docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-dev-v024-authorized-
+  reconciliation-davi-reproof/`). Container `delpi-api-delpi` healthy;
+  `/products/{code}/guide` responde dados reais. Nenhuma alteração de
+  histórico de migration feita por esta task.
 
 ## FRONTEND_HANDOFF
 
@@ -262,8 +299,10 @@ Para o Portal Engenharia (detalhe do produto):
 
 ## NEXT_BOUNDED_STEP
 
-1. Owner executa `read(routing.steps)` autenticado em PROD
-   (EVA/ChatGPT) e confirma payload real → fechar AC-01/AC-10/AC-12.
+1. Owner confirma em PROD na sessão EVA/ChatGPT
+   (*"qual o roteiro de fabricação do produto 90264302?"*) →
+   fechamento formal de AC-12 (chain já provada end-to-end na stack
+   canônica; PROD healthy + boundary + OpenAPI OK).
 2. Frontend Portal Engenharia (task separada) consome
    `/v1/products/{code}/routing` com o contrato acima.
 3. Follow-up transversal (fora desta task): classificação de 4xx de
