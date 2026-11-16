@@ -5771,3 +5771,27 @@ Pipeline lógico, módulos internos somente se necessários:
 **Decision request à Coordination/Engenharia antes do G24-B/C:** ratificar D1–D6; avaliar se acesso ao corpus governado V2 via contrato publicado está disponível à Engineering API; decidir threshold e risco tolerado de falso conforme; confirmar que avaliação de descrição candidata terá consumer real. Sem ratificação, \`G24-A\` entrega planejamento/inventário, demais etapas bloqueadas, não improvisadas.
 
 **Estado final deste plano:** \`G24_PLAN_REGISTERED\`, \`G24_IMPLEMENTATION_NOT_STARTED\`, \`NO_DEPLOY\`, \`NO_AUTHORITY_CHANGE\`. E1 permanece a única frente até gate VAL01; E2–E7 congeladas.
+
+## §94.28 — G24: implementação da validação normativa reutilizável PI/MP
+
+**TASK_ID:** `EVA-E1-VAL01-G24-NORMATIVE-DESCRIPTION-VALIDATION-FULL-IMPLEMENTATION-AND-PRODUCTION-01`  
+**Estado:** `G24_IMPLEMENTATION_PASS / G24_TEST_PASS / DEPLOY_GATED_ON_VERIFIER_EXCEPTION`  
+**Plano:** §94.27 (commit `02b05ed9d0`).
+
+### 94.28.1 Entrega
+
+- **Motor:** `engineering_app/application/drawing/normative_description.py` — `evaluate_description` (contrato `normative_description.v1`) + `evaluate_pi_mp_coherence`, determinístico, zero IA (benchmark: baseline regex/validadores existentes não produzia por-regra nem aplicabilidade; parser tipado cobre o caso; spaCy/LLM **não justificados** — menor solução suficiente).
+- **Normas pinadas:** `NORM_REFS` carrega ref + sha256 + owner ENGENHaria do corpus V2 freeze-002 (PI `ee81169f…f269`; MP `66aa9c13…bd2`). Sem norma → `NOT_APPLICABLE`; extensão não ratificada → `OWNER_BLOCKED` (1038/D1, MABR/D2, posição E-D/D4, alias lexical/D2).
+- **Integração aditiva:** `bom_structure_comparator.py` — bloco `normative` por occurrence_record (`drawing_description_normative`, `totvs_description_normative`, `pi_*_normative`, `pi_bom_coherence`). Schema `structure_validation.v1` preservado; estados candidatos intactos; `automatic_nc=False`.
+- **Estados por regra:** `PASS | VIOLATION_CANDIDATE | WARNING | INCONCLUSIVE | NOT_APPLICABLE | OWNER_BLOCKED`; `MM` nunca vira `MM2` (WARNING com razão); ausência de descrição nunca fabrica campo; posição E/D nunca inferida da BOM.
+
+### 94.28.2 Evidências
+
+- **Testes G24:** 27/27 PASS (`tests/test_g24_normative_description.py`: unitários, contrato, negativos, integração via comparador).
+- **Regressão:** suite completa `1382 passed, 2 failed, 21 skipped`. As 2 falhas (`test_d16_attendance_flags`, `test_rbac_resolution`) são **pré-existentes** e fora do escopo (diff = 3 arquivos drawing-only).
+- **Verificador:** `INCONCLUSIVE` r1 — engine devin sem auth (`Not logged in`); `.git/delpi-verifier/requests/g24-normative-r1.md`. Não promovido a PASS.
+- **Caso 90263680 (teste integrado):** PI `CA18MARR-00152/10/06-0000-0110` → PASS por regra; `10380040` (cabo EPR) → `OWNER_BLOCKED` em ambas fontes; coerência `CA(PVC)` PI × `EPR` MP → `VIOLATION_CANDIDATE` (divergência real do caso, como candidato).
+
+### 94.28.3 Gates pendentes
+
+Deploy e ChatGPT E2E dependem de aceite explícito da exceção do verificador pelo owner competente (§94.27.5 G24-E) e de Infra. Código publicado para revisão com residual; nenhuma autoridade, AuthZ, contrato MCP ou write foi alterado.
