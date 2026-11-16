@@ -77,7 +77,7 @@ def test_single_branch_isolated_and_zero_is_not_fabricated():
     )
     source._supplies_gateway.fetch_sc_pc_conversion_summary.return_value = {
         "source": "SC1010+SCR010+SC7010",
-        "scope": "confirmed_release_to_first_order",
+        "scope": "release_or_issue_without_approval_to_first_order",
         "branch_breakdown": {
             "01": {"sum_conversion_days": 30, "converted_requests": 10},
             "02": {"sum_conversion_days": 20, "converted_requests": 2},
