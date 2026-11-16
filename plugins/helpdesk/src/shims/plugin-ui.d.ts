@@ -399,7 +399,7 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: ActionButtonProps): ReactElement;
 
-  export type IconButtonTone = "default" | "danger" | "primary";
+  export type IconButtonTone = "default" | "danger" | "primary" | "amber";
 
   export type IconButtonProps = {
     children: ReactNode;
@@ -411,6 +411,19 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export function IconButton(props: IconButtonProps): ReactElement;
+
+  export type ClearFiltersButtonDensity = "default" | "compact";
+  export type ClearFiltersButtonVariant = "labeled" | "icon";
+  export type ClearFiltersButtonProps = {
+    onClick: () => void;
+    label?: string;
+    disabled?: boolean;
+    density?: ClearFiltersButtonDensity;
+    variant?: ClearFiltersButtonVariant;
+    className?: string;
+    "aria-label"?: string;
+  };
+  export function ClearFiltersButton(props: ClearFiltersButtonProps): ReactElement;
 
   export type FilePreviewModalProps = {
     open: boolean;

@@ -7,7 +7,7 @@ import {
   SectionHintLabel,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, Building2, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Image as ImageIcon, Link2, Monitor, Paperclip, Pencil, Plus, RefreshCw, Send, TicketPlus, Trash2, Type, Users, X } from "lucide-react";
+import { AlignLeft, Building2, ChevronLeft, ExternalLink, FolderTree, Gauge, Image as ImageIcon, Link2, Monitor, Paperclip, Pencil, Plus, RefreshCw, Send, TicketPlus, Trash2, Type, Users, X } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -197,6 +197,7 @@ import {
   HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY,
   HelpdeskEmptyState,
   HelpdeskFilterInput,
+  HelpdeskClearFiltersButton,
   HelpdeskFormActions,
   HelpdeskIconButton,
   HelpdeskAttachButton,
@@ -659,23 +660,19 @@ function TicketListPage() {
               <HintAction hint={helpTooltips.listUi.statusChips} ariaLabel="Ajuda: Status">
                 <HelpdeskScopeChipBar aria-label="Filtro rápido de status" chips={statusChips} />
               </HintAction>
-              <TicketListToolbar
-                viewModel={listViewModel}
-                trailing={
-                  filterActive ? (
-                    <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
-                      <HelpdeskIconButton aria-label="Limpar filtros" onClick={clearListFilters}>
-                        <FilterX size={16} aria-hidden />
-                      </HelpdeskIconButton>
-                    </HintAction>
-                  ) : null
-                }
-              />
+              <TicketListToolbar viewModel={listViewModel} />
             </div>
 
             {/* Última linha do hero — controles à direita, ordem canônica:
-                Filtros → Ordenar → Colunas → Tabela|Cards (UX V3). */}
+                FilterX → Filtros → Ordenar → Colunas → Tabela|Cards (UX V3). */}
             <div className="helpdesk-list-controls-row">
+              <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
+                <HelpdeskClearFiltersButton
+                  variant="icon"
+                  onClick={clearListFilters}
+                  disabled={!filterActive}
+                />
+              </HintAction>
               <HintAction
                 hint={helpTooltips.listUi.filterBuilderToggle}
                 ariaLabel="Ajuda: Filtros avançados"

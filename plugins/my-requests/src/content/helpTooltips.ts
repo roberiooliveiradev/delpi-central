@@ -19,6 +19,8 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Abre a ordenação. Na fila você pode empilhar até três níveis (o primeiro é o principal). Na lista Minhas, a ordenação só pode usar campos comuns às duas fontes de dados.",
     statusChips:
       "Atalhos de status: toque num chip para filtrar só aquele status; toque de novo para desfazer.",
+    clearFilters:
+      "Remove a busca e todos os filtros ativos. A ordenação, as colunas e o número de itens por página são mantidos.",
     viewLayout:
       "Alterna entre a grade em tabela e a exibição em cartões.",
     columns:

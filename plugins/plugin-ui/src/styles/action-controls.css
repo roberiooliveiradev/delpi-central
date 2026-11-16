@@ -270,7 +270,7 @@ a.delpi-ui-action-btn--link:visited {
   filter: brightness(1.05);
 }
 
-:root[data-theme="dark"] .delpi-ui-icon-btn:not(.delpi-ui-icon-btn--primary):not(.delpi-ui-icon-btn--danger),
+:root[data-theme="dark"] .delpi-ui-icon-btn:not(.delpi-ui-icon-btn--primary):not(.delpi-ui-icon-btn--danger):not(.delpi-ui-icon-btn--amber),
 :root[data-theme="dark"] .delpi-ui-action-btn:not(.delpi-ui-action-btn--primary):not(.delpi-ui-action-btn--ghost):not(.delpi-ui-action-btn--link) {
   background: color-mix(
     in srgb,
@@ -294,6 +294,46 @@ a.delpi-ui-action-btn--link:visited {
     in srgb,
     var(--delpi-ui-danger, #b42318) 40%,
     var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+}
+
+/*
+ * Tom âmbar — ação de «limpar filtros» (FilterX) das toolbars de
+ * listagem (UX V3). Destaque visível sem comunicar perigo: a limpeza
+ * é reversível. Token semântico `warning` do design system; o mixin
+ * preserva legibilidade nos temas claro e escuro.
+ */
+.delpi-ui-icon-btn--amber {
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 82%,
+    var(--delpi-ui-text, var(--text, #111111))
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 45%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-icon-btn--amber:hover:not(:disabled),
+.delpi-ui-icon-btn--amber:focus-visible,
+.delpi-ui-icon-btn--amber:active:not(:disabled) {
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 90%,
+    var(--delpi-ui-text, var(--text, #111111))
+  );
+  border-color: var(--delpi-ui-warning, #f59e0b);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 20%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
   );
 }
 

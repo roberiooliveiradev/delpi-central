@@ -35,6 +35,7 @@ import {
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import {
+  MyRequestsClearFiltersButton,
   MyRequestsFilterRulesBuilder,
   MyRequestsListToolbarPopover,
   MyRequestsPageHero,
@@ -108,7 +109,14 @@ export type RequestListShellProps<Row> = {
   /** Chips de escopo rápido (status etc.). */
   chips?: ScopeChip[];
   chipsLabel?: string;
-  onClearChips?: () => void;
+
+  /**
+   * Limpa busca + chips + filtros avançados (semântica do consumidor —
+   * o botão vem do kit). Preserva ordenação, page size, colunas e layout.
+   */
+  onClearFilters?: () => void;
+  /** Habilita o FilterX âmbar; desabilita quando nada está filtrado. */
+  filtersActive?: boolean;
 
   sort?: RequestListSortConfig;
   filter?: RequestListFilterConfig;
@@ -149,7 +157,8 @@ export function RequestListShell<Row extends object>({
   onSearchCommit,
   chips,
   chipsLabel,
-  onClearChips,
+  onClearFilters,
+  filtersActive = false,
   sort,
   filter,
   columnSortMap,
@@ -307,6 +316,18 @@ export function RequestListShell<Row extends object>({
         }
         toolbarExtra={
           <>
+            {onClearFilters ? (
+              <HintAction
+                hint={MY_REQUESTS_HELP_TOOLTIPS.listUi.clearFilters}
+                ariaLabel="Ajuda: Limpar filtros"
+              >
+                <MyRequestsClearFiltersButton
+                  variant="icon"
+                  onClick={onClearFilters}
+                  disabled={!filtersActive}
+                />
+              </HintAction>
+            ) : null}
             {filter ? (
               <HintAction
                 hint={MY_REQUESTS_HELP_TOOLTIPS.listUi.filterBuilderToggle}
@@ -380,11 +401,7 @@ export function RequestListShell<Row extends object>({
               hint={MY_REQUESTS_HELP_TOOLTIPS.listUi.statusChips}
               ariaLabel="Ajuda: Status"
             >
-              <MyRequestsScopeChipBar
-                chips={chips}
-                label={chipsLabel}
-                onClearAll={onClearChips}
-              />
+              <MyRequestsScopeChipBar chips={chips} label={chipsLabel} />
             </HintAction>
           ) : undefined
         }

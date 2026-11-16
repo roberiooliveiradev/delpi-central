@@ -239,6 +239,20 @@ export function WorkQueuePage() {
     patchFilters(next);
   }, [filterRules, filters, patchFilters]);
 
+  /* FilterX âmbar: limpa busca + chips + filtros avançados (inclui
+   * escopo Minhas); preserva sort/pageSize e colunas/layout. */
+  const clearAllFilters = useCallback(() => {
+    setFilterRules([]);
+    patchFilters({
+      q: "",
+      typeCode: "",
+      status: "",
+      branch: "",
+      mineScope: "",
+      page: 1,
+    });
+  }, [patchFilters]);
+
   /* -------------------------------------------------------- */
 
   useEffect(() => {
@@ -447,7 +461,14 @@ export function WorkQueuePage() {
           }),
         )}
         chipsLabel="Status"
-        onClearChips={() => patchFilters({ status: "", page: 1 })}
+        onClearFilters={clearAllFilters}
+        filtersActive={!!(
+          filters.q ||
+          filters.typeCode ||
+          filters.status ||
+          filters.branch ||
+          filters.mineScope
+        )}
         sort={{
           fields: REQUESTS_SORT_FIELDS,
           levels: sortLevels,

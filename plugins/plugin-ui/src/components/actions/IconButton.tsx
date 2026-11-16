@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type IconButtonTone = "default" | "danger" | "primary";
+export type IconButtonTone = "default" | "danger" | "primary" | "amber";
 
 export type IconButtonProps = {
   children: ReactNode;

@@ -184,7 +184,7 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroBox!.x + heroBox!.width + 2,
     );
 
-    /* Ordem visual Filtros → Ordenar → Colunas → Tabela|Cards.
+    /* Ordem visual FilterX → Filtros → Ordenar → Colunas → Tabela|Cards.
      * Ordem de leitura (linha, depois coluna): no mobile os controles
      * podem quebrar linha — x isolado não reflete a ordem. */
     const boxOf = async (name: RegExp) =>
@@ -196,7 +196,11 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       /* linha visual (bucket ~28px) ×100000 + x — jitter de y na
        * mesma linha não inverte a ordem. */
       b ? Math.round(b.y / 28) * 100000 + Math.round(b.x) : -1;
-    const pFiltros = pos(await boxOf(/filtros/i));
+    const clearBtn = controlsRow
+      .getByRole("button", { name: /limpar filtros/i })
+      .first();
+    const pClear = pos(await clearBtn.boundingBox());
+    const pFiltros = pos(await boxOf(/^Filtros$/i));
     const pOrdenar = pos(await boxOf(/^Ordenar/i));
     const pColunas = pos(await boxOf(/^Colunas/i));
     const pTabela = pos(
@@ -205,13 +209,25 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
         .first()
         .boundingBox(),
     );
-    expect(pFiltros).toBeGreaterThanOrEqual(0);
+    expect(pClear).toBeGreaterThanOrEqual(0);
+    expect(pFiltros).toBeGreaterThan(pClear);
     expect(pOrdenar).toBeGreaterThan(pFiltros);
     expect(pColunas).toBeGreaterThan(pOrdenar);
     expect(pTabela).toBeGreaterThan(pColunas);
 
-    /* Cada um dos quatro controles inteiramente dentro do hero. */
-    for (const name of [/filtros/i, /^Ordenar/i, /^Colunas/i]) {
+    /* FilterX é o controle âmbar compartilhado do kit — cor real do
+     * token warning, não só a classe CSS. */
+    await expect(clearBtn).toHaveClass(/delpi-ui-icon-btn--amber/);
+    const clearColor = await clearBtn.evaluate(
+      (el) => getComputedStyle(el).color,
+    );
+    expect(clearColor).not.toBe("rgb(0, 0, 0)");
+    /* token warning #f59e0b mix com texto — faixa âmbar/laranja */
+    const clearBox = await clearBtn.boundingBox();
+    expect(clearBox).toBeTruthy();
+
+    /* Cada um dos controles inteiramente dentro do hero. */
+    for (const name of [/limpar filtros/i, /^Filtros$/i, /^Ordenar/i, /^Colunas/i]) {
       const box = await controlsRow
         .getByRole("button", { name })
         .first()

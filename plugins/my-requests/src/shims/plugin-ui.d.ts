@@ -297,6 +297,19 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: ActionButtonProps): ReactElement;
 
+  export type ClearFiltersButtonDensity = "default" | "compact";
+  export type ClearFiltersButtonVariant = "labeled" | "icon";
+  export type ClearFiltersButtonProps = {
+    onClick: () => void;
+    label?: string;
+    disabled?: boolean;
+    density?: ClearFiltersButtonDensity;
+    variant?: ClearFiltersButtonVariant;
+    className?: string;
+    "aria-label"?: string;
+  };
+  export function ClearFiltersButton(props: ClearFiltersButtonProps): ReactElement;
+
   export type FilePreviewModalProps = {
     open: boolean;
     title: string;

@@ -172,16 +172,22 @@ describe("Helpdesk list UX structural", () => {
     /* Busca sozinha na faixa primária — sem barra de ações junto ao campo. */
     expect(controls).not.toContain("helpdesk-list-primary-bar__actions");
     expect(css).not.toContain(".helpdesk-list-primary-bar__actions");
-    /* Ordem canônica na linha: Filtros → Ordenar → Colunas → Tabela|Cards. */
+    /* Ordem canônica na linha (UX V3 follow-up):
+       FilterX âmbar → Filtros → Ordenar → Colunas → Tabela|Cards. */
     const row = controls.slice(iRow);
+    const iClear = row.indexOf("HelpdeskClearFiltersButton");
     const iFilter = row.indexOf("TicketListFilterPopover");
     const iSort = row.indexOf("TicketListSortPopover");
     const iCols = row.indexOf("TableColumnVisibilityMenu");
     const iToggle = row.indexOf("HelpdeskSegmentToggle");
-    expect(iFilter).toBeGreaterThan(-1);
+    expect(iClear).toBeGreaterThan(-1);
+    expect(iFilter).toBeGreaterThan(iClear);
     expect(iSort).toBeGreaterThan(iFilter);
     expect(iCols).toBeGreaterThan(iSort);
     expect(iToggle).toBeGreaterThan(iCols);
+    /* O controle compartilhado do kit (variant icon = FilterX âmbar). */
+    expect(row).toContain('variant="icon"');
+    expect(row).toContain("clearListFilters");
     /* A linha é alinhada à direita via CSS do MFE (layout glue, sem kit copiado). */
     expect(css).toMatch(
       /\.helpdesk-list-controls-row[\s\S]*?justify-content:\s*flex-end/,
@@ -200,9 +206,22 @@ describe("Helpdesk list UX structural", () => {
     expect(footer).not.toContain("onPageSizeChange");
     expect(footer).not.toContain("page-size");
     expect(css).not.toContain(".helpdesk-list-pagination__page-size");
-    /* Limpar filtros migrou para a faixa de chips (contexto dos filtros ativos). */
+    /* Limpar filtros mora na linha de controles (à esquerda de
+       Filtros) — não mais na faixa de chips (o toolbar não recebe
+       mais `trailing`). */
     const chipsBlock = controls.slice(iChips, iRow);
-    expect(chipsBlock).toContain("clearListFilters");
+    expect(chipsBlock).not.toContain("clearListFilters");
+    expect(chipsBlock).not.toContain("HelpdeskClearFiltersButton");
+    expect(chipsBlock).not.toContain("trailing=");
+    /* «Meus chamados» não se duplica: chip de escopo + label de filtro
+       ativo não renderizam o mesmo estado duas vezes. */
+    const viewModel = read("../presentation/ticketListViewModel.ts");
+    expect(viewModel).not.toContain('activeFilterLabels.push("Meus chamados")');
+    /* O FilterX é o controle compartilhado do kit — sem duplicação no MFE. */
+    expect(page).not.toContain("import { AlignLeft, Building2, ChevronLeft, ExternalLink, FilterX");
+    expect(read("../ui/helpdeskUi.tsx")).toContain(
+      "HelpdeskClearFiltersButton",
+    );
   });
 
   it("paginação usa kit + HintAction no rodapé (sem ícones ? do HelpTooltip)", () => {
