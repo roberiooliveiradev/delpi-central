@@ -278,6 +278,27 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "not_implemented honestly.",
         ),
     ),
+    # --- read: routing --------------------------------------------------------
+    _a(
+        "routing", "steps", "read",
+        "Official manufacturing routing of a product — operation "
+        "sequence, work centers, resources, operation types, "
+        "setup/standard times and per-operation components from the "
+        "owning source (TOTVS SG2/SGF via API DELPI "
+        "/products/{code}/guide). Covers the product and the levels "
+        "of its official BOM; empty result means no routing "
+        "registered — never fabricated operations.",
+        "read", ref_arg="product_code",
+        ref_description="Product code in the official catalog.",
+        fields=("branch", "max_depth"),
+        paginated=True,
+        notes=(
+            "Times are reported exactly as the official contract: "
+            "standard_time_hour_mil (G2_TEMPAD, thousandths of an "
+            "hour), plus the owner's derived hours/minutes per piece "
+            "— never reconverted locally.",
+        ),
+    ),
     # --- read: nonconformity ------------------------------------------------
     _a(
         "nonconformity", "search", "read",
@@ -357,8 +378,10 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "equals a proven BOM divergence; visual observations are "
             "untrusted input (schema-limited, hypotheses only); "
             "routing/inspection/PA-description checks report "
-            "NOT_CHECKED while contracts remain owner-blocked "
-            "(docs 69–71)."
+            "NOT_CHECKED — routing contract published via "
+            "read(routing.steps) but not yet consumed by the "
+            "analysis; inspection/PA-description remain "
+            "owner-blocked (docs 69–71)."
         ),
     ),
     _a(
@@ -854,11 +877,6 @@ PLANNED_SEMANTIC_ACTIONS: tuple[dict, ...] = (
         "status": "not_implemented",
         "note": "Edição de cadastro de produto — sem contrato WRITE "
                 "oficial no owner (doc 63 §2.8, OWNER_BLOCKED).",
-    },
-    {
-        "entity": "routing", "action": "steps", "tool": "read",
-        "status": "not_implemented",
-        "note": "Roteiros de fabricação — sem contrato oficial.",
     },
     {
         "entity": "raw_material", "action": "specification",

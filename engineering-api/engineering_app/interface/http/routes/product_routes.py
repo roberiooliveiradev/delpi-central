@@ -243,6 +243,43 @@ async def get_product_suppliers(
 
 
 @router.get(
+    "/v1/products/{product_code}/routing",
+    operation_id="get_product_routing",
+    summary="Roteiro de fabricação do produto (SG2) — delegação governada",
+)
+@require_any_permission([ENGINEERING_ACCESS])
+async def get_product_routing(
+    product_code: str,
+    branch: str | None = Query(default=None),
+    max_depth: int | None = Query(default=None, ge=1, le=15),
+    page: int | None = Query(default=None, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=500),
+):
+    ctx, error = _human_context("get_product_routing")
+    if error:
+        return error
+    code = product_code.strip()
+    if not code:
+        return fail(
+            "product_code obrigatório.", 400, operation_id="get_product_routing"
+        )
+    result = await build_delegated_auxiliary_source().fetch_product_guide(
+        ctx,
+        code=code,
+        branch=branch.strip() if branch else None,
+        max_depth=max_depth,
+        page=page,
+        page_size=page_size,
+    )
+    return _delegated(
+        result,
+        operation_id="get_product_routing",
+        ok_message="Roteiro do produto carregado.",
+        not_found_message=f"Produto {code} não encontrado ou sem roteiro.",
+    )
+
+
+@router.get(
     "/v1/products/{product_code}/drawing",
     operation_id="get_product_drawing",
     summary="Metadados do desenho técnico (acervo oficial file server)",

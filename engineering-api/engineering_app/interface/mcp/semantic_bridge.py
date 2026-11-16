@@ -452,6 +452,9 @@ _READ_DISPATCH = {
     ("product", "structure"): (
         lambda a: bridge.tool_get_product_structure(**a)
     ),
+    ("routing", "steps"): (
+        lambda a: bridge.tool_get_product_guide(**a)
+    ),
     ("product", "where_used"): (
         lambda a: bridge.tool_get_product_parents(**a)
     ),

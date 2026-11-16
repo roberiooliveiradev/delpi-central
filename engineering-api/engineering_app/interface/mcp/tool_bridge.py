@@ -1734,6 +1734,38 @@ async def tool_get_product_detail(*, product_code: str) -> CallToolResult:
         return handle_tool_error(exc)
 
 
+async def tool_get_product_guide(
+    *,
+    product_code: str,
+    branch: str | None = None,
+    max_depth: int | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
+) -> CallToolResult:
+    """read(routing.steps) — roteiro de fabricação oficial (SG2)."""
+    try:
+        context = _require_engineering_human()
+        code, error = _product_code_or_error(product_code)
+        if error:
+            return error
+        result = await build_delegated_auxiliary_source().fetch_product_guide(
+            _source_context(context),
+            code=code,
+            branch=branch.strip() if branch else None,
+            max_depth=max_depth,
+            page=page,
+            page_size=page_size,
+        )
+        return _lmp_result(
+            result,
+            not_found_message=(
+                f"Produto {code} não encontrado ou sem roteiro."
+            ),
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 async def tool_get_product_parents(
     *,
     product_code: str,

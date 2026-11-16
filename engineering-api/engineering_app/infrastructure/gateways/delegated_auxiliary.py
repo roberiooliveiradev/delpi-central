@@ -13,6 +13,7 @@ Rotas oficiais consumidas:
 - `GET /dashboard/department-idd` — nota IDD departamental; owner SI.
 - `GET /engineering/lmps/nonconformities/streak` — dias sem NC; owner NC.
 - `GET /products/{code}/structure` — BOM/estrutura; owner Products.
+- `GET /products/{code}/guide` — roteiro de fabricação (SG2); owner Products.
 """
 
 from __future__ import annotations
@@ -251,6 +252,29 @@ class ApiDelpiDelegatedAuxiliary:
             ctx,
             f"/products/{code}/structure",
             {"max_depth": max_depth, "page_size": page_size},
+        )
+
+    async def fetch_product_guide(
+        self,
+        ctx: HomeSourceContext,
+        *,
+        code: str,
+        branch: str | None = None,
+        max_depth: int | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
+    ) -> dict[str, Any]:
+        """Roteiro de fabricação oficial (SG2) — sequência, CT, recurso,
+        tempos e flags de operação; owner Products, sem reprocessamento."""
+        return await self._get_json(
+            ctx,
+            f"/products/{code}/guide",
+            {
+                "branch": branch,
+                "max_depth": max_depth,
+                "page": page,
+                "page_size": page_size,
+            },
         )
 
     async def fetch_product_parents(

@@ -181,6 +181,7 @@ def test_registry_parity_covers_legacy_intents() -> None:
         "lmp.history_events", "lmp.history_flow",
         "lmp.goal_context", "lmp.department_idd", "lmp.nc_streak",
         "product.structure",
+        "routing.steps",
         "nonconformity.search", "nonconformity.detail",
         "nonconformity.history", "nonconformity.indicators",
         "nonconformity.tags", "nonconformity.context",
@@ -332,6 +333,278 @@ def test_read_product_search_rejects_unknown_filter() -> None:
     )
     assert result.is_error
     assert result.structured_content["error_code"] == "validation"
+
+
+# --- routing.steps (roteiro de fabricação — SG2 via api-delpi) ---------------
+
+
+def _routing_items():
+    return {
+        "status": "available",
+        "data": {
+            "items": [
+                {
+                    "branch": "01",
+                    "route_code": "01",
+                    "product_code": "90264302",
+                    "operation_code": "010",
+                    "operation_description": "CORTE",
+                    "resource_code": "LASER01",
+                    "work_center": "CT10",
+                    "setup_hours": 0.5,
+                    "standard_time_hour_mil": 120.0,
+                    "standard_time_hours_piece": 0.12,
+                    "standard_time_minutes_piece": 7.2,
+                    "operation_type": "1",
+                    "mandatory_operation": "S",
+                    "mandatory_sequence": "S",
+                    "mandatory_report": "N",
+                    "component_code": None,
+                    "component_description": None,
+                    "component_sequence": None,
+                    "bom_level": 0,
+                },
+                {
+                    "branch": "01",
+                    "route_code": "01",
+                    "product_code": "90264302",
+                    "operation_code": "020",
+                    "operation_description": "DOBRA",
+                    "resource_code": "DOBRA01",
+                    "work_center": "CT20",
+                    "setup_hours": 0.25,
+                    "standard_time_hour_mil": 60.0,
+                    "standard_time_hours_piece": 0.06,
+                    "standard_time_minutes_piece": 3.6,
+                    "operation_type": "1",
+                    "mandatory_operation": "S",
+                    "mandatory_sequence": "S",
+                    "mandatory_report": "N",
+                    "component_code": None,
+                    "component_description": None,
+                    "component_sequence": None,
+                    "bom_level": 0,
+                },
+            ],
+            "page": None,
+            "page_size": None,
+            "total": 2,
+            "total_pages": None,
+        },
+    }
+
+
+def test_read_routing_steps_delegates(monkeypatch) -> None:
+    """read(routing.steps) — ref → product_code; filtros e paginação
+    propagados ao gateway delegado; payload oficial preservado."""
+    _set_context(_human_user())
+
+    class _Aux:
+        calls = {}
+
+        async def fetch_product_guide(self, ctx, **kw):
+            self.calls["guide"] = kw
+            return _routing_items()
+
+    aux = _Aux()
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: aux
+    )
+    result = asyncio.run(
+        sem.tool_read(
+            entity="routing",
+            action="steps",
+            ref="90264302",
+            filters={"branch": "01", "max_depth": 3},
+            pagination={"page": 1, "page_size": 50},
+        )
+    )
+    assert not result.is_error
+    kw = aux.calls["guide"]
+    assert kw["code"] == "90264302"
+    assert kw["branch"] == "01"
+    assert kw["max_depth"] == 3
+    assert kw["page"] == 1 and kw["page_size"] == 50
+    payload = result.structured_content
+    assert payload["entity"] == "routing"
+    assert payload["action"] == "steps"
+    ops = payload["data"]["data"]["items"]
+    assert [o["operation_code"] for o in ops] == ["010", "020"]
+    assert ops[0]["work_center"] == "CT10"
+    assert ops[0]["resource_code"] == "LASER01"
+    # Tempos trafegam intactos — nunca reconvertidos na borda.
+    assert ops[0]["standard_time_hour_mil"] == 120.0
+    assert ops[0]["standard_time_minutes_piece"] == 7.2
+
+
+def test_read_routing_steps_requires_ref() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps")
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+
+
+def test_read_routing_steps_rejects_unknown_filter() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_read(
+            entity="routing",
+            action="steps",
+            ref="90264302",
+            filters={"warehouse": "01"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+    assert "allowed_fields" in result.structured_content["data"]
+
+
+def test_read_routing_steps_forbidden_maps_403(monkeypatch) -> None:
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "forbidden", "reason": "owner_denied"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps", ref="90264302")
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 403
+
+
+def test_read_routing_steps_not_found_maps_404(monkeypatch) -> None:
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "not_found", "reason": "not_found"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps", ref="99999999")
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 404
+
+
+def test_read_routing_steps_empty_is_honest_not_error(monkeypatch) -> None:
+    """Produto válido sem roteiro: available + items vazio — ausência
+    explícita, nunca operações fabricadas nem erro falso."""
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {
+                "status": "available",
+                "data": {
+                    "items": [],
+                    "page": None,
+                    "page_size": None,
+                    "total": 0,
+                    "total_pages": None,
+                },
+            }
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps", ref="90264302")
+    )
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["status"] == "available"
+    assert data["data"]["items"] == []
+    assert data["data"]["total"] == 0
+
+
+def test_read_routing_steps_unavailable_is_honest(monkeypatch) -> None:
+    """Falha upstream → status unavailable tipado, nunca sucesso falso."""
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "unavailable", "reason": "timeout"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps", ref="90264302")
+    )
+    assert not result.is_error
+    assert result.structured_content["data"]["status"] == "unavailable"
+
+
+def test_read_routing_steps_requires_human() -> None:
+    _set_context(_human_user(principal_type="service"), "Bearer svc")
+    result = asyncio.run(
+        sem.tool_read(entity="routing", action="steps", ref="90264302")
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 403
+
+
+def test_routing_guide_adapter_calls_owner_route() -> None:
+    """Adapter delegado → GET /products/{code}/guide no owner, com o
+    Bearer humano propagado — nunca service token nem SQL direto."""
+    from engineering_app.application.ports.home_sources import (
+        HomeSourceContext,
+    )
+    from engineering_app.infrastructure.gateways.delegated_auxiliary import (
+        ApiDelpiDelegatedAuxiliary,
+    )
+
+    class _Client:
+        calls = {}
+
+        async def get(
+            self,
+            path,
+            *,
+            params=None,
+            access_token,
+            request_id=None,
+            service_token=None,
+        ):
+            self.calls["path"] = path
+            self.calls["params"] = params
+            self.calls["access_token"] = access_token
+            self.calls["service_token"] = service_token
+            return {"items": [], "total": 0}
+
+    client = _Client()
+    ctx = HomeSourceContext(
+        user_id="u1", access_token="tok", request_id="r1"
+    )
+    out = asyncio.run(
+        ApiDelpiDelegatedAuxiliary(client).fetch_product_guide(
+            ctx,
+            code="90264302",
+            branch="01",
+            max_depth=2,
+            page=1,
+            page_size=50,
+        )
+    )
+    assert out["status"] == "available"
+    assert client.calls["path"] == "/products/90264302/guide"
+    assert client.calls["access_token"] == "tok"
+    assert client.calls["service_token"] is None
+    assert client.calls["params"] == {
+        "branch": "01",
+        "max_depth": 2,
+        "page": 1,
+        "page_size": 50,
+    }
 
 
 def test_read_rejects_pagination_on_non_paginated_action() -> None:

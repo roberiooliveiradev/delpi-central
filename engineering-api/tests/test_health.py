@@ -49,6 +49,7 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/products/{product_code}/drawing",
         "/v1/products/{product_code}/drawing/pdf",
         "/v1/products/{product_code}/purchase-price-history",
+        "/v1/products/{product_code}/routing",
         "/public/characters/{character_id}/avatar/{filename}",
         "/v1/nonconformities",
         "/v1/nonconformities/{record_id}",
