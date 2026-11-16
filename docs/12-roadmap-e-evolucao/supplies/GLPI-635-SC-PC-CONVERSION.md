@@ -112,3 +112,34 @@ Consulta direta à base DELPI em novembro/2026 mostrou **482 SCs com `C1_APROV=L
 ### Deploy e checagens
 
 Após merge e testes CI, reconstruir **na ordem** `api-delpi`, `supplies-api`, `strategic-indicators-api`, `supplies` para alinhar o contrato de resposta, sem rebuild de plugins não relacionados. Validar tela com filiais 01 e 02, ambos os tipos de SC e uma SC sem PC. Se o 502 persistir, inspecionar os logs sanitizados de `api-delpi` e `supplies-api`, primeiro verificando ValueError, SQL/ODBC, erros de serviço e status upstream, sem expor tokens. Não solucionar GLPI #635 antes do aceite.
+
+
+## Evolução 16/11/2026 · Média operacional com SCs sem PC (GLPI #635)
+
+**Motivação do solicitante:** uma média apenas de SCs já convertidas pode mascarar o tempo acumulado de solicitações liberadas ainda aguardando pedido. A média principal passa a medir **tempo transcorrido em andamento**, não exclusivamente o tempo final de conversão.
+
+**Regra em produção após homologação desta PR:**
+- SC com pedido: `dias = DATEDIFF(day, data_inicial_efetiva, primeira_emissao_PC)`.
+- SC liberada sem nenhum PC vinculado: `dias = DATEDIFF(day, data_inicial_efetiva, data_de_hoje_em_Sao_Paulo)`. Cada SC pendente entra uma vez no numerador e denominador.
+- Data inicial permanece a **última liberação válida SCR** quando há alçada; para SC liberada sem qualquer SCR ativo, continua **emissão SC1**. A nova regra não inclui SC bloqueada/rejeitada nem com alçada pendente.
+- Data de referência `as_of_date` é calculada **no backend** a cada consulta, no fuso `America/Sao_Paulo` (fallback UTC-03 se o contêiner não tiver `tzdata`), independentemente do intervalo de competência. O cliente não pode escolher data arbitrária.
+- Para data inicial futura em relação a hoje, a pendência aparece na contagem de pendentes mas **não** recebe dias negativos nem compõe a média; contabilizada em `future_pending_requests`.
+- PC com data anterior à data inicial, PC inválido ou sem informação confiável continua excluído da média, com suas anomalias visíveis.
+
+**Métricas retornadas:**
+- `avg_days`: **média operacional principal**, soma dos dias transcorridos das SCs convertidas **e pendentes mensuráveis** ÷ `measured_requests`.
+- `avg_completed_days`: média somente das SCs convertidas, comparável à versão anterior.
+- `avg_pending_days`: idade média das SCs ainda sem PC (até `as_of_date`).
+- `sum_conversion_days`: dias apenas das convertidas (preservado por compatibilidade).
+- `sum_pending_days`: dias acumulados de pendências.
+- `sum_measured_days`: soma das duas parcelas. `measured_requests` é a quantidade de SCs realmente consideradas no cálculo; normalmente igual a convertidas + pendentes, exceto início futuro.
+- `pending_age_days`: dias em aberto da SC individual; `conversion_days` fica preenchido também para pendentes e representa o tempo transcorrido operacional mostrado na tabela.
+- Distribuição por faixas (mesmo dia, 1–2, 3–5 etc.) considera todas as observações com `conversion_days` válido. O percentual usa `measured_requests`.
+- `calculation_mode=completed_or_pending_elapsed_as_of_today` identifica o contrato atualizado. A API BFF e os consumidores estratégicos verificam esse campo para impedir uso silencioso de versões antigas.
+- DELPI Indicadores calcula `sum_measured_days / measured_requests` por filial e consolidado **ponderado por quantidade de SCs mensuráveis**, nunca a média simples das médias das filiais.
+
+**Exemplo ilustrativo:** duas SCs convertidas em 2 e 4 dias e uma SC pendente há 12 dias. Antiga média: (2+4)/2 = 3 dias. Nova média operacional: (2+4+12)/3 = 6 dias. A média de concluídas continua acessível: 3 dias.
+
+**Interpretação indispensável:** a nova média é um indicador **dinâmico** de tempo transcorrido, não uma média estatística de conversões finalizadas. Mesmo que o usuário filtre um mês passado, uma SC ainda aberta daquele mês continuará envelhecendo até hoje. Para comparações históricas fixas é necessário guardar snapshots diários; esta evolução não cria histórico persistente. O aging por si só **não prova atraso perante SLA** porque o prazo-alvo não foi definido.
+
+**Testes de regressão:** validar SC com PC, SC sem PC, sem alçada, alçada liberada, sem SCR, erro de data futura, totalização/rollup, médias separadas, faixas, filiais e ausência de divisões por zero. Garantir que o frontend e o fornecedor do DELPI Indicadores usem o mesmo contrato antes do deploy coordenado.
