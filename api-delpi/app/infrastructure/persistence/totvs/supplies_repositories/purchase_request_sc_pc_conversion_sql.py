@@ -32,6 +32,7 @@ def build_conversion_cohort(
     params = [
         *codes,
         start.replace("-", ""), end.replace("-", ""),
+        *codes,
         start.replace("-", ""), end.replace("-", ""),
         end.replace("-", ""),
     ]
