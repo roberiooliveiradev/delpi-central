@@ -14,20 +14,24 @@
 | C04 | KPI | `EngineeringKpiCard` (`createDashboardKpiCard`) | façade / `ProductRoutingTab.tsx` | **REUSE** quatro cards com density compacta; verificar variant/props reais — PROVEN_USAGE |
 | C05 | Filial/estágio | `EngineeringFiltersRow` + `EngineeringFilterSelect`, ou `EngineeringSelectField` | façade / routing | **REUSE**, compactar layout sem perder ação de troca — PROVEN_USAGE |
 | C06 | Chip contextual | `EngineeringStatusBadge` ou `EngineeringScopeChipBar` | façade | **OPTIONAL**, não substituir seletor por badge estático — PROVEN_EXPORT |
-| C07 | Lista de operações | **Card de domínio neutro reutilizável A IDENTIFICAR** | catálogo tem `DataRecordCard` e `InteractiveDataCard`; fachada possui `EngineeringInteractiveDataCard` | **TARGET card**, proibir `DataTable` como layout primário. `TO_INVENTORY`: verificar se componentes suportam expansão + slots; caso não, Abstraction Gate para UI neutra no Plugin UI |
-| C08 | Expansão/accordion | **Componente oficial a inventariar** | `@delpi/plugin-ui` catálogo + consumidores | **TO_INVENTORY**: sem afirmar export Accordion; confirmar contrato `expanded`/`onToggle`, teclado, aria, focus. Não replicar expander primitivo se kit suportar |
+| C07 | Lista de operações | `EngineeringInteractiveDataCard` | `plugins/plugin-ui/src/components/data/InteractiveDataCard.tsx`; façade `createDashboardInteractiveDataCard` | **COMPOSE** — campos-resumo via `EngineeringDetailFieldGrid` dentro de `children`; `DataTable` proibida como layout primário. Implementado em `OperationCard` — PROVEN_USAGE |
+| C08 | Expansão/accordion | `EngineeringInteractiveDataCard` (`onActivate`/`openHint`, `role="button"`, Enter/Space, `aria-label`) | `InteractiveDataCard.tsx` — interação nativa do kit | **COMPOSE** — estado `expanded` é da feature; chrome, foco e teclado do kit — PROVEN_USAGE |
 | C09 | Detalhes de operação | `EngineeringDetailFieldGrid` | façade `createDashboardDetailFieldGrid` | **REUSE**, mostrar atributos presentes/prioritários e honestidade dos ausentes — PROVEN_EXPORT |
-| C10 | Componentes vinculados | Card/lista simples do kit, `DataRecordCard` candidato; `DataTable` só com densidade comprovada | catálogo | **TARGET**; inspeção da composição real antes da escolha |
+| C10 | Componentes vinculados | Lista compacta (`<ul>` de texto) dentro do card expandido | `OperationDetail` — poucos itens não justificam densidade tabular | **REUSE/COMPOSE** — sem `DataTable` aninhada |
 | C11 | Formulário | `EngineeringTextField`, `EngineeringFormFieldShell`, `EngineeringFieldLabel`, `EngineeringFormActions` | façade `createDashboardNativeFormFields` | **REUSE** 3+2 campos, resumo e CTA — PROVEN_EXPORT |
 | C12 | Ações | `EngineeringActionButton`, `EngineeringIconButton` | façade | **REUSE** — PROVEN_EXPORT |
 | C13 | Feedback/loading | `EngineeringStateBanner`, `EngineeringEmptyState`, `EngineeringLoadingActivityCard` | façade | **REUSE**, erros vs zero dados — PROVEN_EXPORT |
 | C14 | Fonte/status | `EngineeringStatusBadge` | façade | **REUSE** status CALCULATED/PROVIDED/SIMULATION somente com dados pertinentes — PROVEN_EXPORT |
 | C15 | Contêiner gráfico | `EngineeringChartCard` | façade | **REUSE se gráfico agregar valor**, chrome não determina o renderer — PROVEN_EXPORT |
-| C16 | Renderer gráfico | `ConfigurableSeriesChart` | `ProductRoutingTab.tsx` e catálogo | **CURRENT / NOT APPROVED AS VISUAL TARGET**: gráfico existente apresentou plot claro/título inadequado; buscar componente/configuração dos dashboards aceitos e demonstrar equivalência |
+| C16 | Renderer gráfico | `ConfigurableSeriesChart` | `ProductRoutingTab.tsx` (`ThemedSeriesChart`) | **REUSE** — tema/`backgroundColor` (token `--en-surface`)/`decimalPlaces`/unidade `s`/`polarity: high_is_bad` resolvem paridade claro/escuro e escala; evidência visual e2e nos dois temas — PROVEN_USAGE |
 | C17 | Gráfico com uma operação | Card de métrica/detalhe nativo | C02/C04 | **TARGET** visual sintético em lugar de gráfico solitário; sem nova biblioteca |
 | C18 | Comparação de cenários | Cards nativos C02/C04, tabela compartilhada sob condição | façade / catálogo | **TARGET** cards até cenários suportados, tabela apenas se dados/legibilidade justificarem |
 | C19 | Estados de tabela densa | `DataTable` + wrapper da feature | `features/products/components/dataTableUi.ts` (verificar caminho real), `ProductRoutingTab.tsx` | **RETAIN ONLY where truly tabular**; não usar na operação primária — PROVEN_USAGE |
 | C20 | Tema | tokens `--delpi-ui-*` e theme provider/host | `plugins/plugin-ui/docs/architecture.md`, `usePortalTheme` local | **REUSE**, contrastar plot e controles nos dois temas; nenhuma paleta hardcoded |
+
+### Lacunas registradas (2026-11-16)
+
+- **PLUGIN_UI_GAP C08a — `aria-expanded` ausente em `InteractiveDataCard`:** o card interativo expõe `role="button"` + teclado, mas não aceita `ariaExpanded`/estado de disclosure. Mitigação aplicada na feature: `ariaLabel` inclui "— expandida" quando aberto. Correção correta é no owner `@delpi/plugin-ui` (prop `ariaExpanded?: boolean` no `<article>`), não wrapper local.
 
 ## 2. Gates de escolha de componente (antes do JSX)
 

@@ -87,11 +87,19 @@ describe("aba Roteiro — seções e estados honestos", () => {
     expect(src).toContain("CALCULATED");
   });
 
-  it("controles acessíveis — tabs do kit e expansão nativa da DataTable", () => {
+  it("controles acessíveis — tabs do kit e cards expansíveis do kit", () => {
     expect(src).toContain('mode="tabs"');
-    expect(src).toContain("expandedRowKey");
-    expect(src).toContain("renderExpandedRow");
-    expect(src).toContain("onRowClick");
+    expect(src).toContain("EngineeringInteractiveDataCard");
+    expect(src).toContain("onActivate");
+    expect(src).not.toContain("expandedRowKey");
+  });
+
+  it("operações são cards expansíveis — DataTable só onde é tabular", () => {
+    expect(src).not.toContain("OPERATION_COLUMNS");
+    expect(src).not.toContain("COMPONENT_COLUMNS");
+    // A DataTable permanece apenas na comparação de cenários (dados
+    // verdadeiramente tabulares), nunca como visualização primária.
+    expect(src).toContain("SCENARIO_COLUMNS");
   });
 });
 
@@ -118,6 +126,7 @@ describe("aba Roteiro — Plugin UI como fonte de apresentação", () => {
       "EngineeringStatusBadge",
       "EngineeringChartCard",
       "EngineeringLoadingActivityCard",
+      "EngineeringInteractiveDataCard",
     ]) {
       expect(src).toContain(component);
     }

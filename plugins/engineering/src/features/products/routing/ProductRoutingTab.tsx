@@ -29,6 +29,8 @@ import {
 } from "react";
 
 import {
+  ChevronDown,
+  ChevronUp,
   Clock3,
   Factory,
   ListOrdered,
@@ -45,6 +47,7 @@ import {
   EngineeringFilterSelect,
   EngineeringFiltersRow,
   EngineeringFormActions,
+  EngineeringInteractiveDataCard,
   EngineeringKpiCard,
   EngineeringLoadingActivityCard,
   EngineeringSectionCard,
@@ -142,49 +145,6 @@ function stageKeyOf(stage: {
 
 /* --- Operações ------------------------------------------------------- */
 
-const OPERATION_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
-  {
-    key: "operation",
-    header: "Operação",
-    mobileLabel: "Operação",
-    render: (op) => op.operation_code || "—",
-  },
-  {
-    key: "description",
-    header: "Descrição",
-    mobileLabel: "Descrição",
-    render: (op) => op.operation_description ?? "—",
-  },
-  {
-    key: "work_center",
-    header: "Centro de trabalho",
-    mobileLabel: "CT",
-    render: (op) => op.work_center ?? "—",
-  },
-  {
-    key: "time",
-    header: "Tempo padrão por peça",
-    mobileLabel: "Tempo/peça",
-    align: "right",
-    render: (op) => formatMinutes(op.time_minutes_piece),
-    sortValue: (op) => op.time_minutes_piece,
-  },
-];
-
-const COMPONENT_COLUMNS: DataTableColumn<{
-  code: string;
-  description: string | null;
-  sequence: string | null;
-}>[] = [
-  { key: "code", header: "Componente", render: (c) => c.code },
-  {
-    key: "description",
-    header: "Descrição",
-    render: (c) => c.description ?? "—",
-  },
-  { key: "sequence", header: "Sequência", render: (c) => c.sequence ?? "—" },
-];
-
 function OperationDetail({ op }: { op: RoutingOperationView }) {
   return (
     <div className="engineering-routing__op-detail">
@@ -213,20 +173,77 @@ function OperationDetail({ op }: { op: RoutingOperationView }) {
         ]}
       />
       {op.components.length ? (
-        <DataTable
-          columns={COMPONENT_COLUMNS}
-          rows={op.components}
-          rowKey={(c) => c.code}
-          layout="embedded"
-          compact
-          emptyMessage="Nenhum componente associado."
-        />
+        <div
+          role="group"
+          aria-label={`Componentes da operação ${op.operation_code}`}
+        >
+          <p className="engineering-routing__muted">
+            Componentes vinculados
+          </p>
+          <ul className="engineering-routing__components">
+            {op.components.map((c) => (
+              <li key={c.code}>
+                <strong>{c.code}</strong>
+                {c.description ? ` — ${c.description}` : ""}
+                {c.sequence ? (
+                  <span className="engineering-routing__muted">
+                    {` · seq. ${c.sequence}`}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <p className="engineering-routing__muted">
           Nenhum componente associado a esta operação no payload oficial.
         </p>
       )}
     </div>
+  );
+}
+
+function OperationCard({
+  op,
+  expanded,
+  onToggle,
+}: {
+  op: RoutingOperationView;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const timeLabel =
+    op.time_minutes_piece != null
+      ? `${formatMinutes(op.time_minutes_piece)}/peça`
+      : "—";
+  return (
+    <EngineeringInteractiveDataCard
+      ariaLabel={`Operação ${op.operation_code || "—"}${
+        expanded ? " — expandida" : ""
+      }`}
+      onActivate={onToggle}
+      openHint={
+        expanded ? (
+          <ChevronUp size={18} aria-hidden="true" />
+        ) : (
+          <ChevronDown size={18} aria-hidden="true" />
+        )
+      }
+    >
+      <EngineeringDetailFieldGrid
+        fields={[
+          {
+            label: `Operação ${op.operation_code || "—"}`,
+            value: op.operation_description ?? "—",
+          },
+          {
+            label: "CT · tempo por peça",
+            value: `${op.work_center ?? "—"} · ${timeLabel}`,
+          },
+        ]}
+      />
+      {expanded ? <OperationDetail op={op} /> : null}
+    </EngineeringInteractiveDataCard>
   );
 }
 
@@ -263,23 +280,23 @@ function OperationsSection({
     <>
       <div className="engineering-routing__kpis" role="group" aria-label="Indicadores do estágio selecionado">
         <EngineeringKpiCard
-          title="Operações únicas"
+          title="Operações"
           titleHint="Operações distintas pela identidade oficial (produto × nível × operação × CT × recurso) — não é o número de linhas do retorno."
           value={String(stage.operations.length)}
           icon={<ListOrdered size={18} aria-hidden="true" />}
         />
         <EngineeringKpiCard
-          title="Centros de trabalho"
+          title="Centro de trabalho"
           value={String(workCenters)}
           icon={<Factory size={18} aria-hidden="true" />}
         />
         <EngineeringKpiCard
-          title="Recursos distintos"
+          title="Recurso"
           value={String(resources)}
           icon={<Wrench size={18} aria-hidden="true" />}
         />
         <EngineeringKpiCard
-          title="Tempo padrão do estágio"
+          title="Tempo padrão"
           titleHint="Soma dos tempos por peça com valor oficial no estágio selecionado — não soma outros níveis da BOM."
           value={formatMinutes(stageMinutes)}
           subtitle={allTimed ? undefined : "parcial — há operação sem tempo oficial"}
@@ -289,7 +306,7 @@ function OperationsSection({
 
       <EngineeringDetailCard
         title="Operações do estágio"
-        titleHint="Uma linha por operação única. Selecione uma linha para expandir recurso, setup, obrigatoriedade e componentes."
+        titleHint="Um card por operação única. Selecione um card para expandir recurso, setup, obrigatoriedade e componentes."
         headerActions={
           <EngineeringStatusBadge
             label={`${stage.operations.length} ${stage.operations.length === 1 ? "operação" : "operações"}`}
@@ -297,20 +314,27 @@ function OperationsSection({
           />
         }
       >
-        <DataTable
-          columns={OPERATION_COLUMNS}
-          rows={stage.operations}
-          rowKey={(op) => op.key}
-          indexColumn={{ ariaLabel: "Seq." }}
-          expandedRowKey={expandedKey}
-          onExpandedRowKeyChange={setExpandedKey}
-          onRowClick={(op) =>
-            setExpandedKey((k) => (k === op.key ? null : op.key))
-          }
-          renderExpandedRow={(op) => <OperationDetail op={op} />}
-          rowClickRole="button"
-          emptyMessage="Nenhuma operação neste estágio."
-        />
+        {stage.operations.length ? (
+          <div
+            className="engineering-routing__ops"
+            role="list"
+            aria-label="Operações do estágio"
+          >
+            {stage.operations.map((op) => (
+              <div role="listitem" key={op.key}>
+                <OperationCard
+                  op={op}
+                  expanded={expandedKey === op.key}
+                  onToggle={() =>
+                    setExpandedKey((k) => (k === op.key ? null : op.key))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EngineeringEmptyState message="Nenhuma operação neste estágio." />
+        )}
       </EngineeringDetailCard>
 
       <EngineeringSectionCard
@@ -388,7 +412,8 @@ function BalanceSection({
 
   const demandN = numberOrUndefined(demand);
   const shiftN = numberOrUndefined(shiftMinutes);
-  const breakN = numberOrUndefined(breakMinutes) ?? 0;
+  const breakParsed = numberOrUndefined(breakMinutes);
+  const breakN = breakParsed ?? 0;
   const stationsN = numberOrUndefined(numStations);
   const batchN = numberOrUndefined(batchSize);
 
@@ -399,8 +424,11 @@ function BalanceSection({
   if (shiftMinutes.trim() && !(shiftN !== undefined && shiftN > 0)) {
     errors.push("Duração do turno deve ser maior que zero.");
   }
-  if (breakMinutes.trim() && !(breakN >= 0)) {
-    errors.push("Pausas não podem ser negativas.");
+  if (
+    breakMinutes.trim() &&
+    (breakParsed === undefined || breakParsed < 0)
+  ) {
+    errors.push("Pausas devem ser um número não negativo.");
   }
   if (
     shiftN !== undefined &&
@@ -433,115 +461,116 @@ function BalanceSection({
 
   return (
     <>
-      <EngineeringDetailCard
-        title="Condições de produção"
-        titleHint="Parâmetros PROVIDED pelo usuário — o tempo produtivo é derivado de turno − pausas e enviado como available_minutes ao domínio EVA."
-      >
-        <div
-          className="engineering-routing__form-grid"
-          role="group"
-          aria-label="Condições de produção"
-        >
-          <EngineeringTextField
-            id="routing-demand"
-            label="Demanda por período (peças)"
-            value={demand}
-            onChange={setDemand}
-            required
-            hint="Peças a produzir no período analisado."
-            disabled={running}
-          />
-          <EngineeringTextField
-            id="routing-shift"
-            label="Duração do turno (min)"
-            value={shiftMinutes}
-            onChange={setShiftMinutes}
-            required
-            hint="Minutos totais do período, antes das pausas."
-            disabled={running}
-          />
-          <EngineeringTextField
-            id="routing-break"
-            label="Pausas (min)"
-            value={breakMinutes}
-            onChange={setBreakMinutes}
-            hint="Minutos não produtivos do turno — subtraídos do tempo disponível."
-            disabled={running}
-          />
-        </div>
-        <EngineeringDetailFieldGrid
-          fields={[
-            {
-              label: "Tempo produtivo",
-              value:
-                available !== undefined && available > 0
-                  ? formatMinutes(available)
-                  : "—",
-              hint: "Turno − pausas.",
-            },
-            {
-              label: "Prévia do takt",
-              value:
-                taktPreview !== null
-                  ? `${formatMinutes(taktPreview)} / peça`
-                  : "—",
-              hint: "Prévia aritmética de interface (disponível ÷ demanda) — o resultado oficial vem do domínio.",
-            },
-          ]}
-        />
-      </EngineeringDetailCard>
-
-      <EngineeringDetailCard
-        title="Configuração opcional"
-        titleHint="Postos e lote são opcionais — sem lote explícito o setup não é amortizado por peça."
-      >
-        <div
-          className="engineering-routing__form-grid"
-          role="group"
-          aria-label="Configuração opcional"
-        >
-          <EngineeringTextField
-            id="routing-stations"
-            label="Postos atuais"
-            value={numStations}
-            onChange={setNumStations}
-            hint="Informado, o domínio verifica viabilidade e eficiência do arranjo — não equivale a operadores."
-            disabled={running}
-          />
-          <EngineeringTextField
-            id="routing-batch"
-            label="Tamanho do lote"
-            value={batchSize}
-            onChange={setBatchSize}
-            hint="Somente com lote explícito o setup é amortizado por peça."
-            disabled={running}
-          />
-        </div>
-      </EngineeringDetailCard>
-
       {errors.length ? (
         <EngineeringStateBanner variant="error">
           {errors.join(" ")}
         </EngineeringStateBanner>
       ) : null}
 
-      <EngineeringFormActions align="end">
-        <EngineeringActionButton
-          variant="primary"
-          disabled={!canSubmit}
-          onClick={() =>
-            onRun({
-              demand: demandN!,
-              available_minutes: available!,
-              ...(stationsN ? { num_stations: stationsN } : {}),
-              ...(batchN ? { batch_size: batchN } : {}),
-              ...(branch ? { branch } : {}),
-            })
-          }
+      <div className="engineering-routing__balance-grid">
+        <EngineeringDetailCard
+          title="Condições de produção"
+          titleHint="Parâmetros PROVIDED pelo usuário — o tempo produtivo é derivado de turno − pausas e enviado como available_minutes ao domínio EVA."
         >
-          {running ? "Calculando…" : "Calcular balanceamento"}
-        </EngineeringActionButton>
-      </EngineeringFormActions>
+          <div
+            className="engineering-routing__form-grid"
+            role="group"
+            aria-label="Condições de produção"
+          >
+            <EngineeringTextField
+              id="routing-demand"
+              label="Demanda por período (peças)"
+              value={demand}
+              onChange={setDemand}
+              required
+              hint="Peças a produzir no período analisado."
+              disabled={running}
+            />
+            <EngineeringTextField
+              id="routing-shift"
+              label="Duração do turno (min)"
+              value={shiftMinutes}
+              onChange={setShiftMinutes}
+              required
+              hint="Minutos totais do período, antes das pausas."
+              disabled={running}
+            />
+            <EngineeringTextField
+              id="routing-break"
+              label="Pausas (min)"
+              value={breakMinutes}
+              onChange={setBreakMinutes}
+              hint="Minutos não produtivos do turno — subtraídos do tempo disponível."
+              disabled={running}
+            />
+          </div>
+          <EngineeringDetailFieldGrid
+            fields={[
+              {
+                label: "Tempo produtivo",
+                value:
+                  available !== undefined && available > 0
+                    ? formatMinutes(available)
+                    : "—",
+                hint: "Turno − pausas.",
+              },
+              {
+                label: "Prévia do takt",
+                value:
+                  taktPreview !== null
+                    ? `${formatMinutes(taktPreview)} / peça`
+                    : "—",
+                hint: "Prévia aritmética de interface (disponível ÷ demanda) — o resultado oficial vem do domínio.",
+              },
+            ]}
+          />
+        </EngineeringDetailCard>
+
+        <EngineeringDetailCard
+          title="Configuração opcional"
+          titleHint="Postos e lote são opcionais — sem lote explícito o setup não é amortizado por peça."
+        >
+          <div
+            className="engineering-routing__form-grid"
+            role="group"
+            aria-label="Configuração opcional"
+          >
+            <EngineeringTextField
+              id="routing-stations"
+              label="Postos atuais"
+              value={numStations}
+              onChange={setNumStations}
+              hint="Informado, o domínio verifica viabilidade e eficiência do arranjo — não equivale a operadores."
+              disabled={running}
+            />
+            <EngineeringTextField
+              id="routing-batch"
+              label="Tamanho do lote"
+              value={batchSize}
+              onChange={setBatchSize}
+              hint="Somente com lote explícito o setup é amortizado por peça."
+              disabled={running}
+            />
+          </div>
+          <EngineeringFormActions align="end">
+            <EngineeringActionButton
+              variant="primary"
+              disabled={!canSubmit}
+              onClick={() =>
+                onRun({
+                  demand: demandN!,
+                  available_minutes: available!,
+                  ...(stationsN ? { num_stations: stationsN } : {}),
+                  ...(batchN ? { batch_size: batchN } : {}),
+                  ...(branch ? { branch } : {}),
+                })
+              }
+            >
+              {running ? "Calculando…" : "Calcular balanceamento"}
+            </EngineeringActionButton>
+          </EngineeringFormActions>
+        </EngineeringDetailCard>
+      </div>
 
       {scenarios.length ? (
         <ScenarioComparison
@@ -681,7 +710,7 @@ function ScenarioComparison({
     <>
       {latestStage ? (
         <EngineeringDetailCard
-          title="Resultado oficial"
+          title="Resultado do balanceamento"
           titleHint="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED e parâmetros PROVIDED."
         >
           <div className="engineering-routing__badges">
@@ -770,6 +799,7 @@ function ThemedSeriesChart({
   points,
   taktValue,
   colorByGoal,
+  taktAsBar,
   emptyMessage,
 }: {
   title: string;
@@ -777,14 +807,40 @@ function ThemedSeriesChart({
   points: { label: string; value: number | null }[];
   taktValue?: number | null;
   colorByGoal?: boolean;
+  /** Referência aprovada: takt como barra própria com legenda, não linha. */
+  taktAsBar?: boolean;
   emptyMessage: string;
 }) {
   const portalTheme = usePortalTheme();
   const takt = toChartValue(taktValue ?? null, unit);
+  const taktSeries =
+    taktAsBar && takt != null
+      ? {
+          name: `Takt (${unit.unit})`,
+          points: points.map((p) => ({ ...p, value: takt })),
+        }
+      : null;
   return (
     <ConfigurableSeriesChart
       chartType="bar"
       points={points}
+      {...(taktSeries
+        ? {
+            seriesList: [
+              { name: `Tempo por peça (${unit.unit})`, points },
+              taktSeries,
+            ],
+          }
+        : {})}
+      /* `backgroundColor` tema a moldura; a área de plotagem é parte do
+       * gráfico (`chartParts.plotArea`) — sem ela o kit mantém o plot
+       * claro "office" mesmo no tema escuro. */
+      chartParts={{
+        plotArea: {
+          visible: true,
+          style: { fill: portalTheme.surface, strokeWidth: 0, borderRadius: 0 },
+        },
+      }}
       options={{
         title,
         seriesName: `Tempo por peça (${unit.unit})`,
@@ -793,7 +849,7 @@ function ThemedSeriesChart({
         backgroundColor: portalTheme.surface,
         valueFormat: "number",
         decimalPlaces: unit.decimalPlaces,
-        showGoalLine: takt != null,
+        showGoalLine: takt != null && !taktSeries,
         goalLineValue: takt ?? undefined,
         ...(colorByGoal && takt != null
           ? { colorScale: { mode: "by_goal", polarity: "high_is_bad" } }
@@ -841,7 +897,7 @@ function VisualSection({
   return (
     <div className="engineering-routing__charts">
       <EngineeringChartCard
-        title="Tempos das operações"
+        title="Tempo por peça"
         titleHint={`Tempo padrão por peça — dados OBSERVED do roteiro oficial do estágio selecionado. Operações sem tempo oficial não são plotadas como zero.${unitHint}`}
         hint={
           missingCount
@@ -868,6 +924,7 @@ function VisualSection({
             points={points}
             taktValue={takt}
             colorByGoal
+            taktAsBar
             emptyMessage="Nenhuma operação com tempo oficial neste estágio."
           />
         ) : (
@@ -1052,7 +1109,7 @@ export function ProductRoutingTab({ code }: { code: string }) {
 
             <EngineeringSectionCard
               title="Roteiro de fabricação"
-              subtitle="Consulte as operações, avalie a capacidade e analise o balanceamento do produto."
+              subtitle={`${code} · Operações e análises de processo`}
               actions={
                 <EngineeringFiltersRow
                   compact

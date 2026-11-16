@@ -19,7 +19,7 @@ import {
 const PRODUCT_WITH_ROUTING = "90264302";
 const DETAIL = (code: string) =>
   `/apps/engineering/products/${code}?tab=routing`;
-const SHOTS = "artifacts/routing-visual";
+const SHOTS = "artifacts/routing-contract";
 
 async function openRoutingTab(page: Page, code: string) {
   await page.goto(DETAIL(code));
@@ -68,12 +68,11 @@ test.describe("aba Roteiro — evidência visual", () => {
     await setTheme(page, "dark");
     await shot(page, "operations-dark");
 
-    /* Expande a primeira operação — expansão nativa da DataTable. */
-    const firstRow = page
-      .locator("tbody tr")
-      .filter({ hasNot: page.locator("[class*='detail-row']") })
-      .first();
-    await firstRow.click();
+    /* Expande a primeira operação — card expansível do kit. */
+    await page
+      .getByRole("button", { name: /^Operação\s/ })
+      .first()
+      .click();
     await expect(
       page.getByText("Linhas oficiais fundidas"),
     ).toBeVisible({ timeout: 10_000 });
@@ -112,7 +111,7 @@ test.describe("aba Roteiro — evidência visual", () => {
     await page
       .getByRole("button", { name: "Calcular balanceamento" })
       .click();
-    await expect(page.getByText(/Resultado oficial/)).toBeVisible({
+    await expect(page.getByText(/Resultado do balanceamento/)).toBeVisible({
       timeout: 30_000,
     });
     await shot(page, "balance-dark-result");
@@ -154,7 +153,7 @@ test.describe("aba Roteiro — evidência visual", () => {
     await page
       .getByRole("button", { name: "Calcular balanceamento" })
       .click();
-    await expect(page.getByText(/Resultado oficial/)).toBeVisible({
+    await expect(page.getByText(/Resultado do balanceamento/)).toBeVisible({
       timeout: 30_000,
     });
 

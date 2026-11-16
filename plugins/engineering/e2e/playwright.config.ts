@@ -31,6 +31,13 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
     { name: "tablet", use: { ...devices["Galaxy Tab S4"] } },
     {
+      name: "mobile-390",
+      use: {
+        ...devices["iPhone 13"],
+        viewport: { width: 390, height: 844 },
+      },
+    },
+    {
       name: "mobile-320",
       use: { ...devices["Pixel 7"], viewport: { width: 320, height: 720 } },
     },

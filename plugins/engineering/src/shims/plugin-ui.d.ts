@@ -1911,6 +1911,15 @@ declare module "@delpi/plugin-ui/index" {
     points: SeriesChartPoint[];
     seriesList?: SeriesChartSeriesSpec[];
     options?: SeriesChartOptions | null;
+    /** Mapa de partes do gráfico (chartArea/plotArea/title/legend/series…)
+     * conforme `seriesChartParts.ts` — estilo por parte sobrepõe o default. */
+    chartParts?: {
+      [key: string]: {
+        visible?: boolean;
+        style?: { [key: string]: unknown };
+        [key: string]: unknown;
+      };
+    } | null;
     emptyMessage?: string;
     className?: string;
     pieInnerRadiusRatio?: number;
@@ -1919,6 +1928,89 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ConfigurableSeriesChart(
     props: ConfigurableSeriesChartProps,
+  ): ReactElement;
+
+  /** `ConversationPanel` — espelho do contrato real em
+   * `components/conversation-panel/ConversationPanel.tsx`. */
+  export type ConversationComment = {
+    id: string;
+    requestId: string;
+    authorId: string | null;
+    authorName: string;
+    body: string;
+    version: number | null;
+    isMine: boolean;
+    createdAt: string;
+    updatedAt: string | null;
+    edited: boolean;
+  };
+
+  export type ConversationAttachment = {
+    id: string;
+    fileName: string;
+    mediaType: string | null;
+    sizeBytes: number | null;
+    state?: string | null;
+  };
+
+  export type ConversationApi = {
+    listComments(
+      requestId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<ConversationComment[]>;
+    createComment(
+      requestId: string,
+      body: string,
+      opts?: { idempotencyKey?: string },
+    ): Promise<ConversationComment>;
+    updateComment(
+      requestId: string,
+      commentId: string,
+      body: string,
+      opts?: { expectedVersion?: number | null },
+    ): Promise<ConversationComment>;
+    listAttachments(
+      requestId: string,
+      commentId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<ConversationAttachment[]>;
+    uploadAttachment(
+      requestId: string,
+      commentId: string,
+      file: File,
+    ): Promise<ConversationAttachment>;
+    downloadAttachment(
+      requestId: string,
+      commentId: string,
+      attachmentId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<Blob>;
+    deleteAttachment(
+      requestId: string,
+      commentId: string,
+      attachmentId: string,
+    ): Promise<void>;
+  };
+
+  export type ConversationPanelProps = {
+    requestId: string;
+    api: ConversationApi;
+    canComment?: boolean;
+    conversationFrozen?: boolean;
+    refreshKey?: number;
+    loadAvatar?: (
+      userId: string,
+      signal: AbortSignal,
+    ) => Promise<Blob | null>;
+    portalScopeClassName?: string;
+    sectionTitle?: string;
+    sectionHint?: string;
+    fileAccept?: string;
+    maxFileBytes?: number;
+  };
+
+  export function ConversationPanel(
+    props: ConversationPanelProps,
   ): ReactElement;
 
   export type DetailCardClassNames = {
@@ -2530,9 +2622,15 @@ declare module "@delpi/plugin-ui/index" {
 declare module "@delpi/plugin-ui/index" {
   import type { ComponentType, ReactNode } from "react";
 
+  export type InteractiveDataCardValueTone = "title" | "value" | "meta";
   export type InteractiveDataCardField = {
+    id: string;
     label: string;
+    hint?: string;
     value: ReactNode;
+    valueTone?: InteractiveDataCardValueTone;
+    /** false = ocultar; true = forçar exibir mesmo se valor vazio; omitido = omitir placeholders. */
+    present?: boolean;
   };
   export type DashboardInteractiveDataCardProps = {
     fields?: InteractiveDataCardField[];

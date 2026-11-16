@@ -868,10 +868,31 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.engineering-routing__ops {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-grid-gap);
+}
+
 .engineering-routing__op-detail {
   display: flex;
   flex-direction: column;
   gap: var(--en-grid-gap);
+  border-top: 1px solid var(--en-border);
+  padding-top: var(--en-grid-gap);
+}
+
+.engineering-routing__components {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--en-text);
+}
+
+.engineering-routing__balance-grid {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
 }
 
 .engineering-routing__form-grid {
