@@ -5609,3 +5609,46 @@ O job real `aj-7ac2f01425ac4e78` usou `detection: native_table_cells` (SLANet), 
 ### Estado
 
 `G22_ROOT_CAUSE_PASS` · `G22_PI_DESCRIPTION_PASS` (4/4) · `G22_MP_DESCRIPTION_PASS` (8/8, caminho real) · `G22_ENGINE_SELECTION_PASS` (native reconciliado por envelope tipado) · `G22_HIERARCHY_PASS` · `G22_G18_COMPARISON_PASS` · `G22_REGRESSION_PASS`. Deploy **não autorizado** neste pacote; E2E ChatGPT `PENDING_OWNER_ACTION` após gate.
+
+## §94.26 — G23: deploy produtivo autorizado do G22 + handoff E2E ChatGPT
+
+**TASK_ID:** `EVA-E1-VAL01-G23-AUTHORIZED-G22-PRODUCTION-DEPLOY-AND-LIVE-MCP-ACCEPTANCE-01` · **Autorização:** expressa do usuário (Issue #131, comentário `6919214605`)
+
+### Preflight
+
+- `CANDIDATE_SHA`: `c176dac339` (origin/main; contém G22 `f010ba9178` + doc `b6eefa4dac`).
+- `DEPLOY_DELTA` (engineering-api, vs imagem anterior `ead46831787`): exatamente `understanding.py` (+73) e `test_g22_native_table_drift.py` (+206). Demais serviços não redeployados.
+- `TESTS`: 415 PASS reproduzidos no SHA candidato (md5 do arquivo no container-dev == blob do SHA).
+- `VERIFIER`: `INCONCLUSIVE` — motor `cursor/composer-2.5` sem quota em 3 tentativas (r1–r3). Exceção operacional aceita pela autorização expressa emitida pela Coordination já ciente do estado.
+- `ROLLBACK`: `infra-engineering-api:rollback-pre-g23` = `3e2da085b217` (tag imutável criada antes do deploy).
+
+### Deploy
+
+- `git pull --ff-only` → `c176dac339`; `bash infra/scripts/up-prod-sequential.sh --build engineering-api` (somente `delpi-engineering-api` recriado).
+- `IMAGE_BEFORE`: `3e2da085b217` → `IMAGE_AFTER`: **`9e018c72d50a`**.
+- Health: `/health` → `200 {"status":"online"}`; container `Up (healthy)`.
+- Código verificado no container: `md5(understanding.py)` = `3f2e58ba…` == blob `c176dac339`; `_typed_cells_extent` + passe 2 `parent_description` presentes; AST limpo.
+- Conhecimento EVA, contratos MCP e demais serviços: inalterados. Zero migrations, zero escritas.
+
+### MCP smoke (read-only)
+
+- `product.drawing_understanding`, `drawing.runtime_status`, `drawing.job_list`, `product.structure`, `product.detail` registrados na bridge semântica — MCP_READY.
+- Nenhum job iniciado para o smoke.
+
+### Handoff ChatGPT E2E
+
+```text
+PRODUCT_CODE: 90263680
+DEPLOYED_SHA: c176dac339
+DEPLOYED_IMAGE: 9e018c72d50a
+ENGINEERING_HEALTH: PASS (200)
+MCP_READY: YES
+OFFICIAL_PDF_SHA256: 496e25797c8e62fc0f98bd82179846d8b7712078665e58116b68f32a84613417
+OCR_JOB_POLICY: SINGLE_AUTHORIZED_JOB (job anterior expirado — in-memory TTL 1h)
+CHATGPT_TEST_OWNER: EVA_ARCHITECTURE_COORDINATION
+READY_FOR_LIVE_E2E: YES
+```
+
+### Estado
+
+`G23_PREFLIGHT_PASS` · `G23_DEPLOY_PASS` · `G23_MCP_SMOKE_PASS` · verificador `INCONCLUSIVE` (exceção registrada) · `G23_LIVE_EXTRACTION_PASS`/`G23_CHATGPT_E2E_PASS` → `PENDING_OWNER_ACTION` (aceite autenticado pela Coordination nesta sessão).
