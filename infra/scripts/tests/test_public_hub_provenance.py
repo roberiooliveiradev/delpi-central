@@ -37,6 +37,10 @@ def repo(tmp_path):
     base = tmp_path / "plugins/public-hub"
     base.mkdir(parents=True)
     (base / "tracked.txt").write_text("original\n", encoding="utf-8")
+    (tmp_path / "plugins/.dockerignore").write_text(
+        "**/node_modules\n**/dist\n**/.git\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text(
+        ".env*\n*.log\nnode_modules/\ndist/\n", encoding="utf-8")
     git(tmp_path, "add", ".")
     git(tmp_path, "commit", "-qm", "test input")
     return tmp_path
@@ -124,3 +128,61 @@ def test_development_compose_stays_usable_without_fake_sha():
     section = text.split("\n  public-hub:\n", 1)[1].split("\n  central-agendamento:\n", 1)[0]
     assert "target: development" in section
     assert "SOURCE_REVISION" not in section
+
+
+@pytest.mark.parametrize("relative", [
+    "plugins/public-hub/.env.local",
+    "plugins/tv-dashboard-presentation/.env.production",
+    "plugins/plugin-ui/src/components/signature/build.log",
+    "plugins/vite/configuration\nprivate.log",
+])
+def test_ignored_files_copied_by_docker_are_refused(repo, relative):
+    path = repo / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("local-only-input-do-not-echo", encoding="utf-8")
+    got = run_helper(repo)
+    assert got.returncode != 0
+    assert got.stdout == ""
+    assert "local-only-input-do-not-echo" not in got.stderr
+
+
+@pytest.mark.parametrize("directory", ["node_modules", "dist"])
+def test_docker_excluded_local_artifacts_do_not_block(repo, directory):
+    path = repo / "plugins/public-hub" / directory / "cache.js"
+    path.parent.mkdir(parents=True)
+    path.write_text("local-cache", encoding="utf-8")
+    assert run_helper(repo).returncode == 0
+
+
+def test_ignored_file_outside_build_inputs_does_not_block(repo):
+    (repo / ".env.local").write_text("unrelated", encoding="utf-8")
+    assert run_helper(repo).returncode == 0
+
+
+def test_dirty_dockerignore_blocks_revision(repo):
+    (repo / "plugins/.dockerignore").write_text("**/dist\n", encoding="utf-8")
+    assert run_helper(repo).returncode != 0
+
+
+@pytest.mark.parametrize("rule", ["!public-hub/dist/injected.js", "public-hub/**"])
+def test_changed_committed_ignore_contract_requires_review(repo, rule):
+    with (repo / "plugins/.dockerignore").open("a", encoding="utf-8") as output:
+        output.write(rule + "\n")
+    git(repo, "add", "plugins/.dockerignore")
+    git(repo, "commit", "-qm", "changed context policy")
+    assert run_helper(repo).returncode != 0
+
+
+def test_missing_dockerignore_blocks_revision(repo):
+    (repo / "plugins/.dockerignore").unlink()
+    git(repo, "add", "plugins/.dockerignore")
+    git(repo, "commit", "-qm", "remove context policy")
+    assert run_helper(repo).returncode != 0
+
+
+def test_committed_dockerfile_specific_ignore_requires_review(repo):
+    (repo / "plugins/public-hub/Dockerfile.dockerignore").write_text(
+        "# Replaces the context-level ignore policy\n", encoding="utf-8")
+    git(repo, "add", "plugins/public-hub/Dockerfile.dockerignore")
+    git(repo, "commit", "-qm", "override context policy")
+    assert run_helper(repo).returncode != 0

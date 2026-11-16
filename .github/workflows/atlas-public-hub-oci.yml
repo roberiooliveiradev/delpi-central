@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
     paths:
+      - "plugins/.dockerignore"
       - "plugins/public-hub/Dockerfile"
+      - "plugins/public-hub/Dockerfile.dockerignore"
       - "infra/docker-compose.yml"
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
@@ -15,7 +17,9 @@ on:
       - ".github/workflows/atlas-public-hub-oci.yml"
   pull_request:
     paths:
+      - "plugins/.dockerignore"
       - "plugins/public-hub/Dockerfile"
+      - "plugins/public-hub/Dockerfile.dockerignore"
       - "infra/docker-compose.yml"
       - "infra/docker-compose.hml.yml"
       - "infra/docker-compose.dev.yml"
@@ -45,6 +49,11 @@ jobs:
           bash -n infra/scripts/up-hml-sequential.sh
           bash -n infra/scripts/up-prod-sequential.sh
           python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py
+      - name: Verify actual checkout input policy before Docker build
+        run: |
+          source infra/scripts/public-hub-provenance.sh
+          revision="$(atlas_public_hub_revision "$GITHUB_WORKSPACE")"
+          test "$revision" = "$GITHUB_SHA"
       - name: Build only provenance stage on ephemeral CI runner
         run: |
           test "$(printf '%s' "$GITHUB_SHA" | wc -c)" -eq 40

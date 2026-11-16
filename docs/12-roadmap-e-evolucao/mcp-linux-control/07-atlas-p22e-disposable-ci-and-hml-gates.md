@@ -1,6 +1,6 @@
 # ATLAS P2.2e | Integracao descartavel PostgreSQL/Docker e gates de homologacao
 
-> Atualizado: 2026-11-15. **Codigo de CI criado na main. Resultado dos novos jobs do GitHub Actions NAO CONFIRMADO. Nenhuma alteracao em containers, banco ou Keycloak produtivos.**
+> Atualizacao de continuidade em 2026-11-16: **CI P2.2e confirmado PASS** no run [43719312596](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43719312596), SHA `5f7c4a1d65eebaee43c2479ea339dd13f81920d1`, jobs PostgreSQL/Docker `completed/success`. As secoes abaixo preservam o historico de 15/11. Revisao independente, imagem final e HML real continuam pendentes; [estado atual P2.2f](./08-atlas-p22f-public-hub-oci-revision.md#6-retomada-em-16112026-ci-confirmado-e-correcao-local-p22f1). Nenhuma alteracao em containers, banco ou Keycloak produtivos.
 
 ## 1. Evidencia operacional recente
 

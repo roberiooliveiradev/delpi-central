@@ -2,8 +2,8 @@
 
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
-> **Atualizacao:** 2026-11-15
-> **Situacao em 2026-11-15:** P1 READ autenticado e operando; P2.1 politica offline integrada na main com CI verde via PR #191; **P2.2f: rastreabilidade OCI de Public Hub com SHA Git completo, gate de worktree limpo, DEV independente e CI Docker de metadados versionados na main; 11 testes offline PASS; CI/HML assinada pendentes; PREPARE/ACT nao publicados**.
+> **Atualizacao:** 2026-11-16
+> **Situacao em 2026-11-16:** P1 READ autenticado e operando; P2.1 integrada na main; **CI P2.2e PostgreSQL/Docker e P2.2f OCI confirmados PASS. Correcao P2.2f.1 do contexto de build incluida nesta entrega em main: 23 testes de guard / 163 de regressao PASS; tentativa de verificador registrada INCONCLUSIVE por motor indisponivel, sem alegar aprovacao independente; novo CI a confirmar. Proveniencia assinada/HML e PREPARE/ACT pendentes**.
 > **Repositorio:** `roberiooliveiradev/delpi-central`; **PRs integradas:** [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184) (P0-P1), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) (P2.1); **P2.2a-P2.2f em codigo main, sem executor/endpoint e sem deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
@@ -31,14 +31,14 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 
 ## 3. Roadmap com estados e criterios de aceite
 
-| Marco | Entrega | Estado em 15/11/2026 | Gate de aceite |
+| Marco | Entrega | Estado em 16/11/2026 | Gate de aceite |
 |---|---|---|---|
 | A0 | Inventario de `srv-api`, limites e riscos | DOCUMENTADO | Evidencia sem secrets, arquitetura de acesso aprovada |
 | A1 | MCP privado/publicado HTTPS + Keycloak OAuth + READ | **OPERADOR_CONFIRMOU_PASS** | Consulta real `get_host_health` pelo ChatGPT com snapshot/timestamp |
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2f OCI_SHA_GATE_CODIGO_MAIN / CI_DOCKER_NAO_CONFIRMADO; HML_RELEASE_PROVENANCE, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
+| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2e/f CI_PASS; P2.2f.1 CODE_MAIN / LOCAL_TESTS_PASS / VERIFIER_INCONCLUSIVE / CI_PENDING; HML_RELEASE_PROVENANCE, migracao e API pendentes** | Permissoes separadas, CI por SHA, concorrencia/revogacao testadas |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa:** confirmar o resultado dos dois jobs do workflow CI descartavel da P2.2e (PostgreSQL e Docker), solucionar quaisquer falhas e obter review independente; depois escolher UM servico HML real, validar runtime read-only via proxy com ACL, release manifest vinculado ao SHA aprovado e migration de DB com owner. PREPARE/ACT continuam desligados.
+**Proxima tarefa:** confirmar o novo CI P2.2f.1 no SHA publicado e concluir a revisao independente quando houver motor disponivel. O kit aceita o registro INCONCLUSIVE no encerramento (`GATE_PASS_VERDICTS`), sem transformar indisponibilidade em aceite. CI historico P2.2e/f ja confirmado (evidencias no runbook P2.2f, secao 6). Depois: atestacao da imagem final, proxy com ACL, ownership/janela do Public Hub HML e migration de DB com owner. PREPARE/ACT continuam desligados.
 
 ## 7. Marco validado
 
@@ -174,3 +174,13 @@ A janela de frescor da avaliacao e 120 s, com tolerancia de 5 s para clock futur
 **Seguranca:** label OCI e dado informativo, nao prova criptografica; ainda faltam manifest assinado do executor CI, correlacao SHA->ImageID, signer isolado, grants Core e journal real. `preview_deployment`, ACT e as migrations continuam inativas. **Nenhum container, Docker socket, DB, Compose ativo ou serviço HML/PROD foi modificado**. Engenharia de Roberto permanece fora do escopo.
 
 **Proximo passo:** conferir CI OCI e obter aceite do owner antes de rebuild HML de Public Hub; ate la continuar apenas inspecao e aprovar apenas o codigo versionado. Em seguida planejar a atestacao de proveniencia assinada por pipeline para imagem final em execucao.
+
+
+## 14. Retomada P2.2f.1: CI comprovado e contexto local de build (16/11/2026)
+
+- **Fonte atual revalidada:** branch `main`, HEAD inicial `e18ee9a31c08ed29092962c524bba95434d5255f`, checkout inicialmente limpo; nenhum worktree anterior reutilizado.
+- **CI existente confirmado:** P2.2e run [43719312596](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43719312596), SHA `5f7c4a1d65eebaee43c2479ea339dd13f81920d1`, dois jobs `completed/success`; P2.2f run [43721625404](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43721625404), SHA `1ac5b10f8ef6b4677cdcd5f736ca9020908a2d41`, job OCI `completed/success`. Nao sao evidencias de CI da correcao ainda local.
+- **Lacuna reproduzida:** Git `status` omitia arquivos ignorados ainda copiados pelo Docker (ex. `.env.local`); politica `plugins/.dockerignore` nao era input protegido. Nove novos cenarios falharam antes da correcao.
+- **Correcao desta entrega:** helper verifica politica Docker restrita, impede override `Dockerfile.dockerignore`, cobre dirty `.dockerignore` e recusa arquivos ignorados nos inputs, com excecao apenas de `node_modules/dist/.git` comprovadamente excluidos. Workflow passa a verificar o checkout real e observar mudancas nas politicas Docker. Nenhum segredo/nome de arquivo local entra nas mensagens.
+- **Evidencia local:** 23 testes do guard PASS; regressao selecionada ATLAS + guard 163 PASS em Python 3.12. Sem Docker local, nao houve build. Revisao obrigatoria executada com `verify.py`: `veredito: INCONCLUSIVE`, `motivo: verificador indisponivel` (saida original no runbook).
+- **Estado de entrega:** codigo e documentacao publicados diretamente em `main` por GitHub, com CI novo a confirmar e revisao independente pendente. A indisponibilidade foi inicialmente interpretada como bloqueio absoluto; a leitura de `agent-kit/hooks/verifier_hooks.py` confirmou que `INCONCLUSIVE` pertence a `GATE_PASS_VERDICTS`, permitindo registrar o resultado sem alegar ACCEPT. Nenhuma alteracao HML/PROD, grants, migration, chave, executor ou endpoint MCP. Detalhamento e retomada: [P2.2f, secao 6](./08-atlas-p22f-public-hub-oci-revision.md#6-retomada-em-16112026-ci-confirmado-e-correcao-local-p22f1).

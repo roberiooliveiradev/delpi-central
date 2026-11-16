@@ -1,7 +1,9 @@
 # ATLAS P2.2f | Rastreabilidade OCI do Public Hub (sem deploy)
 
-**Data:** 2026-11-15
-**Status:** alteracoes versionadas em `main`, testes estaticos/guard local PASS; **CI Docker real pendente de confirmacao**. Nao executado build ou restart no srv-api. Nenhuma ferramenta PREPARE/ACT do ATLAS foi habilitada.
+**Data inicial:** 2026-11-15 · **Retomada:** 2026-11-16
+**Status atual:** P2.2f em `main`, **CI Docker de metadados confirmado PASS**. P2.2f.1 do guard incluida nesta entrega em main, testada; tentativa de revisao independente INCONCLUSIVE registrada, sem alegar ACCEPT; CI novo a confirmar. Imagem final/assinatura/HML pendentes. Nao executado build ou restart no srv-api; PREPARE/ACT inativos.
+
+As secoes 1–5 registram o corte de 15/11; a secao 6 e a atualizacao de continuidade e prevalece sobre os estados historicos de CI pendente.
 
 ## 1. Motivacao e fato observado
 
@@ -56,3 +58,101 @@ Sem esses quatro gates, P2.1/P2.2a continua DENY. **Nenhum novo MCP tool, execut
 5. `delpi-verifier` independente e revisao do Dockerfile em CI permanecem pendentes. **ACT/PREPARE continuam inativos**.
 
 **Estado:** `P22F_CODE_MAIN`, `LOCAL_STATIC_TESTS_PASS_11`, `CI_REAL_DOCKER_UNVERIFIED`, `PUBLIC_HUB_HML_OLD_IMAGE_UNMODIFIED`, `PROVENANCE_TRUST_PENDING`, `ATLAS_READ_ONLY`.
+
+
+## 6. Retomada em 16/11/2026: CI confirmado e correcao local P2.2f.1
+
+### 6.1 Evidencia GitHub consultada diretamente
+
+| Workflow | SHA verificado | Run / jobs | Resultado |
+| --- | --- | --- | --- |
+| P2.2e PostgreSQL/Docker | `5f7c4a1d65eebaee43c2479ea339dd13f81920d1` | [43719312596](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43719312596); Docker `132827643651`, PostgreSQL `132827643802` | Run e dois jobs `completed/success`; logs Docker mostram 2 PASS, PostgreSQL sete pontos de teste `[100%]` e step success |
+| P2.2f OCI | `1ac5b10f8ef6b4677cdcd5f736ca9020908a2d41` | [43721625404](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43721625404); OCI `132834655829` | Run/job `completed/success`; build de metadados e negativos success |
+
+A consulta permitida `GET /repos/{owner}/{repo}/actions/runs?head_sha={sha}` resolveu a limitacao anterior; os endpoints por nome de workflow nao eram aceitos pelo conector. Nao e preciso repetir os testes antigos no servidor para continuar a revisao de codigo. Os runs acima pertencem aos SHAs historicos, **nao** ao candidate local desta retomada, nem provam a imagem final ou o ambiente HML.
+
+### 6.2 Causa confirmada e delta local
+
+**Antes:** `git status --porcelain` nao reportava `.env.local`, logs e outros arquivos ignorados pelo Git dentro dos paths de `COPY`. `plugins/.dockerignore` nao estava entre os inputs protegidos. Uma politica Dockerfile-specific pode substituir a politica do contexto, conforme a [documentacao oficial Docker](https://docs.docker.com/build/concepts/context/#dockerignore-files).
+
+**Depois, no candidate local:**
+
+- `atlas_public_hub_revision` inclui `plugins/.dockerignore` nos inputs; exige arquivo regular nao symlink e as tres exclusoes existentes (`**/node_modules`, `**/dist`, `**/.git`). Aceita linhas vazias/comentarios, recusa outros padroes e negacoes. Esta e uma politica deliberadamente restrita, nao um parser generico de `.dockerignore`; mudar exclusoes exige evoluir contrato, implementacao e testes juntos.
+- Recusa qualquer `plugins/public-hub/Dockerfile.dockerignore`, inclusive symlink pendente, pois esse arquivo prevaleceria sobre o contexto.
+- `git ls-files --others --ignored --exclude-standard` verifica arquivos ignorados nos inputs; so dispensa os paths comprovadamente excluidos pela politica Docker. `node_modules/dist` locais continuam permitidos, arquivos locais fora dos inputs tambem. Nao apaga arquivos nem imprime nomes/conteudos.
+- Workflow OCI observa mudancas no `.dockerignore` do contexto e no override especifico; executa o helper no checkout real, compara a revisao ao `GITHUB_SHA` e so depois segue ao build leve ja existente.
+- Nenhuma mudanca em Dockerfile, Compose, frontend Engineering, modulo MCP, journal, API, permissao ou migration.
+
+**Limites:** este guard reduz erros de build local; nao prova confianca contra operador privilegiado, alteracao concorrente apos a checagem, flags Git que ocultem mudancas, dependencia npm/base image mutavel ou build manual fora dos scripts canonicos. A proveniencia assinada da imagem final segue obrigatoria; o guard nao desbloqueia PREPARE/ACT.
+
+### 6.3 Requisitos e validacao
+
+| Requisito | Evidencia | Estado |
+| --- | --- | --- |
+| RQ-01 retomar fonte atual e CI | Checkout inicial limpo em `main`, HEAD `e18ee9a31c08ed29092962c524bba95434d5255f`; runs acima | ATENDIDO |
+| RQ-02 corrigir contexto Git/Docker | Baseline: 9 novos FAIL / 14 PASS; depois 23 PASS; ignored `.env/log`, nome com newline, politica/override, artefatos excluidos e arquivos fora dos inputs | ATENDIDO_LOCAL |
+| RQ-03 manter runtime READ e sem operacao em servidor | Diff so helper, teste, workflow e documentos; sem Docker local; sem chamadas de escrita ao host | ATENDIDO |
+| RQ-04 tentar revisao e publicar com evidencia fiel | `verify.py` exit 3, sem Devin/Cursor; INCONCLUSIVE aceito por `GATE_PASS_VERDICTS`, sem afirmar ACCEPT; entrega de codigo em main | CODIGO_PUBLICADO / REVIEW_INCONCLUSIVE |
+| RQ-05 assinatura/imagem final e piloto HML | Fora desta correcao; gates do P2.2g ainda nao satisfeitos | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
+
+Comandos locais efetivos (Python 3.12):
+
+```bash
+python -m pytest -q -p no:cacheprovider infra/scripts/tests/test_public_hub_provenance.py
+# 23 PASS
+PYTHONPATH=linux-ops-mcp python -m pytest -q -p no:cacheprovider \
+  linux-ops-mcp/tests/test_deploy_policy.py \
+  linux-ops-mcp/tests/test_deploy_attestation.py \
+  linux-ops-mcp/tests/test_deploy_host_receipt.py \
+  linux-ops-mcp/tests/test_deploy_journal_policy.py \
+  linux-ops-mcp/tests/test_deploy_host_source_signer.py \
+  infra/scripts/tests/test_public_hub_provenance.py
+# 163 PASS (inclui os 23 do guard; nao somar)
+bash -n infra/scripts/public-hub-provenance.sh infra/scripts/up-hml-sequential.sh infra/scripts/up-prod-sequential.sh
+python -m unittest scripts/ci/test_audit_architecture_phase3.py scripts/ci/test_audit_platform_guardrails.py -q
+# 48 PASS dos proprios scanners
+python scripts/audit_documentation_structure.py
+git diff --check
+```
+
+Aviso nao bloqueante do plugin pytest de anyio: `PytestRemovedIn10Warning`. O parse YAML e a chamada do helper no checkout real tambem passaram localmente. Na primeira execucao os comandos canonicos de enforcement com `--base e18ee9a31c08ed29092962c524bba95434d5255f` comparavam um diff vazio, nao validando o candidate local. Nesta publicacao devem rodar sobre o commit candidato completo antes de mover `main` remota; registrar o resultado efetivo no fechamento/CI, sem alterar scanners para fabricar aceite.
+
+Responsabilidades materiais: **1 arquitetura** (helper operacional, sem novo owner), **2 seguranca** (falha fechada e nao revelar arquivos locais), **6 qualidade** (baseline/regressao), **7 delivery/runtime** (contexto Docker e CI). Sem alteracao de contratos HTTP, banco, UI ou telemetria.
+
+### 6.4 EXECUTION REPORT e verificador
+
+`verify.py` do kit versionado foi executado diretamente (`agent-kit/scripts/verify.py`) porque nao existe instalacao em `~/.delpi-agent-kit`; o runner suporta a fonte original. Pedido em `<git-dir>/delpi-verifier/requests/atlas-public-hub-context-r1.md`, fora do working tree. Sem alterar o runner, modelos ou gates.
+
+Saida original do verificador, sem edicao:
+
+````text
+# Relatório do delpi-verifier
+
+motor: none · modelo: n/a
+
+veredito: INCONCLUSIVE
+
+motivo: verificador indisponível
+
+## Saída bruta
+
+```
+Nenhum motor headless disponível (devin/agent).
+```
+````
+
+| Rodada | Veredito | OCs abertas / fechadas |
+| --- | --- | --- |
+| 1 | INCONCLUSIVE | Nenhuma emitida; motor indisponivel, nao houve revisao independente |
+| 2 | INCONCLUSIVE | Nova tentativa antes da publicacao, mesmo codigo e 163 testes PASS; nenhuma OC, motor ainda indisponivel |
+
+**Entrega:** codigo implementado/testado nesta entrega em main; CI novo a confirmar. **REVIEW_RESULT=INCONCLUSIVE**, sem alegar aprovacao independente ou homologacao. A leitura completa de `agent-kit/hooks/verifier_hooks.py`, constante `GATE_PASS_VERDICTS`, confirmou que `INCONCLUSIVE` e um resultado admitido para encerrar a tentativa registrada. A indisponibilidade foi inicialmente interpretada como bloqueio absoluto de publicacao; essa interpretacao foi corrigida, sem mudar o kit, emitir ACCEPT ou habilitar runtime. Nenhuma nova operacao HML/PROD.
+
+### 6.5 Retomada e recuperacao
+
+1. Confirmar o workflow OCI no SHA desta entrega, separando-o dos runs historicos. Se falhar, corrigir a causa e revalidar; nao habilitar runtime por CI historico.
+2. Concluir revisao independente em ambiente Devin/Cursor disponivel. O INCONCLUSIVE registrado permite o encerramento desta tentativa, mas nao e ACCEPT nem prova de seguranca/HML. Corrigir OCs conforme AGENTS; nao alterar o kit para simular revisao.
+3. P2.2g continua sendo build da **imagem final** + comprovacao assinada do pipeline, separada do release record de host e das chaves. Nao emitir HMAC de release a partir de labels autoafirmadas.
+4. Antes de rebuild HML: ownership/janela do Public Hub, plano de recuperacao, proxy restrito e aceite. Engineering de Roberto segue excluido. PREPARE/ACT, DB e grants permanecem inativos.
+
+**Rollback desta entrega:** nao houve operacao de runtime remota a desfazer. Se houver regressao de codigo/CI, criar commit corretivo ou reversao somente dos arquivos desta entrega; sem force push, reset/clean ou descarte de alteracoes concorrentes; nenhuma instrucao para apagar `.env` ou reetiquetar imagem antiga. A imagem HML historica nao foi modificada.
