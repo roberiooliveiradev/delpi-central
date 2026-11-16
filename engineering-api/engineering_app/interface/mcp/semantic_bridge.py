@@ -530,6 +530,9 @@ _READ_DISPATCH = {
     ("product_registration", "flag_detail"): (
         lambda a: _prc_read("flag_detail", a)
     ),
+    ("product_registration", "comment_list"): (
+        lambda a: _prc_read("comment_list", a)
+    ),
     ("product_registration", "information_round_list"): (
         lambda a: _prc_read("information_round_list", a)
     ),
@@ -2841,6 +2844,12 @@ _EXECUTE_DISPATCH = {
     ("product_registration", "flag_resolve"): prc_semantic.execute_action,
     ("product_registration", "flag_reopen"): prc_semantic.execute_action,
     ("product_registration", "flag_delete"): prc_semantic.execute_action,
+    ("product_registration", "comment_create"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "comment_update"): (
+        prc_semantic.execute_action
+    ),
     ("product_registration", "information_question_accept"): (
         prc_semantic.execute_action
     ),

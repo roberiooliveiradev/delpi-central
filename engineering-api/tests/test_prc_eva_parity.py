@@ -351,3 +351,198 @@ class TestTerminalE2E:
             payload={"official_code": "001234"}, proposal_ref=ref2,
         )
         assert '"success": false' in commit2.content[0].text
+
+
+# === P2 — paridade da conversa (Issue #207) ===========================
+# comment_list/comment_create/comment_update via MESMOS use cases REST:
+# mesma identidade → mesmos efeitos; negações espelhadas.
+
+from tests.test_prc_conversation import (  # noqa: E402
+    ANALYST_SUB,
+    OTHER_SUB,
+    REQUESTER_PERMS,
+    REQUESTER_SUB,
+    _as,
+    _base,
+    _comment,
+    _create,
+    _post_comment_ok,
+    _start,
+)
+
+
+def _list_rest(client, jwks_env, core_rbac, rid, sub=ANALYST_SUB):
+    tok = _as(jwks_env, core_rbac, sub)
+    r = client.get(f"{_base(rid)}/comments",
+                   headers={"Authorization": f"Bearer {tok}"})
+    assert r.status_code == 200, r.text
+    return r.json()["data"]
+
+
+def _ctx_req(user_id=REQUESTER_SUB):
+    return _ctx(user_id=user_id, permissions=list(REQUESTER_PERMS))
+
+
+class TestConversationParity:
+    @pytest.mark.asyncio
+    async def test_dispatch_and_tool_count(self):
+        from engineering_app.application.eva.semantic_registry import (
+            SEMANTIC_TOOL_NAMES,
+            semantic_action,
+        )
+        assert len(SEMANTIC_TOOL_NAMES) == 6
+        assert ("product_registration", "comment_list") in _READ_DISPATCH
+        for a in ("comment_create", "comment_update"):
+            assert ("product_registration", a) in _EXECUTE_DISPATCH
+            assert semantic_action("product_registration", a) is not None
+
+    @pytest.mark.asyncio
+    async def test_eva_list_matches_rest(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evl")
+        _post_comment_ok(client, jwks_env, core_rbac, rid, body="m1")
+        _post_comment_ok(client, jwks_env, core_rbac, rid, body="m2")
+        rest = _list_rest(client, jwks_env, core_rbac, rid)
+        eva = await prc_semantic.read_action(
+            _ctx(), _entry("comment_list"), {"request_id": rid},
+        )
+        body = eva.content[0].text
+        assert "m1" in body and "m2" in body
+        for c in rest["items"]:
+            assert c["commentId"] in body
+        # escopo negado espelha REST: não-analista de outro caso (403)
+        outsider = SimpleNamespace(
+            id=OTHER_SUB, permissions=list(REQUESTER_PERMS),
+            is_superadmin=False, access_token="t",
+        )
+        eva_out = await prc_semantic.read_action(
+            SimpleNamespace(user=outsider), _entry("comment_list"),
+            {"request_id": rid},
+        )
+        assert '"success": false' in eva_out.content[0].text
+
+    @pytest.mark.asyncio
+    async def test_eva_create_persists_and_rest_reads_back(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evc")
+        eva = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_create"), "act",
+            target_ref=rid,
+            payload={"body": "via EVA", "authorUserId": "spoof-x"},
+            idempotency_key="k-ev1",
+        )
+        body = eva.content[0].text
+        assert '"success": true' in body
+        rest = _list_rest(client, jwks_env, core_rbac, rid)
+        assert rest["total"] == 1
+        c = rest["items"][0]
+        assert c["body"] == "via EVA"
+        # autor = principal delegado, nunca payload
+        assert c["authorSubject"] == "analyst-1"
+
+    @pytest.mark.asyncio
+    async def test_prepare_never_persists(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evp")
+        eva = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_create"), "prepare",
+            target_ref=rid, payload={"body": "nao persiste"},
+        )
+        assert "prepare" in eva.content[0].text
+        rest = _list_rest(client, jwks_env, core_rbac, rid)
+        assert rest["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_idempotent_replay_single_message(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evi")
+        for _ in range(2):
+            await prc_semantic.execute_action(
+                _ctx(), _entry("comment_create"), "act",
+                target_ref=rid, payload={"body": "dup"},
+                idempotency_key="k-dup",
+            )
+        rest = _list_rest(client, jwks_env, core_rbac, rid)
+        assert rest["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_update_own_comment_and_cas_conflict(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evu")
+        c = _post_comment_ok(client, jwks_env, core_rbac, rid,
+                             body="original")
+        ok = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_update"), "act",
+            target_ref=rid,
+            payload={"comment_id": c["commentId"], "body": "editado"},
+            expected_version=c["version"],
+        )
+        assert '"success": true' in ok.content[0].text
+        rest = _list_rest(client, jwks_env, core_rbac, rid)
+        c2 = rest["items"][0]
+        assert c2["body"] == "editado"
+        assert c2["authorSubject"] == c["authorSubject"]  # autor preservado
+        # CAS obsoleto → erro tipado, sem sobrescrita
+        stale = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_update"), "act",
+            target_ref=rid,
+            payload={"comment_id": c["commentId"], "body": "x"},
+            expected_version=c["version"],
+        )
+        assert '"success": false' in stale.content[0].text
+        assert "stale_version" in stale.content[0].text
+
+    @pytest.mark.asyncio
+    async def test_update_non_author_denied(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evn")
+        _start(client, jwks_env, core_rbac, rid)
+        c = _post_comment_ok(client, jwks_env, core_rbac, rid,
+                             body="do analista", sub=ANALYST_SUB)
+        eva = await prc_semantic.execute_action(
+            _ctx_req(), _entry("comment_update"), "act",
+            target_ref=rid,
+            payload={"comment_id": c["commentId"], "body": "hack"},
+            expected_version=c["version"],
+        )
+        assert '"success": false' in eva.content[0].text
+        assert "forbidden" in eva.content[0].text
+
+    @pytest.mark.asyncio
+    async def test_comment_idor_other_request(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid_a = _create(client, jwks_env, core_rbac, suffix="eva")
+        rid_b = _create(client, jwks_env, core_rbac, suffix="evb")
+        c = _post_comment_ok(client, jwks_env, core_rbac, rid_a)
+        eva = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_update"), "act",
+            target_ref=rid_b,
+            payload={"comment_id": c["commentId"], "body": "x"},
+            expected_version=c["version"],
+        )
+        assert '"success": false' in eva.content[0].text
+        assert "not_found" in eva.content[0].text
+
+    @pytest.mark.asyncio
+    async def test_frozen_terminal_blocks_create(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _create(client, jwks_env, core_rbac, suffix="evf")
+        eva_service["repo"]._requests[rid]["status"] = "completed"
+        eva = await prc_semantic.execute_action(
+            _ctx(), _entry("comment_create"), "act",
+            target_ref=rid, payload={"body": "tarde demais"},
+        )
+        assert '"success": false' in eva.content[0].text
+        # leitura continua permitida
+        ok = await prc_semantic.read_action(
+            _ctx(), _entry("comment_list"), {"request_id": rid},
+        )
+        assert '"success": true' in ok.content[0].text

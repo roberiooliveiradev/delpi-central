@@ -264,6 +264,19 @@ async def read_action(context, entry, args: dict):
                 svc.get_flag(ref, flag_id, actor=actor),
                 "Bandeira carregada.",
             )
+        if entry.action == "comment_list":
+            if not ref:
+                return _err("request_id é obrigatório.", code="validation")
+            return _ok(
+                svc.list_comments(
+                    ref, actor=actor,
+                    page=int(args.get("page", 1)),
+                    page_size=int(
+                        args.get("page_size") or args.get("pageSize") or 50
+                    ),
+                ),
+                "Conversa carregada.",
+            )
         if entry.action == "information_round_list":
             if not ref:
                 return _err("request_id é obrigatório.", code="validation")
@@ -385,6 +398,14 @@ async def execute_action(
             "flag_create", "flag_update", "flag_resolve", "flag_reopen",
         ):
             return _flag_execute(
+                svc, actor, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                idempotency_key=idempotency_key,
+            )
+
+        if action in ("comment_create", "comment_update"):
+            return _comment_execute(
                 svc, actor, entry, phase, ref,
                 payload=payload or {},
                 expected_version=expected_version,
@@ -539,6 +560,51 @@ def _information_execute(
         data = data["response"]
     return _ok({"entity": entry.entity, "action": action, **data},
                "Rodada de esclarecimento atualizada.")
+
+
+def _comment_execute(
+    svc, actor, entry, phase, ref, *,
+    payload, expected_version, idempotency_key,
+):
+    """PRC conversation create/update — mesmos use cases REST.
+
+    Autor sempre ``actor`` do principal; ``authorUserId`` vindo do
+    modelo nunca é autoridade. PREPARE valida sem persistir.
+    """
+    action = entry.action
+    if not ref:
+        return _err("target_ref (request_id) é obrigatório.",
+                    code="validation")
+    text = payload.get("body")
+    comment_id = str(payload.get("comment_id")
+                     or payload.get("commentId") or "").strip()
+
+    if phase == "prepare":
+        preview = {
+            "phase": "prepare", "request_id": ref, "action": action,
+        }
+        if action == "comment_update":
+            preview["comment_id"] = comment_id
+            preview["expected_version"] = expected_version
+        return _ok(preview, "Pré-validação de mensagem concluída.")
+
+    if action == "comment_create":
+        data = svc.create_comment(
+            ref, actor=actor, body=text,
+            idempotency_key=idempotency_key,
+        )
+    else:
+        if not comment_id:
+            return _err("comment_id é obrigatório.", code="validation")
+        version = _require_version({"expected_version": expected_version})
+        data = svc.update_comment(
+            ref, comment_id, actor=actor, body=text,
+            expected_version=version,
+        )
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok({"entity": entry.entity, "action": action, **data},
+               "Mensagem aplicada.")
 
 
 def _flag_execute(
