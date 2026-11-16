@@ -1,14 +1,32 @@
 # ATLAS | P2.2h.2d: V016, RBAC Core e habilitação de consulta
 
 **Data:** 2026-11-16.  
-**Status:** `PREPARED_IN_PR`, **sem migração em HML/PROD, sem concessão Core, sem ativar flag nem ACT**.  
+**Status atualizado em 2026-11-16:** `VIEW_ONLY_PROD_OPERATOR_CONFIRMED`. V016 aplicada, conexão PostgreSQL dedicada validada e tela de consulta visível ao operador. **PREPARE, aprovação nominativa e ACT permanecem não implementados/desabilitados.** O histórico de preparação abaixo foi preservado para rastreabilidade.  
 **Owner:** TI / PostgreSQL / Core.
 
-## Evidência de produção informada pelo operador
+## Evidência inicial de produção antes da ativação (histórico)
 
 - `delpi-it-portal-api` saudável, endpoints `/atlas/deployments` e `/atlas/deployments/{proposal_id}` presentes na OpenAPI após merge da PR #205.
 - `settings.ATLAS_JOURNAL_READ_ENABLED=False` comprovado no container.
 - Consulta somente leitura ao banco atual retornou `None` para `it_portal.atlas_deploy_proposals`, `it_portal.atlas_deploy_oci_bindings` e `it_portal.atlas_deploy_events`. Não há journal instalado; o frontend intencionalmente não oferece menu até a permissão e flag estarem ativas.
+
+## Aceite de produção: consulta ATLAS somente leitura (16/11/2026)
+
+**Fonte de evidência:** saídas de terminal e captura de tela fornecidas pelo operador nesta data. Este registro não substitui acesso independente ao host, ao Core ou ao PostgreSQL; não contém credenciais, nomes de usuários, IPs ou logs brutos.
+
+1. **PR [#206](https://github.com/roberiooliveiradev/delpi-central/pull/206) integrada à `main`**: migration versionada V016, guardas default-off, role PostgreSQL separada e manifesto 0.3.5. A etapa de CI API/UI/PostgreSQL descartável passou antes da integração; execução independente do `delpi-verifier` **não foi demonstrada**.
+2. **Backups antes das migrations:** o operador gerou backup do schema `it_portal` e backup completo do banco `plugins_hub` com `pg_dump -Fc`; confirmou arquivo não vazio e `pg_restore -l` sem erro. Isso verifica **formato/catálogo**, **não é prova de restauração completa**.
+3. **Migrations V012–V015 aplicadas:** `run_migrations()` retornou exatamente V012, V013, V014 e V015; `schema_migrations` confirmou versões 1–15, sem lacunas. As estruturas de workstation foram criadas, **sem ativar controle remoto**.
+4. **Migration V016 aplicada de forma opt-in:** o operador executou `run_migrations()` em processo isolado com `IT_PORTAL_ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED=true` e `IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED=false`. Resultado confirmado: `V016__atlas_deploy_oci_journal.sql`, versão 16 registrada e as quatro tabelas `it_portal.atlas_deploy_challenges`, `atlas_deploy_proposals`, `atlas_deploy_events` e `atlas_deploy_oci_bindings` presentes. A execução pontual não alterou permanentemente a flag de migração no container.
+5. **Identidade de leitura:** conta `it_portal_atlas_journal_reader` criada inicialmente com `NOLOGIN`, `NOINHERIT` e `NOSUPERUSER`; somente `SELECT` nas tabelas proposals/bindings/events, com negação explícita de `SELECT` em challenges. O operador habilitou login depois da auditoria de privilégios (resultado informado como satisfatório, sem transcrição dos contadores) e validou a API com `atlas_journal_read_db_configured() == True`, `current_user` igual à role dedicada, `default_transaction_read_only=on`, `COUNT(proposals)=0`.
+6. **Core/UI:** o operador foi instruído a publicar o manifesto `0.3.5` e atribuir `it-portal.access` + `it-portal.deploy.view`. A captura final mostra a opção **Implantações ATLAS** no menu, título da página, filtros **Ambiente** e **Situação**, aviso **Consulta somente leitura**, contagem **0 solicitação(ões)** e estado vazio **Nenhuma solicitação encontrada**. Isso comprova a **disponibilização visual ao operador** e é compatível com concessão de VIEW e leitura habilitada; a publicação do manifesto e o valor final da flag não foram confirmados por consulta administrativa independente.
+7. **Segregação preservada:** essa página consulta registros reais e não fabrica propostas; nenhuma ação de solicitar, aprovar, executar, reiniciar container ou promover imagem OCI por digest foi demonstrada ou habilitada.
+
+**Pendências de aceite/segurança ainda abertas:** revisor independente `delpi-verifier`; teste de restauração do backup completo em banco isolado; revisão de trigger/constraint V016 em runtime, além de tabelas; teste HTTP negativo `403` para usuário sem `it-portal.deploy.view`, revogação Core e `503` com leitor indisponível; verificação da configuração final da flag/manifesto pela fonte administrativa; observação de HML quando exigida pelo gate do projeto. Não marcar essas pendências como PASS com base apenas na captura.
+
+**Risco operacional separado:** o PostgreSQL `plugins_hub` reportou divergência de versão de collation (versão registrada 2.41; fornecida pelo sistema 2.36). O operador optou por postergar a manutenção. **Não** foram executados `REINDEX` nem `REFRESH COLLATION VERSION` nesta implantação; manter avaliação e janela DBA separadas.
+
+**Próxima fase ATLAS:** criar uma API de PREPARE autenticada e auditada para produzir propostas OCI reais e vínculos assinados no journal, depois implementar decisão nominativa no Portal do TI e somente por último o executor isolado com verificações de CI, assinatura, host proof, health e rollback. Manter ACT default-off e scripts manuais independentes.
 
 ## Artefatos preparados
 
@@ -55,12 +73,14 @@ O DBA valida com usuário leitor que os três SELECTs passam, challenges negam, 
 - Nenhum `CREATE ROLE`, `GRANT SELECT`, mudança de banco, usuário Keycloak ou deploy é executado pelo ChatGPT nesta preparação.
 - Revisão independente de código é um gate separado de aprovação operacional do único administrador.
 
-## Checklist de aceitação posterior
+## Checklist: validado pelo operador vs. pendente
 
-- [ ] Revisão independente aprovada e CI totalmente verde
-- [ ] Backup verificado e V016 aplicada pelo runner controlado
-- [ ] V016 registrada com checksum, quatro tabelas e triggers existentes
-- [ ] Role específica com SELECT mínimo e negação de challenges/escrita
-- [ ] Manifesto 0.3.5 registrado e VIEW atribuído explicitamente
-- [ ] UI visível ao autorizado, oculta aos demais e GET negando não autorizados
-- [ ] ATLAS permanece sem ACT e scripts manuais inalterados
+- [x] CI API/UI/PostgreSQL descartável aprovado na PR #206, antes do merge
+- [x] Backup completo existente com formato/catálogo `pg_restore -l` validado; **restauração de teste ainda pendente**
+- [x] V012–V016 registradas no histórico pelo runner; quatro tabelas V016 existentes
+- [x] Role dedicada: `SELECT` nas três tabelas de leitura, `challenges` negado e conexão read-only comprovada
+- [x] UI de consulta visível ao operador com 0 propostas e aviso de somente leitura (captura de 16/11/2026)
+- [x] Sem PREPARE/ACT, sem mudança nos scripts manuais pelo incremento de VIEW
+- [ ] `delpi-verifier` independente, teste de restauração e validação de triggers/constraints em runtime
+- [ ] Confirmar configuração Core 0.3.5 e grants por fonte administrativa, e realizar testes negativos 403/503, incluindo usuário sem VIEW
+- [ ] Avaliar e corrigir mismatch de collation em janela DBA própria
