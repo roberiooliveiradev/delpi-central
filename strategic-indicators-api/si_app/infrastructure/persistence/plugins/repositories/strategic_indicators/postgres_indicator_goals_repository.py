@@ -56,6 +56,59 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
             finally:
                 self._injected_connection = None
 
+    def _insert_goal_audit_event(
+        self,
+        *,
+        event_type: str,
+        goal_row: dict,
+        payload_before: dict | None,
+        actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
+        audit_meta: dict | None = None,
+    ) -> None:
+        """Persist the goal mutation into ``strategic_indicators.settings_audit``.
+
+        Must be called inside ``_unit_of_work`` so the INSERT rides the same
+        transaction as the mutation — audit and write commit or roll back
+        together. Correlation metadata (write origin, caller correlation id,
+        consequential effects) is embedded under ``_audit_meta`` inside
+        ``payload_after`` because the audit schema carries no dedicated
+        correlation column.
+        """
+        from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+            PostgresStrategicIndicatorsSettingsAuditRepository,
+        )
+
+        entity_key = (
+            f"indicator_goal:{goal_row.get('indicator_id')}"
+            f":{goal_row.get('goal_year')}"
+        )
+        branch = (goal_row.get("goal_scope_branch") or "").strip()
+        if branch:
+            entity_key += f":{branch}"
+        entity_key += f":v{goal_row.get('version')}"
+        entity_key = entity_key[:150]
+
+        payload_after = {k: v for k, v in goal_row.items() if k != "row_xmin"}
+        meta = dict(audit_meta or {})
+        if audit_origin:
+            meta["write_origin"] = audit_origin
+        if correlation_id:
+            meta["correlation_id"] = correlation_id
+        if meta:
+            payload_after["_audit_meta"] = meta
+
+        PostgresStrategicIndicatorsSettingsAuditRepository(
+            self._connection
+        ).insert_audit_event(
+            entity_key=entity_key,
+            payload_before=payload_before,
+            payload_after=payload_after,
+            changed_by_user_id=actor_user_id,
+            event_type=event_type,
+        )
+
     @staticmethod
     def _scope_lock_key(
         *, indicator_id: str, goal_year: int, goal_scope_branch: str
@@ -151,28 +204,32 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_year: int,
         goal_scope_branch: str,
         actor_user_id: str | None,
-    ) -> None:
-        self.execute(
-            """
-            UPDATE strategic_indicators.indicator_goals
-            SET
-                is_active = FALSE,
-                updated_by_user_id = %s,
-                updated_by_email = %s,
-                updated_at = NOW()
-            WHERE indicator_id = %s
-              AND goal_year = %s
-              AND goal_scope_branch = %s
-              AND is_active = TRUE
-            """,
-            (
-                actor_user_id,
-                None,
-                indicator_id,
-                goal_year,
-                goal_scope_branch,
-            ),
-        )
+    ) -> list[str]:
+        return [
+            str(row["id"])
+            for row in self.fetch_all(
+                """
+                UPDATE strategic_indicators.indicator_goals
+                SET
+                    is_active = FALSE,
+                    updated_by_user_id = %s,
+                    updated_by_email = %s,
+                    updated_at = NOW()
+                WHERE indicator_id = %s
+                  AND goal_year = %s
+                  AND goal_scope_branch = %s
+                  AND is_active = TRUE
+                RETURNING id
+                """,
+                (
+                    actor_user_id,
+                    None,
+                    indicator_id,
+                    goal_year,
+                    goal_scope_branch,
+                ),
+            )
+        ]
 
     @staticmethod
     def _append_goal_validity_filter(
@@ -766,6 +823,8 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         notes: str | None,
         actor_user_id: str | None,
         expected_max_version: int | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         goal_scope_branch = normalize_goal_scope_branch(goal_scope_branch)
 
@@ -778,7 +837,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_scope_branch=goal_scope_branch,
             )
 
-            self._deactivate_active_goals_for_scope(
+            superseded_ids = self._deactivate_active_goals_for_scope(
                 indicator_id=indicator_id,
                 goal_year=goal_year,
                 goal_scope_branch=goal_scope_branch,
@@ -857,6 +916,20 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     monthly_targets=monthly_targets,
                 )
 
+            self._insert_goal_audit_event(
+                event_type="indicator_goal.created",
+                goal_row=created,
+                payload_before=None,
+                actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+                audit_meta=(
+                    {"superseded_goal_ids": superseded_ids}
+                    if superseded_ids
+                    else None
+                ),
+            )
+
         created["monthly_targets"] = self.list_monthly_targets(
             indicator_goal_id=created["id"]
         )
@@ -879,8 +952,19 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         notes: str | None,
         actor_user_id: str | None,
         expected_row_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         with self._unit_of_work():
+            before_row = self.fetch_one(
+                """
+                SELECT *
+                FROM strategic_indicators.indicator_goals
+                WHERE id = %s
+                """,
+                (goal_id,),
+            )
+
             if indicator_id or goal_year is not None or goal_scope_branch is not None:
                 current = self.fetch_goal_identity(goal_id)
                 if not current:
@@ -980,6 +1064,15 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     (goal_id,),
                 )
 
+            self._insert_goal_audit_event(
+                event_type="indicator_goal.updated",
+                goal_row=updated,
+                payload_before=before_row,
+                actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+            )
+
         updated["monthly_targets"] = self.list_monthly_targets(
             indicator_goal_id=goal_id
         )
@@ -991,11 +1084,13 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_id: str,
         actor_user_id: str | None,
         expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         with self._unit_of_work():
             target = self.fetch_one(
                 """
-                SELECT id, indicator_id, goal_year, goal_scope_branch
+                SELECT *
                 FROM strategic_indicators.indicator_goals
                 WHERE id = %s
                 """,
@@ -1012,28 +1107,33 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                 goal_scope_branch=target.get("goal_scope_branch") or "",
             )
 
-            self.execute(
-                """
-                UPDATE strategic_indicators.indicator_goals
-                SET
-                    is_active = FALSE,
-                    updated_by_user_id = %s,
-                    updated_by_email = %s,
-                    updated_at = NOW()
-                WHERE indicator_id = %s
-                  AND goal_year = %s
-                  AND goal_scope_branch = %s
-                  AND id <> %s
-                """,
-                (
-                    actor_user_id,
-                    None,
-                    target["indicator_id"],
-                    target["goal_year"],
-                    target.get("goal_scope_branch") or "",
-                    goal_id,
-                ),
-            )
+            superseded_ids = [
+                str(r["id"])
+                for r in self.fetch_all(
+                    """
+                    UPDATE strategic_indicators.indicator_goals
+                    SET
+                        is_active = FALSE,
+                        updated_by_user_id = %s,
+                        updated_by_email = %s,
+                        updated_at = NOW()
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                      AND goal_scope_branch = %s
+                      AND id <> %s
+                      AND is_active = TRUE
+                    RETURNING id
+                    """,
+                    (
+                        actor_user_id,
+                        None,
+                        target["indicator_id"],
+                        target["goal_year"],
+                        target.get("goal_scope_branch") or "",
+                        goal_id,
+                    ),
+                )
+            ]
 
             # Guarded activate: a stale ``expected_xmin`` refuses the change
             # before any sibling is deactivated (single transaction).
@@ -1062,6 +1162,20 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     "A meta foi alterada ou excluída desde a leitura "
                     "(expected_xmin desatualizado)."
                 )
+
+            self._insert_goal_audit_event(
+                event_type="indicator_goal.activated",
+                goal_row=row,
+                payload_before=target,
+                actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+                audit_meta=(
+                    {"superseded_goal_ids": superseded_ids}
+                    if superseded_ids
+                    else None
+                ),
+            )
 
         row["monthly_targets"] = self.list_monthly_targets(
             indicator_goal_id=goal_id
@@ -1096,36 +1210,58 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_id: str,
         actor_user_id: str | None,
         expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
-        # Guarded deactivate: a stale ``expected_xmin`` refuses the change
-        # atomically in the same statement as the mutation.
-        row = self.execute_returning_one(
-            """
-            UPDATE strategic_indicators.indicator_goals
-            SET
-                is_active = FALSE,
-                updated_by_user_id = %s,
-                updated_by_email = %s,
-                updated_at = NOW()
-            WHERE id = %s
-              AND (%s::text IS NULL OR xmin::text = %s)
-            RETURNING *, xmin::text AS row_xmin
-            """,
-            (
-                actor_user_id,
-                None,
-                goal_id,
-                expected_xmin,
-                expected_xmin,
-            ),
-        )
-        if row is None:
-            if expected_xmin is not None:
-                raise StrategicIndicatorsGoalConflictError(
-                    "A meta foi alterada ou excluída desde a leitura "
-                    "(expected_xmin desatualizado)."
-                )
-            raise ValueError("Meta não encontrada.")
+        with self._unit_of_work():
+            before_row = self.fetch_one(
+                """
+                SELECT *
+                FROM strategic_indicators.indicator_goals
+                WHERE id = %s
+                """,
+                (goal_id,),
+            )
+
+            # Guarded deactivate: a stale ``expected_xmin`` refuses the
+            # change atomically in the same statement as the mutation.
+            row = self.execute_returning_one(
+                """
+                UPDATE strategic_indicators.indicator_goals
+                SET
+                    is_active = FALSE,
+                    updated_by_user_id = %s,
+                    updated_by_email = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+                  AND (%s::text IS NULL OR xmin::text = %s)
+                RETURNING *, xmin::text AS row_xmin
+                """,
+                (
+                    actor_user_id,
+                    None,
+                    goal_id,
+                    expected_xmin,
+                    expected_xmin,
+                ),
+            )
+            if row is None:
+                if expected_xmin is not None:
+                    raise StrategicIndicatorsGoalConflictError(
+                        "A meta foi alterada ou excluída desde a leitura "
+                        "(expected_xmin desatualizado)."
+                    )
+                raise ValueError("Meta não encontrada.")
+
+            self._insert_goal_audit_event(
+                event_type="indicator_goal.deactivated",
+                goal_row=row,
+                payload_before=before_row,
+                actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+            )
+
         row["monthly_targets"] = self.list_monthly_targets(
             indicator_goal_id=goal_id
         )

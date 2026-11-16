@@ -40,10 +40,10 @@ class PostgresStrategicIndicatorsSettingsAuditRepository(
             (
                 event_type,
                 entity_key,
-                json.dumps(payload_before, ensure_ascii=False)
+                json.dumps(payload_before, ensure_ascii=False, default=str)
                 if payload_before is not None
                 else None,
-                json.dumps(payload_after, ensure_ascii=False)
+                json.dumps(payload_after, ensure_ascii=False, default=str)
                 if payload_after is not None
                 else None,
                 changed_by_user_id,

@@ -18,3 +18,5 @@ class CreateStrategicIndicatorsIndicatorGoalRequest:
     notes: str | None = None
     actor_user_id: str | None = None
     expected_max_version: int | None = None
+    audit_origin: str | None = None
+    correlation_id: str | None = None

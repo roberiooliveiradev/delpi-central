@@ -191,7 +191,10 @@ class DaviGovernedWriteOrchestrator:
         # still enforced atomically by the SI API inside the mutation.
         try:
             write_result = self._si_stack.execute(
-                token, capability, proposal.exact_change
+                token,
+                capability,
+                proposal.exact_change,
+                correlation_id=proposal.proposal_id,
             )
         except StrategicIndicatorsApiError as exc:
             governed = owner_error_to_governed(exc)

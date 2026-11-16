@@ -700,12 +700,25 @@ class SiGoalWriteStack:
     # ------------------------------------------------------------ ACT
 
     def execute(
-        self, authorization: str, capability: str, exact_change: dict
+        self,
+        authorization: str,
+        capability: str,
+        exact_change: dict,
+        *,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        # Every governed write is stamped with the DAVI origin and the
+        # sealed proposal id so the owner-side settings_audit row can be
+        # correlated back to the exact PREPARE/ACT cycle.
+        audit_kwargs = {
+            "write_origin": "davi-mcp",
+            "correlation_id": correlation_id,
+        }
         if capability == CAP_GOAL_CREATE:
             return self._client.create_user_indicator_goal(
                 authorization=authorization,
                 body=exact_change,
+                **audit_kwargs,
             )
         if capability == CAP_GOAL_UPDATE:
             body = {k: v for k, v in exact_change.items() if k != "goal_id"}
@@ -714,6 +727,7 @@ class SiGoalWriteStack:
                 authorization=authorization,
                 goal_id=str(exact_change["goal_id"]),
                 body=body,
+                **audit_kwargs,
             )
         if capability == CAP_GOAL_ACTIVATE:
             return self._client.activate_user_indicator_goal(
@@ -722,6 +736,7 @@ class SiGoalWriteStack:
                 expected_xmin=_require_occ_token(
                     exact_change.get("expected_xmin"), capability
                 ),
+                **audit_kwargs,
             )
         if capability == CAP_GOAL_DEACTIVATE:
             return self._client.deactivate_user_indicator_goal(
@@ -730,6 +745,7 @@ class SiGoalWriteStack:
                 expected_xmin=_require_occ_token(
                     exact_change.get("expected_xmin"), capability
                 ),
+                **audit_kwargs,
             )
         raise _err(
             f"ACT not implemented for '{capability}'.",

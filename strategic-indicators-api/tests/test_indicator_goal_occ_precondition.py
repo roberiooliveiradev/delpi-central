@@ -177,3 +177,133 @@ def test_activate_stale_xmin_raises_conflict_before_activate() -> None:
             actor_user_id="u-1",
             expected_xmin="stale",
         )
+
+
+# ---------------------------------------------------------------------------
+# W012 alignment — transactional goal audit into settings_audit
+# ---------------------------------------------------------------------------
+
+_GOAL_ROW = {
+    "id": "g-1",
+    "indicator_id": "ind-1",
+    "goal_year": 2027,
+    "goal_label": "Meta",
+    "goal_value": 10.0,
+    "goal_periodicity": "annual",
+    "goal_mode": "standard",
+    "goal_scope_branch": "",
+    "version": 3,
+    "is_active": True,
+    "valid_from": None,
+    "valid_to": None,
+    "notes": None,
+    "row_xmin": "201",
+}
+
+
+def _audit_inserts(conn):
+    return [s for s in conn.statements if "settings_audit" in s[0].lower() and "insert" in s[0].lower()]
+
+
+def test_update_writes_audit_in_same_transaction() -> None:
+    conn = _FakeConnection()
+    repo = _repo(conn)
+    conn.next_rows = []  # DELETE targets returns nothing
+    conn.next_row = dict(_GOAL_ROW)
+    # first fetch = before_row SELECT, second = guarded UPDATE RETURNING
+    seq = iter([dict(_GOAL_ROW), dict(_GOAL_ROW)])
+    conn.fetch_override = lambda: next(seq)
+    repo.update_indicator_goal(
+        goal_id="g-1",
+        indicator_id=None,
+        goal_year=None,
+        goal_scope_branch=None,
+        goal_label="Meta",
+        goal_value=10.0,
+        goal_periodicity="annual",
+        goal_mode="standard",
+        monthly_targets=[],
+        valid_from=None,
+        valid_to=None,
+        notes=None,
+        actor_user_id="u-1",
+        expected_row_xmin="201",
+        audit_origin="davi-mcp",
+        correlation_id="gp_123",
+    )
+    audits = _audit_inserts(conn)
+    assert len(audits) == 1
+    params = audits[0][1]
+    assert params[0] == "indicator_goal.updated"
+    assert params[1].startswith("indicator_goal:ind-1:2027")
+    assert "gp_123" in params[3]
+    assert "davi-mcp" in params[3]
+    assert params[4] == "u-1"
+    # injected connection: caller owns commit; audit rode the same tx
+    assert conn.commits == 0
+
+
+def test_activate_audits_superseded_siblings() -> None:
+    conn = _FakeConnection()
+    repo = _repo(conn)
+    seq = iter([dict(_GOAL_ROW), dict(_GOAL_ROW)])
+    conn.fetch_override = lambda: next(seq)
+    conn.next_rows = [{"id": "g-2"}]  # superseded sibling RETURNING
+    repo.activate_indicator_goal(
+        goal_id="g-1",
+        actor_user_id="u-1",
+        expected_xmin="201",
+        audit_origin="davi-mcp",
+        correlation_id="gp_456",
+    )
+    audits = _audit_inserts(conn)
+    assert len(audits) == 1
+    assert audits[0][1][0] == "indicator_goal.activated"
+    assert "superseded_goal_ids" in audits[0][1][3]
+    assert "g-2" in audits[0][1][3]
+
+
+def test_deactivate_writes_audit_and_commits_once() -> None:
+    conn = _FakeConnection()
+    repo = _repo(conn)
+    seq = iter([dict(_GOAL_ROW), dict(_GOAL_ROW)])
+    conn.fetch_override = lambda: next(seq)
+    repo.deactivate_indicator_goal(
+        goal_id="g-1",
+        actor_user_id="u-1",
+        expected_xmin="201",
+        audit_origin="davi-mcp",
+        correlation_id="gp_789",
+    )
+    audits = _audit_inserts(conn)
+    assert len(audits) == 1
+    assert audits[0][1][0] == "indicator_goal.deactivated"
+    assert conn.commits == 0  # caller-owned transaction
+
+
+def test_conflict_skips_audit() -> None:
+    """A refused write (stale OCC token) must not produce an audit row."""
+    conn = _FakeConnection()
+    repo = _repo(conn)
+    seq = iter([dict(_GOAL_ROW), None])  # before_row found, UPDATE hits 0 rows
+    conn.fetch_override = lambda: next(seq)
+    with pytest.raises(StrategicIndicatorsGoalConflictError):
+        repo.update_indicator_goal(
+            goal_id="g-1",
+            indicator_id=None,
+            goal_year=None,
+            goal_scope_branch=None,
+            goal_label="Meta",
+            goal_value=10.0,
+            goal_periodicity="annual",
+            goal_mode="standard",
+            monthly_targets=[],
+            valid_from=None,
+            valid_to=None,
+            notes=None,
+            actor_user_id="u-1",
+            expected_row_xmin="999",
+        )
+    assert _audit_inserts(conn) == []
+    assert conn.commits == 0
+    assert conn.rollbacks == 0  # injected conn: exception propagates to outer UoW

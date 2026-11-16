@@ -18,6 +18,8 @@ class ActivateStrategicIndicatorsIndicatorGoalUseCase:
         goal_id: str,
         actor_user_id: str | None,
         expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if not goal_id.strip():
             raise ValueError("goal_id é obrigatório.")
@@ -26,4 +28,6 @@ class ActivateStrategicIndicatorsIndicatorGoalUseCase:
             goal_id=goal_id.strip(),
             actor_user_id=actor_user_id,
             expected_xmin=expected_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

@@ -82,6 +82,7 @@ class FakeSiClient:
     def __init__(self, rows: list[dict] | None = None) -> None:
         self.rows = {r["id"]: dict(r) for r in (rows or [])}
         self.writes: list[tuple[str, str | None, dict]] = []
+        self.audit_meta: list[tuple[str | None, str | None]] = []
         self.fail_write_with: Exception | None = None
         self.fail_read_after_write = False
         self._xmin_seq = 200
@@ -116,8 +117,14 @@ class FakeSiClient:
         return row
 
     def create_user_indicator_goal(
-        self, *, authorization: str, body: dict
+        self,
+        *,
+        authorization: str,
+        body: dict,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        self.audit_meta.append((write_origin, correlation_id))
         self._check_auth(authorization)
         if self.fail_write_with:
             raise self.fail_write_with
@@ -158,8 +165,15 @@ class FakeSiClient:
         return dict(row)
 
     def update_user_indicator_goal(
-        self, *, authorization: str, goal_id: str, body: dict
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        body: dict,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        self.audit_meta.append((write_origin, correlation_id))
         self._check_auth(authorization)
         if self.fail_write_with:
             raise self.fail_write_with
@@ -188,16 +202,30 @@ class FakeSiClient:
         return dict(row)
 
     def activate_user_indicator_goal(
-        self, *, authorization: str, goal_id: str, expected_xmin: str | None = None
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        self.audit_meta.append((write_origin, correlation_id))
         self._check_auth(authorization)
         if self.fail_write_with:
             raise self.fail_write_with
         return self._toggle(authorization, goal_id, True, expected_xmin, "activate")
 
     def deactivate_user_indicator_goal(
-        self, *, authorization: str, goal_id: str, expected_xmin: str | None = None
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        self.audit_meta.append((write_origin, correlation_id))
         self._check_auth(authorization)
         if self.fail_write_with:
             raise self.fail_write_with
@@ -906,3 +934,24 @@ def test_davi_execute_requires_identity() -> None:
             authorization="",
             orchestrator=orch,
         )
+
+
+def test_act_stamps_davi_origin_and_proposal_correlation() -> None:
+    """Owner write carries write_origin=davi-mcp + proposal_id so the
+    owner-side settings_audit row correlates to the PREPARE/ACT cycle."""
+    client = FakeSiClient()
+    orch = _orchestrator(client)
+    out = _prepare(
+        orch,
+        "si.goal.create",
+        {
+            "indicator_id": "ind-1",
+            "goal_year": 2027,
+            "goal_label": "Meta teste",
+            "goal_value": 10.0,
+            "goal_periodicity": "annual",
+        },
+    )
+    result = _act(orch, "si.goal.create", out)
+    assert result["verified"] is True
+    assert client.audit_meta == [("davi-mcp", out["proposal_id"])]

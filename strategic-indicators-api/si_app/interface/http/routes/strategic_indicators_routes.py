@@ -134,6 +134,35 @@ def _extract_actor(request: Request) -> str | None:
     )
 
 
+_VALID_WRITE_ORIGINS = {"davi-mcp"}
+_MAX_CORRELATION_ID_LENGTH = 128
+
+
+def _validate_audit_meta(
+    write_origin: str | None, correlation_id: str | None
+) -> tuple[str | None, str | None]:
+    """Bounded, allowlisted audit metadata for goal mutations.
+
+    ``write_origin`` distinguishes writes issued through the DAVI MCP
+    (``davi-mcp``) from direct portal calls (absent). ``correlation_id``
+    carries the caller's opaque correlation handle (e.g. the governed
+    proposal id) — truncated and never trusted for authorization.
+    """
+    origin = (write_origin or "").strip() or None
+    if origin is not None and origin not in _VALID_WRITE_ORIGINS:
+        raise HTTPException(
+            status_code=400,
+            detail="write_origin inválido.",
+        )
+    correlation = (correlation_id or "").strip() or None
+    if correlation is not None and len(correlation) > _MAX_CORRELATION_ID_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail="correlation_id excede o tamanho máximo.",
+        )
+    return origin, correlation
+
+
 def _serialize_goal_item(item: dict) -> dict:
     return {
         "id": item.get("id"),
@@ -765,9 +794,14 @@ def list_indicator_goal_history(
 def create_indicator_goal(
     body: CreateIndicatorGoalBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
 
         use_case = build_create_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
@@ -787,6 +821,8 @@ def create_indicator_goal(
                 notes=body.notes,
                 actor_user_id=actor_user_id,
                 expected_max_version=body.expected_max_version,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
@@ -809,9 +845,14 @@ def update_indicator_goal(
     goal_id: str,
     body: UpdateIndicatorGoalBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
 
         use_case = build_update_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
@@ -832,6 +873,8 @@ def update_indicator_goal(
                 notes=body.notes,
                 actor_user_id=actor_user_id,
                 expected_row_xmin=body.expected_row_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
@@ -860,15 +903,22 @@ def activate_indicator_goal(
             "Se a linha mudou desde então, a ativação é recusada com 409."
         ),
     ),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
 
         use_case = build_activate_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
             expected_xmin=expected_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsGoalConflictError as exc:
@@ -894,15 +944,22 @@ def deactivate_indicator_goal(
             "Se a linha mudou desde então, a desativação é recusada com 409."
         ),
     ),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
 
         use_case = build_deactivate_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
             expected_xmin=expected_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         return _invalidate_read_cache_after_mutation(_serialize_goal_item(result))
     except StrategicIndicatorsGoalConflictError as exc:

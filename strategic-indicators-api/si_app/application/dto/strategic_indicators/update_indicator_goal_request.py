@@ -19,3 +19,5 @@ class UpdateStrategicIndicatorsIndicatorGoalRequest:
     notes: str | None = None
     actor_user_id: str | None = None
     expected_row_xmin: str | None = None
+    audit_origin: str | None = None
+    correlation_id: str | None = None
