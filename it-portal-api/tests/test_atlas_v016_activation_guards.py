@@ -35,8 +35,12 @@ def test_versioned_sql_is_safe_on_application_deploy():
     assert "CREATE TRIGGER atlas_oci_proposal_identity_guard" in sql
     assert "REVOKE ALL ON FUNCTION it_portal.atlas_oci_guard_binding()" in sql
     assert "REVOKE ALL ON TABLE" in sql
+    # Examine statements only: comments may describe future manual GRANTs.
+    executable = "\n".join(
+        line for line in sql.splitlines() if not line.lstrip().startswith("--")
+    )
     # Migration must never grant CREATE, DML privileges or Core access by itself.
-    assert not any(s in sql.upper() for s in (
+    assert not any(s in executable.upper() for s in (
         "CREATE ROLE ", "GRANT ALL ", "GRANT SELECT ", "DROP TABLE ",
         "ALTER ROLE ", "GRANT EXECUTE "
     ))
