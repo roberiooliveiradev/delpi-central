@@ -201,6 +201,40 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
                 findings = mod.scan_fastapi_duplicates({"orders-api/app/b.py": {1}})
         self.assertEqual([item.rule for item in findings], ["FASTAPI_OPERATION_ID_DUPLICATE"])
 
+    def test_flask_blueprint_route_is_not_checked_as_fastapi(self):
+        source = '''\nfrom flask import Blueprint\nsupplier_bp = Blueprint("supplier", __name__)\n\n@supplier_bp.get("/analytics/supplier-performance")\ndef supplier_performance():\n    return {}\n'''
+        findings = mod.scan_changed_fastapi_file(
+            "supplies-api/app/interfaces/http/routes/supplier_performance_routes.py",
+            source,
+            {5},
+        )
+        self.assertEqual(findings, [])
+
+    def test_flask_aliased_blueprint_and_flask_module_are_skipped(self):
+        source = '''\nimport flask as web\nfrom flask import Blueprint as BP\napp = web.Flask(__name__)\nbp = BP("id", __name__)\n\n@app.get("/app")\ndef app_get():\n    return {}\n\n@bp.post("/submit")\ndef bp_post():\n    return {}\n'''
+        self.assertEqual(mod.fastapi_routes_from_source(source), [])
+
+    def test_mixed_flask_and_fastapi_requires_literal_operation_id(self):
+        source = '''\nfrom flask import Blueprint\nfrom fastapi import APIRouter\nbp = Blueprint("id", __name__)\nrouter = APIRouter()\n\n@bp.get("/flask")\ndef flask_route():\n    return {}\n\n@router.get("/fastapi")\ndef fastapi_route():\n    return {}\n'''
+        findings = mod.scan_changed_fastapi_file(
+            "supplies-api/app/routes.py", source, {11}
+        )
+        self.assertEqual(
+            [finding.rule for finding in findings],
+            ["FASTAPI_OPERATION_ID_REQUIRED"],
+        )
+        self.assertIn("/fastapi", findings[0].message)
+
+    def test_unidentified_router_is_not_implicitly_exempt(self):
+        source = '''\n@unknown.get("/items")\ndef list_items():\n    return []\n'''
+        findings = mod.scan_changed_fastapi_file(
+            "orders-api/app/routes.py", source, {2}
+        )
+        self.assertEqual(
+            [finding.rule for finding in findings],
+            ["FASTAPI_OPERATION_ID_REQUIRED"],
+        )
+
     def test_non_api_python_is_ignored(self):
         source = '@router.get("/items")\ndef x():\n    pass\n'
         findings = mod.scan_changed_fastapi_file("scripts/example.py", source, {1})

@@ -146,3 +146,12 @@ permanecem resíduos explícitos. A publicação solicitada não encerra o chama
 
 Conectividade de deploy: SSH sem configuração global (`-F /dev/null`, BatchMode)
 falhou com `Network is unreachable`; nenhuma alteração foi aplicada ao servidor.
+
+## Continuidade em 16/11/2026 — auditoria pós-push
+
+- Verificado no GitHub: `dee14a0cd2b65fd6a2c18a0821c4900d07e82595` está na ancestralidade de `main` (HEAD observado: `ead46831787acbb4a3f3ec6ac1c42611dd534d8e`). O código IDF está publicado no repositório, mas **não há evidência de deploy em produção**.
+- CI do commit IDF: `Architecture Enforcement` falhou em `FASTAPI_OPERATION_ID_REQUIRED` porque o scanner tratava uma rota Flask `Blueprint.get` como FastAPI. A rota BFF é Flask, não aceita `operation_id`. Correção delimitada na branch `fix/glpi-1579-flask-openapi-guardrail`: identificar apenas construtores Flask explícitos (inclusive imports com alias), excluir seus receivers do scanner FastAPI e manter o gate exigindo `operation_id` nas rotas FastAPI, com testes de regressão.
+- `api-delpi console`: build MFE aprovado; job `api-tests` falhou por arquivo de teste DAVI inexistente (`tests/test_davi_enterprise_offline_broker_contract_v1.py`), sem relação evidenciada com o IDF.
+- `minha-delpi-ai-api presentation`: falha de instalação `npm ci` por `react`/`react-dom` divergentes entre package e lock, outra frente. Não alterar dependências de DAVI/apresentação neste chamado.
+- Antes do deploy: revisão da PR de correção e confirmação do gate de arquitetura. Depois do deploy dos três serviços, validar UI desktop/mobile, RBAC, contagens, dados incompletos e consultas em produção conforme roteiro acima. Não marcar #1579 solucionado sem aceite.
+
