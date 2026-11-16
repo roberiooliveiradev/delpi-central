@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+<title id="title">EVA - referencia compacta da aba Roteiro / Operacoes</title>
+<desc id="desc">Reconstrucao vetorial esquematica do mock fornecido pelo owner: cabecalho compacto, tabs, quatro KPIs e um card de operacao expansivel. Paleta demonstrativa, nao tokens oficiais.</desc>
+<rect width="960" height="540" rx="18" fill="#0d1015"/>
+<rect x="18" y="18" width="924" height="146" rx="16" fill="#171d28"/>
+<text x="37" y="49" font-family="Arial,sans-serif" font-size="21" font-weight="700" fill="#f2f5fa">Roteiro de fabricacao</text>
+<text x="37" y="74" font-family="Arial,sans-serif" font-size="13" fill="#b3bfd0">90260145 · Operacoes e analises de processo</text>
+<rect x="720" y="31" width="107" height="25" rx="13" fill="#313944"/>
+<text x="773" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#e0e6ed">Filiais: todas</text>
+<rect x="833" y="31" width="87" height="25" rx="13" fill="#313944"/>
+<text x="876" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#e0e6ed">Estagio 0</text>
+<rect x="36" y="102" width="288" height="41" rx="12" fill="#27292d"/>
+<text x="180" y="128" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#f0f4f9">Operacoes</text>
+<text x="478" y="128" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="600" fill="#acb7c6">Balanceamento</text>
+<text x="778" y="128" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="600" fill="#acb7c6">Analise visual</text>
+<g font-family="Arial,sans-serif">
+<rect x="19" y="182" width="220" height="94" rx="11" fill="#1b2839" stroke="#3d5169"/>
+<text x="34" y="205" font-size="13" fill="#b2c0cf">Operacao</text><text x="34" y="248" font-size="24" font-weight="700" fill="#f2f6fb">1</text>
+<rect x="253" y="182" width="220" height="94" rx="11" fill="#1b2839" stroke="#3d5169"/>
+<text x="268" y="205" font-size="13" fill="#b2c0cf">Centro de trabalho</text><text x="268" y="248" font-size="24" font-weight="700" fill="#f2f6fb">1</text>
+<rect x="487" y="182" width="220" height="94" rx="11" fill="#1b2839" stroke="#3d5169"/>
+<text x="502" y="205" font-size="13" fill="#b2c0cf">Recurso</text><text x="502" y="248" font-size="24" font-weight="700" fill="#f2f6fb">1</text>
+<rect x="721" y="182" width="220" height="94" rx="11" fill="#1b2839" stroke="#3d5169"/>
+<text x="736" y="205" font-size="13" fill="#b2c0cf">Tempo padrao</text><text x="736" y="248" font-size="24" font-weight="700" fill="#f2f6fb">0,06 min</text>
+<rect x="19" y="291" width="922" height="188" rx="15" fill="#171d28" stroke="#34465c"/>
+<text x="37" y="325" font-size="21" font-weight="700" fill="#eff4fa">Operacoes do estagio</text>
+<rect x="823" y="305" width="98" height="27" rx="13" fill="#313944"/>
+<text x="872" y="323" text-anchor="middle" font-size="12" font-weight="700" fill="#e9edf3">1 operacao</text>
+<rect x="36" y="351" width="888" height="109" rx="11" fill="#223147"/>
+<rect x="55" y="369" width="47" height="66" rx="10" fill="#355a7b"/>
+<text x="78" y="410" text-anchor="middle" font-size="20" font-weight="700" fill="#6dcaf4">01</text>
+<text x="118" y="394" font-size="20" font-weight="700" fill="#eff5fc">EMBALAR</text>
+<text x="118" y="421" font-size="14" fill="#aebfd1">CT-99 · 0,06 min/peca</text>
+<path d="M883 402 l8 8 l8 -8" fill="none" stroke="#c1ccda" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="21" y="511" font-size="12" fill="#93a7bb">REFERENCIA DE COMPOSICAO · SVG ESQUEMATICO · NAO COPIAR CORES COMO TOKENS DE PRODUTO</text>
+</g>
+</svg>
