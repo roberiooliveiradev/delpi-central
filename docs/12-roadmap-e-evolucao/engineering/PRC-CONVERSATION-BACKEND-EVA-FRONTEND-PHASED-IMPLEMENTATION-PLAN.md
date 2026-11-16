@@ -239,3 +239,57 @@ credenciais de teste pelo bootstrap canônico).
 disponível — atualização bloqueada, evidência versionada neste doc.
 
 **NEXT_ACTION:** P3 — Plugin UI + adapters My Requests/Engenharia.
+
+## 9. P3 executado — conversa compartilhada nos dois MFEs (commit `ec40197e3b`)
+
+**Executor:** Devin · **TASK_ID:** `EVA-PRC-CONVERSATION-P3-SHARED-UI-HML-DEPLOY-01`
+
+**Abstraction Gate:** `ConversationPanel` único em
+`plugins/plugin-ui/src/components/conversation-panel/` — port do
+orquestrador do `CommentsPanel` desacoplado de bounded context via
+`ConversationApi` injetado (7 operações) + `loadAvatar` opcional +
+prefixo `delpi-ui` (mesmo kit MessageThread/MentionComposer/
+AttachmentPreviewStrip/RoomShell/FilePreviewModal → visual idêntico).
+`CommentsPanel` legado (requests-api) intocado — zero regressão.
+
+**Adapters (mesmo requestId, mesmo histórico):**
+- `plugins/my-requests/.../prcConversationApi.ts` — envelope PRC
+  (`commentId/authorSubject/isMine/version/edited`, `attachments`,
+  `attachmentId/state`), Idempotency-Key no create, `expectedVersion`
+  no PATCH, multipart autenticado, download bearer.
+- `plugins/engineering/.../api/prcConversationApi.ts` — idem via
+  httpClient do MFE.
+
+**Montagem:** aba **Histórico** — `PrcCasePage` (MR) e `PrcDetailPage`
+(ENG), seção "Conversa sobre a solicitação". `conversationFrozen` em
+`completed|rejected` (espelha `TERMINAL_STATUSES`); `canComment` é
+affordance visual — autorização efetiva sempre backend.
+
+**Avatar:** MR usa `downloadParticipantAvatarBlob` (requests-api→Core
+`/integrations/person-profiles/{id}/photo` S2S) — foto real de
+solicitante e analista. ENG: **iniciais** — engineering-api não possui
+rota governada de foto por usuário (Core expõe foto terceira só via
+S2S); acoplar à requests-api violaria bounded context.
+`ARCHITECTURE_DECISION_REQUIRED`: adicionar rota de avatar por-usuário
+à engineering-api (espelho do BFF da requests-api) é decisão da
+Coordination — registrado como residual.
+
+**Testes:** adapters (envelope/idem/CAS/erros) 8+6, mount estrutural
+2+2 — 14 novos, todos verdes. Regressão: plugin-ui 322, engineering
+PRC 249, my-requests 235 (2 falhas pré-existentes em `process-issue`,
+fora do diff). Builds vite OK nos 3.
+
+**HML:** checkout `~/projetos-teste/delpi-central` (stack real;
+`~/projetos/delpi-central` é só código) — pull + compose
+`delpi-hml/plugin-ui|my-requests|engineering` rebuilt na ordem
+remote→MFE. Healthy 3/3; `ConversationPanel` presente no
+`remoteEntry` servido. Digests: plugin-ui 42424f94c82f,
+my-requests 742ef4dabee1, engineering b7f6b83fe4d4.
+
+**E2E autenticado cruzado:** `INCONCLUSIVE` — sem identidade legítima
+(mesmo bloqueio P1/P2: hml-tester sem senha conhecida, fixture com
+placeholders, proibida nova cirurgia KC). Não declarado PASS.
+**Verificador:** r1 `INCONCLUSIVE` (engine sem login — registrado).
+**Issue #207:** gh sem auth — evidência versionada aqui.
+
+**NEXT_ACTION:** P4 — E2E cruzado com 2 identidades + aceite visual PO.
