@@ -1180,6 +1180,7 @@ export function EntryAuditAnalysisPage({
       {rowsLoading && !rows.length ? (
         <CfLoadingCard title="Carregando registros da aba…" />
       ) : tab === "occurrences" ? (
+        <div className="cf-entry-audit-occurrences-table">
         <DataTableSection<EntryAuditOccurrence>
           title={`Ocorrências (${page?.total ?? 0})`}
           titleHint={CF_HELP.entryAudit.occurrences}
@@ -1229,6 +1230,7 @@ export function EntryAuditAnalysisPage({
             },
           }}
         />
+        </div>
       ) : (
         <DataTableSection<EntryAuditDocument | EntryAuditTes>
           title={`${ENTRY_AUDIT_TABS.find((item) => item.value === tab)?.label} (${page?.total ?? rows.length})`}

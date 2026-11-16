@@ -32,18 +32,23 @@ async function measureTable(page: Page): Promise<{
 }> {
   return page.evaluate(
     ({ v1, v2 }) => {
+      const root = document.querySelector(".cf-entry-audit-occurrences-table");
       const table =
+        root?.querySelector("table") ??
         document.querySelector(
           '[class*="data-table"] table, .cf-data-table table, table',
-        ) ?? document.querySelector("table");
-      const scroller =
-        table?.closest('[class*="table-scroll"], [class*="data-table"]') ??
-        table?.parentElement;
-      const el = (scroller as HTMLElement | null) ?? (table as HTMLElement | null);
-      if (!el) throw new Error("tabela não encontrada");
+        ) ??
+        document.querySelector("table");
+      const wrap =
+        (root?.querySelector(
+          '[class*="table-wrap"]',
+        ) as HTMLElement | null) ??
+        (table?.closest('[class*="table-wrap"]') as HTMLElement | null) ??
+        (table?.parentElement as HTMLElement | null);
+      if (!wrap) throw new Error("tabela não encontrada");
       return {
-        scrollWidth: el.scrollWidth,
-        clientWidth: el.clientWidth,
+        scrollWidth: wrap.scrollWidth,
+        clientWidth: wrap.clientWidth,
         prefsKeyPresent: {
           v1: Boolean(localStorage.getItem(v1)),
           v2: Boolean(localStorage.getItem(v2)),

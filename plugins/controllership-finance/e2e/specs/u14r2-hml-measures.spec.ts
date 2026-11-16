@@ -123,13 +123,16 @@ test.describe("U14R2 K4 — medições HML", () => {
     await page.getByRole("tab", { name: /Ocorrências/i }).click().catch(() => undefined);
     await expect(page.locator("table").first()).toBeVisible({ timeout: 30_000 });
     const tableClean = await page.evaluate(() => {
-      const table = document.querySelector("table");
-      const scroller =
-        table?.closest('[class*="table-scroll"], [class*="data-table"]') ??
-        table?.parentElement;
-      const el = (scroller as HTMLElement | null) ?? (table as HTMLElement | null);
-      if (!el) throw new Error("tabela ausente");
-      return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+      const root = document.querySelector(".cf-entry-audit-occurrences-table");
+      const table = root?.querySelector("table") ?? document.querySelector("table");
+      const wrap =
+        (root?.querySelector(
+          '[class*="table-wrap"]',
+        ) as HTMLElement | null) ??
+        (table?.closest('[class*="table-wrap"]') as HTMLElement | null) ??
+        (table?.parentElement as HTMLElement | null);
+      if (!wrap) throw new Error("tabela ausente");
+      return { scrollWidth: wrap.scrollWidth, clientWidth: wrap.clientWidth };
     });
     write("table-width-clean.json", tableClean);
     expect(tableClean.scrollWidth).toBeLessThanOrEqual(tableClean.clientWidth + 1);
@@ -192,13 +195,16 @@ test.describe("U14R2 K4 — medições HML", () => {
     await page.getByRole("tab", { name: /Ocorrências/i }).click().catch(() => undefined);
     await expect(page.locator("table").first()).toBeVisible({ timeout: 30_000 });
     const table = await page.evaluate(() => {
-      const t = document.querySelector("table");
-      const scroller =
-        t?.closest('[class*="table-scroll"], [class*="data-table"]') ??
-        t?.parentElement;
-      const el = (scroller as HTMLElement | null) ?? (t as HTMLElement | null);
-      if (!el) throw new Error("tabela ausente");
-      return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+      const root = document.querySelector(".cf-entry-audit-occurrences-table");
+      const t = root?.querySelector("table") ?? document.querySelector("table");
+      const wrap =
+        (root?.querySelector(
+          '[class*="table-wrap"]',
+        ) as HTMLElement | null) ??
+        (t?.closest('[class*="table-wrap"]') as HTMLElement | null) ??
+        (t?.parentElement as HTMLElement | null);
+      if (!wrap) throw new Error("tabela ausente");
+      return { scrollWidth: wrap.scrollWidth, clientWidth: wrap.clientWidth };
     });
     write("table-width-v1-legacy.json", table);
     expect(table.scrollWidth).toBeLessThanOrEqual(table.clientWidth + 1);
