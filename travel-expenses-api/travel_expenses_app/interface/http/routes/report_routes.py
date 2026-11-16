@@ -27,7 +27,7 @@ def _handle(exc: Exception):
 
 
 
-@router.get("/mileage-rate")
+@router.get("/mileage-rate", operation_id="travelExpensesGetMileageRate")
 def get_mileage_rate(request: Request, date: str = Query(...)):
     try:
         return ok(_service().get_mileage_rate(request.state.user, date))
@@ -35,7 +35,7 @@ def get_mileage_rate(request: Request, date: str = Query(...)):
         return _handle(exc)
 
 
-@router.post("/reports/{report_id}/send-to-finance")
+@router.post("/reports/{report_id}/send-to-finance", operation_id="travelExpensesSendToFinance")
 def send_to_finance(request: Request, report_id: str):
     try:
         return ok(_service().send_to_finance(request.state.user, report_id))
