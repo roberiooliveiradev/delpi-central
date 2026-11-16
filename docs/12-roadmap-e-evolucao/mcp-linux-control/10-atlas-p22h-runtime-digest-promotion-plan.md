@@ -89,3 +89,34 @@ Esse comando **não altera** containers, baixa imagem, nem consome credenciais c
 ### Próximos gates
 
 `P2.2h.2`: integrar backend Core, journal com aprovação nominativa fora do ChatGPT e executor isolado. Validar rollback, smoke e `verify-public-hub-release.sh` no **container realmente ativado**. Somente com gates externos, verificador independente e aprovação do owner se poderá implementar/usar ACT. O estado continua `ACT_DISABLED`; o código atual **não oferece execução de deploy**.
+
+
+## 7. Validacao real em PROD pelo operador (16/11/2026)
+
+**Fonte:** retorno do terminal de producao enviado pelo operador; nao equivale a uma observacao assinada e fresca pelo backend. A execucao real de `public-hub-release-preflight.sh --plan prod` retornou **[PLAN_OK_NO_DEPLOY]**:
+
+- Ambiente `prod`, container `delpi-public-hub`, projeto Compose `infra`, status running durante a verificacao.
+- `current_ImageID=sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb` e `current_revision=03cecb7ed90946c799a66ca9b22b45beb221282e`.
+- Origem CI verificada: commit `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`, manifest digest `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`.
+- Checksum informativo do plano: `17f1730c4b5798168ca35c215b3e66f3947fdb998b82328219f03ed0d1e07110`. **Nao e aprovacao, segredo, token, proposta persistida nem prova host assinada.**
+- Resultado de seguranca exato: `promotion=BLOCKED approval=NOT_IMPLEMENTED readiness=NOT_VERIFIED rollback=NOT_VERIFIED`.
+
+**Conclusao:** `PREFLIGHT_PROD_PASS_OPERATOR_REPORTED`. A assinatura da release foi validada e nao houve drift do ImageID observado. A imagem atual ainda difere do ImageID da release assinada, `sha256:1a4cfd5d0370e35739cb679d3c0170845e55213488c2c5f7c7d249afba5365a9`. **Nao declarar HOST_PROVENANCE_PASS, readiness, implantacao ou rollback testado. Nenhum deploy foi feito.**
+
+## 8. Lacuna de seguranca a resolver em P2.2h.2
+
+Inspecao do codigo existente em `main`:
+
+- `linux-ops-mcp/linux_ops_mcp/deploy_policy.py`: politica pura/deny-by-default, preview e TTL de 10 min, sem tool ACT.
+- `linux-ops-mcp/linux_ops_mcp/deploy_host_source.py` + `deploy_host_receipt.py`: leitura de observacao e verificacao de recibo com challenge; nao substituem assinatura da release nem aprovacao.
+- `it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py`: PREPARE transacional inerte e idempotente, sem API ativa.
+- `docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql`: DDL candidato, **nao aplicado em producao**.
+
+**Gap confirmado:** o contrato `PrepareIntent` e o DDL candidato contêm `target_sha`, `base_sha`, `proposal_hash` e challenge, mas **nao vinculam explicitamente digest de manifesto OCI assinado, ImageID anterior esperado, ImageID da release nem identidade de atestacao CI**. O checksum informativo do preflight nao deve ser reutilizado como autorizacao. Antes de qualquer ACT:
+
+1. Revalidar a identidade de solicitante/aprovador e RBAC separado via owner Core/IT Portal, sem aceitar evidencias fornecidas pelo modelo como autoridade.
+2. Incorporar SHA completo, digest assinado, ImageID atual esperado, ImageID da release e evidencia CI/host fresca **no hash canonico e journal transacional**; negar replay ou campos divergentes, inclusive sob concorrencia.
+3. Obter autorizacao nominativa no portal fora do ChatGPT, com expiracao/revogacao e verificacao de permissao no ato de execucao.
+4. Construir executor isolado, primeiro em HML, que revalide todos os gates, preserve rollback e use somente digest imutavel, com readback e smoke reais. Nao habilitar PREPARE/ACT antes da revisao independente e teste de rollback.
+
+**Proximo incremento de codigo sugerido:** atualizar o contrato de proposta e testes de politica/journal, com PostgreSQL descartavel no CI, **sem publicar endpoint ou migracao PROD** ate alinhamento de ownership. Este registro e apenas documental, sem mutacao de runtime ou codigo.
