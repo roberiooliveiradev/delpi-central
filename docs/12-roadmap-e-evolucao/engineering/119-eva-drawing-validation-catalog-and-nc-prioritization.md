@@ -5652,3 +5652,122 @@ READY_FOR_LIVE_E2E: YES
 ### Estado
 
 `G23_PREFLIGHT_PASS` · `G23_DEPLOY_PASS` · `G23_MCP_SMOKE_PASS` · verificador `INCONCLUSIVE` (exceção registrada) · `G23_LIVE_EXTRACTION_PASS`/`G23_CHATGPT_E2E_PASS` → `PENDING_OWNER_ACTION` (aceite autenticado pela Coordination nesta sessão).
+
+
+## §94.27 — G24: plano de implementação da validação normativa reutilizável de descrições PI/MP
+
+**TASK_ID:** \`EVA-E1-VAL01-G24-NORMATIVE-DESCRIPTION-VALIDATION-IMPLEMENTATION-PLAN-01\`  
+**Estado:** \`PLANNED / ARCHITECTURE_REVIEW_PENDING\` — planejamento aprovado como demanda; **não** equivale a contrato ratificado, código entregue, deploy autorizado nem aprovação de NC.  
+**Owner de experiência e aplicação:** Portal Engenharia / EVA. **Owner normativo e aprovação técnica:** Engenharia DELPI. **Autoridade cadastral:** Domain APIs/TOTVS via contratos oficiais. **Controle:** Keycloak/AuthN; Core/AuthZ, RBAC e governança. **Tracker:** Issue #131 (única frente E1/VAL-01; E2–E7 congeladas).  
+**Referência funcional:** G23, ChatGPT MCP job real \`aj-a735709338fa459e\`, PDF 90263680 SHA256 \`496e25797c8e62fc0f98bd82179846d8b7712078665e58116b68f32a84613417\` (4 PI, 8 ocorrências MP, 6 códigos MP distintos; extração 4/4 descrições PI + 8/8 MP; comparação desenho × TOTVS comprovada; norma ainda não avaliada por este pipeline).  
+**Código existente inventariado:** \`engineering-api/engineering_app/application/drawing/description_rules.py\` fornece \`validate_mp_description\`, \`validate_pi_description\`, \`parse_pi50_segments\`, \`diff_pi50_descriptions\`; comparador em \`bom_structure_comparator.py\` e leitura visual em \`understanding.py\`. Ampliar/reusar; não criar engine ou Bounded Context por antecipação.  
+**Fontes governadas:** \`api-delpi/docs/api/padroes-totvs/normas-tecnicas-descricao-materias-primas.md\` (MP integral) e \`api-delpi/docs/api/padroes-totvs/codigos-intermediarios-pi.md\` (PI 50xx, resumo autorizado), ambos membros corpus DAVI governed knowledge V2, freeze \`api-delpi/docs/integrations/evidence/davi-governed-knowledge-freeze-002.md\`. São **guidance normativa de Engenharia**, não AuthZ, não fonte de cadastro e não autorização de escrita. Acesso runtime entre bounded contexts exige contrato publicado; **não** importar internals DAVI/Chat nem consultar banco alheio.
+
+### 94.27.1 Resultado esperado / separação de problemas
+
+Quatro perguntas independentes, com conclusões e evidência distintas:
+1. **Comparação textual/segmentada** \`DRAWING vs TOTVS\`: capacidade G23 existente, não substituir.
+2. **Conformidade normativa da descrição do DRAWING**: extrair atributos da descrição observada; avaliar norma por família/subtipo.
+3. **Conformidade normativa da descrição do TOTVS**: mesma avaliação, em outro \`source\`, sem usar a outra descrição para preencher campos ausentes.
+4. **Coerência PI × componentes/BOM oficial**: conferir atributos compatíveis (material isolante, bitola, cor, comprimento, terminais/isoladores e lado somente quando posição/identidade comprovadas); fonte de cada comparação explícita.
+
+Não equiparar \`MATCH(DRAWING,TOTVS)\` a \`NORM_COMPLIANT\`; duas descrições iguais podem violar a norma. Validação não gera alteração de produto, BOM, desenho ou NC; findings \`DRAFT/CANDIDATE\`, homologação por Engenharia.
+
+### 94.27.2 Abstraction Gate e arquitetura-alvo
+
+**Objetivo:** oferecer capacidade de aplicação reusável \`EvaluateTechnicalDescriptionUseCase\` (nome candidato), consumida inicialmente pelo pipeline de análise de desenho; eventual reutilização por cadastro de produtos e outras experiências somente via **contrato oficial**, consumer/owner/permission explicitamente inventariados. A existência de consumidores futuros não justifica novo serviço. Se owner, source of truth, bounded context ou autoridade mudarem: \`ARCHITECTURE_DECISION_REQUIRED\` → Coordination.
+
+Pipeline lógico, módulos internos somente se necessários:
+\`DescriptionInput(DRAWING|TOTVS|CANDIDATE)\` → \`scope/applicability resolver\` → \`normalizer (lossless)\` → \`parser PI50 ou MP-family\` → \`normative rules evaluator\` → \`optional AI interpretation candidate\` → \`evidence/review assembler\`.
+
+**Híbrido com prioridade determinística**:
+- Regex/gramática para PI 50xx, medidas, unidades, cores, tokens de certificação, segmentação literal; reutilizar parsers atuais.
+- Parser/vocabulário tipado por família e subtipo MP (1008 BANDEIRA/FASTON, 1009 ISOLADOR, cabos segundo grupos autorizados); preservar trechos originais e posição.
+- Regras determinísticas explicitamente aprovadas por Engenharia decidem aplicabilidade, campos/ordem/unidades/abreviações. Sucesso do parse não prova conformidade do conteúdo.
+- IA via adapter/port existente **somente após benchmark e quando ambiguidade material persistir**; grounding em trechos autorizados e dados permitidos, resposta estruturada, sem criação de regra/limiar, \`PASS\` não decidido por LLM. Falha do provider → abstenção honesta.
+- spaCy/Matcher, DSL externo, novo rule engine ou novo provider **não são baseline**: prototipar só se teste comparativo indicar ganho líquido em atributos, false positives e generalização; usar stdlib/re/Python tipado e bibliotecas aprovadas existentes primeiro.
+- Domain/Application independentes de HTTP, DB, framework, SDK LLM/MCP; integrações por ports/adapters, tolerância a falha e backpressure quando houver IA.
+- Não duplicar corpus normativo no prompt como autoridade: resolver regras versionadas por catálogo publicado e registrar \`norm_ref/version/hash\`; quando inviável, \`OWNER_BLOCKED\` e contrato de acesso a decidir antes do código.
+
+### 94.27.3 Contrato candidato (ratificar antes de implementar)
+
+**Request (READ/ANALYZE, sem efeitos):**
+\`product_code, product_type, description_raw, description_source(DRAWING|TOTVS|CANDIDATE), occurrence_key?, document_sha256?, document_page?, bbox?, official_product_group?, declared_subtype?, bom_context_ref?, evaluation_scope, ruleset_version?\`.
+
+**Response:**
+\`evaluation_id, inputs_provenance, applied_ruleset(owner, ref, sha/version, valid_at, applicability), extracted_attributes[{name,raw_span,normalized_value,unit,extraction_method,evidence,state}], rule_results[{rule_id,requirement,applicable,observed,expected_if_authorized,status,reason,evidence_ref,certainty_limits}], cross_checks[], unknowns[], review_status, engine_versions, no_business_write=true\`.
+
+**Estados por regra:** \`PASS\`, \`VIOLATION_CANDIDATE\`, \`WARNING\`, \`INCONCLUSIVE\`, \`NOT_APPLICABLE\`, \`OWNER_BLOCKED\`; estados técnicos de execução \`PASS|FAIL|PENDING|INCONCLUSIVE|TEST_NOT_RUN|STALE_EVIDENCE\` separados. Recusa/erro tipado: \`FORBIDDEN\`, \`NORM_UNAVAILABLE\`, \`RULESET_STALE\`, \`NOT_APPLICABLE\`, \`UNSUPPORTED_SUBTYPE\`, \`EVIDENCE_INSUFFICIENT\`, \`PROVIDER_UNAVAILABLE\`. \`PASS\` deve ser por regra com evidência, não \`compliant=true\` global por média. Não misturar \`DRAWING\` e \`TOTVS\` no mesmo campo de entrada; \`CANDIDATE\` jamais registro oficial. Contrato final: versionado, limites de payload, timeout, observabilidade, RBAC/live AuthZ, compatibilidade, degradação sem IA e no-write garantido.
+
+**Proveniência:** cadeia \`norma-fonte/versão/hash → regra-id/version → trecho da descrição source → método de extração → atributo → checagem → finding → revisão de owner\`. Na leitura do desenho, anexar PDF SHA, página e bbox; na descrição TOTVS, id do produto e snapshot/validity. Na comparação PI × BOM, afirmar apenas relações de associação verificadas.
+
+### 94.27.4 Matriz inicial de políticas e pendências de owner
+
+| Famílias | Regras candidatas | Autoridade/limite |
+|---|---|---|
+| PI 50xx | segmentar \`CA|CB|CF|CT|CV\`, gauge, cor de 4 letras, comprimento mm, decape E/D, terminações E/D | Norma PI; \`CA=PVC\`, \`CB=EPR\`; parse da descrição não prova material físico; regras de posição de terminais exigem associação oficial |
+| MP 1001–1005 | \`CABO\`, material, temperatura, bitola, cor abreviada, tensão, observações, certificação e sequência | Norma de cabos cobre explicitamente 1001–1005; conteúdo técnico requer catálogo/datasheet autorizado |
+| MP 1008 BANDEIRA/FASTON | \`TERM.\`, subtipo, largura, TAB, faixa em \`MM2\`, banho, isolação, embalagem, observações, certificação | Definir obrigatoriedade/condicionalidade e alias de \`CARRETEL\` com Engenharia; \`MM\` não virar \`MM2\` silenciosamente |
+| MP 1009 ISOLADOR | prefixo, material, orientação, série, cor (ex.: \`PT\`), observações, normas | \`PRETA\` vs \`PT\` é candidato lexical; equivalência exige alias ratificado |
+| MP 1038 (cabos do caso) | atributos extraíveis EPR, AWG, cor, tensão, temperatura, certificação | **Norma consultada de cabos 1001–1005 não cobre 1038 explicitamente**; status \`OWNER_BLOCKED/NOT_APPLICABLE\` para conformidade normativa até extensão ratificada, mesmo quando semanticamente semelhante |
+| Cor composta PI \`MABR\` | validar significado de códigos compostos | Referência PI lista cores simples de 4 letras; não inventar mapeamento para \`MABR\` sem regra de Engenharia |
+| PI × BOM | isolação PI \`CA(PVC)\` vs cabo EPR na BOM; bitola e cor quando tipadas; comprimento base \`MT/MI\` | \`CONFLICT_CANDIDATE\`, não NC; \`QTD desenho=1\` não é metro; revisão do desenho ≠ revisão cliente/TOTVS |
+| Terminações E/D | sufixos PI \`0000-0110\` vs presença de terminal/isolador | Código MP na BOM não prova lado ou montagem; \`INCONCLUSIVE\` sem vínculo de posição autorizado |
+
+**Decision gates de Engenharia prévios à regra produtiva:** (D1) extensão da norma cabo a grupo 1038; (D2) política de abreviações, sinônimos e color codes compostos; (D3) campos obrigatórios vs opcionais/condicionais por subtipo; (D4) mapeamento de sufixos/posições PI ↔ MP e versão efetiva; (D5) fontes/datasheets de característica física; (D6) severidade/priorização e conteúdo mínimo de apresentação. Regras não ratificadas retornam \`OWNER_BLOCKED\`, não \`PASS\`/NC.
+
+### 94.27.5 Pacotes limitados e dependências
+
+**G24-A — Inventário + contrato + matrizes (READ_ONLY / NO_CODE / NO_DEPLOY).**
+- Inventariar aplicabilidade de duas normas e hashes efetivos; cliente oficial do corpus V2 e adapters disponíveis; \`description_rules.py\`, parser PI, comparador, boundary do desenho e possíveis consumers de cadastro. Registrar \`PROVEN|TO_INVENTORY|PLANNED|TARGET\` sem confundir documentação e runtime.
+- Fechar requisitos \`RQ24-01..07\`, matrizes por família/subtipo, decisões D1–D6, contrato V1 (AuthN/AuthZ, efeitos, erros, limites e compatibilidade), exemplos positivos/negativos. **Gate:** revisão/ratificação pela Engenharia e Coordination. Se contrato de norm access criar nova autoridade/owner, parar em \`ARCHITECTURE_DECISION_REQUIRED\`.
+- Artefato: seção normativa no Doc119 + Issue #131; evitar doc paralelo sem necessidade.
+
+**G24-B — Benchmark/spike reprodutível (NO_DEPLOY / NO_WRITE).**
+- Corpus congelado com amostras por grupos: PI 5021/5023, MP 1008/1009, cabos 1001–1005 e 1038 como \`OWNER_BLOCKED\`; incluir casos de descrições corretas, incompletas, abreviações, erro de unidade, ordem variável, OCR ruidoso, textos históricos e casos adversariais. Dividir \`development\`, \`holdout\` por família e por template (não vazar mesmos códigos/descrições).
+- Baselines sobre o **mesmo corpus**: (A) regex/stdlib + validadores atuais, (B) parser tipado + vocabulário/alias aprovado, (C) B + spaCy/Matcher **se justificável**, (D) B + LLM grounded seletivo **se justificável**.
+- Medir precisão/recall/F1 por atributo, acurácia de aplicabilidade, false \`VIOLATION_CANDIDATE\` / false \`PASS\`, taxa de abstenção correta, regressão por família, versão/reprodutibilidade, latência p50/p95, custo e falha de provider. Nenhum número inventado; thresholds/propriedade do risco a ratificar antes do aceite. **Gate:** relatório comparativo + escolha da menor complexidade que atende requisitos; sem dependência extra por preferência de framework.
+
+**G24-C — Motor normativo reutilizável (CODE_ONLY / SHA_PINNED / NO_DEPLOY).**
+- Implementar \`EvaluateTechnicalDescriptionUseCase\` dentro do boundary de Engenharia, sobre módulos atuais; criar ports apenas quando houver integração real (norm catalog, optional model interpretation), adapters na infraestrutura; nenhuma importação do DAVI/Chat/SDK em Domain/Application.
+- \`scope/applicability\` fail-closed; normalização sem perda (decimal, \`MM/MM2\`, cores, certificados e aliases com versão), extração typed \`raw_span\` e ambiguidades, regra por família/subtipo, evidence ledger. Validar inicialmente \`DRAWING\` e \`TOTVS\` separadamente; tratamento de \`CANDIDATE\` somente se houver consumer legítimo.
+- Testes unitários/contratuais e negativos por cada regra, source e família; invariantes não fabricar, sem autorizar writes, provider IA desligado não impedir avaliação determinística.
+- Verificador independente no SHA final (se quota indisponível: \`INCONCLUSIVE\`, não PASS), residual search, docs de evidência. **Gate:** Code ACCEPT somente se RQ/AC cobertos.
+
+**G24-D — Integração e contrato de consumo (NO_DEPLOY até gate).**
+- Adicionar projeção *aditiva* ao relatório existente de \`product.drawing_understanding\`/comparador somente após contrato versionado; não quebrar consumers existentes. Novo endpoint/tool MCP **não é default** — justificar discovery se o contrato atual não atender ao consumer; respeitar contratos oficiais e RBAC.
+- Cada ocorrência PI e MP pode ter \`drawing_normative_checks\` e \`totvs_normative_checks\` distintos; \`pi_bom_coherence_checks\` somente evidências sustentadas; deduplicar execução normativa para 6 códigos MP quando válido, **preservar 8 occurrence_keys** e contextos diferentes.
+- Sem dependência obrigatória do OCR para avaliar descrição cadastral; nenhum copy/paste de norma como prompt estático. Modo \`existing_only\` e job semantics idempotentes respeitados quando análise com OCR for necessária.
+- Negativos: acesso negado, norma vencida, grupo fora do escopo, provider indisponível, PI sem componente comparável, revisão/efeito divergentes, campo texto ausente e conflito OCR × cadastro. **Gate:** contract + auth regression + task outcome em SHA.
+
+**G24-E — E2E, generalização e homologação (OPERATIONAL_GATED).**
+- Antes de deployment: HEAD/status, delta, testes, independent verifier, rollback, impacto de recursos e live AuthZ. Produção **não autorizada por este plano**; owner Infra + Coordination decidem deploy isolado engineering-api. Jamais auto OCR por documentação.
+- Primeiro caso 90263680: 4 PI do desenho + TOTVS, 6 MPs distintas (8 ocorrências) dos dois sources; checar no E2E normas identificadas por regra, versões, atributos e evidências. Testar \`CA↔CB\` vs EPR com status candidato, descrições 10080136/10090010, e MP 1038 \`OWNER_BLOCKED\` para applicability. Não converter finding literal em NC.
+- Holdout de layouts/códigos distintos; teste por identidade delegada no ChatGPT MCP, job único autorizado e admission, comparação com corpus e anotação por Engenharia; revisão técnica final de candidatos como trabalho separado. Critérios \`AC-E1\` que permanecem pendentes não se encerram automaticamente por G24.
+- Registrar resultado \`PASS|FAIL|PENDING|INCONCLUSIVE|TEST_NOT_RUN|STALE_EVIDENCE\` por gate, SHA, imagens, testes, custo/latência quando IA, pipeline version e outcomes. Issue #131 permanece aberta até VAL01 de fato concluída.
+
+### 94.27.6 Requisitos e aceite
+
+| RQ | Requisito | AC / evidência mínima |
+|---|---|---|
+| RQ24-01 | Norma versionada e owner | Each rule \`norm_ref + hash/version + applicability + owner\`; sem norma → \`OWNER_BLOCKED/NOT_APPLICABLE\` |
+| RQ24-02 | Entrada reutilizável e sem efeitos | \`DRAWING|TOTVS\` avaliados separadamente pelo mesmo contrato; read-only/live AuthZ, sem alterar cadastro, BOM, artefato oficial ou NC |
+| RQ24-03 | Extração com prova textual | Campo tipado com raw span, origem, unidade/normalização; OCR ambíguo não gera campo fabricado |
+| RQ24-04 | Motor determinístico auditável | Regra + observação + exigência + evidência + estado por regra; regex/parser não certifica sozinho |
+| RQ24-05 | IA seletiva governada | Apenas se benchmark justificar; bounded provider port, grounding, falha segura, sem \`PASS\`/norma criada por LLM |
+| RQ24-06 | PI × MP coerência | Dependência de BOM/posição/revisão explícita; ausência de prova → \`INCONCLUSIVE\`, \`CA(PVC)↔EPR\` candidate |
+| RQ24-07 | Integração e regressão | Contrato aditivo, compatibilidade com G23, test suite + holdout + verifier no SHA e E2E do ChatGPT (após owner gate) |
+| RQ24-08 | Não extrapolar normas | Cabos 1038 e cor MABR não recebem \`PASS\` automático; exceções e alias somente Engenharia |
+| RQ24-09 | Revisão e segurança | DRAFT/CANDIDATE, nenhuma NC automática, nenhuma escrita, provenance e aprovação técnica separadas |
+
+### 94.27.7 Riscos, métricas e decisão pendente
+
+**Riscos:** falso \`PASS\` por parser permissivo, falso \`VIOLATION\` por abreviação histórica, confundir \`MM\` com \`MM2\`, aplicar norma fora de escopo (1038), inventar material/temperatura ausente, confundir revisão do desenho com controle cliente no TOTVS, alucinação em interpretação LLM, propagação de conteúdo normativo stale, entrada maliciosa via OCR, vazar dados para provider não autorizado, acoplamento a DAVI/Chat.
+
+**Mitigações:** parsing estruturado com anchors; ruleset versionado e bloqueio de vigência; allowlist de atributos/alias; output sempre evidenciado e tipado; filtro de prompt injection, sem secrets em modelo, vendor adapter via política aprovada; thresholds de falso positivo e cobertura definidos por owner; fail-closed em autorização e write; fallback determinístico sem IA.
+
+**Critério de seleção tecnológica:** não adotar spaCy, motor de regras externo ou agent framework sem benchmark e Abstraction Gate. Reaproveitar Python, stdlib \`re\` e \`description_rules.py\` como baseline; Pydantic somente na borda/adapters de contrato se já aprovado. Framework é meio de extração, nunca autoridade da norma.
+
+**Decision request à Coordination/Engenharia antes do G24-B/C:** ratificar D1–D6; avaliar se acesso ao corpus governado V2 via contrato publicado está disponível à Engineering API; decidir threshold e risco tolerado de falso conforme; confirmar que avaliação de descrição candidata terá consumer real. Sem ratificação, \`G24-A\` entrega planejamento/inventário, demais etapas bloqueadas, não improvisadas.
+
+**Estado final deste plano:** \`G24_PLAN_REGISTERED\`, \`G24_IMPLEMENTATION_NOT_STARTED\`, \`NO_DEPLOY\`, \`NO_AUTHORITY_CHANGE\`. E1 permanece a única frente até gate VAL01; E2–E7 congeladas.
