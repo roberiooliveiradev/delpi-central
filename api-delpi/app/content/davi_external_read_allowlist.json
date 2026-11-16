@@ -1,64 +1,69 @@
 {
-  "version": 30,
+  "version": 31,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-INTELLIGENCE-002",
-    "decision": "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY",
-    "reason": "GLPI DAVI-INTELLIGENCE-002: specialist/persona task — bounded retrieval additions only: material-movement business phrases map to get_product_internal_movements (entrada/saída/movimentos de materiais) and aggregate movement-scan phrases map to execute_readonly_sql (produtos com movimentação no período). No new ops, no new MCP tools, DATA_SQL_ACCESS unchanged; persona/specialist knowledge lives in agent intelligence + MCP instructions, not in this allowlist.",
+    "taskId": "DAVI-SI-READ-USER-PARITY-001",
+    "decision": "BOUNDED_SI_USER_PARITY_READ",
+    "reason": "Coordination-approved vertical slice: 5 governed READ ops proxied to strategic-indicators-api user-facing routes with caller-JWT-only transport (no internal service token). SI permissions remain effective at both boundaries (strategic-indicators.view for operational reads; strategic-indicators.settings.manage for goal list/history). No writes, no job dispatch, no generic endpoint access. Dashboard-BFF routes intentionally NOT reused (different permission domain).",
     "previousDecision": {
-      "taskId": "DAVI-INTELLIGENCE-001",
-      "decision": "COMPLETE_ROW_RECORD_INTENT_ROUTING",
-      "reason": "GLPI DAVI-INTELLIGENCE-001: completes the two-sided record-intent contract designed in CORRECTIVE-001 — metadata ops already suppress row-access phrases via retrievalNegativePhrases; execute_readonly_sql (canonical, owner-restored Oct-19) now owns the positive side via data-intent aliases (registros/linhas/dados de tabela) so natural requests like \"10 primeiros registros da SG1010\" discover the governed SQL capability without the user naming SQL/routes. No new ops, no new MCP tools, backend DATA_SQL_ACCESS unchanged.",
+      "taskId": "DAVI-INTELLIGENCE-002",
+      "decision": "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY",
+      "reason": "GLPI DAVI-INTELLIGENCE-002: specialist/persona task — bounded retrieval additions only: material-movement business phrases map to get_product_internal_movements (entrada/saída/movimentos de materiais) and aggregate movement-scan phrases map to execute_readonly_sql (produtos com movimentação no período). No new ops, no new MCP tools, DATA_SQL_ACCESS unchanged; persona/specialist knowledge lives in agent intelligence + MCP instructions, not in this allowlist.",
       "previousDecision": {
-        "taskId": "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003",
-        "decision": "EVOLVE_SUPPLIER_WEB_RESEARCH_ORCHESTRATION",
-        "reason": "GLPI #530 V3: declarative supplier_web_research flow — DELPI code is the anchor: get_product_suppliers first, then manufacturer PNs drive authorized public research (provider-side navigation only, never a backend proxy). Flows A (registered suppliers only, no web), B (code→suppliers→PN→public research), C (external PN→DELPI, V2 preserved), D (new market suppliers ≠ homologated). Reference-quality rules (manufacturer vs distributor vs internal code), privacy guard (no ERP data to public services), untrusted-content rules. Aliases on get_product_suppliers only. Eligible READ 94 unchanged; MCP tools 2; zero new capabilities.",
+        "taskId": "DAVI-INTELLIGENCE-001",
+        "decision": "COMPLETE_ROW_RECORD_INTENT_ROUTING",
+        "reason": "GLPI DAVI-INTELLIGENCE-001: completes the two-sided record-intent contract designed in CORRECTIVE-001 — metadata ops already suppress row-access phrases via retrievalNegativePhrases; execute_readonly_sql (canonical, owner-restored Oct-19) now owns the positive side via data-intent aliases (registros/linhas/dados de tabela) so natural requests like \"10 primeiros registros da SG1010\" discover the governed SQL capability without the user naming SQL/routes. No new ops, no new MCP tools, backend DATA_SQL_ACCESS unchanged.",
         "previousDecision": {
-          "taskId": "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001",
-          "decision": "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4",
-          "reason": "GLPI #530 V2: PN-first search precedence (manufacturer/distributor/DELPI code distinction), detail+supplier reconciliation, bounded similar-candidate selection with governed norms, two-layer classification (cadastral identification evidence vs technical evaluation), response contract and normalization rules in agent intelligence flow. Backend total semantics documented as OR-token universe count (not a defect); no contract change. Aliases for manufacturer-site phrasing added to PN op. Eligible READ 94 unchanged. MCP tools 2.",
+          "taskId": "DAVI-SUPPLIER-WEB-RESEARCH-INTELLIGENCE-003",
+          "decision": "EVOLVE_SUPPLIER_WEB_RESEARCH_ORCHESTRATION",
+          "reason": "GLPI #530 V3: declarative supplier_web_research flow — DELPI code is the anchor: get_product_suppliers first, then manufacturer PNs drive authorized public research (provider-side navigation only, never a backend proxy). Flows A (registered suppliers only, no web), B (code→suppliers→PN→public research), C (external PN→DELPI, V2 preserved), D (new market suppliers ≠ homologated). Reference-quality rules (manufacturer vs distributor vs internal code), privacy guard (no ERP data to public services), untrusted-content rules. Aliases on get_product_suppliers only. Eligible READ 94 unchanged; MCP tools 2; zero new capabilities.",
           "previousDecision": {
-            "taskId": "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002",
-            "decision": "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION",
-            "reason": "GLPI #530 acceptance: close the similarity/dedup retrieval gap — add similarity/duplicate/equivalence/check-before-register aliases to search_products (candidate discovery) and get_product_detail (reference lookup); add governed similarity_dedup_check flow to davi_agent_intelligence.json directing the agent to reformulate composite register+check requests into pure READ discovers, bound candidate fan-out, reconcile suppliers/PNs, classify POSSIBLE_DUPLICATE/POSSIBLE_TECHNICAL_SIMILARITY/INSUFFICIENT_INFORMATION/TECHNICAL_MISMATCH and never assert equivalence without Engineering authority. READ-only guard unchanged — real write verbs still return zero candidates; the agent reformulates legitimately read-only intent. Eligible READ unchanged at 94. MCP tools remain 2.",
+            "taskId": "DAVI-PRODUCT-MATCHING-INTELLIGENCE-V2-001",
+            "decision": "EVOLVE_MATCHING_INTELLIGENCE_P1_TO_P4",
+            "reason": "GLPI #530 V2: PN-first search precedence (manufacturer/distributor/DELPI code distinction), detail+supplier reconciliation, bounded similar-candidate selection with governed norms, two-layer classification (cadastral identification evidence vs technical evaluation), response contract and normalization rules in agent intelligence flow. Backend total semantics documented as OR-token universe count (not a defect); no contract change. Aliases for manufacturer-site phrasing added to PN op. Eligible READ 94 unchanged. MCP tools 2.",
             "previousDecision": {
-              "taskId": "DAVI-PRODUCT-DETAIL-SIMILARITY-001",
-              "decision": "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY",
-              "reason": "GLPI #530 similarity: promote get_product_detail (was SEMANTICALLY_REDUNDANT vs 3-field search_products) with fail-closed technical projection — 32 approved product.* paths (identity/type/classification, units+conversion, engineering/production fields, packaging/logistics, MP/PI-PA struct, RoHS/traceability/quality-MRP flags, DELPI classification). Financial/fiscal/accounting/commercial/audit/internal-control fields remain non-approved (never projected). Approved input: code only (view/legacy not exposed). Add generic part-number aliases to existing search_products_by_supplier_part_number op. Eligible READ 93->94. MCP tools remain 2. GPT Actions unchanged. No equivalence authority — candidates only.",
+              "taskId": "DAVI-SIMILARITY-FLOW-ACCEPTANCE-002",
+              "decision": "PROMOTE_SIMILARITY_DISCOVERY_AND_AGENT_ORCHESTRATION",
+              "reason": "GLPI #530 acceptance: close the similarity/dedup retrieval gap — add similarity/duplicate/equivalence/check-before-register aliases to search_products (candidate discovery) and get_product_detail (reference lookup); add governed similarity_dedup_check flow to davi_agent_intelligence.json directing the agent to reformulate composite register+check requests into pure READ discovers, bound candidate fan-out, reconcile suppliers/PNs, classify POSSIBLE_DUPLICATE/POSSIBLE_TECHNICAL_SIMILARITY/INSUFFICIENT_INFORMATION/TECHNICAL_MISMATCH and never assert equivalence without Engineering authority. READ-only guard unchanged — real write verbs still return zero candidates; the agent reformulates legitimately read-only intent. Eligible READ unchanged at 94. MCP tools remain 2.",
               "previousDecision": {
-                "taskId": "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01",
-                "decision": "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2",
-                "reason": "Publish corpus V2 (17 documents: V1 15 + ratified full MP/PI norms, freeze-002) via the existing canonical GET /knowledge/technical-guides/{topic} catalog action with corpus_version selection (default latest). Backend api-delpi.access AuthZ, approved projection, 3-excerpt pages unchanged. Documents remain untrusted guidance, not domain truth or authorization. No new MCP tool, RAG, vector store, SQL or proxy capability.",
+                "taskId": "DAVI-PRODUCT-DETAIL-SIMILARITY-001",
+                "decision": "PROMOTE_GOVERNED_PRODUCT_DETAIL_AND_PN_DISCOVERY",
+                "reason": "GLPI #530 similarity: promote get_product_detail (was SEMANTICALLY_REDUNDANT vs 3-field search_products) with fail-closed technical projection — 32 approved product.* paths (identity/type/classification, units+conversion, engineering/production fields, packaging/logistics, MP/PI-PA struct, RoHS/traceability/quality-MRP flags, DELPI classification). Financial/fiscal/accounting/commercial/audit/internal-control fields remain non-approved (never projected). Approved input: code only (view/legacy not exposed). Add generic part-number aliases to existing search_products_by_supplier_part_number op. Eligible READ 93->94. MCP tools remain 2. GPT Actions unchanged. No equivalence authority — candidates only.",
                 "previousDecision": {
-                  "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
-                  "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
-                  "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
+                  "taskId": "DAVI-GOVERNED-KNOWLEDGE-MP-PI-FULL-NORMS-V2-IMPLEMENTATION-01",
+                  "decision": "PUBLISH_GOVERNED_KNOWLEDGE_CORPUS_V2",
+                  "reason": "Publish corpus V2 (17 documents: V1 15 + ratified full MP/PI norms, freeze-002) via the existing canonical GET /knowledge/technical-guides/{topic} catalog action with corpus_version selection (default latest). Backend api-delpi.access AuthZ, approved projection, 3-excerpt pages unchanged. Documents remain untrusted guidance, not domain truth or authorization. No new MCP tool, RAG, vector store, SQL or proxy capability.",
                   "previousDecision": {
-                    "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-                    "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
-                    "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
+                    "taskId": "DAVI-LIVE-TECHNICAL-KNOWLEDGE-DISCOVER-EXECUTE-01",
+                    "decision": "PROMOTE_GOVERNED_TECHNICAL_KNOWLEDGE_READ",
+                    "reason": "Owner-ratified bounded READ of the 15 frozen V1 governed-knowledge documents via the canonical GET /knowledge/technical-guides/{topic} catalog action (api-delpi.access backend AuthZ, approved projection only, 3-excerpt pages). Documents are untrusted guidance, not domain truth or authorization. MP/PI standards remain unpublished pending business ratification. No new MCP tool, RAG, vector store, SQL or proxy capability.",
                     "previousDecision": {
-                      "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
-                      "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
-                      "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+                      "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
+                      "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
+                      "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
                       "previousDecision": {
-                        "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
-                        "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
-                        "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+                        "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
+                        "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
+                        "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
                         "previousDecision": {
-                          "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-                          "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
-                          "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+                          "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+                          "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
+                          "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
                           "previousDecision": {
-                            "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-                            "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-                            "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+                            "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+                            "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+                            "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
                             "previousDecision": {
-                              "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-                              "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+                              "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+                              "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+                              "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+                              "previousDecision": {
+                                "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+                                "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+                              }
                             }
                           }
                         }
@@ -5958,6 +5963,305 @@
           }
         }
       }
+    },
+    {
+      "operationId": "get_si_executive_summary",
+      "reason": "DAVI-SI-READ-USER-PARITY-001: owner-published user-parity BFF over strategic-indicators-api GET /strategic-indicators/executive-summary (IGD rollup for a competence). Backend AuthZ strategic-indicators.view enforced at api-delpi AND re-checked at SI boundary with the caller's own JWT — never service token. Freshness: SI materialized period snapshot (hourly refresh) with live recalculation fallback; absence → empty departments/errors with partial_success semantics, never fabricated numbers.",
+      "executionMode": "catalog_action",
+      "responseContract": "strategic_indicators_executive_summary",
+      "approvedInputFields": [
+        "department_id",
+        "branch",
+        "competence",
+        "start_date",
+        "end_date"
+      ],
+      "approvedResponseFields": [
+        "competence",
+        "igd",
+        "igd_exact",
+        "classification",
+        "variation.value",
+        "variation.direction",
+        "variation.vs_label",
+        "departments[].id",
+        "departments[].name",
+        "departments[].short_name",
+        "departments[].weight_pct",
+        "departments[].score",
+        "departments[].contribution",
+        "departments[].trend",
+        "departments[].strategic_summary",
+        "departments[].key_indicators",
+        "departments[].executive_goal",
+        "departments[].variation.value",
+        "departments[].variation.direction",
+        "alerts_summary[].title",
+        "alerts_summary[].severity",
+        "alerts_summary[].impact",
+        "alerts_summary[].recommendation",
+        "errors[].department_id",
+        "errors[].source",
+        "errors[].message",
+        "errors[].code",
+        "partial_success"
+      ],
+      "argumentConstraints": {
+        "competence": {
+          "pattern": "^[0-9]{4}-[0-9]{2}$",
+          "maxLength": 7
+        },
+        "start_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "end_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        }
+      },
+      "semanticAliases": [
+        "resumo executivo",
+        "índice geral",
+        "igd",
+        "idd geral",
+        "desempenho estratégico",
+        "panorama estratégico",
+        "visão executiva indicadores",
+        "executive summary",
+        "strategic score",
+        "igd do mês"
+      ]
+    },
+    {
+      "operationId": "get_si_departments",
+      "reason": "DAVI-SI-READ-USER-PARITY-001: user-parity BFF over strategic-indicators-api GET /strategic-indicators/departments (per-department IDD/score for a competence). Backend AuthZ strategic-indicators.view; caller JWT forwarded, no service token. Freshness: SI materialized snapshot; absence → empty items, partial_success on measurement errors.",
+      "executionMode": "catalog_action",
+      "responseContract": "strategic_indicators_departments",
+      "approvedInputFields": [
+        "department_id",
+        "branch",
+        "competence",
+        "start_date",
+        "end_date"
+      ],
+      "approvedResponseFields": [
+        "items[].id",
+        "items[].name",
+        "items[].short_name",
+        "items[].weight_pct",
+        "items[].score",
+        "items[].classification",
+        "items[].contribution",
+        "items[].aggregation_mode",
+        "items[].strategic_summary",
+        "items[].variation.value",
+        "items[].variation.direction",
+        "errors[].department_id",
+        "errors[].source",
+        "errors[].message",
+        "errors[].code",
+        "partial_success"
+      ],
+      "argumentConstraints": {
+        "competence": {
+          "pattern": "^[0-9]{4}-[0-9]{2}$",
+          "maxLength": 7
+        },
+        "start_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "end_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        }
+      },
+      "semanticAliases": [
+        "departamentos",
+        "nota dos departamentos",
+        "idd por departamento",
+        "desempenho por área",
+        "ranking de departamentos",
+        "score por departamento",
+        "resultado por área"
+      ]
+    },
+    {
+      "operationId": "get_si_indicators",
+      "reason": "DAVI-SI-READ-USER-PARITY-001: user-parity BFF over strategic-indicators-api GET /strategic-indicators/indicators (configured indicators with realized, active goal incl. monthly curve, score/gap). Backend AuthZ strategic-indicators.view; caller JWT forwarded, no service token. Numeric units per indicator value_unit/value_prefix/value_suffix/value_decimals as published by the owner. Absence → items=[]; measurement failures in errors[] with partial_success.",
+      "executionMode": "catalog_action",
+      "responseContract": "strategic_indicators_indicators",
+      "approvedInputFields": [
+        "department_id",
+        "branch",
+        "competence",
+        "start_date",
+        "end_date"
+      ],
+      "approvedResponseFields": [
+        "items[].department_id",
+        "items[].department_name",
+        "items[].indicator_id",
+        "items[].indicator_name",
+        "items[].weight_pct",
+        "items[].goal_label",
+        "items[].goal_value",
+        "items[].goal_periodicity",
+        "items[].goal_mode",
+        "items[].monthly_targets",
+        "items[].scope_type",
+        "items[].performance_direction",
+        "items[].value",
+        "items[].realized",
+        "items[].score",
+        "items[].gap",
+        "items[].gaps",
+        "items[].goals",
+        "items[].trend",
+        "items[].classification",
+        "items[].source",
+        "items[].value_unit",
+        "items[].value_prefix",
+        "items[].value_suffix",
+        "items[].value_decimals",
+        "errors[].department_id",
+        "errors[].source",
+        "errors[].message",
+        "errors[].code",
+        "partial_success"
+      ],
+      "argumentConstraints": {
+        "competence": {
+          "pattern": "^[0-9]{4}-[0-9]{2}$",
+          "maxLength": 7
+        },
+        "start_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        },
+        "end_date": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10
+        }
+      },
+      "semanticAliases": [
+        "indicadores estratégicos",
+        "lista de indicadores",
+        "realizado e meta",
+        "resultado dos indicadores",
+        "desempenho dos indicadores",
+        "indicadores do departamento",
+        "strategic indicators",
+        "kpi estratégico"
+      ]
+    },
+    {
+      "operationId": "list_si_indicator_goals",
+      "reason": "DAVI-SI-READ-USER-PARITY-001: user-parity BFF over strategic-indicators-api GET /strategic-indicators/indicator-goals (configured goals incl. monthly_curve targets). Backend AuthZ strategic-indicators.settings.manage at BOTH boundaries; caller JWT forwarded, no service token. Freshness: direct read of indicator_goals catalog (no snapshot). Absence → items=[].",
+      "executionMode": "catalog_action",
+      "responseContract": "strategic_indicators_indicator_goals",
+      "approvedInputFields": [
+        "indicator_id",
+        "goal_year",
+        "department_id",
+        "active_only"
+      ],
+      "approvedResponseFields": [
+        "items[].id",
+        "items[].indicator_id",
+        "items[].indicator_name",
+        "items[].goal_year",
+        "items[].goal_label",
+        "items[].goal_value",
+        "items[].goal_periodicity",
+        "items[].goal_mode",
+        "items[].goal_scope_branch",
+        "items[].monthly_targets",
+        "items[].version",
+        "items[].is_active",
+        "items[].valid_from",
+        "items[].valid_to",
+        "items[].notes",
+        "items[].created_by_user_id",
+        "items[].created_by_email",
+        "items[].updated_by_user_id",
+        "items[].updated_by_email",
+        "items[].created_at",
+        "items[].updated_at"
+      ],
+      "argumentConstraints": {
+        "indicator_id": {
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "goal_year": {
+          "minimum": 2020,
+          "maximum": 2100
+        }
+      },
+      "semanticAliases": [
+        "metas configuradas",
+        "meta do indicador",
+        "curva mensal",
+        "metas dos indicadores",
+        "meta anual",
+        "monthly targets",
+        "configured goals",
+        "metas estratégicas"
+      ]
+    },
+    {
+      "operationId": "list_si_indicator_goal_history",
+      "reason": "DAVI-SI-READ-USER-PARITY-001: user-parity BFF over strategic-indicators-api GET /strategic-indicators/indicator-goals/history (version history for an indicator goal). Backend AuthZ strategic-indicators.settings.manage at BOTH boundaries; caller JWT forwarded, no service token. indicator_id required. Absence → items=[].",
+      "executionMode": "catalog_action",
+      "responseContract": "strategic_indicators_indicator_goal_history",
+      "approvedInputFields": [
+        "indicator_id",
+        "goal_year"
+      ],
+      "approvedResponseFields": [
+        "items[].id",
+        "items[].indicator_id",
+        "items[].indicator_name",
+        "items[].goal_year",
+        "items[].goal_label",
+        "items[].goal_value",
+        "items[].goal_periodicity",
+        "items[].goal_mode",
+        "items[].goal_scope_branch",
+        "items[].monthly_targets",
+        "items[].version",
+        "items[].is_active",
+        "items[].valid_from",
+        "items[].valid_to",
+        "items[].notes",
+        "items[].created_by_user_id",
+        "items[].created_by_email",
+        "items[].updated_by_user_id",
+        "items[].updated_by_email",
+        "items[].created_at",
+        "items[].updated_at"
+      ],
+      "argumentConstraints": {
+        "indicator_id": {
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "goal_year": {
+          "minimum": 2020,
+          "maximum": 2100
+        }
+      },
+      "semanticAliases": [
+        "histórico de metas",
+        "versões da meta",
+        "mudanças na meta",
+        "goal history",
+        "histórico da meta do indicador",
+        "quando a meta mudou",
+        "auditoria de metas"
+      ]
     }
   ],
   "explicitlyNotApproved": [

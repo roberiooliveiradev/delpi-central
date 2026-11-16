@@ -2,31 +2,28 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-29T14:04:49.625223+00:00",
-    "source_head": "826c73b1c4d09d965856bd0543e5d984bdb1e6a8",
-    "origin_main": "9bc5fd0bb44fab97796ceb511c85e2f4b6d6b1b0",
+    "generated_at": "2026-11-16T11:38:42.927608+00:00",
+    "source_head": "e76018eea9191b11e64eac3cb43b7839ce72480c",
+    "origin_main": "e76018eea9191b11e64eac3cb43b7839ce72480c",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
-    "baseline_operation_count": 784,
+    "baseline_operation_count": 793,
     "budgets": {
-      "version": 2,
-      "discover_default_top_k": 5,
-      "discover_max_top_k": 10,
+      "version": 3,
       "execute_max_response_bytes": 65536,
       "execute_max_items": 50,
       "default_page_size": 50,
       "max_page_size": 50,
       "projection_max_depth": 8,
-      "candidate_token_ttl_seconds": 300,
       "execute_max_resultsets": 8,
       "execute_max_result_columns": 64
     }
   },
   "technical_operation_counts": {
-    "TOTAL_OPERATIONS": 784,
-    "TOTAL_GET": 573,
-    "TOTAL_WRITE_VERBS": 211,
-    "DAVI_ELIGIBLE_READ": 94,
+    "TOTAL_OPERATIONS": 793,
+    "TOTAL_GET": 590,
+    "TOTAL_WRITE_VERBS": 203,
+    "DAVI_ELIGIBLE_READ": 99,
     "ELIGIBLE_OPERATION_IDS": [
       "get_commercial_rol_by_branch",
       "get_commercial_rol_by_customer",
@@ -85,6 +82,9 @@
       "get_sales_order_otd_series",
       "get_sales_order_otd_series_by_customer",
       "get_sales_order_otd_summary",
+      "get_si_departments",
+      "get_si_executive_summary",
+      "get_si_indicators",
       "get_supplies_cpv",
       "get_supplies_inventory_accuracy_items",
       "get_supplies_inventory_accuracy_summary",
@@ -114,6 +114,8 @@
       "list_product_drawings",
       "list_production_order_operation_materials",
       "list_protheus_table_columns",
+      "list_si_indicator_goal_history",
+      "list_si_indicator_goals",
       "list_supplies_inventory_adjustments",
       "list_supplies_purchase_request_lines",
       "read_governed_technical_knowledge",
@@ -125,47 +127,49 @@
     ],
     "STATUS_COUNTS": {
       "ADMIN_OUT_OF_SCOPE": 71,
-      "DAVI_ELIGIBLE_READ": 94,
+      "DAVI_ELIGIBLE_READ": 99,
       "DESTRUCTIVE_OUT_OF_SCOPE": 19,
       "GENERIC_SQL_FORBIDDEN": 1,
       "LEGACY_UNSAFE": 2,
       "NEEDS_BOUNDED_EXECUTION": 3,
-      "NEEDS_MODEL_SAFE_PROJECTION": 362,
-      "NEEDS_NESTED_PROJECTION_SUPPORT": 54,
+      "NEEDS_MODEL_SAFE_PROJECTION": 366,
+      "NEEDS_NESTED_PROJECTION_SUPPORT": 57,
       "SEMANTICALLY_REDUNDANT": 2,
-      "STREAM_BINARY_OUT_OF_SCOPE": 37,
-      "WRITE_OUT_OF_SCOPE": 139
+      "STREAM_BINARY_OUT_OF_SCOPE": 42,
+      "WRITE_OUT_OF_SCOPE": 131
     },
     "GET_DOMAIN_COUNTS": {
       "admin": 29,
       "commercial": 56,
       "dashboards": 75,
-      "engineering": 44,
-      "financial": 82,
+      "engineering": 46,
+      "financial": 83,
       "hr": 5,
-      "inspection": 21,
-      "other": 8,
+      "inspection": 22,
+      "other": 14,
       "product": 37,
       "production": 53,
-      "quality": 100,
-      "reports": 11,
+      "quality": 102,
+      "reports": 12,
       "scheduling": 6,
-      "supplies": 46
+      "supplies": 50
     },
     "ADMIN": 71,
     "SQL": 1,
-    "BINARY": 37,
-    "WRITE_OUT_OF_SCOPE": 139,
+    "BINARY": 42,
+    "WRITE_OUT_OF_SCOPE": 131,
     "DESTRUCTIVE": 19,
-    "MODEL_SAFE_PROJECTION_BLOCKED": 362,
-    "NESTED_PROJECTION_BLOCKED": 54,
+    "MODEL_SAFE_PROJECTION_BLOCKED": 366,
+    "NESTED_PROJECTION_BLOCKED": 57,
     "SEMANTICALLY_REDUNDANT": 2
   },
   "mcp_tools": [
-    "discover_delpi_information",
-    "execute_delpi_information"
+    "get_context",
+    "knowledge",
+    "read",
+    "analyze"
   ],
-  "mcp_tool_count": 2,
+  "mcp_tool_count": 4,
   "semantic_capability_counts": {
     "TOTAL_SEMANTIC_CAPABILITIES": 39,
     "STATUS_COUNTS": {
@@ -186,17 +190,17 @@
     "admin": 29,
     "commercial": 56,
     "dashboards": 75,
-    "engineering": 44,
-    "financial": 82,
+    "engineering": 46,
+    "financial": 83,
     "hr": 5,
-    "inspection": 21,
-    "other": 8,
+    "inspection": 22,
+    "other": 14,
     "product": 37,
     "production": 53,
-    "quality": 100,
-    "reports": 11,
+    "quality": 102,
+    "reports": 12,
     "scheduling": 6,
-    "supplies": 46
+    "supplies": 50
   },
   "domain_summary": [
     {
@@ -239,26 +243,27 @@
     },
     {
       "domain": "engineering",
-      "get_operations": 44,
+      "get_operations": 46,
       "semantic_capabilities": 1,
       "currently_eligible": 0,
       "freeze_candidates": 0,
       "main_blockers": {
         "STREAM_BINARY_OUT_OF_SCOPE": 5,
-        "NEEDS_MODEL_SAFE_PROJECTION": 30,
+        "NEEDS_MODEL_SAFE_PROJECTION": 32,
         "ADMIN_OUT_OF_SCOPE": 6,
         "NEEDS_NESTED_PROJECTION_SUPPORT": 3
       }
     },
     {
       "domain": "financial",
-      "get_operations": 82,
+      "get_operations": 83,
       "semantic_capabilities": 1,
       "currently_eligible": 0,
       "freeze_candidates": 0,
       "main_blockers": {
-        "STREAM_BINARY_OUT_OF_SCOPE": 7,
-        "NEEDS_MODEL_SAFE_PROJECTION": 67,
+        "STREAM_BINARY_OUT_OF_SCOPE": 11,
+        "NEEDS_MODEL_SAFE_PROJECTION": 63,
+        "NEEDS_NESTED_PROJECTION_SUPPORT": 1,
         "ADMIN_OUT_OF_SCOPE": 8
       }
     },
@@ -275,25 +280,25 @@
     },
     {
       "domain": "inspection",
-      "get_operations": 21,
+      "get_operations": 22,
       "semantic_capabilities": 2,
       "currently_eligible": 0,
       "freeze_candidates": 0,
       "main_blockers": {
-        "NEEDS_MODEL_SAFE_PROJECTION": 19,
+        "NEEDS_MODEL_SAFE_PROJECTION": 20,
         "NEEDS_NESTED_PROJECTION_SUPPORT": 2
       }
     },
     {
       "domain": "other",
-      "get_operations": 8,
+      "get_operations": 14,
       "semantic_capabilities": 0,
-      "currently_eligible": 1,
+      "currently_eligible": 6,
       "freeze_candidates": 0,
       "main_blockers": {
-        "NEEDS_MODEL_SAFE_PROJECTION": 6,
-        "NEEDS_NESTED_PROJECTION_SUPPORT": 1,
-        "DAVI_ELIGIBLE_READ": 1
+        "NEEDS_MODEL_SAFE_PROJECTION": 7,
+        "DAVI_ELIGIBLE_READ": 6,
+        "NEEDS_NESTED_PROJECTION_SUPPORT": 1
       }
     },
     {
@@ -325,25 +330,25 @@
     },
     {
       "domain": "quality",
-      "get_operations": 100,
+      "get_operations": 102,
       "semantic_capabilities": 2,
       "currently_eligible": 0,
       "freeze_candidates": 0,
       "main_blockers": {
-        "STREAM_BINARY_OUT_OF_SCOPE": 12,
+        "STREAM_BINARY_OUT_OF_SCOPE": 13,
         "NEEDS_NESTED_PROJECTION_SUPPORT": 11,
-        "NEEDS_MODEL_SAFE_PROJECTION": 75,
+        "NEEDS_MODEL_SAFE_PROJECTION": 76,
         "ADMIN_OUT_OF_SCOPE": 2
       }
     },
     {
       "domain": "reports",
-      "get_operations": 11,
+      "get_operations": 12,
       "semantic_capabilities": 0,
       "currently_eligible": 0,
       "freeze_candidates": 0,
       "main_blockers": {
-        "NEEDS_MODEL_SAFE_PROJECTION": 11
+        "NEEDS_MODEL_SAFE_PROJECTION": 12
       }
     },
     {
@@ -358,15 +363,15 @@
     },
     {
       "domain": "supplies",
-      "get_operations": 46,
+      "get_operations": 50,
       "semantic_capabilities": 4,
       "currently_eligible": 26,
       "freeze_candidates": 0,
       "main_blockers": {
         "STREAM_BINARY_OUT_OF_SCOPE": 3,
-        "NEEDS_NESTED_PROJECTION_SUPPORT": 3,
+        "NEEDS_NESTED_PROJECTION_SUPPORT": 5,
         "DAVI_ELIGIBLE_READ": 26,
-        "NEEDS_MODEL_SAFE_PROJECTION": 14
+        "NEEDS_MODEL_SAFE_PROJECTION": 16
       }
     }
   ],
@@ -549,9 +554,9 @@
       "product.shipping.status"
     ],
     "count": 3,
-    "current_eligible": 94,
+    "current_eligible": 99,
     "new_capabilities": 3,
-    "expected_eligible_after_implementation": 97,
+    "expected_eligible_after_implementation": 102,
     "expected_mcp_tools_after_implementation": 3,
     "agent_instruction_change": "NO",
     "capabilities": [
@@ -6250,6 +6255,162 @@
       "notes": null
     },
     {
+      "operationId": "export_financeiro_billing_exclusion_roster",
+      "http_path": "/financeiro/billing-exclusion-roster/export",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Exportação — Financeiro billing exclusion roster export",
+      "description": "Retorna financeiro billing exclusion roster export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Billing Exclusion Roster"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "view",
+        "product_group",
+        "product_code",
+        "document",
+        "customer_code",
+        "tes",
+        "format"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "document_export",
+      "response_schema": "financeiro_billing_exclusion_roster_export",
+      "estimated_payload_risk": "high",
+      "binary": true,
+      "stream": true,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_blocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "export_financeiro_cost_center_expenses",
+      "http_path": "/financeiro/cost-center-expenses/export",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Exportação — Financeiro cost center expenses export",
+      "description": "Retorna financeiro cost center expenses export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Cost Center Expenses"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "universe",
+        "view",
+        "cost_center",
+        "product_code",
+        "document",
+        "supplier_code",
+        "tes",
+        "format"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "document_export",
+      "response_schema": "financeiro_cost_center_expenses_export",
+      "estimated_payload_risk": "high",
+      "binary": true,
+      "stream": true,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_blocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "export_financeiro_inventory_adjustments",
+      "http_path": "/financeiro/inventory-adjustments/export",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Exportação — Financeiro inventory adjustments export",
+      "description": "Retorna financeiro inventory adjustments export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code",
+        "format"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "document_export",
+      "response_schema": "financeiro_inventory_adjustments_export",
+      "estimated_payload_risk": "high",
+      "binary": true,
+      "stream": true,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_blocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "export_financeiro_stock_inventory",
       "http_path": "/financeiro/stock-inventory/export",
       "bounded_context": "financial",
@@ -6282,6 +6443,56 @@
       "pagination_model": "none",
       "response_shape": "document_export",
       "response_schema": "financeiro_stock_inventory_export",
+      "estimated_payload_risk": "high",
+      "binary": true,
+      "stream": true,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_blocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "export_financeiro_stock_kardex",
+      "http_path": "/financeiro/stock-kardex/export",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Exportação — Financeiro stock kardex export",
+      "description": "Retorna financeiro stock kardex export via API DELPI. Resposta estruturada para consumo no chat. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code",
+        "product_type",
+        "format"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "document_export",
+      "response_schema": "financeiro_stock_kardex_export",
       "estimated_payload_risk": "high",
       "binary": true,
       "stream": true,
@@ -6466,6 +6677,59 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "lmp_nonconformity_export",
+      "estimated_payload_risk": "high",
+      "binary": true,
+      "stream": true,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_blocker": "STREAM_BINARY_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "export_nonconformity_operator_ranking_excel",
+      "http_path": "/quality/nonconformities/operators/export.xlsx",
+      "bounded_context": "quality",
+      "route_module": "app/interface/http/routes/quality/quality_router.py",
+      "handler": "export_nonconformity_operator_ranking_excel_route",
+      "method": "GET",
+      "summary": "Export Nonconformity Operator Ranking Excel Route",
+      "description": "Planilha completa dos operadores e defeitos, sem limite do Top 5.",
+      "tags": [
+        "Qualidade"
+      ],
+      "owner": "api-delpi.quality",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "export_nonconformity_operator_ranking_excel_route",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "KPI_QUALITY_ACCESS"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "type",
+        "start_date",
+        "end_date",
+        "date_start",
+        "date_end",
+        "status",
+        "item_code",
+        "description",
+        "branch"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "export_nonconformity_operator_ranking_excel",
       "estimated_payload_risk": "high",
       "binary": true,
       "stream": true,
@@ -6885,7 +7149,7 @@
       "explicitly_not_approved": true,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
-      "notes": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
+      "notes": "Binary/document export must not flow through the governed JSON read surface (no base64)."
     },
     {
       "operationId": "get_audit_5s_analytics_dashboard",
@@ -8165,6 +8429,100 @@
       "notes": null
     },
     {
+      "operationId": "get_consumption_audit_comparison",
+      "http_path": "/supplies/consumption-audit/comparison",
+      "bounded_context": "supplies",
+      "route_module": "app/interface/http/routes/supplies/consumption_audit_router.py",
+      "handler": "get_consumption_audit_comparison",
+      "method": "GET",
+      "summary": "Comparação de consumo entre OPs (Suprimentos)",
+      "description": "Batch bounded (2–10 OPs, mesma filial): projeta o detalhe já calculado de cada OP em componentes comparáveis por operação, totais agregados apenas dentro da mesma unidade de medida e qualidade por OP. OPs não encontradas saem em not_found.",
+      "tags": [
+        "Supplies — Consumption Audit"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_consumption_audit_comparison",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "required_filter_unspecified_enum",
+      "parameters": [
+        "orders",
+        "branch"
+      ],
+      "required_parameters": [
+        "orders",
+        "branch"
+      ],
+      "pagination_model": "none",
+      "response_shape": "composite_analysis",
+      "response_schema": "consumption_audit_comparison",
+      "estimated_payload_risk": "high",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_blocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_consumption_audit_order",
+      "http_path": "/supplies/consumption-audit/orders/{production_order}",
+      "bounded_context": "supplies",
+      "route_module": "app/interface/http/routes/supplies/consumption_audit_router.py",
+      "handler": "get_consumption_audit_order",
+      "method": "GET",
+      "summary": "Auditoria de consumo de uma OP (Suprimentos)",
+      "description": "Detalhe read-only OP × operação × componente: ordem (SC2), estrutura histórica (SG1 na data de emissão), empenhos e consumo derivado (SD4), movimentos classificados/excluídos (SD3) e evidências de execução separadas (SH6/HZA/SH8). Filial obrigatória 01|02; chave da OP de 11 posições preservada.",
+      "tags": [
+        "Supplies — Consumption Audit"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_consumption_audit_order",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "required_filter_unspecified_enum",
+      "parameters": [
+        "production_order",
+        "branch"
+      ],
+      "required_parameters": [
+        "production_order",
+        "branch"
+      ],
+      "pagination_model": "none",
+      "response_shape": "composite_analysis",
+      "response_schema": "consumption_audit_order",
+      "estimated_payload_risk": "high",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_blocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "get_cultura_delpi_content",
       "http_path": "/cultura-delpi/content",
       "bounded_context": "hr",
@@ -8691,6 +9049,260 @@
       "sensitive_high_volume": false,
       "current_davi_disposition": "ADMIN_OUT_OF_SCOPE",
       "current_blocker": "ADMIN_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_billing_exclusion_roster",
+      "http_path": "/financeiro/billing-exclusion-roster",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Financeiro billing exclusion roster",
+      "description": "Retorna financeiro billing exclusion roster via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Financeiro — Billing Exclusion Roster"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "view",
+        "product_group",
+        "product_code",
+        "document",
+        "customer_code",
+        "tes",
+        "include_findings",
+        "page",
+        "page_size",
+        "sort",
+        "sort_dir"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "financeiro_billing_exclusion_roster",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_billing_mod_breakdown",
+      "http_path": "/financeiro/billing-mod-breakdown",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Relatório operacional — Faturamento × mod por âncora pa (r09/dlp204, visão operacional)",
+      "description": "Retorna faturamento × MOD por âncora PA (R09/DLP204, visão operacional) via API DELPI. Relatório operacional do playbook (REST, sem SQL). Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Billing MOD Breakdown"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "playbook_report",
+      "response_schema": "financeiro_billing_mod_breakdown",
+      "estimated_payload_risk": "high",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_blocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_closing_state",
+      "http_path": "/financeiro/closing-state",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Indicador — Financeiro closing state",
+      "description": "Retorna financeiro closing state via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Closing State"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "financeiro_closing_state",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_cost_center_expenses",
+      "http_path": "/financeiro/cost-center-expenses",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Financeiro cost center expenses",
+      "description": "Retorna financeiro cost center expenses via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Financeiro — Cost Center Expenses"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "universe",
+        "view",
+        "cost_center",
+        "product_code",
+        "document",
+        "supplier_code",
+        "tes",
+        "include_findings",
+        "page",
+        "page_size",
+        "sort",
+        "sort_dir"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "financeiro_cost_center_expenses",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_cpv",
+      "http_path": "/financeiro/cpv",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Indicador — Financeiro cpv",
+      "description": "Retorna financeiro CPV via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "top_limit"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "financeiro_cpv",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "current_allowlist_presence": false,
       "current_projection_support": false,
       "current_aliases": [],
@@ -9253,6 +9865,105 @@
       "notes": null
     },
     {
+      "operationId": "get_financeiro_inventory_adjustments",
+      "http_path": "/financeiro/inventory-adjustments",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Financeiro inventory adjustments",
+      "description": "Retorna financeiro inventory adjustments via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code",
+        "movement_kind",
+        "page",
+        "page_size"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "financeiro_inventory_adjustments",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_inventory_adjustments_summary",
+      "http_path": "/financeiro/inventory-adjustments/summary",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Indicador — Financeiro inventory adjustments summary",
+      "description": "Retorna financeiro inventory adjustments summary via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "financeiro_inventory_adjustments_summary",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "get_financeiro_settlements_payables",
       "http_path": "/financeiro/settlements/payables",
       "bounded_context": "financial",
@@ -9432,6 +10143,160 @@
       "pagination_model": "page/page_size",
       "response_shape": "paged_list",
       "response_schema": "financeiro_stock_inventory",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_stock_kardex",
+      "http_path": "/financeiro/stock-kardex",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Financeiro stock kardex",
+      "description": "Retorna financeiro stock kardex via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code",
+        "product_type",
+        "movement_kind",
+        "page",
+        "page_size",
+        "sort",
+        "sort_dir"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "financeiro_stock_kardex",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_stock_kardex_product",
+      "http_path": "/financeiro/stock-kardex/products/{product_code}",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Financeiro stock kardex",
+      "description": "Retorna financeiro stock kardex via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "product_code",
+        "period",
+        "branch",
+        "warehouse",
+        "page",
+        "page_size"
+      ],
+      "required_parameters": [
+        "product_code",
+        "period"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "financeiro_stock_kardex",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_financeiro_stock_kardex_summary",
+      "http_path": "/financeiro/stock-kardex/summary",
+      "bounded_context": "financial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Indicador — Financeiro stock kardex summary",
+      "description": "Retorna financeiro stock kardex summary via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Financeiro — Stock Kardex"
+      ],
+      "owner": "api-delpi.financial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "period",
+        "branch",
+        "warehouse",
+        "product_code",
+        "product_type"
+      ],
+      "required_parameters": [
+        "period"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "financeiro_stock_kardex_summary",
       "estimated_payload_risk": "medium",
       "binary": false,
       "stream": false,
@@ -10598,8 +11463,11 @@
       "branch_semantics": "optional_consolidated: all | 01 | 02",
       "parameters": [
         "data",
+        "start_date",
+        "end_date",
         "inspecao_status",
         "shift",
+        "export_all",
         "page",
         "page_size",
         "branch"
@@ -11489,355 +12357,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "kaizen_summary_series",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
-      "http_path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "preview_received_cte_dacte",
-      "method": "GET",
-      "summary": "Preview Received Cte Dacte",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "preview_received_cte_dacte",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "document_id",
-        "file_id",
-        "access_key",
-        "branch"
-      ],
-      "required_parameters": [
-        "document_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "received_cte_dacte",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
-      "http_path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "preview_received_invoice_danfe",
-      "method": "GET",
-      "summary": "Preview Received Invoice Danfe",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "preview_received_invoice_danfe",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "document_id",
-        "access_key",
-        "branch"
-      ],
-      "required_parameters": [
-        "document_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "received_invoice_danfe",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
-      "http_path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "received_fiscal_detail",
-      "method": "GET",
-      "summary": "Received Fiscal Detail",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "received_fiscal_detail",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "document_id",
-        "branch",
-        "document_type",
-        "file_id",
-        "access_key",
-        "provider_entity_id",
-        "supplier_code",
-        "supplier_store"
-      ],
-      "required_parameters": [
-        "document_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "received_nfse_detail",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
-      "http_path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "download_received_fiscal_xml",
-      "method": "GET",
-      "summary": "Download Received Fiscal Xml",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "download_received_fiscal_xml",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "document_id",
-        "variant",
-        "branch",
-        "document_type",
-        "file_id"
-      ],
-      "required_parameters": [
-        "document_id",
-        "variant"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "received_nfse_xml",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "get_request",
-      "method": "GET",
-      "summary": "Get Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "get_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_danfe",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "download_request_danfe",
-      "method": "GET",
-      "summary": "Download Request Danfe",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "download_request_danfe",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id",
-        "disposition"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_danfe",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "download_request_fiscal_attachment",
-      "method": "GET",
-      "summary": "Download Request Fiscal Attachment",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "download_request_fiscal_attachment",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id",
-        "attachment_type"
-      ],
-      "required_parameters": [
-        "request_id",
-        "attachment_type"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_fiscal_attachment",
       "estimated_payload_risk": "medium",
       "binary": false,
       "stream": false,
@@ -12874,6 +13393,60 @@
       "notes": null
     },
     {
+      "operationId": "get_nonconformity_operator_ranking",
+      "http_path": "/quality/nonconformities/operators",
+      "bounded_context": "quality",
+      "route_module": "app/interface/http/routes/quality/quality_router.py",
+      "handler": "get_nonconformity_operator_ranking_route",
+      "method": "GET",
+      "summary": "Get Nonconformity Operator Ranking Route",
+      "description": "Ranking em todos os registros filtrados, nunca na página corrente.",
+      "tags": [
+        "Qualidade"
+      ],
+      "owner": "api-delpi.quality",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_nonconformity_operator_ranking_route",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "KPI_QUALITY_ACCESS"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "type",
+        "start_date",
+        "end_date",
+        "date_start",
+        "date_end",
+        "status",
+        "item_code",
+        "description",
+        "operator_code",
+        "branch"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "nonconformity_operator_ranking",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "get_nonconformity_series",
       "http_path": "/quality/nonconformities/series",
       "bounded_context": "quality",
@@ -13165,6 +13738,53 @@
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.oee",
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_pcp_stock_rupture_pendencies",
+      "http_path": "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
+      "bounded_context": "reports",
+      "route_module": "app/interface/http/routes/reports/reports_router.py",
+      "handler": "get_pcp_stock_rupture_pendencies",
+      "method": "GET",
+      "summary": "Get Pcp Stock Rupture Pendencies",
+      "description": "S2S para o PCP: reutiliza o cálculo oficial, sem liberar Reports no navegador.\n\nA autenticação da filial e a permissão de leitura do PCP são verificadas no\nBFF antes desta chamada. Esta rota só aceita token interno de serviço.",
+      "tags": [
+        "Delpi Reports",
+        "Delpi Reports"
+      ],
+      "owner": "api-delpi.reports",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_pcp_stock_rupture_pendencies",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "required_filter_unspecified_enum",
+      "parameters": [
+        "branch",
+        "horizonDays"
+      ],
+      "required_parameters": [
+        "branch"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "pcp_stock_rupture_pendencies",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
       "notes": null
     },
@@ -14439,7 +15059,7 @@
       "canonical_use_case": "get_product_detail",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "PRC_READ_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -14573,7 +15193,7 @@
       "canonical_use_case": "get_product_drawing_metadata",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "ENGINEERING_LMP_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -14631,7 +15251,7 @@
       "canonical_use_case": "get_product_drawing_pdf",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "ENGINEERING_LMP_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -14659,7 +15279,7 @@
       "explicitly_not_approved": true,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
-      "notes": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in execute_delpi_information. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
+      "notes": "Binary PDF document transport is not a JSON READ projection. Must not embed pdf_base64 in the governed JSON read surface. Requires generic authorized document boundary (ARCHITECTURE_ESCALATION if new MCP tool/resource). AuthZ remains API_DELPI_ACCESS on the HTTP route."
     },
     {
       "operationId": "get_product_factory_status",
@@ -15162,7 +15782,7 @@
       "canonical_use_case": "parents",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "ENGINEERING_LMP_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -16029,7 +16649,7 @@
       "canonical_use_case": "get_structure",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "ENGINEERING_LMP_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -16251,13 +16871,14 @@
       "canonical_use_case": "suppliers",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "PRC_READ_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
       "branch_semantics": "not_applicable",
       "parameters": [
         "code",
+        "view",
         "page",
         "page_size"
       ],
@@ -18189,6 +18810,7 @@
         "operator_code",
         "metric",
         "limit",
+        "granularity",
         "branch"
       ],
       "required_parameters": [
@@ -18747,6 +19369,53 @@
       "sensitive_high_volume": false,
       "current_davi_disposition": "ADMIN_OUT_OF_SCOPE",
       "current_blocker": "ADMIN_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_public_character_avatar",
+      "http_path": "/public/characters/{character_id}/avatar/{filename}",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/characters/characters_public_router.py",
+      "handler": "get_public_character_avatar",
+      "method": "GET",
+      "summary": "Get Public Character Avatar",
+      "description": "",
+      "tags": [
+        "Characters"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_public_character_avatar",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "character_id",
+        "filename"
+      ],
+      "required_parameters": [
+        "character_id",
+        "filename"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "character_avatar",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
       "current_allowlist_presence": false,
       "current_projection_support": false,
       "current_aliases": [],
@@ -21455,6 +22124,123 @@
       "current_allowlist_presence": false,
       "current_projection_support": false,
       "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_si_departments",
+      "http_path": "/strategic-indicators/departments",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/strategic_indicators/strategic_indicators_router.py",
+      "handler": "get_si_departments",
+      "method": "GET",
+      "summary": "Strategic Indicators department results",
+      "description": "Per-department Strategic Indicators results (IDD, score, trend) for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/departments. Requires strategic-indicators.view.",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_si_departments",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "STRATEGIC_INDICATORS_VIEW"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "department_id",
+        "competence",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "required_parameters": [],
+      "pagination_model": "paged_list_shape",
+      "response_shape": "paged_list",
+      "response_schema": "strategic_indicators_departments",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "departamentos",
+        "nota dos departamentos",
+        "idd por departamento",
+        "desempenho por área",
+        "ranking de departamentos",
+        "score por departamento",
+        "resultado por área"
+      ],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_si_executive_summary",
+      "http_path": "/strategic-indicators/executive-summary",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/strategic_indicators/strategic_indicators_router.py",
+      "handler": "get_si_executive_summary",
+      "method": "GET",
+      "summary": "Strategic Indicators executive summary for a competence",
+      "description": "Executive summary of Strategic Indicators (IDD rollup across departments) for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/executive-summary. Requires the caller's strategic-indicators.view permission; the request is forwarded with the caller identity only.",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_si_executive_summary",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "STRATEGIC_INDICATORS_VIEW"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "department_id",
+        "competence",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "composite_analysis",
+      "response_schema": "strategic_indicators_executive_summary",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "resumo executivo",
+        "índice geral",
+        "igd",
+        "idd geral",
+        "desempenho estratégico",
+        "panorama estratégico",
+        "visão executiva indicadores",
+        "executive summary",
+        "strategic score",
+        "igd do mês"
+      ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
@@ -24767,6 +25553,64 @@
       "current_allowlist_presence": false,
       "current_projection_support": false,
       "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_si_indicators",
+      "http_path": "/strategic-indicators/indicators",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/strategic_indicators/strategic_indicators_router.py",
+      "handler": "get_si_indicators",
+      "method": "GET",
+      "summary": "Strategic Indicators operational indicator results",
+      "description": "Configured indicators with realized values, active goal, score, gap and classification for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/indicators. Requires strategic-indicators.view.",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "get_si_indicators",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "STRATEGIC_INDICATORS_VIEW"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "department_id",
+        "competence",
+        "start_date",
+        "end_date",
+        "branch"
+      ],
+      "required_parameters": [],
+      "pagination_model": "paged_list_shape",
+      "response_shape": "paged_list",
+      "response_schema": "strategic_indicators_indicators",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "indicadores estratégicos",
+        "lista de indicadores",
+        "realizado e meta",
+        "resultado dos indicadores",
+        "desempenho dos indicadores",
+        "indicadores do departamento",
+        "strategic indicators",
+        "kpi estratégico"
+      ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
@@ -28199,6 +29043,58 @@
       "notes": null
     },
     {
+      "operationId": "list_inspecoes_entrada_ncs_fornecedores",
+      "http_path": "/inspecoes-entrada/ncs-fornecedores",
+      "bounded_context": "inspection",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Inspecoes entrada ncs fornecedores",
+      "description": "Retorna inspecoes entrada ncs fornecedores via API DELPI. Lista paginada de registros. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Inspeções de Entrada"
+      ],
+      "owner": "api-delpi.inspection",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "required_concrete: 01 | 02",
+      "parameters": [
+        "branch",
+        "start_date",
+        "end_date",
+        "status",
+        "item_code",
+        "description",
+        "page",
+        "page_size"
+      ],
+      "required_parameters": [
+        "branch"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "inspecoes_entrada_ncs_fornecedores",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "list_inspecoes_processo_operation_inspections",
       "http_path": "/inspecoes-processo/operations/inspections",
       "bounded_context": "inspection",
@@ -28519,6 +29415,7 @@
         "title",
         "start_date",
         "end_date",
+        "date_field",
         "date_start",
         "date_end",
         "page",
@@ -28577,258 +29474,6 @@
       "pagination_model": "paged_list_shape",
       "response_shape": "paged_list",
       "response_schema": "kaizen_revision",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
-      "http_path": "/lancamento-notas-fiscais/purchase-orders/open",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "list_open_purchase_orders",
-      "method": "GET",
-      "summary": "List Open Purchase Orders",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "list_open_purchase_orders",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "required_filter_unspecified_enum",
-      "parameters": [
-        "branch",
-        "supplier_code",
-        "supplier_store"
-      ],
-      "required_parameters": [
-        "branch",
-        "supplier_code",
-        "supplier_store"
-      ],
-      "pagination_model": "paged_list_shape",
-      "response_shape": "paged_list",
-      "response_schema": "invoice_posting_purchase_order",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_received_invoices",
-      "http_path": "/lancamento-notas-fiscais/received-invoices",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "list_received_invoices",
-      "method": "GET",
-      "summary": "List Received Invoices",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "list_received_invoices",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "invoice_number",
-        "supplier_cnpj",
-        "page",
-        "page_size",
-        "document_type"
-      ],
-      "required_parameters": [],
-      "pagination_model": "page/page_size",
-      "response_shape": "paged_list",
-      "response_schema": "received_invoice",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "list_request_purchase_orders",
-      "method": "GET",
-      "summary": "List Request Purchase Orders",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "list_request_purchase_orders",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "paged_list_shape",
-      "response_shape": "paged_list",
-      "response_schema": "invoice_posting_purchase_order",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_requests",
-      "http_path": "/lancamento-notas-fiscais/requests",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "list_requests",
-      "method": "GET",
-      "summary": "List Requests",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "list_requests",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "branch",
-        "status",
-        "supplier",
-        "document",
-        "issued_from",
-        "issued_to",
-        "received_from",
-        "received_to",
-        "page",
-        "page_size"
-      ],
-      "required_parameters": [],
-      "pagination_model": "page/page_size",
-      "response_shape": "paged_list",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
-      "http_path": "/lancamento-notas-fiscais/unmapped-products",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "list_unmapped_products",
-      "method": "GET",
-      "summary": "List Unmapped Products",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "list_unmapped_products",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "optional_filter",
-      "parameters": [
-        "supplier",
-        "product_code",
-        "branch",
-        "mapping_status",
-        "request_id",
-        "page",
-        "page_size"
-      ],
-      "required_parameters": [],
-      "pagination_model": "page/page_size",
-      "response_shape": "paged_list",
-      "response_schema": "invoice_posting_unmapped_product",
       "estimated_payload_risk": "medium",
       "binary": false,
       "stream": false,
@@ -31170,7 +31815,7 @@
       "canonical_use_case": "list_product_drawings",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "API_DELPI_ACCESS"
+        "ENGINEERING_LMP_ACCESS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
@@ -32949,6 +33594,119 @@
       "notes": null
     },
     {
+      "operationId": "list_si_indicator_goal_history",
+      "http_path": "/strategic-indicators/indicator-goals/history",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/strategic_indicators/strategic_indicators_router.py",
+      "handler": "list_si_indicator_goal_history",
+      "method": "GET",
+      "summary": "Version history of a Strategic Indicators goal",
+      "description": "All persisted versions of goals for an indicator (requires indicator_id; goal_year optional). Owner: strategic-indicators-api GET /strategic-indicators/indicator-goals/history. Requires strategic-indicators.settings.manage.",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "list_si_indicator_goal_history",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "STRATEGIC_INDICATORS_SETTINGS_MANAGE"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "indicator_id",
+        "goal_year"
+      ],
+      "required_parameters": [
+        "indicator_id"
+      ],
+      "pagination_model": "paged_list_shape",
+      "response_shape": "paged_list",
+      "response_schema": "strategic_indicators_indicator_goal_history",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "histórico de metas",
+        "versões da meta",
+        "mudanças na meta",
+        "goal history",
+        "histórico da meta do indicador",
+        "quando a meta mudou",
+        "auditoria de metas"
+      ],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "list_si_indicator_goals",
+      "http_path": "/strategic-indicators/indicator-goals",
+      "bounded_context": "other",
+      "route_module": "app/interface/http/routes/strategic_indicators/strategic_indicators_router.py",
+      "handler": "list_si_indicator_goals",
+      "method": "GET",
+      "summary": "Configured Strategic Indicators goals and monthly curves",
+      "description": "Configured goals (goal_value, goal_mode, monthly_targets curve, scope and validity) for indicators, optionally filtered by indicator/department/year. Owner: strategic-indicators-api GET /strategic-indicators/indicator-goals. Requires strategic-indicators.settings.manage.",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "owner": "api-delpi.other",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "list_si_indicator_goals",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "STRATEGIC_INDICATORS_SETTINGS_MANAGE"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "indicator_id",
+        "goal_year",
+        "department_id",
+        "active_only"
+      ],
+      "required_parameters": [],
+      "pagination_model": "paged_list_shape",
+      "response_shape": "paged_list",
+      "response_schema": "strategic_indicators_indicator_goals",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "metas configuradas",
+        "meta do indicador",
+        "curva mensal",
+        "metas dos indicadores",
+        "meta anual",
+        "monthly targets",
+        "configured goals",
+        "metas estratégicas"
+      ],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "list_supplier_field_provenance",
       "http_path": "/integrations/protheus/suppliers/{supplier_id}/provenance",
       "bounded_context": "other",
@@ -33295,6 +34053,51 @@
         "SC abertas",
         "solicitações de compra abertas"
       ],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "list_supplies_purchase_request_pending_approvals",
+      "http_path": "/supplies/purchase-requests/pending-approvals",
+      "bounded_context": "supplies",
+      "route_module": "app/interface/http/routes/supplies/purchase_requests_router.py",
+      "handler": "list_supplies_purchase_request_pending_approvals_route",
+      "method": "GET",
+      "summary": "Alçadas ativas de solicitações de compra",
+      "description": "Feed interno paginado por filial e SC. Somente SCR status 02, SCs bloqueadas e abertas, sem corte por data. Cursor exclusivo; próximo cursor nulo encerra a varredura.",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "list_supplies_purchase_request_pending_approvals_route",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "after_branch",
+        "after_request_number",
+        "limit"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "list",
+      "response_schema": "supplies_purchase_request_pending_approval",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
@@ -33875,6 +34678,104 @@
       "notes": null
     },
     {
+      "operationId": "prc_catalog_items",
+      "http_path": "/engineering/product-registration/catalogs/{catalog}",
+      "bounded_context": "engineering",
+      "route_module": "app/interface/http/routes/engineering/prc_catalogs_router.py",
+      "handler": "list_prc_catalog_items",
+      "method": "GET",
+      "summary": "List Prc Catalog Items",
+      "description": "",
+      "tags": [
+        "Engineering — Product Registration"
+      ],
+      "owner": "api-delpi.engineering",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "list_prc_catalog_items",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "PRC_READ_ACCESS"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "catalog",
+        "query",
+        "limit"
+      ],
+      "required_parameters": [
+        "catalog"
+      ],
+      "pagination_model": "none",
+      "response_shape": "scalar",
+      "response_schema": "prc_catalog_items",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "prc_supplier_search",
+      "http_path": "/engineering/product-registration/suppliers",
+      "bounded_context": "engineering",
+      "route_module": "app/interface/http/routes/engineering/prc_catalogs_router.py",
+      "handler": "search_prc_suppliers",
+      "method": "GET",
+      "summary": "Search Prc Suppliers",
+      "description": "",
+      "tags": [
+        "Engineering — Product Registration"
+      ],
+      "owner": "api-delpi.engineering",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "search_prc_suppliers",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "PRC_READ_ACCESS"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "not_applicable",
+      "parameters": [
+        "query",
+        "page",
+        "page_size"
+      ],
+      "required_parameters": [
+        "query"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "scalar",
+      "response_schema": "prc_supplier_search",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "preview_report_provider_management_revenue_monthly",
       "http_path": "/reports/providers/management_revenue_monthly/preview",
       "bounded_context": "reports",
@@ -34128,6 +35029,63 @@
       "notes": null
     },
     {
+      "operationId": "search_consumption_audit_orders",
+      "http_path": "/supplies/consumption-audit/orders",
+      "bounded_context": "supplies",
+      "route_module": "app/interface/http/routes/supplies/consumption_audit_router.py",
+      "handler": "search_consumption_audit_orders",
+      "method": "GET",
+      "summary": "Busca/listagem de OPs para auditoria de consumo (Suprimentos)",
+      "description": "Listagem paginada leve de ordens de produção: fragmento de código, produto/descrição, período por tipo de data (emission|finished|appointment), situação, centro de trabalho e operação — sem calcular o detalhe de cada OP. Filial obrigatória 01|02.",
+      "tags": [
+        "Supplies — Consumption Audit"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "search_consumption_audit_orders",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "required_filter_unspecified_enum",
+      "parameters": [
+        "branch",
+        "search",
+        "product",
+        "date_type",
+        "period_start",
+        "period_end",
+        "status",
+        "work_center",
+        "operation",
+        "page",
+        "page_size",
+        "sort_by",
+        "sort_direction"
+      ],
+      "required_parameters": [
+        "branch"
+      ],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "consumption_audit_order_summary",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "search_customers",
       "http_path": "/customers/search",
       "bounded_context": "commercial",
@@ -34177,54 +35135,6 @@
       "notes": null
     },
     {
-      "operationId": "search_lancamento_notas_fiscais_suppliers",
-      "http_path": "/lancamento-notas-fiscais/suppliers",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "search_suppliers",
-      "method": "GET",
-      "summary": "Search Suppliers",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "search_suppliers",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "query",
-        "limit"
-      ],
-      "required_parameters": [
-        "query"
-      ],
-      "pagination_model": "paged_list_shape",
-      "response_shape": "paged_list",
-      "response_schema": "invoice_posting_supplier",
-      "estimated_payload_risk": "medium",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
       "operationId": "search_products",
       "http_path": "/products/search",
       "bounded_context": "product",
@@ -34253,6 +35163,8 @@
         "product_type",
         "description",
         "customer_reference",
+        "previous_code",
+        "view",
         "page",
         "page_size",
         "sort",
@@ -35388,53 +36300,6 @@
       "notes": null
     },
     {
-      "operationId": "update_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "update_request",
-      "method": "PATCH",
-      "summary": "Update Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "update_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
       "operationId": "update_planejamento_orcamentario_admin_cost_center_icon",
       "http_path": "/planejamento-orcamentario/admin/org/cost-centers/icon",
       "bounded_context": "financial",
@@ -35833,53 +36698,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "budget_guidance_acknowledgement",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "add_lancamento_notas_fiscais_comment",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/comments",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "add_comment",
-      "method": "POST",
-      "summary": "Add Comment",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "add_comment",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_comment",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -36746,36 +37564,39 @@
       "notes": null
     },
     {
-      "operationId": "block_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/block",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "block_request",
+      "operationId": "cancel_audit_5s_nc_candidate_without_plan",
+      "http_path": "/quality/audit-5s/audits/{audit_id}/nc-candidates/{response_id}/cancel",
+      "bounded_context": "quality",
+      "route_module": "app/interface/http/routes/quality/audit_5s_operational_router.py",
+      "handler": "cancel_nc_candidate",
       "method": "POST",
-      "summary": "Block Request",
-      "description": "",
+      "summary": "Cancel Nc Candidate",
+      "description": "Admin cancela NC sem plano, com justificativa e sem alterar a nota.",
       "tags": [
-        "Lançamento de Notas Fiscais"
+        "Qualidade",
+        "Auditoria 5S"
       ],
-      "owner": "api-delpi.financial",
+      "owner": "api-delpi.quality",
       "owner_evidence": "PROVEN",
-      "canonical_use_case": "block_request",
+      "canonical_use_case": "cancel_nc_candidate",
       "repository_downstream_source": "TO_INVENTORY",
       "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS"
+        "AUDIT_5S_ADMIN_PERMISSIONS"
       ],
       "backend_authz": "PROVEN",
       "authz_mechanism": "route_decorator",
       "branch_semantics": "not_applicable",
       "parameters": [
-        "request_id"
+        "audit_id",
+        "response_id"
       ],
       "required_parameters": [
-        "request_id"
+        "audit_id",
+        "response_id"
       ],
       "pagination_model": "none",
       "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
+      "response_schema": "audit_5s_nc_candidate_without_plan",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -36823,53 +37644,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "invoice_issuance_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "cancel_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/cancel",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "cancel_request",
-      "method": "POST",
-      "summary": "Cancel Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "cancel_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -37561,49 +38335,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "kaizen_revision",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "create_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "create_request",
-      "method": "POST",
-      "summary": "Create Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "create_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_CREATE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [],
-      "required_parameters": [],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -39597,53 +40328,6 @@
       "notes": null
     },
     {
-      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "link_request_purchase_order",
-      "method": "POST",
-      "summary": "Link Request Purchase Order",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "link_request_purchase_order",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
       "operationId": "list_customer_billing_series",
       "http_path": "/pedidos-venda-abertos/customers/billing-series",
       "bounded_context": "commercial",
@@ -39709,6 +40393,47 @@
       "pagination_model": "paged_list_shape",
       "response_shape": "paged_list",
       "response_schema": "customer_open_order_metrics",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
+      "current_blocker": "WRITE_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "list_customer_outbound_invoice_line_items",
+      "http_path": "/pedidos-venda-abertos/totvs-outbound-invoice-line-items",
+      "bounded_context": "commercial",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "POST",
+      "summary": "Lista — Customer outbound invoice line item",
+      "description": "Retorna customer outbound invoice line item via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Pedidos de venda em aberto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "owner": "api-delpi.commercial",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "not_applicable",
+      "parameters": [],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "list",
+      "response_schema": "customer_outbound_invoice_line_item",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -39874,6 +40599,47 @@
       "notes": "Deferred by DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001: not explicitly frozen in the approved DAVI Product/Architecture scope and no proven DAVI consumer need justifies the batch of up to 300 OPs. Owner API route/contract unchanged; single-OP list_production_order_operation_materials remains promoted. Not a security/AuthZ/endpoint defect."
     },
     {
+      "operationId": "lookup_products_sb1_identity",
+      "http_path": "/products/sb1-identity-lookup",
+      "bounded_context": "product",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "POST",
+      "summary": "Análise consolidada — Identidade cadastral sb1 (código/referência exatos)",
+      "description": "Retorna identidade cadastral SB1 (código/referência exatos) via API DELPI. Visão consolidada com múltiplas seções. Domínio: Produto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "products"
+      ],
+      "owner": "api-delpi.product",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "not_applicable",
+      "parameters": [],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "composite_analysis",
+      "response_schema": "product_sb1_identity",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
+      "current_blocker": "WRITE_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "notify_console_smoke_alerts",
       "http_path": "/system/console-alerts/smoke",
       "bounded_context": "admin",
@@ -39910,53 +40676,6 @@
       "sensitive_high_volume": false,
       "current_davi_disposition": "ADMIN_OUT_OF_SCOPE",
       "current_blocker": "ADMIN_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "post_manual_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "post_manual_request",
-      "method": "POST",
-      "summary": "Post Manual Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "post_manual_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
       "current_allowlist_presence": false,
       "current_projection_support": false,
       "current_aliases": [],
@@ -40317,49 +41036,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "quality_action_plan",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
-      "http_path": "/lancamento-notas-fiscais/reconciliation/refresh",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "refresh_reconciliation",
-      "method": "POST",
-      "summary": "Refresh Reconciliation",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "refresh_reconciliation",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [],
-      "required_parameters": [],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_reconciliation_refresh",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -41079,53 +41755,6 @@
       "notes": null
     },
     {
-      "operationId": "resume_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/resume",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "resume_request",
-      "method": "POST",
-      "summary": "Resume Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "resume_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
       "operationId": "return_invoice_issuance_request",
       "http_path": "/invoice-issuance/requests/{request_id}/return",
       "bounded_context": "financial",
@@ -41156,49 +41785,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "invoice_issuance_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "run_lancamento_notas_fiscais_reconciliation",
-      "http_path": "/lancamento-notas-fiscais/reconciliation/run",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "run_reconciliation",
-      "method": "POST",
-      "summary": "Run Reconciliation",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "run_reconciliation",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_MANAGE"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [],
-      "required_parameters": [],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_reconciliation_batch",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -41295,53 +41881,6 @@
       "pagination_model": "none",
       "response_shape": "scalar",
       "response_schema": "invoice_issuance_request",
-      "estimated_payload_risk": "low",
-      "binary": false,
-      "stream": false,
-      "admin": false,
-      "generic_sql": false,
-      "sensitive_high_volume": false,
-      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
-      "current_blocker": "WRITE_OUT_OF_SCOPE",
-      "current_allowlist_presence": false,
-      "current_projection_support": false,
-      "current_aliases": [],
-      "explicitly_not_approved": false,
-      "semantic_capability_id": null,
-      "existing_tests": "TO_INVENTORY",
-      "notes": null
-    },
-    {
-      "operationId": "start_lancamento_notas_fiscais_request",
-      "http_path": "/lancamento-notas-fiscais/requests/{request_id}/start",
-      "bounded_context": "financial",
-      "route_module": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
-      "handler": "start_request",
-      "method": "POST",
-      "summary": "Start Request",
-      "description": "",
-      "tags": [
-        "Lançamento de Notas Fiscais"
-      ],
-      "owner": "api-delpi.financial",
-      "owner_evidence": "PROVEN",
-      "canonical_use_case": "start_request",
-      "repository_downstream_source": "TO_INVENTORY",
-      "backend_permission_symbols": [
-        "LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS"
-      ],
-      "backend_authz": "PROVEN",
-      "authz_mechanism": "route_decorator",
-      "branch_semantics": "not_applicable",
-      "parameters": [
-        "request_id"
-      ],
-      "required_parameters": [
-        "request_id"
-      ],
-      "pagination_model": "none",
-      "response_shape": "scalar",
-      "response_schema": "invoice_posting_request",
       "estimated_payload_risk": "low",
       "binary": false,
       "stream": false,
@@ -43847,16 +44386,16 @@
     }
   ],
   "residual_gaps": {
-    "unassigned_get_count": 508,
+    "unassigned_get_count": 525,
     "unassigned_by_status": {
       "ADMIN_OUT_OF_SCOPE": 28,
-      "DAVI_ELIGIBLE_READ": 55,
+      "DAVI_ELIGIBLE_READ": 60,
       "GENERIC_SQL_FORBIDDEN": 1,
       "LEGACY_UNSAFE": 2,
-      "NEEDS_MODEL_SAFE_PROJECTION": 343,
-      "NEEDS_NESTED_PROJECTION_SUPPORT": 47,
+      "NEEDS_MODEL_SAFE_PROJECTION": 347,
+      "NEEDS_NESTED_PROJECTION_SUPPORT": 50,
       "SEMANTICALLY_REDUNDANT": 2,
-      "STREAM_BINARY_OUT_OF_SCOPE": 30
+      "STREAM_BINARY_OUT_OF_SCOPE": 35
     },
     "unassigned_get_operations": [
       {
@@ -43932,8 +44471,32 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "export_financeiro_billing_exclusion_roster",
+        "path": "/financeiro/billing-exclusion-roster/export",
+        "domain": "financial",
+        "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
+      },
+      {
+        "operationId": "export_financeiro_cost_center_expenses",
+        "path": "/financeiro/cost-center-expenses/export",
+        "domain": "financial",
+        "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
+      },
+      {
+        "operationId": "export_financeiro_inventory_adjustments",
+        "path": "/financeiro/inventory-adjustments/export",
+        "domain": "financial",
+        "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
+      },
+      {
         "operationId": "export_financeiro_stock_inventory",
         "path": "/financeiro/stock-inventory/export",
+        "domain": "financial",
+        "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
+      },
+      {
+        "operationId": "export_financeiro_stock_kardex",
+        "path": "/financeiro/stock-kardex/export",
         "domain": "financial",
         "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
       },
@@ -43959,6 +44522,12 @@
         "operationId": "export_lmp_nonconformities",
         "path": "/engineering/lmps/nonconformities/export",
         "domain": "engineering",
+        "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
+      },
+      {
+        "operationId": "export_nonconformity_operator_ranking_excel",
+        "path": "/quality/nonconformities/operators/export.xlsx",
+        "domain": "quality",
         "davi_status": "STREAM_BINARY_OUT_OF_SCOPE"
       },
       {
@@ -44118,6 +44687,18 @@
         "davi_status": "ADMIN_OUT_OF_SCOPE"
       },
       {
+        "operationId": "get_consumption_audit_comparison",
+        "path": "/supplies/consumption-audit/comparison",
+        "domain": "supplies",
+        "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
+      },
+      {
+        "operationId": "get_consumption_audit_order",
+        "path": "/supplies/consumption-audit/orders/{production_order}",
+        "domain": "supplies",
+        "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
+      },
+      {
         "operationId": "get_cultura_delpi_content",
         "path": "/cultura-delpi/content",
         "domain": "hr",
@@ -44184,6 +44765,36 @@
         "davi_status": "ADMIN_OUT_OF_SCOPE"
       },
       {
+        "operationId": "get_financeiro_billing_exclusion_roster",
+        "path": "/financeiro/billing-exclusion-roster",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_billing_mod_breakdown",
+        "path": "/financeiro/billing-mod-breakdown",
+        "domain": "financial",
+        "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
+      },
+      {
+        "operationId": "get_financeiro_closing_state",
+        "path": "/financeiro/closing-state",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_cost_center_expenses",
+        "path": "/financeiro/cost-center-expenses",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_cpv",
+        "path": "/financeiro/cpv",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "get_financeiro_despesas_centro_custo_filtros",
         "path": "/financeiro/despesas-centro-custo/filtros",
         "domain": "financial",
@@ -44232,6 +44843,18 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "get_financeiro_inventory_adjustments",
+        "path": "/financeiro/inventory-adjustments",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_inventory_adjustments_summary",
+        "path": "/financeiro/inventory-adjustments/summary",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "get_financeiro_settlements_payables",
         "path": "/financeiro/settlements/payables",
         "domain": "financial",
@@ -44252,6 +44875,24 @@
       {
         "operationId": "get_financeiro_stock_inventory",
         "path": "/financeiro/stock-inventory",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_stock_kardex",
+        "path": "/financeiro/stock-kardex",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_stock_kardex_product",
+        "path": "/financeiro/stock-kardex/products/{product_code}",
+        "domain": "financial",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_financeiro_stock_kardex_summary",
+        "path": "/financeiro/stock-kardex/summary",
         "domain": "financial",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
@@ -44484,48 +45125,6 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
-        "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
-        "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
-        "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
-        "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
-        "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_request",
-        "path": "/lancamento-notas-fiscais/requests/{request_id}",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_request_danfe",
-        "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
-        "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
         "operationId": "get_lmp_by_sale_number",
         "path": "/engineering/lmps/{sale_number}",
         "domain": "engineering",
@@ -44640,6 +45239,12 @@
         "davi_status": "DAVI_ELIGIBLE_READ"
       },
       {
+        "operationId": "get_nonconformity_operator_ranking",
+        "path": "/quality/nonconformities/operators",
+        "domain": "quality",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "get_observability_snapshot",
         "path": "/system/observability-snapshot",
         "domain": "admin",
@@ -44650,6 +45255,12 @@
         "path": "/system/openapi-diff",
         "domain": "admin",
         "davi_status": "ADMIN_OUT_OF_SCOPE"
+      },
+      {
+        "operationId": "get_pcp_stock_rupture_pendencies",
+        "path": "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
+        "domain": "reports",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
         "operationId": "get_personal_report_subscription",
@@ -45108,6 +45719,12 @@
         "davi_status": "ADMIN_OUT_OF_SCOPE"
       },
       {
+        "operationId": "get_public_character_avatar",
+        "path": "/public/characters/{character_id}/avatar/{filename}",
+        "domain": "other",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "get_public_mural_acessos_link_image",
         "path": "/public/mural-acessos/links/{link_id}/image",
         "domain": "admin",
@@ -45394,6 +46011,18 @@
         "path": "/pedidos-venda-abertos/sellers/{seller_id}",
         "domain": "commercial",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_si_departments",
+        "path": "/strategic-indicators/departments",
+        "domain": "other",
+        "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
+        "operationId": "get_si_executive_summary",
+        "path": "/strategic-indicators/executive-summary",
+        "domain": "other",
+        "davi_status": "DAVI_ELIGIBLE_READ"
       },
       {
         "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -45828,6 +46457,12 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "get_si_indicators",
+        "path": "/strategic-indicators/indicators",
+        "domain": "other",
+        "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
         "operationId": "get_smoke_definitions",
         "path": "/system/smoke-definitions",
         "domain": "admin",
@@ -46140,6 +46775,12 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "list_inspecoes_entrada_ncs_fornecedores",
+        "path": "/inspecoes-entrada/ncs-fornecedores",
+        "domain": "inspection",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "list_inspecoes_processo_operation_inspections",
         "path": "/inspecoes-processo/operations/inspections",
         "domain": "inspection",
@@ -46185,36 +46826,6 @@
         "operationId": "list_kaizen_revisions",
         "path": "/quality/kaizens/records/{record_id}/revisions",
         "domain": "quality",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
-        "path": "/lancamento-notas-fiscais/purchase-orders/open",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "list_lancamento_notas_fiscais_received_invoices",
-        "path": "/lancamento-notas-fiscais/received-invoices",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
-        "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "list_lancamento_notas_fiscais_requests",
-        "path": "/lancamento-notas-fiscais/requests",
-        "domain": "financial",
-        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
-      },
-      {
-        "operationId": "list_lancamento_notas_fiscais_unmapped_products",
-        "path": "/lancamento-notas-fiscais/unmapped-products",
-        "domain": "financial",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
@@ -46698,6 +47309,18 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "list_si_indicator_goal_history",
+        "path": "/strategic-indicators/indicator-goals/history",
+        "domain": "other",
+        "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
+        "operationId": "list_si_indicator_goals",
+        "path": "/strategic-indicators/indicator-goals",
+        "domain": "other",
+        "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
         "operationId": "list_supplier_field_provenance",
         "path": "/integrations/protheus/suppliers/{supplier_id}/provenance",
         "domain": "other",
@@ -46732,6 +47355,12 @@
         "path": "/supplies/purchase-requests/lines",
         "domain": "supplies",
         "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
+        "operationId": "list_supplies_purchase_request_pending_approvals",
+        "path": "/supplies/purchase-requests/pending-approvals",
+        "domain": "supplies",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
         "operationId": "list_supplies_purchase_request_recent_linked_orders",
@@ -46806,6 +47435,18 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
+        "operationId": "prc_catalog_items",
+        "path": "/engineering/product-registration/catalogs/{catalog}",
+        "domain": "engineering",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "prc_supplier_search",
+        "path": "/engineering/product-registration/suppliers",
+        "domain": "engineering",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
         "operationId": "preview_report_provider_management_revenue_monthly",
         "path": "/reports/providers/management_revenue_monthly/preview",
         "domain": "reports",
@@ -46830,15 +47471,15 @@
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
-        "operationId": "search_customers",
-        "path": "/customers/search",
-        "domain": "commercial",
+        "operationId": "search_consumption_audit_orders",
+        "path": "/supplies/consumption-audit/orders",
+        "domain": "supplies",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {
-        "operationId": "search_lancamento_notas_fiscais_suppliers",
-        "path": "/lancamento-notas-fiscais/suppliers",
-        "domain": "financial",
+        "operationId": "search_customers",
+        "path": "/customers/search",
+        "domain": "commercial",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
       {

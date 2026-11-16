@@ -289,6 +289,22 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_dashboard_departments_indicators": RouteContract(
         "dashboard_departments_indicators", "playbook_report"
     ),
+    # Strategic Indicators — user-parity BFF (DAVI READ surface)
+    "get_si_executive_summary": RouteContract(
+        "strategic_indicators_executive_summary", "composite_analysis"
+    ),
+    "get_si_departments": RouteContract(
+        "strategic_indicators_departments", "paged_list"
+    ),
+    "get_si_indicators": RouteContract(
+        "strategic_indicators_indicators", "paged_list"
+    ),
+    "list_si_indicator_goals": RouteContract(
+        "strategic_indicators_indicator_goals", "paged_list"
+    ),
+    "list_si_indicator_goal_history": RouteContract(
+        "strategic_indicators_indicator_goal_history", "paged_list"
+    ),
     "get_helpdesk_dashboard_summary": RouteContract(
         "helpdesk_dashboard_summary", "scalar"
     ),

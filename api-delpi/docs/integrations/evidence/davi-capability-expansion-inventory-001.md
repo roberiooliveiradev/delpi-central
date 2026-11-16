@@ -3,29 +3,29 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `826c73b1c4d09d965856bd0543e5d984bdb1e6a8`
-- origin/main: `9bc5fd0bb44fab97796ceb511c85e2f4b6d6b1b0`
+- Source HEAD: `e76018eea9191b11e64eac3cb43b7839ce72480c`
+- origin/main: `e76018eea9191b11e64eac3cb43b7839ce72480c`
 - OpenAPI/baseline: `3.0.3` / v3
-- Generated at: `2026-10-29T14:04:49.625223+00:00`
+- Generated at: `2026-11-16T11:38:42.927608+00:00`
 
 ## Executive summary
 
 DAVI remains intelligence/orchestration over API DELPI. This inventory converts GET operations into semantic READ capabilities and freezes Wave 1 without promoting runtime eligibility.
 
-- Technical operations: **784** (GET **573**)
-- Current `DAVI_ELIGIBLE_READ`: **94**
-- Current MCP tools: **2** `['discover_delpi_information', 'execute_delpi_information']`
+- Technical operations: **793** (GET **590**)
+- Current `DAVI_ELIGIBLE_READ`: **99**
+- Current MCP tools: **4** `['get_context', 'knowledge', 'read', 'analyze']`
 - Proposed semantic capabilities: **39**
-- Wave 1 frozen: **3** → expected eligible after implementation **97**
-- Unassigned GETs (not capabilities): **508**
+- Wave 1 frozen: **3** → expected eligible after implementation **102**
+- Unassigned GETs (not capabilities): **525**
 
 ## Baseline
 
 ```json
 {
-  "TOTAL_OPERATIONS": 784,
-  "TOTAL_GET": 573,
-  "DAVI_ELIGIBLE_READ": 94,
+  "TOTAL_OPERATIONS": 793,
+  "TOTAL_GET": 590,
+  "DAVI_ELIGIBLE_READ": 99,
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
     "get_commercial_rol_by_customer",
@@ -84,6 +84,9 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
     "get_sales_order_otd_series",
     "get_sales_order_otd_series_by_customer",
     "get_sales_order_otd_summary",
+    "get_si_departments",
+    "get_si_executive_summary",
+    "get_si_indicators",
     "get_supplies_cpv",
     "get_supplies_inventory_accuracy_items",
     "get_supplies_inventory_accuracy_summary",
@@ -113,6 +116,8 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
     "list_product_drawings",
     "list_production_order_operation_materials",
     "list_protheus_table_columns",
+    "list_si_indicator_goal_history",
+    "list_si_indicator_goals",
     "list_supplies_inventory_adjustments",
     "list_supplies_purchase_request_lines",
     "read_governed_technical_knowledge",
@@ -124,16 +129,16 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 71,
-    "DAVI_ELIGIBLE_READ": 94,
+    "DAVI_ELIGIBLE_READ": 99,
     "DESTRUCTIVE_OUT_OF_SCOPE": 19,
     "GENERIC_SQL_FORBIDDEN": 1,
     "LEGACY_UNSAFE": 2,
     "NEEDS_BOUNDED_EXECUTION": 3,
-    "NEEDS_MODEL_SAFE_PROJECTION": 362,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 54,
+    "NEEDS_MODEL_SAFE_PROJECTION": 366,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 57,
     "SEMANTICALLY_REDUNDANT": 2,
-    "STREAM_BINARY_OUT_OF_SCOPE": 37,
-    "WRITE_OUT_OF_SCOPE": 139
+    "STREAM_BINARY_OUT_OF_SCOPE": 42,
+    "WRITE_OUT_OF_SCOPE": 131
   }
 }
 ```
@@ -145,17 +150,17 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
 | `admin` | 29 | 0 | 5 | 0 | ADMIN_OUT_OF_SCOPE:12, NEEDS_MODEL_SAFE_PROJECTION:9, DAVI_ELIGIBLE_READ:5, LEGACY_UNSAFE:2 |
 | `commercial` | 56 | 4 | 18 | 0 | NEEDS_MODEL_SAFE_PROJECTION:26, DAVI_ELIGIBLE_READ:18, NEEDS_NESTED_PROJECTION_SUPPORT:11, STREAM_BINARY_OUT_OF_SCOPE:1 |
 | `dashboards` | 75 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:73, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
-| `engineering` | 44 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:30, ADMIN_OUT_OF_SCOPE:6, STREAM_BINARY_OUT_OF_SCOPE:5, NEEDS_NESTED_PROJECTION_SUPPORT:3 |
-| `financial` | 82 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:67, ADMIN_OUT_OF_SCOPE:8, STREAM_BINARY_OUT_OF_SCOPE:7 |
+| `engineering` | 46 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:32, ADMIN_OUT_OF_SCOPE:6, STREAM_BINARY_OUT_OF_SCOPE:5, NEEDS_NESTED_PROJECTION_SUPPORT:3 |
+| `financial` | 83 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:63, STREAM_BINARY_OUT_OF_SCOPE:11, ADMIN_OUT_OF_SCOPE:8, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
 | `hr` | 5 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:4, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
-| `inspection` | 21 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:19, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
-| `other` | 8 | 0 | 1 | 0 | NEEDS_MODEL_SAFE_PROJECTION:6, DAVI_ELIGIBLE_READ:1, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
+| `inspection` | 22 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:20, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
+| `other` | 14 | 0 | 6 | 0 | NEEDS_MODEL_SAFE_PROJECTION:7, DAVI_ELIGIBLE_READ:6, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
 | `product` | 37 | 20 | 27 | 3 | DAVI_ELIGIBLE_READ:27, NEEDS_NESTED_PROJECTION_SUPPORT:6, STREAM_BINARY_OUT_OF_SCOPE:2, NEEDS_MODEL_SAFE_PROJECTION:1 |
 | `production` | 53 | 4 | 17 | 0 | NEEDS_MODEL_SAFE_PROJECTION:21, DAVI_ELIGIBLE_READ:17, NEEDS_NESTED_PROJECTION_SUPPORT:14, SEMANTICALLY_REDUNDANT:1 |
-| `quality` | 100 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:75, STREAM_BINARY_OUT_OF_SCOPE:12, NEEDS_NESTED_PROJECTION_SUPPORT:11, ADMIN_OUT_OF_SCOPE:2 |
-| `reports` | 11 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:11 |
+| `quality` | 102 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:76, STREAM_BINARY_OUT_OF_SCOPE:13, NEEDS_NESTED_PROJECTION_SUPPORT:11, ADMIN_OUT_OF_SCOPE:2 |
+| `reports` | 12 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:12 |
 | `scheduling` | 6 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:6 |
-| `supplies` | 46 | 4 | 26 | 0 | DAVI_ELIGIBLE_READ:26, NEEDS_MODEL_SAFE_PROJECTION:14, NEEDS_NESTED_PROJECTION_SUPPORT:3, STREAM_BINARY_OUT_OF_SCOPE:3 |
+| `supplies` | 50 | 4 | 26 | 0 | DAVI_ELIGIBLE_READ:26, NEEDS_MODEL_SAFE_PROJECTION:16, NEEDS_NESTED_PROJECTION_SUPPORT:5, STREAM_BINARY_OUT_OF_SCOPE:3 |
 
 ## Semantic clusters
 
@@ -264,7 +269,7 @@ Normative freeze contract: `davi-capability-wave-001-freeze.md`.
 
 ## Gaps
 
-- Unassigned GET operations: 508
+- Unassigned GET operations: 525
 - Second-user negative AuthZ: `TEST_NOT_RUN`
 - MCP rate policy: TO_INVENTORY — overall rollout decision remains separate
 - HR: REQUIRED before any HR capability promotion

@@ -842,3 +842,55 @@ DECISÃO                  = GO — autorização do responsável + código limpo
                            pendências externas documentadas não bloqueiam
                            (broker já era fallback declarado obsoleto)
 ```
+
+## 23. Wave 010 — Strategic Indicators user-parity READ (DAVI-SI-READ-USER-PARITY-001)
+
+Decisão de Coordination: habilitar READ governada de Strategic Indicators via
+tool `read` existente, com paridade de identidade (JWT do usuário end-to-end)
+e permissões SI canônicas — sem `X-Delpi-Service-Token` no transporte de
+usuário, sem novas tools, sem writes.
+
+### 23.1 Adapter implementado (menor caminho)
+
+```text
+DAVI read(capability) → catálogo (baseline+allowlist) → api-delpi BFF
+  GET /strategic-indicators/{executive-summary|departments|indicators|
+                              indicator-goals|indicator-goals/history}
+  → StrategicIndicatorsUserParityService
+  → StrategicIndicatorsApiClient._get_user_scoped (Authorization do usuário,
+    NUNCA service token)
+  → strategic-indicators-api (JWT middleware + require_permission canônico)
+```
+
+- api-delpi BFF reforça o mesmo código de permissão do owner
+  (`strategic-indicators.view` nas 3 leituras operacionais;
+  `strategic-indicators.settings.manage` em metas/histórico) — autoridade
+  final segue no backend SI (defesa em profundidade, não RBAC paralelo).
+- Dashboard BFF (`/dashboard/*`) intencionalmente NÃO reutilizado: domínio de
+  permissão distinto (`dashboard-*.view`/`api-delpi.access`).
+
+### 23.2 Catálogo
+
+```text
+allowlist v30 → v31 (97 → 102 ops; 5 novas, todas GET)
+DAVI_ELIGIBLE_READ: 94 → 99
+mcp tools: 4 (inalterado) · execute/delete: PLANNED_NOT_IMPLEMENTED
+openapi_baseline: 788 → 793 ops
+```
+
+### 23.3 Evidências
+
+```text
+TRANSPORT_USER_ONLY    = PASS (teste unitário: headers={Authorization} único,
+                         apply_internal_service_headers nunca chamado)
+AUTHZ_NEGATIVE         = PASS (sem view → Forbidden; view-only → Forbidden
+                         em metas/histórico; SI 403 propagado)
+FAIL_CLOSED            = PASS (sem Authorization → erro local antes do HTTP;
+                         live side-instance: 401 missing/invalid JWT)
+READ_ONLY              = PASS (todas as ops GET; executor rejeita não-GET)
+COVERAGE               = PASS (route test coverage 5/5 strategic-indicators)
+PROVIDER_DISCOVERY     = PENDING · LIVE_OAUTH = PENDING · DEPLOY = NOT_RUN
+ENV_BLOCKER            = dev postgres checksum drift V024__prc_record_flags
+                         (engineering/PRC) derruba startup do api-delpi —
+                         pré-existente, fora do escopo desta fatia
+```
