@@ -5,6 +5,8 @@ export type ScPcConversionStatus =
 
 export type ScPcConversionSummary = {
   approved_requests: number;
+  with_approval: number;
+  without_approval: number;
   converted_requests: number;
   pending_requests: number;
   before_release: number;
@@ -22,7 +24,9 @@ export type ScPcConversionItem = {
   branch: string;
   request_number: string;
   issue_date: string | null;
-  final_approval_date: string;
+  final_approval_date: string | null;
+  effective_start_date: string;
+  start_date_source: "approval_release" | "issue_without_approval";
   first_order_date: string | null;
   first_order_number: string | null;
   linked_order_count: number;
@@ -34,8 +38,8 @@ export type ScPcConversionItem = {
 
 export type ScPcConversionResponse = {
   source: "SC1010+SCR010+SC7010";
-  scope: "confirmed_release_to_first_order";
-  period_anchor: "final_approval_date";
+  scope: "release_or_issue_without_approval_to_first_order";
+  period_anchor: "effective_start_date";
   unit: "calendar_days";
   summary: ScPcConversionSummary;
   branch_breakdown: Record<string, ScPcConversionSummary>;
