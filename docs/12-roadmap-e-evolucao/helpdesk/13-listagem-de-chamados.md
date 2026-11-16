@@ -1,5 +1,8 @@
 # 13 — Listagem de chamados
 
+> **UX V3 follow-up aprovado (16/11/2026, PLANNED):** [Contrato executável de posicionamento do `FilterX` âmbar e header sort](../my-requests/UX-V3-FOLLOWUP-HEADER-SORT-AMBER-CLEAR-CROSS-MFE-PLAN.md). Fonte atual inspecionada: `HelpdeskPage.tsx` já usa `HelpdeskIconButton` + `FilterX size={16}` + `clearListFilters`, mas o botão está em `TicketListToolbar.trailing`, junto aos chips. Evoluir o primitivo no **Plugin UI**, importar no Helpdesk e My Requests; mover para esquerda de Filtros no rodapé do Hero, garantir ASC/DESC nos cabeçalhos suportados e manter paginação/GLPI. Sem mudança de dados neste registro.
+
+
 > **UX V3 PO-approved TARGET (15/11/2026):** [Layout conjunto das listagens](../my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md) — mover botões Filtros/Ordenar/Colunas/Tabela|Cards para a **última linha à direita** do Hero, separar page size na tabela e preservar contrato GLPI. Planejado, não implantado.
 
 
