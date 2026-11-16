@@ -1,0 +1,86 @@
+name: GLPI 635 SC to PC conversion quality
+
+on:
+  push:
+    branches:
+      - "fix/glpi-635-*"
+    paths:
+      - "api-delpi/app/infrastructure/persistence/totvs/supplies_repositories/purchase_request_sc_pc_conversion*"
+      - "api-delpi/tests/test_purchase_request_sc_pc_conversion.py"
+      - "supplies-api/app/infrastructure/gateways/delpi_api_gateway.py"
+      - "supplies-api/app/interfaces/http/routes/purchase_requests_routes.py"
+      - "supplies-api/tests/interface/http/test_purchase_request_sc_pc_conversion.py"
+      - "supplies-api/tests/infrastructure/gateways/test_delpi_api_gateway.py"
+      - "plugins/supplies/src/features/purchase-requests/ScPcConversionPage.tsx"
+      - ".github/workflows/supplies-sc-pc-conversion.yml"
+  pull_request:
+    paths:
+      - "api-delpi/app/infrastructure/persistence/totvs/supplies_repositories/purchase_request_sc_pc_conversion*"
+      - "api-delpi/tests/test_purchase_request_sc_pc_conversion.py"
+      - "supplies-api/app/infrastructure/gateways/delpi_api_gateway.py"
+      - "supplies-api/app/interfaces/http/routes/purchase_requests_routes.py"
+      - "supplies-api/tests/interface/http/test_purchase_request_sc_pc_conversion.py"
+      - "supplies-api/tests/infrastructure/gateways/test_delpi_api_gateway.py"
+      - "plugins/supplies/src/features/purchase-requests/ScPcConversionPage.tsx"
+      - ".github/workflows/supplies-sc-pc-conversion.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  api-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - name: Install api-delpi dependencies
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r api-delpi/requirements.txt
+      - name: Validate SCR-to-PC SQL and repository contracts
+        working-directory: api-delpi
+        run: python -m pytest -q tests/test_purchase_request_sc_pc_conversion.py
+
+  supplies-bff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: supplies-api/requirements.txt
+      - name: Install supplies-api dependencies
+        run: |
+          pip install -e './shared[flask]'
+          pip install -r supplies-api/requirements.txt
+      - name: Validate BFF timeout and authorized response mapping
+        working-directory: supplies-api
+        run: |
+          python -m pytest -q \
+            tests/interface/http/test_purchase_request_sc_pc_conversion.py \
+            tests/infrastructure/gateways/test_delpi_api_gateway.py
+
+  supplies-mfe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: plugins/supplies/package-lock.json
+      - name: Install UI packages
+        run: |
+          npm ci --prefix plugins/plugin-ui
+          npm ci --prefix plugins/supplies
+      - name: Validate route contracts
+        working-directory: plugins/supplies
+        run: npx vitest run src/features/purchase-requests/scPcConversionApi.test.ts
+      - name: Compile production UI
+        working-directory: plugins/supplies
+        run: npm run build
