@@ -931,12 +931,13 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
 }
 
 /*
- * Conteúdo do hero pode vir envelopado por `HelpTooltip wrap`
- * (`width: max-content`) — chips de status ou controles assim
- * travariam a linha inteira sem quebra e estourariam o hero.
- * No layout hero eles encolhem e deixam o conteúdo interno quebrar.
+ * Chips/controles do hero podem vir envelopados por `HelpTooltip wrap`
+ * (`width: max-content`) — travariam a linha inteira sem quebra e
+ * estourariam o hero. Aqui eles encolhem e deixam o conteúdo interno
+ * quebrar (a busca mantém seu wrap esticado pela regra acima).
  */
-.delpi-ui-table-toolbar--hero .delpi-ui-help-tooltip--wrap {
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__chips .delpi-ui-help-tooltip--wrap,
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls .delpi-ui-help-tooltip--wrap {
   display: flex;
   flex-wrap: wrap;
   width: auto;
@@ -945,7 +946,8 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   flex: 0 1 auto;
 }
 
-.delpi-ui-table-toolbar--hero .delpi-ui-help-tooltip--wrap > * {
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__chips .delpi-ui-help-tooltip--wrap > *,
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls .delpi-ui-help-tooltip--wrap > * {
   min-width: 0;
   max-width: 100%;
 }

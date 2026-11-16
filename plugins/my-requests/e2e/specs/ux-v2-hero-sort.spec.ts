@@ -164,6 +164,8 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     const rowBox = await controlsRow.boundingBox();
     const heroBox = await hero.boundingBox();
     expect(searchBox && chipsBox && rowBox && heroBox).toBeTruthy();
+    /* busca dominante — ocupa a largura útil do hero (linha própria) */
+    expect(searchBox!.width).toBeGreaterThan(heroBox!.width * 0.5);
     /* chips abaixo da busca; controles abaixo dos chips, dentro do hero */
     expect(chipsBox!.y).toBeGreaterThanOrEqual(searchBox!.y + searchBox!.height - 2);
     expect(rowBox!.y).toBeGreaterThanOrEqual(chipsBox!.y + chipsBox!.height - 2);
@@ -182,26 +184,31 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroBox!.x + heroBox!.width + 2,
     );
 
-    /* Ordem visual Filtros → Ordenar → Colunas → Tabela|Cards. */
-    const xOf = async (name: RegExp) => {
-      const box = await controlsRow
+    /* Ordem visual Filtros → Ordenar → Colunas → Tabela|Cards.
+     * Ordem de leitura (linha, depois coluna): no mobile os controles
+     * podem quebrar linha — x isolado não reflete a ordem. */
+    const boxOf = async (name: RegExp) =>
+      controlsRow
         .getByRole("button", { name })
         .first()
         .boundingBox();
-      return box?.x ?? -1;
-    };
-    const xFiltros = await xOf(/filtros/i);
-    const xOrdenar = await xOf(/^Ordenar/i);
-    const xColunas = await xOf(/^Colunas/i);
-    const xToggle = await controlsRow
-      .getByRole("button", { name: "Tabela", exact: true })
-      .first()
-      .boundingBox()
-      .then((b) => b?.x ?? -1);
-    expect(xFiltros).toBeGreaterThanOrEqual(0);
-    expect(xOrdenar).toBeGreaterThan(xFiltros);
-    expect(xColunas).toBeGreaterThan(xOrdenar);
-    expect(xToggle).toBeGreaterThan(xColunas);
+    const pos = (b: { x: number; y: number } | null) =>
+      /* linha visual (bucket ~28px) ×100000 + x — jitter de y na
+       * mesma linha não inverte a ordem. */
+      b ? Math.round(b.y / 28) * 100000 + Math.round(b.x) : -1;
+    const pFiltros = pos(await boxOf(/filtros/i));
+    const pOrdenar = pos(await boxOf(/^Ordenar/i));
+    const pColunas = pos(await boxOf(/^Colunas/i));
+    const pTabela = pos(
+      await controlsRow
+        .getByRole("button", { name: "Tabela", exact: true })
+        .first()
+        .boundingBox(),
+    );
+    expect(pFiltros).toBeGreaterThanOrEqual(0);
+    expect(pOrdenar).toBeGreaterThan(pFiltros);
+    expect(pColunas).toBeGreaterThan(pOrdenar);
+    expect(pTabela).toBeGreaterThan(pColunas);
 
     /* Cada um dos quatro controles inteiramente dentro do hero. */
     for (const name of [/filtros/i, /^Ordenar/i, /^Colunas/i]) {
