@@ -20,8 +20,8 @@ def _snapshot(**overrides):
         "otd_pct": 0,
         "stock_value": 0,
         "sc_pc_conversion_by_branch": {
-            "01": {"converted_requests": 10, "sum_conversion_days": 30},
-            "02": {"converted_requests": 2, "sum_conversion_days": 20},
+            "01": {"measured_requests": 10, "sum_measured_days": 30},
+            "02": {"measured_requests": 2, "sum_measured_days": 20},
         },
     }
     args.update(overrides)
@@ -50,14 +50,14 @@ def test_consolidated_is_weighted_by_converted_sc_not_mean_of_branches():
 
 def test_unavailable_branch_blocks_consolidated_and_no_conversions_yield_null():
     missing = _measure(_snapshot(sc_pc_conversion_by_branch={
-        "01": {"converted_requests": 10, "sum_conversion_days": 30},
+        "01": {"measured_requests": 10, "sum_measured_days": 30},
         "02": None,
     }))
     assert missing["value"] is None
     assert missing["unit_values"]["02"] is None
     no_conversions = _measure(_snapshot(sc_pc_conversion_by_branch={
-        "01": {"converted_requests": 0, "sum_conversion_days": 0},
-        "02": {"converted_requests": 0, "sum_conversion_days": 0},
+        "01": {"measured_requests": 0, "sum_measured_days": 0},
+        "02": {"measured_requests": 0, "sum_measured_days": 0},
     }))
     assert no_conversions["value"] is None
 
@@ -66,7 +66,7 @@ def test_single_branch_isolated_and_zero_is_not_fabricated():
     single = _measure(_snapshot(
         branch="01",
         sc_pc_conversion_by_branch={
-            "01": {"converted_requests": 10, "sum_conversion_days": 30},
+            "01": {"measured_requests": 10, "sum_measured_days": 30},
         },
     ))
     assert single["value"] == 3.0
@@ -79,17 +79,28 @@ def test_single_branch_isolated_and_zero_is_not_fabricated():
         "source": "SC1010+SCR010+SC7010",
         "scope": "release_or_issue_without_approval_to_first_order",
         "branch_breakdown": {
-            "01": {"sum_conversion_days": 30, "converted_requests": 10},
-            "02": {"sum_conversion_days": 20, "converted_requests": 2},
+            "01": {"sum_measured_days": 30, "measured_requests": 10},
+            "02": {"sum_measured_days": 20, "measured_requests": 2},
         },
     }
     assert source._load_sc_pc_conversion(
         branch=None, start_date="2026-10-01", end_date="2026-10-31",
     ) == {
-        "01": {"sum_conversion_days": 30, "converted_requests": 10},
-        "02": {"sum_conversion_days": 20, "converted_requests": 2},
+        "01": {"sum_measured_days": 30, "measured_requests": 10},
+        "02": {"sum_measured_days": 20, "measured_requests": 2},
     }
     source._supplies_gateway.fetch_sc_pc_conversion_summary.side_effect = RuntimeError("down")
     assert source._load_sc_pc_conversion(
         branch=None, start_date="2026-10-01", end_date="2026-10-31",
     ) == {"01": None, "02": None}
+
+def test_pending_age_changes_strategic_average_not_just_completed():
+    # 2 converted SCs at 2d and 8 open SCs at 10d:
+    # 84 elapsed days / 10 observed SCs, not converted-only 2d.
+    sample = _snapshot(sc_pc_conversion_by_branch={
+        "01": {"measured_requests": 10, "sum_measured_days": 84},
+        "02": {"measured_requests": 0, "sum_measured_days": 0},
+    })
+    measurement = _measure(sample)
+    assert measurement["unit_values"]["01"] == 8.4
+    assert measurement["value"] == 8.4
