@@ -96,6 +96,7 @@ class HMLReadOnlyAdmissionReviewer:
             raise HMLAdmissionError("ATLAS_HML_ADMISSION_DISABLED")
         if (
             type(actor) is not TrustedHumanActor
+            or actor.principal_type != "user"
             or type(release) is not TargetReleaseReview
             or type(host) is not PinnedHostTarget
             or type(base) is not ExpectedBaseRelease
