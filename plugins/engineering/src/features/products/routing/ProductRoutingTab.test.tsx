@@ -21,6 +21,7 @@ const api = readFileSync(
   join(here, "../api/productApi.ts"),
   "utf8",
 );
+const css = readFileSync(join(here, "../../../index.css"), "utf8");
 
 describe("aba Roteiro — wiring", () => {
   it("registra a aba routing na navegação da ficha", () => {
@@ -86,9 +87,54 @@ describe("aba Roteiro — seções e estados honestos", () => {
     expect(src).toContain("CALCULATED");
   });
 
-  it("controles acessíveis — tabs do kit, expander com aria", () => {
+  it("controles acessíveis — tabs do kit e expansão nativa da DataTable", () => {
     expect(src).toContain('mode="tabs"');
-    expect(src).toContain("aria-expanded");
-    expect(src).toContain("aria-controls");
+    expect(src).toContain("expandedRowKey");
+    expect(src).toContain("renderExpandedRow");
+    expect(src).toContain("onRowClick");
+  });
+});
+
+describe("aba Roteiro — Plugin UI como fonte de apresentação", () => {
+  it("não reconstrói primitivos do kit — sem <table>/<select>/<button> manual", () => {
+    expect(src).not.toContain("<table");
+    expect(src).not.toContain("<select");
+    expect(src).not.toContain("<button");
+    expect(src).not.toContain("__expander");
+    expect(src).not.toContain("__components-table");
+  });
+
+  it("usa os componentes canônicos do kit para cada superfície", () => {
+    for (const component of [
+      "EngineeringSectionCard",
+      "EngineeringKpiCard",
+      "EngineeringDetailCard",
+      "EngineeringFiltersRow",
+      "EngineeringFilterSelect",
+      "EngineeringFormActions",
+      "EngineeringTabs",
+      "EngineeringEmptyState",
+      "EngineeringStateBanner",
+      "EngineeringStatusBadge",
+      "EngineeringChartCard",
+      "EngineeringLoadingActivityCard",
+    ]) {
+      expect(src).toContain(component);
+    }
+    expect(src).toContain("DataTable");
+  });
+
+  it("gráficos herdam o tema do portal e formatam escala legível", () => {
+    expect(src).toContain("usePortalTheme");
+    expect(src).toContain("resolveChartTimeUnit");
+    expect(src).toContain("decimalPlaces");
+  });
+
+  it("CSS local é só composição — sem primitivos visuais duplicados", () => {
+    expect(css).not.toContain(".engineering-routing__table");
+    expect(css).not.toContain(".engineering-routing__expander");
+    expect(css).not.toContain(".engineering-routing__components-table");
+    expect(css).not.toContain(".engineering-routing__filters");
+    expect(css).not.toContain(".engineering-routing__calc-form");
   });
 });

@@ -85,6 +85,15 @@ declare module "@delpi/plugin-ui/index" {
     children?: ReactNode;
     actions?: ReactNode;
     className?: string;
+    /** Quando true, o corpo pode ser ocultado pelo toggle no header. */
+    collapsible?: boolean;
+    /** Estado inicial (não controlado). Default: true (aberto). */
+    defaultOpen?: boolean;
+    /** Controle externo do aberto/fechado. */
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    /** Preenche a altura do pai flex e deixa o corpo rolar o conteúdo. */
+    fill?: boolean;
   };
 
   export function createDashboardSectionCard(config: {
@@ -663,12 +672,22 @@ declare module "@delpi/plugin-ui/index" {
     emptyMessage?: string;
     loading?: boolean;
     onRowClick?: (row: T) => void;
+    rowClickRole?: "button" | "none";
     getRowClassName?: (row: T, index: number) => string | undefined;
     sortKey?: string | null;
     sortDirection?: "asc" | "desc";
     onSortChange?: (columnKey: string) => void;
     layout?: "section" | "embedded" | "scroll";
     compact?: boolean;
+    /** Coluna visual de índice; não altera o shape das linhas. */
+    indexColumn?: { header?: string; ariaLabel?: string; startAt?: number };
+    /** Chave da linha expandida (controlado; tipicamente uma por vez). */
+    expandedRowKey?: string | null;
+    onExpandedRowKeyChange?: (key: string | null) => void;
+    /** Conteúdo da linha de detalhe sob a row expandida. */
+    renderExpandedRow?: (row: T, index: number) => ReactNode;
+    /** Default: true quando `renderExpandedRow` existe. */
+    isRowExpandable?: (row: T) => boolean;
     classNames: DataTableClassNames;
     labels: DataTableLabels;
   };

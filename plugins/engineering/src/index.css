@@ -853,8 +853,8 @@
 }
 
 /* --- Aba Roteiro (Doc 126) ---------------------------------------------
- * Estilos locais da feature — superfícies, tokens e componentes visuais
- * permanecem do kit (@delpi/plugin-ui); aqui só layout/composição. */
+ * Somente composição de layout da feature — superfícies, tokens, tabelas,
+ * cartões, inputs e gráficos vêm do kit (@delpi/plugin-ui). */
 
 .engineering-routing {
   display: flex;
@@ -862,103 +862,36 @@
   gap: var(--en-section-gap);
 }
 
-.engineering-routing__filters {
-  align-items: flex-end;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.engineering-routing__filters > * {
-  min-width: 200px;
-}
-
-.engineering-routing__table-wrap {
-  overflow-x: auto;
-}
-
-.engineering-routing__table {
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  min-width: 100%;
-}
-
-.engineering-routing__table th,
-.engineering-routing__table td {
-  border-bottom: 1px solid var(--en-border);
-  padding: 6px 10px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.engineering-routing__table th {
-  color: var(--en-text-muted);
-  font-weight: 600;
-}
-
-.engineering-routing__expander {
-  background: transparent;
-  border: none;
-  color: var(--en-accent);
-  cursor: pointer;
-  font: inherit;
-  margin-right: 6px;
-  padding: 0 2px;
-}
-
-.engineering-routing__expander:focus-visible {
-  outline: 2px solid var(--en-accent);
-  outline-offset: 1px;
-}
-
-.engineering-routing__op-detail-row td {
-  background: var(--en-surface-alt, transparent);
-  white-space: normal;
+.engineering-routing__kpis {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .engineering-routing__op-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 4px 0 8px;
+  gap: var(--en-grid-gap);
 }
 
-.engineering-routing__components-table {
-  border-collapse: collapse;
-  font-size: 0.8rem;
-}
-
-.engineering-routing__components-table th,
-.engineering-routing__components-table td {
-  border-bottom: 1px solid var(--en-border);
-  padding: 4px 10px 4px 0;
-  text-align: left;
-}
-
-.engineering-routing__components-table th {
-  color: var(--en-text-muted);
-  font-weight: 600;
-}
-
-.engineering-routing__calc-form {
+.engineering-routing__form-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: var(--en-grid-gap);
 }
 
-.engineering-routing__calc-bar {
-  align-items: center;
+.engineering-routing__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  justify-content: space-between;
-  margin-top: 12px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .engineering-routing__charts {
   display: grid;
-  gap: var(--en-section-gap);
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
 }
 
 .engineering-routing__limitations {
@@ -972,15 +905,4 @@
   color: var(--en-text-muted);
   font-size: 0.85rem;
   margin: 0;
-}
-
-.engineering-routing__sr-only {
-  border: 0;
-  clip: rect(0 0 0 0);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
 }

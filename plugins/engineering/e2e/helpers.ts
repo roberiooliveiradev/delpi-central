@@ -40,9 +40,22 @@ export async function loginAsDev(page: Page): Promise<void> {
   }
   await page.waitForURL(
     (url) =>
-      !url.pathname.startsWith("/auth/") && !url.pathname.endsWith("/login"),
+      !url.pathname.includes("/realms/") &&
+      !url.pathname.startsWith("/auth/") &&
+      !url.pathname.endsWith("/login"),
     { timeout: 30_000 },
   );
+  /* response_mode=fragment: o código volta em `/#code=...` e o SPA troca
+   * por token de forma assíncrona — navegar antes aborta a sessão e o
+   * portal devolve para /login. Esperar a troca assentar. */
+  await page
+    .waitForLoadState("networkidle", { timeout: 15_000 })
+    .catch(() => undefined);
+  if (page.url().includes("/login")) {
+    throw new Error(
+      "loginAsDev: portal devolveu /login — sessão SSO não estabelecida.",
+    );
+  }
 }
 
 /** Guard de boundary: nenhuma chamada do MFE pode ir direto à api-delpi
