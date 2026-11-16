@@ -343,6 +343,11 @@ wait_pg() {
 
 run_compose_up() {
   local svc="$1"
+  # The legacy sequential runner must never activate a signed image override.
+  # A future separate executor will own approved digest promotion.
+  if [[ "$svc" == "public-hub" ]]; then
+    export PUBLIC_HUB_RELEASE_IMAGE=""
+  fi
   mapfile -t base < <(compose_cmd)
   local -a cmd=("${base[@]}")
   local profile

@@ -350,6 +350,10 @@ compose_cmd_base() {
 
 run_compose_up() {
   local svc="$1"
+  # Normal HML service startup must not silently promote a registry release.
+  if [[ "$svc" == "public-hub" ]]; then
+    export PUBLIC_HUB_HML_RELEASE_IMAGE=""
+  fi
   local profile
   profile="$(compose_profiles_for "$svc")"
   mapfile -t base < <(compose_cmd_base "$profile")

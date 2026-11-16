@@ -857,7 +857,8 @@ services:
       file: docker-compose.yml
       service: public-hub
     profiles: [public-hub, baseline, platform]
-    image: delpi-hml/public-hub:local
+    # HML stays local by default; release override requires independent approval.
+    image: ${PUBLIC_HUB_HML_RELEASE_IMAGE:-delpi-hml/public-hub:local}
     container_name: delpi-hml-public-hub
     ports: !override []
     depends_on: !override {}

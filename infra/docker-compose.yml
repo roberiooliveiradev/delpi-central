@@ -977,6 +977,9 @@ services:
       - delpi-network
 
   public-hub:
+    # Legacy builds keep Compose's project-service tag. Only an approved,
+    # digest-pinned release executor may set PUBLIC_HUB_RELEASE_IMAGE.
+    image: ${PUBLIC_HUB_RELEASE_IMAGE:-${COMPOSE_PROJECT_NAME:-infra}-public-hub}
     depends_on:
       - plugin-ui
     build:
