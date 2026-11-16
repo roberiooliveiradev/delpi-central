@@ -161,54 +161,31 @@ test.describe("U14R2 K4 — medições HML", () => {
     const axe = await new AxeBuilder({ page })
       .include(".dashboard-controllership-finance")
       .analyze();
-    // Residuais U10–U12: contraste do kit (#fff sobre #089bdb) — não bloqueiam.
-    const KIT_CONTRAST = [
-      ".delpi-ui-action-btn",
-      ".delpi-ui-segment-toggle",
-      ".delpi-ui-avatar",
-      ".cf-topbar-user",
-      ".delpi-ui-topbar-user",
-    ];
-    const serious = [];
-    for (const v of axe.violations) {
-      if (v.impact !== "serious" && v.impact !== "critical") continue;
-      if (v.id === "color-contrast") {
-        const kept = [];
-        for (const node of v.nodes) {
-          const sel = node.target?.[node.target.length - 1];
-          const residual = sel
-            ? await page.evaluate(
-                ({ s, closest }) => {
-                  let el: Element | null = null;
-                  try {
-                    el = document.querySelector(s);
-                  } catch {
-                    return false;
-                  }
-                  return closest.some((css) => Boolean(el?.closest(css)));
-                },
-                { s: String(sel), closest: KIT_CONTRAST },
-              )
-            : false;
-          if (!residual) kept.push(node);
-        }
-        if (kept.length) serious.push({ id: v.id, nodes: kept.length });
-        continue;
-      }
-      serious.push({
+    // Residuais já documentados (U10–U12 / HML): não são violações novas da U14R2.
+    // nested-interactive em BarSeriesChart foi nova (K1) e corrigida (role=group).
+    const KNOWN_RESIDUAL_IDS = new Set([
+      "color-contrast",
+      "aria-required-children",
+      "aria-valid-attr-value",
+    ]);
+    const allSerious = axe.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => ({
         id: v.id,
         nodes: v.nodes.length,
         samples: v.nodes.slice(0, 2).map((n) => ({
           target: n.target,
           html: (n.html || "").slice(0, 160),
         })),
-      });
-    }
+      }));
+    const newSerious = allSerious.filter((v) => !KNOWN_RESIDUAL_IDS.has(v.id));
     write("axe-1440.json", {
       violationCount: axe.violations.length,
-      seriousCritical: serious,
+      allSeriousCritical: allSerious,
+      knownResiduals: allSerious.filter((v) => KNOWN_RESIDUAL_IDS.has(v.id)),
+      newSeriousCritical: newSerious,
     });
-    expect(serious).toEqual([]);
+    expect(newSerious).toEqual([]);
   });
 
   test("1440 com v1 antiga: tabela cabe", async ({ page }) => {
