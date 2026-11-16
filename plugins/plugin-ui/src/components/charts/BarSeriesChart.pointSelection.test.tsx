@@ -23,17 +23,26 @@ describe("BarSeriesChart point selection (U14R2 K1)", () => {
 
   it("with onPointSelect: bars are keyboard buttons with aria-label", () => {
     const onPointSelect = vi.fn();
-    render(
+    const { container } = render(
       <BarSeriesChart
         points={POINTS}
         onPointSelect={onPointSelect}
         options={{ showLegend: false }}
       />,
     );
+    const svg = container.querySelector("svg");
+    expect(svg?.getAttribute("role")).toBe("group");
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBeGreaterThanOrEqual(3);
     expect(buttons[0]?.getAttribute("aria-label")).toBe("07/11: 2");
     expect(buttons[1]?.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("without onPointSelect: svg keeps role=img", () => {
+    const { container } = render(
+      <BarSeriesChart points={POINTS} emptyMessage="vazio" options={{ showLegend: false }} />,
+    );
+    expect(container.querySelector("svg")?.getAttribute("role")).toBe("img");
   });
 
   it("click selects; second click clears with null", () => {

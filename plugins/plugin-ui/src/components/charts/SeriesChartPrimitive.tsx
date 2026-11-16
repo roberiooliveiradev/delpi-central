@@ -523,7 +523,12 @@ export function SeriesChartPrimitive({
         <div className={cn.body}>
           {legendPosition === "left" ? legend : null}
           <div className={cn.plotHost} ref={plotHostRef}>
-            <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
+            <ChartFrame
+              viewW={layout.viewW}
+              viewH={layout.viewH}
+              ariaLabel={ariaLabel}
+              interactivePoints={Boolean(pointSelection?.onPointSelect)}
+            >
               {renderPlotArea(plotProps)}
             </ChartFrame>
             <ChartPlotAreaChrome layout={layout} interaction={interaction} chartParts={chartParts} />
