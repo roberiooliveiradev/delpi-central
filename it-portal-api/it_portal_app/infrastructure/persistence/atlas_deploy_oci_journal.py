@@ -170,6 +170,14 @@ def store_oci_prepared(
                     raise JournalRejected("JOURNAL_ROW_INCONSISTENT")
                 (proposal_id, requester, request_id, env, service, target, base,
                  proposal_hash, old_digest, expires_at, status) = existing
+                # A legacy or partially constructed proposal is never
+                # retrofitted with an OCI binding on replay. Check presence
+                # before comparing the parent TTL, which may differ.
+                row = conn.execute(
+                    _SQL_BINDING_READ, (str(proposal_id),),
+                ).fetchone()
+                if row is None:
+                    raise JournalRejected("OCI_BINDING_MISSING")
                 if (
                     str(requester) != generic.requester_subject
                     or str(request_id) != generic.request_id
@@ -182,11 +190,6 @@ def store_oci_prepared(
                     or expires_at != candidate.expires_at
                 ):
                     raise JournalRejected("IDEMPOTENCY_PAYLOAD_CONFLICT")
-                row = conn.execute(
-                    _SQL_BINDING_READ, (str(proposal_id),),
-                ).fetchone()
-                if row is None:
-                    raise JournalRejected("OCI_BINDING_MISSING")
                 if not _binding_equals(row, expected):
                     raise JournalRejected("IDEMPOTENCY_PAYLOAD_CONFLICT")
                 if status != "pending_approval" or expires_at <= now:
