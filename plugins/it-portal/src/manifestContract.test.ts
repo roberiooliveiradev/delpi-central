@@ -37,6 +37,7 @@ const BFF_PERMISSIONS = [
   "it-portal.networks.manage",
   "it-portal.integrations.view",
   "it-portal.integrations.manage",
+  "it-portal.deploy.view",
 ];
 
 describe("it-portal manifest", () => {
@@ -50,6 +51,16 @@ describe("it-portal manifest", () => {
     expect(manifest.basePath).toBe("/apps/it-portal");
     expect(manifest.entry).toBe("/apps/it-portal/assets/remoteEntry.js");
     expect(manifest.ui.renderMode).toBe("federated");
+  });
+
+  it("publishes a dedicated read-only ATLAS route but no approval or ACT grant", () => {
+    expect((manifest as Manifest & { version?: string }).version).toBe("0.3.5");
+    const allowed = manifest.permissions.map((p) => p.code);
+    expect(allowed).toContain("it-portal.deploy.view");
+    expect(allowed).not.toContain("it-portal.deploy.approve");
+    expect(allowed).not.toContain("it-portal.deploy.execute");
+    expect(manifest.routes.find((r) => r.path === "/apps/it-portal/atlas-deployments")?.permission)
+      .toBe("it-portal.deploy.view");
   });
 
   it("only registers routes the MFE actually implements", () => {

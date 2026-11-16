@@ -554,3 +554,54 @@ def test_g2_s4_s2a_postgres_dynamic_binding_revoked_atomically(pg_client):
         "identity_reserved", "identity_prepared",
         "identity_revocation_requested", "identity_revoked",
     }
+
+
+
+def test_z_atlas_v016_is_opt_in_with_real_postgresql(migrated, monkeypatch):
+    """Last test: disposable module database only; never a production target."""
+    from it_portal_app.infrastructure.persistence.db import db_connect
+
+    monkeypatch.setattr(settings, "ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED", False)
+    assert run_migrations() == []
+    with db_connect() as conn:
+        assert conn.execute(
+            "SELECT to_regclass('it_portal.atlas_deploy_proposals') AS obj"
+        ).fetchone()["obj"] is None
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.schema_migrations "
+            "WHERE version = 16"
+        ).fetchone()["n"] == 0
+
+    # Only an explicit release gate permits V016; runner enforces checksum.
+    monkeypatch.setattr(settings, "ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED", True)
+    assert run_migrations() == ["V016__atlas_deploy_oci_journal.sql"]
+    assert run_migrations() == []
+
+    with db_connect() as conn:
+        record = conn.execute(
+            "SELECT version, name, length(checksum) AS sha_len "
+            "FROM it_portal.schema_migrations WHERE version = 16"
+        ).fetchone()
+        assert record == {
+            "version": 16, "name": "V016__atlas_deploy_oci_journal.sql",
+            "sha_len": 64,
+        }
+        for name in (
+            "atlas_deploy_challenges", "atlas_deploy_proposals",
+            "atlas_deploy_events", "atlas_deploy_oci_bindings",
+        ):
+            assert conn.execute(
+                "SELECT to_regclass(%s) AS obj", ("it_portal." + name,),
+            ).fetchone()["obj"] is not None
+        triggers = conn.execute(
+            "SELECT tgname FROM pg_trigger WHERE tgname IN "
+            "('atlas_oci_binding_immutable', 'atlas_oci_proposal_identity_guard') "
+            "AND NOT tgisinternal"
+        ).fetchall()
+        assert {row["tgname"] for row in triggers} == {
+            "atlas_oci_binding_immutable", "atlas_oci_proposal_identity_guard",
+        }
+        # A new journal has no synthetic proposals; the reader may show 0.
+        assert conn.execute(
+            "SELECT count(*) AS n FROM it_portal.atlas_deploy_proposals"
+        ).fetchone()["n"] == 0

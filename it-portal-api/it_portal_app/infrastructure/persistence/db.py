@@ -17,6 +17,37 @@ def db_configured() -> bool:
     )
 
 
+def atlas_journal_read_db_configured() -> bool:
+    """True only for an explicitly configured dedicated journal SELECT role."""
+    return bool(
+        db_configured()
+        and settings.ATLAS_JOURNAL_READ_DB_USER
+        and settings.ATLAS_JOURNAL_READ_DB_PASSWORD
+        and settings.ATLAS_JOURNAL_READ_DB_USER != settings.DB_USER
+    )
+
+
+def atlas_journal_read_connect(*, row_factory=dict_row) -> psycopg.Connection:
+    """Use the dedicated read-only login; fail closed, never use API write role."""
+    if not atlas_journal_read_db_configured():
+        raise RuntimeError("atlas_journal_reader_not_configured")
+    return psycopg.connect(
+        host=settings.DB_HOST,
+        port=int(settings.DB_PORT),
+        dbname=settings.DB_NAME,
+        user=settings.ATLAS_JOURNAL_READ_DB_USER,
+        password=settings.ATLAS_JOURNAL_READ_DB_PASSWORD,
+        connect_timeout=settings.DB_CONNECT_TIMEOUT,
+        sslmode=settings.DB_SSLMODE,
+        application_name="it-portal-atlas-journal-read",
+        options=(
+            "-c default_transaction_read_only=on "
+            f"-c statement_timeout={settings.DB_STATEMENT_TIMEOUT_MS}"
+        ),
+        row_factory=row_factory,
+    )
+
+
 def db_connect(*, row_factory=dict_row) -> psycopg.Connection:
     return psycopg.connect(
         host=settings.DB_HOST,

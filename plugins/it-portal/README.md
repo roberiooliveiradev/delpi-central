@@ -25,6 +25,7 @@ Microfrontend do Portal de TI — Minha DELPI.
 | `/integrations` | Integrações entre serviços e com sistemas externos | `it-portal.integrations.view` |
 | `/integrations/{id}` | Detalhe: origem, destino, protocolo, direção, histórico | `it-portal.integrations.view` |
 | `/action-plans` | Planos de ação de todos os servidores | `it-portal.actions.view` |
+| `/atlas-deployments` | Consultas de propostas OCI ATLAS e eventos, sem aprovação/execução | `it-portal.deploy.view` + `it-portal.access`, flag no backend e role DB somente leitura |
 | `/help` | Ajuda | `it-portal.access` |
 
 Os controles exibidos seguem `GET /me/capabilities`; a BFF revalida cada
@@ -91,3 +92,9 @@ npm run build   # tsc -b && vite build
 - Ficha de computador mostra estado de revogacao e opcao `Revogar identidade` apenas quando o backend permitir `can_revoke=true` e o usuario tiver computers.manage.
 - Revogacao exige confirmacao, verifica Core RBAC fresh, impede coleta no DB e desabilita Client Keycloak sem mostrar secrets no navegador.
 - Sem ativacao e sem Client Secret no frontend; `G2-S4-S2b` ainda pendente. [Runbook](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).
+
+## ATLAS P2.2h.2e — manifesto 0.3.5 preparado
+
+A release de manifesto `0.3.5` adiciona exclusivamente `it-portal.deploy.view` e a rota interna `/apps/it-portal/atlas-deployments`. O arquivo no Git **nao registra automaticamente** a nova permissão no Core. O administrador publica a versao estrutural no Portal Admin, atribui a VIEW somente ao usuario autorizado e depois habilita a flag de consulta somente se V016 e a role PostgreSQL SELECT minima ja estiverem revisadas. Nenhum codigo `deploy.approve` ou `deploy.execute` foi cadastrado. Sem propostas persistidas, a pagina tera estado vazio correto.
+
+[Runbook controlado](../../docs/12-roadmap-e-evolucao/mcp-linux-control/16-atlas-journal-v016-core-view-activation-plan.md). Deploy manual dos outros desenvolvedores inalterado.

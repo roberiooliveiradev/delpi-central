@@ -4,7 +4,7 @@
   "name": "Portal de TI",
   "description": "Inventário de servidores, serviços, aplicações, bancos de dados, redes e integrações, com relacionamentos, notas técnicas e planos de ação da infraestrutura de TI.",
   "icon": "server",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "type": "microfrontend",
   "basePath": "/apps/it-portal",
   "entry": "/apps/it-portal/assets/remoteEntry.js",
@@ -116,6 +116,12 @@
       "name": "Portal de TI — gerenciar integrações",
       "description": "Cadastra, edita, arquiva e restaura integrações. Requer ver servidores, ver serviços e ver integrações.",
       "module": "it-portal"
+    },
+    {
+      "code": "it-portal.deploy.view",
+      "name": "Portal de TI — consultar implantações ATLAS",
+      "description": "Consulta somente leitura de solicitações e histórico do journal OCI. Exige também it-portal.access. Não permite solicitar, aprovar ou executar deploy.",
+      "module": "it-portal"
     }
   ],
   "routes": [
@@ -189,6 +195,14 @@
       "permission": "it-portal.computers.view",
       "icon": "monitor",
       "order": 53,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/it-portal/atlas-deployments",
+      "label": "Implantações ATLAS",
+      "permission": "it-portal.deploy.view",
+      "icon": "shield-check",
+      "order": 54,
       "showInMenu": false
     }
   ],

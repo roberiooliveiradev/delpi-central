@@ -12,7 +12,9 @@ from collections.abc import Callable
 from typing import Any
 
 from it_portal_app.domain.errors import NotFoundError, PersistenceUnavailableError
-from it_portal_app.infrastructure.persistence.db import db_configured, db_connect
+from it_portal_app.infrastructure.persistence.db import (
+    atlas_journal_read_connect, atlas_journal_read_db_configured,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +69,13 @@ _SQL_SCHEMA = """SELECT
 
 
 class PostgresAtlasDeployReadRepository:
-    """Reads only. Connection identity MUST be a backend DB role, not an MCP token."""
+    """Reads only. Uses a dedicated PostgreSQL SELECT role, never the API write role."""
 
     def __init__(
         self,
         *,
-        connect: Callable[[], Any] = db_connect,
-        configured: Callable[[], bool] = db_configured,
+        connect: Callable[[], Any] = atlas_journal_read_connect,
+        configured: Callable[[], bool] = atlas_journal_read_db_configured,
     ):
         self._connect = connect
         self._configured = configured
