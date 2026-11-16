@@ -194,19 +194,27 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       heroBox!.x + heroBox!.width + 2,
     );
 
-    /* «Itens por página» abaixo do hero, na região da grade. O hero tem
-     * animação de entrada (translateY+scale, 280ms) que replaya quando o
-     * nó remonta após o filtro — o bounding box fica inflado/deslocado
-     * durante o replay. Aguarda as animações e re-meço o box estável. */
-    await hero.evaluate((el) =>
-      Promise.all(el.getAnimations().map((a) => a.finished)),
-    );
-    const heroBoxSettled = await hero.boundingBox();
-    const metaBox = await tableMeta.boundingBox();
-    expect(metaBox).toBeTruthy();
-    expect(metaBox!.y).toBeGreaterThanOrEqual(
-      heroBoxSettled!.y + heroBoxSettled!.height - 2,
-    );
+    /* «Itens por página» abaixo do hero, na região da grade. Após o
+     * clique no chip a lista recarrega e o browser aplica scroll
+     * anchoring — medir hero e meta em chamadas separadas captura
+     * viewports diferentes (rects são viewport-relative). Medição
+     * atômica + poll até o layout estabilizar. */
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            ([heroSel, metaSel]) => {
+              const h =
+                document.querySelector(heroSel)?.getBoundingClientRect();
+              const m =
+                document.querySelector(metaSel)?.getBoundingClientRect();
+              return h && m ? m.y - (h.y + h.height) : -Infinity;
+            },
+            [HERO, TABLE_META],
+          ),
+        { timeout: 5_000 },
+      )
+      .toBeGreaterThanOrEqual(-2);
 
     /* Ordem visual FilterX → Filtros → Ordenar → Colunas → Tabela|Cards.
      * Ordem de leitura (linha, depois coluna): no mobile os controles
