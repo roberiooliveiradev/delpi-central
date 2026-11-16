@@ -97,3 +97,85 @@ Verificador indisponível por restrição de ambiente nas duas engines — decla
 ## 10. PRD — gate
 
 **PRD_DEPLOY: NOT_AUTHORIZED_THIS_PACKAGE.** Nenhuma mutação em produção executada. Delta HML×PRD = 2 commits frontend-only (`30fba42e82`, `929291374a`), zero contrato/API/RBAC/migration. Relatório GO/NO-GO devolvido à Coordination para autorização explícita.
+
+---
+
+# Anexo — Correção P1 `CROSS-MFE-UXV3-CLEAR-FILTERS-BUTTON-REGRESSION-HML-01`
+
+## A. Causa raiz
+
+**Geometria (botão deformado/estreito):** a regra de overflow do V3
+`.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls .delpi-ui-help-tooltip--wrap > * { min-width: 0 }`
+(especificidade 0,3,1) sobrescrevia o `min-width: 36px` do `IconButton` (0,1,0).
+Sem largura mínima, o botão dimensionava para o conteúdo (~largura do SVG 16px)
+mantendo `min-height: 36px` → retângulo estreito e alto. Probe mediu e confirmou.
+
+**Visibilidade:** os consumidores usavam `disabled={!filtersActive}` — o botão
+continuava renderizado e reservando largura sem filtros. Corrigido para
+renderização condicional (o botão deixa de existir no DOM no estado limpo).
+
+**Achado colateral (AC09):** `.delpi-ui-page-hero__actions { flex: 0 0 auto }`
+impedia o shrink; em 320px os botões «Atualizar» + «Nova solicitação» (317px)
+estouravam os 242px úteis e eram clippados pelo `overflow:hidden` do hero
+(scrollW 374 × clientW 284). Corrigido para `flex: 0 1 auto; min-width: 0` —
+tamanho natural preservado em desktop, wrap interno empilha em telas estreitas.
+
+## B. Correções (owner: Plugin UI)
+
+| Arquivo | Mudança |
+|---|---|
+| `plugin-ui/styles/data-table.css` | wrap `> *:not(.delpi-ui-icon-btn)` — icon buttons excluídos do `min-width: 0` nas faixas chips e controls |
+| `plugin-ui/styles/action-controls.css` | `.delpi-ui-icon-btn { flex-shrink: 0 }` |
+| `plugin-ui/styles/page-hero.css` | `__actions` `flex: 0 1 auto; min-width: 0` |
+| `my-requests/RequestListShell.tsx` | FilterX renderizado só quando há filtro removível ativo |
+| `helpdesk/HelpdeskPage.tsx` | mesma condicional sobre `filterActive` |
+
+Zero CSS/componente duplicado nos MFEs — apenas bindings e condicionais.
+
+## C. Prova geométrica HML (320px, probe autenticado)
+
+| Estado | clearBtn | docOverflow |
+|---|---|---|
+| Limpo | `null` (não existe no DOM) | 0 |
+| Filtrado | `{w:36, h:36}` — quadrado, âmbar | 0 |
+
+Hero actions após fix: «Nova solicitação» empilha abaixo de «Atualizar»,
+sem clipping (screenshot versionado).
+
+## D. Testes
+
+- Plugin UI: typecheck + build OK; ClearFiltersButton/IconButton 17/17.
+- My Requests: estrutural 26/26; suíte focada 44/44.
+- Helpdesk: estrutural 18/18; build OK.
+- E2E HML autenticado (`https://192.168.1.237:18443`): **36/36** em
+  desktop, tablet, mobile-390 e mobile-320 — incluindo estado limpo sem
+  FilterX, aparição com filtro, geometria 36×36, cor âmbar, posição à
+  esquerda de Filtros, desaparecimento após limpar, preservação de
+  sort/page-size/layout e zero overflow.
+
+### Flake de medição E2E corrigido
+
+Rects viewport-relative dessincronizavam quando o scroll anchoring
+atuava entre chamadas `boundingBox` separadas (remount pós-filtro e
+encolhimento do hero pós-clear). Compares verticais migraram para
+`page.evaluate` atômico + `expect.poll` até estabilizar. Nenhuma
+asserção enfraquecida — tolerância `-2`/`+2` preservada.
+
+## E. Deploy HML
+
+| Item | Valor |
+|---|---|
+| SHA | `1fbea4178d` (impl) → `a7218deeca` (hero actions) → `c176dac339` |
+| plugin-ui image | `delpi-hml/plugin-ui:local` → `f10f0d2cdc2b` (healthy) |
+| my-requests image | `delpi-hml/my-requests:local` → `a15b3aded778` (healthy) |
+| Helpdesk | ausente do compose HML — E2E `TEST_NOT_RUN` (mesmo bloqueio do ciclo anterior; grant/inventário pendentes do owner) |
+| Rollback | imagens `rollback-ux-v3-20261116` + redeploy por SHA anterior |
+| PRD | `NOT_EXECUTED` — sem autorização nesta task |
+
+## F. Verificação independente
+
+Pedido `.git/delpi-verifier/requests/ux-v3-clear-filters-regression-r1.md`.
+Veredito: `INCONCLUSIVE` por restrição de ambiente (engine devin sem auth,
+cursor sem quota — mesmo bloqueio do ciclo anterior). Registrado em
+`verdicts.jsonl`. Evidência primária: E2E HML 36/36 + probes geométricos +
+estruturais + builds.
