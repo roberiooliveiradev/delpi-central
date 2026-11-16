@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 
 from it_portal_app.application.dashboard_service import DashboardService
+from it_portal_app.config import settings
 from it_portal_app.core.responses import ok
 from it_portal_app.interface.http.authz import (
     ACTIONS_MANAGE,
@@ -13,6 +14,7 @@ from it_portal_app.interface.http.authz import (
     DATABASES_VIEW,
     INTEGRATIONS_MANAGE,
     INTEGRATIONS_VIEW,
+    ATLAS_DEPLOY_VIEW,
     NETWORKS_MANAGE,
     NETWORKS_VIEW,
     NOTES_CREATE,
@@ -85,6 +87,11 @@ def get_it_portal_capabilities(request: Request):
         "can_manage_networks": view_networks and user_has(user, NETWORKS_MANAGE),
         "can_view_integrations": view_integrations,
         "can_manage_integrations": view_integrations and user_has(user, INTEGRATIONS_MANAGE),
+        # UI hint only. The GET endpoint rechecks Core with force_refresh=True.
+        "can_view_atlas_deployments": (
+            settings.ATLAS_JOURNAL_READ_ENABLED is True
+            and ATLAS_DEPLOY_VIEW in (getattr(user, "permissions", None) or [])
+        ),
     }
     return ok(data, operation_id="get_it_portal_capabilities")
 
