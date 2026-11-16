@@ -161,6 +161,26 @@ def test_breakdowns_exclude_own_dimension_filter():
     assert {row["name"] for row in payload["tes"]} == {"148"}
 
 
+def test_daily_excludes_own_day_filter():
+    """U15 P2: com day= selecionado, a série ainda tem todos os dias > 0 pertinentes."""
+    store = MemoryEntryAuditStore()
+    analysis_id = _add_analysis(store, branches=["01"])
+    _add_occurrence(store, analysis_id, received_date="2026-11-10", severity="Alta")
+    _add_occurrence(store, analysis_id, received_date="2026-11-11", severity="Baixa")
+    _add_occurrence(store, analysis_id, received_date="2026-11-12", severity="Alta")
+    service = _service(store)
+    with_day = service.daily(analysis_id, {"day": "2026-11-10"})
+    without = service.daily(analysis_id, {})
+    by_day_filtered = {row["name"]: row["count"] for row in with_day["series"]}
+    by_day_full = {row["name"]: row["count"] for row in without["series"]}
+    assert by_day_filtered == by_day_full
+    assert by_day_filtered.get("2026-11-10", 0) >= 1
+    assert by_day_filtered.get("2026-11-11", 0) >= 1
+    assert sum(1 for c in by_day_filtered.values() if c > 0) == sum(
+        1 for c in by_day_full.values() if c > 0
+    )
+
+
 def test_breakdowns_tes_includes_sf4_label_without_protheus():
     store = MemoryEntryAuditStore()
     analysis_id = _add_analysis(store, branches=["01"])

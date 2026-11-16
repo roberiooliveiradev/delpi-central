@@ -429,7 +429,7 @@ Filtros dessas leituras, todos opcionais: `branch`, `severity`, `theme`, `suppli
 | Rota | `data` |
 |---|---|
 | `summary` | KPIs atuais; `previous` = KPIs do período anterior **ou `null`** quando não há análise anterior válida (U11/U12 W1a); conformidade (`clean`, `divergent`, `unmatched_open`, `unmatched_explained`, `posted_outside_period` com `count` e `by_date`) |
-| `daily` | série do período e do período anterior (`previous: []` se não houver anterior): dia → notas com divergência |
+| `daily` | série do período e do período anterior (`previous: []` se não houver anterior): dia → notas com divergência. **U15:** calculada **sem** o filtro `day` (AC-SEL-3 / gráfico que seleciona não filtra a si mesmo); demais filtros de detalhamento seguem |
 | `breakdowns` | por severidade, por tema, top fornecedores, TES com mais ocorrências. **U14:** cada dimensão de seleção é calculada **sem** o filtro da própria dimensão (AC-BFF-3 / AC-SEL-3); `tes[]` inclui `label` aditivo com a descrição SF4 já persistida na análise (AC-BFF-2, sem nova consulta ao Protheus) |
 | `facets` | fornecedores, temas, TES e severidades, com contagem |
 | `GET /entry-audit/trend` | `branch`, `date_from`, `date_to`: pendentes e altas por mês, entre análises |

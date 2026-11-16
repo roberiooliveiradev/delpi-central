@@ -309,12 +309,19 @@ class EntryAuditService:
 
     def daily(self, analysis_id: str, filters: dict) -> dict:
         analysis, ready = self._ready(analysis_id)
+        # U15 P2 / AC-SEL-3: série diária ignora o próprio filtro `day`
+        # (selecionado destacado no MFE; demais dias não zeram).
+        chart_filters = _filters_without(filters, "day")
         previous = self._previous_analysis(analysis)
         previous_series = []
         if previous is not None:
-            previous_series = _by_day(self._filtered("occurrences", previous["id"], filters))
+            previous_series = _by_day(
+                self._filtered("occurrences", previous["id"], chart_filters)
+            )
         return {
-            "series": _by_day(self._filtered("occurrences", analysis_id, filters)),
+            "series": _by_day(
+                self._filtered("occurrences", analysis_id, chart_filters)
+            ),
             "previous": previous_series,
             "branches_unavailable": ready,
             "period": [analysis["date_from"].isoformat(), analysis["date_to"].isoformat()],
