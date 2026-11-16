@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ActionButton, FilePreviewModal } from "@delpi/plugin-ui/index";
-import { Camera, FilePlus2 } from "lucide-react";
+import { Camera, FilePlus2, Send } from "lucide-react";
+import { parseBrlInput } from "../utils/parseBrlInput";
 
 import { TravelReportHero } from "../components/TravelReportHero";
 import { TravelPixSection } from "../components/TravelPixSection";
 
 import {
   addExpense,
+  getMileageRate,
+  sendToFinance,
   deleteExpense,
   deleteReceipt,
   fetchReceiptBlob,
@@ -85,6 +88,7 @@ export function WorkspacePage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [preview, setPreview] = useState<{ expense: Expense; receipt: Receipt } | null>(null);
@@ -153,6 +157,27 @@ export function WorkspacePage({
 
   function cancelHeaderEdit() {
     if (savedHeader) setHeader(savedHeader);
+  }
+
+  async function onSendToFinance() {
+    if (!report || !editable || sending) return;
+    if (!report.expenses.length) {
+      setError("Inclua ao menos uma despesa antes de enviar.");
+      return;
+    }
+    if (!window.confirm("Enviar o PDF para financeiro@delpi.com.br, com cópia ao solicitante?")) return;
+    setSending(true);
+    setError(null);
+    try {
+      await sendToFinance(reportId);
+      await reload();
+      setSuccess("Prestação enviada ao Financeiro com cópia ao solicitante.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível confirmar o envio.");
+      await reload().catch(() => undefined);
+    } finally {
+      setSending(false);
+    }
   }
 
   function openNewExpense() {
@@ -243,6 +268,22 @@ export function WorkspacePage({
           )}
         </div>
       </TravelSectionCard>
+
+      {editable ? (
+        <TravelSectionCard title="Encaminhamento ao Financeiro">
+          <p className="te-muted">Envie o PDF para financeiro@delpi.com.br, com cópia ao solicitante.</p>
+          {report.completeness.missingReceiptCount > 0 ? (
+            <p className="te-muted">Há {report.completeness.missingReceiptCount} despesa(s) sem comprovante. O aviso não impede o envio.</p>
+          ) : null}
+          <ActionButton variant="primary" disabled={sending || !report.expenses.length} onClick={() => void onSendToFinance()}>
+            <Send size={16} /> {sending ? "Enviando…" : "Enviar ao Financeiro"}
+          </ActionButton>
+        </TravelSectionCard>
+      ) : report.dispatchStatus ? (
+        <TravelSectionCard title="Envio ao Financeiro">
+          <p className="te-muted">{report.dispatchStatus === "sent" ? "Prestação encaminhada ao Financeiro." : "Consulte a TI para verificar o envio."}</p>
+        </TravelSectionCard>
+      ) : null}
 
       <TravelPixSection
         report={report}
