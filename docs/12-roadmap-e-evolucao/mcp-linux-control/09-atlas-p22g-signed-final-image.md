@@ -1,0 +1,39 @@
+# ATLAS P2.2g | Imagem final e atestacao assinada do Public Hub
+
+**Data:** 2026-11-16. **Estado:** candidato em branch/PR; producao nao alterada. **Owner:** TI DELPI.
+
+## Objetivo e escopo
+
+A P2.2f testava somente a stage `provenance-contract` e adicionava labels informativas. Agora o GitHub Actions valida o codigo do Public Hub, constrói a **stage final `production`**, publica um artefato de release em `ghcr.io/roberiooliveiradev/delpi-public-hub:sha-<git-sha>` **apenas em push na main** e produz a atestacao SLSA in-toto via `actions/attest@v4` com certificado efemero OIDC/Sigstore. O sujeito criptografico e o **digest do manifesto OCI** retornado pelo build/push, nunca somente a label de Git ou o ID de configuracao da imagem Docker.
+
+A PR executa testes, lint/TypeScript, Docker stage completa e verifica `nginx -t` + `index.html` **sem login GHCR, push ou atestado**. Em main, CI faz push por digest imutavel e valida o digest publicado e sua assinatura com `gh attestation verify`, impondo repo, workflow assinante, source ref `refs/heads/main`, source digest, SLSA v1, emissor OIDC GitHub e exclusao de runners self-hosted. A assinatura e produzida pelo GitHub Actions, nao por HMAC autoafirmado do host.
+
+**Atenção:** o job tem permissoes de `packages: write` e `attestations: write` somente na main. Ele nao publica automaticamente em HML/PROD. O token do workflow precisa poder gravar no GHCR da conta dona; se houver bloqueio de permissao, o CI falha e a entrega de imagem nao deve ser considerada concluida.
+
+## Verificacao read-only no host (depois da existencia da release)
+
+O script `infra/scripts/verify-public-hub-release.sh` recebe **tres parametros fechados** (Git SHA completo, digest OCI de 64 hex e ambiente prod/hml), nao aceita host, URL, nome de container ou comandos arbitrarios. Ele:
+
+1. Usa `gh attestation verify oci://ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:...` e impõe identidade da assinatura com commit e workflow.
+2. Requer a imagem **por digest ja instalada no Docker local**; nao faz `docker pull`, build ou deploy.
+3. Compara `docker image inspect ... .Id` com `docker container inspect ... .Image` do container fixo, mais labels OCI, Compose service, Compose project HML e estado running.
+4. Em caso de erro de assinatura, digest, imagem nao presente, label, estado ou identidade divergente, falha fechado com `[BLOCKED]`.
+
+A invocacao e ilustrativa, com valores **retirados do run de CI correspondente**, nunca estimados:
+
+```bash
+bash infra/scripts/verify-public-hub-release.sh '<SHA_COMMIT_40>' 'sha256:<DIGEST_MANIFESTO_64>' prod
+```
+
+**Distincao obrigatoria:** `sha256:7ef60f87eb35e004ab5af8d95289a3836e20757d3fba626e14b98c2ad0a48cfb` e o **ImageID Docker atual** relatado pelo operador, e **nao** o digest de um manifesto atestado pelo CI. O deploy anterior foi um rebuild local no host; mesmo que labels/revisao coincidam, nao e permitido reaproveitar assinatura de um build futuro para a imagem antiga. A comprovacao so sera PASS quando o container executar os mesmos bytes identificados pelo artefato assinado. Nenhuma implantacao foi realizada neste incremento.
+
+## Testes e gates
+
+- **Execucao simulada local:** testes unitarios de verificador com mock GH CLI/Docker, cobrindo casos positivos PROD/HML e negativos de assinatura, digest, SHA, drift de ImageID, labels, projeto Compose e status. O workflow CI ainda deve confirmar resultado da PR.
+- **Gates restantes:** GitHub CI de build real e assinatura na main, permissao GHCR, verificacao no host real com digest da release, smoke HTTP, health/readiness e revisao independente (verificador `delpi-verifier`).
+- **Nao alterado:** Dockerfile do Public Hub, Compose, Keycloak, PostgreSQL, scripts de deploy sequencial, gateway, Core, MCP READ, allowlist de deploy, PREPARE/ACT ou a imagem de producao.
+- **Risco residual:** a build continua sujeita a dependencias base/npm variaveis. Imagens com mesmo SHA fonte podem ser distintas; a assinatura do digest publicado, e nao a reproducibilidade por si, identifica os bytes aprovados. GHCR package pode ser privado dependendo da configuracao, exigindo autenticacao para verificar.
+
+## Rollback e proximo passo
+
+Esta PR nao altera runtime. Se CI falhar, corrigir com commit novo na branch, sem editar servidor ou assinar imagem local. Uma vez testada e aprovada, o merge pode produzir uma imagem assinada no GHCR; a promocao por **digest fixo** exigira gate futuro, revisao do Compose/fluxo canonico e autorizacao propria. Nao substituir o script de `--build public-hub` atual por um `pull` silencioso. Prosseguir com ownership, restricao do proxy READ, journal/approval e somente entao PREPARE/ACT governados. 
