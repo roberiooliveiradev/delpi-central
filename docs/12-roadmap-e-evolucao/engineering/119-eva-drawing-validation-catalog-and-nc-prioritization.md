@@ -6206,3 +6206,52 @@ Release report entregue à Coordination. O aceite E2E na conexão oficial EVA×C
 - Verificação independente efetiva pendente de `devin auth` — owner: infra/tooling; não reverte o release (exceção governada registrada acima).
 - Falhas PRC #207 e D16 seguem abertas nas frentes proprietárias.
 - G-02..G-07 inalterados — próximo lote L2 (subtipos 1008).
+
+---
+
+## §94.37 — G25-L2: Cobertura Normativa MP 1008, Verificação e Liberação Produtiva
+
+**Data:** 2026-11-16 | **Modo:** `BOUNDED_IMPLEMENTATION / TEST_AND_VERIFY / CONDITIONAL_PRODUCTION_DEPLOY` | **TASK_ID:** `EVA-E1-VAL01-G25-L2-MP1008-NORMATIVE-COVERAGE-IMPLEMENTATION-VERIFICATION-AND-PRODUCTION-RELEASE-01`
+
+### 94.37.1 Escopo e fonte
+
+Cobertura integral das 8 estruturas do grupo **MP 1008** documentadas em `normas-tecnicas-descricao-materias-primas.md` (hash `66aa9c13…4bd2`, sem drift). Contrato `normative_description.v1` aditivo — campos inalterados.
+
+### 94.37.2 Implementação
+
+Dispatcher `_eval_1008` por marcador `TERM. <TIPO>` (espelha o padrão do dispatcher 1009):
+
+| TIPO | Avaliador | Regras |
+|---|---|---|
+| PINO | `_eval_pino_1008` | `MP-1008P-*` (variante, bitola range/simples, COMP, banho, iso, emb, obs, cert) |
+| FORQUILHA | `_ring_1008` | `MP-1008F-*` (M#, D.INT, bitola, D.EXT, COMP, banho, iso, emb, obs, cert) |
+| ILHOS/TUBULAR | `_eval_eyelet_1008` | `MP-1008I-*` |
+| LINGUETA | `_eval_lingueta_1008` | `MP-1008L-*` (LARG×TAB) |
+| FASTON/BANDEIRA | `_eval_terminal_1008` | `MP-1008-*` — **inalterado** |
+| OLHAL/ANZOL | `_ring_1008` | `MP-1008O-*` |
+| LUVA/EMENDA | `_eval_luva_1008` | `MP-1008E-*` (NU posicional em banho e isolação) |
+| TIPO livre (ex.: BALA) | `_eval_generic_1008` | `MP-1008G-*` — fallback documentado pela própria norma |
+
+- Subtipo ausente/contraditório → `MP-1008-SUBTYPE INCONCLUSIVE`, nunca FASTON.
+- OBS/CERT: omissíveis → `NOT_APPLICABLE` (exemplos oficiais ANZOL e EMENDA omitem campos).
+- Bitola simples `x,xxMM2`: `PASS` só em PINO (única seção que a documenta); demais → `INCONCLUSIVE`.
+- `MM` (sem ²) → `WARNING` preservado — nunca normalizado para MM2.
+
+### 94.37.3 Evidências
+
+- **12/12 fixtures oficiais verbatim → PASS** (PINO, FORQUILHA, ILHOS, TUBULAR, LINGUETA, FASTON, BANDEIRA, OLHAL, ANZOL, BALA, LUVA, EMENDA).
+- Focados: **79/79** (64 anteriores + 15 novos L2: negativos de subtipo ausente/contraditório/TIPO livre com marcador alheio, bitola simples fora de PINO, sem-TERM., fonte DRAWING, isolamento 1009).
+- Suíte completa @ `aa398570a9`: **1485 pass / 3 fail / 21 skip** — as 3 falhas são pré-existentes conhecidas (`test_probe_route_not_in_production_openapi` + `test_only_authorized_business_routes_exposed` da frente PRC #207; `test_isolation_between_requests` residual D16). **Zero regressões L2.**
+- `automatic_nc=false`, `no_business_write=true`, `review_status=DRAFT/CANDIDATE` preservados.
+
+### 94.37.4 Verificação independente e gate de deploy
+
+- Verifier r1 (`c1d904b8cc..aa398570a9`): **INCONCLUSIVE** — engine devin `Not logged in` (10ª ocorrência). Request `.git/delpi-verifier/requests/g25-l2-mp1008-coverage-r1.md`.
+- O pacote exige `VERIFIER_VERDICT=PASS` para deploy e **não concede exceção** → **`DEPLOY_BLOCKED / OWNER_ACTION_REQUIRED`**.
+- Autorização condicional do usuário (Issue #131, comentário `6927823838`) permanece válida: o deploy está liberado **assim que** a verificação independente retornar PASS em uma rodada válida — sem necessidade de novo pedido.
+
+### 94.37.5 Residual
+
+- `G-02` fechado funcionalmente (8/8 estruturas com avaliador ou fallback documentado); produção ainda roda o avaliador FASTON único para todo 1008 até o deploy.
+- Verificação independente efetiva pendente de `devin auth` — owner: infra/tooling.
+- Próximos lotes: G-03 (vocabulário de certificações) e seguintes conforme §94.34.9.
