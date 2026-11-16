@@ -7193,3 +7193,16 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESTRIÇÕES honradas:** arquivo V024 intocado (0 diff em migrations/), nenhuma outra migration alterada, nenhum dado de negócio, nenhum ambiente além de DEV, PROD intocado, PHASE_ADVANCEMENT=NO, TWO_AGENT_PROMOTION=NOT_AUTHORIZED.
 - **NATUREZA:** reconciliação excepcional única do histórico DEV (banco gravou versão nunca commitada) — não é prática nova; migrations aplicadas permanecem imutáveis e mudanças de esquema seguem por migrations incrementais.
 - **PACOTE:** `evidence/c3-t2-dev-v024-authorized-reconciliation-davi-reproof/`.
+
+### 2026-11-16 — C3/T2: INT3 anchor classification & demonstrable vocabulary
+
+- **TASK:** `DELIA-C3-T2-INT3-ANCHOR-CLASSIFICATION-AND-DEMONSTRABLE-VOCABULARY-01` · **DECISION_REF:** `4acdf61177` (coordination report autorizada).
+- **BASE:** `736bf7cd189c` (= origin/main no reanchor; concorrentes c3775d97e4+ preservados — engenharia/helpdesk/tv WIP intacto).
+- **ROOT_CAUSE:** âncoras presentation-class (`display_format`, `layout`, …) só bypassavam veto de eco owner sob `delivery=aggregation`; sob record_detail/explanation/enumeration travavam evidência real congruente em UNSATISFIED/INCONCLUSIVE (boundary: aceite do plano admite classe sem caminho de demonstração).
+- **FIX (EXTEND, menor diff):** `_PRESENTATION_EVIDENCE_SOURCES` +5 tokens (display/display_format/format/layout/presentation); `_presentation_evidence_source` classificador delivery-agnóstico; bypass de eco em `_attempt_demonstrates_anchored`/`_attempt_binds_obligation` para qualquer delivery exigindo business evidence + `_attempt_business_entity_congruent`; `_material_required_scope` strip para âncora presentation sob qualquer delivery. Gates downstream inalterados (scope, op, identidade, completude, métrica, pós-condição ACT; READ nunca ACT; âncora pontilhada continua rejeitada; sem singularização entity-class).
+- **TESTES:** 6 RED→GREEN + 7 guards negativos preservados (`test_c3_t2_int3_anchor_classification.py`); suítes âncora/obrigação 99 PASS; regressão completa delia-api ~2184 testes EXIT=0; audits Phase3/guardrails EXIT=0.
+- **LIVE A/B (INT2, 15 cenários, two-agent, OpenRouter qwen3-14b):** `or-qwen14b-a7b1dfa635af` — 7 GROUNDED / 8 NON_GROUNDED honesto; G2 GROUNDED na 1ª tentativa (baseline exigia retry); R5/C2/D/R6 paridade; E2 `summary` sem `entity=` corretamente INCONCLUSIVE; zero falso SATISFIED/COMPLETE, zero write/bypass; F injection→insufficient. 44 req / 600,5k in / 33,7k out / 1,65e6 ms.
+- **NOVOS RESIDUAIS OBSERVADOS (não desta task):** `R2-CONTINUITY-MULTIPAGE-GROUP-SPLIT` (página 1 sem `params` diverge grupo de cobertura — A/E INCONCLUSIVE honesto); `INT2-REQUIRED-SCOPE-OPAQUE-PARAMS` (`params=<opaque>` declarado vira unproven); `T2-B-COMPREHENSION-AGENT-ERROR` (amostra única, caminho experimental).
+- **RESIDUAIS:** R4 AuthZ deny PENDING (owner platform-security); entity-class/unknown anchors sem eco → honesto por contrato; R6-N6/N7 PENDING.
+- **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
+- **NEXT:** `COORDINATION_C3_T2_INT3_ANCHOR_CLASSIFICATION_INDEPENDENT_REVIEW`

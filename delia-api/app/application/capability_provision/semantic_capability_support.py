@@ -2830,10 +2830,11 @@ def _required_scope_pairs(args: object) -> tuple[str, ...]:
 
 
 # Presentation-class evidence_source / view tokens — they name how the
-# model hoped to acquire a metric, not a business entity kind. When the
-# delivery is ``aggregation`` and an authoritative owner metric exists
-# under matching material filters, these must not veto a READ that
-# actually demonstrated the count (G2 anchor mismatch).
+# model hoped to acquire or render the answer, not a business entity
+# kind. A presentation anchor never proves a business fact by itself,
+# so it must not veto congruent authoritative business evidence under
+# ANY delivery (G2 aggregation path, extended to record_detail /
+# explanation / enumeration by INT3 anchor classification).
 _PRESENTATION_EVIDENCE_SOURCES = frozenset(
     {
         "summary",
@@ -2845,6 +2846,11 @@ _PRESENTATION_EVIDENCE_SOURCES = frozenset(
         "kpi",
         "dashboard",
         "view",
+        "display",
+        "display_format",
+        "format",
+        "layout",
+        "presentation",
     }
 )
 _CONSULTATION_OPERATIONS = frozenset(
@@ -3352,20 +3358,36 @@ def _attempt_declares_aggregate_metric(
     return False
 
 
-def _presentation_source_allows_aggregation(
+def _presentation_evidence_source(
     evidence_source: str | None,
 ) -> bool:
-    """True when the declared source names a presentation/metric view.
+    """True when the declared source names presentation vocabulary.
 
-    Under ``delivery=aggregation``, a READ that returns an owner
-    aggregate under matching material filters may demonstrate the
-    obligation even when Comprehension proposed ``summary`` /
-    ``analysis`` rather than the entity vocabulary of the capability
-    that actually delivered the total (G2 / INT3 depth).
+    Presentation tokens name how the model hoped to acquire or render
+    the answer — never a business entity kind — so under ANY delivery a
+    congruent authoritative business attempt may demonstrate the
+    obligation even without a literal owner echo of the token. Under
+    ``delivery=aggregation`` the same applies to an owner aggregate
+    under matching material filters (G2 / INT3 depth); under
+    enumeration/detail deliveries the ordinary completeness and
+    identity gates still apply after the bypass.
     """
     if evidence_source is None:
         return False
     return evidence_source.casefold() in _PRESENTATION_EVIDENCE_SOURCES
+
+
+def _presentation_source_allows_aggregation(
+    evidence_source: str | None,
+) -> bool:
+    """Presentation anchor + aggregation delivery compat check.
+
+    Kept as the narrow aggregation predicate; new call sites should
+    use ``_presentation_evidence_source`` for the delivery-agnostic
+    class check and gate aggregation-specific behaviour on the
+    ``delivery`` parameter explicitly.
+    """
+    return _presentation_evidence_source(evidence_source)
 
 
 def _obligation_declared_entity_tokens(
@@ -3450,11 +3472,15 @@ def _attempt_demonstrates_anchored(
     requires an authoritative metric or provably complete collection
     — never a count invented from an unverifiable window.
 
-    Under ``aggregation``, presentation-class evidence sources
-    (``summary``/``analysis``/…) and consultation-class operations
-    (READ↔ANALYSIS) do not veto an owner aggregate that already
-    satisfies the material filter scope — the metric is the
-    demonstration, not the presentation vocabulary of the plan.
+    Presentation-class evidence sources (``summary``/``analysis``/
+    ``display_format``/…) never prove a business fact, so under any
+    delivery they do not veto congruent authoritative business
+    evidence — the declared ``required_scope`` entity tokens are the
+    congruence contract. Under ``aggregation``, consultation-class
+    operations (READ↔ANALYSIS) also relax so an owner aggregate that
+    already satisfies the material filter scope demonstrates — the
+    metric is the demonstration, not the presentation vocabulary of
+    the plan.
     """
     if attempt.status is not GovernedCapabilityStatus.SUCCESS:
         return False
@@ -3462,23 +3488,24 @@ def _attempt_demonstrates_anchored(
         return False
     if "discovery_metadata_observation" in attempt.limitations:
         return False
+    presentation_source = _presentation_evidence_source(
+        obligation.evidence_source
+    )
     aggregation_presentation = (
-        delivery == "aggregation"
-        and _presentation_source_allows_aggregation(
-            obligation.evidence_source
-        )
+        delivery == "aggregation" and presentation_source
     )
     if obligation.evidence_source is not None:
         source = obligation.evidence_source.casefold()
         tokens = _attempt_anchor_tokens(attempt)
         if source not in tokens:
-            if not aggregation_presentation:
+            if not presentation_source:
                 return False
-            # Presentation source under aggregation: require business
+            # Presentation source under any delivery: require business
             # evidence AND declared business-entity congruence with the
             # attempt's owner vocabulary — a sales_order total must
             # never satisfy a process-count obligation merely because
-            # both share status=ativo and an authoritative metric.
+            # both share status=ativo and an authoritative metric, and
+            # a display-format anchor never proves the business fact.
             if not _is_business_evidence_attempt(attempt):
                 return False
             if not _attempt_business_entity_congruent(attempt, obligation):
@@ -3560,9 +3587,7 @@ def _attempt_satisfies_obligation(
     if not needle:
         return False
     scope = item.required_scope
-    if delivery == "aggregation" and _presentation_source_allows_aggregation(
-        item.evidence_source
-    ):
+    if _presentation_evidence_source(item.evidence_source):
         scope = _material_required_scope(scope)
     if _attempt_scope_state(attempt, scope) != "ok":
         # A declared required scope that is contradicted or unproven
@@ -3611,10 +3636,11 @@ def _attempt_binds_obligation(
     whose demonstration failed on completeness/postcondition. An
     echoed DIFFERENT kind or operation disproves the bind outright.
 
-    Presentation-class sources under ``aggregation`` bind to business
-    evidence of a consultation-class capability when material filters
-    are not contradicted — demonstration still requires the aggregate
-    metric path in ``_attempt_satisfies_obligation``.
+    Presentation-class sources bind to congruent business evidence
+    under any delivery when material filters are not contradicted —
+    demonstration still requires the full gate chain in
+    ``_attempt_satisfies_obligation`` (scope, operation, identity,
+    completeness/metric, postcondition).
     """
     item = _obligation_item(obligation)
     if not item.description:
@@ -3628,11 +3654,13 @@ def _attempt_binds_obligation(
     if "discovery_metadata_observation" in attempt.limitations:
         return False
     scope = item.required_scope
-    aggregation_presentation = (
-        delivery == "aggregation"
-        and _presentation_source_allows_aggregation(item.evidence_source)
+    presentation_source = _presentation_evidence_source(
+        item.evidence_source
     )
-    if aggregation_presentation:
+    aggregation_presentation = (
+        delivery == "aggregation" and presentation_source
+    )
+    if presentation_source:
         scope = _material_required_scope(scope)
     if _attempt_scope_state(attempt, scope) == "contradicted":
         # The invocation provably queried a different business scope —
@@ -3645,11 +3673,11 @@ def _attempt_binds_obligation(
         source = item.evidence_source.casefold()
         if source not in tokens:
             if (
-                aggregation_presentation
+                presentation_source
                 and _is_business_evidence_attempt(attempt)
                 and _attempt_business_entity_congruent(attempt, item)
             ):
-                # Presentation source under aggregation: business
+                # Presentation source under any delivery: business
                 # evidence congruent with the declared entity may bind.
                 pass
             elif _attempt_surface_anchor_match(attempt, source):

@@ -1,0 +1,63 @@
+task_id: DELIA-C3-T2-INT3-ANCHOR-CLASSIFICATION-AND-DEMONSTRABLE-VOCABULARY-01
+phase: C3/T2
+cp_rq: INT-3 / INT3-OBLIGATION-DEMONSTRATION-DEPTH
+mode: BOUNDED_IMPLEMENTATION / RED_FIRST / REUSE_BEFORE_DESIGN / REAL_EVAL / NO_PRODUCTION_DEPLOY
+reference_decision: 4acdf611778ccbd035b4744ec5bc3371036cd59b
+base_head: 736bf7cd189cb5a16f9f468c98aa1346a87c9382
+delivered_head: (to be reconciled at commit)
+
+scope:
+  functional_changes:
+    - delia-api/app/application/capability_provision/semantic_capability_support.py
+  test_changes:
+    - delia-api/tests/test_c3_t2_int3_anchor_classification.py (new)
+  forbidden_surfaces_untouched:
+    - Keycloak, Core RBAC, Domain APIs, DAVI, TÉO, Automation Hub,
+      MCP providers, database, migrations, production runtime
+
+mechanism:
+  problem: >
+    presentation-class evidence_source anchors (display_format e vocabulário
+    afim) só bypassavam o veto de eco owner sob delivery=aggregation. Sob
+    record_detail / explanation / enumeration, a âncora nunca ecoada travava
+    evidência empresarial real e congruente em UNSATISFIED/INCONCLUSIVE.
+  fix: >
+    classe de âncora de apresentação reconhecida sob QUALQUER delivery —
+    bypass de eco exige business evidence + congruência de entidade
+    (required_scope entity=/entity_kind= ∩ owner anchor tokens); todos os
+    gates downstream (scope, operação, identidade, completude de coleção,
+    métrica de agregação, pós-condição ACT) inalterados. Frozenset de
+    apresentação estendido com display/display_format/format/layout/
+    presentation.
+  reuse_decision: EXTEND
+  new_abstractions: none
+
+tests:
+  red_count: 6
+  red_cases:
+    - display_format + record_detail + congruent → SATISFIED
+    - display_format + explanation + congruent → SATISFIED
+    - display_format + enumeration + complete + congruent → SATISFIED
+    - summary + record_detail + congruent → SATISFIED (class-wide)
+    - layout + record_detail + congruent → SATISFIED
+    - display_format + enumeration + INCOMPLETE + congruent → INCONCLUSIVE
+  guards_unchanged:
+    - wrong entity congruence → never SATISFIED
+    - presentation sem entity scope → never SATISFIED
+    - presentation + ACT/read-only → never SATISFIED
+    - discovery-metadata-only → never SATISFIED
+    - processes ≠ process (sem singularização) → never SATISFIED
+    - transportadora (desconhecida) vs eco diverso → UNSATISFIED
+    - âncora exata entity continua SATISFIED
+  regression: full delia-api suite exit 0 (zero FAILED/ERROR)
+
+live_eval:
+  harness: delia-api/scripts/run_int1_openrouter_qwen14b_instrumented_eval.sh
+  corpus: INT2 (15 cenários)
+  model: OpenRouter qwen3-14b (profile openrouter_qwen)
+  variant: two-agent experiment flag ON (mesmo das avaliações anteriores)
+  evaluation_id: or-qwen14b-a7b1dfa635af
+  llm_requests: 44
+  input_tokens: 600528
+  output_tokens: 33695
+  latency_ms_total: 1648340

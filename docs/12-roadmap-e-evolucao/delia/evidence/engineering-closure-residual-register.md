@@ -2149,3 +2149,22 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `R6-N6/N7` | `PENDING` | dependem de R4 |
 
 **NEXT:** `COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+
+### 2026-11-16 — INT3 anchor classification & demonstrable vocabulary
+
+**TASK:** `DELIA-C3-T2-INT3-ANCHOR-CLASSIFICATION-AND-DEMONSTRABLE-VOCABULARY-01`
+**DECISION_REF:** `4acdf61177` · **LIVE_EVAL:** `or-qwen14b-a7b1dfa635af` (INT2, 15 cenários, two-agent flag)
+**EVIDENCE:** `evidence/c3-t2-int3-anchor-classification/`
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `PARTIAL_REMEDIATED / OPEN_LOW` | Classe de âncora presentation (`summary`/`display_format`/`layout`/…) agora bypassa veto de eco sob QUALQUER delivery exigindo business evidence + congruência `entity=`∩anchor tokens; 6 RED→GREEN + regressão completa exit 0. Residual: âncoras entity-class/unknown sem eco permanecem honestamente não-SATISFIED por contrato (sem singularização) — `processes`≠`process`, `transportadora` sem vocabulário. |
+| `T2-G2-OBLIGATION-ANCHOR-MISMATCH` | `CLOSED_PROVEN` (anterior) mantido | Live G2 GROUNDED+SATISFIED na 1ª tentativa (`or-qwen14b-a7b1dfa635af`, âncora `process` + `params.status=ativo`, 3 páginas, 109) |
+| `R2-CONTINUITY-MULTIPAGE-GROUP-SPLIT` | `OPEN_LOW (observado live)` | `INT2_A`/`INT2_E`: página 1 invocada sem container `params` enquanto páginas 2+ o carregam → `invocation_scope` diverge → `_joint_collection_coverage` agrupa separado → INCONCLUSIVE honesto com união real 40+40+29=109. Owner: `_invocation_scope`/group identity — normalização de janela de paginação na identidade do grupo. |
+| `INT2-REQUIRED-SCOPE-OPAQUE-PARAMS` | `OPEN_LOW (observado live)` | `INT2_E`/`INT2_G`: `required_scope` contém `params=<opaque:hash>` quando o modelo declara objeto complexo — par não-checável vira `unproven` → INCONCLUSIVE mesmo com escopo correto invocado. Owner: `_required_scope_pairs` canonicalização. |
+| `R5_MULTIPAGE_UNION` | `PROVEN_IN_SAMPLE` (reprovado) | `INT2_R5` GROUNDED+SATISFIED (3 reads, `params` consistente nas 3 chamadas) |
+| `T2-B-COMPREHENSION-AGENT-ERROR` | `OPEN (amostra única)` | `INT2_B`: `comprehension_agent_error`, 0 requests — falha upstream no caminho experimental two-agent; não reproduzida; não é defeito de Suficiência |
+| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | sem identidade restrita legítima — owner platform-security/Keycloak |
+| `R6-N6/N7` | `PENDING` | dependem de R4 |
+
+**NEXT:** `COORDINATION_C3_T2_INT3_ANCHOR_CLASSIFICATION_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
