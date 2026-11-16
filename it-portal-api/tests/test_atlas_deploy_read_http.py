@@ -12,7 +12,7 @@ from it_portal_app.interface.http.routes.atlas_deploy_read_routes import (
     ATLAS_DEPLOY_VIEW, get_atlas_journal_reader,
 )
 from it_portal_app.main import app
-from tests.conftest import ALL_PERMISSIONS
+from tests.conftest import ALL_PERMISSIONS, USER_ID
 
 REQUESTER = "11111111-2222-4333-8444-555555555555"
 PROPOSAL = "01234567-89ab-4def-8abc-0123456789ab"
@@ -167,7 +167,8 @@ def test_fresh_core_identity_mismatch_cannot_be_accepted(client, principal, enab
 
     async def mismatched(_token, *, force_refresh=False):
         return {
-            "id": REQUESTER, "name": "Different", "permissions": [*ALL_PERMISSIONS, ATLAS_DEPLOY_VIEW],
+            "id": REQUESTER if force_refresh else USER_ID,
+            "name": "Different", "permissions": [*ALL_PERMISSIONS, ATLAS_DEPLOY_VIEW],
             "is_superadmin": False,
         }
 
