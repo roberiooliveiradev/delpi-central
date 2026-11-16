@@ -35,3 +35,13 @@
 
 - Helpdesk: paridade visual inferida de código + CSS espelhado; E2E HML bloqueado por RBAC do usuário de teste — **não afirmar homologação visual do Helpdesk**.
 - PRD: pendente de gates G9–G12 nesta thread.
+
+## Deploy controlado PRD (G11–G12)
+
+- **RELEASE_SHA:** `5782cd10dd` (FF em `~/projetos/delpi-central` a partir de `75250f2beb`).
+- **Ordem:** plugin-ui → my-requests → helpdesk via `up-prod-sequential.sh --build` (frontend-only; zero migrations, zero RBAC, zero API).
+- **Rollback:** `infra-plugin-ui:rollback-ux-v3-20261116` (`d796f2c9d2bc`) · `infra-my-requests:rollback-ux-v3-20261116` (`e3c65b160538`) · `infra-helpdesk:rollback-ux-v3-20261116` (`6516a27df817`) — retag + `up -d` restaura o estado anterior.
+- **Digests PRD:** plugin-ui `70b89d6ce531` · my-requests `882dcf2025c0` · helpdesk `6e2c3a1a4930`.
+- **Health:** 3 containers `Up`; remoteEntry 200/200/200 via gateway; bundle novo confirmado (`style-DGLwMMH5.css` contém `table-meta`); logs sem erros/5xx; gate de autenticação intacto.
+- **Smoke autenticado:** `INCONCLUSIVE` — credencial `ti_delpi` (dev) inválida no Keycloak PRD; nenhuma identidade de teste autorizada para produção foi provisionada (correto: não se cria privilégio artificial). Validação visual PRD fica para usuário legítimo.
+- **Helpdesk:** migrado no mesmo contrato e publicado; validação E2E visual permanece bloqueada por RBAC (HML `TEST_NOT_RUN`, PRD `INCONCLUSIVE`).
