@@ -251,6 +251,8 @@ class SuppliesMetricsSnapshotService:
                 not isinstance(payload, dict)
                 or payload.get("source") != "SC1010+SCR010+SC7010"
                 or payload.get("scope") != "release_or_issue_without_approval_to_first_order"
+                or payload.get("calculation_mode") != "completed_or_pending_elapsed_as_of_today"
+                or not isinstance(payload.get("as_of_date"), str)
             ):
                 return empty
             breakdown = payload.get("branch_breakdown") or {}
