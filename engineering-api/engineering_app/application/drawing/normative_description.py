@@ -46,11 +46,30 @@ NORM_REFS: dict[str, dict[str, str]] = {
         "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
         "applicability": "terminals FASTON/BANDEIRA, group 1008",
     },
-    "MP_ISOLATOR_1009": {
+    "MP_1009": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1009",
         "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "applicability": "group 1009 — subtype dispatched "
+                        "(ISOLADOR | INSERTO | CONECTOR)",
+    },
+    "MP_ISOLATOR_1009": {
+        "owner": "ENGENHARIA",
+        "ref": "normas-tecnicas-descricao-materias-primas.md#1009-isoladores",
+        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
         "applicability": "isolators, group 1009",
+    },
+    "MP_INSERT_1009": {
+        "owner": "ENGENHARIA",
+        "ref": "normas-tecnicas-descricao-materias-primas.md#1009-inserto",
+        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "applicability": "insertos, group 1009",
+    },
+    "MP_CONNECTOR_1009": {
+        "owner": "ENGENHARIA",
+        "ref": "normas-tecnicas-descricao-materias-primas.md#1009-conectores",
+        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "applicability": "conectores, group 1009",
     },
 }
 
@@ -78,6 +97,16 @@ _TERMINAL_PACK = {"GRANEL", "FITADO", "BLISTER"}
 _ISOLATOR_MATERIALS = {"NYLON", "POLIPROPILENO", "PVC", "POLIURETANO"}
 _ISOLATOR_ORIENT = {"RETO", "90"}
 _ISOLATOR_CERTS = {"UL", "ROHS", "IEC", "ABNT", "DIN", "V2"}
+# 1009 · Inserto (norm: tipos documentados; bitola explicitamente opcional)
+_INSERT_TYPES = {
+    "MACHO", "FEMEA", "FÊMEA", "MODULO", "MÓDULO", "CEGO", "FALSO",
+    "BLINDADO",
+}
+_INSERT_OBS = {"CRIMP", "SCREW"}
+# 1009 · Conectores (tipos do documento normativo)
+_CONNECTOR_TYPES = {"MODULAR", "PORTA SOQUETE", "RETO", "ANGULAR"}
+_CONNECTOR_OBS = {"C/SELO", "C/TRAVA", "CHAVEAMENTO"}
+_1009_CERTS = {"UL", "ROHS", "IEC", "ABNT", "DIN", "CSA", "V2"}
 
 _CABLE_GROUP = re.compile(r"^100[1-5]$")
 _GROUP = re.compile(r"^(\d{4})")
@@ -90,6 +119,8 @@ _COLOR_ABBR = re.compile(r"\b(PT|BN|AZ|VD|VM|AM|LR|CZ|RS|BR|AL)\b")
 _DIM_PAIR = re.compile(r"\b\d+([,.]\d+)?\s*[Xx]\s*\d+([,.]\d+)?\b")
 _RANGE_MM2 = re.compile(r"\b\d+([,.]\d+)?\s*-\s*\d+([,.]\d+)?\s*(MM2|MM)\b")
 _SERIE = re.compile(r"\b\d[,.]\d\b")
+_WAYS = re.compile(r"\b\d+\s*(?:POLOS?|VIAS)\b")
+_INSERT_SERIE = re.compile(r"\bHAN\s+([A-Z0-9]+)\b")
 
 
 def _attr(name: str, raw: str | None, method: str,
@@ -335,6 +366,135 @@ def _eval_isolator_1009(desc: str) -> dict[str, Any]:
     return attrs, rules
 
 
+def _eval_insert_1009(desc: str) -> dict[str, Any]:
+    """1009 · Inserto — INSERTO + TIPO + VIAS/POLOS + LINHA/SÉRIE +
+    BITOLA (opcional) + OBS + NORMAS."""
+    up = desc.upper()
+    attrs: list[dict] = []
+    rules: list[dict[str, Any]] = []
+    tokens = set(re.findall(r"[A-ZÀ-Ú]{2,}", up))
+    ttype = next((t for t in _INSERT_TYPES if t in tokens), None)
+    ways = _WAYS.search(up)
+    serie = _INSERT_SERIE.search(up)
+    gauge = _RANGE_MM2.search(up) or _MM2.search(up) or _AWG.search(up)
+    obs = next((o for o in _INSERT_OBS if re.search(rf"\b{o}\b", up)), None)
+    certs = sorted(c for c in _1009_CERTS
+                   if re.search(rf"\b{c}\b", up))
+    attrs += [
+        _attr("insert_type", ttype, "vocab", "EXTRACTED" if ttype else "ABSENT"),
+        _attr("ways", ways.group(0) if ways else None, "regex", "EXTRACTED" if ways else "ABSENT"),
+        _attr("serie", serie.group(0) if serie else None, "regex", "EXTRACTED" if serie else "ABSENT"),
+        _attr("gauge", gauge.group(0) if gauge else None, "regex", "EXTRACTED" if gauge else "ABSENT"),
+        _attr("observations", obs, "vocab", "EXTRACTED" if obs else "ABSENT"),
+        _attr("certifications", ",".join(certs) or None, "vocab", "EXTRACTED" if certs else "ABSENT"),
+    ]
+    rules.append(_rule(
+        "MP-1009I-PREFIX", "prefix ITEM = INSERTO", True,
+        "PASS" if up.strip().startswith("INSERTO") else "VIOLATION_CANDIDATE",
+        up.split()[0] if up.strip() else None, "INSERTO"))
+    rules.append(_rule(
+        "MP-1009I-TYPE", "type MACHO|FEMEA|MODULO|CEGO|FALSO|BLINDADO",
+        True, "PASS" if ttype else "INCONCLUSIVE",
+        ttype, sorted(_INSERT_TYPES)))
+    rules.append(_rule(
+        "MP-1009I-WAYS", "number of ways/poles (e.g. 10 POLOS, 3 VIAS)",
+        True, "PASS" if ways else "INCONCLUSIVE",
+        ways.group(0) if ways else None))
+    rules.append(_rule(
+        "MP-1009I-SERIE", "line/series (e.g. HAN D, HAN E, HAN 1A)",
+        True, "PASS" if serie else "INCONCLUSIVE",
+        serie.group(0) if serie else None))
+    # bitola explicitly OPTIONAL in the norm — absence is never a violation
+    rules.append(_rule(
+        "MP-1009I-GAUGE", "gauge optional (e.g. 0,14-2,5MM2; 20-14AWG)",
+        bool(gauge), "PASS" if gauge else "NOT_APPLICABLE",
+        gauge.group(0) if gauge else None,
+        reason=None if gauge else
+        "optional per norm — absence is not a deviation"))
+    rules.append(_rule(
+        "MP-1009I-CERT", "norms/certs (RoHS, UL, IEC, DIN, UL/CSA)",
+        True, "PASS" if certs else "INCONCLUSIVE", certs))
+    return attrs, rules
+
+
+def _eval_connector_1009(desc: str) -> dict[str, Any]:
+    """1009 · Conectores — CONECTOR + TIPO + Nº VIAS + COR + OBS + NORMAS."""
+    up = desc.upper()
+    attrs: list[dict] = []
+    rules: list[dict[str, Any]] = []
+    ttype = next((t for t in _CONNECTOR_TYPES if t in up), None)
+    ways = _WAYS.search(up)
+    color = _COLOR_ABBR.search(up)
+    obs = next((o for o in _CONNECTOR_OBS if o in up), None)
+    certs = sorted(c for c in _1009_CERTS
+                   if re.search(rf"\b{c}\b", up))
+    attrs += [
+        _attr("connector_type", ttype, "vocab", "EXTRACTED" if ttype else "ABSENT"),
+        _attr("ways", ways.group(0) if ways else None, "regex", "EXTRACTED" if ways else "ABSENT"),
+        _attr("color", color.group(1) if color else None, "regex", "EXTRACTED" if color else "ABSENT"),
+        _attr("observations", obs, "vocab", "EXTRACTED" if obs else "ABSENT"),
+        _attr("certifications", ",".join(certs) or None, "vocab", "EXTRACTED" if certs else "ABSENT"),
+    ]
+    rules.append(_rule(
+        "MP-1009C-PREFIX", "prefix ITEM = CONECTOR", True,
+        "PASS" if up.strip().startswith("CONECTOR") else "VIOLATION_CANDIDATE",
+        up.split()[0] if up.strip() else None, "CONECTOR"))
+    rules.append(_rule(
+        "MP-1009C-TYPE", "type MODULAR|PORTA SOQUETE|RETO|ANGULAR",
+        True, "PASS" if ttype else "INCONCLUSIVE",
+        ttype, sorted(_CONNECTOR_TYPES)))
+    rules.append(_rule(
+        "MP-1009C-WAYS", "number of ways (e.g. 3 VIAS, 6 VIAS)",
+        True, "PASS" if ways else "INCONCLUSIVE",
+        ways.group(0) if ways else None))
+    rules.append(_rule(
+        "MP-1009C-COLOR", "color abbreviation (PT, AL, ...)", True,
+        "PASS" if color else "INCONCLUSIVE",
+        color.group(1) if color else None))
+    rules.append(_rule(
+        "MP-1009C-CERT", "norms/certs (RoHS, UL, V2, IEC, ABNT, DIN)",
+        True, "PASS" if certs else "INCONCLUSIVE", certs))
+    return attrs, rules
+
+
+# First ITEM word is the normative subtype marker — each 1009
+# structure fixes its own prefix (ISOLADOR | INSERTO | CONECTOR).
+_1009_SUBTYPES = {
+    "ISOLADOR": _eval_isolator_1009,
+    "INSERTO": _eval_insert_1009,
+    "CONECTOR": _eval_connector_1009,
+}
+_1009_RULESET = {
+    "ISOLADOR": "MP_ISOLATOR_1009",
+    "INSERTO": "MP_INSERT_1009",
+    "CONECTOR": "MP_CONNECTOR_1009",
+}
+
+
+def _eval_1009(desc: str) -> dict[str, Any]:
+    """Group 1009 dispatcher — picks the evaluator by the ITEM prefix.
+
+    An absent/unknown subtype NEVER falls through to the isolator
+    rules: it yields an explicit INCONCLUSIVE instead.
+    """
+    first = (desc or "").strip().split()[0].upper() if desc else ""
+    subtype = first if first in _1009_SUBTYPES else None
+    if subtype is None:
+        return [
+            _attr("subtype", first or None, "item_prefix", "AMBIGUOUS")], [
+            _rule(
+                "MP-1009-SUBTYPE",
+                "ITEM prefix identifies subtype "
+                "(ISOLADOR|INSERTO|CONECTOR)",
+                True, "INCONCLUSIVE", first or None,
+                sorted(_1009_SUBTYPES),
+                "subtype not identified — no evaluator applied "
+                "arbitrarily")]
+    attrs, rules = _1009_SUBTYPES[subtype](desc)
+    attrs.insert(0, _attr("subtype", subtype, "item_prefix", "EXTRACTED"))
+    return attrs, rules
+
+
 def resolve_applicability(product_code: str, product_type: str) -> tuple:
     """Return (norm_key, evaluator | None, status_reason).
 
@@ -350,7 +510,7 @@ def resolve_applicability(product_code: str, product_type: str) -> tuple:
     if group == "1008":
         return "MP_TERMINAL_1008", _eval_terminal_1008, None
     if group == "1009":
-        return "MP_ISOLATOR_1009", _eval_isolator_1009, None
+        return "MP_1009", _eval_1009, None
     if group == "1038":
         return "MP_CABLES_1001_1005", None, (
             "group 1038 looks cable-like but norm 1001-1005 was NOT "
@@ -415,6 +575,11 @@ def evaluate_description(
             "another source")
         return result
     attrs, rules = evaluator((description_raw or "").strip())
+    if norm_key == "MP_1009":
+        st = next((a["normalized_value"] for a in attrs
+                   if a["name"] == "subtype"), None)
+        result["applied_ruleset"] = NORM_REFS.get(
+            _1009_RULESET.get(st, "MP_1009"))
     result["extracted_attributes"] = attrs
     result["rule_results"] = rules
     statuses = [r["status"] for r in rules if r["applicable"]]

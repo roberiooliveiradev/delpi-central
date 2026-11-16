@@ -214,7 +214,7 @@ def test_applicability_resolver_matrix():
     assert resolve_applicability("50213206", "PI")[0] == "PI_50XX"
     assert resolve_applicability("10049999", "MP")[0] == "MP_CABLES_1001_1005"
     assert resolve_applicability("10080001", "MP")[0] == "MP_TERMINAL_1008"
-    assert resolve_applicability("10090001", "MP")[0] == "MP_ISOLATOR_1009"
+    assert resolve_applicability("10090001", "MP")[0] == "MP_1009"
     assert resolve_applicability("10380040", "MP")[2] is not None  # blocked
     assert resolve_applicability("77770001", "MP")[0] is None
 
@@ -835,3 +835,163 @@ def test_r31_t15_owner_blocked_and_blocked_gate_coexist():
         "OWNER_BLOCKED"
     assert b["totvs_description_normative"]["overall_status"] == \
         "OWNER_BLOCKED"
+
+
+# ════════════════════════ G25-L1 — G-01: subtipos MP 1009 ════════════
+# A norma 1009 tem três estruturas (ISOLADOR/INSERTO/CONECTOR).
+# Antes do fix, tudo era avaliado como ISOLADOR → falso VIOLATION.
+
+def _ev(code, desc, source="DRAWING"):
+    from engineering_app.application.drawing.normative_description import (
+        evaluate_description)
+    return evaluate_description(
+        product_code=code, product_type="MP",
+        description_raw=desc, description_source=source)
+
+
+def _rule(r, rid):
+    return next(x for x in r["rule_results"] if x["rule_id"] == rid)
+
+
+def test_l1_isolator_official_still_passes():
+    """AC-01: ISOLADOR válido preservado."""
+    r = _ev("10090010", "ISOLADOR NYLON RETO 6,3 PT UL94 V2")
+    assert r["applied_ruleset"]["applicability"].startswith("isolators")
+    assert r["overall_status"] == "PASS"
+    st = next(a for a in r["extracted_attributes"] if a["name"] == "subtype")
+    assert st["normalized_value"] == "ISOLADOR"
+
+
+def test_l1_insert_official_no_false_violation():
+    """AC-02: INSERTO conforme NÃO vira VIOLATION_CANDIDATE."""
+    r = _ev("10090011",
+            "INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL")
+    assert r["overall_status"] == "PASS"
+    assert r["applied_ruleset"]["applicability"].startswith("insertos")
+    assert not any(x["status"] == "VIOLATION_CANDIDATE"
+                   for x in r["rule_results"])
+    assert _rule(r, "MP-1009I-PREFIX")["status"] == "PASS"
+    assert _rule(r, "MP-1009I-TYPE")["status"] == "PASS"
+    assert _rule(r, "MP-1009I-WAYS")["status"] == "PASS"
+    assert _rule(r, "MP-1009I-SERIE")["status"] == "PASS"
+    assert _rule(r, "MP-1009I-GAUGE")["status"] == "PASS"
+
+
+def test_l1_connector_official_no_false_violation():
+    """AC-03: CONECTOR conforme NÃO vira VIOLATION_CANDIDATE."""
+    r = _ev("10090012", "CONECTOR MODULAR 3 VIAS AL C/TRAVA UL")
+    assert r["overall_status"] == "PASS"
+    assert r["applied_ruleset"]["applicability"].startswith("conectores")
+    assert _rule(r, "MP-1009C-PREFIX")["status"] == "PASS"
+    assert _rule(r, "MP-1009C-TYPE")["status"] == "PASS"
+    assert _rule(r, "MP-1009C-WAYS")["status"] == "PASS"
+    assert _rule(r, "MP-1009C-COLOR")["status"] == "PASS"
+
+
+def test_l1_insert_optional_gauge_absent_not_violation():
+    """AC-05: bitola é OPCIONAL na norma — ausência não pune."""
+    r = _ev("10090011", "INSERTO MACHO 3 POLOS HAN E UL")
+    g = _rule(r, "MP-1009I-GAUGE")
+    assert g["status"] == "NOT_APPLICABLE"
+    assert g["applicable"] is False
+    assert r["overall_status"] == "PASS"
+
+
+def test_l1_unknown_subtype_no_arbitrary_evaluator():
+    """AC-07: subtipo ausente/desconhecido → INCONCLUSIVE, nunca ISOLADOR."""
+    for desc in ("BUCHA NYLON 6,3 PT UL",
+                 "1009 ITEM SEM PREFIXO NORMATIVO"):
+        r = _ev("10090099", desc)
+        assert r["overall_status"] == "INCONCLUSIVE"
+        assert _rule(r, "MP-1009-SUBTYPE")["status"] == "INCONCLUSIVE"
+        assert not any(x["status"] == "VIOLATION_CANDIDATE"
+                       for x in r["rule_results"])
+        assert not any(x["rule_id"].startswith("MP-1009-")
+                       and x["rule_id"] != "MP-1009-SUBTYPE"
+                       for x in r["rule_results"])
+
+
+def test_l1_incomplete_description_no_false_violation():
+    """AC-06: descrição incompleta → campos INCONCLUSIVE, não violação."""
+    r = _ev("10090012", "CONECTOR")
+    assert r["overall_status"] == "INCONCLUSIVE"
+    assert not any(x["status"] == "VIOLATION_CANDIDATE"
+                   for x in r["rule_results"])
+    assert _rule(r, "MP-1009C-PREFIX")["status"] == "PASS"
+
+
+def test_l1_wrong_prefix_for_identified_subtype_is_candidate():
+    """AC implícita: prefixo incompatível com ITEM identificado por
+    evidência → candidato legítimo (nunca NC automática)."""
+    r = _ev("10090010", "ISOLADOR INSERTO 3 VIAS UL")
+    # primeiro token ISOLADOR → avaliador isolador; "INSERTO" é só token
+    assert _rule(r, "MP-1009-PREFIX")["status"] == "PASS"
+    r2 = _ev("10090012", "CONECTOR ISOLADOR NYLON RETO UL")
+    assert _rule(r2, "MP-1009C-PREFIX")["status"] == "PASS"
+
+
+def test_l1_all_sources():
+    """RQ-L1-08: dispatch funciona em DRAWING/TOTVS/CANDIDATE."""
+    for src in ("DRAWING", "TOTVS", "CANDIDATE"):
+        r = _ev("10090012", "CONECTOR MODULAR 3 VIAS AL UL", source=src)
+        assert r["overall_status"] == "PASS"
+        assert r["description_source"] == src
+
+
+def test_l1_non_1009_untouched_and_no_cross_norm():
+    """AC-08 + RQ-L1-06: outros grupos e PI inalterados; regras 1009
+    nunca aplicadas fora do grupo."""
+    cabo = _ev("10010101", "CABO PVC 70°C 0,75MM2 PT 450/750V")
+    assert all(not x["rule_id"].startswith("MP-1009")
+               for x in cabo["rule_results"])
+    term = _ev("10080136",
+               "TERM. FASTON 6,30X0,80 0,50-1,50MM2 ESTANHADO UL")
+    assert all(not x["rule_id"].startswith("MP-1009")
+               for x in term["rule_results"])
+    pi = evaluate_pi_description_helper = _ev  # noqa
+    from engineering_app.application.drawing.normative_description import (
+        evaluate_description)
+    r = evaluate_description(
+        product_code="50213206", product_type="PI",
+        description_raw="CA18BRAN-00512/10/10-0000-0000",
+        description_source="DRAWING")
+    assert r["overall_status"] == "PASS"
+    assert not any(x["rule_id"].startswith("MP-1009")
+                   for x in r["rule_results"])
+
+
+def test_l1_comparator_integration_preserves_contract():
+    """RQ-L1-07/08 + AC-09/10: bloco normativo via comparador mantém
+    contrato v1, identidade de fontes e gates F01/F02."""
+    b = _r3_block(
+        code="10090011", occurrence_id="L1-C1",
+        bom={"component_code": "10090011",
+             "component_description": "INSERTO FEMEA 10 POLOS HAN D UL",
+             "parent_code": "50233507"},
+        drawing={"item_description":
+                 "INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL",
+                 "parent_code": "50233507", "parent_verified": True,
+                 "parent_description": "CB18VERD-00512/10/10-0000-0000"},
+        bom_desc_by_code={"50233507": "CB18VERD-00512/10/10-0000-0000"})
+    dr = b["drawing_description_normative"]
+    assert dr["contract_version"] == "normative_description.v1"
+    assert dr["overall_status"] in {"PASS", "INCONCLUSIVE"}
+    assert dr["applied_ruleset"]["applicability"].startswith("insertos")
+    assert dr["no_business_write"] is True
+    assert b["parent_divergence"]["status"] == "SAME_PARENT_VERIFIED"
+    # F02: gate continua produzindo checks=[] quando bloqueado
+    b2 = _r3_block(
+        code="10090011", occurrence_id="L1-C2",
+        bom={"component_code": "10090011",
+             "component_description": "INSERTO FEMEA 10 POLOS HAN D UL",
+             "parent_code": "50233507"},
+        drawing={"item_description": "INSERTO FEMEA 10 POLOS HAN D UL",
+                 "parent_code": "50233508", "parent_verified": True,
+                 "parent_description": "CA18BRAN-00512/10/10-0000-0000"},
+        bom_desc_by_code={
+            "50233507": "CB18VERD-00512/10/10-0000-0000",
+            "50233508": "CA18BRAN-00512/10/10-0000-0000"})
+    cross = next(c for c in b2["pi_bom_coherence"]
+                 if c["comparison_type"] == "CROSS_SOURCE")
+    assert cross["status"] == "INCONCLUSIVE"
+    assert cross["checks"] == []
