@@ -85,11 +85,11 @@ jobs:
           set -euo pipefail
           cd infra
           PUBLIC_HUB_HML_RELEASE_IMAGE='' docker compose -f docker-compose.hml.yml \
-            --env-file env.hml.example config --no-env-resolution --format json \
+            --env-file env.hml.example --profile public-hub config --no-env-resolution --format json \
             > "$RUNNER_TEMP/atlas-hml-local.json"
           PUBLIC_HUB_HML_RELEASE_IMAGE='ghcr.io/roberiooliveiradev/delpi-public-hub@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
             docker compose -f docker-compose.hml.yml --env-file env.hml.example \
-            config --no-env-resolution --format json > "$RUNNER_TEMP/atlas-hml-release.json"
+            --profile public-hub config --no-env-resolution --format json > "$RUNNER_TEMP/atlas-hml-release.json"
           python - "$RUNNER_TEMP/atlas-hml-local.json" "$RUNNER_TEMP/atlas-hml-release.json" <<'PY'
           import json,sys
           local=json.load(open(sys.argv[1], encoding='utf-8'))['services']['public-hub']
