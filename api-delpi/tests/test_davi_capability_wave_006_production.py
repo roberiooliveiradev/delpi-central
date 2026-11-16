@@ -382,6 +382,7 @@ def test_wave006_mcp_tools_wave001_four():
         "knowledge",
         "read",
         "analyze",
+        "execute",
     ]
 
 

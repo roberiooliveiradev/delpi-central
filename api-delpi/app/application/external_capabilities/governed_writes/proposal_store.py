@@ -33,7 +33,12 @@ from app.application.external_capabilities.governed_writes.errors import (
 from app.application.external_capabilities.governed_writes.proposal import (
     GovernedProposal,
 )
-from app.config import settings
+
+
+# In-flight proposal cap. Expired entries are evicted first under pressure;
+# beyond that the oldest proposals are evicted (they would fail closed as
+# NOT_FOUND at ACT — never silently re-executed).
+MAX_PROPOSALS = 1000
 
 
 def _b64(data: bytes) -> str:
@@ -46,17 +51,16 @@ def _unb64(data: str) -> bytes:
 
 
 def _signing_key() -> bytes:
-    # Dedicated env first, JWT_SECRET as compat fallback. Fail-closed:
-    # without a real secret there is no safe proposal integrity, so the
-    # governed write surface refuses to mint/verify handles.
-    secret = (
-        (os.getenv("DAVI_GOVERNED_WRITE_HMAC_SECRET") or "").strip()
-        or (os.getenv("DAVI_CANDIDATE_HMAC_SECRET") or "").strip()
-        or (settings.JWT_SECRET or "").strip()
-    )
+    # DAVI_GOVERNED_WRITE_HMAC_SECRET is MANDATORY — no fallback to shared
+    # secrets (JWT_SECRET) or sibling surfaces (DAVI_CANDIDATE_HMAC_SECRET):
+    # a fallback would let any holder of the broader secret forge write
+    # proposals. Missing secret → fail-closed INTERNAL. READ tools never
+    # reach this path, so a missing write secret never degrades reads.
+    secret = (os.getenv("DAVI_GOVERNED_WRITE_HMAC_SECRET") or "").strip()
     if not secret:
         raise GovernedWriteError(
-            "Governed write proposal secret is not configured.",
+            "Governed write proposal secret (DAVI_GOVERNED_WRITE_HMAC_SECRET) "
+            "is not configured.",
             code=INTERNAL,
             status_code=500,
         )
@@ -130,6 +134,8 @@ class ProposalStore:
     def put(self, proposal: GovernedProposal) -> str:
         with self._lock:
             self._purge_locked()
+            if len(self._items) >= MAX_PROPOSALS:
+                self._evict_for_capacity_locked()
             self._items[proposal.proposal_id] = proposal
             return mint_proposal_handle(proposal.proposal_id)
 
@@ -198,6 +204,20 @@ class ProposalStore:
         dead = [pid for pid, p in self._items.items() if p.consumed]
         for pid in dead:
             self._items.pop(pid, None)
+
+    def _evict_for_capacity_locked(self) -> None:
+        now = time.time()
+        expired = [
+            pid for pid, p in self._items.items() if p.expires_at < now
+        ]
+        for pid in expired:
+            self._items.pop(pid, None)
+        if len(self._items) >= MAX_PROPOSALS:
+            oldest = sorted(
+                self._items.values(), key=lambda p: p.created_at
+            )
+            for p in oldest[: len(self._items) - MAX_PROPOSALS + 1]:
+                self._items.pop(p.proposal_id, None)
 
 
 _STORE = ProposalStore()

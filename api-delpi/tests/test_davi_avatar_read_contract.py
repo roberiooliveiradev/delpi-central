@@ -100,10 +100,11 @@ async def test_read_avatar_does_not_shadow_catalog_capabilities() -> None:
 
 @pytest.mark.asyncio
 async def test_read_tool_surface_unchanged() -> None:
-    """No new tool was added for the avatar — read stays one of four."""
+    """No new tool was added for the avatar — read stays one of five."""
     tools = await create_mcp_server().list_tools()
     assert sorted(t.name for t in tools) == [
         "analyze",
+        "execute",
         "get_context",
         "knowledge",
         "read",

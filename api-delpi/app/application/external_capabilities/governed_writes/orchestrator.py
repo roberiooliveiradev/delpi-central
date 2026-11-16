@@ -39,6 +39,16 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
 
 logger = logging.getLogger(__name__)
 
+# Authoritative reconciliation procedure returned on ambiguous outcomes.
+# The consumed proposal can never be re-executed; the caller must read the
+# owner state and only PREPARE again if the mutation is provably absent.
+_RECONCILIATION_HINT = (
+    "Read the authoritative state via the read tool "
+    "(list_si_indicator_goals / list_si_indicator_goal_history); the "
+    "consumed proposal cannot be re-executed. PREPARE a new proposal "
+    "only if reconciliation proves the mutation did not take effect."
+)
+
 # All approved capabilities require the two-step confirmation flow.
 WRITE_CAPABILITIES = SI_GOAL_WRITE_CAPABILITIES
 
@@ -210,25 +220,43 @@ class DaviGovernedWriteOrchestrator:
             raise
         except StrategicIndicatorsApiError as exc:
             logger.exception(
-                "governed_write_verify_transport_failed capability=%s", capability
+                "governed_write_verify_transport_failed correlation_id=%s "
+                "capability=%s proposal_id=%s actor_id=%s",
+                proposal.proposal_id,
+                capability,
+                proposal.proposal_id,
+                proposal.actor_id,
             )
             raise GovernedWriteError(
                 "Write may have occurred but the outcome could not be "
                 "verified. Do not retry blindly; read the current state first.",
                 code=UNKNOWN_RESULT,
                 status_code=409,
-                data={"capability": capability},
+                data={
+                    "capability": capability,
+                    "proposal_id": proposal.proposal_id,
+"reconciliation": _RECONCILIATION_HINT,
+                },
             ) from exc
         except Exception as exc:
             logger.exception(
-                "governed_write_verify_failed capability=%s", capability
+                "governed_write_verify_failed correlation_id=%s "
+                "capability=%s proposal_id=%s actor_id=%s",
+                proposal.proposal_id,
+                capability,
+                proposal.proposal_id,
+                proposal.actor_id,
             )
             raise GovernedWriteError(
                 "Write may have occurred but the outcome could not be "
                 "verified. Do not retry blindly; read the current state first.",
                 code=OUTCOME_VERIFICATION_FAILED,
                 status_code=409,
-                data={"capability": capability},
+                data={
+                    "capability": capability,
+                    "proposal_id": proposal.proposal_id,
+"reconciliation": _RECONCILIATION_HINT,
+                },
             ) from exc
 
         logger.info(

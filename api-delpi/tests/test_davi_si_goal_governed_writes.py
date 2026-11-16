@@ -810,20 +810,65 @@ def test_prepare_toggle_fails_closed_without_occ_token() -> None:
 
 
 def test_hmac_secret_missing_fails_closed(monkeypatch) -> None:
-    """No dedicated secret and no JWT_SECRET → minting fails, never a
-    constant forgeable key."""
+    """Dedicated secret is mandatory: legacy fallback env vars must NOT
+    rescue the governed-write surface."""
     from app.application.external_capabilities.governed_writes import (
         proposal_store,
     )
 
     monkeypatch.delenv("DAVI_GOVERNED_WRITE_HMAC_SECRET", raising=False)
-    monkeypatch.delenv("DAVI_CANDIDATE_HMAC_SECRET", raising=False)
-    monkeypatch.setattr(
-        "app.application.external_capabilities.governed_writes.proposal_store.settings",
-        type("S", (), {"JWT_SECRET": None})(),
-    )
+    # Fallback secrets present — still must fail closed.
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", "candidate-secret")
+    monkeypatch.setenv("JWT_SECRET", "jwt-secret")
     with pytest.raises(GovernedWriteError):
         proposal_store.mint_proposal_handle("gp_x")
+
+
+def test_proposal_store_bounded_evicts_expired_then_oldest(monkeypatch) -> None:
+    """Store is memory-bounded: at MAX_PROPOSALS capacity, expired entries
+    are evicted first, then the oldest live proposals."""
+    from app.application.external_capabilities.governed_writes import (
+        proposal_store,
+    )
+    from app.application.external_capabilities.governed_writes.proposal import (
+        GovernedProposal,
+    )
+
+    store = proposal_store.ProposalStore()
+    monkeypatch.setattr(proposal_store, "MAX_PROPOSALS", 3)
+
+    def _proposal(pid: str, expires_at: float, created: float) -> GovernedProposal:
+        return GovernedProposal(
+            proposal_id=pid,
+            capability="si.goal.update",
+            actor_id="u1",
+            actor_email="u1@x",
+            resource_type="indicator_goal",
+            resource_id="g-1",
+            current_state_fingerprint="fp",
+            exact_change={"x": 1},
+            validation_result={"ready": True},
+            consequential_impact={},
+            confirmation_requirement={"mode": "explicit"},
+            expected_postcondition={},
+            created_at=created,
+            expires_at=expires_at,
+            content_hash="h",
+        )
+
+    now = 1000.0
+    monkeypatch.setattr(proposal_store.time, "time", lambda: now)
+    store.put(_proposal("p-expired", expires_at=now - 1, created=1))
+    store.put(_proposal("p-old", expires_at=now + 900, created=2))
+    store.put(_proposal("p-mid", expires_at=now + 900, created=3))
+    # At capacity → expired evicted first.
+    store.put(_proposal("p-new", expires_at=now + 900, created=4))
+    assert "p-expired" not in store._items
+    assert {"p-old", "p-mid", "p-new"} <= set(store._items)
+    # Still at capacity → oldest live entry evicted.
+    store.put(_proposal("p-newer", expires_at=now + 900, created=5))
+    assert "p-old" not in store._items
+    assert len(store._items) <= 3
 
 
 def test_wire_execute_tool_unauthenticated_returns_typed_error() -> None:

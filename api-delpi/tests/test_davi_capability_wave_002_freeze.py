@@ -109,7 +109,7 @@ def test_freeze_records_pre_implementation_eligible_baseline() -> None:
 
 def test_mcp_tools_wave001_four() -> None:
     source = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert source.count("@mcp.tool(") == 4
+    assert source.count("@mcp.tool(") == 5
     assert set(MCP_TOOLS) == {
         "get_context",
         "knowledge",
@@ -449,4 +449,4 @@ def test_no_new_allowlist_or_mcp_surface() -> None:
     assert "get_product_last_purchase" in op_ids
     assert "get_product_cost_impact_simulation" not in op_ids
     mcp = (_API_ROOT / "app/interface/mcp/server.py").read_text(encoding="utf-8")
-    assert mcp.count("@mcp.tool(") == 4
+    assert mcp.count("@mcp.tool(") == 5

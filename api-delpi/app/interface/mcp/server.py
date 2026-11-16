@@ -573,14 +573,21 @@ def create_mcp_server() -> MCPServer:
             "capabilities: si.goal.create, si.goal.update, "
             "si.goal.activate, si.goal.deactivate (Strategic Indicators "
             "goals; backend AuthZ remains authoritative on every call). "
-            "This tool never accepts URLs, methods, paths or SQL."
+            "This tool never accepts URLs, methods, paths or SQL. "
+            "Result classification: 'verified' means the owner confirmed "
+            "the postcondition; 'unknown_result' means the write may have "
+            "been committed — reconcile by reading the authoritative "
+            "state via the read tool (list_si_indicator_goals / "
+            "list_si_indicator_goal_history) and never retry the same "
+            "proposal; only PREPARE a new proposal if reconciliation "
+            "proves the mutation did not take effect."
         ),
         annotations=ToolAnnotations.model_validate(
             tool_annotations_payload(
                 MCP_TOOL_EXECUTE_TITLE,
                 read_only=False,
                 destructive=False,
-                idempotent=True,
+                idempotent=False,
             )
         ),
         meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),

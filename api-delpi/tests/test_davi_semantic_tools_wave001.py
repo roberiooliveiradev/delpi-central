@@ -194,7 +194,7 @@ def test_surface_registers_six_tools_with_closed_schemas():
     }
     assert ex.annotations.read_only_hint is False
     assert ex.annotations.destructive_hint is not True
-    assert ex.annotations.idempotent_hint is True
+    assert ex.annotations.idempotent_hint is False
     # Owner-typed classes on the wire — metadata, never permission.
     assert ctx.meta["delpi/toolClass"] == "DISCOVERY"
     assert kn.meta["delpi/toolClass"] == "READ"

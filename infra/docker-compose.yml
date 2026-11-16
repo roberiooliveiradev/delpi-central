@@ -1502,7 +1502,9 @@ services:
       # When empty, api-delpi falls back to JWT_SECRET (compatibility only).
       DAVI_CANDIDATE_HMAC_SECRET: ${DAVI_CANDIDATE_HMAC_SECRET:-}
       # Dedicated HMAC for DAVI governed-write proposal handles (execute
-      # PREPARE/ACT). When empty, api-delpi falls back to JWT_SECRET.
+      # PREPARE/ACT). MANDATORY — no fallback to shared secrets: when
+      # empty, the governed-write surface fails closed while READ tools
+      # remain unaffected.
       DAVI_GOVERNED_WRITE_HMAC_SECRET: ${DAVI_GOVERNED_WRITE_HMAC_SECRET:-}
       # Dedicated HMAC for integration-tracking payload hashes.
       # When empty, api-delpi falls back to JWT_SECRET (compatibility only).

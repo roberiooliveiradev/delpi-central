@@ -309,6 +309,23 @@ READ CURRENT STATE
 
 HTTP 2xx ≠ outcome verificado. Falha de read-back → `OUTCOME_VERIFICATION_FAILED`.
 
+### Reconciliação de `unknown_result`
+
+`unknown_result` (ou falha de transporte após possível commit) **nunca** deve
+ser tratado como retryável:
+
+1. A proposta é consumida antes da escrita no owner — replay do mesmo
+   `proposal_handle` retorna `proposal_not_found`, nunca re-executa.
+2. Reconciliar via leitura autoritativa (`read`:
+   `list_si_indicator_goals` / `list_si_indicator_goal_history`).
+3. Somente PREPARE uma nova proposta se a reconciliação provar que a
+   mutação não foi aplicada — nunca repetir a mutação às cegas.
+
+Segredo dedicado `DAVI_GOVERNED_WRITE_HMAC_SECRET` é obrigatório para
+emitir/verificar handles — sem fallback para `JWT_SECRET` nem
+`DAVI_CANDIDATE_HMAC_SECRET`. Ausente → superfície de escrita falha
+fechada; READs seguem operando.
+
 ---
 
 ## FASE K — Legacy
