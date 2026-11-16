@@ -407,7 +407,7 @@ describe("troca guiada de OP (E2)", () => {
       expect(screen.queryByText("Finalizar operação")).not.toBeInTheDocument(),
     );
     expect(
-      await screen.findByText("Informar motivo da parada?"),
+      await screen.findByText("Informar motivo da parada"),
     ).toBeInTheDocument();
   });
 
