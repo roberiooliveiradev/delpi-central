@@ -5474,3 +5474,46 @@ O owner determina que a EVA confronte **código + descrição do PI**, **letra/p
 
 - Recall de descrição/quantidade/letra do pipeline OCR neste layout: 0% — próximo passo E1 é investigar tipificação de células neste formato de tabela (códigos fundidos na mesma célula) antes de qualquer claim de cobertura.
 - ChatGPT E2E autenticado segue owner-pending; 12 arquivos WIP alheio preservados.
+
+---
+
+## 94.23 G20 — Extração de atributos da Tabela de Estrutura (causa-raiz + correção)
+
+- **TASK_ID:** `EVA-E1-VAL01-G20-DRAWING-TABLE-ATTRIBUTE-EXTRACTION-AND-RELATIONSHIP-RECOVERY-01`
+- **Base:** `5610c687ee` (origin/main) · OCR do G19 **reutilizado** (95 tokens, zero execuções produtivas novas).
+- **Verificador:** `delpi-verifier` (cursor/composer-2.5) r1 → **ACCEPT_WITH_RESIDUAL**, 8/8 ACs PASS, zero OCs. Residuais: caminho de ambiguidade sem teste E2E sintético (coberto por teste unitário do mecanismo); escopo misto no working tree (WIP alheio preservado, não commitado).
+
+### Causa-raiz comprovada (primeira fronteira = B2/B3, não OCR)
+
+Os 95 tokens do job G19 **continham tudo**: descrições PI (`CA18…`), descrições MP, letras A–F, QTD e os 6 rótulos de cabeçalho. A perda era interna ao caminho token-cluster de `understanding.py`:
+
+1. **Filtro de cabeçalho ≤10%w da coluna de códigos** → só `Código` era reconhecido; `Descrição/Item/QTD./Comp.` ignorados → `col_types` só `{component_code}` (FIELD_TYPING_GAP).
+2. **`table_box` truncado** (`+w*0.30` após a coluna de códigos ≈ x930) → coluna de descrição MP (x917–1400) fora do box (TABLE_SEGMENTATION_GAP).
+3. **`keep_cols` por gap** descartava colunas tipadas distantes; letras/qtd sem tipo morriam no gate `_is_sheet_index_text`.
+4. **`_assign_presentation_roles` sem `item_band`** rejeitava a coluna-pai (4 âncoras/8 linhas > 45% → sem `parent_code`, sem âncoras) — o caminho token-cluster **não tinha** maquinaria de âncora de grupo (era exclusiva de `rows_from_native_cells`).
+5. Bug `cell.get("col") or -1` → coluna 0 (falsy) nunca casava nas âncoras.
+
+### Correção (módulo canônico, menor diff)
+
+- Faixa de rótulos aceita **toda a linha de cabeçalho**; `table_box` estende até a coluna do rótulo mais à direita.
+- Header→col por **proximidade mútua** (coluna adota o rótulo mais próximo); rótulos perdedores viram **refinadores por célula** (Item|QTD no mesmo cluster X — letra→item, dígito→quantidade).
+- `keep_cols` mantém todas as colunas tipadas; `item_band` derivada do rótulo Item → pivô posicional rejeita/abstrai corretamente.
+- Re-sync células→`fields` após retipagem (parent_code/parent_description não se fundem aos campos do componente); helper `_fields_from_cells`.
+- Novo `_apply_token_group_anchors`: âncora `column_span` token-cluster — a célula mesclada é **verticalmente centrada** no bloco e as letras de item reiniciam por conjunto → expansão simétrica limitada pela sequência de itens e outras âncoras; ranks (simétrico>unilateral>fallback); empate → `association_conflict` (fail-closed).
+- Comparador: ocorrência do código-âncora (PI) observa `parent_group_description` como `item_description`.
+
+### Evidência real (PDF 90263680, tokens G19 reutilizados)
+
+- `col_types`: `{parent_code, parent_description, quantity, component_code, description}`; headers 6/6.
+- **8/8 MP**: código + item(a–f) + QTD=1 + descrição do desenho; **4/4 PI** `CA18*` como `parent_group_description`; **8/8 pais IDENTIFIED** via `column_span` — árvore idêntica à BOM vigente sem forçá-la.
+- Comparador G18 com BOM real TOTVS: `description`/`pi_description` → **CONFLICT_CANDIDATE** com `segment_differences` (`isolation_prefix CA↔CB`, `terminal_right 01↔36`); `parent_relation` → MATCH_CANDIDATE 8/8; `quantity` → NOT_COMPARABLE (`consumption_vs_assembly`, abstenção honesta); `item` → NOT_CHECKED; `automatic_nc: false`, `engineering_approval: NOT_APPROVED`, estado DRAFT/CANDIDATE.
+- As descrições do desenho (`CA18*`) **diferem do cadastro** (`CB18*`) — prova de que o observado veio do PDF, não da BOM.
+
+### Testes
+
+- `tests/test_g20_table_attribute_extraction.py` (10 testes, fixture real de 95 tokens com proveniência): colunas tipadas, descrições MP/PI, letras com contexto, QTD, hierarquia, conflito de âncoras (fail-closed), integração G18 (CONFLICT_CANDIDATE + segmentos), negativos sem preenchimento.
+- Regressão: **410 testes** drawing/understanding/bom/table/g18/g20 PASS.
+
+### Estados G20
+
+`G20_ROOT_CAUSE_PASS` · `G20_EXTRACTION_CODE_PASS` · `G20_ATTRIBUTE_RECALL_PASS` (12/12 códigos, 8/8 desc MP, 4/4 desc PI, 8/8 itens, 8/8 qty, 8/8 pais) · `G20_HIERARCHY_PASS` · `G20_DESCRIPTION_PASS` · `G20_QUANTITY_PASS` (abstenção correta) · `G20_REGRESSION_PASS` · `G20_VERIFIER_PASS` (ACCEPT_WITH_RESIDUAL r1) · Deploy **não autorizado** — candidato a decisão de Coordination.

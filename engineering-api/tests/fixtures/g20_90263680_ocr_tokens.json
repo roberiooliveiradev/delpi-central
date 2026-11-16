@@ -1,0 +1,3517 @@
+[
+ {
+  "page": 1,
+  "raw_text": "2",
+  "normalized_text": "2",
+  "confidence": 0.9996814727783203,
+  "bounding_box_px": [
+   715.0,
+   66.0,
+   740.0,
+   66.0,
+   740.0,
+   101.0,
+   715.0,
+   101.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4325,
+   0.0282,
+   0.4477,
+   0.0432
+  ],
+  "bounding_box_pdf_points": [
+   257.4,
+   23.76,
+   266.4,
+   23.76,
+   266.4,
+   36.36,
+   257.4,
+   36.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "3",
+  "normalized_text": "3",
+  "confidence": 0.999794065952301,
+  "bounding_box_px": [
+   1057.0,
+   68.0,
+   1082.0,
+   68.0,
+   1082.0,
+   103.0,
+   1057.0,
+   103.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.6394,
+   0.0291,
+   0.6546,
+   0.044
+  ],
+  "bounding_box_pdf_points": [
+   380.52,
+   24.48,
+   389.52,
+   24.48,
+   389.52,
+   37.08,
+   380.52,
+   37.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "4",
+  "normalized_text": "4",
+  "confidence": 0.9996504783630371,
+  "bounding_box_px": [
+   1406.0,
+   69.0,
+   1427.0,
+   69.0,
+   1427.0,
+   99.0,
+   1406.0,
+   99.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8506,
+   0.0295,
+   0.8633,
+   0.0423
+  ],
+  "bounding_box_pdf_points": [
+   506.16,
+   24.84,
+   513.72,
+   24.84,
+   513.72,
+   35.64,
+   506.16,
+   35.64
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "A",
+  "normalized_text": "a",
+  "confidence": 0.9989758729934692,
+  "bounding_box_px": [
+   738.0,
+   174.0,
+   797.0,
+   174.0,
+   797.0,
+   236.0,
+   738.0,
+   236.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4465,
+   0.0744,
+   0.4822,
+   0.1009
+  ],
+  "bounding_box_pdf_points": [
+   265.68,
+   62.64,
+   286.92,
+   62.64,
+   286.92,
+   84.96,
+   265.68,
+   84.96
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.7187036275863647,
+  "bounding_box_px": [
+   309.0,
+   290.0,
+   391.0,
+   290.0,
+   391.0,
+   315.0,
+   309.0,
+   315.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1869,
+   0.124,
+   0.2365,
+   0.1347
+  ],
+  "bounding_box_pdf_points": [
+   111.24,
+   104.4,
+   140.76,
+   104.4,
+   140.76,
+   113.4,
+   111.24,
+   113.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "O",
+  "normalized_text": "o",
+  "confidence": 0.16498973965644836,
+  "bounding_box_px": [
+   749.0,
+   285.0,
+   764.0,
+   277.0,
+   772.0,
+   294.0,
+   757.0,
+   301.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4531,
+   0.1184,
+   0.467,
+   0.1287
+  ],
+  "bounding_box_pdf_points": [
+   269.64,
+   102.6,
+   275.04,
+   99.72,
+   277.92,
+   105.84,
+   272.52,
+   108.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.6539844870567322,
+  "bounding_box_px": [
+   1168.0,
+   290.0,
+   1251.0,
+   290.0,
+   1251.0,
+   315.0,
+   1168.0,
+   315.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.7066,
+   0.124,
+   0.7568,
+   0.1347
+  ],
+  "bounding_box_pdf_points": [
+   420.48,
+   104.4,
+   450.36,
+   104.4,
+   450.36,
+   113.4,
+   420.48,
+   113.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "B",
+  "normalized_text": "b",
+  "confidence": 0.9992513060569763,
+  "bounding_box_px": [
+   732.0,
+   340.0,
+   787.0,
+   340.0,
+   787.0,
+   401.0,
+   732.0,
+   401.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4428,
+   0.1454,
+   0.4761,
+   0.1714
+  ],
+  "bounding_box_pdf_points": [
+   263.52,
+   122.4,
+   283.32,
+   122.4,
+   283.32,
+   144.36,
+   263.52,
+   144.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.6641072034835815,
+  "bounding_box_px": [
+   308.0,
+   456.0,
+   390.0,
+   456.0,
+   390.0,
+   484.0,
+   308.0,
+   484.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1863,
+   0.195,
+   0.2359,
+   0.2069
+  ],
+  "bounding_box_pdf_points": [
+   110.88,
+   164.16,
+   140.4,
+   164.16,
+   140.4,
+   174.24,
+   110.88,
+   174.24
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.35036614537239075,
+  "bounding_box_px": [
+   1171.0,
+   454.0,
+   1251.0,
+   457.0,
+   1250.0,
+   483.0,
+   1170.0,
+   480.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.7078,
+   0.1941,
+   0.7568,
+   0.2065
+  ],
+  "bounding_box_pdf_points": [
+   421.56,
+   163.44,
+   450.36,
+   164.52,
+   450.0,
+   173.88,
+   421.2,
+   172.8
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10±1",
+  "normalized_text": "10±1",
+  "confidence": 0.9902442097663879,
+  "bounding_box_px": [
+   313.0,
+   492.0,
+   386.0,
+   488.0,
+   388.0,
+   531.0,
+   316.0,
+   535.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1894,
+   0.2086,
+   0.2347,
+   0.2287
+  ],
+  "bounding_box_pdf_points": [
+   112.68,
+   177.12,
+   138.96,
+   175.68,
+   139.68,
+   191.16,
+   113.76,
+   192.6
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10±1",
+  "normalized_text": "10±1",
+  "confidence": 0.7538426518440247,
+  "bounding_box_px": [
+   1169.0,
+   490.0,
+   1248.0,
+   487.0,
+   1250.0,
+   534.0,
+   1170.0,
+   537.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.7072,
+   0.2082,
+   0.7562,
+   0.2296
+  ],
+  "bounding_box_pdf_points": [
+   420.84,
+   176.4,
+   449.28,
+   175.32,
+   450.0,
+   192.24,
+   421.2,
+   193.32
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "512±2",
+  "normalized_text": "512±2",
+  "confidence": 0.9969935417175293,
+  "bounding_box_px": [
+   728.0,
+   570.0,
+   815.0,
+   567.0,
+   816.0,
+   602.0,
+   729.0,
+   604.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4404,
+   0.2424,
+   0.4936,
+   0.2582
+  ],
+  "bounding_box_pdf_points": [
+   262.08,
+   205.2,
+   293.4,
+   204.12,
+   293.76,
+   216.72,
+   262.44,
+   217.44
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "E",
+  "normalized_text": "e",
+  "confidence": 0.9384130835533142,
+  "bounding_box_px": [
+   858.0,
+   683.0,
+   917.0,
+   683.0,
+   917.0,
+   746.0,
+   858.0,
+   746.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5191,
+   0.292,
+   0.5547,
+   0.3189
+  ],
+  "bounding_box_pdf_points": [
+   308.88,
+   245.88,
+   330.12,
+   245.88,
+   330.12,
+   268.56,
+   308.88,
+   268.56
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "C",
+  "normalized_text": "c",
+  "confidence": 0.49461090564727783,
+  "bounding_box_px": [
+   1368.0,
+   698.0,
+   1430.0,
+   698.0,
+   1430.0,
+   766.0,
+   1368.0,
+   766.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8276,
+   0.2984,
+   0.8651,
+   0.3275
+  ],
+  "bounding_box_pdf_points": [
+   492.48,
+   251.28,
+   514.8,
+   251.28,
+   514.8,
+   275.76,
+   492.48,
+   275.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "C",
+  "normalized_text": "c",
+  "confidence": 0.7269163727760315,
+  "bounding_box_px": [
+   1215.0,
+   753.0,
+   1229.0,
+   758.0,
+   1224.0,
+   773.0,
+   1210.0,
+   768.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.732,
+   0.3219,
+   0.7435,
+   0.3305
+  ],
+  "bounding_box_pdf_points": [
+   437.4,
+   271.08,
+   442.44,
+   272.88,
+   440.64,
+   278.28,
+   435.6,
+   276.48
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "D",
+  "normalized_text": "d",
+  "confidence": 0.9997102618217468,
+  "bounding_box_px": [
+   1371.0,
+   788.0,
+   1425.0,
+   788.0,
+   1425.0,
+   849.0,
+   1371.0,
+   849.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8294,
+   0.3369,
+   0.8621,
+   0.363
+  ],
+  "bounding_box_pdf_points": [
+   493.56,
+   283.68,
+   513.0,
+   283.68,
+   513.0,
+   305.64,
+   493.56,
+   305.64
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.6098163723945618,
+  "bounding_box_px": [
+   591.0,
+   805.0,
+   674.0,
+   805.0,
+   674.0,
+   829.0,
+   591.0,
+   829.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.3575,
+   0.3442,
+   0.4077,
+   0.3544
+  ],
+  "bounding_box_pdf_points": [
+   212.76,
+   289.8,
+   242.64,
+   289.8,
+   242.64,
+   298.44,
+   212.76,
+   298.44
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10±1",
+  "normalized_text": "10±1",
+  "confidence": 0.9047832489013672,
+  "bounding_box_px": [
+   591.0,
+   834.0,
+   673.0,
+   829.0,
+   675.0,
+   877.0,
+   594.0,
+   881.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.3575,
+   0.3544,
+   0.4083,
+   0.3767
+  ],
+  "bounding_box_pdf_points": [
+   212.76,
+   300.24,
+   242.28,
+   298.44,
+   243.0,
+   315.72,
+   213.84,
+   317.16
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "152±2",
+  "normalized_text": "152±2",
+  "confidence": 0.9857708811759949,
+  "bounding_box_px": [
+   856.0,
+   873.0,
+   943.0,
+   871.0,
+   944.0,
+   907.0,
+   857.0,
+   909.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5178,
+   0.3724,
+   0.5711,
+   0.3886
+  ],
+  "bounding_box_pdf_points": [
+   308.16,
+   314.28,
+   339.48,
+   313.56,
+   339.84,
+   326.52,
+   308.52,
+   327.24
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "H",
+  "normalized_text": "h",
+  "confidence": 0.9538891315460205,
+  "bounding_box_px": [
+   1621.0,
+   880.0,
+   1649.0,
+   880.0,
+   1649.0,
+   901.0,
+   1621.0,
+   901.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.9806,
+   0.3762,
+   0.9976,
+   0.3852
+  ],
+  "bounding_box_pdf_points": [
+   583.56,
+   316.8,
+   593.64,
+   316.8,
+   593.64,
+   324.36,
+   583.56,
+   324.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "F",
+  "normalized_text": "f",
+  "confidence": 0.9994112253189087,
+  "bounding_box_px": [
+   854.0,
+   982.0,
+   899.0,
+   982.0,
+   899.0,
+   1042.0,
+   854.0,
+   1042.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5166,
+   0.4198,
+   0.5439,
+   0.4455
+  ],
+  "bounding_box_pdf_points": [
+   307.44,
+   353.52,
+   323.64,
+   353.52,
+   323.64,
+   375.12,
+   307.44,
+   375.12
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "C",
+  "normalized_text": "c",
+  "confidence": 0.8413357734680176,
+  "bounding_box_px": [
+   1371.0,
+   997.0,
+   1428.0,
+   997.0,
+   1428.0,
+   1059.0,
+   1371.0,
+   1059.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8294,
+   0.4263,
+   0.8639,
+   0.4528
+  ],
+  "bounding_box_pdf_points": [
+   493.56,
+   358.92,
+   514.08,
+   358.92,
+   514.08,
+   381.24,
+   493.56,
+   381.24
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "W",
+  "normalized_text": "w",
+  "confidence": 0.4927164614200592,
+  "bounding_box_px": [
+   450.0,
+   1100.0,
+   533.0,
+   1100.0,
+   533.0,
+   1128.0,
+   450.0,
+   1128.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2722,
+   0.4703,
+   0.3224,
+   0.4823
+  ],
+  "bounding_box_pdf_points": [
+   162.0,
+   396.0,
+   191.88,
+   396.0,
+   191.88,
+   406.08,
+   162.0,
+   406.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "D",
+  "normalized_text": "d",
+  "confidence": 0.9997499585151672,
+  "bounding_box_px": [
+   1372.0,
+   1092.0,
+   1419.0,
+   1089.0,
+   1422.0,
+   1144.0,
+   1376.0,
+   1147.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.83,
+   0.4656,
+   0.8603,
+   0.4904
+  ],
+  "bounding_box_pdf_points": [
+   493.92,
+   393.12,
+   510.84,
+   392.04,
+   511.92,
+   411.84,
+   495.36,
+   412.92
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10±1",
+  "normalized_text": "10±1",
+  "confidence": 0.9679213762283325,
+  "bounding_box_px": [
+   454.0,
+   1130.0,
+   532.0,
+   1126.0,
+   534.0,
+   1169.0,
+   456.0,
+   1173.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2747,
+   0.4814,
+   0.323,
+   0.5015
+  ],
+  "bounding_box_pdf_points": [
+   163.44,
+   406.8,
+   191.52,
+   405.36,
+   192.24,
+   420.84,
+   164.16,
+   422.28
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "242±2",
+  "normalized_text": "242±2",
+  "confidence": 0.9971672892570496,
+  "bounding_box_px": [
+   793.0,
+   1166.0,
+   880.0,
+   1163.0,
+   881.0,
+   1199.0,
+   794.0,
+   1202.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4797,
+   0.4972,
+   0.533,
+   0.5139
+  ],
+  "bounding_box_pdf_points": [
+   285.48,
+   419.76,
+   316.8,
+   418.68,
+   317.16,
+   431.64,
+   285.84,
+   432.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Código",
+  "normalized_text": "código",
+  "confidence": 0.9270236492156982,
+  "bounding_box_px": [
+   101.0,
+   1422.0,
+   185.0,
+   1422.0,
+   185.0,
+   1458.0,
+   101.0,
+   1458.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.0611,
+   0.608,
+   0.1119,
+   0.6233
+  ],
+  "bounding_box_pdf_points": [
+   36.36,
+   511.92,
+   66.6,
+   511.92,
+   66.6,
+   524.88,
+   36.36,
+   524.88
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Descrição",
+  "normalized_text": "descrição",
+  "confidence": 0.9504337310791016,
+  "bounding_box_px": [
+   370.0,
+   1423.0,
+   475.0,
+   1425.0,
+   474.0,
+   1457.0,
+   369.0,
+   1455.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2232,
+   0.6084,
+   0.2874,
+   0.6229
+  ],
+  "bounding_box_pdf_points": [
+   133.2,
+   512.28,
+   171.0,
+   513.0,
+   170.64,
+   524.52,
+   132.84,
+   523.8
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Item",
+  "normalized_text": "item",
+  "confidence": 0.9989632368087769,
+  "bounding_box_px": [
+   653.0,
+   1426.0,
+   705.0,
+   1426.0,
+   705.0,
+   1453.0,
+   653.0,
+   1453.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.395,
+   0.6097,
+   0.4265,
+   0.6212
+  ],
+  "bounding_box_pdf_points": [
+   235.08,
+   513.36,
+   253.8,
+   513.36,
+   253.8,
+   523.08,
+   235.08,
+   523.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "QTD.",
+  "normalized_text": "qtd.",
+  "confidence": 0.9996253252029419,
+  "bounding_box_px": [
+   726.0,
+   1424.0,
+   783.0,
+   1424.0,
+   783.0,
+   1454.0,
+   726.0,
+   1454.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4392,
+   0.6088,
+   0.4737,
+   0.6216
+  ],
+  "bounding_box_pdf_points": [
+   261.36,
+   512.64,
+   281.88,
+   512.64,
+   281.88,
+   523.44,
+   261.36,
+   523.44
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Comp.",
+  "normalized_text": "comp.",
+  "confidence": 0.9998914003372192,
+  "bounding_box_px": [
+   817.0,
+   1424.0,
+   890.0,
+   1426.0,
+   889.0,
+   1456.0,
+   816.0,
+   1454.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4936,
+   0.6088,
+   0.5384,
+   0.6225
+  ],
+  "bounding_box_pdf_points": [
+   294.12,
+   512.64,
+   320.4,
+   513.36,
+   320.04,
+   524.16,
+   293.76,
+   523.44
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Descrição",
+  "normalized_text": "descrição",
+  "confidence": 0.9513189792633057,
+  "bounding_box_px": [
+   1209.0,
+   1424.0,
+   1312.0,
+   1426.0,
+   1312.0,
+   1455.0,
+   1209.0,
+   1453.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.7314,
+   0.6088,
+   0.7937,
+   0.6221
+  ],
+  "bounding_box_pdf_points": [
+   435.24,
+   512.64,
+   472.32,
+   513.36,
+   472.32,
+   523.8,
+   435.24,
+   523.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "50213206",
+  "normalized_text": "50213206",
+  "confidence": 0.9998340606689453,
+  "bounding_box_px": [
+   94.0,
+   1460.0,
+   194.0,
+   1460.0,
+   194.0,
+   1492.0,
+   94.0,
+   1492.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.0569,
+   0.6242,
+   0.1174,
+   0.6379
+  ],
+  "bounding_box_pdf_points": [
+   33.84,
+   525.6,
+   69.84,
+   525.6,
+   69.84,
+   537.12,
+   33.84,
+   537.12
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CA18BRAN-00512/10/10-0000-0000",
+  "normalized_text": "ca18bran-00512/10/10-0000-0000",
+  "confidence": 0.9998437762260437,
+  "bounding_box_px": [
+   257.0,
+   1463.0,
+   588.0,
+   1463.0,
+   588.0,
+   1487.0,
+   257.0,
+   1487.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1555,
+   0.6255,
+   0.3557,
+   0.6357
+  ],
+  "bounding_box_pdf_points": [
+   92.52,
+   526.68,
+   211.68,
+   526.68,
+   211.68,
+   535.32,
+   92.52,
+   535.32
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "A",
+  "normalized_text": "a",
+  "confidence": 0.9995455145835876,
+  "bounding_box_px": [
+   667.0,
+   1462.0,
+   692.0,
+   1462.0,
+   692.0,
+   1492.0,
+   667.0,
+   1492.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4035,
+   0.6251,
+   0.4186,
+   0.6379
+  ],
+  "bounding_box_pdf_points": [
+   240.12,
+   526.32,
+   249.12,
+   526.32,
+   249.12,
+   537.12,
+   240.12,
+   537.12
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.9202792048454285,
+  "bounding_box_px": [
+   747.0,
+   1463.0,
+   763.0,
+   1463.0,
+   763.0,
+   1490.0,
+   747.0,
+   1490.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.6255,
+   0.4616,
+   0.637
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   526.68,
+   274.68,
+   526.68,
+   274.68,
+   536.4,
+   268.92,
+   536.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10380040",
+  "normalized_text": "10380040",
+  "confidence": 0.9998377561569214,
+  "bounding_box_px": [
+   807.0,
+   1464.0,
+   902.0,
+   1464.0,
+   902.0,
+   1493.0,
+   807.0,
+   1493.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.6259,
+   0.5457,
+   0.6383
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   527.04,
+   324.72,
+   527.04,
+   324.72,
+   537.48,
+   290.52,
+   537.48
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CABO EPR 125/150°C 18AWG BN 600V STYLE 3400 CSA NBR 9114- UL",
+  "normalized_text": "caboepr125/150°c18awgbn600vstyle3400csanbr9114-ul",
+  "confidence": 0.9979100823402405,
+  "bounding_box_px": [
+   917.0,
+   1467.0,
+   1586.0,
+   1467.0,
+   1586.0,
+   1491.0,
+   917.0,
+   1491.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.6272,
+   0.9595,
+   0.6375
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   528.12,
+   570.96,
+   528.12,
+   570.96,
+   536.76,
+   330.12,
+   536.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "50213207",
+  "normalized_text": "50213207",
+  "confidence": 0.999829888343811,
+  "bounding_box_px": [
+   95.0,
+   1499.0,
+   192.0,
+   1499.0,
+   192.0,
+   1528.0,
+   95.0,
+   1528.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.0575,
+   0.6409,
+   0.1162,
+   0.6533
+  ],
+  "bounding_box_pdf_points": [
+   34.2,
+   539.64,
+   69.12,
+   539.64,
+   69.12,
+   550.08,
+   34.2,
+   550.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CA18PRET-00512/10/10-0000-0000",
+  "normalized_text": "ca18pret-00512/10/10-0000-0000",
+  "confidence": 0.9999351501464844,
+  "bounding_box_px": [
+   259.0,
+   1501.0,
+   589.0,
+   1500.0,
+   589.0,
+   1525.0,
+   259.0,
+   1526.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1567,
+   0.6413,
+   0.3563,
+   0.6524
+  ],
+  "bounding_box_pdf_points": [
+   93.24,
+   540.36,
+   212.04,
+   540.0,
+   212.04,
+   549.0,
+   93.24,
+   549.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "B",
+  "normalized_text": "b",
+  "confidence": 0.9997734427452087,
+  "bounding_box_px": [
+   669.0,
+   1500.0,
+   690.0,
+   1500.0,
+   690.0,
+   1528.0,
+   669.0,
+   1528.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4047,
+   0.6413,
+   0.4174,
+   0.6533
+  ],
+  "bounding_box_pdf_points": [
+   240.84,
+   540.0,
+   248.4,
+   540.0,
+   248.4,
+   550.08,
+   240.84,
+   550.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.9250778555870056,
+  "bounding_box_px": [
+   747.0,
+   1501.0,
+   763.0,
+   1501.0,
+   763.0,
+   1527.0,
+   747.0,
+   1527.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.6417,
+   0.4616,
+   0.6528
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   540.36,
+   274.68,
+   540.36,
+   274.68,
+   549.72,
+   268.92,
+   549.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10380035",
+  "normalized_text": "10380035",
+  "confidence": 0.9997496604919434,
+  "bounding_box_px": [
+   807.0,
+   1503.0,
+   902.0,
+   1503.0,
+   902.0,
+   1531.0,
+   807.0,
+   1531.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.6426,
+   0.5457,
+   0.6546
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   541.08,
+   324.72,
+   541.08,
+   324.72,
+   551.16,
+   290.52,
+   551.16
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CABO EPR 125/150°C 18AWG PT 600V STYLE 3400 CSA NBR 9114-UL",
+  "normalized_text": "caboepr125/150°c18awgpt600vstyle3400csanbr9114-ul",
+  "confidence": 0.985806941986084,
+  "bounding_box_px": [
+   917.0,
+   1505.0,
+   1579.0,
+   1505.0,
+   1579.0,
+   1529.0,
+   917.0,
+   1529.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.6434,
+   0.9552,
+   0.6537
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   541.8,
+   568.44,
+   541.8,
+   568.44,
+   550.44,
+   330.12,
+   550.44
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "C",
+  "normalized_text": "c",
+  "confidence": 0.968227207660675,
+  "bounding_box_px": [
+   668.0,
+   1538.0,
+   689.0,
+   1538.0,
+   689.0,
+   1566.0,
+   668.0,
+   1566.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4041,
+   0.6575,
+   0.4168,
+   0.6695
+  ],
+  "bounding_box_pdf_points": [
+   240.48,
+   553.68,
+   248.04,
+   553.68,
+   248.04,
+   563.76,
+   240.48,
+   563.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.9339005947113037,
+  "bounding_box_px": [
+   747.0,
+   1538.0,
+   763.0,
+   1538.0,
+   763.0,
+   1564.0,
+   747.0,
+   1564.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.6575,
+   0.4616,
+   0.6687
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   553.68,
+   274.68,
+   553.68,
+   274.68,
+   563.04,
+   268.92,
+   563.04
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10080136",
+  "normalized_text": "10080136",
+  "confidence": 0.9997749328613281,
+  "bounding_box_px": [
+   807.0,
+   1540.0,
+   902.0,
+   1540.0,
+   902.0,
+   1569.0,
+   807.0,
+   1569.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.6584,
+   0.5457,
+   0.6708
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   554.4,
+   324.72,
+   554.4,
+   324.72,
+   564.84,
+   290.52,
+   564.84
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "TERM. BANDEIRA 6,3X0,8 1,0-2,6MM UL ESTANHADO",
+  "normalized_text": "term.bandeira6,3x0,81,0-2,6mmulestanhado",
+  "confidence": 0.9950196743011475,
+  "bounding_box_px": [
+   917.0,
+   1543.0,
+   1430.0,
+   1543.0,
+   1430.0,
+   1566.0,
+   917.0,
+   1566.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.6597,
+   0.8651,
+   0.6695
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   555.48,
+   514.8,
+   555.48,
+   514.8,
+   563.76,
+   330.12,
+   563.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "50233507",
+  "normalized_text": "50233507",
+  "confidence": 0.9995561242103577,
+  "bounding_box_px": [
+   95.0,
+   1574.0,
+   191.0,
+   1574.0,
+   191.0,
+   1602.0,
+   95.0,
+   1602.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.0575,
+   0.6729,
+   0.1155,
+   0.6849
+  ],
+  "bounding_box_pdf_points": [
+   34.2,
+   566.64,
+   68.76,
+   566.64,
+   68.76,
+   576.72,
+   34.2,
+   576.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CA18MARR-00152/10/06-0000-0110",
+  "normalized_text": "ca18marr-00152/10/06-0000-0110",
+  "confidence": 0.9999401569366455,
+  "bounding_box_px": [
+   255.0,
+   1576.0,
+   591.0,
+   1575.0,
+   591.0,
+   1599.0,
+   255.0,
+   1600.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1543,
+   0.6734,
+   0.3575,
+   0.6841
+  ],
+  "bounding_box_pdf_points": [
+   91.8,
+   567.36,
+   212.76,
+   567.0,
+   212.76,
+   575.64,
+   91.8,
+   576.0
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "D",
+  "normalized_text": "d",
+  "confidence": 0.9998619556427002,
+  "bounding_box_px": [
+   668.0,
+   1575.0,
+   688.0,
+   1575.0,
+   688.0,
+   1603.0,
+   668.0,
+   1603.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4041,
+   0.6734,
+   0.4162,
+   0.6853
+  ],
+  "bounding_box_pdf_points": [
+   240.48,
+   567.0,
+   247.68,
+   567.0,
+   247.68,
+   577.08,
+   240.48,
+   577.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.5083171129226685,
+  "bounding_box_px": [
+   747.0,
+   1575.0,
+   763.0,
+   1575.0,
+   763.0,
+   1602.0,
+   747.0,
+   1602.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.6734,
+   0.4616,
+   0.6849
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   567.0,
+   274.68,
+   567.0,
+   274.68,
+   576.72,
+   268.92,
+   576.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10090010",
+  "normalized_text": "10090010",
+  "confidence": 0.9998128414154053,
+  "bounding_box_px": [
+   807.0,
+   1577.0,
+   902.0,
+   1577.0,
+   902.0,
+   1606.0,
+   807.0,
+   1606.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.6742,
+   0.5457,
+   0.6866
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   567.72,
+   324.72,
+   567.72,
+   324.72,
+   578.16,
+   290.52,
+   578.16
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "ISOLADOR NYLON 90° 6.3 PRETA ABERTA UL94 V2",
+  "normalized_text": "isoladornylon90°6.3pretaabertaul94v2",
+  "confidence": 0.9963804483413696,
+  "bounding_box_px": [
+   917.0,
+   1580.0,
+   1413.0,
+   1580.0,
+   1413.0,
+   1603.0,
+   917.0,
+   1603.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.6755,
+   0.8548,
+   0.6853
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   568.8,
+   508.68,
+   568.8,
+   508.68,
+   577.08,
+   330.12,
+   577.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "E",
+  "normalized_text": "e",
+  "confidence": 0.9994813799858093,
+  "bounding_box_px": [
+   669.0,
+   1612.0,
+   690.0,
+   1612.0,
+   690.0,
+   1640.0,
+   669.0,
+   1640.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4047,
+   0.6892,
+   0.4174,
+   0.7012
+  ],
+  "bounding_box_pdf_points": [
+   240.84,
+   580.32,
+   248.4,
+   580.32,
+   248.4,
+   590.4,
+   240.84,
+   590.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.9489679336547852,
+  "bounding_box_px": [
+   747.0,
+   1613.0,
+   763.0,
+   1613.0,
+   763.0,
+   1639.0,
+   747.0,
+   1639.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.6896,
+   0.4616,
+   0.7007
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   580.68,
+   274.68,
+   580.68,
+   274.68,
+   590.04,
+   268.92,
+   590.04
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10380042",
+  "normalized_text": "10380042",
+  "confidence": 0.999923586845398,
+  "bounding_box_px": [
+   807.0,
+   1615.0,
+   902.0,
+   1615.0,
+   902.0,
+   1643.0,
+   807.0,
+   1643.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.6905,
+   0.5457,
+   0.7024
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   581.4,
+   324.72,
+   581.4,
+   324.72,
+   591.48,
+   290.52,
+   591.48
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CABO EPR 125/150°C 18AWG MR 600V STYLE 3400 CSA NBR 9114 - UL",
+  "normalized_text": "caboepr125/150°c18awgmr600vstyle3400csanbr9114-ul",
+  "confidence": 0.9847809672355652,
+  "bounding_box_px": [
+   917.0,
+   1617.0,
+   1595.0,
+   1617.0,
+   1595.0,
+   1641.0,
+   917.0,
+   1641.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.6913,
+   0.9649,
+   0.7016
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   582.12,
+   574.2,
+   582.12,
+   574.2,
+   590.76,
+   330.12,
+   590.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "C",
+  "normalized_text": "c",
+  "confidence": 0.9271420836448669,
+  "bounding_box_px": [
+   668.0,
+   1650.0,
+   689.0,
+   1650.0,
+   689.0,
+   1678.0,
+   668.0,
+   1678.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4041,
+   0.7054,
+   0.4168,
+   0.7174
+  ],
+  "bounding_box_pdf_points": [
+   240.48,
+   594.0,
+   248.04,
+   594.0,
+   248.04,
+   604.08,
+   240.48,
+   604.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.8890796899795532,
+  "bounding_box_px": [
+   747.0,
+   1650.0,
+   763.0,
+   1650.0,
+   763.0,
+   1676.0,
+   747.0,
+   1676.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4519,
+   0.7054,
+   0.4616,
+   0.7165
+  ],
+  "bounding_box_pdf_points": [
+   268.92,
+   594.0,
+   274.68,
+   594.0,
+   274.68,
+   603.36,
+   268.92,
+   603.36
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10080136",
+  "normalized_text": "10080136",
+  "confidence": 0.9997397661209106,
+  "bounding_box_px": [
+   807.0,
+   1652.0,
+   902.0,
+   1652.0,
+   902.0,
+   1680.0,
+   807.0,
+   1680.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.7063,
+   0.5457,
+   0.7183
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   594.72,
+   324.72,
+   594.72,
+   324.72,
+   604.8,
+   290.52,
+   604.8
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "TERM. BANDEIRA 6,3X0,8 1,0-2,6MM UL ESTANHADO",
+  "normalized_text": "term.bandeira6,3x0,81,0-2,6mmulestanhado",
+  "confidence": 0.9918385148048401,
+  "bounding_box_px": [
+   917.0,
+   1655.0,
+   1429.0,
+   1655.0,
+   1429.0,
+   1678.0,
+   917.0,
+   1678.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.7076,
+   0.8645,
+   0.7174
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   595.8,
+   514.44,
+   595.8,
+   514.44,
+   604.08,
+   330.12,
+   604.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "50233508",
+  "normalized_text": "50233508",
+  "confidence": 0.9997740983963013,
+  "bounding_box_px": [
+   96.0,
+   1686.0,
+   192.0,
+   1686.0,
+   192.0,
+   1714.0,
+   96.0,
+   1714.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.0581,
+   0.7208,
+   0.1162,
+   0.7328
+  ],
+  "bounding_box_pdf_points": [
+   34.56,
+   606.96,
+   69.12,
+   606.96,
+   69.12,
+   617.04,
+   34.56,
+   617.04
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CA18MABR-00242/10/06-0000-0110",
+  "normalized_text": "ca18mabr-00242/10/06-0000-0110",
+  "confidence": 0.9994674921035767,
+  "bounding_box_px": [
+   258.0,
+   1689.0,
+   591.0,
+   1689.0,
+   591.0,
+   1712.0,
+   258.0,
+   1712.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1561,
+   0.7221,
+   0.3575,
+   0.7319
+  ],
+  "bounding_box_pdf_points": [
+   92.88,
+   608.04,
+   212.76,
+   608.04,
+   212.76,
+   616.32,
+   92.88,
+   616.32
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "D",
+  "normalized_text": "d",
+  "confidence": 0.9997497200965881,
+  "bounding_box_px": [
+   667.0,
+   1687.0,
+   688.0,
+   1687.0,
+   688.0,
+   1715.0,
+   667.0,
+   1715.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4035,
+   0.7212,
+   0.4162,
+   0.7332
+  ],
+  "bounding_box_pdf_points": [
+   240.12,
+   607.32,
+   247.68,
+   607.32,
+   247.68,
+   617.4,
+   240.12,
+   617.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.8244585990905762,
+  "bounding_box_px": [
+   746.0,
+   1688.0,
+   764.0,
+   1688.0,
+   764.0,
+   1715.0,
+   746.0,
+   1715.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4513,
+   0.7217,
+   0.4622,
+   0.7332
+  ],
+  "bounding_box_pdf_points": [
+   268.56,
+   607.68,
+   275.04,
+   607.68,
+   275.04,
+   617.4,
+   268.56,
+   617.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10090010",
+  "normalized_text": "10090010",
+  "confidence": 0.9719379544258118,
+  "bounding_box_px": [
+   805.0,
+   1690.0,
+   901.0,
+   1688.0,
+   902.0,
+   1717.0,
+   806.0,
+   1719.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.487,
+   0.7217,
+   0.5457,
+   0.7349
+  ],
+  "bounding_box_pdf_points": [
+   289.8,
+   608.4,
+   324.36,
+   607.68,
+   324.72,
+   618.12,
+   290.16,
+   618.84
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "ISOLADOR NYLON 90° 6.3 PRETA ABERTA UL94 V2",
+  "normalized_text": "isoladornylon90°6.3pretaabertaul94v2",
+  "confidence": 0.9959718585014343,
+  "bounding_box_px": [
+   917.0,
+   1692.0,
+   1413.0,
+   1692.0,
+   1413.0,
+   1715.0,
+   917.0,
+   1715.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.7234,
+   0.8548,
+   0.7332
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   609.12,
+   508.68,
+   609.12,
+   508.68,
+   617.4,
+   330.12,
+   617.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "F",
+  "normalized_text": "f",
+  "confidence": 0.999320387840271,
+  "bounding_box_px": [
+   667.0,
+   1723.0,
+   691.0,
+   1723.0,
+   691.0,
+   1752.0,
+   667.0,
+   1752.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4035,
+   0.7366,
+   0.418,
+   0.749
+  ],
+  "bounding_box_pdf_points": [
+   240.12,
+   620.28,
+   248.76,
+   620.28,
+   248.76,
+   630.72,
+   240.12,
+   630.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "1",
+  "normalized_text": "1",
+  "confidence": 0.999832034111023,
+  "bounding_box_px": [
+   746.0,
+   1725.0,
+   763.0,
+   1725.0,
+   763.0,
+   1750.0,
+   746.0,
+   1750.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4513,
+   0.7375,
+   0.4616,
+   0.7482
+  ],
+  "bounding_box_pdf_points": [
+   268.56,
+   621.0,
+   274.68,
+   621.0,
+   274.68,
+   630.0,
+   268.56,
+   630.0
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "10380111",
+  "normalized_text": "10380111",
+  "confidence": 0.999936580657959,
+  "bounding_box_px": [
+   807.0,
+   1727.0,
+   900.0,
+   1727.0,
+   900.0,
+   1755.0,
+   807.0,
+   1755.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4882,
+   0.7383,
+   0.5445,
+   0.7503
+  ],
+  "bounding_box_pdf_points": [
+   290.52,
+   621.72,
+   324.0,
+   621.72,
+   324.0,
+   631.8,
+   290.52,
+   631.8
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CABO EPR 125/150°C 18AWG MRBN 600V STYLE 3400 CSA NBR 9114",
+  "normalized_text": "caboepr125/150°c18awgmrbn600vstyle3400csanbr9114",
+  "confidence": 0.9870396852493286,
+  "bounding_box_px": [
+   917.0,
+   1729.0,
+   1578.0,
+   1729.0,
+   1578.0,
+   1753.0,
+   917.0,
+   1753.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.5547,
+   0.7392,
+   0.9546,
+   0.7495
+  ],
+  "bounding_box_pdf_points": [
+   330.12,
+   622.44,
+   568.08,
+   622.44,
+   568.08,
+   631.08,
+   330.12,
+   631.08
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "00",
+  "normalized_text": "00",
+  "confidence": 0.9994008541107178,
+  "bounding_box_px": [
+   300.0,
+   1973.0,
+   332.0,
+   1973.0,
+   332.0,
+   2000.0,
+   300.0,
+   2000.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1815,
+   0.8435,
+   0.2008,
+   0.8551
+  ],
+  "bounding_box_pdf_points": [
+   108.0,
+   710.28,
+   119.52,
+   710.28,
+   119.52,
+   720.0,
+   108.0,
+   720.0
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "15/03/23",
+  "normalized_text": "15/03/23",
+  "confidence": 0.9999797344207764,
+  "bounding_box_px": [
+   383.0,
+   1971.0,
+   465.0,
+   1971.0,
+   465.0,
+   1999.0,
+   383.0,
+   1999.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2317,
+   0.8427,
+   0.2813,
+   0.8546
+  ],
+  "bounding_box_pdf_points": [
+   137.88,
+   709.56,
+   167.4,
+   709.56,
+   167.4,
+   719.64,
+   137.88,
+   719.64
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "040 23",
+  "normalized_text": "04023",
+  "confidence": 0.9198076128959656,
+  "bounding_box_px": [
+   481.0,
+   1971.0,
+   556.0,
+   1971.0,
+   556.0,
+   1996.0,
+   481.0,
+   1996.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.291,
+   0.8427,
+   0.3364,
+   0.8534
+  ],
+  "bounding_box_pdf_points": [
+   173.16,
+   709.56,
+   200.16,
+   709.56,
+   200.16,
+   718.56,
+   173.16,
+   718.56
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CRIAÇAO DE DESENHO",
+  "normalized_text": "criaçaodedesenho",
+  "confidence": 0.9739163517951965,
+  "bounding_box_px": [
+   597.0,
+   1971.0,
+   811.0,
+   1971.0,
+   811.0,
+   1998.0,
+   597.0,
+   1998.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.3612,
+   0.8427,
+   0.4906,
+   0.8542
+  ],
+  "bounding_box_pdf_points": [
+   214.92,
+   709.56,
+   291.96,
+   709.56,
+   291.96,
+   719.28,
+   214.92,
+   719.28
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "MARCIO",
+  "normalized_text": "marcio",
+  "confidence": 0.9997053146362305,
+  "bounding_box_px": [
+   1366.0,
+   1975.0,
+   1438.0,
+   1975.0,
+   1438.0,
+   1997.0,
+   1366.0,
+   1997.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8264,
+   0.8444,
+   0.8699,
+   0.8538
+  ],
+  "bounding_box_pdf_points": [
+   491.76,
+   711.0,
+   517.68,
+   711.0,
+   517.68,
+   718.92,
+   491.76,
+   718.92
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "EMELLY",
+  "normalized_text": "emelly",
+  "confidence": 0.9997439980506897,
+  "bounding_box_px": [
+   1502.0,
+   1973.0,
+   1569.0,
+   1973.0,
+   1569.0,
+   1995.0,
+   1502.0,
+   1995.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.9087,
+   0.8435,
+   0.9492,
+   0.8529
+  ],
+  "bounding_box_pdf_points": [
+   540.72,
+   710.28,
+   564.84,
+   710.28,
+   564.84,
+   718.2,
+   540.72,
+   718.2
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "REV.",
+  "normalized_text": "rev.",
+  "confidence": 0.9994809031486511,
+  "bounding_box_px": [
+   297.0,
+   2004.0,
+   360.0,
+   2004.0,
+   360.0,
+   2042.0,
+   297.0,
+   2042.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1797,
+   0.8568,
+   0.2178,
+   0.873
+  ],
+  "bounding_box_pdf_points": [
+   106.92,
+   721.44,
+   129.6,
+   721.44,
+   129.6,
+   735.12,
+   106.92,
+   735.12
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "DATA",
+  "normalized_text": "data",
+  "confidence": 0.9998663663864136,
+  "bounding_box_px": [
+   393.0,
+   2006.0,
+   460.0,
+   2006.0,
+   460.0,
+   2040.0,
+   393.0,
+   2040.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2377,
+   0.8576,
+   0.2783,
+   0.8722
+  ],
+  "bounding_box_pdf_points": [
+   141.48,
+   722.16,
+   165.6,
+   722.16,
+   165.6,
+   734.4,
+   141.48,
+   734.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "LMP",
+  "normalized_text": "lmp",
+  "confidence": 0.9997913837432861,
+  "bounding_box_px": [
+   490.0,
+   2005.0,
+   548.0,
+   2005.0,
+   548.0,
+   2041.0,
+   490.0,
+   2041.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2964,
+   0.8572,
+   0.3315,
+   0.8726
+  ],
+  "bounding_box_pdf_points": [
+   176.4,
+   721.8,
+   197.28,
+   721.8,
+   197.28,
+   734.76,
+   176.4,
+   734.76
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "RESUMO DAS MODIFICACÖES",
+  "normalized_text": "resumodasmodificacöes",
+  "confidence": 0.9915080070495605,
+  "bounding_box_px": [
+   739.0,
+   2007.0,
+   1073.0,
+   2007.0,
+   1073.0,
+   2038.0,
+   739.0,
+   2038.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4471,
+   0.8581,
+   0.6491,
+   0.8713
+  ],
+  "bounding_box_pdf_points": [
+   266.04,
+   722.52,
+   386.28,
+   722.52,
+   386.28,
+   733.68,
+   266.04,
+   733.68
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "EXECUTADO[LIBERADO",
+  "normalized_text": "executado[liberado",
+  "confidence": 0.9732875823974609,
+  "bounding_box_px": [
+   1348.0,
+   2006.0,
+   1601.0,
+   2006.0,
+   1601.0,
+   2040.0,
+   1348.0,
+   2040.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8155,
+   0.8576,
+   0.9685,
+   0.8722
+  ],
+  "bounding_box_pdf_points": [
+   485.28,
+   722.16,
+   576.36,
+   722.16,
+   576.36,
+   734.4,
+   485.28,
+   734.4
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CLIENTE: WEG INDUSTRIA S.A.",
+  "normalized_text": "cliente:wegindustrias.a.",
+  "confidence": 0.9995192289352417,
+  "bounding_box_px": [
+   278.0,
+   2077.0,
+   990.0,
+   2073.0,
+   991.0,
+   2123.0,
+   278.0,
+   2127.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.1682,
+   0.8863,
+   0.5995,
+   0.9094
+  ],
+  "bounding_box_pdf_points": [
+   100.08,
+   747.72,
+   356.4,
+   746.28,
+   356.76,
+   764.28,
+   100.08,
+   765.72
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "LINHARES",
+  "normalized_text": "linhares",
+  "confidence": 0.9998772740364075,
+  "bounding_box_px": [
+   1079.0,
+   2079.0,
+   1321.0,
+   2079.0,
+   1321.0,
+   2121.0,
+   1079.0,
+   2121.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.6528,
+   0.8888,
+   0.7992,
+   0.9068
+  ],
+  "bounding_box_pdf_points": [
+   388.44,
+   748.44,
+   475.56,
+   748.44,
+   475.56,
+   763.56,
+   388.44,
+   763.56
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "Delpi",
+  "normalized_text": "delpi",
+  "confidence": 0.9898216128349304,
+  "bounding_box_px": [
+   1372.0,
+   2077.0,
+   1535.0,
+   2077.0,
+   1535.0,
+   2156.0,
+   1372.0,
+   2156.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.83,
+   0.888,
+   0.9286,
+   0.9218
+  ],
+  "bounding_box_pdf_points": [
+   493.92,
+   747.72,
+   552.6,
+   747.72,
+   552.6,
+   776.16,
+   493.92,
+   776.16
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "—",
+  "normalized_text": "—",
+  "confidence": 0.35651469230651855,
+  "bounding_box_px": [
+   1015.0,
+   2087.0,
+   1054.0,
+   2087.0,
+   1054.0,
+   2113.0,
+   1015.0,
+   2113.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.614,
+   0.8923,
+   0.6376,
+   0.9034
+  ],
+  "bounding_box_pdf_points": [
+   365.4,
+   751.32,
+   379.44,
+   751.32,
+   379.44,
+   760.68,
+   365.4,
+   760.68
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "COD. 16199984",
+  "normalized_text": "cod.16199984",
+  "confidence": 0.9984788298606873,
+  "bounding_box_px": [
+   276.0,
+   2158.0,
+   516.0,
+   2160.0,
+   515.0,
+   2194.0,
+   276.0,
+   2192.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.167,
+   0.9226,
+   0.3122,
+   0.938
+  ],
+  "bounding_box_pdf_points": [
+   99.36,
+   776.88,
+   185.76,
+   777.6,
+   185.4,
+   789.84,
+   99.36,
+   789.12
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "DES: 10008915923",
+  "normalized_text": "des:10008915923",
+  "confidence": 0.9835137128829956,
+  "bounding_box_px": [
+   581.0,
+   2159.0,
+   887.0,
+   2162.0,
+   887.0,
+   2197.0,
+   581.0,
+   2194.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.3515,
+   0.923,
+   0.5366,
+   0.9393
+  ],
+  "bounding_box_pdf_points": [
+   209.16,
+   777.24,
+   319.32,
+   778.32,
+   319.32,
+   790.92,
+   209.16,
+   789.84
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "REV. 00",
+  "normalized_text": "rev.00",
+  "confidence": 0.9387137293815613,
+  "bounding_box_px": [
+   1073.0,
+   2155.0,
+   1178.0,
+   2152.0,
+   1179.0,
+   2193.0,
+   1074.0,
+   2195.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.6491,
+   0.9201,
+   0.7132,
+   0.9384
+  ],
+  "bounding_box_pdf_points": [
+   386.28,
+   775.8,
+   424.08,
+   774.72,
+   424.44,
+   789.48,
+   386.64,
+   790.2
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "conexães elétricas",
+  "normalized_text": "conexãeselétricas",
+  "confidence": 0.9743818640708923,
+  "bounding_box_px": [
+   1380.0,
+   2152.0,
+   1515.0,
+   2151.0,
+   1515.0,
+   2169.0,
+   1380.0,
+   2170.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.8348,
+   0.9196,
+   0.9165,
+   0.9277
+  ],
+  "bounding_box_pdf_points": [
+   496.8,
+   774.72,
+   545.4,
+   774.36,
+   545.4,
+   780.84,
+   496.8,
+   781.2
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "CHICOTE DE I",
+  "normalized_text": "chicotedei",
+  "confidence": 0.9956023097038269,
+  "bounding_box_px": [
+   337.0,
+   2200.0,
+   772.0,
+   2200.0,
+   772.0,
+   2261.0,
+   337.0,
+   2261.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.2039,
+   0.9406,
+   0.467,
+   0.9667
+  ],
+  "bounding_box_pdf_points": [
+   121.32,
+   792.0,
+   277.92,
+   792.0,
+   277.92,
+   813.96,
+   121.32,
+   813.96
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "LIGACAO",
+  "normalized_text": "ligacao",
+  "confidence": 0.9971610307693481,
+  "bounding_box_px": [
+   742.0,
+   2198.0,
+   1005.0,
+   2196.0,
+   1005.0,
+   2259.0,
+   742.0,
+   2261.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.4489,
+   0.9389,
+   0.608,
+   0.9667
+  ],
+  "bounding_box_pdf_points": [
+   267.12,
+   791.28,
+   361.8,
+   790.56,
+   361.8,
+   813.24,
+   267.12,
+   813.96
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ },
+ {
+  "page": 1,
+  "raw_text": "90263680",
+  "normalized_text": "90263680",
+  "confidence": 0.9999284744262695,
+  "bounding_box_px": [
+   1150.0,
+   2192.0,
+   1533.0,
+   2192.0,
+   1533.0,
+   2261.0,
+   1150.0,
+   2261.0
+  ],
+  "coordinate_system": "pixels_top_left",
+  "provider_id": "paddleocr_experimental",
+  "provider_version": "3.3.0",
+  "extraction_method": "paddleocr_local",
+  "bounding_box_normalized": [
+   0.6957,
+   0.9372,
+   0.9274,
+   0.9667
+  ],
+  "bounding_box_pdf_points": [
+   414.0,
+   789.12,
+   551.88,
+   789.12,
+   551.88,
+   813.96,
+   414.0,
+   813.96
+  ],
+  "pdf_transform": "pdf_pt = px / 2.7778"
+ }
+]

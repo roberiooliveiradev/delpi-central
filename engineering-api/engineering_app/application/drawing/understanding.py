@@ -70,7 +70,7 @@ _TABLE_HEADER_LABELS = frozenset(
     {
         "item", "cod", "cod.", "código", "codigo",
         "descrição", "descricao", "descr", "qtd",
-        "qtde", "quant", "unid", "un", "componente",
+        "qtde", "quant", "unid", "un", "componente", "comp",
         "obs", "pi", "mp", "ref", "ref.", "cabo",
     }
 )
@@ -89,6 +89,7 @@ _HEADER_TYPE_MAP = {
     "unidade": "unit",
     "cod": "component_code", "código": "component_code",
     "codigo": "component_code", "componente": "component_code",
+    "comp": "component_code",
     "pi": "component_code", "mp": "component_code",
     "ref": "reference", "descrição": "description",
     "descricao": "description", "descr": "description",
@@ -822,15 +823,26 @@ def _detect_component_table(
     )
     table_box[0] -= w * 0.03
     table_box[2] += w * 0.30  # descrição à direita do código
+    # Faixa de rótulos: toda a linha de cabeçalho da tabela (não só
+    # a etiqueta colada à coluna de códigos) tipifica colunas —
+    # layouts com bloco pai + componente usam rótulos repetidos e
+    # espalhados (Código|Descrição|Item|QTD|Comp.|Descrição).
     header = [
         t
         for t in tokens
         if _tok_center(t)
+        and id(t) not in ex
         and _is_header_label(_text_of(t))
-        and abs(_tok_center(t)[0] - col_box[0]) <= w * 0.10
-        and _tok_center(t)[1] < table_box[1] - h * 0.005
+        and _tok_center(t)[0] > col_box[0] - w * 0.03
+        and _tok_center(t)[1] < table_box[1] + h * 0.01
         and _tok_center(t)[1] > table_box[1] - h * 0.12
     ]
+    # A faixa de rótulos delimita a largura real da tabela: a coluna
+    # de descrição do componente pode estender-se além do envelope
+    # dos códigos — cobri-la no box em vez de truncá-la.
+    if header:
+        hdr_right = max(_tok_center(t)[0] for t in header)
+        table_box[2] = max(table_box[2], hdr_right + w * 0.12)
     # não engolir o carimbo: se a tabela coincide com o carimbo,
     # limitar à coluna de códigos
     if tb_box and _inside(
@@ -860,6 +872,50 @@ def _header_type(text: str) -> str | None:
     return _HEADER_TYPE_MAP.get(text.lower().rstrip(".:"))
 
 
+def _fields_from_cells(cells: list[dict]) -> dict[str, dict]:
+    """Campos tipados da linha a partir do col_type das células.
+
+    Mesma coluna tipada → concatena (multilinha/descrição). Célula
+    de component_code sem evidência de código não vira campo."""
+    fields: dict[str, dict] = {}
+    for cell in cells:
+        ct = cell.get("col_type")
+        if not ct:
+            continue
+        if ct in ("component_code", "parent_code") and (
+            _is_sheet_index_noise_cell(cell["text"])
+            or not (
+                _CODE_RE.match(cell["text"])
+                or _CODE_FIND_RE.search(cell["text"])
+            )
+        ):
+            continue
+        if ct not in fields:
+            fields[ct] = {
+                "raw_text": cell["text"],
+                "normalized_value": cell["text"],
+                "bounding_box_px": cell.get("bounding_box_px"),
+                "col": cell["col"],
+                "association_method": "col_type_header_or_content",
+                "association_state": "FIELD_IDENTIFIED",
+            }
+        else:
+            fields[ct]["raw_text"] += " " + cell["text"]
+            fields[ct]["normalized_value"] = fields[ct]["raw_text"]
+            b = fields[ct]["bounding_box_px"]
+            nb = cell.get("bounding_box_px")
+            if b and nb:
+                fields[ct]["bounding_box_px"] = [
+                    min(b[0], nb[0]), min(b[1], nb[1]),
+                    max(b[2], nb[2]), max(b[3], nb[3]),
+                ]
+    if "quantity" in fields:
+        q = fields["quantity"]["raw_text"].strip()
+        if q.replace(",", ".").replace(".", "", 1).isdigit() or q.isdigit():
+            fields["quantity"]["normalized_value"] = q
+    return fields
+
+
 def _structure_table(
     table: dict, w: float, h: float
 ) -> list[dict]:
@@ -883,24 +939,42 @@ def _structure_table(
         else:
             col_centers[-1] = (col_centers[-1] + cx) / 2.0
     col_types: dict[int, str] = {}
-    # header→col: atribuição greedy sem colisão — cada rótulo ocupa a
-    # coluna livre mais próxima (headers em ordem x).
+    # header→col por proximidade mútua: cada coluna adota o rótulo
+    # mais próximo. Rótulos repetidos (Descrição×2) tipificam as duas
+    # colunas de descrição; rótulos que perdem a disputa pela mesma
+    # coluna (Item e QTD no mesmo cluster X) viram refinadores —
+    # decidem o tipo célula a célula pela proximidade ao rótulo.
     hdr_toks = sorted(
         [t for t in (table.get("header_tokens") or []) if _tok_center(t)],
         key=lambda t: _tok_center(t)[0],
     )
-    used_cols: set[int] = set()
+    header_entries: list[tuple[float, str, int]] = []
     for ht in hdr_toks:
         tpe = _header_type(_text_of(ht))
         c = _tok_center(ht)
-        if not (tpe and c and col_centers):
-            continue
-        free = [i for i in range(len(col_centers)) if i not in used_cols]
-        if not free:
-            break
-        ci = min(free, key=lambda i: abs(col_centers[i] - c[0]))
+        if tpe and c and col_centers:
+            ci = min(
+                range(len(col_centers)),
+                key=lambda i: abs(col_centers[i] - c[0]),
+            )
+            header_entries.append((c[0], tpe, ci))
+    winner: dict[int, tuple[float, float, str]] = {}
+    for hx, tpe, ci in header_entries:
+        d = abs(hx - col_centers[ci])
+        if ci not in winner or d < winner[ci][0]:
+            winner[ci] = (d, hx, tpe)
+    for ci, (_d, _hx, tpe) in winner.items():
         col_types[ci] = tpe
-        used_cols.add(ci)
+    winner_hx = {ci: hx for ci, (_d, hx, _t) in winner.items()}
+    loose_headers = [
+        (hx, tpe, ci)
+        for hx, tpe, ci in header_entries
+        if not (
+            ci in winner
+            and winner[ci][1] == hx
+            and winner[ci][2] == tpe
+        )
+    ]
     # tipagem por conteúdo (evidência de dados): coluna cujas células
     # são majoritariamente códigos 6-11 dígitos → component_code,
     # quando o header não a tipou (header pode estar desalinhado em x).
@@ -943,12 +1017,12 @@ def _structure_table(
             if col_centers[i] - col_centers[i - 1] > gap:
                 break
             keep_cols.add(i)
-    # Colunas tipadas component_code por conteúdo mantêm-se mesmo com
-    # gap — layouts multi-coluna (conjunto + componentes) usam faixas
-    # X não contíguas.
-    keep_cols.update(
-        i for i, tpe in col_types.items() if tpe == "component_code"
-    )
+    # Colunas tipadas por cabeçalho ou por conteúdo mantêm-se mesmo
+    # com gap — layouts multi-coluna (bloco pai + componentes, e a
+    # coluna de descrição do componente após a de código) usam faixas
+    # X não contíguas. Coluna sem rótulo e sem evidência tipada
+    # continua sujeita ao corte por gap.
+    keep_cols.update(col_types)
     rows_out = []
     ambiguous = 0
     for r_i, row in enumerate(sorted(table["rows"], key=lambda r: r["y"])):
@@ -970,6 +1044,24 @@ def _structure_table(
             # Índice curto só permanece como quantidade tipada; fora
             # disso não vira célula de componente/descrição.
             provisional_type = col_types.get(best_i)
+            # Refinamento por rótulo não adotado: quando dois
+            # cabeçalhos disputam a mesma coluna (ex.: Item e QTD no
+            # mesmo cluster X), o rótulo mais próximo da célula decide
+            # o tipo dela — letra de item e dígito de quantidade no
+            # mesmo cluster passam a ter tipos distintos.
+            refined: tuple[float, str] | None = None
+            wx = winner_hx.get(best_i)
+            if wx is not None:
+                for hx, tpe, ci in loose_headers:
+                    if ci != best_i:
+                        continue
+                    d_hdr = abs(hx - x)
+                    if d_hdr < abs(wx - x) and (
+                        refined is None or d_hdr < refined[0]
+                    ):
+                        refined = (d_hdr, tpe)
+                if refined is not None:
+                    provisional_type = refined[1]
             if _is_sheet_index_text(text_t) and provisional_type not in (
                 "quantity",
                 "item",
@@ -985,8 +1077,10 @@ def _structure_table(
             }
             if t.get("page") is not None:
                 cell["page"] = t.get("page")
-            if best_i in col_types:
-                cell["col_type"] = col_types[best_i]
+            if provisional_type:
+                cell["col_type"] = provisional_type
+            if refined is not None:
+                cell["_type_from"] = "header_refined"
             if len(ties) > 1:
                 cell["ambiguous"] = True
                 cell["alternatives"] = ties
@@ -994,44 +1088,7 @@ def _structure_table(
             cells.append(cell)
         # R10 — tipagem de campos por linha a partir de col_type:
         # item/quantity/component_code/description com proveniência real.
-        fields: dict[str, dict] = {}
-        for cell in cells:
-            ct = cell.get("col_type")
-            if not ct:
-                continue
-            if ct == "component_code" and (
-                _is_sheet_index_noise_cell(cell["text"])
-                or not (
-                    _CODE_RE.match(cell["text"])
-                    or _CODE_FIND_RE.search(cell["text"])
-                )
-            ):
-                continue
-            if ct not in fields:
-                fields[ct] = {
-                    "raw_text": cell["text"],
-                    "normalized_value": cell["text"],
-                    "bounding_box_px": cell.get("bounding_box_px"),
-                    "col": cell["col"],
-                    "association_method": "col_type_header_or_content",
-                    "association_state": "FIELD_IDENTIFIED",
-                }
-            else:
-                # mesma coluna tipada → concatena (multilinha/descrição)
-                fields[ct]["raw_text"] += " " + cell["text"]
-                fields[ct]["normalized_value"] = fields[ct]["raw_text"]
-                b = fields[ct]["bounding_box_px"]
-                nb = cell.get("bounding_box_px")
-                if b and nb:
-                    fields[ct]["bounding_box_px"] = [
-                        min(b[0], nb[0]), min(b[1], nb[1]),
-                        max(b[2], nb[2]), max(b[3], nb[3]),
-                    ]
-        # quantity → número só se formato válido
-        if "quantity" in fields:
-            q = fields["quantity"]["raw_text"].strip()
-            if q.replace(",", ".").replace(".", "", 1).isdigit() or q.isdigit():
-                fields["quantity"]["normalized_value"] = q
+        fields = _fields_from_cells(cells)
         typed = {
             "row": r_i,
             "y_px": round(row["y"], 1),
@@ -1043,23 +1100,183 @@ def _structure_table(
             "component_code": fields.get(
                 "component_code", {}
             ).get("normalized_value"),
+            "parent_code": fields.get(
+                "parent_code", {}
+            ).get("normalized_value"),
             "description": fields.get(
                 "description", {}
+            ).get("normalized_value"),
+            "parent_description": fields.get(
+                "parent_description", {}
             ).get("normalized_value"),
             "association_status": (
                 "FIELD_IDENTIFIED" if fields else "UNRESOLVED"
             ),
         }
         rows_out.append(typed)
-    # Perfil DELPI também no caminho token-cluster: papéis por
-    # evidência de conteúdo (sem item_band — pivô esparso×denso).
+    # Perfil DELPI também no caminho token-cluster: a faixa de item
+    # vem do rótulo de cabeçalho quando presente (pivô posicional);
+    # sem rótulo, recai no pivô esparso×denso.
+    item_xs = [hx for hx, tpe, _ci in header_entries if tpe == "item"]
+    item_band = (
+        (min(item_xs) - x_tol, max(item_xs) + x_tol)
+        if item_xs
+        else None
+    )
     _assign_presentation_roles(
         [c for r in rows_out for c in r["cells"]],
         col_types,
-        item_band=None,
+        item_band=item_band,
         data_row_count=len(rows_out),
     )
+    # Os papéis de apresentação podem retipar colunas depois da
+    # montagem das células (component_code→parent_code, description→
+    # parent_description). Sincronizar as células e reconstruir os
+    # campos para que o código/descrição do pai não se fundam aos do
+    # componente; células refinadas por rótulo não são retipadas.
+    for r in rows_out:
+        changed = False
+        for cell in r["cells"]:
+            final = col_types.get(cell["col"])
+            if (
+                final
+                and final != cell.get("col_type")
+                and cell.get("_type_from") != "header_refined"
+            ):
+                cell["col_type"] = final
+                changed = True
+        if not changed:
+            continue
+        fields = _fields_from_cells(r["cells"])
+        r["fields"] = fields
+        r["item"] = fields.get("item", {}).get("normalized_value")
+        r["quantity"] = fields.get("quantity", {}).get("normalized_value")
+        r["component_code"] = fields.get(
+            "component_code", {}
+        ).get("normalized_value")
+        r["parent_code"] = fields.get(
+            "parent_code", {}
+        ).get("normalized_value")
+        r["description"] = fields.get(
+            "description", {}
+        ).get("normalized_value")
+        r["parent_description"] = fields.get(
+            "parent_description", {}
+        ).get("normalized_value")
+        r["association_status"] = (
+            "FIELD_IDENTIFIED" if fields else "UNRESOLVED"
+        )
+    # Âncoras de grupo no caminho token-cluster: código na coluna
+    # parent_code ancora o bloco de componentes sem rowspan nativo.
+    _apply_token_group_anchors(
+        rows_out,
+        sorted(
+            int(c) for c, t in col_types.items() if t == "parent_code"
+        ),
+    )
     return rows_out, ambiguous, col_types
+
+
+def _token_item_sort_key(item: str) -> tuple[int, ...] | None:
+    parts = re.findall(r"\d+|[A-Za-z]+", item or "")
+    if not parts:
+        return None
+    return tuple(
+        (0, int(p)) if p.isdigit() else (1, p.upper()) for p in parts
+    )
+
+
+def _apply_token_group_anchors(
+    rows: list[dict], parent_code_cols: list[int]
+) -> None:
+    """Âncoras de grupo por coluna no caminho token-cluster.
+
+    Sem rowspan nativo, a extensão vertical do bloco-pai não vem
+    declarada — mas a célula mesclada é verticalmente centrada no
+    seu intervalo e as letras de item reiniciam por conjunto. A
+    cobertura expande simetricamente enquanto a sequência de itens
+    cresce dentro do bloco e nenhuma outra âncora interrompe.
+
+    Expansão simétrica (âncora centrada, rank 2) prevalece sobre
+    cobertura unilateral (rank 1) e fallback até a próxima âncora
+    (rank 0, sem letras de item). Linha disputada por âncoras do
+    mesmo rank → conflito explícito, nunca pai inventado.
+    """
+    if not parent_code_cols or not rows:
+        return
+    anchors: list[tuple[int, str, str | None]] = []
+    for i, r in enumerate(rows):
+        code = None
+        for cell in r.get("cells") or []:
+            ccol = cell.get("col")
+            if ccol is None or int(ccol) not in parent_code_cols:
+                continue
+            m = _CODE_FIND_RE.search(str(cell.get("text") or ""))
+            if m:
+                code = m.group(0)
+                break
+        if code:
+            anchors.append((i, code, r.get("parent_description")))
+    if not anchors:
+        return
+    anchor_rows = {a[0] for a in anchors}
+    items = [
+        _token_item_sort_key(_norm(str(r.get("item") or "")))
+        for r in rows
+    ]
+    has_items = any(i is not None for i in items)
+    claims: dict[int, list[tuple[int, str, str | None]]] = {}
+    for a_i, (a_row, code, desc) in enumerate(anchors):
+        if has_items:
+            up = 0
+            while (
+                a_row - up - 1 >= 0
+                and (a_row - up - 1) not in anchor_rows
+                and items[a_row - up - 1] is not None
+                and items[a_row - up] is not None
+                and items[a_row - up - 1] < items[a_row - up]
+            ):
+                up += 1
+            down = 0
+            while (
+                a_row + down + 1 < len(rows)
+                and (a_row + down + 1) not in anchor_rows
+                and items[a_row + down + 1] is not None
+                and items[a_row + down] is not None
+                and items[a_row + down] < items[a_row + down + 1]
+            ):
+                down += 1
+            k = min(up, down)
+            if k > 0:
+                start, end, rank = a_row - k, a_row + k, 2
+            else:
+                # Sem prova de centralização: cobertura unilateral na
+                # direção evidenciada pela sequência de itens.
+                start, end, rank = a_row - up, a_row + down, 1
+        else:
+            start = a_row
+            end = (
+                anchors[a_i + 1][0] - 1
+                if a_i + 1 < len(anchors)
+                else len(rows) - 1
+            )
+            rank = 0
+        for i in range(start, end + 1):
+            claims.setdefault(i, []).append((rank, code, desc))
+    for i, claimed in claims.items():
+        best = max(c[0] for c in claimed)
+        top = [c for c in claimed if c[0] == best]
+        if len({c[1] for c in top}) != 1:
+            rows[i]["association_conflict"] = True
+            rows[i]["association_status"] = "INCONCLUSIVE"
+            continue
+        _rank, code, desc = top[0]
+        rows[i]["parent_group_candidate"] = code
+        rows[i]["parent_group_source"] = (
+            "column_span" if best >= 2 else "column_span_inferred"
+        )
+        if desc:
+            rows[i]["parent_group_description"] = desc
 
 
 def _value_run_right(

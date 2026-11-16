@@ -417,7 +417,17 @@ def _drawing_occurrences(
                 {
                     "item_code": code,
                     "item_type": item_type,
-                    "item_description": row.get("description"),
+                    # O código-âncora do grupo (PI/conjunto) descreve
+                    # o bloco-pai: sua descrição é a da célula mesclada
+                    # do conjunto, não a do componente da linha.
+                    "item_description": (
+                        (
+                            row.get("parent_group_description")
+                            or row.get("parent_description")
+                        )
+                        if row_group and code == row_group
+                        else row.get("description")
+                    ),
                     "parent_code": parent,
                     "parent_verified": verified,
                     "parent_source": parent_source,
