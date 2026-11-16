@@ -415,8 +415,51 @@ def _literal_string(node: ast.AST | None, *, allow_empty: bool = False) -> str |
     return None
 
 
+def _flask_route_receivers(tree: ast.Module) -> set[str]:
+    """Identify explicit Flask app/blueprint instances without disabling FastAPI checks."""
+    constructors: set[str] = set()
+    flask_modules: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.module == "flask":
+            constructors.update(
+                alias.asname or alias.name
+                for alias in node.names
+                if alias.name in {"Blueprint", "Flask"}
+            )
+        elif isinstance(node, ast.Import):
+            flask_modules.update(
+                alias.asname or "flask"
+                for alias in node.names
+                if alias.name == "flask"
+            )
+
+    receivers: set[str] = set()
+    for node in tree.body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        value = node.value
+        if not isinstance(value, ast.Call):
+            continue
+        factory = value.func
+        is_flask = (
+            isinstance(factory, ast.Name)
+            and factory.id in constructors
+        ) or (
+            isinstance(factory, ast.Attribute)
+            and factory.attr in {"Blueprint", "Flask"}
+            and isinstance(factory.value, ast.Name)
+            and factory.value.id in flask_modules
+        )
+        if not is_flask:
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        receivers.update(target.id for target in targets if isinstance(target, ast.Name))
+    return receivers
+
+
 def fastapi_routes_from_source(source: str) -> list[FastApiRoute]:
     tree = ast.parse(source)
+    flask_receivers = _flask_route_receivers(tree)
     routes: list[FastApiRoute] = []
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -426,6 +469,12 @@ def fastapi_routes_from_source(source: str) -> list[FastApiRoute]:
                 continue
             method = decorator.func.attr.lower()
             if method not in HTTP_METHODS or not decorator.args:
+                continue
+            # Flask Blueprint.get() has no FastAPI operation_id parameter.
+            if (
+                isinstance(decorator.func.value, ast.Name)
+                and decorator.func.value.id in flask_receivers
+            ):
                 continue
             route_path = _literal_string(decorator.args[0], allow_empty=True)
             if route_path is None or (route_path != "" and not route_path.startswith("/")):
