@@ -296,6 +296,13 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
             <SuppliesActionButton
               type="button"
               variant="ghost"
+              onClick={() => navigatePluginView("sc_pc_conversion", { basePath })}
+            >
+              Conversão SC → PC
+            </SuppliesActionButton>
+            <SuppliesActionButton
+              type="button"
+              variant="ghost"
               onClick={reload}
               disabled={loading || !units.length}
               title={SP_HELP.purchaseRequestsRefresh}
