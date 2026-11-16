@@ -922,6 +922,11 @@
     overflow-y: visible;
   }
 
+  /* Glow absoluto do kit (right:-90px) infla scrollWidth — esconde em 390. */
+  .dashboard-controllership-finance .cf-page-hero .cf-page-hero__glow {
+    display: none;
+  }
+
   .dashboard-controllership-finance .cf-page-hero .cf-page-hero__headline,
   .dashboard-controllership-finance .cf-page-hero .cf-page-hero__headline-main {
     flex-direction: column;
