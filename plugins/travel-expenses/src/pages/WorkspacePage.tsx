@@ -28,7 +28,13 @@ import {
 } from "../api/travelExpensesApi";
 import { CATEGORY_LABELS, formatBrl, formatDate } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
-import { toInputDate } from "../utils/dates";
+import { initialExpenseDate, toInputDate } from "../utils/dates";
+import {
+  emptyMileageRateLookup,
+  mileageRateLabel,
+  rateForDate,
+  type MileageRateLookup,
+} from "../utils/mileageRateState";
 import {
   TravelAttachmentStrip,
   TravelDrawer,
@@ -401,7 +407,9 @@ function ExpenseDrawer({
   const [amount, setAmount] = useState("");
   const [transportMode, setTransportMode] = useState("");
   const [distanceKm, setDistanceKm] = useState("");
-  const [mileageRate, setMileageRate] = useState<number | null>(null);
+  const [mileageRateLookup, setMileageRateLookup] = useState<MileageRateLookup>(emptyMileageRateLookup);
+  const [mileageRetry, setMileageRetry] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const current = useMemo(
@@ -410,7 +418,8 @@ function ExpenseDrawer({
   );
 
   useEffect(() => {
-    setExpenseDate(toInputDate(expense?.expenseDate) || toInputDate(report.periodStart));
+    setExpenseDate(initialExpenseDate(expense?.expenseDate, report.periodStart));
+    setFormError(null);
     setCategoryId(expense?.categoryId || categories[0]?.id || "other");
     setMerchant(expense?.merchant || "");
     setAmount(expense ? String(expense.amountBrl) : "");
@@ -420,18 +429,43 @@ function ExpenseDrawer({
   }, [expense, categories, report.periodStart, open]);
 
   useEffect(() => {
-    let active = true;
-    if (categoryId !== "ground_transport" || transportMode !== "own_vehicle" || !expenseDate) {
-      setMileageRate(null);
+    if (!open || categoryId !== "ground_transport" || transportMode !== "own_vehicle" || !expenseDate) {
+      setMileageRateLookup(emptyMileageRateLookup);
       return;
     }
-    getMileageRate(expenseDate)
-      .then((rate) => { if (active) setMileageRate(rate); })
-      .catch(() => { if (active) setMileageRate(null); });
-    return () => { active = false; };
-  }, [categoryId, transportMode, expenseDate]);
+
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    setMileageRateLookup({ date: expenseDate, status: "loading", rate: null, error: null });
+
+    getMileageRate(expenseDate, controller.signal)
+      .then((rate) => {
+        if (active) {
+          setMileageRateLookup({ date: expenseDate, status: "success", rate, error: null });
+        }
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        const message = controller.signal.aborted
+          ? "A consulta demorou demais. Verifique a conexão e tente novamente."
+          : err instanceof Error ? err.message : "Não foi possível consultar a tarifa.";
+        setMileageRateLookup({ date: expenseDate, status: "error", rate: null, error: message });
+      })
+      .finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [open, categoryId, transportMode, expenseDate, mileageRetry]);
 
   const ownVehicle = categoryId === "ground_transport" && transportMode === "own_vehicle";
+  // Never display the rate from an earlier date while a new request is pending.
+  const mileageRate = ownVehicle ? rateForDate(mileageRateLookup, expenseDate) : null;
+  const mileageRateError = ownVehicle && mileageRateLookup.date === expenseDate &&
+    mileageRateLookup.status === "error" ? mileageRateLookup.error : null;
   const km = parseBrlInput(distanceKm);
   const mileageTotal = mileageRate !== null && km !== null && km > 0
     ? Math.round((mileageRate * km + Number.EPSILON) * 100) / 100
