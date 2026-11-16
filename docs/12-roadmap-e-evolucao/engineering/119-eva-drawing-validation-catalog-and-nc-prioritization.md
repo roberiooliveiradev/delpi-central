@@ -6162,3 +6162,47 @@ Contagem do grupo 1008 em §94.34.3: são **sete** estruturas sem cobertura espe
 ### 94.35.4 Residual
 
 `G-01` fechado funcionalmente; verificação independente efetiva e liberação produtiva permanecem gates da Coordination. G-02 a G-07 inalterados (lotes futuros).
+
+---
+
+## §94.36 — G25-L1-R1: Release Produtivo e Aceite Normativo MP 1009
+
+**Data:** 2026-11-16 | **Modo:** `RELEASE_REVIEW / CONTROLLED_DEPLOY / PRODUCTION_SMOKE / MCP_E2E_HANDOFF` | **TASK_ID:** `EVA-E1-VAL01-G25-L1-R1-MP1009-PRODUCTION-RELEASE-AND-MCP-E2E-01`
+
+### 94.36.1 Escopo do release
+
+Deploy canônico `srv-api` da Engineering API sobre `origin/main` `3cfac6c5a1`. Delta efetivo no serviço: `7e1121b9df` (G-01, dispatch MP 1009) + `f7ef23e3ed` (actions semânticas PRC `comment_list/create/update`, Issue #207 — frente concorrente já integrada à main, sem novas rotas HTTP). Sem alterações de norma, contrato (`normative_description.v1`), F01/F02, Keycloak, Core ou api-delpi.
+
+### 94.36.2 Gates
+
+- **Regressão (HEAD `3ca9bebc`, mesma árvore de código implantada):** `1469 passed / 21 skipped`; 4 falhas — 2 de contrato de rotas PRC (Issue #207, `test_probe_route_not_in_production_openapi` + `test_only_authorized_business_routes_exposed`, pré-existentes do commit `2c3ab3c709`), 1 residual D16 (`test_isolation_between_requests`, 422→`KeyError` conhecido), 1 artefato de ambiente (`test_constants_match_semantics_spec` — passa com mount `/api-delpi`, confirmado). **Zero regressões novas atribuíveis ao G25-L1.**
+- **Verificador independente:** `INCONCLUSIVE` — engine devin `Not logged in` (9ª ocorrência). Requests r1/r2/r3 em `.git/delpi-verifier/requests/g25-l1-*.md`.
+- **Exceção de verificação:** aprovada pela **EVA — Architecture / Coordination** via ordem explícita deste pacote (deploy comandado com status INCONCLUSIVE já documentado em §94.35). Controles compensatórios: 64/64 testes focados, suíte completa executada no SHA, smoke normativo na imagem produtiva, imagem anterior preservada para rollback, estado CANDIDATE fail-closed.
+- **Preflight:** zero jobs OCR ativos; serviço healthy; disco 48%; memória 25 GB disponível; rollback `sha256:5aa202f7bd86` retido.
+
+### 94.36.3 Deploy e evidência produtiva
+
+- Imagem antes: `sha256:5aa202f7bd86` → depois: `sha256:ef28e52604f9` (`infra-engineering-api:latest`).
+- Código confirmado **dentro do container**: `_eval_1009` dispatcher + `_eval_insert_1009` + `_eval_connector_1009` presentes (antes: `MP_ISOLATOR_1009` direto).
+- Smoke na imagem produtiva (`evaluate_description`, sem escrita):
+
+| Cenário | Resultado produtivo |
+|---|---|
+| `ISOLADOR NYLON RETO 6,3 PT UL94 V2` | `PASS` — regras `MP-1009-*` (regressão zero) |
+| `INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL` | `PASS` — regras `MP-1009I-*` (G-01 eliminado) |
+| `CONECTOR MODULAR 3 VIAS AL C/TRAVA UL` | `PASS` — regras `MP-1009C-*` |
+| `INSERTO MACHO 16 POLOS HAN E CRIMP` (sem bitola) | `MP-1009I-GAUGE NOT_APPLICABLE` — opcional respeitado |
+| `COMPONENTE ESPECIAL 3 VIAS` (subtipo ausente) | `MP-1009-SUBTYPE INCONCLUSIVE` — sem avaliador arbitrário |
+| Fonte `DRAWING` (INSERTO) | `PASS` — mesmo avaliador |
+
+`no_business_write=true`, `automatic_nc` ausente/falso, `review_status=DRAFT/CANDIDATE` preservados.
+
+### 94.36.4 Handoff E2E (ChatGPT)
+
+Release report entregue à Coordination. O aceite E2E na conexão oficial EVA×ChatGPT exige documento que contenha INSERTO ou CONECTOR do grupo 1009; se nenhum desenho autorizado aplicável existir, registrar `LIVE_DOCUMENT_HOLDOUT_NOT_AVAILABLE` (o desenho `90263680` não prova G-01 se não contiver esses subtipos). **Owner do aceite: Coordination.**
+
+### 94.36.5 Residual
+
+- Verificação independente efetiva pendente de `devin auth` — owner: infra/tooling; não reverte o release (exceção governada registrada acima).
+- Falhas PRC #207 e D16 seguem abertas nas frentes proprietárias.
+- G-02..G-07 inalterados — próximo lote L2 (subtipos 1008).
