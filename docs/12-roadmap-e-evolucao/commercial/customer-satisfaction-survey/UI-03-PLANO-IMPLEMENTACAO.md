@@ -89,7 +89,7 @@ Cada fase é um pedido de execução delimitado, com commit próprio, verificaç
 
 ### Fase 5 — `GuidedQuestionnaire` (fluxo completo)
 
-- Definição declarativa: `intro`, `steps[]` (`questions[]` com `kind: "scale" | "text"`), `texts` (padrões da UI-03 §3.6), `onSubmit(answers) → resultado`, `renderResult?`, `colorScheme`, `showThemeToggle`.
+- Definição declarativa: `intro`, `steps[]` (`questions[]` com `kind: "scale" | "text"`), `texts` (**obrigatório** — o kit não tem textos fixos em português, conforme ; a página da Pesquisa passa os textos da UI-03 §3.6), `onSubmit(answers) → resultado`, `renderResult?`, `colorScheme`, `showThemeToggle`.
 - Fluxo: abertura → etapas → revisão → enviando → resultado; Editar por etapa e “Voltar à revisão”.
 - Regras genéricas: obrigatórias por etapa com foco na primeira pendência e contagem no rodapé; progresso = obrigatórias respondidas ÷ total; um envio por vez; `beforeunload` enquanto houver respostas não enviadas; nada salvo no navegador; troca de tema preserva respostas.
 - **Testes:** fluxo completo com definição de exemplo **não ligada à Pesquisa**; bloqueio de avanço; edição a partir da revisão; envio duplo impedido; erro de envio mantém respostas; resultado só após `onSubmit` resolver.
@@ -97,7 +97,7 @@ Cada fase é um pedido de execução delimitado, com commit próprio, verificaç
 ### Fase 6 — Catálogo, demo e publicação do remote em DEV/HML
 
 - Exports em `src/components/forms/index.ts` / `src/index.ts`; registro em `component-catalog.md` e `export-catalog.md`; demo com as seis telas nos dois temas.
-- Build e publicação do remote do PluginUI em **DEV e HML**. **Atenção:** o PluginUI é compartilhado por todo o Portal; o deploy em PROD do PluginUI com esses exports precisa de avaliação do owner, mesmo sem a página pública estar exposta.
+- Build e publicação do remote do PluginUI. **Decisão do solicitante (16/11/2026):** os pacotes do kit genérico (P1–P5) seguem o deploy canônico em **PROD** após verificação, para acompanhamento pelo catálogo do PluginUI em ; eles não contêm nada da Pesquisa. A página pública da Pesquisa continua **somente HML**. Pedidos de execução: [UI-03-PROMPTS-DEVIN.md](./UI-03-PROMPTS-DEVIN.md).
 - **Verificar regressão** em MFEs e páginas públicas que usam o PluginUI.
 
 ### Fase 7 — Página pública nova da Pesquisa (public-hub)
@@ -131,7 +131,7 @@ Cada fase é um pedido de execução delimitado, com commit próprio, verificaç
 | Risco | Mitigação |
 |---|---|
 | Mudança no PluginUI afetar outros MFEs | Componentes novos isolados em pasta e CSS próprios (`.delpi-ui-form-*`); nenhum seletor global; verificação de regressão na fase 6 |
-| Deploy do PluginUI em PROD expor algo da Pesquisa | O kit não conhece a Pesquisa; a página pública só existe em DEV/HML; avaliação do owner antes de qualquer deploy do PluginUI em PROD |
+| Deploy do PluginUI em PROD expor algo da Pesquisa | O kit não conhece a Pesquisa (sem textos, chaves ou rotas dela); a página pública só existe em DEV/HML; conferência de regressão em MFE após cada deploy |
 | `TextAreaField` não atender ao visual | Ajuste no kit com teste, nunca CSS na página |
 | Tokens do escuro sem contraste | Contrastes da UI-03 §3.2 como critério de teste |
 | Escopo crescer para outros formulários | Customer Experience e construtor de formulários ficam fora; exigem decisão própria |
