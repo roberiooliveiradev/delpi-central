@@ -94,3 +94,10 @@ bash infra/scripts/verify-public-hub-release.sh f81ddd0075de1e4ef8bb68ca58791e9c
 ```
 
 **Esperado antes de promocao:** `[BLOCKED]` por ausencia de imagem local vinculada ao digest ou ImageID do container divergente. Isso nao e falha do CI; e bloqueio seguro do gate de runtime. **Nao fazer `docker pull`/deploy como efeito implicito desta verificacao.** PREPARE/ACT, grants Core, migracoes e executor continuam inativos.
+
+
+### Leitura do ATLAS apos CI assinado (somente leitura, 16/11/2026)
+
+Consultas `get_deployment_revision` e `get_host_health` pelo MCP ATLAS, fonte `it-portal-linux-collector`, `observed_at=2026-11-16T09:01:17.294712-03:00`: `observation_status=partial`, `revision=null`, `status=not_available`, `reason=no_authoritative_deployed_revision_source`; a secao `docker` do snapshot de health esta `unavailable`. A coleta demonstra que **nao ha evidencia automatizada atual do ImageID Docker em execucao**, nao que o container tenha parado. Este snapshot tem timestamp proprio e nao deve ser tratado como coleta de runtime contemporanea ao fechamento do pipeline. **Nenhuma promocao ou comando Docker de escrita foi executado pelo ATLAS**.
+
+P2.2h deve integrar a fonte confiavel de `docker inspect` via proxy allowlisted read-only, com identidade/ACL explicitas e metadados sanitizados; o artefato GHCR assinado continua pronto para uma promocao futura aprovada por digest. Sem read-back, a afirmacao `HOST_PROVENANCE_PASS` permanece proibida.
