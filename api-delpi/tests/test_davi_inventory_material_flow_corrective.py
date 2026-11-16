@@ -399,8 +399,8 @@ def test_batch05_retrieval_never_returns_batch():
     )
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 30
-    assert len(allow["operations"]) == 97
+    assert allow["version"] == 31
+    assert len(allow["operations"]) == 102
     ops = _ops()
     for kept in (
         "list_supplies_inventory_adjustments",
@@ -430,14 +430,14 @@ def test_count02_baseline_and_live_counts_recomputed():
     baseline_eligible = {
         a.operation_id for a in _baseline_actions() if a.executable
     }
-    assert len(baseline_eligible) == 94
+    assert len(baseline_eligible) == 99
     live_eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(live_eligible) == 97
+    assert len(live_eligible) == 102
 
 
 def test_coverage_decision_chain_records_corrective():
     coverage = (
-        _allow()["coverageDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]
+        _allow()["coverageDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]["previousDecision"]
     )
     assert coverage["taskId"] == "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001"
     assert coverage["decision"] == (

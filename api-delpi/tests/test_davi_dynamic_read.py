@@ -216,6 +216,14 @@ _WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS = frozenset(
     }
 )
 _WAVE7_SEMANTIC_POST_IDS = frozenset()
+_SI_USER_PARITY_OPERATION_IDS = frozenset({
+    "get_si_executive_summary",
+    "get_si_departments",
+    "get_si_indicators",
+    "list_si_indicator_goals",
+    "list_si_indicator_goal_history",
+})
+
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -228,6 +236,7 @@ _ELIGIBLE_OPERATION_IDS = (
     | _PRODUCT_MASTER_OPERATION_IDS
     | _SYSTEM_METADATA_OPERATION_IDS
     | _WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS
+    | _SI_USER_PARITY_OPERATION_IDS
     | frozenset({
         "get_supplies_inventory_accuracy_summary",
         "get_supplies_inventory_accuracy_items",
@@ -362,11 +371,14 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 30
+    assert allow.get("version") == 31
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY"
+        "BOUNDED_SI_USER_PARITY_READ"
     )
     coverage = (allow.get("coverageDecision", {}).get("previousDecision") or {})
+    assert coverage.get("decision") == (
+        "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY")
+    coverage = coverage.get("previousDecision") or {}
     assert coverage.get("decision") == (
         "COMPLETE_ROW_RECORD_INTENT_ROUTING")
     coverage = coverage.get("previousDecision") or {}
@@ -560,7 +572,7 @@ def test_inventory_eligible_count_is_ninety_three():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 94
+    assert len(eligible) == 99
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 def test_argument_validation_matrix():
     action = _action(
@@ -1497,7 +1509,7 @@ def test_eligible_count_is_ninety_three():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 94
+    assert len(eligible) == 99
 
 
 # ---------------------------------------------------------------------------

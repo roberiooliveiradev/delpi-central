@@ -1326,12 +1326,20 @@
       },
       "enumLabels": {
         "cif": {
-          "en": { "label": "CIF" },
-          "pt-BR": { "label": "CIF" }
+          "en": {
+            "label": "CIF"
+          },
+          "pt-BR": {
+            "label": "CIF"
+          }
         },
         "fob": {
-          "en": { "label": "FOB" },
-          "pt-BR": { "label": "FOB" }
+          "en": {
+            "label": "FOB"
+          },
+          "pt-BR": {
+            "label": "FOB"
+          }
         }
       }
     },
@@ -1811,24 +1819,44 @@
       },
       "enumLabels": {
         "sale": {
-          "en": { "label": "Sale" },
-          "pt-BR": { "label": "Venda" }
+          "en": {
+            "label": "Sale"
+          },
+          "pt-BR": {
+            "label": "Venda"
+          }
         },
         "return": {
-          "en": { "label": "Return" },
-          "pt-BR": { "label": "Devolução" }
+          "en": {
+            "label": "Return"
+          },
+          "pt-BR": {
+            "label": "Devolução"
+          }
         },
         "sample": {
-          "en": { "label": "Sample" },
-          "pt-BR": { "label": "Amostra" }
+          "en": {
+            "label": "Sample"
+          },
+          "pt-BR": {
+            "label": "Amostra"
+          }
         },
         "repair_shipment": {
-          "en": { "label": "Repair shipment" },
-          "pt-BR": { "label": "Remessa ou retorno de conserto" }
+          "en": {
+            "label": "Repair shipment"
+          },
+          "pt-BR": {
+            "label": "Remessa ou retorno de conserto"
+          }
         },
         "other": {
-          "en": { "label": "Other" },
-          "pt-BR": { "label": "Outros" }
+          "en": {
+            "label": "Other"
+          },
+          "pt-BR": {
+            "label": "Outros"
+          }
         }
       }
     },
@@ -2603,12 +2631,20 @@
       },
       "enumLabels": {
         "customer": {
-          "en": { "label": "Customer" },
-          "pt-BR": { "label": "Cliente" }
+          "en": {
+            "label": "Customer"
+          },
+          "pt-BR": {
+            "label": "Cliente"
+          }
         },
         "supplier": {
-          "en": { "label": "Supplier" },
-          "pt-BR": { "label": "Fornecedor" }
+          "en": {
+            "label": "Supplier"
+          },
+          "pt-BR": {
+            "label": "Fornecedor"
+          }
         }
       }
     },
@@ -5374,6 +5410,42 @@
         "pt-BR": {
           "label": "Versão do corpus",
           "description": "Versão exigida do corpus governado."
+        }
+      }
+    },
+    "indicator_id": {
+      "locale": {
+        "en": {
+          "label": "Indicator",
+          "description": "Strategic indicator id (e.g. ind_fin_margin)."
+        },
+        "pt-BR": {
+          "label": "Indicador",
+          "description": "Identificador do indicador estratégico."
+        }
+      }
+    },
+    "goal_year": {
+      "locale": {
+        "en": {
+          "label": "Goal year",
+          "description": "Reference year of the configured goal (e.g. 2026)."
+        },
+        "pt-BR": {
+          "label": "Ano da meta",
+          "description": "Ano de referência da meta configurada (ex.: 2026)."
+        }
+      }
+    },
+    "active_only": {
+      "locale": {
+        "en": {
+          "label": "Active only",
+          "description": "When true, only active goal versions are returned."
+        },
+        "pt-BR": {
+          "label": "Somente ativas",
+          "description": "Quando true, retorna apenas versões ativas de metas."
         }
       }
     }

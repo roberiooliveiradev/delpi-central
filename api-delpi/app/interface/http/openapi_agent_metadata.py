@@ -1338,3 +1338,60 @@ GOVERNED_TECHNICAL_KNOWLEDGE = agent_route(
     ),
     operation_id="read_governed_technical_knowledge",
 )
+
+# --- Strategic Indicators — user-parity BFF (DAVI governed READ) ---
+SI_EXECUTIVE_SUMMARY = agent_route(
+    summary="Strategic Indicators executive summary for a competence",
+    description=(
+        "Executive summary of Strategic Indicators (IDD rollup across "
+        "departments) for a competence/branch window. Owner: "
+        "strategic-indicators-api GET /strategic-indicators/executive-summary. "
+        "Requires the caller's strategic-indicators.view permission; the "
+        "request is forwarded with the caller identity only."
+    ),
+    operation_id="get_si_executive_summary",
+)
+
+SI_DEPARTMENTS = agent_route(
+    summary="Strategic Indicators department results",
+    description=(
+        "Per-department Strategic Indicators results (IDD, score, trend) for "
+        "a competence/branch window. Owner: strategic-indicators-api GET "
+        "/strategic-indicators/departments. Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_departments",
+)
+
+SI_INDICATORS = agent_route(
+    summary="Strategic Indicators operational indicator results",
+    description=(
+        "Configured indicators with realized values, active goal, score, gap "
+        "and classification for a competence/branch window. Owner: "
+        "strategic-indicators-api GET /strategic-indicators/indicators. "
+        "Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_indicators",
+)
+
+SI_INDICATOR_GOALS = agent_route(
+    summary="Configured Strategic Indicators goals and monthly curves",
+    description=(
+        "Configured goals (goal_value, goal_mode, monthly_targets curve, "
+        "scope and validity) for indicators, optionally filtered by "
+        "indicator/department/year. Owner: strategic-indicators-api GET "
+        "/strategic-indicators/indicator-goals. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_indicator_goals",
+)
+
+SI_INDICATOR_GOAL_HISTORY = agent_route(
+    summary="Version history of a Strategic Indicators goal",
+    description=(
+        "All persisted versions of goals for an indicator (requires "
+        "indicator_id; goal_year optional). Owner: strategic-indicators-api "
+        "GET /strategic-indicators/indicator-goals/history. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_indicator_goal_history",
+)

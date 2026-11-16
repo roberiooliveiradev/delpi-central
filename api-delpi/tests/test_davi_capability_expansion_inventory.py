@@ -120,6 +120,12 @@ _ELIGIBLE = {
     "get_supplies_safety_stock_consumption_analysis_item_details",
     "read_governed_technical_knowledge",
     "get_product_detail",
+    # DAVI-SI-READ-USER-PARITY-001 — bounded SI user-parity READ slice
+    "get_si_executive_summary",
+    "get_si_departments",
+    "get_si_indicators",
+    "list_si_indicator_goals",
+    "list_si_indicator_goal_history",
 }
 
 # Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
@@ -157,7 +163,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 94
+    assert len(eligible) == 99
 def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
     source_head = git_sha("HEAD")
     doc = build_inventory_document(source_head=source_head, origin_main=source_head)
@@ -185,9 +191,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 94
+    assert doc["wave_1_freeze"]["current_eligible"] == 99
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 97
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 102
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 
@@ -228,5 +234,5 @@ def test_committed_artifacts_are_evidence_not_runtime() -> None:
     assert freeze["artifact_class"] == "EVIDENCE_NOT_RUNTIME_AUTHORITY"
     assert inventory["runtime_invariants"]["eligible_must_remain"] == 7
     assert inventory["runtime_invariants"]["mcp_tools_must_remain"] == 3
-    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 94
+    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 99
     assert "product.factory.status" in inventory["wave_1_freeze"]["capability_ids"]

@@ -238,6 +238,12 @@ ENGINEERING_LMP_NC_WRITE = [
 # O registro no Core ocorre pelo manifesto do MFE, fora desta entrega.
 METALOGRAPHY_VIEW = "metalography.view"
 METALOGRAPHY_CREATE = "metalography.create"
+
+# --- strategic-indicators (módulo próprio; BFF user-parity p/ DAVI) ---
+# Mesmos códigos canônicos do manifesto `plugins/strategic-indicators` —
+# resolvidos pela Core API; não é um segundo RBAC.
+STRATEGIC_INDICATORS_VIEW = "strategic-indicators.view"
+STRATEGIC_INDICATORS_SETTINGS_MANAGE = "strategic-indicators.settings.manage"
 METALOGRAPHY_EDIT = "metalography.edit"
 METALOGRAPHY_DELETE = "metalography.delete"
 METALOGRAPHY_EXPORT = "metalography.export"

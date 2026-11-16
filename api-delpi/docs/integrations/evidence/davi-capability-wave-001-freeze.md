@@ -3,12 +3,12 @@
 > **Normative for the next implementation task.** Evidence/governance only. Does not change runtime.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `826c73b1c4d09d965856bd0543e5d984bdb1e6a8`
+- Source HEAD: `e76018eea9191b11e64eac3cb43b7839ce72480c`
 - Freeze status: `FROZEN_FOR_IMPLEMENTATION`
 - Theme: Operational Product Intelligence (classified factory snapshot + MP exclusivity + shipping)
-- Current eligible: **94**
+- Current eligible: **99**
 - New Wave 1 capabilities: **3**
-- Expected eligible after implementation: **97**
+- Expected eligible after implementation: **102**
 - Expected MCP tools after implementation: **3**
 - Agent instructions change: **NO**
 
@@ -22,7 +22,7 @@ DAVI_LOCAL_RBAC / BRANCH / OBJECT / ROLE AUTHZ = FORBIDDEN
 FILTER != AUTHORIZATION
 endpoint != capability
 backend AuthZ != raw model exposure
-MCP tools remain search_products + discover_delpi_information + execute_delpi_information
+MCP tools are get_context + knowledge + read + analyze
 ```
 
 ## Why this Wave 1 (not the seeded summary trio as-is)

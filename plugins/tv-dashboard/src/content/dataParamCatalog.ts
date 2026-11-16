@@ -8,6 +8,7 @@
 
 export const PARAM_FIELD_LABELS: Record<string, string> = {
   "active": "Ativo",
+  "active_only": "Somente ativas",
   "actual_end_end": "Fim do fim real",
   "actual_end_start": "Início do fim real",
   "adjustment_percent": "Ajuste (%)",
@@ -90,6 +91,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "freight_document": "Número do CT-e",
   "freight_mode": "Modalidade de transporte",
   "from": "De",
+  "goal_year": "Ano da meta",
   "granularity": "Granularidade",
   "group_by": "Agrupar por",
   "group_code": "Código do grupo",
@@ -99,6 +101,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "id": "ID",
   "include": "Seções opcionais",
   "includeBlocked": "Incluir bloqueados",
+  "indicator_id": "Indicador",
   "includeWithoutSafetyStock": "Incluir sem estoque de segurança",
   "include_bom": "Incluir estrutura (BOM)",
   "include_completed": "Incluir concluídos",
@@ -253,6 +256,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
 
 export const PARAM_FIELD_HINTS: Record<string, string> = {
   "active": "Filtra apenas registros ativos (sim) ou inativos (não).",
+  "active_only": "Quando true, retorna apenas versões ativas de metas.",
   "actual_end_end": "Fim do intervalo da data de fim real (AAAA-MM-DD).",
   "actual_end_start": "Início do intervalo da data de fim real (AAAA-MM-DD).",
   "adjustment_percent": "Percentual de ajuste aplicado no cálculo.",
@@ -335,6 +339,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "freight_document": "Número do documento de frete (CT-e).",
   "freight_mode": "CIF ou FOB.",
   "from": "Início do intervalo (data ou valor).",
+  "goal_year": "Ano de referência da meta configurada (ex.: 2026).",
   "granularity": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
   "group_by": "Como agregar o resultado (geral, filial, produto etc.).",
   "group_code": "Código do grupo de produto/material.",
@@ -344,6 +349,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "id": "Identificador único do registro.",
   "include": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
   "includeBlocked": "Inclui materiais bloqueados quando verdadeiro.",
+  "indicator_id": "Identificador do indicador estratégico.",
   "includeWithoutSafetyStock": "Inclui matérias-primas sem estoque de segurança cadastrado.",
   "include_bom": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo.",
   "include_completed": "Inclui itens já concluídos no resultado.",

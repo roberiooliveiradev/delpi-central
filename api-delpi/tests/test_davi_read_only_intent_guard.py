@@ -117,6 +117,11 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
     assert "NOT AuthZ" in str(guard.get("description") or "")
     assert load_allowlist_operation_ids(allow) == {
         "execute_readonly_sql",
+        "get_si_executive_summary",
+        "get_si_departments",
+        "get_si_indicators",
+        "list_si_indicator_goals",
+        "list_si_indicator_goal_history",
         "get_supplies_inventory_accuracy_summary",
         "get_supplies_inventory_accuracy_items",
         "get_supplies_non_moving_stock_summary",

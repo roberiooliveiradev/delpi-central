@@ -93,6 +93,9 @@ from app.interface.http.routes.quality import quality_labels_public_router
 from app.interface.http.routes.quality import kaizen_public_router
 from app.interface.http.routes.hr import hr_router
 from app.interface.http.routes.dashboard import dashboard_router
+from app.interface.http.routes.strategic_indicators import (
+    strategic_indicators_router,
+)
 from app.interface.http.routes.helpdesk import helpdesk_router
 from app.interface.http.routes import governed_knowledge_router
 from app.interface.http.routes.scheduling import scheduling_public_router
@@ -352,6 +355,7 @@ app.include_router(canal_denuncia_public_router.router)
 app.include_router(scheduling_public_router.router)
 app.include_router(hr_router.router)
 app.include_router(dashboard_router.router)
+app.include_router(strategic_indicators_router.router)
 app.include_router(scheduling_router.router, prefix="/scheduling", tags=["Agendamento"])
 app.include_router(
     cultura_delpi_router.router,
