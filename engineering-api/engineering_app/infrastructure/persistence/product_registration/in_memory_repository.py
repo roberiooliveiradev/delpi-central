@@ -57,6 +57,8 @@ class InMemoryProductRegistrationRepository:
         self._correction_targets: dict[str, dict] = {}  # target_id → row
         # PRC-REF-023 — documentos de apoio.
         self._attachments: dict[str, dict] = {}  # attachment_id → row
+        self._comments: dict[str, dict] = {}  # comment_id → row
+        self._comment_attachments: dict[str, dict] = {}  # id → row
 
     # --- helpers internos ------------------------------------------------------
 
@@ -2009,3 +2011,114 @@ class InMemoryProductRegistrationRepository:
             ):
                 return dict(r)
         return None
+
+
+    # --- PRC-CONVERSATION — conversa do caso ---------------------------------
+
+    def create_comment(self, *, comment: dict[str, Any]) -> dict[str, Any]:
+        row = dict(comment)
+        self._comments[row["id"]] = row
+        return dict(row)
+
+    def list_comments(
+        self, *, request_id: str, page: int, page_size: int
+    ) -> tuple[list[dict[str, Any]], int]:
+        rows = [
+            dict(r)
+            for r in self._comments.values()
+            if r.get("request_id") == request_id
+        ]
+        rows.sort(key=lambda r: (str(r.get("created_at") or ""), str(r["id"])))
+        total = len(rows)
+        start = max(page - 1, 0) * page_size
+        return rows[start : start + page_size], total
+
+    def get_comment(
+        self, *, request_id: str, comment_id: str
+    ) -> dict[str, Any] | None:
+        row = self._comments.get(comment_id)
+        if not row or row.get("request_id") != request_id:
+            return None
+        return dict(row)
+
+    def update_comment_body(
+        self,
+        *,
+        request_id: str,
+        comment_id: str,
+        body: str,
+        expected_version: int | None,
+    ) -> dict[str, Any] | None:
+        row = self._comments.get(comment_id)
+        if not row or row.get("request_id") != request_id:
+            return None
+        if (
+            expected_version is not None
+            and row.get("row_version") != expected_version
+        ):
+            return None
+        from datetime import datetime, timezone
+
+        row["body"] = body
+        row["row_version"] = int(row.get("row_version") or 1) + 1
+        row["updated_at"] = datetime.now(timezone.utc).isoformat()
+        return dict(row)
+
+    def create_comment_attachment(
+        self, *, attachment: dict[str, Any]
+    ) -> dict[str, Any]:
+        row = dict(attachment)
+        self._comment_attachments[row["id"]] = row
+        return dict(row)
+
+    def list_comment_attachments(
+        self, *, comment_id: str
+    ) -> list[dict[str, Any]]:
+        out = [
+            dict(r)
+            for r in self._comment_attachments.values()
+            if r.get("comment_id") == comment_id and r.get("state") != "DELETED"
+        ]
+        out.sort(key=lambda r: (str(r.get("created_at") or ""), str(r["id"])))
+        return out
+
+    def get_comment_attachment(
+        self, *, request_id: str, comment_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        row = self._comment_attachments.get(attachment_id)
+        if (
+            not row
+            or row.get("request_id") != request_id
+            or row.get("comment_id") != comment_id
+            or row.get("state") == "DELETED"
+        ):
+            return None
+        return dict(row)
+
+    def find_comment_attachment_by_hash(
+        self, *, comment_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        for r in self._comment_attachments.values():
+            if (
+                r.get("comment_id") == comment_id
+                and r.get("state") != "DELETED"
+                and r.get("sha256") == sha256
+                and r.get("original_file_name") == original_file_name
+            ):
+                return dict(r)
+        return None
+
+    def update_comment_attachment_state(
+        self, *, request_id: str, comment_id: str, attachment_id: str,
+        state: str,
+    ) -> dict[str, Any] | None:
+        row = self._comment_attachments.get(attachment_id)
+        if (
+            not row
+            or row.get("request_id") != request_id
+            or row.get("comment_id") != comment_id
+        ):
+            return None
+        row["state"] = state
+        return dict(row)
+

@@ -136,3 +136,52 @@ Nomes são **candidatos TARGET**; aplicar Abstraction Gate antes de ampliar cat�
 `TASK_ID | BASE_HEAD | FINAL_SHA | OWNER | RQ/AC | REST_CONTRACT | AUTHZ_MATRIX | MIGRATIONS | SOURCE_OF_TRUTH | EVA_TOOL_COUNT | SEMANTIC_ACTION_STATUS | TESTS | HML_RUNTIME_SHA | CROSS_APP_EVIDENCE | VERIFIER_VERDICT | FAIL/PASS/INCONCLUSIVE/TEST_NOT_RUN | RESIDUAL_RISKS | PRD_DEPLOY | ROLLBACK | NEXT_ACTION`.
 
 **Arquitetura:** mudança de owner/SoT, novo contexto ou autoridade = `ARCHITECTURE_DECISION_REQUIRED` e devolver à Coordination. MCP, UI, modelos e documentação nunca concedem permissão ou authority.
+
+## 7. P0+P1 executado — registro de implementação (commit `203b4b6cd3`)
+
+**Executor:** Devin · **TASK_ID:** `EVA-PRC-CONVERSATION-P0-P1-BACKEND-CONTRACT-AND-IMPLEMENTATION-01`
+
+### Contrato ratificado (autoridade existente, sem `ARCHITECTURE_DECISION_REQUIRED`)
+
+**Modelo (schema `engineering`, V026/V027):** `product_registration_comments`
+(id, request_id FK, author_subject, author_display_name snapshot, body CHECK
+non-empty, row_version CAS, created_at/updated_at; índice
+`(request_id, created_at, id)`) e `product_registration_comment_attachments`
+(id, request_id FK, comment_id FK, original_file_name, media_type, size_bytes,
+sha256, storage_key privado, state `PENDING_SCAN|AVAILABLE|REJECTED|QUARANTINED|DELETED`,
+uploaded_by_*, correlation_id). Grants `eng_prc` SELECT/INSERT/UPDATE — sem
+DELETE (remoção = `DELETED` lógico + purge de bytes).
+
+**AuthZ (fail-closed):** sem principal → 401; sem permissão do módulo → 403;
+object AuthZ via `_scope_check` (analista `engineering.access` com fila
+global, ou requester/assignee do caso). Editar/anexar/remover: autor da
+mensagem ou analista. Caso terminal (`completed`/`rejected`) → conversa
+frozen (409 para mutações; leitura permanece). `authorSubject` sempre do JWT.
+
+**Rotas (`/v1/product-registration/requests/{request_id}`):** `GET /comments`
+(page, pageSize≤200, ASC+id) · `POST /comments` (`Idempotency-Key`: replay
+200 mesmo payload / 409 divergente) · `PATCH /comments/{id}`
+(`expectedVersion` CAS→409) · `GET/POST /comments/{id}/attachments` (10MB,
+PDF/PNG/JPEG/WebP por magic bytes, dedup sha256) · `GET|DELETE
+…/attachments/{attId}` (nosniff+no-store; delete lógico).
+
+**Avatar:** sem cópia persistida; frontend futuro resolve via contrato de
+perfil Core (`/me/directory/users/lookup`, já governado) + fallback iniciais.
+
+**Artefatos P1:** `domain/product_registration/conversation.py`; port +9
+métodos; service +7 métodos (`_assert_conversation_open`, `_get_scoped_comment`,
+idempotência, CAS, dedup, purge de órfãos, `_emit_change` comment_* pós-commit);
+3 adapters (postgres/in-memory/unavailable); 7 rotas; migrations V026/V027;
+`tests/test_prc_conversation.py` (17 casos HTTP).
+
+**Testes executados:** `test_prc_conversation.py` 17/17 PASS (positivo, irmão,
+negativo: 401/403/404/409/413/422, não-autor upload 403, IDOR cross-request
+404, frozen 409, CAS 409, idempotência replay); regressão
+`test_product_registration + prc_attachments + ref023*` 127 PASS / 10 skip
+(postgres real: SKIPPED no dev local — executado em HML).
+
+**Verificador:** round 1 `INCONCLUSIVE` — engine `devin` sem login no executor
+(restrição de ambiente registrada em `verdicts.jsonl`; não é aprovação).
+
+**Pendências:** smoke HML autenticado; OpenAPI/doc Engineering API;
+ledger Engineering + Issue #207.

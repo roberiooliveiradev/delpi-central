@@ -32,6 +32,7 @@ from engineering_app.domain.product_registration import (
 )
 from engineering_app.domain.product_registration import baseline as sa5_baseline
 from engineering_app.domain.product_registration import catalog
+from engineering_app.domain.product_registration import conversation
 from engineering_app.domain.product_registration import flags as attendance_flags
 from engineering_app.domain.product_registration import (
     correction_returns as corr_returns,
@@ -4313,6 +4314,329 @@ class ProductRegistrationService:
         return {
             "meta": attachments_mod.attachment_to_api(row),
             "handle": handle,
+        }
+
+    # --- PRC-CONVERSATION — conversa do caso (Issue #207) ---------------------
+
+    def _assert_conversation_open(self, request: dict) -> None:
+        try:
+            conversation.assert_conversation_open(request.get("status"))
+        except ValueError as exc:
+            raise PrcStateConflictError(str(exc)) from exc
+
+    def _get_scoped_comment(
+        self, request: dict, comment_id: str
+    ) -> dict[str, Any]:
+        comment = self._repo.get_comment(
+            request_id=request["id"], comment_id=comment_id
+        )
+        if comment is None:
+            raise PrcNotFoundError("comment", comment_id)
+        return comment
+
+    def list_comments(
+        self, request_id: str, *, actor: PrcActor, page: int, page_size: int
+    ) -> dict[str, Any]:
+        """Leitura escopada: só quem pode ver o caso vê a conversa."""
+        self._get_scoped(request_id, actor)
+        rows, total = self._repo.list_comments(
+            request_id=request_id, page=page, page_size=page_size
+        )
+        return {
+            "requestId": request_id,
+            "items": [
+                conversation.comment_to_api(r, actor_user_id=actor.user_id)
+                for r in rows
+            ],
+            "total": total,
+            "page": page,
+            "pageSize": page_size,
+        }
+
+    def create_comment(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        body: str | None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Posta mensagem — autor é o principal, nunca o payload."""
+        request = self._get_scoped(request_id, actor)
+        self._assert_conversation_open(request)
+        try:
+            text = conversation.validate_comment_body(body)
+        except ValueError as exc:
+            raise PrcValidationError(
+                str(exc), fields={"body": str(exc)}
+            ) from exc
+        fingerprint = _fingerprint({"body": text, "requestId": request_id})
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="prc_comment_create",
+            key=idempotency_key,
+            fingerprint=fingerprint,
+        )
+        if replay is not None:
+            return replay
+        now = _now()
+        row = self._repo.create_comment(
+            comment={
+                "id": _uuid(),
+                "request_id": request_id,
+                "author_subject": actor.user_id,
+                "author_display_name": actor.label,
+                "body": text,
+                "row_version": 1,
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
+        payload = {
+            "comment": conversation.comment_to_api(
+                row, actor_user_id=actor.user_id
+            )
+        }
+        self._idempotent_store(
+            actor=actor,
+            operation="prc_comment_create",
+            key=idempotency_key,
+            fingerprint=fingerprint,
+            request_id=request_id,
+            status=201,
+            payload=payload,
+        )
+        return payload
+
+    def update_comment(
+        self,
+        request_id: str,
+        comment_id: str,
+        *,
+        actor: PrcActor,
+        body: str | None,
+        expected_version: int | None = None,
+    ) -> dict[str, Any]:
+        """Edição: autor ou analista; CAS opcional por ``version``."""
+        request = self._get_scoped(request_id, actor)
+        self._assert_conversation_open(request)
+        comment = self._get_scoped_comment(request, comment_id)
+        if not conversation.can_moderate_comment(
+            actor_is_author=comment["author_subject"] == actor.user_id,
+            actor_is_analyst=actor.is_analyst,
+        ):
+            raise PrcForbiddenError(
+                "Somente o autor ou a Engenharia podem editar a mensagem."
+            )
+        try:
+            text = conversation.validate_comment_body(body)
+        except ValueError as exc:
+            raise PrcValidationError(
+                str(exc), fields={"body": str(exc)}
+            ) from exc
+        row = self._repo.update_comment_body(
+            request_id=request_id,
+            comment_id=comment_id,
+            body=text,
+            expected_version=expected_version,
+        )
+        if row is None:
+            raise PrcConcurrencyError(
+                "Comentário alterado em paralelo — recarregue e tente de novo."
+            )
+        self._emit_change(
+            request_id, reason="comment_updated", actor=actor
+        )
+        return {
+            "comment": conversation.comment_to_api(
+                row, actor_user_id=actor.user_id
+            )
+        }
+
+    def list_comment_attachments(
+        self, request_id: str, comment_id: str, *, actor: PrcActor
+    ) -> dict[str, Any]:
+        request = self._get_scoped(request_id, actor)
+        comment = self._get_scoped_comment(request, comment_id)
+        rows = self._repo.list_comment_attachments(comment_id=comment["id"])
+        return {
+            "requestId": request_id,
+            "commentId": comment_id,
+            "attachments": [
+                conversation.comment_attachment_to_api(r) for r in rows
+            ],
+        }
+
+    def upload_comment_attachment(
+        self,
+        request_id: str,
+        comment_id: str,
+        *,
+        actor: PrcActor,
+        filename: str | None,
+        content: bytes,
+        correlation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Anexo da conversa: autor do comentário ou analista; validação
+        por conteúdo (magic bytes) do domínio de anexos REF-023."""
+        request = self._get_scoped(request_id, actor)
+        self._assert_conversation_open(request)
+        storage = self._require_attachment_storage()
+        comment = self._get_scoped_comment(request, comment_id)
+        if not conversation.can_moderate_comment(
+            actor_is_author=comment["author_subject"] == actor.user_id,
+            actor_is_analyst=actor.is_analyst,
+        ):
+            raise PrcForbiddenError(
+                "Somente o autor ou a Engenharia podem anexar na mensagem."
+            )
+        existing = self._repo.list_comment_attachments(
+            comment_id=comment["id"]
+        )
+        try:
+            meta = attachments_mod.validate_attachment(
+                filename=filename,
+                content=content,
+                current_count=len(existing),
+            )
+        except ValueError as exc:
+            code = str(exc)
+            raise PrcValidationError(
+                attachments_mod.attachment_error(code),
+                fields={"file": code},
+            ) from exc
+        dup = self._repo.find_comment_attachment_by_hash(
+            comment_id=comment["id"],
+            sha256=str(meta["sha256"]),
+            original_file_name=str(meta["original_file_name"]),
+        )
+        if dup is not None:
+            return {
+                "attachment": conversation.comment_attachment_to_api(dup),
+                "deduplicated": True,
+            }
+        attachment_id = _uuid()
+        storage_key = (
+            f"{request_id}/comments/{comment_id}/"
+            f"{attachment_id}{meta['extension']}"
+        )
+        try:
+            storage.save(storage_key, content)
+        except Exception as exc:
+            raise PrcValidationError(
+                "Storage de anexos indisponível no momento.",
+                fields={"file": "storage_unavailable"},
+            ) from exc
+        row = {
+            "id": attachment_id,
+            "request_id": request_id,
+            "comment_id": comment_id,
+            "original_file_name": meta["original_file_name"],
+            "media_type": meta["media_type"],
+            "size_bytes": meta["size_bytes"],
+            "sha256": meta["sha256"],
+            "storage_key": storage_key,
+            "state": "AVAILABLE",
+            "uploaded_by_subject": actor.user_id,
+            "uploaded_by_display_name": actor.label,
+            "uploaded_by_email": actor.email,
+            "correlation_id": correlation_id,
+            "created_at": _now(),
+        }
+        try:
+            row = self._repo.create_comment_attachment(attachment=row)
+        except Exception:
+            try:
+                storage.delete(storage_key)
+            except Exception:
+                pass
+            raise
+        self._emit_change(
+            request_id, reason="comment_attachment_upload", actor=actor
+        )
+        return {
+            "attachment": conversation.comment_attachment_to_api(row),
+            "deduplicated": False,
+        }
+
+    def download_comment_attachment(
+        self,
+        request_id: str,
+        comment_id: str,
+        attachment_id: str,
+        *,
+        actor: PrcActor,
+    ) -> dict[str, Any]:
+        """Stream autenticado — identidade composta caso+comentário."""
+        request = self._get_scoped(request_id, actor)
+        self._get_scoped_comment(request, comment_id)
+        storage = self._require_attachment_storage()
+        row = self._repo.get_comment_attachment(
+            request_id=request_id,
+            comment_id=comment_id,
+            attachment_id=attachment_id,
+        )
+        if row is None:
+            raise PrcNotFoundError("comment_attachment", attachment_id)
+        if row["state"] != "AVAILABLE":
+            raise PrcStateConflictError("attachment_not_available")
+        try:
+            handle = storage.open_path(row["storage_key"])
+        except Exception as exc:
+            raise PrcValidationError(
+                "Arquivo indisponível no storage.",
+                fields={"file": "storage_unavailable"},
+            ) from exc
+        return {
+            "meta": conversation.comment_attachment_to_api(row),
+            "handle": handle,
+        }
+
+    def delete_comment_attachment(
+        self,
+        request_id: str,
+        comment_id: str,
+        attachment_id: str,
+        *,
+        actor: PrcActor,
+    ) -> dict[str, Any]:
+        """Remoção autorizada — DELETED lógico + bytes removidos."""
+        request = self._get_scoped(request_id, actor)
+        self._assert_conversation_open(request)
+        storage = self._require_attachment_storage()
+        comment = self._get_scoped_comment(request, comment_id)
+        row = self._repo.get_comment_attachment(
+            request_id=request_id,
+            comment_id=comment_id,
+            attachment_id=attachment_id,
+        )
+        if row is None:
+            raise PrcNotFoundError("comment_attachment", attachment_id)
+        if not conversation.can_moderate_comment(
+            actor_is_author=comment["author_subject"] == actor.user_id,
+            actor_is_analyst=actor.is_analyst,
+        ):
+            raise PrcForbiddenError(
+                "Somente o autor ou a Engenharia podem remover o anexo."
+            )
+        updated = self._repo.update_comment_attachment_state(
+            request_id=request_id,
+            comment_id=comment_id,
+            attachment_id=attachment_id,
+            state="DELETED",
+        )
+        if updated is None:
+            raise PrcNotFoundError("comment_attachment", attachment_id)
+        try:
+            storage.delete(row["storage_key"])
+        except Exception:
+            pass  # vínculo já encerrado; órfão resolvido por reconciliação
+        self._emit_change(
+            request_id, reason="comment_attachment_removed", actor=actor
+        )
+        return {
+            "attachment": conversation.comment_attachment_to_api(updated),
+            "removed": True,
         }
 
 

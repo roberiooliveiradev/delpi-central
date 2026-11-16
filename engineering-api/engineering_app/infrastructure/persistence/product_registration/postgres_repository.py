@@ -61,6 +61,8 @@ _T_INFO_A = f"{_SCHEMA}.product_registration_info_answers"
 _T_CORR_RET = f"{_SCHEMA}.product_registration_correction_returns"
 _T_CORR_TGT = f"{_SCHEMA}.product_registration_correction_targets"
 _T_ATT = f"{_SCHEMA}.product_registration_attachments"
+_T_CMT = f"{_SCHEMA}.product_registration_comments"
+_T_CMT_ATT = f"{_SCHEMA}.product_registration_comment_attachments"
 
 # Estados de rodada que bloqueiam a abertura de nova rodada / resume.
 _INFO_OPEN_ROUND_STATUSES = ("awaiting_requester", "awaiting_review")
@@ -2959,3 +2961,164 @@ class PostgresProductRegistrationRepository:
                 (request_id, sha256, original_file_name),
             ).fetchone()
         return self._attachment_row(row) if row else None
+
+
+    # --- PRC-CONVERSATION — conversa do caso ---------------------------------
+
+    def _comment_row(self, row: dict) -> dict[str, Any]:
+        out = dict(row)
+        out["id"] = str(out["id"])
+        out["request_id"] = str(out["request_id"])
+        out["created_at"] = _iso(out.get("created_at"))
+        out["updated_at"] = _iso(out.get("updated_at"))
+        return out
+
+    def create_comment(self, *, comment: dict[str, Any]) -> dict[str, Any]:
+        with self._conn() as conn:
+            conn.execute(
+                f"INSERT INTO {_T_CMT}"
+                " (id, request_id, author_subject, author_display_name,"
+                "  body, row_version, created_at, updated_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    comment["id"], comment["request_id"],
+                    comment["author_subject"],
+                    comment.get("author_display_name"),
+                    comment["body"], comment.get("row_version", 1),
+                    comment["created_at"], comment["updated_at"],
+                ),
+            )
+        return self._comment_row(comment)
+
+    def list_comments(
+        self, *, request_id: str, page: int, page_size: int
+    ) -> tuple[list[dict[str, Any]], int]:
+        offset = max(page - 1, 0) * page_size
+        with self._conn() as conn:
+            total = conn.execute(
+                f"SELECT count(*) AS c FROM {_T_CMT} WHERE request_id=%s",
+                (request_id,),
+            ).fetchone()["c"]
+            rows = conn.execute(
+                f"SELECT * FROM {_T_CMT} WHERE request_id=%s"
+                " ORDER BY created_at ASC, id ASC LIMIT %s OFFSET %s",
+                (request_id, page_size, offset),
+            ).fetchall()
+        return [self._comment_row(r) for r in rows], int(total)
+
+    def get_comment(
+        self, *, request_id: str, comment_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_CMT} WHERE id=%s AND request_id=%s",
+                (comment_id, request_id),
+            ).fetchone()
+        return self._comment_row(row) if row else None
+
+    def update_comment_body(
+        self,
+        *,
+        request_id: str,
+        comment_id: str,
+        body: str,
+        expected_version: int | None,
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            if expected_version is None:
+                row = conn.execute(
+                    f"UPDATE {_T_CMT} SET body=%s,"
+                    " row_version=row_version+1, updated_at=now()"
+                    " WHERE id=%s AND request_id=%s RETURNING *",
+                    (body, comment_id, request_id),
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    f"UPDATE {_T_CMT} SET body=%s,"
+                    " row_version=row_version+1, updated_at=now()"
+                    " WHERE id=%s AND request_id=%s AND row_version=%s"
+                    " RETURNING *",
+                    (body, comment_id, request_id, expected_version),
+                ).fetchone()
+        return self._comment_row(row) if row else None
+
+    def _comment_attachment_row(self, row: dict) -> dict[str, Any]:
+        out = self._attachment_row(row)
+        out["comment_id"] = str(out["comment_id"])
+        return out
+
+    def create_comment_attachment(
+        self, *, attachment: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self._conn() as conn:
+            conn.execute(
+                f"INSERT INTO {_T_CMT_ATT}"
+                " (id, request_id, comment_id, original_file_name,"
+                "  media_type, size_bytes, sha256, storage_key, state,"
+                "  uploaded_by_subject, uploaded_by_display_name,"
+                "  uploaded_by_email, correlation_id, created_at)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    attachment["id"], attachment["request_id"],
+                    attachment["comment_id"],
+                    attachment["original_file_name"],
+                    attachment["media_type"], attachment["size_bytes"],
+                    attachment["sha256"], attachment["storage_key"],
+                    attachment["state"],
+                    attachment["uploaded_by_subject"],
+                    attachment.get("uploaded_by_display_name"),
+                    attachment.get("uploaded_by_email"),
+                    attachment.get("correlation_id"),
+                    attachment["created_at"],
+                ),
+            )
+        return self._comment_attachment_row(attachment)
+
+    def list_comment_attachments(
+        self, *, comment_id: str
+    ) -> list[dict[str, Any]]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM {_T_CMT_ATT} WHERE comment_id=%s"
+                " AND state<>'DELETED' ORDER BY created_at, id",
+                (comment_id,),
+            ).fetchall()
+        return [self._comment_attachment_row(r) for r in rows]
+
+    def get_comment_attachment(
+        self, *, request_id: str, comment_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_CMT_ATT}"
+                " WHERE id=%s AND comment_id=%s AND request_id=%s"
+                " AND state<>'DELETED'",
+                (attachment_id, comment_id, request_id),
+            ).fetchone()
+        return self._comment_attachment_row(row) if row else None
+
+    def find_comment_attachment_by_hash(
+        self, *, comment_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {_T_CMT_ATT} WHERE comment_id=%s"
+                " AND sha256=%s AND original_file_name=%s"
+                " AND state<>'DELETED' ORDER BY created_at LIMIT 1",
+                (comment_id, sha256, original_file_name),
+            ).fetchone()
+        return self._comment_attachment_row(row) if row else None
+
+    def update_comment_attachment_state(
+        self, *, request_id: str, comment_id: str, attachment_id: str,
+        state: str,
+    ) -> dict[str, Any] | None:
+        with self._conn() as conn:
+            row = conn.execute(
+                f"UPDATE {_T_CMT_ATT} SET state=%s"
+                " WHERE id=%s AND comment_id=%s AND request_id=%s"
+                " RETURNING *",
+                (state, attachment_id, comment_id, request_id),
+            ).fetchone()
+        return self._comment_attachment_row(row) if row else None
+

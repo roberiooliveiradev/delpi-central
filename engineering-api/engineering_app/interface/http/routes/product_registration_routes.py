@@ -2243,3 +2243,281 @@ async def prc_attachment_download(
         filename=None,
         headers=headers,
     )
+
+
+# --- PRC-CONVERSATION — conversa do caso (Issue #207) -----------------------
+
+
+class CommentBody(BaseModel):
+    body: str = Field(..., max_length=4100)
+    expectedVersion: int | None = Field(default=None, ge=1)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/comments",
+    operation_id="prc_comments_list",
+    summary="CONV — Mensagens da conversa do caso (cronológica)",
+)
+@require_any_permission(_REQUESTER_READ_PERMS)
+async def prc_comments_list(
+    request_id: str = Path(...),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=50, ge=1, le=200),
+):
+    op = "prc_comments_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_comments(
+            rid, actor=_actor(user), page=page, page_size=pageSize
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Conversa carregada.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/comments",
+    operation_id="prc_comment_create",
+    summary="CONV — Postar mensagem (autor = principal autenticado)",
+)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
+async def prc_comment_create(
+    request_id: str = Path(...),
+    body: CommentBody = Body(...),
+    idempotency_key: str | None = Header(
+        default=None, alias="Idempotency-Key"
+    ),
+):
+    op = "prc_comment_create"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().create_comment(
+            rid,
+            actor=_actor(user),
+            body=body.body,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    if data.get("replayed"):
+        return ok(
+            data["response"],
+            message="Comentário já registrado.",
+            operation_id=op,
+            status_code=200,
+        )
+    return ok(
+        data,
+        message="Comentário publicado.",
+        operation_id=op,
+        status_code=201,
+    )
+
+
+@router.patch(
+    "/v1/product-registration/requests/{request_id}/comments/{comment_id}",
+    operation_id="prc_comment_update",
+    summary="CONV — Editar mensagem (autor ou Engenharia; CAS opcional)",
+)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
+async def prc_comment_update(
+    request_id: str = Path(...),
+    comment_id: str = Path(...),
+    body: CommentBody = Body(...),
+):
+    op = "prc_comment_update"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    cid, bad = _uuid_or_fail(comment_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().update_comment(
+            rid,
+            cid,
+            actor=_actor(user),
+            body=body.body,
+            expected_version=body.expectedVersion,
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Comentário atualizado.", operation_id=op)
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments",
+    operation_id="prc_comment_attachments_list",
+    summary="CONV — Anexos da mensagem",
+)
+@require_any_permission(_REQUESTER_READ_PERMS)
+async def prc_comment_attachments_list(
+    request_id: str = Path(...), comment_id: str = Path(...)
+):
+    op = "prc_comment_attachments_list"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    cid, bad = _uuid_or_fail(comment_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().list_comment_attachments(
+            rid, cid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Anexos carregados.", operation_id=op)
+
+
+@router.post(
+    "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments",
+    operation_id="prc_comment_attachment_upload",
+    summary="CONV — Anexar arquivo à mensagem (magic bytes)",
+)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
+async def prc_comment_attachment_upload(
+    request_id: str = Path(...),
+    comment_id: str = Path(...),
+    file: UploadFile = File(...),
+):
+    op = "prc_comment_attachment_upload"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    cid, bad = _uuid_or_fail(comment_id, op)
+    if bad is not None:
+        return bad
+    content = await file.read(_ATT_MAX_BYTES + 1)
+    if len(content) > _ATT_MAX_BYTES:
+        return fail(
+            "Arquivo excede o limite de 10 MB por anexo.",
+            413,
+            data={"code": "attachment_too_large"},
+            operation_id=op,
+        )
+    try:
+        data = build_prc_service().upload_comment_attachment(
+            rid,
+            cid,
+            actor=_actor(user),
+            filename=file.filename,
+            content=content,
+            correlation_id=get_request_id(),
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(
+        data,
+        message="Anexo enviado.",
+        operation_id=op,
+        status_code=201,
+    )
+
+
+@router.get(
+    "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}",
+    operation_id="prc_comment_attachment_download",
+    summary="CONV — Download autorizado do anexo da conversa",
+)
+@require_any_permission(_REQUESTER_READ_PERMS)
+async def prc_comment_attachment_download(
+    request_id: str = Path(...),
+    comment_id: str = Path(...),
+    attachment_id: str = Path(...),
+):
+    op = "prc_comment_attachment_download"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    cid, bad = _uuid_or_fail(comment_id, op)
+    if bad is not None:
+        return bad
+    aid, bad = _uuid_or_fail(attachment_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().download_comment_attachment(
+            rid, cid, aid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    meta = data["meta"]
+    handle = data["handle"]
+    filename = meta["originalFileName"]
+    headers = {
+        "Content-Disposition": (
+            f"attachment; filename*=UTF-8''{__import__('urllib.parse').parse.quote(filename)}"
+        ),
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store",
+        "Content-Length": str(meta["sizeBytes"]),
+    }
+    if hasattr(handle, "read"):
+        return StreamingResponse(
+            handle,
+            media_type=meta["mediaType"],
+            headers=headers,
+        )
+    return FileResponse(
+        handle,
+        media_type=meta["mediaType"],
+        filename=None,
+        headers=headers,
+    )
+
+
+@router.delete(
+    "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}",
+    operation_id="prc_comment_attachment_delete",
+    summary="CONV — Remoção autorizada do anexo (DELETED lógico)",
+)
+@require_any_permission(_REQUESTER_WRITE_PERMS)
+async def prc_comment_attachment_delete(
+    request_id: str = Path(...),
+    comment_id: str = Path(...),
+    attachment_id: str = Path(...),
+):
+    op = "prc_comment_attachment_delete"
+    user, denied = _user(op)
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, op)
+    if bad is not None:
+        return bad
+    cid, bad = _uuid_or_fail(comment_id, op)
+    if bad is not None:
+        return bad
+    aid, bad = _uuid_or_fail(attachment_id, op)
+    if bad is not None:
+        return bad
+    try:
+        data = build_prc_service().delete_comment_attachment(
+            rid, cid, aid, actor=_actor(user)
+        )
+    except Exception as exc:
+        return _err(exc, op)
+    return ok(data, message="Anexo removido.", operation_id=op)
+

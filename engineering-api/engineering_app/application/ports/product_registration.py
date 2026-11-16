@@ -498,6 +498,65 @@ class ProductRegistrationRepository(Protocol):
         """Dedup idempotente: mesmo bytes+nome no mesmo caso."""
         ...
 
+    # --- PRC-CONVERSATION — conversa do caso ---------------------------------
+
+    def create_comment(self, *, comment: dict[str, Any]) -> dict[str, Any]:
+        """Persiste mensagem com autoria já resolvida pelo service."""
+        ...
+
+    def list_comments(
+        self, *, request_id: str, page: int, page_size: int
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Página cronológica (created_at, id ASC) + total."""
+        ...
+
+    def get_comment(
+        self, *, request_id: str, comment_id: str
+    ) -> dict[str, Any] | None:
+        """Comentário do caso — identidade composta (anti-IDOR)."""
+        ...
+
+    def update_comment_body(
+        self,
+        *,
+        request_id: str,
+        comment_id: str,
+        body: str,
+        expected_version: int | None,
+    ) -> dict[str, Any] | None:
+        """Atualiza corpo com CAS opcional por row_version."""
+        ...
+
+    def create_comment_attachment(
+        self, *, attachment: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Persiste metadado do anexo da conversa (bytes no storage)."""
+        ...
+
+    def list_comment_attachments(
+        self, *, comment_id: str
+    ) -> list[dict[str, Any]]:
+        """Anexos visíveis do comentário (state <> DELETED)."""
+        ...
+
+    def get_comment_attachment(
+        self, *, request_id: str, comment_id: str, attachment_id: str
+    ) -> dict[str, Any] | None:
+        """Anexo por identidade composta caso+comentário+anexo."""
+        ...
+
+    def find_comment_attachment_by_hash(
+        self, *, comment_id: str, sha256: str, original_file_name: str
+    ) -> dict[str, Any] | None:
+        """Dedup idempotente: mesmos bytes+nome no mesmo comentário."""
+        ...
+
+    def update_comment_attachment_state(
+        self, *, request_id: str, comment_id: str, attachment_id: str, state: str
+    ) -> dict[str, Any] | None:
+        """Transição de estado auditável (remoção é DELETED lógico)."""
+        ...
+
 
 class AttachmentStoragePort(Protocol):
     """PRC-REF-023 — port de bytes (provider governado).
