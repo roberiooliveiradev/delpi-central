@@ -6,7 +6,7 @@
 
 A P2.2f testava somente a stage `provenance-contract` e adicionava labels informativas. Agora o GitHub Actions valida o codigo do Public Hub, constrói a **stage final `production`**, publica um artefato de release em `ghcr.io/roberiooliveiradev/delpi-public-hub:sha-<git-sha>` **apenas em push na main** e produz a atestacao SLSA in-toto via `actions/attest@v4` com certificado efemero OIDC/Sigstore. O sujeito criptografico e o **digest do manifesto OCI** retornado pelo build/push, nunca somente a label de Git ou o ID de configuracao da imagem Docker.
 
-A PR executa testes, lint/TypeScript, Docker stage completa e verifica `nginx -t` + `index.html` **sem login GHCR, push ou atestado**. Em main, CI faz push por digest imutavel e valida o digest publicado e sua assinatura com `gh attestation verify`, impondo repo, workflow assinante, source ref `refs/heads/main`, source digest, SLSA v1, emissor OIDC GitHub e exclusao de runners self-hosted. A assinatura e produzida pelo GitHub Actions, nao por HMAC autoafirmado do host.
+A PR executa testes, TypeScript/Vite e lint rigoroso de arquivos TypeScript novos/alterados, com inventario separado de erros de lint preexistentes; testa a Docker stage completa e verifica `nginx -t` + `index.html` **sem login GHCR, push ou atestado**. Em main, CI faz push por digest imutavel e valida o digest publicado e sua assinatura com `gh attestation verify`, impondo repo, workflow assinante, source ref `refs/heads/main`, source digest, SLSA v1, emissor OIDC GitHub e exclusao de runners self-hosted. A assinatura e produzida pelo GitHub Actions, nao por HMAC autoafirmado do host.
 
 **Atenção:** o job tem permissoes de `packages: write` e `attestations: write` somente na main. Ele nao publica automaticamente em HML/PROD. O token do workflow precisa poder gravar no GHCR da conta dona; se houver bloqueio de permissao, o CI falha e a entrega de imagem nao deve ser considerada concluida.
 
@@ -37,3 +37,16 @@ bash infra/scripts/verify-public-hub-release.sh '<SHA_COMMIT_40>' 'sha256:<DIGES
 ## Rollback e proximo passo
 
 Esta PR nao altera runtime. Se CI falhar, corrigir com commit novo na branch, sem editar servidor ou assinar imagem local. Uma vez testada e aprovada, o merge pode produzir uma imagem assinada no GHCR; a promocao por **digest fixo** exigira gate futuro, revisao do Compose/fluxo canonico e autorizacao propria. Nao substituir o script de `--build public-hub` atual por um `pull` silencioso. Prosseguir com ownership, restricao do proxy READ, journal/approval e somente entao PREPARE/ACT governados. 
+
+## Correcao do check CI da PR #193 (16/11/2026)
+
+**Diagnostico pelo log da primeira execucao:** [run 43855607278](https://github.com/roberiooliveiradev/delpi-central/actions/runs/43855607278), job de frontend falhou em `npm run lint` com 47 erros e 2 avisos ja existentes no repositorio. Como o script `npm run ci` executava `lint && test && build`, o job abortou antes de qualquer teste Vitest ou compilacao do frontend. A PR so introduz CI, verificador READ, testes de verificador e documentos; **nenhum arquivo de codigo frontend foi modificado** para gerar esse inventario.
+
+**Correcao segura e localizada no workflow da PR:**
+
+1. Executar `npm ci`, `npm run test` e `npm run build` como **gates obrigatorios separados**, bloqueando a release em qualquer falha.
+2. Exigir `eslint --max-warnings=0` para **cada TS/TSX adicionado/modificado em `plugins/public-hub`** entre GitHub `base.sha` e o commit testado (PR) ou `before` e o commit testado (push em main). Validar os SHA e a existencia dos objetos Git; negar em erro de diff, arquivo ausente ou lint. Nao excluir fontes alterados dessa verificacao.
+3. Executar ESLint global somente para inventario da divida anterior, publicar contagens no resumo do GitHub Actions e falhar se o proprio ESLint nao puder executar/produzir JSON valido. O passivo preexistente **nao desapareceu e nao e classificado como corrigido**.
+4. O build Docker final continua condicionado a todos os gates obrigatorios. A publicacao/assinatura permanece exclusiva de `push` em `main`.
+
+**Risco e limite:** a P2.2g nao soluciona os 47 erros anteriores em componentes React. Corrigi-los exige task propria de frontend, regressao visual e review de owners, sem misturar refatoracao com este pipeline de seguranca. O lint global completo continua disponivel por `cd plugins/public-hub && npm run lint` e suas contagens ficam visiveis no CI. Aceite real depende de novo run da PR, e nao de evidencia isolada da etapa antiga. Nenhuma alteracao de producao foi realizada.
