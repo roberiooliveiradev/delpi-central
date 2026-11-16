@@ -110,6 +110,152 @@ def test_terminal_mm_not_silently_mm2():
     assert "MM2" not in attr["normalized_value"]
 
 
+# ---- MP 1008 subtypes (G25-L2) — fixtures verbatim da norma ----
+def _rules(r):
+    return {x["rule_id"]: x["status"] for x in r["rule_results"]}
+
+
+def test_l2_pino_official():
+    r = ev("10080111", "MP",
+           "TERM. PINO RETO 2,00MM2 COMP 10,00MM ESTANHADO "
+           "C/ISOLACAO GRANEL REFORÇADO ROHS")
+    assert r["overall_status"] == "PASS"
+    st = _rules(r)
+    assert st["MP-1008-SUBTYPE"] == "PASS"
+    assert st["MP-1008P-GAUGE"] == "PASS"   # bitola simples documentada
+    assert "MP-1008-TYPE" not in st       # não usa avaliador FASTON
+
+
+def test_l2_forquilha_official():
+    r = ev("10080112", "MP",
+           "TERM. FORQUILHA M3 3,40MM 1,00-2,50MM2 6,20MM "
+           "COMP 20,00MM ESTANHADO S/ISOLACAO GRANEL "
+           "PONTAS DOBRADAS ROHS")
+    assert r["overall_status"] == "PASS"
+    st = _rules(r)
+    for rid in ("MP-1008F-SCREW", "MP-1008F-DINT", "MP-1008F-GAUGE",
+                "MP-1008F-DEXT", "MP-1008F-LENGTH"):
+        assert st[rid] == "PASS"
+
+
+def test_l2_ilhos_and_tubular_official():
+    for desc in (
+        "TERM. ILHOS 0,50-1,50MM2 COMP 12,00MM ESTANHADO "
+        "S/ISOLACAO GRANEL CURTO DIN46228",
+        "TERM. TUBULAR 1,00-2,50MM2 COMP 14,00MM NIQUELADO "
+        "C/ISOLACAO BLISTER LONGO UL",
+    ):
+        r = ev("10080113", "MP", desc)
+        assert r["overall_status"] == "PASS", desc
+        assert _rules(r)["MP-1008I-TYPE"] == "PASS"
+
+
+def test_l2_lingueta_official():
+    r = ev("10080115", "MP",
+           "TERM. LINGUETA 6,30X0,80 2,00-4,00MM2 ESTANHADO "
+           "S/ISOLACAO FITADO CURTA UL ROHS")
+    assert r["overall_status"] == "PASS"
+    assert _rules(r)["MP-1008L-DIM"] == "PASS"
+
+
+def test_l2_olhal_anzol_official():
+    r = ev("10080116", "MP",
+           "TERM. OLHAL M3 3,40MM 1,00-2,50MM2 6,20MM "
+           "COMP 20MM ESTANHADO S/ISOLACAO GRANEL REFORÇADO ROHS")
+    assert r["overall_status"] == "PASS"
+    # exemplo oficial ANZOL omite OBS/CERT — tolerado, nunca violação
+    r2 = ev("10080117", "MP",
+            "TERM. ANZOL M4 4,40MM 0,25-1,60MM2 7,90MM "
+            "COMP 18,70MM ESTANHADO C/ISOLACAO GRANEL")
+    st = _rules(r2)
+    assert st["MP-1008O-OBS"] == "NOT_APPLICABLE"
+    assert st["MP-1008O-CERT"] == "NOT_APPLICABLE"
+    assert r2["overall_status"] == "PASS"
+
+
+def test_l2_generic_official():
+    r = ev("10080118", "MP", "TERM. BALA 2,50-6,00MM2 NU GRANEL CURTO UL")
+    assert r["overall_status"] == "PASS"
+    st = _rules(r)
+    assert st["MP-1008G-TYPE"] == "PASS"
+    assert st["MP-1008G-BATH"] == "PASS"   # NU é banho documentado
+
+
+def test_l2_luva_emenda_official():
+    r = ev("10080119", "MP",
+           "TERM. LUVA 2,00-4,00MM2 COMP 10,00MM ESTANHADO "
+           "S/ISOLACAO GRANEL COMPRESSAO ROHS")
+    assert r["overall_status"] == "PASS"
+    r2 = ev("10080120", "MP",
+            "TERM. EMENDA 4,00-9,00MM2 COMP 8,00MM NU NU GRANEL "
+            "F.E ROHS")
+    st = _rules(r2)
+    assert st["MP-1008E-BATH"] == "PASS"   # NU posicional (banho)
+    assert st["MP-1008E-ISO"] == "PASS"    # NU posicional (isolação)
+    assert r2["overall_status"] == "PASS"
+
+
+def test_l2_subtype_absent_inconclusive_no_faston():
+    r = ev("10080121", "MP", "TERM.")
+    st = _rules(r)
+    assert st["MP-1008-SUBTYPE"] == "INCONCLUSIVE"
+    assert "MP-1008-TYPE" not in st        # nunca avaliador arbitrário
+    assert r["overall_status"] == "INCONCLUSIVE"
+
+
+def test_l2_subtype_contradictory():
+    r = ev("10080122", "MP",
+           "TERM. PINO RETO 2,00MM2 COMP 10,00MM LUVA ESTANHADO")
+    st = _rules(r)
+    assert st["MP-1008-SUBTYPE"] == "INCONCLUSIVE"
+    assert "MP-1008P-TYPE" not in st
+
+
+def test_l2_unknown_tipo_with_known_subtype_token():
+    # TIPO livre + marcador de outro subtipo → ambíguo, não genérico
+    r = ev("10080123", "MP", "TERM. ESPECIAL FASTON 2,50-6,00MM2 NU")
+    assert _rules(r)["MP-1008-SUBTYPE"] == "INCONCLUSIVE"
+
+
+def test_l2_no_term_prefix_violation():
+    r = ev("10080124", "MP", "PINO RETO 2,00MM2 COMP 10,00MM")
+    st = _rules(r)
+    assert st["MP-1008-PREFIX"] == "VIOLATION_CANDIDATE"
+
+
+def test_l2_gauge_single_only_documented_for_pino():
+    # LUVA com bitola simples → norma documenta range → INCONCLUSIVE
+    r = ev("10080125", "MP",
+           "TERM. LUVA 4,00MM2 COMP 10,00MM ESTANHADO GRANEL")
+    assert _rules(r)["MP-1008E-GAUGE"] == "INCONCLUSIVE"
+
+
+def test_l2_no_faston_rules_on_other_subtypes():
+    # regressão RQ-L2-01/AC-03: PINO nunca recebe MP-1008-TYPE/DIM/RANGE
+    r = ev("10080111", "MP",
+           "TERM. PINO RETO 2,00MM2 COMP 10,00MM ESTANHADO "
+           "C/ISOLACAO GRANEL REFORÇADO ROHS")
+    ids = {x["rule_id"] for x in r["rule_results"]}
+    assert ids.isdisjoint(
+        {"MP-1008-TYPE", "MP-1008-DIM", "MP-1008-RANGE"})
+
+
+def test_l2_drawing_source_same_dispatch():
+    r = ev("10080113", "MP",
+           "TERM. ILHOS 0,50-1,50MM2 COMP 12,00MM ESTANHADO "
+           "S/ISOLACAO GRANEL CURTO DIN46228", "DRAWING")
+    assert r["overall_status"] == "PASS"
+    assert _rules(r)["MP-1008I-TYPE"] == "PASS"
+
+
+def test_l2_1009_isolation_regression():
+    # grupo 1009 não pode receber regras 1008
+    r = ev("10090002", "MP",
+           "INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL")
+    ids = {x["rule_id"] for x in r["rule_results"]}
+    assert all("1008" not in i for i in ids)
+
+
 # ---- MP 1009 isolators ----
 def test_isolator_1009_canonical():
     r = ev("10090010", "MP", "ISOLADOR NYLON RETO 6,3 PT UL94 V2")
