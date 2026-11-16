@@ -14,6 +14,9 @@ on:
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py"
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_release_evidence.py"
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_release_evidence.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_challenge_inspection.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_readiness_review.py"
+      - "it-portal-api/tests/unit/test_atlas_deploy_readiness_review.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
@@ -42,6 +45,9 @@ on:
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py"
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_release_evidence.py"
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_release_evidence.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_challenge_inspection.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_readiness_review.py"
+      - "it-portal-api/tests/unit/test_atlas_deploy_readiness_review.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
@@ -98,7 +104,8 @@ jobs:
             it-portal-api/tests/unit/test_atlas_deploy_oci_seal.py \
             it-portal-api/tests/unit/test_atlas_deploy_oci_attestation.py \
             it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py \
-            it-portal-api/tests/unit/test_atlas_deploy_oci_release_evidence.py
+            it-portal-api/tests/unit/test_atlas_deploy_oci_release_evidence.py \
+            it-portal-api/tests/unit/test_atlas_deploy_readiness_review.py
 
   disposable-docker:
     name: Real Docker read-only inspection, ephemeral only

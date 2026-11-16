@@ -596,3 +596,108 @@ def test_atlas_readonly_rejects_injection_by_parameter_not_sql_concatenation(pg,
     injection = "prod' OR TRUE --"
     assert reader.list_proposals(environment=injection)["total"] == 0
     assert reader.list_proposals(environment="prod")["total"] == 1
+
+
+# P2.2h.2p-r: challenge SELECT contract in the same disposable PG CI database.
+# Explicitly DO NOT run on production/HML or grant the UI reader role SELECT.
+from it_portal_app.infrastructure.persistence.atlas_deploy_challenge_inspection import (
+    ChallengeInspectionError,
+    inspect_active_challenge,
+)
+
+
+def test_challenge_readback_is_readonly_and_keeps_nonce_unconsumed(pg):
+    subject = "11111111-2222-4333-8444-555555555555"
+    nonce = issue_challenge(
+        pg, requester_subject=subject, environment="hml", service_id="public-hub",
+    )
+    before = _counts(pg)
+    first = inspect_active_challenge(
+        pg, requester_subject=subject, environment="hml",
+        service_id="public-hub", nonce=nonce,
+    )
+    second = inspect_active_challenge(
+        pg, requester_subject=subject, environment="hml",
+        service_id="public-hub", nonce=nonce,
+    )
+    assert first.status == second.status == "observed_not_reserved"
+    assert first.expires_at == second.expires_at
+    assert first.issued_at == second.issued_at
+    assert first.observed_at <= second.observed_at
+    assert not first.one_shot_consumed and not first.prepare_eligible
+    assert _counts(pg) == before == (1, 0, 0)
+    assert pg.execute(
+        "SELECT consumed_at FROM it_portal.atlas_deploy_challenges"
+    ).fetchone()[0] is None
+
+
+def test_challenge_reader_never_crosses_requester_environment_or_nonce(pg):
+    subject = "11111111-2222-4333-8444-555555555555"
+    nonce = issue_challenge(
+        pg, requester_subject=subject, environment="hml", service_id="public-hub",
+    )
+    for kwargs in (
+        {"requester_subject": "bbbbbbbb-2222-4333-8444-555555555555"},
+        {"environment": "prod"},
+        {"nonce": "b"*64},
+    ):
+        scope = {
+            "requester_subject": subject, "environment": "hml",
+            "service_id": "public-hub", "nonce": nonce,
+        }
+        scope.update(kwargs)
+        with pytest.raises(
+            ChallengeInspectionError, match="CHALLENGE_INSPECTION_UNAVAILABLE",
+        ):
+            inspect_active_challenge(pg, **scope)
+    assert _counts(pg) == (1, 0, 0)
+
+
+def test_challenge_readback_rejects_nonce_consumed_during_release_check(pg):
+    subject = "11111111-2222-4333-8444-555555555555"
+    nonce = issue_challenge(
+        pg, requester_subject=subject, environment="hml", service_id="public-hub",
+    )
+    inspect_active_challenge(
+        pg, requester_subject=subject, environment="hml",
+        service_id="public-hub", nonce=nonce,
+    )
+    # CI ONLY: emulate a second transaction consuming the exact nonce.
+    pg.execute(
+        "UPDATE it_portal.atlas_deploy_challenges "
+        "SET consumed_at=clock_timestamp() WHERE requester_subject=%s",
+        (subject,),
+    )
+    with pytest.raises(
+        ChallengeInspectionError, match="CHALLENGE_INSPECTION_UNAVAILABLE",
+    ):
+        inspect_active_challenge(
+            pg, requester_subject=subject, environment="hml",
+            service_id="public-hub", nonce=nonce,
+        )
+    assert _counts(pg) == (1, 0, 0)
+
+
+def test_challenge_readback_rejects_expiration_after_first_observation(pg):
+    subject = "11111111-2222-4333-8444-555555555555"
+    nonce = issue_challenge(
+        pg, requester_subject=subject, environment="hml", service_id="public-hub",
+    )
+    inspect_active_challenge(
+        pg, requester_subject=subject, environment="hml",
+        service_id="public-hub", nonce=nonce,
+    )
+    # CI ONLY: maintain schema's 90 second validity constraint.
+    pg.execute(
+        "UPDATE it_portal.atlas_deploy_challenges SET "
+        "issued_at=clock_timestamp()-interval '90 seconds', "
+        "expires_at=clock_timestamp()-interval '1 second'",
+    )
+    with pytest.raises(
+        ChallengeInspectionError, match="CHALLENGE_INSPECTION_UNAVAILABLE",
+    ):
+        inspect_active_challenge(
+            pg, requester_subject=subject, environment="hml",
+            service_id="public-hub", nonce=nonce,
+        )
+    assert _counts(pg) == (1, 0, 0)
