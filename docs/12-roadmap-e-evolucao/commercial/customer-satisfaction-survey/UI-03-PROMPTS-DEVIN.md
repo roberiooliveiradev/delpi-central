@@ -96,6 +96,8 @@ Qualquer outro arquivo: fora do escopo.
 
 ### 2.5 Invariantes
 
+- **Namespace (ajuste na revisão da declaração, 16/11/2026):** o kit já tem `.delpi-ui-form-actions*` e `--delpi-ui-form-actions-*` (barra de ações de formulários, ~37 usos). **Nunca** criar classe ou token com o nome `form-actions*`; novos nomes do kit usam `.delpi-ui-form-root`, `.delpi-ui-form-page*` etc., sem tocar nos existentes.
+
 - Nenhuma alteração visual em componente existente do PluginUI ou em qualquer MFE.
 - Nenhum seletor global; nenhum `!important`; nenhum valor de cor fora dos tokens.
 - Sem texto em português fixo nos componentes; sem referência à Pesquisa.
@@ -110,6 +112,7 @@ Qualquer outro arquivo: fora do escopo.
 5. `QuestionnaireThemeScope` aplica `data-color-scheme` e as classes dual (`prefixo` + `delpi-ui-form-root`).
 6. `FormPageLayout` aplica as variantes `compact`/`tall`.
 7. `componentRegistry.test.ts` continua cobrindo todos os exports visuais.
+8. Teste de contrato do CSS (no padrão dos `*CssContract.test.ts` existentes): `questionnaire.css` define todos os tokens da UI-03 §3.2 no bloco claro **e** no bloco `[data-color-scheme="dark"]`, e não contém `:root`, `html`, `body`, `*` nem `!important`.
 
 ### 2.7 Critérios de aceite
 

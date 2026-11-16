@@ -27,7 +27,7 @@
 |---|---|---|---|
 | D1 | **Endereço da página nova** | **Manter `/p/commercial/form/{token}`** e apontá-lo para a página nova, removendo a implementação antiga | Um endereço diferente exige alterar o gerador do link na `commercial-api` (`manage_satisfaction_surveys.py`, linha ~717) e invalida os links já gerados em HML |
 | D2 | Texto de privacidade da abertura | Aguardar o responsável LGPD; até lá, a abertura mostra só “Não pedimos seus dados pessoais” | Nenhum para o código |
-| D3 | Logo `/p/logoMinhaDelpi.svg` respondendo 403 em HML | Investigar na fase 0 (`public-hub/nginx.conf`, gateway, permissões do arquivo) | Bloqueia o aceite visual |
+| D3 | Logo `/p/logoMinhaDelpi.svg` respondendo 403 em HML | **Causa encontrada (Devin, P1/fase 0, 16/11/2026):** no clone de HML o arquivo está com modo `660` (o `COPY` do Dockerfile preserva o modo, e o nginx não consegue ler); `demo-cover.svg` igual; no clone de PROD o modo é `670`, com o mesmo risco num próximo rebuild. **Correção a programar:** normalizar o modo dos arquivos em `plugins/public-hub/public/` (ex.: `chmod 644`/`git checkout`) e rebuild do `public-hub`; avaliar `chmod` no Dockerfile como endurecimento | Bloqueia o aceite visual |
 
 ## 4. Mapa de componentes do kit (PluginUI)
 
