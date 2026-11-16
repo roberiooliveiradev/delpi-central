@@ -7179,3 +7179,17 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **VERIFIER:** rodada 1 `ACCEPT_WITH_RESIDUAL` (AC-17 TEST_NOT_RUN no hook; AC-21/22 PENDING pré-push); 0 OC.
 - **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`
 - **NEXT:** `COORDINATION_C3_T2_ENTITY_SUFFICIENCY_HTTP_MULTITURN_VERIFIER_INDEPENDENT_REVIEW`
+
+### 2026-11-16 — V024: reconciliação autorizada DEV + reprova DAVI (`DELIA-C3-T2-DEV-V024-AUTHORIZED-RECONCILIATION-AND-DAVI-REPROOF-01`)
+
+- **BASE `c176dac339a` (= origin/main).** PO autorizou reconciliação controlada do DEV (backup + tx + auditoria + rollback) — proposta entregue na task anterior (`d13392e04f`, Caso B → DECISION_REQUIRED).
+- **PRECONDITIONS verificadas:** plugins_hub DEV (current_database/current_user); file=817a70f4 (v2, intacto); DEV checksum=8f9c9753; constraint=v1 plain; events/flags=0 linhas; sweep 25 migrations → só V024 divergente; sem migration concorrente (só keepalives idle).
+- **BACKUP:** pg_dump escopo afetado → `~/c3t2-artifacts/v024-reconciliation/backup-2026-11-16.sql` (sha256 4d95368f…, verificado: contém linha V024 + constraint + tabelas).
+- **TX ATÔMICA COMMIT:** `pg_advisory_xact_lock(904221001)` (mesma key do runner canônico) → revalidação in-tx → DROP+ADD constraint `flag.{created,updated,resolved,removed}` → CAS UPDATE checksum 8f9c9753→817a70f4 **exatamente 1 linha** → pós-condições in-tx → COMMIT. Zero autocommit, zero dados de negócio alterados, `executed_at`/`name`/V025 preservados.
+- **PÓS-COMMIT (queries independentes):** checksum=817a70f4, constraint=flag.*, 25 registros, 0 linhas de dados.
+- **DAVI RECUPERADO:** `docker restart delpi-api-delpi` → Up (healthy), "Nenhuma migration pendente", catalog 12 caps (3 grupos), `native_mcp_toolsets davi+teo+vista`.
+- **REPROVA FUNCIONAL (SHA avaliado, two-agent, OpenRouter qwen3-14b):** HTTP multiturn real (`http-mt-351936f0111f`): turn1 clarify → turn2 `davi.read code=90260921` → **GROUNDED**, estrutura real ("21010421 CHICOTE DE LIGACAO", PA, componentes); invariants HTTP_REQUESTS=2 / SAME_SUBJECT / CANONICAL_CONTEXT / NO_INJECTED_PRIORS / TURN2_GROUNDED. INT2 live: G2 retry **GROUNDED 109** (1ª amostra honest NON_GROUNDED via analyze path — fail-closed segurou "200" não fundamentado); R5 GROUNDED 109 itens 3 páginas; C2 GROUNDED estrutura real; D insufficient honesto (99999999 existe sem BOM); R6 clarify sem consulta prematura. 0 auth failures, 0 writes, 0 bypass, `experiment_variant=split`.
+- **REGRESSÃO:** 119 PASS (directed + boundary + runtime + eligibility).
+- **RESTRIÇÕES honradas:** arquivo V024 intocado (0 diff em migrations/), nenhuma outra migration alterada, nenhum dado de negócio, nenhum ambiente além de DEV, PROD intocado, PHASE_ADVANCEMENT=NO, TWO_AGENT_PROMOTION=NOT_AUTHORIZED.
+- **NATUREZA:** reconciliação excepcional única do histórico DEV (banco gravou versão nunca commitada) — não é prática nova; migrations aplicadas permanecem imutáveis e mudanças de esquema seguem por migrations incrementais.
+- **PACOTE:** `evidence/c3-t2-dev-v024-authorized-reconciliation-davi-reproof/`.

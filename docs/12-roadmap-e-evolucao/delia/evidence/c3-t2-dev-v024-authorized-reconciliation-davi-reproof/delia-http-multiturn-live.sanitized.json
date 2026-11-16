@@ -1,0 +1,84 @@
+{
+  "correlation_id": "http-mt-351936f0111f",
+  "two_agent": "true",
+  "subject": {
+    "subject_fingerprint": "4903c6464e2cd62d",
+    "azp": "delpi-central",
+    "token_url_host": "delpi-gateway",
+    "exchange_configured": true
+  },
+  "HTTP_TURN_1": {
+    "http_status": 200,
+    "request_id": "174243df-0859-49ea-9cde-82e99d12c3a6",
+    "session_id": "c4f3ac56-d94f-4a4f-80fe-6b0b429a2652",
+    "user_turn_id": "0e5b45c0-9028-4b5a-921b-1ee64255e1ce",
+    "result_turn_id": "27849a2c-1300-4319-b2e6-7faf1cee7a07",
+    "grounding_status": "NON_GROUNDED",
+    "epistemic_class": "HYPOTHESIS",
+    "limitations": [
+      "agent_requested_clarification",
+      "experiment_variant=split",
+      "comprehension_llm_requests=2"
+    ],
+    "content_head": "Qual é o código ou identificador do produto cuja estrutura você deseja visualizar? (código do produto)",
+    "provenance": null,
+    "code": null,
+    "detail": null,
+    "user_message": "Quero ver a estrutura de um produto.",
+    "clarification_detected": true
+  },
+  "HTTP_TURN_2": {
+    "grounding_status": "GROUNDED",
+    "epistemic_class": "OBSERVATION",
+    "limitations": [
+      "experiment_variant=split",
+      "comprehension_llm_requests=3"
+    ],
+    "content_head": "A estrutura do produto com código **90260921** (\"21010421 CHICOTE DE LIGACAO\") é a seguinte:\n\n- **Código:** 90260921  \n- **Descrição:** 21010421 CHICOTE DE LIGACAO  \n- **Tipo:** PA (Peça de Acessório)  \n- **Unidade:** MI (Milheiro)  \n- **Quantidade:** 1  \n\n### Componentes:\n1. **Código:** 10020003  \n   **Descrição:** CABO PVC 105°C 0,50MM² PT 750V ESTANHADO NBR 9117  \n   **Tipo:** MP (Material)  \n ",
+    "provenance": {
+      "action_id": "read",
+      "capability_group_id": "davi",
+      "correlation_id": "5f1079c5-bc2f-4748-b970-9f37541742e0",
+      "invocation_identity": [
+        "90260921"
+      ],
+      "invocation_scope": [
+        "arguments.code=90260921",
+        "capability=get_product_structure",
+        "__scope_digest__=76b7873e1b3e3c8c"
+      ],
+      "invocation_vocabulary": [
+        "get_product_structure"
+      ],
+      "is_complete": true,
+      "observed_at": "2026-11-16T14:39:38.349664+00:00",
+      "operation_class": "READ",
+      "protocol": "MCP",
+      "provider_id": "mcp",
+      "remote_capability": "read",
+      "source": {
+        "observed_at": "2026-11-16T14:39:38.349664+00:00",
+        "source_id": "davi",
+        "source_system": "mcp"
+      },
+      "sources": [
+        {
+          "observed_at": "2026-11-16T14:39:38.349664+00:00",
+          "source_id": "davi",
+          "source_system": "mcp"
+        }
+      ],
+      "specialist_id": "davi"
+    }
+  },
+  "CONTEXT_PROOF": null,
+  "INVARIANTS": {
+    "HTTP_REQUESTS": 2,
+    "SAME_AUTHORIZED_SUBJECT": true,
+    "CONTEXT_SOURCE": "CANONICAL_APPLICATION_BOUNDARY",
+    "MANUALLY_INJECTED_PRIOR_TURNS": false,
+    "TURN1_CLARIFICATION": true,
+    "TURN2_HTTP_OK": true,
+    "TURN2_GROUNDED": true
+  }
+}

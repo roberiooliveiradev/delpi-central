@@ -1,0 +1,54 @@
+{
+  "scenarios": {
+    "INT2_G2_aggregation_active_scope": {
+      "elapsed_s": 112.1,
+      "grounding": "GroundingStatus.NON_GROUNDED",
+      "status": "complete",
+      "answer_head": "Existem 200 processos de transformação ativos.",
+      "obligation_states": [
+        {
+          "total de processos ativos": "UNSATISFIED"
+        },
+        {
+          "total de processos ativos": "UNSATISFIED"
+        }
+      ],
+      "mcp_invoke_targets": [
+        "MCP:analyze",
+        "MCP:analyze"
+      ],
+      "limitations": [
+        "insufficient_evidence",
+        "material_obligations_incomplete",
+        "related_observations_insufficient",
+        "obligation_unsatisfied:total de processos ativos",
+        "declared_limitation:result_truncated",
+        "declared_status_overridden",
+        "experiment_variant=split",
+        "comprehension_llm_requests=4"
+      ]
+    },
+    "INT2_G2_aggregation_active_scope_retry": {
+      "elapsed_s": 50.8,
+      "grounding": "GroundingStatus.GROUNDED",
+      "status": "complete",
+      "answer_head": "109",
+      "obligation_states": [
+        {
+          "Contagem de processos ativos": "SATISFIED"
+        },
+        {
+          "Contagem de processos ativos": "SATISFIED"
+        }
+      ],
+      "mcp_invoke_targets": [
+        "MCP:read"
+      ],
+      "limitations": [
+        "result_truncated",
+        "experiment_variant=split",
+        "comprehension_llm_requests=3"
+      ]
+    }
+  }
+}

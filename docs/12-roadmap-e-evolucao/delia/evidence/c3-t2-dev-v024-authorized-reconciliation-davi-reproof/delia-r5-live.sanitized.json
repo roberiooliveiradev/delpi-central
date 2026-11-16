@@ -1,0 +1,29 @@
+{
+  "scenarios": {
+    "INT2_R5_multipage_full_enumeration": {
+      "elapsed_s": 110.0,
+      "grounding": "GroundingStatus.GROUNDED",
+      "status": "complete",
+      "answer_head": "A seguir está a lista completa dos processos de transformação cadastrados:\n\n1. **Processo ID:** 8fe16420-748a-40cf-a8bf-f578e413a9e6\n   **Código:** PROC-0105\n  ",
+      "obligation_states": [
+        {
+          "Listagem completa de registros de processos de transformação": "SATISFIED"
+        },
+        {
+          "Listagem completa de registros de processos de transformação": "SATISFIED"
+        }
+      ],
+      "mcp_invoke_targets": [
+        "MCP:read",
+        "MCP:read",
+        "MCP:read"
+      ],
+      "limitations": [
+        "result_truncated",
+        "multiple_observations_without_compose",
+        "experiment_variant=split",
+        "comprehension_llm_requests=3"
+      ]
+    }
+  }
+}

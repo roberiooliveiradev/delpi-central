@@ -1,0 +1,31 @@
+task_id: DELIA-C3-T2-DEV-V024-AUTHORIZED-RECONCILIATION-AND-DAVI-REPROOF-01
+evaluated_sha: "c176dac339af5a51ef7dd4ea9882a4bfba6429f6"
+environment: DEV (plugins_hub @ delpi-postgres-plugins)
+operation:
+  type: AUTHORIZED_DEV_MIGRATION_HISTORY_RECONCILIATION
+  backup: ~/c3t2-artifacts/v024-reconciliation/backup-2026-11-16.sql
+  tx: single transaction, pg_advisory_xact_lock(904221001), CAS 1 row
+  result: COMMITTED — constraint flag.* + checksum 817a70f4
+files:
+  - dev-reconciliation-preflight.md
+  - dev-backup-and-rollback.md
+  - dev-v024-execution.md
+  - dev-v024-before-after.md
+  - dev-migration-history-validation.md
+  - davi-health-and-mcp.md
+  - delia-g2-live.sanitized.json
+  - delia-r5-live.sanitized.json
+  - delia-http-multiturn-live.sanitized.json
+  - delia-live-scenarios.sanitized.json
+  - delia-negatives.md
+  - test-commands-and-results.md
+  - ci-evidence.md
+restrictions:
+  migration_files_changed: "NO"
+  other_migrations_changed: "NO"
+  production_database_changed: "NO"
+  production_deploy: "NOT_AUTHORIZED"
+  two_agent_promotion: "NOT_AUTHORIZED"
+  phase_advancement: "NO"
+  material_writes_delia: 0
+  authz_bypass: 0
