@@ -244,6 +244,80 @@ class TravelReportService:
                 self.receipt_storage.delete(report_id=report_id, stored_name=receipt["storedName"])
         self.repo.delete_report(report_id)
 
+
+    def _expense_transport_fields(self, *, category_id: str, expense_date: date, body: dict[str, Any]) -> dict[str, Any]:
+        mode = str(body.get("transportMode") or "").strip() or None
+        if category_id != "ground_transport":
+            if mode:
+                raise TravelReportError("Modalidade permitida somente em Deslocamento.")
+            return {"transport_mode": None, "distance_km": None, "rate_brl_per_km": None}
+        if mode is None:
+            # Preserve legacy Deslocamento records without subtype.
+            return {"transport_mode": None, "distance_km": None, "rate_brl_per_km": None}
+        if mode not in {"own_vehicle", "ride_hailing", "public_transport"}:
+            raise TravelReportError("Tipo de deslocamento inválido.")
+        if mode != "own_vehicle":
+            return {"transport_mode": mode, "distance_km": None, "rate_brl_per_km": None}
+        try:
+            distance = parse_distance_km(body.get("distanceKm"))
+        except ExpenseValueError as exc:
+            raise TravelReportError(str(exc)) from exc
+        rate_raw = self.repo.get_mileage_rate(expense_date)
+        if rate_raw is None:
+            raise TravelReportError("Tarifa de quilometragem não configurada para essa data.")
+        rate = Decimal(str(rate_raw))
+        amount = mileage_amount(distance, rate)
+        if amount > Decimal("999999999999.99"):
+            raise TravelReportError("Reembolso excede o limite permitido.")
+        return {"transport_mode": mode, "distance_km": distance,
+                "rate_brl_per_km": rate, "amount_brl": amount}
+
+    def get_mileage_rate(self, user, expense_date: str) -> dict[str, Any]:
+        self._actor(user)
+        parsed = _parse_date(expense_date)
+        if parsed is None:
+            raise TravelReportError("Informe a data para consultar a tarifa.")
+        rate = self.repo.get_mileage_rate(parsed)
+        if rate is None:
+            raise TravelReportError("Tarifa de quilometragem não configurada para essa data.")
+        return {"rateBrlPerKm": float(rate), "expenseDate": parsed.isoformat()}
+
+    def send_to_finance(self, user, report_id: str, mailer: FinanceReportMailer | None = None) -> dict[str, Any]:
+        report = self._load_visible(user, report_id)
+        self._assert_editable(user, report)
+        if report["status"] != "draft":
+            raise TravelReportError("Somente rascunhos podem ser enviados ao Financeiro.")
+        detail = self.get_detail(user, report_id)
+        if not detail["expenses"]:
+            raise TravelReportError("Inclua ao menos uma despesa antes de enviar.")
+        if any(not exp.get("amountBrl") or exp["amountBrl"] <= 0 for exp in detail["expenses"]):
+            raise TravelReportError("Corrija as despesas sem valor antes de enviar.")
+        cc = (report.get("createdByEmail") or "").strip()
+        if not cc or "@" not in cc:
+            raise TravelReportError("Solicitante sem e-mail cadastrado para receber a cópia.")
+        recipient = "financeiro@delpi.com.br"
+        pdf = self.build_package_pdf(user, report_id)
+        if not self.repo.reserve_finance_dispatch(report_id, recipient, cc):
+            raise TravelReportError("Este relatório já tem uma tentativa de envio. Consulte o histórico antes de reenviar.")
+        try:
+            (mailer or FinanceReportMailer()).send(report=detail, pdf=pdf, recipient=recipient, cc=cc)
+        except Exception:
+            # Graph timeouts are ambiguous: do not retry without checking sent mail.
+            self.repo.finalize_finance_dispatch(
+                report_id, "failed", "Entrega não confirmada. Solicite verificação antes de repetir.",
+            )
+            raise TravelReportError("Envio não confirmado. Consulte a TI antes de tentar novamente.")
+        self.repo.finalize_finance_dispatch(report_id, "sent")
+        self.repo.update_report(report_id, {"status": "submitted"})
+        actor_id, email, name = self._actor(user)
+        self.repo.add_audit({
+            "report_id": report_id, "event_type": "sent_to_finance",
+            "from_status": "draft", "to_status": "submitted",
+            "actor_user_id": actor_id, "actor_name": name, "actor_email": email,
+            "payload": {"to": recipient, "cc": cc},
+        })
+        return self._with_completeness(self.repo.get_report(report_id))
+
     def add_expense(self, user, report_id: str, body: dict[str, Any]) -> dict[str, Any]:
         report = self._load_visible(user, report_id)
         self._assert_editable(user, report)
