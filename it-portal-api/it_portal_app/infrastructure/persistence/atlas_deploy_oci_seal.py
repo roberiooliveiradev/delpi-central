@@ -265,8 +265,8 @@ def evaluate_portal_approval(*, candidate: SealedOCICandidate,
     if not (_uuid(approval.proposal_id) and _uuid(approval.requester_subject)
             and _uuid(approval.approver_subject)):
         raise OCIGateRejected("OCI_APPROVAL_IDENTITY_INVALID")
-    if approval.requester_subject == approval.approver_subject:
-        raise OCIGateRejected("OCI_SELF_APPROVAL_DENIED")
+    # Requester and approver may be the same named human, but the approval
+    # must still be an explicit, current portal decision tied to this binding.
     if (approval.requester_subject != candidate.requester_subject
             or approval.environment != candidate.environment
             or approval.service_id != candidate.service_id):
