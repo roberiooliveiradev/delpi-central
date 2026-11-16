@@ -5445,3 +5445,32 @@ O owner determina que a EVA confronte **código + descrição do PI**, **letra/p
 - Base `MI=1000` e par PC↔PC são as únicas conversões aprovadas; demais unidades/PA não-MI → `NOT_COMPARABLE` até homologação da Engenharia.
 - Revisão/efetividade da BOM × revisão do desenho: domínio separado preservado (`revision_domain_equivalence` continua OWNER_BLOCKED).
 - Deploy: **não autorizado** — pacote fica como candidato até decisão de Coordination.
+
+---
+
+## 94.22 G19 — Deploy G18 e prova E2E real do 90263680
+
+- **TASK_ID:** `EVA-E1-VAL01-G19-REAL-DRAWING-MATERIALS-OCR-AND-BOM-E2E-VALIDATION-01`
+- **Candidato:** `294c86c0a5` (delta engineering-api = 6 arquivos G18, identidade provada pelo verifier)
+- **Imagem:** `6117136d3543` → `5b7bc9c50302` · rollback `infra-engineering-api:rollback-pre-g19`
+- **Deploy:** isolado engineering-api via `up-prod-sequential.sh --build` em srv-api `4bccc31a12`; healthy; knowledge v1.6, G10/G13 preservados; zero migrations; demais serviços inalterados.
+- **PDF oficial:** `/drawing-pdfs/90263680.pdf` — SHA-256 `496e25797c8e62fc0f98bd82179846d8b7712078665e58116b68f32a84613417` (hash idêntico na execução; `same_document_verified: true`).
+- **OCR:** 1 execução autorizada, pipeline `pdfium_render_paddleocr`, status `ok`, 95 tokens, 1 página — sem JWT humano (stub de fonte com bytes oficiais já validados; read-only).
+- **BOM oficial:** `product_structure_repository.fetch_structure_rows('90263680', 5)` → 12 ocorrências (4 PI + 8 MP), `parent_unit=MI` — dados reais TOTVS.
+
+### Resultado E2E honesto (sem injeção de dados)
+
+- `component_table` detectada (candidate), 8 linhas, **12/12 códigos** reconhecidos — recall de código 100%.
+- `parent_relation`: 7/8 ocorrências MP com associação `MATCH_CANDIDATE` (linhas fundidas PI+MP deram evidência `row_group`); 1 `NOT_CHECKED` (associação ambígua `10080136` sob `50233508` — observado `50213207`).
+- `description`/`pi_description`: **NOT_CHECKED em tudo** — OCR recuperou códigos, não as descrições tipadas → `DESCRIPTION_EXTRACTION_PARTIAL`; nada completado com TOTVS.
+- `quantity`: `NOT_COMPARABLE` (QTD não extraída) — sem falso positivo.
+- `global_situation: INCONCLUSIVE`, `engineering_approval: NOT_APPROVED`, `automatic_nc: false`, `unverified_relations: 1`.
+
+### Estados G19
+
+`G19_DEPLOY_PASS` · `G19_OCR_PASS` · `G19_TABLE_EXTRACTION_PASS`=PARCIAL (códigos+relações sim; descrições/quantidades/letras não extraídas) · `G19_DESCRIPTION_VALIDATION`=INCONCLUSIVE (sem descrição extraída, CA/CB não avaliável — não simulado) · `G19_QUANTITY_VALIDATION`=NOT_COMPARABLE honesto · `G19_MCP_E2E`=PENDING_OWNER_ACTION (JWT humano + refresh conector) · Veredito: `G19_PASS_WITH_RESIDUAL`.
+
+### Residuais
+
+- Recall de descrição/quantidade/letra do pipeline OCR neste layout: 0% — próximo passo E1 é investigar tipificação de células neste formato de tabela (códigos fundidos na mesma célula) antes de qualquer claim de cobertura.
+- ChatGPT E2E autenticado segue owner-pending; 12 arquivos WIP alheio preservados.
