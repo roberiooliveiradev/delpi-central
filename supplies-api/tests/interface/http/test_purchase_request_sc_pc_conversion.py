@@ -52,9 +52,9 @@ def test_conversion_forwards_branch_scope_and_validates_provenance(mock_resolve,
     gateway = MagicMock()
     gateway.get.return_value = {"success": True, "data": {
         "source": "SC1010+SCR010+SC7010",
-        "scope": "confirmed_release_to_first_order",
-        "period_anchor": "final_approval_date",
-        "summary": {"approved_requests": 1, "converted_requests": 1, "avg_days": 2},
+        "scope": "release_or_issue_without_approval_to_first_order",
+                "period_anchor": "effective_start_date",
+        "summary": {"approved_requests": 1, "converted_requests": 1, "avg_days": 2, "with_approval": 0, "without_approval": 1},
         "branch_breakdown": {"01": {"converted_requests": 1}},
         "items": [],
     }}
