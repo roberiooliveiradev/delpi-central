@@ -418,3 +418,9 @@ Residuais → U15R: **P1 pela metade** — a medição olhou o contêiner (trans
 | Residual kit | `onPointSelect` do BarSeriesChart sem consumidor CF |
 
 Pedido ao owner: conferência visual em PROD (tipo de gráfico, day, tema escuro, KPI compacto, ícone 390).
+
+### Revisão do Claude sobre U15R (16/11) — ACCEPT_WITH_RESIDUAL
+
+PROD, 1440 e 390, com `day=2026-11-10`. PASS: «Evolução por dia» no padrão do Comercial (Séries, Tipo «Colunas», CSV/Excel/PDF); dia selecionado em destaque e os outros em cinza; sem fundo branco no escuro (só o tooltip padrão do recharts, oculto); KPIs compactos («R$ 136,1 mil»); em 390, ícone e título sem sobreposição.
+
+Residuais menores (sem prompt por ora): em 390 os títulos «Diferença nas Altas» e «Sem par em aberto» cortam no fim; rótulos do eixo X do diário muito apagados; ao abrir um link profundo com a sessão expirada, o login devolve para o Início do Portal e não para a análise (host/Core).
