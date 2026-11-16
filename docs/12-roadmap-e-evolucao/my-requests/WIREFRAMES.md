@@ -1,5 +1,8 @@
 # Wireframes — Minhas Solicitações
 
+> **UX V3 — decisão visual aprovada (15/11/2026):** [Wireframes finais My Requests Mine/Fila e Helpdesk — toolbar inferior direita + itens por página na tabela](./UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md). Esta é a **referência TARGET mais recente**, substituindo apenas o posicionamento UX V2 dos controles. Código/deploy ainda não executados nesta revisão.
+
+
 > **Atualização de design — 15/11/2026:** a composição nova, os quatro wireframes revisados e o contrato de paridade com o Helpdesk estão em [UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md](./UX-PARITY-HELPDESK-PLUGIN-UI-TWO-MFES.md). Os wireframes E5–E23 abaixo são a **fotografia da implementação anterior**, não o layout alvo aprovado. Topbar com quatro abas **acima do hero**, hero único compacto, Filtros/Ordenar/Colunas, Tabela/Cards e primitives generalizados no Plugin UI são **TARGET**, não IMPLEMENTED. Não copiar mecanismos de Helpdesk entre MFEs.
 >
 > **Correção executada — 15/11/2026:** controles de listagem passaram a renderizar **dentro do hero** via `toolbarPortalTarget` + `toolbarLayout="hero"` do `DataTableSection`; grade `embedded` logo abaixo sem card redundante; ordenação por clique nos cabeçalhos ativa. Implementado em `96e9b5bf30`, evidência em [UX-V2-HERO-TOOLBAR-EXECUTION-EVIDENCE.md](./UX-V2-HERO-TOOLBAR-EXECUTION-EVIDENCE.md).
