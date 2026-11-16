@@ -131,7 +131,9 @@ class GHCRImageIdentityReader:
                 if mime != "application/json":
                     raise OCIRegistryReadError("OCI_REGISTRY_AUTH_UNAVAILABLE")
                 raw = await self._limited_response(response, _MAX_TOKEN)
-        except (httpx.HTTPError, UnicodeError):
+        except (httpx.HTTPError, UnicodeError, OCIRegistryReadError):
+            # Oversized token responses and every other token-endpoint failure
+            # remain authentication failures, never a generic content error.
             raise OCIRegistryReadError("OCI_REGISTRY_AUTH_UNAVAILABLE") from None
         token = _json_object(raw, "OCI_REGISTRY_AUTH_UNAVAILABLE").get("token")
         if not _valid_token(token):
