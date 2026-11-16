@@ -1,5 +1,7 @@
 # Portal Controladoria & Finanças — Fonte de navegação e estado
 
+> **16/11/2026 — Fusão do Portal Financeiro:** [`financial-merge/`](./financial-merge/README.md) (doc 172) `PLANNED` — trazer o Portal Financeiro (`plugins/financial` + `financial-api`) para dentro do Portal, só com `access`/`manage`. AS-IS conferido no código, decisões D1–D7 do owner pendentes; próximo passo: inventário M0 somente leitura.
+>
 > **14/11/2026 — Revisão de UI:** [`ui-review/`](./ui-review/README.md) (doc 171) `READY` — Início e Auditoria de Entradas no padrão visual dos Portais (hero, PagePath, KPIs com ícone e ajuda, severidade com badge, vocabulário PT-BR, R$ pt-BR, estados, desktop/tablet/celular) e conformidade das demais páginas do MFE.
 >
 > **14/11/2026 — Início no padrão dos Portais:** [`home-hub/`](./home-hub/README.md) (doc 170) `READY` — tira o card Portal, cria os cards **Notas fiscais** (Auditoria de Entradas + Lançamento de Notas Fiscais) e **Administração**, e traz os **Favoritos** como no Comercial.
