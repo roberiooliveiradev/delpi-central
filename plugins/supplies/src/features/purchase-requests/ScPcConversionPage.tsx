@@ -69,7 +69,9 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
       .then((payload) => {
         if (payload.scope !== "release_or_issue_without_approval_to_first_order" ||
             payload.period_anchor !== "effective_start_date" ||
-            payload.source !== "SC1010+SCR010+SC7010") {
+            payload.source !== "SC1010+SCR010+SC7010" ||
+            payload.calculation_mode !== "completed_or_pending_elapsed_as_of_today" ||
+            !payload.as_of_date) {
           throw new Error("A origem comprovada do indicador não foi confirmada.");
         }
         setData(payload);
@@ -123,7 +125,9 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
     { label: "SCs liberadas (amostra)", value: formatNumber(summary?.approved_requests) },
     { label: "Com alçada de compras", value: formatNumber(summary?.with_approval) },
     { label: "Sem alçada (emissão SC)", value: formatNumber(summary?.without_approval) },
-    { label: "Tempo médio até o 1º PC", value: summary?.avg_days == null ? "—" : formatNumber(summary.avg_days, 2) + " dias" },
+    { label: "Média atual · incluindo pendentes", value: summary?.avg_days == null ? "—" : formatNumber(summary.avg_days, 2) + " dias" },
+    { label: "Média das SCs convertidas", value: summary?.avg_completed_days == null ? "—" : formatNumber(summary.avg_completed_days, 2) + " dias" },
+    { label: "Idade média das SCs sem PC", value: summary?.avg_pending_days == null ? "—" : formatNumber(summary.avg_pending_days, 2) + " dias" },
     { label: "SCs convertidas", value: formatNumber(summary?.converted_requests) },
     { label: "Ainda sem PC", value: formatNumber(summary?.pending_requests) },
     { label: "PC anterior ao início", value: formatNumber(summary?.before_release) },
@@ -136,7 +140,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
     { label: "6 a 10 dias", count: summary?.six_to_ten_days ?? 0 },
     { label: "Acima de 10 dias", count: summary?.over_ten_days ?? 0 },
   ];
-  const eligible = Math.max(summary?.converted_requests ?? 0, 1);
+  const eligible = Math.max(summary?.measured_requests ?? 0, 1);
 
   return (
     <div className="sp-page-stack sp-approval-lead-time">
@@ -152,7 +156,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
       <SuppliesPageHero
         eyebrow="Portal Suprimentos / Eficiência de Compras"
         title="Tempo de conversão SC → PC"
-        description="Da última liberação da alçada, ou da emissão da SC sem alçada, até o primeiro PC vinculado. Cada SC conta uma vez na média."
+        description="Da liberação da alçada ou emissão da SC sem alçada até o primeiro PC. SCs ainda sem pedido continuam contando dias até hoje e entram na média."
       />
       <SuppliesSectionCard
         title="Filtros do indicador"
@@ -191,6 +195,11 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
       {loading ? <SuppliesLoadingCard title="Consultando eventos de aprovação e pedidos no Protheus" variant="panel" /> : null}
       {!loading && data ? (
         <>
+          <p className="sp-approval-lead-time__note">
+            <strong>Referência das pendências: {formatDate(data.as_of_date)}.</strong>{" "}
+            O tempo das SCs sem PC aumenta a cada dia. A média principal considera
+            tanto as convertidas quanto as pendentes, com uma SC por observação.
+          </p>
           <section className="sp-approval-lead-time__metrics" aria-label="Resumo da conversão">
             {metrics.map((metric) => (
               <div key={metric.label} className="sp-approval-lead-time__metric">
@@ -199,7 +208,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
               </div>
             ))}
           </section>
-          <SuppliesSectionCard title="Distribuição do prazo de conversão" hint="Somente SCs convertidas com data inicial válida e primeiro PC válido">
+          <SuppliesSectionCard title="Distribuição do tempo transcorrido" hint="SCs com PC: início até a emissão. SCs sem PC: início até hoje. Anomalias não entram.">
             <div className="sp-approval-lead-time__buckets">
               {buckets.map((bucket) => (
                 <div key={bucket.label}>
@@ -224,7 +233,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
                     <tr>
                       <th>SC</th><th>Unidade</th><th>Início da contagem</th>
                       <th>Primeiro PC</th><th>Emissão PC</th><th>PCs vinculados</th>
-                      <th>Situação</th><th>Tempo</th>
+                      <th>Situação</th><th>Tempo transcorrido</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -254,7 +263,12 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
                         <td>{formatDate(item.first_order_date)}</td>
                         <td>{formatNumber(item.linked_order_count)}</td>
                         <td>{labels[item.conversion_status]}</td>
-                        <td><strong>{item.conversion_days == null ? "—" : formatNumber(item.conversion_days) + " d"}</strong></td>
+                        <td>
+                          <strong>{item.conversion_days == null ? "—" : formatNumber(item.conversion_days) + " d"}</strong>
+                          {item.conversion_status === "pending" && item.pending_age_days != null ? (
+                            <div className="sp-approval-lead-time__note">até {formatDate(data.as_of_date)}</div>
+                          ) : null}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -272,8 +286,9 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
           <p className="sp-approval-lead-time__note">
             Fonte: SCR010 (alçada existente), SC1010 (SC sem alçada) e SC7010 (PC vinculado).
             A emissão da SC somente inicia o prazo quando não houver nenhum histórico SCR e todos os itens estiverem liberados.
-            SC sem PC fica pendente; PC anterior à data inicial e dados inválidos não entram na média.
-            Os prazos são dias corridos. Aprovações retroativas e reaprovações devem ser conferidas
+            SC sem PC fica pendente, mas seus dias até a data de referência entram na média.
+            Apenas inconsistências (PC anterior à data inicial, dados inválidos ou início futuro)
+            ficam fora. Os prazos são dias corridos. Aprovações retroativas e reaprovações devem ser conferidas
             com Compras. O primeiro PC indica início de conversão, não atendimento total da SC.
           </p>
         </>
