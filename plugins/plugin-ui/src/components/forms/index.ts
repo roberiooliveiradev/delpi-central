@@ -289,3 +289,16 @@ export {
   type LucideIconSectionDef,
   type LucideIconSectionView,
 } from "./lucideIconResolver";
+
+export {
+  FormPageLayout,
+  QuestionnaireThemeScope,
+  useQuestionnaireColorScheme,
+  useSessionColorScheme,
+  type FormPageLayoutBand,
+  type FormPageLayoutProps,
+  type QuestionnaireColorScheme,
+  type QuestionnaireThemeScopeProps,
+  type SessionColorScheme,
+  type SessionColorSchemeState,
+} from "./questionnaire";

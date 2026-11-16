@@ -440,6 +440,16 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "LucideIconField"),
   vc("forms", "LucideIconGridPanel"),
   vc("forms", "LucideIconByName"),
+  vc("forms", "QuestionnaireThemeScope", {
+    addedAt: "2026-11-16",
+    description:
+      "Raiz temática do kit de formulário (.delpi-ui-form-root + data-color-scheme); tema por visita via useSessionColorScheme — sem storage.",
+  }),
+  vc("forms", "FormPageLayout", {
+    addedAt: "2026-11-16",
+    description:
+      "Página do kit de formulário: faixa da marca (compact/tall) + coluna sobreposta (16 px / máx. 760 px), quebra em 600 px.",
+  }),
   // export
   vc("export", "TabularExportButtons"),
   vc("export", "DocumentExportActions"),

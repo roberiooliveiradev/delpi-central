@@ -1,0 +1,107 @@
+/* Kit de formulário — raiz de tema (.delpi-ui-form-root) e layout de página
+   (.delpi-ui-form-page*). Valores claro/escuro: UI-03 §3.2 (inventário 16/11/2026).
+   Cores literais só nas declarações de token; componentes consomem var(--delpi-ui-*).
+   A raiz define também os tokens --delpi-ui-* usados pelos componentes do kit,
+   para o formulário não depender de declarações do host. */
+
+.delpi-ui-form-root {
+  color-scheme: light;
+
+  --delpi-ui-form-font: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  --delpi-ui-form-page-bg: #f3f4f6;
+  --delpi-ui-form-band-bg: #0c6fb0;
+  --delpi-ui-form-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --delpi-ui-form-accent-text: #0a5a8f;
+  --delpi-ui-form-tint: #eaf3fb;
+  --delpi-ui-form-border-soft: #d0d7de;
+  --delpi-ui-form-input-bg: #ffffff;
+  --delpi-ui-form-track: #e6eaef;
+  --delpi-ui-form-warning-bg: #fff8e6;
+  --delpi-ui-form-warning-border: #f0d58c;
+  --delpi-ui-form-warning-text: #5c4400;
+  --delpi-ui-form-logo-bg: transparent;
+
+  --delpi-ui-surface: #ffffff;
+  --delpi-ui-border: #e1e4e8;
+  --delpi-ui-text: #1f2328;
+  --delpi-ui-muted: #57606a;
+  --delpi-ui-accent: #0c6fb0;
+  --delpi-ui-on-accent: #ffffff;
+  --delpi-ui-control-border: #8c959f;
+  --delpi-ui-danger: #b42318;
+  --delpi-ui-success: #1a7f37;
+  --delpi-ui-focus-ring: 0 0 0 3px #8fc3ea;
+
+  font-family: var(--delpi-ui-form-font);
+  color: var(--delpi-ui-text);
+}
+
+.delpi-ui-form-root[data-color-scheme="dark"] {
+  color-scheme: dark;
+
+  --delpi-ui-form-font: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  --delpi-ui-form-page-bg: #041b2e;
+  --delpi-ui-form-band-bg: #003866;
+  --delpi-ui-form-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --delpi-ui-form-accent-text: #7fd3f5;
+  --delpi-ui-form-tint: #103c55;
+  --delpi-ui-form-border-soft: #788792;
+  --delpi-ui-form-input-bg: #061622;
+  --delpi-ui-form-track: #2c4354;
+  --delpi-ui-form-warning-bg: #273736;
+  --delpi-ui-form-warning-border: #6a6230;
+  --delpi-ui-form-warning-text: #fde68a;
+  --delpi-ui-form-logo-bg: #ffffff;
+
+  --delpi-ui-surface: #0a2438;
+  --delpi-ui-border: rgba(255, 255, 255, 0.14);
+  --delpi-ui-text: #f4f8fc;
+  --delpi-ui-muted: #b8c9d9;
+  --delpi-ui-accent: #30b8ec;
+  --delpi-ui-on-accent: #041b2e;
+  --delpi-ui-control-border: #788792;
+  --delpi-ui-danger: #ff9d9d;
+  --delpi-ui-success: #2ecc71;
+  --delpi-ui-focus-ring: 0 0 0 3px #7fd3f5;
+}
+
+/* --- Layout da página (FormPageLayout) ------------------------------------ */
+
+.delpi-ui-form-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--delpi-ui-form-page-bg);
+}
+
+.delpi-ui-form-page__band {
+  height: 112px;
+  background: var(--delpi-ui-form-band-bg);
+}
+
+.delpi-ui-form-page--band-tall .delpi-ui-form-page__band {
+  height: 168px;
+}
+
+.delpi-ui-form-page__column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: -80px 16px 24px;
+}
+
+.delpi-ui-form-page--band-tall .delpi-ui-form-page__column {
+  margin-top: -112px;
+}
+
+@media (min-width: 600px) {
+  .delpi-ui-form-page__band {
+    height: 220px;
+  }
+
+  .delpi-ui-form-page__column {
+    max-width: 760px;
+    gap: 16px;
+    margin: -160px auto 40px;
+  }
+}

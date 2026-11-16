@@ -151,6 +151,7 @@
 @import "./styles/floating-notice.css";
 @import "./styles/document-reader.css";
 @import "./styles/markdown-document.css";
+@import "./styles/questionnaire.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

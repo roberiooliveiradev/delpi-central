@@ -1312,6 +1312,53 @@ import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 
 ---
 
+## `QuestionnaireThemeScope` e `FormPageLayout` — kit de formulário
+
+Fundação visual genérica para páginas de formulário (questionários e convites públicos), com tema claro/escuro por visita — sem storage, cookies ou mutação de `document`.
+
+```ts
+import {
+  QuestionnaireThemeScope,
+  FormPageLayout,
+  useQuestionnaireColorScheme,
+  useSessionColorScheme,
+} from "@delpi/plugin-ui";
+```
+
+### `QuestionnaireThemeScope`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `colorScheme` | `"auto" \| "light" \| "dark"` | `"auto"` | `"auto"` segue o aparelho (até o 1º toggle do visitante) |
+| `prefix` | `string` | — | Prefixo BEM do consumidor (classes dual) |
+| `className` | `string` | — | Classes extras na raiz |
+
+Renderiza `<div class="{prefix}-form-root delpi-ui-form-root" data-color-scheme="light|dark">` e provê contexto. Tokens de tema vivem em `styles/questionnaire.css` (bloco claro na raiz, escuro em `[data-color-scheme="dark"]`) — nunca duplicar no consumidor.
+
+### `useQuestionnaireColorScheme()`
+
+Hook dentro do escopo: `{ scheme, toggle(), userChosen }`. `toggle()` alterna para a visita corrente e ignora mudanças do aparelho a partir de então; nada é persistido — remontar volta ao `prefers-color-scheme` do dispositivo. Fora do escopo lança erro. `useSessionColorScheme()` é o hook de estado bruto (sem contexto), para quem compõe a própria raiz.
+
+### `FormPageLayout`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `band` | `"compact" \| "tall"` | `"compact"` | Altura da faixa da marca: 112/168 px (220 px ≥ 600 px) |
+| `prefix` | `string` | — | Prefixo BEM do consumidor |
+| `className` | `string` | — | Classes extras na raiz |
+
+Ocupa a altura da janela (`100dvh`), pinta `--delpi-ui-form-page-bg` e renderiza faixa `aria-hidden` + coluna sobreposta (margens 16 px, máx. 760 px e centralizada ≥ 600 px; gap 12/16 px). Filhos são os cartões da página.
+
+```tsx
+<QuestionnaireThemeScope prefix="meuapp">
+  <FormPageLayout prefix="meuapp" band="compact">
+    <MeuCartao />
+  </FormPageLayout>
+</QuestionnaireThemeScope>
+```
+
+---
+
 ## Família `charts` — matriz impacto × esforço
 
 Scatter SVG headless para priorização de revisões (Playbook 21 Transformômetro). **Cálculo na API** — o MFE só passa pontos já normalizados.

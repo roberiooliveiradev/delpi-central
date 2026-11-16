@@ -955,3 +955,63 @@
   font-size: 12px;
   color: var(--puc-muted);
 }
+
+/* --- Kit de formulário (questionnaire) — molduras de altura fixa da demo --- */
+
+.dashboard-plugin-ui .puc-questionnaire-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-plugin-ui .puc-questionnaire-frame {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  overflow: auto;
+  border: 1px solid var(--puc-border);
+  border-radius: 12px;
+}
+
+.dashboard-plugin-ui .puc-questionnaire-frame .delpi-ui-form-root {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-plugin-ui .puc-questionnaire-frame .delpi-ui-form-page {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.dashboard-plugin-ui .puc-questionnaire-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: var(--delpi-ui-surface);
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: 12px;
+  box-shadow: var(--delpi-ui-form-card-shadow);
+}
+
+.dashboard-plugin-ui .puc-questionnaire-card p {
+  margin: 0;
+  color: var(--delpi-ui-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dashboard-plugin-ui .puc-questionnaire-theme-btn {
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--delpi-ui-form-border-soft);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
