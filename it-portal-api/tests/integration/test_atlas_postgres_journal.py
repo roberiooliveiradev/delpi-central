@@ -316,7 +316,7 @@ def test_oci_replay_requires_same_challenge(pg):
     another = issue_challenge(pg, requester_subject=i.requester_subject,
                               environment=i.environment, service_id=i.service_id)
     with pytest.raises(JournalRejected, match="IDEMPOTENCY_PAYLOAD_CONFLICT"):
-        _oci_store(pg, bundle, another)
+        _oci_store(pg, _oci_bound_to_nonce(bundle, another), another)
     assert _oci_counts(pg) == (2, 1, 1, 1)
 
 
@@ -338,6 +338,7 @@ def test_oci_legacy_proposal_without_binding_denied_on_replay(pg):
     nonce = issue_challenge(pg, requester_subject=i.requester_subject,
                             environment=i.environment, service_id=i.service_id)
     bundle = _oci_bound_to_nonce(bundle, nonce)
+    i, _, _, sealed = bundle
     store_prepared(pg, intent=PrepareIntent(
         requester_subject=i.requester_subject, request_id=i.request_id,
         environment=i.environment, service_id=i.service_id,
