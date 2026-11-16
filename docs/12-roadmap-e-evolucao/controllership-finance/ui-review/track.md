@@ -358,3 +358,9 @@ Conferido em PROD (análise 07–13/11, 1440×900, DOM medido).
 - **Processo:** AC visual aprovado sem medição (AC-GRA-2, AC-TAB-3). Na U14R, AC visual só passa com geometria medida em HML.
 
 Prompt: [prompts/U14R-rework.md](./prompts/U14R-rework.md).
+
+### Revisão do Claude sobre U14R H1 (15/11) — ACCEPT
+
+PROD conferido em 1440: Panorama 338 px; marcadores da legenda 9–10 px; «73%» e «87» dentro dos gráficos.
+
+**DR-1 decidido pelo owner:** opção (b) — «Evolução por dia» em barras COM clique no dia, acrescentando ao `BarSeriesChart` do plugin-ui `onPointSelect`/`selectedPointKey` (aditivo, caracterizado, consumidores provados, plugin-ui publicado antes do MFE). Prompt: [prompts/U14R2-continuacao.md](./prompts/U14R2-continuacao.md).
