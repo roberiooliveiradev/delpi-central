@@ -364,3 +364,15 @@ Prompt: [prompts/U14R-rework.md](./prompts/U14R-rework.md).
 PROD conferido em 1440: Panorama 338 px; marcadores da legenda 9–10 px; «73%» e «87» dentro dos gráficos.
 
 **DR-1 decidido pelo owner:** opção (b) — «Evolução por dia» em barras COM clique no dia, acrescentando ao `BarSeriesChart` do plugin-ui `onPointSelect`/`selectedPointKey` (aditivo, caracterizado, consumidores provados, plugin-ui publicado antes do MFE). Prompt: [prompts/U14R2-continuacao.md](./prompts/U14R2-continuacao.md).
+
+### U14R2 — H2–H6 + DR-1=(b) — DONE
+
+| Item | Valor |
+|---|---|
+| HEAD | `360d300cf3` |
+| Verifier | ACCEPT_WITH_RESIDUAL (r2; r1 REWORK OC CSS/tsc) |
+| Tags | `rollback-ui-review-u14r2-plugin-ui` · `rollback-ui-review-u14r2-controllership-finance` |
+| PROD | plugin-ui → MFE (`2026-11-16T01:50`–`01:52Z`) |
+| Report | [report-u14r2.md](./report-u14r2.md) |
+
+Pedido ao owner: conferência visual em PROD (Pendentes, tabela 1440, barras+day).
