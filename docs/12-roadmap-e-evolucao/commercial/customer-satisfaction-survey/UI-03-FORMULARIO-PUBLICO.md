@@ -231,7 +231,7 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 |---|---|
 | `intro` | título, empresa/contexto, frase, lista de itens, rótulo do botão de início, texto de rodapé |
 | `steps[]` | `{ id, title, questions[] }`; cada questão: `{ key, kind: "scale" \| "text", number, eyebrow, prompt, required, scale?: { min, max, valueLabels, endLabels, endLabelsPosition, narrowColumns, notApplicable } }` |
-| `texts` | microcopy (padrões em português de §3.6, sobrescrevíveis) |
+| `texts` | microcopy **obrigatória** (o kit não tem textos fixos; a página da Pesquisa passa os de §3.6) |
 | `colorScheme` / `showThemeToggle` | `"auto"` (padrão: tema do aparelho, troca só em memória) / mostrar o botão de tema no cabeçalho |
 | `onSubmit(answers)` | função do app; devolve o resultado (enviado, já registrado, erro…) para o kit exibir a tela certa |
 | `renderResult?` | permite ao app escolher título/mensagem por resultado |
