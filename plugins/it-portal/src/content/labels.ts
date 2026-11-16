@@ -333,6 +333,7 @@ export const SHELL_CONTENT = {
     networks: "Redes",
     integrations: "Integrações",
     action_plans: "Planos de ação",
+    atlas_deployments: "Implantações ATLAS",
     help: "Ajuda",
   },
   navHints: {
@@ -344,6 +345,7 @@ export const SHELL_CONTENT = {
     networks: "Sub-redes, VLANs e os servidores conectados a cada uma.",
     integrations: "Integrações entre serviços e com sistemas externos.",
     action_plans: "Planos de ação de todos os servidores.",
+    atlas_deployments: "Histórico e propostas de atualização, apenas consulta.",
     help: "Como usar o Portal de TI.",
   },
   search: {
