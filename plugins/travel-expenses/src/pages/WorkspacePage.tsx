@@ -473,9 +473,28 @@ function ExpenseDrawer({
 
   async function save() {
     if (!editable) return;
+    setFormError(null);
+
+    if (!expenseDate) {
+      setFormError("Informe a data da despesa para consultar a tarifa correta.");
+      return;
+    }
+    if (categoryId === "ground_transport" && !transportMode) {
+      setFormError("Selecione o tipo de deslocamento.");
+      return;
+    }
+    if (ownVehicle && (km === null || km <= 0)) {
+      setFormError("Informe uma quilometragem maior que zero.");
+      return;
+    }
+    if (ownVehicle && mileageRate === null) {
+      setFormError(mileageRateError || "Aguarde a consulta da tarifa vigente antes de salvar.");
+      return;
+    }
+
     const parsedAmount = ownVehicle ? mileageTotal : parseBrlInput(amount);
     if (parsedAmount === null) {
-      onError(ownVehicle ? "Informe a quilometragem e aguarde a tarifa vigente." : "Informe um valor válido. Exemplo: R$ 324,00.");
+      setFormError("Informe um valor válido. Exemplo: R$ 324,00.");
       return;
     }
 
@@ -495,7 +514,9 @@ function ExpenseDrawer({
         : await addExpense(report.id, payload);
       await onSaved(saved);
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Não foi possível salvar a despesa.");
+      const message = err instanceof Error ? err.message : "Não foi possível salvar a despesa.";
+      setFormError(message);
+      onError(message);
     } finally {
       setBusy(false);
     }
@@ -531,11 +552,11 @@ function ExpenseDrawer({
       <TravelFormGrid>
         <label className="te-field">
           Data
-          <input type="date" value={expenseDate} disabled={!editable} onChange={(event) => setExpenseDate(event.target.value)} />
+          <input type="date" value={expenseDate} disabled={!editable} onChange={(event) => { setExpenseDate(event.target.value); setFormError(null); }} />
         </label>
         <label className="te-field">
           Categoria
-          <select value={categoryId} disabled={!editable} onChange={(event) => setCategoryId(event.target.value)}>
+          <select value={categoryId} disabled={!editable} onChange={(event) => { setCategoryId(event.target.value); setFormError(null); }}>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.label}
@@ -546,7 +567,7 @@ function ExpenseDrawer({
         {categoryId === "ground_transport" ? (
           <label className="te-field te-field--wide">
             Tipo de deslocamento
-            <select disabled={!editable} value={transportMode} onChange={(event) => setTransportMode(event.target.value)}>
+            <select disabled={!editable} value={transportMode} onChange={(event) => { setTransportMode(event.target.value); setFormError(null); }}>
               <option value="">Selecione o transporte</option>
               <option value="own_vehicle">Veículo próprio</option>
               <option value="ride_hailing">Carro de aplicativo</option>
@@ -558,12 +579,24 @@ function ExpenseDrawer({
           <>
             <label className="te-field">
               Quilometragem percorrida (km)
-              <input inputMode="decimal" disabled={!editable} value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} placeholder="Ex.: 270" />
+              <input inputMode="decimal" disabled={!editable} value={distanceKm} onChange={(event) => { setDistanceKm(event.target.value); setFormError(null); }} placeholder="Ex.: 270" />
             </label>
             <label className="te-field">
               Tarifa vigente
-              <input value={mileageRate !== null ? formatBrl(mileageRate) + "/km" : "Carregando tarifa…"} readOnly />
+              <input value={mileageRateLabel(mileageRateLookup, expenseDate)} readOnly aria-invalid={Boolean(mileageRateError)} />
             </label>
+            {mileageRateError ? (
+              <div className="te-mileage-alert te-field--wide" role="alert">
+                <span>{mileageRateError}</span>
+                <ActionButton
+                  variant="ghost"
+                  disabled={!editable}
+                  onClick={() => setMileageRetry((value) => value + 1)}
+                >
+                  Tentar novamente
+                </ActionButton>
+              </div>
+            ) : null}
           </>
         ) : null}
         <label className="te-field">
@@ -579,6 +612,8 @@ function ExpenseDrawer({
           <textarea value={notes} disabled={!editable} onChange={(event) => setNotes(event.target.value)} rows={3} />
         </label>
       </TravelFormGrid>
+
+      {formError ? <p className="te-mileage-alert" role="alert">{formError}</p> : null}
 
       {current ? (
         <>
