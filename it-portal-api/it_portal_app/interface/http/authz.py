@@ -44,6 +44,8 @@ NETWORKS_VIEW = "it-portal.networks.view"
 NETWORKS_MANAGE = "it-portal.networks.manage"
 INTEGRATIONS_VIEW = "it-portal.integrations.view"
 INTEGRATIONS_MANAGE = "it-portal.integrations.manage"
+# Candidate Core grant; intentionally not added to ALL_PERMISSIONS or granted here.
+ATLAS_DEPLOY_VIEW = "it-portal.deploy.view"
 
 ALL_PERMISSIONS = (
     ACCESS,
