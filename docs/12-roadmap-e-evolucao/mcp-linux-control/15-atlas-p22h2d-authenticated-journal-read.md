@@ -1,7 +1,7 @@
 # ATLAS P2.2h.2d | Consulta autenticada do journal OCI no Portal do TI
 
 **Data:** 2026-11-16.  
-**Estado:** implementacao em PR; CI e revisao independente pendentes; sem ativacao em producao.
+**Estado atualizado (16/11/2026):** PR #205 integrada; API e frontend publicados pelo operador, endpoints presentes, mas consulta desativada e sem tabelas no banco; revisão independente e ativação controlada ainda pendentes. Próxima preparação: [V016 e Core](./16-atlas-journal-v016-core-view-activation-plan.md).
 
 ## Objetivo
 
