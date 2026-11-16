@@ -293,3 +293,23 @@ placeholders, proibida nova cirurgia KC). Não declarado PASS.
 **Issue #207:** gh sem auth — evidência versionada aqui.
 
 **NEXT_ACTION:** P4 — E2E cruzado com 2 identidades + aceite visual PO.
+
+## 10. P3-FIX executado — correção visual/funcional pós-aceite PO (commit `6a7e9e9c86`)
+
+**Executor:** Devin · **TASK_ID:** `EVA-PRC-CONVERSATION-P3-UX-FUNCTIONAL-CORRECTION-HML-01`
+**Base:** `c1d904b8cc` (origin/main revalidado).
+
+**Diagnóstico (evidência no código):**
+- RQ-01 real: `PrcCasePage` usava `CaseTab`/`mode="tabs"` Ficha técnica|Histórico — divergente do padrão do módulo. **Corrigido:** página única de seções verticais (ficha → documentos → conversa → linha do tempo).
+- RQ-02/03 pipeline íntegro: backend `isMine = author_subject == actor.user_id` (mesma fonte) → adapter → `mine` → `item--mine` → `flex-end`; bolhas sempre `article.delpi-ui-message-thread__bubble` com fundos distintos (7%/18%); CSS canônico dual-class presente no bundle. Causa mais provável do sintoma HML: dados de smoke P1/P2 (identidade sintética única → tudo à esquerda + agrupamento `continues` ocultando identidade) combinado à ausência de identidade nas mensagens próprias. **Corrigido:** `showMineIdentity` no thread do painel — autor+avatar também nas mensagens próprias (layout esperado pelo PO).
+- RQ-04 íntegro: upload multipart `AVAILABLE`→dedup→storage, inline `attachment:{id}` reescrito `pending:`→uuid + PATCH, reload lista metas e baixa blob autenticado → object URL; `PENDING_SCAN` sem preview. Sem evidência de defeito de código; persistência só comprovável com E2E autenticado.
+- Engenharia mantém abas operacionais (draft/verificação/histórico/revisões — workspace de analista, não o padrão de acompanhamento reportado); conversa já é seção vertical na área de histórico. Divergência intencional documentada.
+
+**Testes:** `ConversationPanel.alignment.test.tsx` novo (2) — `isMine`→`item--mine`/bolha-mine, recebida→bolha comum+autor+avatar+time, inversão por identidade. Módulo PRC my-requests 18/18; plugin-ui 65/65 nos módulos tocados; my-requests total 243 (mesmas 2 falhas pré-existentes `process-issue`). Builds vite OK.
+
+**HML:** push `6a7e9e9c86` → pull em `operador@srv-api:~/projetos-teste/delpi-central` → `hml-compose.sh up --scenario plugin-ui|my-requests`. Healthy; bundle servido sem `prc-case-tab`, `showMineIdentity` presente no remoteEntry. Digests: plugin-ui `e8e72315fb45`, my-requests `22a4c093b77f`, engineering `b7f6b83fe4d4` (inalterado — consome o panel via federação).
+
+**E2E autenticado:** `TEST_NOT_RUN` — segue sem identidade legítima (mesmo bloqueio P1–P3). Não declarado PASS; aceite visual pendente do PO.
+**Issue #207:** `gh` sem auth nesta sessão — evidência versionada aqui.
+
+**NEXT_ACTION:** aceite visual do PO em HML.
