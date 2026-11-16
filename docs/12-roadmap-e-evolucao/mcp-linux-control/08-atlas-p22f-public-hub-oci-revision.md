@@ -172,3 +172,14 @@ Nenhum motor headless disponível (devin/agent).
 **Gates locais do diff real:** `audit_architecture_phase3.py --check --base e18ee9a31c08ed29092962c524bba95434d5255f` e `audit_platform_guardrails.py` com mesma base: exit 0 / zero findings no commit candidato, antes de atualizar a ref remota. Suite selecionada: 163 PASS, incluindo 23 do guard. Tentativas independentes 1 e 2: INCONCLUSIVE, sem motor e sem OCs; nao alegar ACCEPT. O kit permaneceu intacto.
 
 Este fechamento altera apenas documentacao de evidencias; dispensa nova tentativa de verificador por ser somente texto, conforme `agent-kit/verifier/project-contract.md` parte A, item 1. Nenhum efeito de runtime, Docker ou banco foi executado no srv-api. Build/signature da imagem final, HML real, migration e ferramentas PREPARE/ACT continuam pendentes de seus gates. O pacote ZIP de handoff anterior tornou-se desnecessario: a fonte de codigo atual e a main.
+
+
+### 6.7 Confirmacao posterior de deploy manual em producao (16/11/2026)
+
+**Fonte:** escolha explicita do operador para usar producao e resposta **"Feito, podemos prosseguir no desenvolvimento"** apos receber `git pull --ff-only` e `./infra/scripts/up-prod-sequential.sh --build public-hub`. Registrar como `PROD_PUBLIC_HUB_DEPLOY_OPERATOR_CONFIRMED`. O erro anterior de `.env.hml` ocorreu no checkout produtivo e interrompeu aquela tentativa HML; nao orientamos criar outra configuracao de homologacao no checkout produtivo.
+
+A confirmacao cobre a execucao manual informada, nao comprova por si a revisao OCI, `ImageID`, health ou SHA efetivamente instalado. Esses campos exigem consulta filtrada ao container `delpi-public-hub` e a imagem por ele referenciada; nao consultar Env, mounts, redes ou inspect bruto. Nenhuma nova operacao de deploy foi executada pelo assistente para este registro.
+
+O deploy manual autorizado de metadados nao habilita PREPARE/ACT, nao equivale ao piloto automatizado P3/P4 e nao conclui homologacao dos controles ATLAS. Os registros anteriores de ausencia de deploy sao historicos ao momento daquela entrega. O proximo incremento P2.2g deve comprovar imagem final e origem assinada do pipeline; uma recompilacao no host pode produzir outro artefato mesmo a partir do mesmo commit, logo assinatura de imagem CI nao pode ser atribuida automaticamente a imagem recompilada em producao.
+
+Este registro altera somente documentacao e dispensa nova tentativa de verificador conforme o contrato do kit, parte A, item 1.
