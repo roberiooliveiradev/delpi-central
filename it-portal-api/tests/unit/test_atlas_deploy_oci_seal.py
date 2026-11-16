@@ -175,6 +175,30 @@ def test_synthetic_approval_gate_is_not_execution():
                                     backend_policy_enabled=True)=='approval_evidence_shape_only'
 
 
+def test_single_operator_approval_evidence_requires_explicit_valid_current_decision():
+    c = seal()
+    own = replace(approval_for(c), approver_subject=REQUESTER)
+    assert evaluate_portal_approval(
+        candidate=c, approval=own, now=NOW, backend_policy_enabled=True,
+    ) == 'approval_evidence_shape_only'
+    with pytest.raises(OCIGateRejected, match='OCI_POLICY_DISABLED'):
+        evaluate_portal_approval(candidate=c, approval=own, now=NOW)
+    for changes, code in [
+        ({'permission_fresh': False}, 'OCI_APPROVAL_NOT_ACTIVE'),
+        ({'approved_in_portal': False}, 'OCI_APPROVAL_NOT_ACTIVE'),
+        ({'revoked': True}, 'OCI_APPROVAL_NOT_ACTIVE'),
+        ({'already_consumed': True}, 'OCI_APPROVAL_NOT_ACTIVE'),
+        ({'binding_sha256': 'f' * 64}, 'OCI_APPROVAL_BINDING_DRIFT'),
+        ({'permissions_checked_at': NOW-timedelta(seconds=121)}, 'OCI_APPROVAL_PERMISSION_STALE'),
+    ]:
+        with pytest.raises(OCIGateRejected) as exc:
+            evaluate_portal_approval(
+                candidate=c, approval=replace(own, **changes),
+                now=NOW, backend_policy_enabled=True,
+            )
+        assert exc.value.code == code
+
+
 def test_approval_default_deny():
     c=seal()
     with pytest.raises(OCIGateRejected,match='OCI_POLICY_DISABLED'):
@@ -184,7 +208,6 @@ def test_approval_default_deny():
 @pytest.mark.parametrize('property,value,code',[
     ('proposal_id','fake','OCI_APPROVAL_IDENTITY_INVALID'),
     ('requester_subject','fake','OCI_APPROVAL_IDENTITY_INVALID'),
-    ('approver_subject',REQUESTER,'OCI_SELF_APPROVAL_DENIED'),
     ('requester_subject','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','OCI_APPROVAL_TARGET_MISMATCH'),
     ('environment','hml','OCI_APPROVAL_TARGET_MISMATCH'),
     ('service_id','gateway','OCI_APPROVAL_TARGET_MISMATCH'),
