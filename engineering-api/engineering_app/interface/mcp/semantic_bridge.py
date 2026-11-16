@@ -602,6 +602,7 @@ _ANALYZE_KINDS: frozenset[str] = frozenset(
         "product.drawing_analysis",
         "product.drawing_benchmark",
         "product.drawing_understanding",
+        "routing.line_balance",
     }
 )
 
@@ -641,6 +642,10 @@ async def tool_analyze(
             return await _analyze_drawing_benchmark(context, params, question)
         if kind == "product.drawing_understanding":
             return await _analyze_drawing_understanding(
+                context, params, question
+            )
+        if kind == "routing.line_balance":
+            return await _analyze_routing_line_balance(
                 context, params, question
             )
         # Unreachable: the _ANALYZE_KINDS gate above rejects unknown
@@ -788,6 +793,185 @@ async def _analyze_lmp_performance(
             "provenance": "OBSERVED official aggregates only",
         },
         "Análise de desempenho de LMPs.",
+    )
+
+
+async def _analyze_routing_line_balance(
+    context, params: dict, question: str | None
+) -> CallToolResult:
+    """analyze(routing.line_balance) — balanço determinístico sobre o
+    roteiro oficial (mesma fonte delegada de read(routing.steps))."""
+    from engineering_app.domain.routing.line_balance import (
+        BALANCE_INPUT_FIELDS,
+        compute_balance,
+        group_routing,
+    )
+
+    code = str(params.get("product_code") or "").strip()
+    if not code:
+        return _err(
+            "product_code obrigatório para routing.line_balance.",
+            code="validation",
+        )
+    unknown = sorted(set(params) - BALANCE_INPUT_FIELDS)
+    if unknown:
+        return _err(
+            f"Parâmetros não suportados: {unknown}.",
+            code="validation",
+            data={
+                "error_kind": "validation",
+                "allowed_fields": sorted(BALANCE_INPUT_FIELDS),
+            },
+        )
+    bom_levels = params.get("bom_levels")
+    if bom_levels is not None:
+        if not isinstance(bom_levels, (list, tuple)) or not all(
+            str(v).strip().isdigit() for v in bom_levels
+        ):
+            return _err(
+                "bom_levels deve ser uma lista de níveis inteiros.",
+                code="validation",
+                data={"error_kind": "validation"},
+            )
+        bom_levels = sorted({int(v) for v in bom_levels})
+
+    ctx = bridge._source_context(context)
+    auxiliary = bridge.build_delegated_auxiliary_source()
+    result = await auxiliary.fetch_product_guide(
+        ctx,
+        code=code,
+        branch=str(params["branch"]).strip() or None
+        if params.get("branch")
+        else None,
+        max_depth=params.get("max_depth"),
+        page=None,
+        page_size=None,
+    )
+    status = (result or {}).get("status", "unavailable")
+    if status == "forbidden":
+        return _err(
+            "Sem permissão para o roteiro na fonte oficial.",
+            status_code=403,
+            code="forbidden",
+        )
+    if status == "not_found":
+        return _err(
+            f"Produto {code} não encontrado ou sem roteiro.",
+            status_code=404,
+            code="not_found",
+        )
+    if status != "available":
+        return _err(
+            "Fonte oficial de roteiro indisponível.",
+            status_code=502,
+            code="unavailable",
+            data={"upstream_status": status},
+        )
+
+    items = ((result.get("data") or {}).get("items")) or []
+    grouped = group_routing(items)
+    stages = [
+        s
+        for s in grouped["stages"]
+        if bom_levels is None or s["bom_level"] in bom_levels
+    ]
+    if not stages:
+        return _ok(
+            {
+                "analysis_type": "routing.line_balance",
+                "question": question,
+                "product_code": code,
+                "data_class": "PARTIAL",
+                "stages": [],
+                "official_rows": grouped["rows_total"],
+                "limitations": [
+                    "Roteiro oficial vazio para o produto/escopo — "
+                    "ausência explícita, nenhuma operação fabricada."
+                ],
+                "source": "api-delpi /products/{code}/guide",
+            },
+            "Produto sem roteiro cadastrado no escopo informado.",
+        )
+
+    kw = {
+        "demand": params.get("demand"),
+        "available_minutes": params.get("available_minutes"),
+        "batch_size": params.get("batch_size"),
+        "num_stations": params.get("num_stations"),
+    }
+    stage_results = [
+        {
+            "product_code": s["product_code"],
+            "bom_level": s["bom_level"],
+            "branch": s["branch"],
+            "route_code": s["route_code"],
+            "operations": s["operations"],
+            **compute_balance(s["operations"], **kw),
+        }
+        for s in stages
+    ]
+    any_missing = sorted(
+        {
+            m
+            for s in stage_results
+            for m in s["missing_parameters"] + s["invalid_parameters"]
+        }
+    )
+    invalid_params = sorted(
+        {m for s in stage_results for m in s["invalid_parameters"]}
+    )
+    return _ok(
+        {
+            "analysis_type": "routing.line_balance",
+            "question": question,
+            "product_code": code,
+            "branch": params.get("branch"),
+            "method": (
+                "Roteiro oficial deduplicado por "
+                "(produto, operação, CT, recurso, nível); estágios "
+                "analisados isoladamente; takt = available_minutes/"
+                "demand; mínimo teórico = ceil(conteúdo/takt)."
+            ),
+            "data_class": "PARTIAL" if any_missing else "CALCULATED",
+            "official_rows": grouped["rows_total"],
+            "unique_operations": grouped["unique_operations"],
+            "parameters": {
+                k: {
+                    "value": kw[k],
+                    "data_class": (
+                        "UNKNOWN"
+                        if kw[k] in (None, "")
+                        else "INVALID"
+                        if k in invalid_params
+                        else "PROVIDED"
+                    ),
+                }
+                for k in kw
+            },
+            "stages": stage_results,
+            "missing_parameters": any_missing,
+            "invalid_parameters": invalid_params,
+            "limitations": [
+                "Operações repetidas por componente consolidadas — "
+                "linhas do payload são (produto, operação, componente), "
+                "não operações independentes.",
+                "Precedência, operadores, layout e disponibilidade não "
+                "são fornecidos pelo contrato — cenários são "
+                "SIMULATION e exigem revisão da Engenharia.",
+            ],
+            "filters_applied": {
+                "branch": params.get("branch"),
+                "max_depth": params.get("max_depth"),
+                "bom_levels": bom_levels,
+            },
+            "source": "api-delpi /products/{code}/guide — OBSERVED",
+            "provenance": (
+                "OBSERVED official routing × PROVIDED parameters → "
+                "CALCULATED deterministic metrics; scenarios are "
+                "SIMULATION, never official data."
+            ),
+        },
+        "Análise determinística de balanceamento de linha.",
     )
 
 

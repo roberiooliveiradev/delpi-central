@@ -338,6 +338,32 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     ),
     # --- analyze ------------------------------------------------------------
     _a(
+        "routing", "line_balance", "analyze",
+        "Deterministic line-balancing analysis over the OFFICIAL "
+        "product routing (same source as read(routing.steps) — "
+        "api-delpi /products/{code}/guide): takt time, normalized "
+        "times, work content per production stage, bottleneck "
+        "candidates, theoretical minimum stations, balance efficiency "
+        "and idle estimates. Demand/available time/stations/batch are "
+        "caller-provided parameters — never invented; insufficient "
+        "inputs yield a PARTIAL analysis with missing_parameters.",
+        "analysis",
+        fields=(
+            "product_code", "branch", "max_depth", "bom_levels",
+            "demand", "available_minutes", "batch_size",
+            "num_stations",
+        ),
+        notes=(
+            "Operations repeated per BOM component are deduplicated "
+            "by (product, operation, work center, resource, level); "
+            "stages at different bom_levels are analyzed separately, "
+            "never summed as one line. setup_hours is only amortized "
+            "when batch_size is explicitly provided. Redistribution "
+            "scenarios are labeled SIMULATION and ignore precedence "
+            "unless provided — engineering review required.",
+        ),
+    ),
+    _a(
         "nonconformity", "recurrence", "analyze",
         "Recurrence analysis: group NCs by product, problem tag, status "
         "or customer — verifiable counts labeled CALCULATED, never "
@@ -475,6 +501,15 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "eva", "usage", "knowledge",
         "How to operate EVA: tools, phases, confirmation model and "
         "availability semantics.",
+        "read",
+    ),
+    _a(
+        "routing", "balance_guide", "knowledge",
+        "Versioned Industrial Engineering guidance for line "
+        "balancing: takt time, cycle time, work content, theoretical "
+        "stations, efficiency, idle time, bottlenecks, precedence, "
+        "setup amortization — plus how official DELPI routing fields "
+        "map to those concepts.",
         "read",
     ),
     # --- execute --------------------------------------------------------------

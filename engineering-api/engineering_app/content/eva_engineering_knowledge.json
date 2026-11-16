@@ -1,5 +1,5 @@
 {
- "version": "1.6",
+ "version": "1.7",
  "owner": "engineering-api",
  "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais; topic product.drawing_bom_comparison (G6) derivado do contrato do comparador oficial e do conhecimento legado onda-14 (ADAPT, sem dependencia runtime); topic product.lifecycle_traceability (G11) derivado dos contratos api-delpi/engineering vigentes e do fluxo de negócio informado pelo owner — itens pendentes de ratificação estão marcados.",
  "topics": {
@@ -547,6 +547,26 @@
     "family_semantics: distinção oficial 8000×8001 e marco temporal de adoção de OV impressa — pendentes de ratificação/validação documental"
    ],
    "scope": "Conhecimento de domínio e fluxo — interpretação e ordem de consulta. Não é fonte de dados: identidades, vínculos e valores vêm dos contratos oficiais; aprovação técnica é da Engenharia DELPI."
+  },
+  "routing.balance_guide": {
+   "title": "Balanceamento de linha — guia de métodos de Engenharia Industrial aplicado ao roteiro oficial DELPI",
+   "revision": "1.0",
+   "sources": [
+    "Métodos clássicos de Engenharia Industrial (takt/cycle time/line balancing — conhecimento geral, não regra DELPI)",
+    "Contrato oficial api-delpi GET /products/{code}/guide (Doc 122; SG2010×SG1010×SGF010)"
+   ],
+   "guidance": [
+    "Takt time = tempo produtivo disponível do período / demanda do período (mesma unidade). É o ritmo que a linha precisa sustentar — CALCULATED a partir de parâmetros fornecidos, nunca dado oficial.",
+    "Tempo padrão por peça oficial = standard_time_minutes_piece do roteiro (OBSERVED). setup_hours é tempo por LOTE: só vira custo por peça com tamanho de lote explícito — nunca tratar setup como tempo por peça sem lote.",
+    "Conteúdo de trabalho = soma dos tempos por peça das OPERAÇÕES ÚNICAS. O payload do roteiro repete a mesma operação para cada componente da BOM — consolidar por (produto, operação, CT, recurso, nível) antes de somar.",
+    "Cada estágio (product_code × bom_level) é uma linha candidata separada: nível 0 = operações do produto pedido; níveis maiores = operações dos componentes (linhas de alimentação). Nunca somar tempos de níveis diferentes como se fossem uma única linha sem escopo produtivo definido.",
+    "Número mínimo teórico de postos = ceil(conteúdo de trabalho / takt). Eficiência de balanceamento = conteúdo / (postos utilizados × takt). Ociosidade = postos × takt − conteúdo.",
+    "Gargalo candidato = operação com maior tempo por peça; operações com tempo > takt não cabem em um posto e exigem paralelização ou revisão.",
+    "Precedência, número de operadores, paralelismo e restrições de equipamento NÃO constam no contrato oficial do roteiro — não assumir; cenários de redistribuição são SIMULATION até revisão pela Engenharia.",
+    "Rotulagem obrigatória na resposta: OBSERVED (roteiro oficial), PROVIDED (parâmetros do solicitante), CALCULATED (métricas determinísticas), SIMULATION (cenários), UNKNOWN (ausentes).",
+    "analyze(routing.line_balance) executa estes cálculos deterministicamente sobre o roteiro oficial; dados insuficientes produzem análise parcial com missing_parameters — nunca completar com chutes."
+   ],
+   "scope": "Conceitos e método — não substitui os dados oficiais do roteiro nem decisão de Engenharia sobre layout/arranjo produtivo."
   }
  },
  "planned_topics": [

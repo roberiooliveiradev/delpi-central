@@ -187,7 +187,9 @@ def create_mcp_server() -> MCPServer:
             "verifiable method and provenance. Types: "
             "nonconformity.recurrence (group_by), lmp.performance, "
             "product.drawing_analysis (product_code[, visual_"
-            "observations[], scope[]]). "
+            "observations[], scope[]]), routing.line_balance "
+            "(product_code[, demand, available_minutes, batch_size, "
+            "num_stations]). "
             "Unknown types answer not_implemented — never fabricated."
         ),
         annotations=_annotations("analyze", "Analyze"),

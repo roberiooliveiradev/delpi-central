@@ -799,6 +799,313 @@ def test_analyze_lmp_performance_invalid_period() -> None:
     assert result.structured_content["error_code"] == "validation"
 
 
+def _guide_payload(items):
+    return {
+        "status": "available",
+        "data": {
+            "items": items,
+            "page": None,
+            "page_size": None,
+            "total": len(items),
+            "total_pages": None,
+        },
+    }
+
+
+def _guide_row(product, level, op, wc, res, minutes, setup=0.0, comp=""):
+    return {
+        "branch": "02",
+        "route_code": "01",
+        "product_code": product,
+        "bom_level": level,
+        "operation_code": op,
+        "operation_description": f"OP {op}",
+        "work_center": wc,
+        "resource_code": res,
+        "operation_type": "1",
+        "standard_time_minutes_piece": minutes,
+        "setup_hours": setup,
+        "component_code": comp,
+        "component_description": f"COMP {comp}" if comp else None,
+    }
+
+
+_BALANCE_ITEMS = [
+    _guide_row("90264135", 0, "010", "CT1", "R1", 2.0, comp="C1"),
+    _guide_row("90264135", 0, "010", "CT1", "R1", 2.0, comp="C2"),
+    _guide_row("90264135", 0, "020", "CT2", "R2", 3.0, setup=1.0, comp="C1"),
+    _guide_row("C1", 1, "010", "CT9", "R9", 5.0, comp="MP1"),
+]
+
+
+def _aux_guide(payload):
+    class _Aux:
+        calls = {}
+
+        async def fetch_product_guide(self, ctx, **kw):
+            self.calls["guide"] = kw
+            return payload
+
+    return _Aux()
+
+
+def test_analyze_routing_line_balance_full(monkeypatch) -> None:
+    """analyze(routing.line_balance) — cadeia real: roteiro oficial
+    deduplicado por componente, estágio por nível, takt e postos."""
+    _set_context(_human_user())
+    aux = _aux_guide(_guide_payload(_BALANCE_ITEMS))
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: aux
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={
+                "product_code": "90264135",
+                "demand": 500,
+                "available_minutes": 420,
+            },
+        )
+    )
+    assert not result.is_error
+    kw = aux.calls["guide"]
+    assert kw["code"] == "90264135"
+    assert kw["page"] is None and kw["page_size"] is None
+    data = result.structured_content["data"]
+    assert data["data_class"] == "CALCULATED"
+    assert data["unique_operations"] == 3  # op010 deduplicada por comp.
+    stages = {s["product_code"]: s for s in data["stages"]}
+    p = stages["90264135"]
+    assert p["work_content_minutes"] == 5.0
+    assert p["takt_minutes"] == 0.84
+    assert p["theoretical_min_stations"] == 6
+    assert p["bottleneck_candidate"]["operation_code"] == "020"
+    # nível 1 analisado como estágio próprio — nunca somado ao nível 0
+    assert stages["C1"]["bom_level"] == 1
+    assert stages["C1"]["work_content_minutes"] == 5.0
+    # setup sem batch_size → reportado à parte, não amortizado
+    assert p["setup_minutes_piece_amortized"] is None
+    # cenário FFD presente e rotulado
+    assert p["balance_scenario"]["data_class"] == "SIMULATION"
+
+
+def test_analyze_routing_line_balance_partial_missing_params(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge,
+        "build_delegated_auxiliary_source",
+        lambda: _aux_guide(_guide_payload(_BALANCE_ITEMS)),
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "90264135"},
+        )
+    )
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["data_class"] == "PARTIAL"
+    assert set(data["missing_parameters"]) == {
+        "demand",
+        "available_minutes",
+    }
+    assert data["stages"][0]["takt_minutes"] is None
+
+
+def test_analyze_routing_line_balance_rejects_unknown_params() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "90264135", "operator_count": 4},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+    assert "allowed_fields" in result.structured_content["data"]
+
+
+def test_analyze_routing_line_balance_requires_product_code() -> None:
+    _set_context(_human_user())
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance", parameters={}
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["error_code"] == "validation"
+
+
+def test_analyze_routing_line_balance_empty_routing_honest(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge,
+        "build_delegated_auxiliary_source",
+        lambda: _aux_guide(_guide_payload([])),
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={
+                "product_code": "90264135",
+                "demand": 500,
+                "available_minutes": 420,
+            },
+        )
+    )
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["stages"] == []
+    assert data["data_class"] == "PARTIAL"
+
+
+def test_analyze_routing_line_balance_forbidden_upstream(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "forbidden"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "90264135"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 403
+
+
+def test_analyze_routing_line_balance_not_found_upstream(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "not_found"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "99999999"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 404
+
+
+def test_analyze_routing_line_balance_invalid_params_labeled(
+    monkeypatch,
+) -> None:
+    """Parâmetros fornecidos mas inválidos → data_class INVALID +
+    análise parcial — nunca rotulados PROVIDED/CALCULATED."""
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge,
+        "build_delegated_auxiliary_source",
+        lambda: _aux_guide(_guide_payload(_BALANCE_ITEMS)),
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={
+                "product_code": "90264135",
+                "demand": 0,
+                "available_minutes": 420,
+            },
+        )
+    )
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["data_class"] == "PARTIAL"
+    assert data["parameters"]["demand"]["data_class"] == "INVALID"
+    assert "demand" in data["invalid_parameters"]
+    assert data["stages"][0]["takt_minutes"] is None
+
+
+def test_analyze_routing_line_balance_unavailable_upstream(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+
+    class _Aux:
+        async def fetch_product_guide(self, ctx, **kw):
+            return {"status": "timeout"}
+
+    monkeypatch.setattr(
+        bridge, "build_delegated_auxiliary_source", lambda: _Aux()
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "90264135"},
+        )
+    )
+    assert result.is_error
+    assert result.structured_content["status_code"] == 502
+    assert result.structured_content["error_code"] == "unavailable"
+
+
+def test_analyze_routing_line_balance_bom_levels_scope(
+    monkeypatch,
+) -> None:
+    _set_context(_human_user())
+    monkeypatch.setattr(
+        bridge,
+        "build_delegated_auxiliary_source",
+        lambda: _aux_guide(_guide_payload(_BALANCE_ITEMS)),
+    )
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={
+                "product_code": "90264135",
+                "demand": 500,
+                "available_minutes": 420,
+                "bom_levels": [0],
+            },
+        )
+    )
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert len(data["stages"]) == 1
+    assert data["stages"][0]["bom_level"] == 0
+
+
+def test_analyze_routing_line_balance_requires_human() -> None:
+    _set_context(_human_user(principal_type="service"), "Bearer svc")
+    result = asyncio.run(
+        sem.tool_analyze(
+            analysis_type="routing.line_balance",
+            parameters={"product_code": "90264135"},
+        )
+    )
+    assert result.is_error
+
+
+def test_knowledge_routing_balance_guide() -> None:
+    _set_context(_human_user())
+    result = sem.tool_knowledge(topic="routing.balance_guide")
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["knowledge_version"]
+    assert data["sources"]
+    assert any("takt" in g.lower() for g in data["guidance"])
+
+
 # --- knowledge ---------------------------------------------------------------
 
 
