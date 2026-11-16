@@ -1687,25 +1687,40 @@ def _normative_block(
             (pi_bom, b_parent, "TOTVS", bom_desc, "TOTVS",
              False),  # relação oficial — gate próprio da BOM
             (pi_draw, d_parent, "DRAWING", bom_desc, "TOTVS",
-             divergent or not draw_assoc_verified),
+             divergent or not draw_assoc_verified
+             or not b_parent_is_pi),
         )
         reasons = {
             0: "visual parent association not verified — drawing "
                "coherence stays inconclusive",
             2: "cross-source comparison requires proven occurrence "
-               "correspondence (verified parent, no divergence)",
+               "correspondence (verified drawing parent, identified "
+               "official PI parent, no divergence)",
         }
         for i, (pi_d, pi_c, pi_s, mp_d, mp_s, gated) in enumerate(pairs):
-            cmp_ = evaluate_pi_mp_coherence(
+            if gated:
+                # G24-R3.1 (F02): associação não comprovada bloqueia a
+                # avaliação — regras dependentes NÃO são executadas e
+                # nenhum check conclusivo é emitido.
+                comparisons.append({
+                    "comparison_type": (
+                        "CROSS_SOURCE" if pi_s != mp_s else "SAME_SOURCE"),
+                    "source_pair": {"pi": pi_s, "mp": mp_s},
+                    "pi_code": pi_c,
+                    "mp_code": code,
+                    "occurrence_id": occurrence_id,
+                    "status": "INCONCLUSIVE",
+                    "checks": [],
+                    "review_status": "PENDING_ENGINEERING",
+                    "reason": reasons.get(
+                        i, "association not proven for this source pair"),
+                })
+                continue
+            comparisons.append(evaluate_pi_mp_coherence(
                 pi_description=pi_d, mp_descriptions=[mp_d] if mp_d else [],
                 pi_code=pi_c, mp_code=code,
                 pi_source=pi_s, mp_source=mp_s,
-                occurrence_id=occurrence_id)
-            if gated and cmp_["status"] != "INCONCLUSIVE":
-                cmp_["status"] = "INCONCLUSIVE"
-                cmp_["reason"] = reasons.get(
-                    i, "association not proven for this source pair")
-            comparisons.append(cmp_)
+                occurrence_id=occurrence_id))
         block["pi_bom_coherence"] = comparisons
     return block or None
 

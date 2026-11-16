@@ -611,3 +611,227 @@ def test_r3_pi_under_pa_still_no_pa_subject():
     assert b.get("pi_drawing_normative") is None
     assert b.get("pi_totvs_normative") is None
     assert "pi_bom_coherence" not in b
+
+
+# ════════════════════════ G24-R3.1 — F02: GATE BEFORE EVALUATION ════
+# Invariante: comparação bloqueada por associação não comprovada →
+# status INCONCLUSIVE e NENHUM check conclusivo pode ser emitido
+# (as regras dependentes não são executadas).
+
+CONCLUSIVE = {"PASS", "VIOLATION_CANDIDATE"}
+CABO_EPR = "CABO EPR 125/150°C 18AWG BN 600V"
+PI_PVC = "CA18BRAN-00512/10/10-0000-0000"   # isolamento PVC
+PI_EPR = "CB18VERD-00512/10/10-0000-0000"   # isolamento EPR
+
+
+def _pair31(nb, pi_s, mp_s):
+    return next(c for c in nb["pi_bom_coherence"]
+                if c["source_pair"] == {"pi": pi_s, "mp": mp_s})
+
+
+def _no_conclusive(cmp_):
+    assert cmp_["status"] == "INCONCLUSIVE"
+    assert not any(c.get("status") in CONCLUSIVE
+                   for c in cmp_.get("checks", []))
+
+
+def test_r31_t01_divergent_conflicting_cross_no_checks():
+    """T01: pais divergentes + atributos conflitantes → cross sem checks."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-01",
+        bom={"component_code": "10380040",
+             "component_description": "CABO PVC 18AWG BN 600V",
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR,
+                 "parent_code": "50233508", "parent_verified": True,
+                 "parent_description": PI_EPR},
+        bom_desc_by_code={"50233507": PI_PVC, "50233508": PI_EPR})
+    assert b["parent_divergence"]["status"] == "DIVERGENCE_CANDIDATE"
+    cross = _pair31(b, "DRAWING", "TOTVS")
+    _no_conclusive(cross)
+    assert cross["checks"] == []
+    # PI do cross é o pai VISUAL, não o oficial
+    assert cross["pi_code"] == "50233508"
+
+
+def test_r31_t02_divergent_identical_descs_no_false_pass():
+    """T02: pais divergentes + descrições iguais → nenhum falso PASS."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-02",
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR,
+                 "parent_code": "50233508", "parent_verified": True,
+                 "parent_description": PI_EPR},
+        bom_desc_by_code={"50233507": PI_EPR, "50233508": PI_EPR})
+    # cross bloqueada: identidade presumida não gera falso PASS
+    cross = _pair31(b, "DRAWING", "TOTVS")
+    _no_conclusive(cross)
+    assert cross["checks"] == []
+    # D×D é observação interna ao desenho com vínculo verificado:
+    # a divergência do pai oficial não bloqueia esse par
+    dd = _pair31(b, "DRAWING", "DRAWING")
+    assert any(c["status"] in CONCLUSIVE for c in dd["checks"])
+
+
+def test_r31_t03_t04_unverified_association_blocks_dd_and_cross():
+    """T03/T04: mesmo pai com parent_verified False/None → gate ativo."""
+    for verified in (False, None):
+        b = _r3_block(
+            code="10380040", occurrence_id="R31-03",
+            bom={"component_code": "10380040",
+                 "component_description": CABO_EPR,
+                 "parent_code": "50233507"},
+            drawing={"item_description": CABO_EPR,
+                     "parent_code": "50233507", "parent_verified": verified,
+                     "parent_description": PI_EPR},
+            bom_desc_by_code={"50233507": PI_EPR})
+        assert b["parent_divergence"]["status"] == "SAME_PARENT_UNVERIFIED"
+        for pi_s, mp_s in (("DRAWING", "DRAWING"), ("DRAWING", "TOTVS")):
+            cmp_ = _pair31(b, pi_s, mp_s)
+            _no_conclusive(cmp_)
+            assert cmp_["checks"] == []
+
+
+def test_r31_t05_t06_absent_parent_no_fallback():
+    """T05/T06: pai ausente → cross INCONCLUSIVE sem checks conclusivos."""
+    # pai visual ausente
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-05",
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR, "parent_verified": True},
+        bom_desc_by_code={"50233507": PI_EPR})
+    assert b["parent_divergence"]["status"] == "DRAWING_PARENT_ABSENT"
+    _no_conclusive(_pair31(b, "DRAWING", "TOTVS"))
+    # pai oficial ausente
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-06",
+        bom={"component_code": "10380040", "component_description": CABO_EPR},
+        drawing={"item_description": CABO_EPR, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_EPR},
+        bom_desc_by_code={})
+    assert b["parent_divergence"]["status"] == "BOM_PARENT_ABSENT"
+    _no_conclusive(_pair31(b, "DRAWING", "TOTVS"))
+
+
+def test_r31_t07_verified_association_evaluates_all_pairs():
+    """T07: vínculo comprovado → 3 pares avaliados, checks conclusivos ok."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-07",
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_EPR},
+        bom_desc_by_code={"50233507": PI_EPR})
+    assert b["parent_divergence"]["status"] == "SAME_PARENT_VERIFIED"
+    assert len(b["pi_bom_coherence"]) == 3
+    cross = _pair31(b, "DRAWING", "TOTVS")
+    iso = next(x for x in cross["checks"]
+               if x["rule_id"] == "COH-ISO-MATERIAL")
+    assert iso["status"] == "PASS"
+
+
+def test_r31_t08_divergent_parents_tt_still_evaluates():
+    """T08: pais divergentes não impedem T×T (relação oficial própria)."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-08",
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR,
+                 "parent_code": "50233508", "parent_verified": True,
+                 "parent_description": PI_PVC},
+        bom_desc_by_code={"50233507": PI_EPR, "50233508": PI_PVC})
+    tt = _pair31(b, "TOTVS", "TOTVS")
+    assert tt["pi_code"] == "50233507"
+    assert any(x["rule_id"] == "COH-ISO-MATERIAL"
+               and x["status"] == "PASS" for x in tt["checks"])
+
+
+def test_r31_t09_repeated_mp_occurrences_independent():
+    """T09: mesma MP sob dois PI — ocorrências não herdam resultado."""
+    kw = dict(
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        bom_desc_by_code={"50233507": PI_EPR, "50233508": PI_PVC})
+    b_verified = _r3_block(
+        code="10380040", occurrence_id="R31-09A", **kw,
+        drawing={"item_description": CABO_EPR, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_EPR})
+    b_unverified = _r3_block(
+        code="10380040", occurrence_id="R31-09B", **kw,
+        drawing={"item_description": CABO_EPR, "parent_code": "50233508",
+                 "parent_verified": False, "parent_description": PI_PVC})
+    cross_a = _pair31(b_verified, "DRAWING", "TOTVS")
+    cross_b = _pair31(b_unverified, "DRAWING", "TOTVS")
+    assert cross_a["occurrence_id"] == "R31-09A"
+    assert cross_b["occurrence_id"] == "R31-09B"
+    assert any(c["status"] in CONCLUSIVE for c in cross_a["checks"])
+    _no_conclusive(cross_b)
+
+
+def test_r31_t10_pa_never_pi_subject():
+    """T10: PI sob PA — ocorrência PI não gera blocos PI."""
+    b = _r3_block(
+        code="50213206", occurrence_id="R31-10",
+        bom={"component_code": "50213206",
+             "component_description": "CA18BRAN-00512/10/10-0000-0000",
+             "parent_code": "90263680"},
+        drawing={"item_description": "CA18BRAN-00512/10/10-0000-0000",
+                 "parent_code": "90263680", "parent_verified": True,
+                 "parent_description": "CHICOTE DE LIGACAO"},
+        bom_desc_by_code={})
+    assert "pi_drawing_normative" not in b
+    assert "pi_bom_coherence" not in b
+
+
+def test_r31_t11_t12_verified_allows_violation_and_pass():
+    """T11/T12: vínculo válido → conclusões semânticas permitidas."""
+    # VIOLATION: PI PVC vs cabo EPR
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-11",
+        bom={"component_code": "10380040", "component_description": CABO_EPR,
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR, "parent_code": "50233507",
+                 "parent_verified": True, "parent_description": PI_PVC},
+        bom_desc_by_code={"50233507": PI_PVC})
+    cross = _pair31(b, "DRAWING", "TOTVS")
+    assert any(c["status"] == "VIOLATION_CANDIDATE"
+               for c in cross["checks"])
+    # PASS: PI EPR vs cabo EPR — já coberto por T07
+
+
+def test_r31_t13_parseable_attrs_not_promoted_when_blocked():
+    """T13: parser extrai atributos, mas gate impede checks conclusivos;
+    a evidência de parsing NÃO é apagada dos blocos de fonte."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-13",
+        bom={"component_code": "10380040",
+             "component_description": "CABO PVC 18AWG BN 600V",
+             "parent_code": "50233507"},
+        drawing={"item_description": CABO_EPR, "parent_code": "50233507",
+                 "parent_verified": False, "parent_description": PI_PVC},
+        bom_desc_by_code={"50233507": PI_PVC})
+    cross = _pair31(b, "DRAWING", "TOTVS")
+    _no_conclusive(cross)
+    # evidência de parsing preservada nos blocos normativos de fonte
+    assert b["pi_drawing_normative"]["overall_status"] != "INCONCLUSIVE"
+    assert b["pi_totvs_normative"]["overall_status"] != "INCONCLUSIVE"
+    assert b["parent_divergence"]["drawing_association_state"] == "TO_VERIFY"
+
+
+def test_r31_t15_owner_blocked_and_blocked_gate_coexist():
+    """T15: 1038/MABR seguem OWNER_BLOCKED; gate F02 não interfere."""
+    b = _r3_block(
+        code="10380040", occurrence_id="R31-15",
+        bom={"component_code": "10380040",
+             "component_description": "CABO PP 2X1,5MM2",
+             "parent_code": "50233507"},
+        drawing={"item_description": "CABO PP 2X1,5MM2",
+                 "parent_code": "50233507", "parent_verified": True,
+                 "parent_description": PI_EPR},
+        bom_desc_by_code={"50233507": PI_EPR})
+    assert b["drawing_description_normative"]["overall_status"] == \
+        "OWNER_BLOCKED"
+    assert b["totvs_description_normative"]["overall_status"] == \
+        "OWNER_BLOCKED"
