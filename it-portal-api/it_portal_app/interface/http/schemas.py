@@ -251,6 +251,7 @@ class CapabilitiesOut(BaseModel):
     can_manage_networks: bool
     can_view_integrations: bool
     can_manage_integrations: bool
+    can_view_atlas_deployments: bool = False
 
 
 # ------------------------------------------------------------- inventário E2A
