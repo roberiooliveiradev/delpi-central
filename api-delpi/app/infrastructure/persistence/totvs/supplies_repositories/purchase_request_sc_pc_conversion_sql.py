@@ -8,6 +8,9 @@ SC7010 identifica somente o primeiro PC vinculado, sem duplicar itens/PCs.
 
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_approval_lead_time_sql import (
     normalize_lead_time_filters,
 )
@@ -16,14 +19,27 @@ PAGE_SIZE = 25
 MAX_PAGE_SIZE = 100
 
 
+def sao_paulo_today() -> date:
+    """Business cut-off date independent of the container's UTC clock."""
+    try:
+        return datetime.now(ZoneInfo("America/Sao_Paulo")).date()
+    except ZoneInfoNotFoundError:
+        # Resilient on slim Python containers missing system timezone data.
+        return datetime.now(timezone(timedelta(hours=-3))).date()
+
+
 def build_conversion_cohort(
     *, branches: list[str] | None, date_from: str | None,
     date_to: str | None, request_number: str | None = None,
+    as_of_date: date | None = None,
 ) -> tuple[str, list[str], dict]:
     codes, start, end, number = normalize_lead_time_filters(
         branches=branches, date_from=date_from,
         date_to=date_to, request_number=request_number,
     )
+    cutoff = as_of_date or sao_paulo_today()
+    if not isinstance(cutoff, date):
+        raise ValueError("Data de referência inválida.")
     placeholders = ", ".join("?" for _ in codes)
     # Restrict the cohort at the indexed approval ledger before reading SC/PC.
     # Without this filter, a 2026 request may join the ENTIRE historical SC/SCR
@@ -44,6 +60,7 @@ def build_conversion_cohort(
     params += [
         start.replace("-", ""), end.replace("-", ""),
         start.replace("-", ""), end.replace("-", ""),
+        cutoff.strftime("%Y%m%d"),
     ]
     sql = f"""
 WITH release_candidates AS (
@@ -174,6 +191,7 @@ assessed AS (
     SELECT E.branch, E.request_number, E.issue_date, E.item_count,
            E.final_approval_date, E.approval_levels,
            E.effective_start_date, E.start_date_source,
+           TRY_CONVERT(date, ?, 112) AS as_of_date,
            R.first_order_date, F.order_number AS first_order_number,
            COALESCE(R.linked_order_count, 0) AS linked_order_count,
            CASE WHEN R.linked_lines IS NULL THEN 'pending'
@@ -190,15 +208,26 @@ assessed AS (
 ),
 measured AS (
     SELECT A.*,
+           -- This live operational elapsed time intentionally includes
+           -- open SCs. Closed SCs stop at the first PC; open SCs age until
+           -- today's Sao Paulo business date. No negative future durations.
            CASE WHEN A.conversion_status = 'converted'
                 THEN DATEDIFF(day, A.effective_start_date, A.first_order_date)
-                ELSE NULL END AS conversion_days
+                WHEN A.conversion_status = 'pending'
+                     AND A.effective_start_date <= A.as_of_date
+                THEN DATEDIFF(day, A.effective_start_date, A.as_of_date)
+                ELSE NULL END AS conversion_days,
+           CASE WHEN A.conversion_status = 'pending'
+                     AND A.effective_start_date <= A.as_of_date
+                THEN DATEDIFF(day, A.effective_start_date, A.as_of_date)
+                ELSE NULL END AS pending_age_days
     FROM assessed A
 )
 """
     return sql, params, {
         "branches": codes, "date_from": start,
         "date_to": end, "request_number": number,
+        "as_of_date": cutoff.isoformat(),
     }
 
 
@@ -210,10 +239,17 @@ SELECT CASE WHEN GROUPING(branch) = 1 THEN NULL ELSE branch END AS branch,
        SUM(CASE WHEN start_date_source = 'issue_without_approval' THEN 1 ELSE 0 END) AS without_approval,
        SUM(CASE WHEN conversion_status = 'converted' THEN 1 ELSE 0 END) AS converted_requests,
        SUM(CASE WHEN conversion_status = 'pending' THEN 1 ELSE 0 END) AS pending_requests,
+       SUM(CASE WHEN conversion_status = 'pending' AND pending_age_days IS NULL THEN 1 ELSE 0 END) AS future_pending_requests,
+       COUNT(conversion_days) AS measured_requests,
        SUM(CASE WHEN conversion_status = 'order_before_release' THEN 1 ELSE 0 END) AS before_release,
        SUM(CASE WHEN conversion_status = 'invalid_order_date' THEN 1 ELSE 0 END) AS invalid_order_dates,
        CAST(AVG(CAST(conversion_days AS decimal(18, 2))) AS decimal(12, 2)) AS avg_days,
+       CAST(AVG(CASE WHEN conversion_status = 'converted'
+                     THEN CAST(conversion_days AS decimal(18, 2)) END) AS decimal(12, 2)) AS avg_completed_days,
+       CAST(AVG(CAST(pending_age_days AS decimal(18, 2))) AS decimal(12, 2)) AS avg_pending_days,
        SUM(CASE WHEN conversion_status = 'converted' THEN conversion_days ELSE 0 END) AS sum_conversion_days,
+       SUM(COALESCE(pending_age_days, 0)) AS sum_pending_days,
+       SUM(COALESCE(conversion_days, 0)) AS sum_measured_days,
        SUM(CASE WHEN conversion_days = 0 THEN 1 ELSE 0 END) AS same_day,
        SUM(CASE WHEN conversion_days BETWEEN 1 AND 2 THEN 1 ELSE 0 END) AS one_to_two_days,
        SUM(CASE WHEN conversion_days BETWEEN 3 AND 5 THEN 1 ELSE 0 END) AS three_to_five_days,
@@ -233,7 +269,7 @@ SELECT branch, request_number,
        start_date_source,
        CONVERT(varchar(10), first_order_date, 23) AS first_order_date,
        first_order_number, linked_order_count, approval_levels, item_count,
-       conversion_status, conversion_days
+       conversion_status, conversion_days, pending_age_days
 FROM measured
 ORDER BY effective_start_date DESC, branch, request_number DESC
 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
