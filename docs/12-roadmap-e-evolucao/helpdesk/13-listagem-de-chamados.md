@@ -251,10 +251,10 @@ FORA                  → não entra neste produto
 | ID | Capacidade | Estado |
 |---|---|---|
 | G-30 | `page` / `has_more` sem total | **IMPLEMENTADO** |
-| G-31 | Seletor `page_size` 10/20/50 | **IMPLEMENTADO** |
+| G-31 | Seletor `page_size` 10/20/50 | **IMPLEMENTADO** | na toolbar do hero (ver §17) |
 | G-32 | Recorte na URL e F5 | **IMPLEMENTADO** |
 | G-32b | Voltar do detalhe/abertura restaura o recorte | **IMPLEMENTADO** | `listNavigationMemory` + seta Voltar |
-| G-32c | Filtros só no construtor; page_size na paginação | **IMPLEMENTADO** | sem FiltersRow no topo |
+| G-32c | Filtros só no construtor; page_size no hero | **IMPLEMENTADO** | sem FiltersRow no topo; page_size migrou da região da tabela para a toolbar do hero (§17) |
 | G-32d | Toggle Tabela \| Cards (localStorage) | **IMPLEMENTADO** | `usePersistedViewLayout` + DataCardsGrid |
 | G-32e | Rodapé paginação do kit (setas, Ir para, resumo) + ajuda no controle | **IMPLEMENTADO** | `HelpdeskListPaginationFooter`; commits `4ea3ae19d`…`1d999772a` |
 | G-33 | Vazio vs recorte vazio | **IMPLEMENTADO** |
@@ -430,3 +430,44 @@ Quando houver implementação, no mesmo entregável, sem path de API:
 - não muda o corpo da conversa (isso é o 12).
 
 Quando o pedido passar de «documentar» para «implementar», a primeira subetapa é fechar H1–H2 (e H5 se a coluna de requerente for desejada) no pipeline real. Só então G-02…G-25 viram plano executável.
+
+## 17. Release — «Por página» na toolbar do hero (16/11/2026)
+
+Composição aprovada específica do Helpdesk (My Requests mantém
+`page_size` na região da tabela, decisão PO preservada):
+
+`FilterX → Filtros → Ordenar → Colunas → Por página → Tabela|Cards`
+
+- Implementação: `d18c8158c3` (markup/CSS), doc `c3775d97e4`,
+  E2E/config `4a986c8779`. Componente canônico
+  `kit.TablePageSizeSelect` (Plugin UI intacto); estado segue
+  `filters.page_size` na URL com reset para `page=1`
+  (`commitFilters` inalterado, paginação server-side GLPI).
+- `.helpdesk-list-table-meta` removida (markup + CSS); uma única
+  instância do seletor, sem duplicação de estado.
+- Em `forceCards` (≤768px, `listViewport.ts`) Colunas e o toggle
+  saem da linha; «Por página» permanece após Ordenar.
+- HML: MFE+API provisionados em `infra/docker-compose.hml.yml` +
+  rota `/apps/helpdesk-api/` no gateway HML (`86dd2339b3`);
+  manifest registrado via use case canônico (`apps.manage`);
+  GLPI desabilitado (`glpi-disabled.hml.invalid`) + sessão-fixture
+  em `helpdesk.oauth_sessions` para a identidade `hml-tester` —
+  evidência E2E na view `unavailable` (listChrome visível).
+- E2E HML real (`plugins/helpdesk/e2e/specs/ux-v3-page-size.spec.ts`):
+  **17 pass / 3 skip** em desktop 1440, tablet 768, mobile 390,
+  mobile-320 — ordem por bounding-box, FilterX âmbar 36×36
+  condicional, listbox do kit, `page_size` na URL + reset de página,
+  instância única, tema escuro, zero overflow. Skips = toggle
+  Tabela|Cards em ≤768px (forceCards canônico).
+- PRD: deploy isolado do MFE (`up-prod-sequential.sh --build
+  helpdesk`) em main `4a986c8779`; imagem `infra-helpdesk:latest`
+  `033fefbf3d63` (anterior `3746301be434`); bundle verificado —
+  `helpdesk-list-controls-row` + `Ajuda: Por página` presentes,
+  `helpdesk-list-table-meta` ausente de JS e CSS; nginx sem 5xx;
+  rollback tag `infra-helpdesk:rollback-pre-pagesize-20261116`.
+- Verificador independente: `INCONCLUSIVE` nas duas rodadas
+  (engine `devin` sem login — restrição de ambiente, registrada
+  em `verdicts.jsonl`); não convertido em aprovação.
+- Smoke autenticado PRD: `INCONCLUSIVE` — sem identidade autorizada
+  no realm PRD; deploy técnico concluído, aceite funcional do PO
+  pendente.
