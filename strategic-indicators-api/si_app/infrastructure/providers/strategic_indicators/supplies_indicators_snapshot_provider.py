@@ -117,8 +117,44 @@ class SuppliesIndicatorsSnapshotProvider(
                     value=snapshot.stock_value,
                 ),
                 self._build_negotiation_savings_measurement(snapshot=snapshot),
+                self._build_sc_pc_conversion_measurement(snapshot=snapshot),
             ],
             "errors": [],
+        }
+
+    @staticmethod
+    def _conversion_average(values: dict[str, int] | None) -> float | None:
+        if values is None:
+            return None
+        count = values.get("converted_requests", 0)
+        if count <= 0:
+            return None
+        return round(values["sum_conversion_days"] / count, 2)
+
+    def _build_sc_pc_conversion_measurement(self, *, snapshot) -> dict:
+        """Weighted by converted SC count, never average filial averages."""
+        counts = snapshot.sc_pc_conversion_by_branch or {}
+        unit_values = {
+            branch: self._conversion_average(counts.get(branch))
+            for branch in BRANCH_UNIT_CODES
+        }
+        valid = [row for row in counts.values() if row is not None]
+        # Do not claim consolidated value when either branch is unavailable.
+        complete = all(counts.get(branch) is not None for branch in BRANCH_UNIT_CODES)
+        if snapshot.branch in BRANCH_UNIT_CODES:
+            value = unit_values.get(snapshot.branch)
+        elif complete and valid:
+            total_count = sum(row["converted_requests"] for row in valid)
+            total_days = sum(row["sum_conversion_days"] for row in valid)
+            value = round(total_days / total_count, 2) if total_count else None
+        else:
+            value = None
+        return {
+            "department_id": "supplies",
+            "indicator_id": "supplies-sc-pc-conversion-days",
+            "value": value,
+            "source": "supplies_sc_pc_conversion",
+            "unit_values": unit_values,
         }
 
     def _build_negotiation_savings_measurement(self, *, snapshot) -> dict:
