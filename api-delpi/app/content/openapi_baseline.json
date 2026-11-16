@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 788,
+  "operation_count": 789,
   "operations": [
     {
       "method": "GET",
@@ -117048,6 +117048,149 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna supplies supplier catalog item via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/supplier-performance",
+      "operationId": "get_supplies_supplier_performance",
+      "summary": "Supplier performance index (IDF)",
+      "tags": [
+        "Supplies — supplier performance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "One or more Protheus branch codes (01 or 02). Repeat the query param: ?branch=01&branch=02.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": true,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": true,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_supplier_performance",
+        "shape": "composite_analysis",
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Supplier performance index (IDF)",
+            "description": "Read-only supplier IDF: 70% approved-inspection rate and 30% on-time receipt rate. Requires the authenticated, trusted supplies-api BFF; direct user calls are denied. Missing evidence yields no IDF score.",
+            "whenToUse": "Internal supplies-api BFF only; not callable with a user token alone.",
+            "label": "Supplier performance (IDF)"
+          },
+          "pt-BR": {
+            "summary": "Índice de Desempenho do Fornecedor (IDF)",
+            "description": "IDF por fornecedor e loja: 70% Qualidade e 30% Entrega, em escala de 0 a 100. Exige BFF supplies-api autenticada e confiável; chamadas diretas são negadas. Sem uma das bases, não há nota de IDF.",
+            "whenToUse": "Uso interno da BFF supplies-api; token de usuário isolado não autoriza esta rota.",
+            "label": "Desempenho do fornecedor (IDF)"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Required concrete branch collection: 01 and/or 02. Repeat branch for both units; all is not accepted.",
+                "label": "Branches"
+              },
+              "pt-BR": {
+                "description": "Filiais concretas obrigatórias: 01 e/ou 02. Repita branch para consultar as duas; all não é aceito.",
+                "label": "Filiais"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Uso interno da BFF supplies-api; token de usuário isolado não autoriza esta rota.",
+          "description": "IDF por fornecedor e loja: 70% Qualidade e 30% Entrega, em escala de 0 a 100. Exige BFF supplies-api autenticada e confiável; chamadas diretas são negadas. Sem uma das bases, não há nota de IDF.",
+          "label": "Desempenho do fornecedor (IDF)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Read-only supplier IDF: 70% approved-inspection rate and 30% on-time receipt rate. Requires the authenticated, trusted supplies-api BFF; direct user calls are denied. Missing evidence yields no IDF score."
     },
     {
       "method": "GET",

@@ -9490,6 +9490,37 @@
           }
         }
       }
+    },
+    "get_supplies_supplier_performance": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Supplier performance index (IDF)",
+          "description": "Read-only supplier IDF: 70% approved-inspection rate and 30% on-time receipt rate. Requires the authenticated, trusted supplies-api BFF; direct user calls are denied. Missing evidence yields no IDF score.",
+          "label": "Supplier performance (IDF)",
+          "whenToUse": "Internal supplies-api BFF only; not callable with a user token alone."
+        },
+        "pt-BR": {
+          "summary": "Índice de Desempenho do Fornecedor (IDF)",
+          "description": "IDF por fornecedor e loja: 70% Qualidade e 30% Entrega, em escala de 0 a 100. Exige BFF supplies-api autenticada e confiável; chamadas diretas são negadas. Sem uma das bases, não há nota de IDF.",
+          "label": "Desempenho do fornecedor (IDF)",
+          "whenToUse": "Uso interno da BFF supplies-api; token de usuário isolado não autoriza esta rota."
+        }
+      },
+      "params": {
+        "branch": {
+          "locale": {
+            "en": {
+              "label": "Branches",
+              "description": "Required concrete branch collection: 01 and/or 02. Repeat branch for both units; all is not accepted."
+            },
+            "pt-BR": {
+              "label": "Filiais",
+              "description": "Filiais concretas obrigatórias: 01 e/ou 02. Repita branch para consultar as duas; all não é aceito."
+            }
+          }
+        }
+      }
     }
   }
 }

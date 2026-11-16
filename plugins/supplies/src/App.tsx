@@ -16,6 +16,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
+import { SupplierPerformancePage } from "./features/supplier-performance/SupplierPerformancePage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
 import { DeliveriesPage } from "./features/deliveries/DeliveriesPage";
 import { InventoryPage } from "./features/inventory/InventoryPage";
@@ -138,6 +139,8 @@ function AppRoutes({
     content = <HomePage basePath={basePath} />;
   } else if (view === "overview") {
     content = <OverviewPage basePath={basePath} />;
+  } else if (view === "supplier_performance") {
+    content = <SupplierPerformancePage basePath={basePath} />;
   } else if (view === "analytics_otd") {
     content = <OtdAnalyticsPage basePath={basePath} />;
   } else if (view === "help") {

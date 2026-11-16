@@ -46,6 +46,7 @@ Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/
 |---|---|
 | **Início** | DoD fechado — hub + `GET /home/attention` + Favoritos TopBar (localStorage P0) |
 | Visão geral | DoD fechado |
+| IDF dos fornecedores | `/analytics/supplier-performance` — 70% Qualidade / 30% Entrega, composição por fornecedor/loja; [critérios e validação #1579](../../docs/12-roadmap-e-evolucao/supplies/GLPI-1579-SUPPLIER-IDF.md) |
 | Pedidos | `/purchase-orders` — fornecedor com avatar de iniciais (kit) |
 | Detalhe pedido | `/purchase-orders/:branch/:number` |
 | SC | E6 C1 — solicitante com avatar de iniciais (kit) |

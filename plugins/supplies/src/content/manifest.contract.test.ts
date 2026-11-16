@@ -24,7 +24,7 @@ describe("supplies.manifest", () => {
   it("does not invent CRUD permission codes", () => {
     const codes = manifest.permissions.map((item) => item.code);
     expect(codes).toEqual(["supplies.access", "supplies.manage"]);
-    expect(manifest.version).toBe("0.5.2");
+    expect(manifest.version).toBe("0.5.3");
     expect(codes.some((code) => /\.(view|write|create|delete)$/.test(code))).toBe(false);
   });
 
@@ -32,6 +32,7 @@ describe("supplies.manifest", () => {
     const paths = manifest.routes.map((route) => route.path);
     expect(paths).toContain("/apps/supplies");
     expect(paths).toContain("/apps/supplies/help");
+    expect(paths).toContain("/apps/supplies/analytics/supplier-performance");
     expect(paths).not.toContain("/apps/supplies/imports");
     expect(paths).not.toContain("/apps/supplies/approvals");
     expect(manifest.routes.filter((route) => route.showInMenu)).toHaveLength(1);

@@ -59,6 +59,19 @@ export const USER_MANUAL_CONTENT = {
     "Sem permissão (403): você não tem uso normal deste módulo. Aliases antigos não abrem o app.",
   sections: [
     {
+      id: "supplier-performance",
+      title: "IDF dos fornecedores",
+      intro: "Em Análises → IDF dos fornecedores, acompanhe o Índice de Desempenho do Fornecedor por período e filial.",
+      bullets: [
+        "A fórmula é IDF = (Qualidade × 0,70) + (Entrega × 0,30), na escala de 0 a 100. A média considera somente fornecedores com os dois índices disponíveis e sem inconsistências.",
+        "Qualidade usa inspeções concluídas pela data do laudo. Aprovadas, liberações urgentes e laudos condicionais contam como aprovação, conforme o critério atual do Portal. Veja as contagens separadas em Ver composição.",
+        "Entrega usa linhas recebidas no prazo ou antecipadas, pela data de digitação do recebimento, como no OTD de Suprimentos. O escopo é matéria-prima e família 3019, sem ponderar por quantidade.",
+        "Filtre o período (até 367 dias) e as filiais, busque o fornecedor pelo nome/código e use Disponibilidade de dados para localizar bases incompletas. Cada fornecedor é identificado por código e loja.",
+        "Ver composição abre a nota, a contribuição de cada índice, aprovações, rejeições, condicionais, liberações urgentes e recebimentos. Sem uma das bases, o IDF fica sem nota; não é assumida aprovação de 100%.",
+        "A consulta é feita sob demanda, com cache configurável (padrão 5 minutos). Faixas de classificação e metas dependem de validação de Suprimentos e Qualidade.",
+      ],
+    },
+    {
       id: "want",
       title: "Quero… → vá em…",
       intro: "Use esta tabela como mapa. Atalhos também estão no Início (favoritos, recentes e busca).",

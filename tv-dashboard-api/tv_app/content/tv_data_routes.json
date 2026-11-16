@@ -34228,6 +34228,47 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "get_supplies_supplier_performance",
+      "httpMethod": "GET",
+      "label": "Desempenho do fornecedor (IDF)",
+      "category": "supplies",
+      "path": "/supplies/supplier-performance",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "IDF por fornecedor e loja: 70% Qualidade e 30% Entrega, em escala de 0 a 100. Exige BFF supplies-api autenticada e confiável; chamadas diretas são negadas. Sem uma das bases, não há nota de IDF.",
+      "whenToUse": "Uso interno da BFF supplies-api; token de usuário isolado não autoriza esta rota.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        },
+        "date_from": {
+          "type": "string",
+          "optional": false,
+          "label": "Data início",
+          "format": "date",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_to": {
+          "type": "string",
+          "optional": false,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_from",
+        "date_to"
+      ]
+    },
+    {
       "operationId": "list_supplies_suppliers",
       "httpMethod": "GET",
       "label": "Lista paginada — Supplies supplier",

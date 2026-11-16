@@ -4,6 +4,15 @@
  */
 declare module "@delpi/plugin-ui/index" {
   import type { ComponentType, CSSProperties, MouseEventHandler, ReactNode, RefObject } from "react";
+  export function metricKpiCardBemClasses(prefix: string): Record<string, unknown>;
+  export function MetricKpiCard(props: {
+    label?: string;
+    titleHint?: string;
+    value: string;
+    hint?: ReactNode;
+    icon?: ReactNode;
+    classNames: Record<string, unknown>;
+  }): ReactNode;
 
   export function HelpTooltip(props: {
     content: string;
@@ -1116,6 +1125,13 @@ declare module "@delpi/plugin-ui/index" {
   }): string;
 
   export type ModalShellClassNames = Record<string, string>;
+  export function createHostContainedModalShell(config: {
+    prefix: string;
+    classNames: ModalShellClassNames;
+    portalScopeClassName: string;
+    closeAriaLabel: string;
+    containedLayout: "fill" | "dialog";
+  }): ComponentType<Omit<Parameters<typeof ModalShell>[0], "classNames">>;
   export function modalShellBemClasses(prefix: string): ModalShellClassNames;
   export function ModalShell(props: {
     open: boolean;

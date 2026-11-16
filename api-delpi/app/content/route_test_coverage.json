@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-15",
-  "baselineOperationCount": 788,
-  "operationCount": 788,
-  "coveredCount": 707,
+  "generatedAt": "2026-11-16",
+  "baselineOperationCount": 789,
+  "operationCount": 789,
+  "coveredCount": 708,
   "gapCount": 80,
   "exemptCount": 1,
   "byModule": {
@@ -224,8 +224,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 49,
-      "covered": 47,
+      "total": 50,
+      "covered": 48,
       "gap": 2,
       "exempt": 0
     },
@@ -7104,6 +7104,15 @@
       "entity": "supplies_supplier_catalog_item",
       "shape": "list",
       "status": "gap"
+    },
+    {
+      "operationId": "get_supplies_supplier_performance",
+      "method": "GET",
+      "path": "/supplies/supplier-performance",
+      "module": "supplies",
+      "entity": "supplies_supplier_performance",
+      "shape": "composite_analysis",
+      "status": "covered"
     },
     {
       "operationId": "list_supplies_suppliers",

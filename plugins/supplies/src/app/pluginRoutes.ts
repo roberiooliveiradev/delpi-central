@@ -5,6 +5,7 @@ export type PluginView =
   | "home"
   | "overview"
   | "analytics_otd"
+  | "supplier_performance"
   | "my_tasks"
   | "purchase_requests"
   | "approval_lead_time"
@@ -79,6 +80,7 @@ export function normalizeBasePath(basePath?: string): string {
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   overview: "overview",
   "analytics/otd": "analytics_otd",
+  "analytics/supplier-performance": "supplier_performance",
   "my-tasks": "my_tasks",
   "purchase-requests": "purchase_requests",
   "purchase-requests/approval-lead-time": "approval_lead_time",
@@ -101,6 +103,7 @@ export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   home: "",
   overview: "overview",
   analytics_otd: "analytics/otd",
+  supplier_performance: "analytics/supplier-performance",
   my_tasks: "my-tasks",
   purchase_requests: "purchase-requests",
   approval_lead_time: "purchase-requests/approval-lead-time",
@@ -272,6 +275,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
       return "home";
     case "overview":
     case "analytics_otd":
+    case "supplier_performance":
     case "negotiations":
     case "indicators":
       return "overview";

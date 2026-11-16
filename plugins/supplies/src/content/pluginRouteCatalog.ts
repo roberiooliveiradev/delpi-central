@@ -66,6 +66,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         keywords: ["otd", "pontualidade", "velocimetro"],
       },
       {
+        id: "supplier_performance",
+        label: "IDF dos fornecedores",
+        viewId: "supplier_performance",
+        requiredCap: "analytics",
+        keywords: ["idf", "desempenho", "fornecedor", "qualidade", "entrega"],
+      },
+      {
         id: "negotiations",
         label: "Negociações",
         viewId: "negotiations",

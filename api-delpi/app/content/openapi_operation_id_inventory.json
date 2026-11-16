@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 788,
-  "stableCount": 788,
+  "operationCount": 789,
+  "stableCount": 789,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -5346,6 +5346,13 @@
       "method": "GET",
       "path": "/supplies/supplier-catalogs/{catalog}",
       "tag": "Supplies — Supplier catalogs",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_supplier_performance",
+      "method": "GET",
+      "path": "/supplies/supplier-performance",
+      "tag": "Supplies — supplier performance",
       "stable": true
     },
     {

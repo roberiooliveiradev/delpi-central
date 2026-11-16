@@ -1,5 +1,8 @@
 import {
   ActionButton,
+  MetricKpiCard,
+  metricKpiCardBemClasses,
+  createHostContainedModalShell,
   HelpTooltip,
   SectionHintLabel,
   SpeedometerGauge,
@@ -155,6 +158,10 @@ export const SuppliesDepartmentScoreBadge = createDashboardDepartmentScoreBadge(
   prefix: UI_PREFIX,
 });
 export const SuppliesActionButton = ActionButton;
+const spMetricClasses = metricKpiCardBemClasses(UI_PREFIX);
+export function SuppliesMetricCard(props: Omit<ComponentProps<typeof MetricKpiCard>, "classNames">) {
+  return createElement(MetricKpiCard, { classNames: spMetricClasses, ...props });
+}
 export const SuppliesClearFiltersButton = ClearFiltersButton;
 export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);
 export const SuppliesEntityAvatarLabel = createDashboardEntityAvatarLabel(UI_PREFIX);
@@ -294,6 +301,13 @@ export function SuppliesDataTable<T>(props: DashboardDataTableProps<T>) {
 }
 
 const spModalShellClassNames = modalShellBemClasses(UI_PREFIX);
+export const SuppliesHostModal = createHostContainedModalShell({
+  prefix: UI_PREFIX,
+  classNames: spModalShellClassNames,
+  portalScopeClassName: SP_PORTAL_SCOPE,
+  closeAriaLabel: "Fechar",
+  containedLayout: "dialog",
+});
 
 export function SuppliesModal(
   props: Omit<ComponentProps<typeof ModalShell>, "classNames">,
