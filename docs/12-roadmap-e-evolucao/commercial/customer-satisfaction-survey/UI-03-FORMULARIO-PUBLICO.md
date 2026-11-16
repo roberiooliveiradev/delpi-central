@@ -4,6 +4,7 @@
 > **Implementação:** existe uma versão funcional anterior em `plugins/public-hub/src/apps/commercial/` (commit `7d275ed2`, homologação desde 14/11/2026) com o **visual antigo**. Esta especificação exige **REWORK visual** dessa versão; regras funcionais e contratos de rede permanecem os mesmos.
 > **Arquitetura de componentes (Q22, 16/11/2026):** todo o formulário é construído com componentes do **PluginUI** (`@delpi/plugin-ui`) — os que faltam são **criados no PluginUI** — e importado pelo `public-hub`. O kit é genérico, para ser reaproveitado em outros formulários. Ver §5.
 > **Temas (Q23, 16/11/2026):** o formulário inteiro — todos os componentes e subcomponentes — tem **dois visuais, claro e escuro**. Tokens inventariados em §3.2.
+> **Plano de implementação:** [UI-03-PLANO-IMPLEMENTACAO.md](./UI-03-PLANO-IMPLEMENTACAO.md) (kit no PluginUI em fases + página pública nova e dedicada).
 > **Referência visual normativa:** [`UI-03-REFERENCIA-VISUAL.html`](./UI-03-REFERENCIA-VISUAL.html) (abrir no navegador; arquivo estático, sem lógica; seis telas em tema claro e as mesmas seis em tema escuro). Em caso de divergência, **este Markdown prevalece**.
 > **Histórico:** a redação anterior deste documento (decisões de 11/11/2026) está no histórico do Git; as decisões substituídas e mantidas estão registradas em [BUSINESS-DECISIONS — Q21](./BUSINESS-DECISIONS.md#q21--padrão-visual-do-formulário-público-16112026). Não reabrir os pontos abaixo sem nova decisão do solicitante.
 
@@ -48,11 +49,11 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 5. **Título público fixo:** “Pesquisa de Satisfação de Clientes”. O **nome interno da campanha não aparece** para o cliente.
 6. **Ações sempre à mão no celular:** rodapé fixo com Voltar / Avançar.
 7. Sem gradientes, sem ilustrações, sem emojis, sem estrelas.
-8. **Tudo vem do PluginUI.** Nenhum componente visual é desenhado dentro do `public-hub`; a página só monta o formulário com o kit e mapeia os tokens dos dois temas (§5).
+8. **Tudo vem do PluginUI.** Nenhum componente visual é desenhado dentro do `public-hub`; a página só monta o formulário com o kit (§5); os dois temas vêm prontos do kit.
 
 ### 3.2 Tokens — claro e escuro (inventário de 16/11/2026)
 
-**Onde ficam:** o CSS dos componentes fica no PluginUI (`plugins/plugin-ui/src/styles/`) e lê **somente** tokens `--delpi-ui-*` — os existentes e novos `--delpi-ui-form-*`, sempre com valor de reserva do tema claro. O `public-hub` declara os valores dos dois temas na raiz da página, a partir de `plugins/public-hub/src/shell/brand-tokens.css` (que já tem bloco claro em `:root`, escuro em `:root[data-theme="dark"]` e `@media (prefers-color-scheme: dark)`). Nenhum CSS de componente no `public-hub`.
+**Onde ficam (ajustado no plano de implementação, 16/11/2026):** o CSS dos componentes e os **valores claro e escuro** dos tokens `--delpi-ui-form-*` ficam no **próprio kit do PluginUI** (`plugins/plugin-ui/src/styles/`), no elemento raiz do formulário (`.delpi-ui-form-root` e `[data-color-scheme="dark"]`), para o kit funcionar em qualquer página. Os valores abaixo vêm do inventário das fontes existentes. O hospedeiro pode sobrescrever tokens, mas não precisa declará-los; nenhum CSS de componente no `public-hub`.
 
 **Inventário das fontes existentes:**
 
@@ -231,6 +232,7 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 | `intro` | título, empresa/contexto, frase, lista de itens, rótulo do botão de início, texto de rodapé |
 | `steps[]` | `{ id, title, questions[] }`; cada questão: `{ key, kind: "scale" \| "text", number, eyebrow, prompt, required, scale?: { min, max, valueLabels, endLabels, endLabelsPosition, narrowColumns, notApplicable } }` |
 | `texts` | microcopy (padrões em português de §3.6, sobrescrevíveis) |
+| `colorScheme` / `showThemeToggle` | `"auto"` (padrão: tema do aparelho, troca só em memória) / mostrar o botão de tema no cabeçalho |
 | `onSubmit(answers)` | função do app; devolve o resultado (enviado, já registrado, erro…) para o kit exibir a tela certa |
 | `renderResult?` | permite ao app escolher título/mensagem por resultado |
 
@@ -245,8 +247,8 @@ Local sugerido: `plugins/plugin-ui/src/components/forms/questionnaire/` + CSS em
 | `src/apps/commercial/FormPage.tsx` | Adaptador fino: converte o questionário da API na definição do `GuidedQuestionnaire`, passa `onSubmit` → `submitPublicSurvey`, mapeia resultados |
 | `src/apps/commercial/SurveyStateView.tsx` | Usa `FormPageLayout` + `FormResultPanel`; remove o nome da campanha |
 | `src/apps/commercial/form.css` | **Removido** ou reduzido a mapeamento de tokens `--delpi-ui-*` / layout de página; nenhum seletor de componente |
-| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo **flutuantes** do shell; o botão de tema vai no `FormHeaderCard`. O `ThemeToggle` atual **salva** a escolha em `localStorage` (`pub-theme`) e lê a preferência salva — para esta página é preciso um modo **sem persistência** (ex.: propriedade `persist={false}` ou controle do kit), que ao abrir remove `data-theme`, segue `prefers-color-scheme` e, ao clicar, só altera `data-theme` em memória, restaurando o estado ao sair da página. Menor solução: opção opcional de `chrome` sem decoração na definição da página, padrão inalterado para as demais apps |
-| `src/shell/brand-tokens.css` (ou arquivo de tokens da página) | Declarar os valores claro/escuro dos tokens de §3.2, nos mesmos três blocos já existentes (`:root`, `:root[data-theme="dark"]`, `@media (prefers-color-scheme: dark)`) |
+| `src/apps/commercial/pages.tsx` + `src/shell/` | Página sem botão de tema e sem logo **flutuantes** do shell; o botão de tema vai no `FormHeaderCard`. O `ThemeToggle` do shell **salva** a escolha em `localStorage` (`pub-theme`); por isso esta página **não usa** esse botão: o tema é controlado pelo kit (`colorScheme="auto"`, troca só em memória), ver [plano](./UI-03-PLANO-IMPLEMENTACAO.md). Menor solução: opção opcional de `chrome` sem decoração na definição da página, padrão inalterado para as demais apps |
+| Tokens | Nenhuma declaração obrigatória: os dois temas vêm do kit. Sobrescrever tokens só se necessário |
 | `surveyForm.ts`, `api.ts` | Mantidos (regra de etapas e rede) |
 
 ### 5.5 Ordem de execução sugerida e cuidados

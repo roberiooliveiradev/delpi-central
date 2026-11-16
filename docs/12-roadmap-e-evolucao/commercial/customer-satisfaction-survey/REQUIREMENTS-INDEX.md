@@ -114,6 +114,7 @@
 | [UI-01-RESULTADOS-PESQUISA.md](./UI-01-RESULTADOS-PESQUISA.md) | Página de Resultados: wireframe, filtros, indicadores, gráficos, tabelas e inventário PluginUI | Especificar/desenvolver resultados |
 | [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md) | Página de Configuração: campanhas, participantes, cópia de convites, estados e componentes | Especificar/desenvolver gestão |
 | [UI-03-FORMULARIO-PUBLICO.md](./UI-03-FORMULARIO-PUBLICO.md) | **Especificação vigente (16/11/2026)** do formulário público: padrão visual clean aprovado, telas, tokens, microcopy, regras e gaps observados em HML; referência visual em [UI-03-REFERENCIA-VISUAL.html](./UI-03-REFERENCIA-VISUAL.html) | Antes do rework visual do formulário |
+| [UI-03-PLANO-IMPLEMENTACAO.md](./UI-03-PLANO-IMPLEMENTACAO.md) | Plano em fases: kit de formulário no PluginUI (componentes, temas, fluxo guiado) e página pública nova da Pesquisa; decisões abertas D1–D3 | Antes de abrir qualquer pedido de implementação da UI-03 |
 | [UI-04-INICIO-CARD-MARKETING.md](./UI-04-INICIO-CARD-MARKETING.md) | Integração no Início: card Marketing, navegação e capacidade | Inserir entrada no hub existente |
 | [UI-05-VISAO-GERAL-SECAO-PESQUISA.md](./UI-05-VISAO-GERAL-SECAO-PESQUISA.md) | Integração na Visão Geral: seção única de indicadores consolidados | Integrar resumo existente |
 | [UI-06-RESPOSTAS-POR-EMPRESA.md](./UI-06-RESPOSTAS-POR-EMPRESA.md) | Lista privada respondentes/pendentes; avatar; navegação para UI-07 | Especificar/desenvolver consulta identificada |
