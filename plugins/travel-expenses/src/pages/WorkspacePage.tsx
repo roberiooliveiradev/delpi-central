@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ActionButton, FilePreviewModal } from "@delpi/plugin-ui/index";
-import { Camera, FilePlus2 } from "lucide-react";
+import { Camera, FilePlus2, Send } from "lucide-react";
+import { parseBrlInput } from "../utils/parseBrlInput";
 
 import { TravelReportHero } from "../components/TravelReportHero";
 import { TravelPixSection } from "../components/TravelPixSection";
 
 import {
   addExpense,
+  getMileageRate,
+  sendToFinance,
   deleteExpense,
   deleteReceipt,
   fetchReceiptBlob,
@@ -85,6 +88,7 @@ export function WorkspacePage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [preview, setPreview] = useState<{ expense: Expense; receipt: Receipt } | null>(null);
@@ -153,6 +157,27 @@ export function WorkspacePage({
 
   function cancelHeaderEdit() {
     if (savedHeader) setHeader(savedHeader);
+  }
+
+  async function onSendToFinance() {
+    if (!report || !editable || sending) return;
+    if (!report.expenses.length) {
+      setError("Inclua ao menos uma despesa antes de enviar.");
+      return;
+    }
+    if (!window.confirm("Enviar o PDF para financeiro@delpi.com.br, com cópia ao solicitante?")) return;
+    setSending(true);
+    setError(null);
+    try {
+      await sendToFinance(reportId);
+      await reload();
+      setSuccess("Prestação enviada ao Financeiro com cópia ao solicitante.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível confirmar o envio.");
+      await reload().catch(() => undefined);
+    } finally {
+      setSending(false);
+    }
   }
 
   function openNewExpense() {
@@ -231,7 +256,12 @@ export function WorkspacePage({
                   <span className="te-expense-row__date">{formatDate(expense.expenseDate)}</span>
                   <span className="te-expense-meta">
                     <strong>{CATEGORY_LABELS[expense.categoryId] || expense.categoryId}</strong>
-                    <small>{expense.merchant || "Sem estabelecimento"}</small>
+                    <small>
+                      {expense.categoryId === "ground_transport" && expense.transportMode
+                        ? (expense.transportMode === "own_vehicle" ? "Veículo próprio" : expense.transportMode === "ride_hailing" ? "Carro de aplicativo" : "Transporte público")
+                        : expense.merchant || "Sem estabelecimento"}
+                      {expense.transportMode === "own_vehicle" && expense.distanceKm != null ? ` · ${expense.distanceKm} km` : ""}
+                    </small>
                   </span>
                   <span className="te-amount">{formatBrl(expense.amountBrl)}</span>
                   <span className="te-expense-row__receipt te-muted">
@@ -243,6 +273,23 @@ export function WorkspacePage({
           )}
         </div>
       </TravelSectionCard>
+
+      {editable ? (
+        <TravelSectionCard title="Encaminhamento ao Financeiro">
+          <p className="te-muted">Envie o PDF para financeiro@delpi.com.br, com cópia ao solicitante.</p>
+          {report.completeness.missingReceiptCount > 0 ? (
+            <p className="te-muted">Há {report.completeness.missingReceiptCount} despesa(s) sem comprovante. O aviso não impede o envio.</p>
+          ) : null}
+          {report.dispatchStatus ? <p className="te-muted">Já existe uma tentativa de envio ({report.dispatchStatus}). Para evitar duplicidade, um novo envio exige verificação da TI.</p> : null}
+          <ActionButton variant="primary" disabled={sending || !report.expenses.length || Boolean(report.dispatchStatus)} onClick={() => void onSendToFinance()}>
+            <Send size={16} /> {sending ? "Enviando…" : "Enviar ao Financeiro"}
+          </ActionButton>
+        </TravelSectionCard>
+      ) : report.dispatchStatus ? (
+        <TravelSectionCard title="Envio ao Financeiro">
+          <p className="te-muted">{report.dispatchStatus === "sent" ? "Prestação encaminhada ao Financeiro." : "Consulte a TI para verificar o envio."}</p>
+        </TravelSectionCard>
+      ) : null}
 
       <TravelPixSection
         report={report}
@@ -352,6 +399,9 @@ function ExpenseDrawer({
   const [categoryId, setCategoryId] = useState("");
   const [merchant, setMerchant] = useState("");
   const [amount, setAmount] = useState("");
+  const [transportMode, setTransportMode] = useState("");
+  const [distanceKm, setDistanceKm] = useState("");
+  const [mileageRate, setMileageRate] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const current = useMemo(
@@ -364,19 +414,47 @@ function ExpenseDrawer({
     setCategoryId(expense?.categoryId || categories[0]?.id || "other");
     setMerchant(expense?.merchant || "");
     setAmount(expense ? String(expense.amountBrl) : "");
+    setTransportMode(expense?.transportMode || "");
+    setDistanceKm(expense?.distanceKm != null ? String(expense.distanceKm) : "");
     setNotes(expense?.notes || "");
   }, [expense, categories, report.periodStart, open]);
 
+  useEffect(() => {
+    let active = true;
+    if (categoryId !== "ground_transport" || transportMode !== "own_vehicle" || !expenseDate) {
+      setMileageRate(null);
+      return;
+    }
+    getMileageRate(expenseDate)
+      .then((rate) => { if (active) setMileageRate(rate); })
+      .catch(() => { if (active) setMileageRate(null); });
+    return () => { active = false; };
+  }, [categoryId, transportMode, expenseDate]);
+
+  const ownVehicle = categoryId === "ground_transport" && transportMode === "own_vehicle";
+  const km = parseBrlInput(distanceKm);
+  const mileageTotal = mileageRate !== null && km !== null && km > 0
+    ? Math.round((mileageRate * km + Number.EPSILON) * 100) / 100
+    : null;
+
   async function save() {
     if (!editable) return;
+    const parsedAmount = ownVehicle ? mileageTotal : parseBrlInput(amount);
+    if (parsedAmount === null) {
+      onError(ownVehicle ? "Informe a quilometragem e aguarde a tarifa vigente." : "Informe um valor válido. Exemplo: R$ 324,00.");
+      return;
+    }
+
     setBusy(true);
     try {
       const payload = {
         expenseDate,
         categoryId,
         merchant,
-        amountBrl: Number(amount.replace(",", ".") || 0),
+        amountBrl: parsedAmount,
         notes,
+        transportMode: categoryId === "ground_transport" ? (transportMode || null) : null,
+        distanceKm: ownVehicle ? km : null,
       };
       const saved = expense
         ? await updateExpense(report.id, expense.id, payload)
@@ -431,13 +509,36 @@ function ExpenseDrawer({
             ))}
           </select>
         </label>
+        {categoryId === "ground_transport" ? (
+          <label className="te-field te-field--wide">
+            Tipo de deslocamento
+            <select disabled={!editable} value={transportMode} onChange={(event) => setTransportMode(event.target.value)}>
+              <option value="">Selecione o transporte</option>
+              <option value="own_vehicle">Veículo próprio</option>
+              <option value="ride_hailing">Carro de aplicativo</option>
+              <option value="public_transport">Transporte público</option>
+            </select>
+          </label>
+        ) : null}
+        {ownVehicle ? (
+          <>
+            <label className="te-field">
+              Quilometragem percorrida (km)
+              <input inputMode="decimal" disabled={!editable} value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} placeholder="Ex.: 270" />
+            </label>
+            <label className="te-field">
+              Tarifa vigente
+              <input value={mileageRate !== null ? formatBrl(mileageRate) + "/km" : "Carregando tarifa…"} readOnly />
+            </label>
+          </>
+        ) : null}
         <label className="te-field">
           Estabelecimento
           <input value={merchant} disabled={!editable} onChange={(event) => setMerchant(event.target.value)} />
         </label>
         <label className="te-field">
           Valor (BRL)
-          <input value={amount} disabled={!editable} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} />
+          <input value={ownVehicle ? (mileageTotal !== null ? formatBrl(mileageTotal) : "") : amount} disabled={!editable || ownVehicle} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} placeholder="R$ 0,00" />
         </label>
         <label className="te-field te-field--wide">
           Nota

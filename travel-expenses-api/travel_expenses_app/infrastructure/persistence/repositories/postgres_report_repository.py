@@ -57,6 +57,9 @@ def _map_expense(row: dict[str, Any], receipts: list[dict[str, Any]] | None = No
         "merchant": row.get("merchant") or "",
         "amountBrl": float(row.get("amount_brl") or 0),
         "notes": row.get("notes") or "",
+        "transportMode": row.get("transport_mode"),
+        "distanceKm": float(row["distance_km"]) if row.get("distance_km") is not None else None,
+        "rateBrlPerKm": float(row["rate_brl_per_km"]) if row.get("rate_brl_per_km") is not None else None,
         "sortOrder": int(row.get("sort_order") or 0),
         "createdAt": row.get("created_at"),
         "updatedAt": row.get("updated_at"),
@@ -253,9 +256,10 @@ class PostgresTravelReportRepository:
             cur.execute(
                 f"""
                 INSERT INTO {SCHEMA}.expenses (
-                    report_id, expense_date, category_id, merchant, amount_brl, notes, sort_order
+                    report_id, expense_date, category_id, merchant, amount_brl, notes, sort_order,
+                    transport_mode, distance_km, rate_brl_per_km
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
                 """,
                 (
@@ -266,6 +270,9 @@ class PostgresTravelReportRepository:
                     payload["amount_brl"],
                     payload.get("notes") or "",
                     payload.get("sort_order") or 0,
+                    payload.get("transport_mode"),
+                    payload.get("distance_km"),
+                    payload.get("rate_brl_per_km"),
                 ),
             )
             row = cur.fetchone()
@@ -319,6 +326,9 @@ class PostgresTravelReportRepository:
             "merchant": "merchant",
             "amount_brl": "amount_brl",
             "notes": "notes",
+            "transport_mode": "transport_mode",
+            "distance_km": "distance_km",
+            "rate_brl_per_km": "rate_brl_per_km",
         }
         sets = []
         params: list[Any] = []
@@ -448,3 +458,42 @@ class PostgresTravelReportRepository:
                 }
                 for row in cur.fetchall()
             ]
+
+    def get_mileage_rate(self, expense_date: date):
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"SELECT rate_brl_per_km FROM {SCHEMA}.mileage_rates WHERE valid_from <= %s ORDER BY valid_from DESC LIMIT 1",
+                (expense_date,),
+            )
+            row = cur.fetchone()
+        return row["rate_brl_per_km"] if row else None
+
+    def get_dispatch(self, report_id: str):
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(f"SELECT * FROM {SCHEMA}.finance_dispatches WHERE report_id = %s", (report_id,))
+            return cur.fetchone()
+
+    def reserve_finance_dispatch(self, report_id: str, recipient: str, cc: str) -> bool:
+        # One persistent reservation per report. Never resend on unknown delivery.
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""INSERT INTO {SCHEMA}.finance_dispatches
+                    (report_id, status, recipient_email, cc_email)
+                    VALUES (%s, 'sending', %s, %s)
+                    ON CONFLICT (report_id) DO NOTHING RETURNING report_id""",
+                (report_id, recipient, cc),
+            )
+            reserved = cur.fetchone() is not None
+            conn.commit()
+        return reserved
+
+    def finalize_finance_dispatch(self, report_id: str, status: str, error: str | None = None):
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""UPDATE {SCHEMA}.finance_dispatches
+                    SET status = %s, last_error = %s, updated_at = NOW(),
+                        sent_at = CASE WHEN %s = 'sent' THEN NOW() ELSE NULL END
+                    WHERE report_id = %s""",
+                (status, error, status, report_id),
+            )
+            conn.commit()

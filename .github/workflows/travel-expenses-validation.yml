@@ -1,0 +1,52 @@
+name: Travel Expenses Validation
+
+on:
+  pull_request:
+    paths:
+      - 'travel-expenses-api/**'
+      - 'plugins/travel-expenses/**'
+      - 'shared/delpi_auth/**'
+      - '.github/workflows/travel-expenses-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install API and shared dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r travel-expenses-api/requirements.txt
+          python -m pip install -e './shared[fastapi]'
+      - name: Test API
+        working-directory: travel-expenses-api
+        run: python -m pytest tests -q
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install shared UI dependencies
+        working-directory: plugins/plugin-ui
+        run: npm install --no-audit --no-fund
+      - name: Install plugin dependencies
+        working-directory: plugins/travel-expenses
+        run: npm install --no-audit --no-fund
+      - name: Unit tests
+        working-directory: plugins/travel-expenses
+        run: npm test
+      - name: TypeScript check
+        working-directory: plugins/travel-expenses
+        run: npm run typecheck
+      - name: Production build
+        working-directory: plugins/travel-expenses
+        run: npm run build

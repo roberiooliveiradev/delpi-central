@@ -164,7 +164,15 @@ export function PackageDocumentView({
               {report.expenses.map((expense) => (
                 <tr key={expense.id}>
                   <td>{formatDate(expense.expenseDate)}</td>
-                  <td>{CATEGORY_LABELS[expense.categoryId] || expense.categoryId}</td>
+                  <td>
+                    {CATEGORY_LABELS[expense.categoryId] || expense.categoryId}
+                    {expense.categoryId === "ground_transport" && expense.transportMode ? (
+                      <small>
+                        {" · "}{expense.transportMode === "own_vehicle" ? "Veículo próprio" : expense.transportMode === "ride_hailing" ? "Carro de aplicativo" : "Transporte público"}
+                        {expense.transportMode === "own_vehicle" ? ` · ${expense.distanceKm} km × ${formatBrl(expense.rateBrlPerKm)}/km` : ""}
+                      </small>
+                    ) : null}
+                  </td>
                   <td>{expense.merchant || "—"}</td>
                   <td>{formatBrl(expense.amountBrl)}</td>
                   <td>{expense.receipts.length ? `${expense.receipts.length} arquivo(s)` : "ausente"}</td>
@@ -178,7 +186,7 @@ export function PackageDocumentView({
 
         <ReportExpenseAttachmentsSection report={report} receiptPreviews={receiptPreviews} />
 
-        <p className="te-doc-note">Documento de rascunho — ainda não enviado ao financeiro.</p>
+        <p className="te-doc-note">Prestação de despesas de viagem — documento gerado pelo sistema.</p>
       </DocumentPage>
     </DocumentReader>
   );

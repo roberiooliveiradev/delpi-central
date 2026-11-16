@@ -26,6 +26,23 @@ def _handle(exc: Exception):
     raise exc
 
 
+
+@router.get("/mileage-rate", operation_id="travelExpensesGetMileageRate")
+def get_mileage_rate(request: Request, date: str = Query(...)):
+    try:
+        return ok(_service().get_mileage_rate(request.state.user, date))
+    except (PermissionError, TravelReportError) as exc:
+        return _handle(exc)
+
+
+@router.post("/reports/{report_id}/send-to-finance", operation_id="travelExpensesSendToFinance")
+def send_to_finance(request: Request, report_id: str):
+    try:
+        return ok(_service().send_to_finance(request.state.user, report_id))
+    except (PermissionError, TravelReportError) as exc:
+        return _handle(exc)
+
+
 @router.get("/categories")
 def list_categories():
     return ok(_service().list_categories())

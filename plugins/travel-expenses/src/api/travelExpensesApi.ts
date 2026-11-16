@@ -39,6 +39,9 @@ export type Expense = {
   merchant: string;
   amountBrl: number;
   notes: string;
+  transportMode?: "own_vehicle" | "ride_hailing" | "public_transport" | null;
+  distanceKm?: number | null;
+  rateBrlPerKm?: number | null;
   receipts: Receipt[];
 };
 
@@ -74,6 +77,8 @@ export type ReportDetail = ReportListItem & {
   ownerUserId: string;
   expenses: Expense[];
   completeness: Completeness;
+  createdByEmail?: string | null;
+  dispatchStatus?: "sending" | "sent" | "failed" | null;
   pixKeyType?: string | null;
   pixKeyValue?: string | null;
 };
@@ -188,4 +193,18 @@ export async function listAudit(reportId: string) {
 
 export async function downloadPackagePdf(reportId: string) {
   return httpBlob(`${API_BASE}/reports/${reportId}/package.pdf`);
+}
+
+export async function getMileageRate(expenseDate: string): Promise<number> {
+  const data = await httpGet<Envelope<{ rateBrlPerKm: number }>>(
+    `${API_BASE}/mileage-rate?date=${encodeURIComponent(expenseDate)}`,
+  );
+  return data.data.rateBrlPerKm;
+}
+
+export async function sendToFinance(reportId: string): Promise<ReportDetail> {
+  const response = await httpJson<Envelope<ReportDetail>>(
+    "POST", `${API_BASE}/reports/${reportId}/send-to-finance`,
+  );
+  return response.data;
 }
