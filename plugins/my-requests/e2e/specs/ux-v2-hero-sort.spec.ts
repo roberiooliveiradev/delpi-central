@@ -299,20 +299,46 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
       controlsRow.getByRole("button", { name: /limpar filtros/i }),
     ).toHaveCount(0);
 
-    /* Grade logo abaixo do hero, embedded, sem seção-card duplicada. */
+    /* Grade logo abaixo do hero, embedded, sem seção-card duplicada.
+     * Medição atômica + poll: o clearBtn.click() encolhe o hero e o
+     * scroll anchoring desloca o viewport entre chamadas boundingBox
+     * separadas (rects são viewport-relative). */
     const section = page.locator(SECTION);
     await expect(section).toHaveCount(1);
-    const sectionBox = await section.boundingBox();
-    expect(sectionBox).toBeTruthy();
-    expect(sectionBox!.y).toBeGreaterThanOrEqual(heroBox!.y + heroBox!.height - 2);
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            ([heroSel, sectionSel]) => {
+              const h =
+                document.querySelector(heroSel)?.getBoundingClientRect();
+              const s =
+                document.querySelector(sectionSel)?.getBoundingClientRect();
+              return h && s ? s.y - (h.y + h.height) : -Infinity;
+            },
+            [HERO, SECTION],
+          ),
+        { timeout: 5_000 },
+      )
+      .toBeGreaterThanOrEqual(-2);
 
-    /* Breadcrumb navegável acima do hero. */
-    const path = page
-      .locator("nav[class*=page-path], [class*=page-path]")
-      .first();
-    const pathBox = await path.boundingBox();
-    expect(pathBox).toBeTruthy();
-    expect(pathBox!.y + pathBox!.height).toBeLessThanOrEqual(heroBox!.y + 2);
+    /* Breadcrumb navegável acima do hero — mesma medição atômica. */
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            ([heroSel, pathSel]) => {
+              const h =
+                document.querySelector(heroSel)?.getBoundingClientRect();
+              const p =
+                document.querySelector(pathSel)?.getBoundingClientRect();
+              return h && p ? p.y + p.height - h.y : Infinity;
+            },
+            [HERO, "nav[class*=page-path], [class*=page-path]"],
+          ),
+        { timeout: 5_000 },
+      )
+      .toBeLessThanOrEqual(2);
 
     /* AC06 — fonte mesclada: só a coluna Data é ordenável. */
     await ensureTableView(page);
