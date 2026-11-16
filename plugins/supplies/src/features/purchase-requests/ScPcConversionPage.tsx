@@ -67,8 +67,8 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
     setError(null);
     getScPcConversion(applied, controller.signal)
       .then((payload) => {
-        if (payload.scope !== "confirmed_release_to_first_order" ||
-            payload.period_anchor !== "final_approval_date" ||
+        if (payload.scope !== "release_or_issue_without_approval_to_first_order" ||
+            payload.period_anchor !== "effective_start_date" ||
             payload.source !== "SC1010+SCR010+SC7010") {
           throw new Error("A origem comprovada do indicador não foi confirmada.");
         }
@@ -121,10 +121,12 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
 
   const metrics = [
     { label: "SCs liberadas (amostra)", value: formatNumber(summary?.approved_requests) },
+    { label: "Com alçada de compras", value: formatNumber(summary?.with_approval) },
+    { label: "Sem alçada (emissão SC)", value: formatNumber(summary?.without_approval) },
     { label: "Tempo médio até o 1º PC", value: summary?.avg_days == null ? "—" : formatNumber(summary.avg_days, 2) + " dias" },
     { label: "SCs convertidas", value: formatNumber(summary?.converted_requests) },
     { label: "Ainda sem PC", value: formatNumber(summary?.pending_requests) },
-    { label: "PC antes da liberação", value: formatNumber(summary?.before_release) },
+    { label: "PC anterior ao início", value: formatNumber(summary?.before_release) },
     { label: "PC com dado inválido", value: formatNumber(summary?.invalid_order_dates) },
   ];
   const buckets = [
@@ -150,11 +152,11 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
       <SuppliesPageHero
         eyebrow="Portal Suprimentos / Eficiência de Compras"
         title="Tempo de conversão SC → PC"
-        description="Da última aprovação válida na alçada até a emissão do primeiro pedido vinculado. Uma SC conta uma vez na média."
+        description="Da última liberação da alçada, ou da emissão da SC sem alçada, até o primeiro PC vinculado. Cada SC conta uma vez na média."
       />
       <SuppliesSectionCard
         title="Filtros do indicador"
-        hint="Competência pela data da última liberação da alçada. Dias corridos."
+        hint="Competência pelo início da contagem: liberação da alçada ou emissão da SC sem alçada. Dias corridos."
       >
         <form className="sp-approval-lead-time__filters" onSubmit={(event) => { event.preventDefault(); apply(); }}>
           <label>
@@ -167,11 +169,11 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
             </select>
           </label>
           <label>
-            Liberação de
+            Início da contagem de
             <input aria-label="Liberação de" type="date" required value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
           </label>
           <label>
-            Liberação até
+            Início da contagem até
             <input aria-label="Liberação até" type="date" required value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
           </label>
           <label>
@@ -197,7 +199,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
               </div>
             ))}
           </section>
-          <SuppliesSectionCard title="Distribuição do prazo de conversão" hint="Somente SCs convertidas com liberação e PC válidos">
+          <SuppliesSectionCard title="Distribuição do prazo de conversão" hint="Somente SCs convertidas com data inicial válida e primeiro PC válido">
             <div className="sp-approval-lead-time__buckets">
               {buckets.map((bucket) => (
                 <div key={bucket.label}>
@@ -220,7 +222,7 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
                 <table className="sp-approval-lead-time__table">
                   <thead>
                     <tr>
-                      <th>SC</th><th>Unidade</th><th>Última liberação</th>
+                      <th>SC</th><th>Unidade</th><th>Início da contagem</th>
                       <th>Primeiro PC</th><th>Emissão PC</th><th>PCs vinculados</th>
                       <th>Situação</th><th>Tempo</th>
                     </tr>
@@ -235,7 +237,12 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
                           </button>
                         </td>
                         <td>{item.branch}</td>
-                        <td>{formatDate(item.final_approval_date)}</td>
+                        <td>
+                          <strong>{formatDate(item.effective_start_date)}</strong>
+                          <div className="sp-approval-lead-time__note">
+                            {item.start_date_source === "approval_release" ? "Liberação da alçada" : "Emissão SC · sem alçada"}
+                          </div>
+                        </td>
                         <td>
                           {item.first_order_number ? (
                             <button type="button" className="sp-approval-lead-time__link"
@@ -263,8 +270,9 @@ export function ScPcConversionPage({ basePath }: { basePath: string }) {
             </div>
           </SuppliesSectionCard>
           <p className="sp-approval-lead-time__note">
-            Fonte: SCR010 (liberação comprovada), SC1010 (SC) e SC7010 (PC vinculado).
-            SC sem PC fica pendente; PC anterior à liberação e dados inválidos não entram na média.
+            Fonte: SCR010 (alçada existente), SC1010 (SC sem alçada) e SC7010 (PC vinculado).
+            A emissão da SC somente inicia o prazo quando não houver nenhum histórico SCR e todos os itens estiverem liberados.
+            SC sem PC fica pendente; PC anterior à data inicial e dados inválidos não entram na média.
             Os prazos são dias corridos. Aprovações retroativas e reaprovações devem ser conferidas
             com Compras. O primeiro PC indica início de conversão, não atendimento total da SC.
           </p>
