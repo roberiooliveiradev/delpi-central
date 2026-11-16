@@ -99,7 +99,7 @@ Cor PI ≠ cor MP (4 letras vs abreviação curta).
 | Revisão do desenho | bloco de revisão | `drawing metadata.revision`, `product.current_revision` | PROVEN |
 | Descrição MP/PI | título/notas | normas §7–8 | PROVEN rules |
 | Descrição PA | — | — | OWNER_BLOCKED |
-| Roteiro | símbolos/processos | SG2 | OWNER_BLOCKED (sem contrato) |
+| Roteiro | símbolos/processos | SG2 | PROVEN — `read(routing.steps)` via api-delpi `/guide` (Doc 122) |
 | Normas aplicáveis | notas | Normas DELPI + externas | parcial — inventário de normas em §12 |
 
 Classificações obrigatórias por informação: explícita / extraída-com-incerteza / oficial-BOM / divergência comprovada / divergência potencial / insuficiente. **Proibido** inferir ausência em BOM por ausência visual.
@@ -124,7 +124,7 @@ Evidências: `OBSERVED | CALCULATED | INFERRED | UNKNOWN`. Verificações: `PASS
 
 ## 15. Matriz de testes e ground truth
 
-Corpus inicial já existente: scripts ONDA14 + produtos 90262008/90263149/90264227/90264258 + `build_drawing_fixture_pdf.py`. Cobrir: correto, info ausente, revisão divergente, BOM divergente, componente faltante, qty inconsistente, descrição MP/PI incorreta, roteiro divergente (quando contrato existir), norma inaplicável/sem revisão, desenho ilegível, PDF digital vs escaneado, multipágina, produto não identificado, usuário sem acesso à estrutura, **PDF com instruções maliciosas embutidas** (prompt injection). Métricas: precisão de achados, FP/FN, citação, boundary de permissão, utilidade. Ground truth validado por Engenharia.
+Corpus inicial já existente: scripts ONDA14 + produtos 90262008/90263149/90264227/90264258 + `build_drawing_fixture_pdf.py`. Cobrir: correto, info ausente, revisão divergente, BOM divergente, componente faltante, qty inconsistente, descrição MP/PI incorreta, roteiro divergente (contrato existe: `read(routing.steps)`, Doc 122), norma inaplicável/sem revisão, desenho ilegível, PDF digital vs escaneado, multipágina, produto não identificado, usuário sem acesso à estrutura, **PDF com instruções maliciosas embutidas** (prompt injection). Métricas: precisão de achados, FP/FN, citação, boundary de permissão, utilidade. Ground truth validado por Engenharia.
 
 ## 16. Segurança e permission boundaries
 
@@ -133,7 +133,7 @@ Sem acesso a desenho/estrutura sem permissão efetiva backend; sem token em URL;
 ## 17. Gaps e OWNER_BLOCKED
 
 1. **PA 90xx** sem norma de descrição → owner Engenharia (norma).
-2. **Roteiros SG2** sem contrato → owner api-delpi/TOTVS (Contract Gate).
+2. ~~**Roteiros SG2** sem contrato~~ → resolvido 2026-11-16: `read(routing.steps)` oficial (Doc 122).
 3. **Inspeção vinculada a desenho** → owner qualidade (contratos inspecoes-*).
 4. **Serviço neutro de extração/análise** → extrair do pipeline chat legado (owner + adapter + testes — Abstraction Gate).
 5. **Catálogo versionado de normas externas** → owner Engenharia.

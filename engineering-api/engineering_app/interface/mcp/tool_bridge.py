@@ -768,7 +768,7 @@ _PLANNED_CAPABILITIES: tuple[dict[str, str], ...] = (
     {
         "name": "engineering_bom",
         "status": "not_implemented",
-        "note": "BOM/roteiros — sem contrato oficial ainda.",
+        "note": "BOM — sem contrato oficial ainda; roteiro SG2 já atendido por read(routing.steps).",
     },
     {
         "name": "engineering_documents",

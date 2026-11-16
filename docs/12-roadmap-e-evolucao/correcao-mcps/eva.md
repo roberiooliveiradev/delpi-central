@@ -33,7 +33,7 @@
 - Análises: `lmp.performance`, `nonconformity.recurrence`, `product.drawing_analysis`, `product.drawing_benchmark`, `product.drawing_understanding` (presença no contrato não é prova de resultado de runtime).
 - Escritas não conformidade: `create/update` sob Core AuthZ e `ENG_EVA_ACT_ENABLED`; deleção exige governança e `ENG_EVA_ACT_DELETE_ENABLED`; importação replace-all exige `ENG_EVA_ACT_IMPORT_ENABLED` e confirmação verificável.
 - No catálogo consultado: `act_enabled=true`; `act_tiers.write=true`, `delete=true`, `import=false`. **Não recomendar importação como executável nesta configuração**.
-- `product.update` consta `not_implemented` por falta de contrato WRITE oficial; `routing.steps`, `raw_material.specification`, `inspection.report` também não implementadas; `technical_document.prepare_draft` planejada. Não prometer essas capacidades.
+- `product.update` consta `not_implemented` por falta de contrato WRITE oficial; ~~`routing.steps`~~ (implementada 2026-11-16, Doc 122), `raw_material.specification`, `inspection.report` também não implementadas; `technical_document.prepare_draft` planejada. Não prometer essas capacidades.
 - Fontes de valores reais: owner Engineering e outros contratos autorizados; `knowledge` é guidance, nunca dado operacional; persona narrativa nunca concede AuthZ.
 
 ## 3. Lacunas e ações propostas

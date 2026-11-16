@@ -2,7 +2,7 @@
 
 **TASK_ID:** `EVA-PRODUCT-ROUTING-SEMANTIC-CAPABILITY-E2E-01`
 **DATA:** 2026-11-16
-**STATUS:** `DEPLOYED_PENDING_AUTHENTICATED_E2E`
+**STATUS:** `DEPLOYED — E2E autenticado real comprovado (stack canônica); confirmação owner em EVA/ChatGPT`
 
 ```text
 TASK_ID              EVA-PRODUCT-ROUTING-SEMANTIC-CAPABILITY-E2E-01
