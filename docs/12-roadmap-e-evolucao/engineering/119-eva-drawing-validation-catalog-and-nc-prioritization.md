@@ -5819,3 +5819,61 @@ Deploy e ChatGPT E2E dependem de aceite explícito da exceção do verificador p
 - Regressão (worktree @ d3af593469+fix, container infra-engineering-api): **1390 pass, 2 fail, 21 skip** — `test_d16_attendance_flags` pré-existente idêntico à baseline G24; `test_lmp_domain` falhou só sem mount `/api-delpi` (artefato de ambiente, passa com mount); `test_rbac_resolution` passou.
 - Verificador: `INCONCLUSIVE` r1 — engine devin não autenticada; `.git/delpi-verifier/requests/g24-r1-source-isolation-r1.md`.
 - Contrato `normative_description.v1` preservado; `pi_bom_coherence` dict→lista tipada é correção de defeito do próprio campo (consumidor interno).
+
+## §94.30 — G24-R2: verificação independente, homologação normativa e generalização
+
+**TASK_ID:** `EVA-E1-VAL01-G24-R2-INDEPENDENT-VERIFICATION-NORMATIVE-GOVERNANCE-AND-GENERALIZATION-01`  
+**Decisão:** Issue #131 #6921949662 · **SHA avaliado:** `8d8b3ede03` · **E2E live aceito pela Coordination:** job `aj-70edba74c31849f9` (4/4 PI, 8/8 MP, 24 comparações tipadas, zero PA-como-PI, zero writes) → `G24_R1_LIVE_MCP_E2E_PASS_WITH_RESIDUAL`.
+
+### 94.30.1 Verificador independente — estado
+
+| Engine | Estado | Evidência |
+|---|---|---|
+| devin/swe-2-high | **indisponível** | `credentials.toml` de 15/11 stale → `Not logged in`; re-login exige fluxo browser/manual-token do owner |
+| cursor/composer-2.5 | **indisponível** | `ActionRequiredError: You're out of usage` (quota) |
+
+`G24_R2_VERIFIER_OPERATIONAL_PASS: NO` — bloqueio de infraestrutura, não do código. Verificação independente efetiva permanece `INCONCLUSIVE` até o owner autenticar uma das engines (requests r1/r2 registradas em `.git/delpi-verifier/requests/`).
+
+### 94.30.2 Finding do executor — F01 (análise determinística, não verificação independente)
+
+**`parent = drawing.parent_code or bom.parent_code`** é um único código que alimenta AMBOS os lookups de PI. Quando o pai visual diverge do oficial:
+
+- `pi_totvs_normative` avalia `bom_desc_by_code[drawing_parent]` — a descrição TOTVS de um PI que **não** é o pai oficial da MP (prova: MP com pai BOM `50233507` e pai visual `50233508` avaliou a descrição oficial de `50233508`).
+- `pi_bom_coherence` T×T referencia `pi_code` do pai visual, não do oficial.
+
+**Severidade:** MÉDIA — findings são candidatos e a ambiguidade `parent_verified=False` já joga coerência para `INCONCLUSIVE`; porém o bloco `pi_totvs_normative` ainda vincula descrição oficial ao PI errado. **Menor rework proposto:** resolver `pi_draw` por `drawing.parent_code` e `pi_bom` por `bom.parent_code` independentemente, com `parent_divergence` explícito quando divergirem. **Decisão:** mudança de comportamento → Coordination (rework G24-R3, não silenciar).
+
+### 94.30.3 Generalização — holdout 24 casos (descrições nunca usadas em dev)
+
+| Métrica | Resultado |
+|---|---|
+| Outcome esperado == observado | **24/24** |
+| Falsos `PASS` | 0 |
+| Falsas `VIOLATION_CANDIDATE` | 0 |
+| Abstenções corretas (INCONCLUSIVE/OWNER_BLOCKED/NOT_APPLICABLE) | 10 |
+| Latência média | <1 ms (determinístico) |
+
+Cobertura holdout: PI com CA/CB/CF/CT/CV, bitolas AWG e mm², cores documentadas, cor desconhecida (`XXYY`→OWNER_BLOCKED), isolação inválida, truncada, ausente; cabos 1001/1002/1005 (XLPE/silicone/EPR, AWG e MM2), material ausente, prefixo errado; terminais FASTON/BANDEIRA (NIQUELADO, FITADO, BLISTER); isoladores 1009 (PP, PVC, RETO/90°, AL/VM); 1038→OWNER_BLOCKED; grupo 1010→NOT_APPLICABLE; descrição vazia→INCONCLUSIVE. **Zero hardcode por produto.**
+
+### 94.30.4 Matriz decisória D1–D6 (proposta — Engenharia ratifica)
+
+| ID | Regra atual | Questão aberta | Recomendação do executor | Estado |
+|---|---|---|---|---|
+| D1 | Cabos 1001–1005 ratificados; 1038 `OWNER_BLOCKED` | Estender a 1038? Descrições 1038 seguem o mesmo template (CABO EPR …AWG…V UL) | Estender por revisão normativa formal; o motor já separa o grupo | `APPROVAL_STATUS: PENDING` |
+| D2 | Cor PI = tabela fechada de 13; `MABR`→OWNER_BLOCKED; `PRETA↔PT` não presumido | Ratificar aliases/cores compostas? | Publicar tabela de alias versionada (ex.: MABR=marrom+branco?) — IA nunca aprova por similaridade | PENDING |
+| D3 | Campos do tipo "opcional" → INCONCLUSIVE; `MM`→WARNING (nunca MM2); `CARRETEL` fora de embalagens → INCONCLUSIVE | Definir obrigatório/opcional/condicional por subtipo | Ratificar matriz de obrigatoriedade e decisão sobre `MM` (erro vs legado) | PENDING |
+| D4 | Posição E/D de terminais/isoladores sempre `NOT_APPLICABLE` | Quando sufixo PI x componente físico pode ser confrontado | Só após regra posicional oficial + vínculo autorizado BOM→posição | PENDING |
+| D5 | Nenhuma checagem física — só descrição | Quais fontes comprovam material/bitola/tensão (datasheet, spec) | Definir fonte oficial de características físicas antes de qualquer check físico | PENDING |
+| D6 | Severidade única candidata; review PENDING_ENGINEERING | Severidades, apresentação, critérios de homologação | Manter DRAFT/CANDIDATE→ENGINEERING_REVIEW→APPROVAL→OFFICIAL_ACTION | PENDING |
+
+`ENGINEERING_APPROVAL: PENDING` — executor propõe, não ratifica. Regras não ratificadas permanecem `OWNER_BLOCKED`.
+
+### 94.30.5 Segurança/arquitetura
+
+Confirmado: Keycloak=identidade, Core=AuthZ, TOTVS=cadastro, Engenharia=norma, EVA=avaliação candidata. Zero writes, zero NC, zero nova source of truth, zero acoplamento DAVI/Chat, zero change de owner. `ARCHITECTURE_DECISION_REQUIRED: NO`.
+
+### 94.30.6 Regressão e falhas conhecidas
+
+- `test_d16_attendance_flags::test_isolation_between_requests` = **PRE_EXISTING_FAILURE** (intake PRC retorna 422 em segunda submissão; falha idêntica na baseline G24 anterior a qualquer código meu) → owner: frente D16/PRC.
+- `test_rbac_resolution` e `test_lmp_domain`: passam (falha anterior era artefato de mount).
+- `CODE_CHANGED: NO` · `DEPLOY_EXECUTED: NO` (pacote de verificação).
