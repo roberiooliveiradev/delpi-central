@@ -190,6 +190,8 @@ def get_portal_sc_pc_conversion():
         or data.get("source") != "SC1010+SCR010+SC7010"
         or data.get("scope") != "release_or_issue_without_approval_to_first_order"
         or data.get("period_anchor") != "effective_start_date"
+        or data.get("calculation_mode") != "completed_or_pending_elapsed_as_of_today"
+        or not isinstance(data.get("as_of_date"), str)
         or not isinstance(data.get("summary"), dict)
         or not isinstance(data.get("branch_breakdown"), dict)
         or not isinstance(data.get("items"), list)
