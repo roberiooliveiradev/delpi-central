@@ -81,6 +81,9 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 
 <ClearFiltersButton onClick={resetFilters} />
 <ClearFiltersButton density="compact" label="Limpar" onClick={resetFilters} />
+{/* UX V3 — controle canônico «limpar filtros» das toolbars de listagem:
+    quadrado só-ícone FilterX em tom âmbar (token --delpi-ui-warning). */}
+<ClearFiltersButton variant="icon" onClick={resetFilters} disabled={!hasActive} />
 
 <IconButton aria-label="Remover participante" tone="danger" onClick={remove}>
   <X size={16} />
@@ -91,8 +94,8 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 |------------|------------------|
 | `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
 | `BackLink` | `variant` (`default`, `prominent`), `onClick`, `className`, `children` |
-| `ClearFiltersButton` | `onClick`, `label` (padrão «Limpar filtros»), `density` (`default` \| `compact`), `disabled` |
-| `IconButton` | `aria-label`, `tone` (`default`, `danger`), `disabled`, `onClick`, `children` |
+| `ClearFiltersButton` | `onClick`, `label` (padrão «Limpar filtros»), `density` (`default` \| `compact`), `variant` (`labeled` \| `icon`), `disabled` |
+| `IconButton` | `aria-label`, `tone` (`default`, `danger`, `primary`, `amber`), `disabled`, `onClick`, `children` |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **TASK_ID:** `CROSS-MFE-LIST-UXV3-HEADER-SORT-AMBER-CLEAR-PLUGIN-UI-HML-01`  
 **Decisão PO:** APPROVED_VISUAL / IMPLEMENTATION_PLANNED em 16/11/2026.  
-**Estado factual:** código V3 anterior reportado como deployado HML/PRD (release `5782cd10dd`); este pacote **não foi implementado nem implantado** pelo registro documental. Revalidar HEAD/runtime/evidências antes de atuar.  
+**Estado factual:** **IMPLEMENTED + HML_DEPLOYED em 16/11/2026** — implementação `30fba42e82` (+ spec `929291374a`) deployada em HML (plugin-ui `236faeb98152`, my-requests `5cda269028f3`); E2E autenticado 36/36 em 4 viewports. Helpdesk sem E2E visual (serviço ausente do compose HML + RBAC). **PRD: NOT_AUTHORIZED_THIS_PACKAGE** — gate devolvido à Coordination (ver relatório de execução).  
 **Escopo de três telas em dois MFEs:** `/apps/my-requests/mine`, `/apps/my-requests/work-queue`, `/apps/helpdesk`. Owner de UI compartilhada: `@delpi/plugin-ui`; owners de ordenação são Requests API/PRC Engineering API e Helpdesk API conforme a fonte.
 
 ## 1. Fontes e decisão visual
