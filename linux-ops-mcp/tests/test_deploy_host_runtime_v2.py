@@ -93,7 +93,7 @@ def verified(receipt, *, target=TARGET, challenge=CHALLENGE, secret=HOST_KEY,
     )
 
 
-def error(receipt, code, **kwargs):
+def expect_rejection(receipt, code, **kwargs):
     with pytest.raises(HostRuntimeV2Error) as exc:
         verified(receipt, **kwargs)
     assert exc.value.code == code
@@ -152,20 +152,20 @@ def test_real_signer_path_binds_exact_host_container_project_and_nonce():
 ])
 def test_target_drift_denied_even_with_valid_host_mac(attr, wrong):
     receipt = sign()
-    error(receipt, "HOST_V2_TARGET_MISMATCH", target=replace(TARGET, **{attr: wrong}))
+    expect_rejection(receipt, "HOST_V2_TARGET_MISMATCH", target=replace(TARGET, **{attr: wrong}))
 
 
 def test_nonmatching_challenge_is_denied_and_nonce_is_never_consumed():
     receipt = sign()
-    error(receipt, "HOST_V2_TARGET_MISMATCH", challenge="b" * 64)
+    expect_rejection(receipt, "HOST_V2_TARGET_MISMATCH", challenge="b" * 64)
     assert "challenge_consumed" not in receipt.body.decode()
 
 
 def test_bad_host_key_and_modified_signed_bytes_are_rejected():
     receipt = sign()
-    error(receipt, "HOST_V2_SIGNATURE_INVALID",
+    expect_rejection(receipt, "HOST_V2_SIGNATURE_INVALID",
           secret=b"wrong-32-plus-byte-secret-from-another-host")
-    error(SignedHostReceipt(receipt.body + b" ", receipt.mac_hex),
+    expect_rejection(SignedHostReceipt(receipt.body + b" ", receipt.mac_hex),
           "HOST_V2_SIGNATURE_INVALID")
 
 
@@ -175,17 +175,17 @@ def test_v1_receipt_signature_cannot_be_replayed_as_v2():
         release_key=RELEASE_KEY, host_key=HOST_KEY,
         challenge=CHALLENGE, now=NOW,
     ))
-    error(original, "HOST_V2_SIGNATURE_INVALID")
+    expect_rejection(original, "HOST_V2_SIGNATURE_INVALID")
     # Even a forged v2-domain MAC on v1 content cannot pass the schema.
     forged = resign(json.loads(original.body))
-    error(forged, "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(forged, "HOST_V2_RECEIPT_INVALID")
 
 
 def test_host_key_cannot_attest_to_git_checkout_by_boolean():
     receipt = sign()
     signed_fields = json.loads(receipt.body)
     signed_fields["checkout_clean"] = True
-    error(resign(signed_fields), "HOST_V2_CHECKOUT_NOT_ATTESTED")
+    expect_rejection(resign(signed_fields), "HOST_V2_CHECKOUT_NOT_ATTESTED")
 
 
 @pytest.mark.parametrize("attr,value,code", [
@@ -214,25 +214,25 @@ def test_host_key_cannot_attest_to_git_checkout_by_boolean():
 def test_validly_mac_authenticated_but_invalid_claims_are_denied(attr, value, code):
     fields = json.loads(sign().body)
     fields[attr] = value
-    error(resign(fields), code)
+    expect_rejection(resign(fields), code)
 
 
 def test_even_validly_signed_extra_or_missing_fields_are_not_accepted():
     base = json.loads(sign().body)
-    error(resign({**base, "can_execute": True}), "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(resign({**base, "can_execute": True}), "HOST_V2_RECEIPT_INVALID")
     removed = dict(base)
     removed.pop("container_name")
-    error(resign(removed), "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(resign(removed), "HOST_V2_RECEIPT_INVALID")
 
 
 def test_duplicate_json_keys_and_nan_denied_after_correct_mac():
     receipt = sign()
     raw = receipt.body[:-1] + b',"host_id":"someone-else"}'
     mac = hmac.new(HOST_KEY, _DOMAIN + raw, hashlib.sha256).hexdigest()
-    error(SignedHostReceipt(raw, mac), "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(SignedHostReceipt(raw, mac), "HOST_V2_RECEIPT_INVALID")
     raw = receipt.body[:-1] + b',"random":NaN}'
     mac = hmac.new(HOST_KEY, _DOMAIN + raw, hashlib.sha256).hexdigest()
-    error(SignedHostReceipt(raw, mac), "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(SignedHostReceipt(raw, mac), "HOST_V2_RECEIPT_INVALID")
 
 
 @pytest.mark.parametrize("secret,expected,now", [
@@ -242,7 +242,7 @@ def test_duplicate_json_keys_and_nan_denied_after_correct_mac():
     (HOST_KEY, CHALLENGE, "today"),
 ])
 def test_verifier_unconfigured_denies_before_body_read(secret, expected, now):
-    error(sign(), "HOST_V2_VERIFIER_UNCONFIGURED",
+    expect_rejection(sign(), "HOST_V2_VERIFIER_UNCONFIGURED",
           secret=secret, challenge=expected, now=now)
 
 
@@ -252,7 +252,7 @@ def test_verifier_unconfigured_denies_before_body_read(secret, expected, now):
     SignedHostReceipt(b"hello", "not-a-mac"),
 ])
 def test_malformed_oversized_or_invalid_mac_is_denied(invalid):
-    error(invalid, "HOST_V2_RECEIPT_INVALID")
+    expect_rejection(invalid, "HOST_V2_RECEIPT_INVALID")
 
 
 def test_correctly_signed_stopped_or_unhealthy_container_stays_unready():
