@@ -445,3 +445,102 @@ def test_oci_concurrent_retry_serializes_one_binding(pg, schema_ready):
         "created_pending_approval", "replay_pending_approval",
     }
     assert _oci_counts(pg) == (1, 1, 1, 1)
+
+
+
+# P2.2h.2d: GET-only reader against disposable PostgreSQL, not API DB.
+def _journal_reader(schema_ready):
+    from psycopg.rows import dict_row
+    from it_portal_app.infrastructure.persistence.atlas_deploy_read_repository import (
+        PostgresAtlasDeployReadRepository,
+    )
+    return PostgresAtlasDeployReadRepository(
+        connect=lambda: psycopg.connect(
+            schema_ready, autocommit=True, connect_timeout=5, row_factory=dict_row,
+        ),
+        configured=lambda: True,
+    )
+
+
+def test_atlas_readonly_empty_oci_journal(pg, schema_ready):
+    reader = _journal_reader(schema_ready)
+    assert reader.list_proposals() == {
+        "items": [], "total": 0, "page": 1, "page_size": 20,
+    }
+
+
+def test_atlas_readonly_list_and_detail_use_real_disposable_pg(pg, schema_ready):
+    from it_portal_app.domain.errors import NotFoundError
+    bundle = oci_bundle()
+    i, ci, host, sealed = bundle
+    nonce = issue_challenge(
+        pg, requester_subject=i.requester_subject,
+        environment=i.environment, service_id=i.service_id,
+    )
+    stored = _oci_store(pg, bundle, nonce)
+    reader = _journal_reader(schema_ready)
+    listed = reader.list_proposals(environment="prod", page=1, page_size=5)
+    assert listed["total"] == 1
+    assert len(listed["items"]) == 1
+    item = listed["items"][0]
+    assert item["id"] == stored.proposal_id
+    assert item["manifest_digest"] == i.manifest_digest
+    assert item["target_image_id"] == i.target_image_id
+    assert item["previous_image_id"] == i.base_image_id
+    assert item["binding_sha256"] == sealed.binding_sha256
+    assert item["can_approve"] is False and item["can_execute"] is False
+    assert "challenge_digest" not in item
+    assert "ci_statement_sha256" not in item
+    detail = reader.get_proposal(stored.proposal_id)
+    assert detail["events"] and detail["events"][0]["event_type"] == "prepared"
+    assert detail["events"][0]["actor_subject"] == i.requester_subject
+    assert reader.list_proposals(environment="hml")["items"] == []
+    assert reader.list_proposals(status="approved")["total"] == 0
+    with pytest.raises(NotFoundError, match="não encontrada"):
+        reader.get_proposal(str(uuid4()))
+
+
+def test_atlas_readonly_excludes_generic_unbound_proposals(pg, schema_ready):
+    from it_portal_app.domain.errors import NotFoundError
+    plain = intent(service_id="public-hub")
+    nonce = issue_challenge(
+        pg, requester_subject=plain.requester_subject,
+        environment=plain.environment, service_id=plain.service_id,
+    )
+    stored = store_prepared(pg, intent=plain, signed_receipt_challenge=nonce)
+    reader = _journal_reader(schema_ready)
+    assert reader.list_proposals()["total"] == 0
+    with pytest.raises(NotFoundError):
+        reader.get_proposal(stored.proposal_id)
+
+
+def test_atlas_readonly_repository_requires_configured_backend_without_sql():
+    from it_portal_app.domain.errors import PersistenceUnavailableError
+    from it_portal_app.infrastructure.persistence.atlas_deploy_read_repository import (
+        PostgresAtlasDeployReadRepository,
+    )
+
+    def unexpected_connect():
+        raise AssertionError("must not open connection when DB is unconfigured")
+
+    reader = PostgresAtlasDeployReadRepository(
+        connect=unexpected_connect, configured=lambda: False,
+    )
+    with pytest.raises(PersistenceUnavailableError, match="indisponível"):
+        reader.list_proposals()
+    with pytest.raises(PersistenceUnavailableError, match="indisponível"):
+        reader.get_proposal(str(uuid4()))
+
+
+def test_atlas_readonly_rejects_injection_by_parameter_not_sql_concatenation(pg, schema_ready):
+    bundle = oci_bundle()
+    i = bundle[0]
+    nonce = issue_challenge(
+        pg, requester_subject=i.requester_subject,
+        environment=i.environment, service_id=i.service_id,
+    )
+    _oci_store(pg, bundle, nonce)
+    reader = _journal_reader(schema_ready)
+    injection = "prod' OR TRUE --"
+    assert reader.list_proposals(environment=injection)["total"] == 0
+    assert reader.list_proposals(environment="prod")["total"] == 1
