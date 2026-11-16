@@ -512,6 +512,22 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "map to those concepts.",
         "read",
     ),
+    _a(
+        "routing", "guided_analysis", "knowledge",
+        "Versioned EVA conduction method for guided line-balancing "
+        "analysis: staged diagnosis (product → objective → parameters "
+        "→ deterministic analysis → probing questions → supported "
+        "scenarios → grounded conclusion), progressive parameter "
+        "gathering, provenance labelling and honest limitations. "
+        "Fetch when the user wants to balance or improve a line.",
+        "read",
+        notes=(
+            "Conduction method only — formulas live in "
+            "routing.balance_guide, computation in "
+            "analyze(routing.line_balance), official data in "
+            "read(routing.steps).",
+        ),
+    ),
     # --- execute --------------------------------------------------------------
     _a(
         "nonconformity", "create", "execute",

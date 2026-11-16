@@ -1106,6 +1106,43 @@ def test_knowledge_routing_balance_guide() -> None:
     assert any("takt" in g.lower() for g in data["guidance"])
 
 
+def test_knowledge_routing_guided_analysis() -> None:
+    _set_context(_human_user())
+    result = sem.tool_knowledge(topic="routing.guided_analysis")
+    assert not result.is_error
+    data = result.structured_content["data"]
+    assert data["knowledge_version"]
+    assert data["sources"]
+    joined = " ".join(data["guidance"]).lower()
+    for marker in (
+        "routing.steps", "routing.line_balance", "observed",
+        "provided", "calculated", "simulation", "unknown",
+        "engenharia",
+    ):
+        assert marker in joined, marker
+
+
+def test_guided_analysis_discoverable_and_registered() -> None:
+    _set_context(_human_user())
+    result = sem.tool_get_context(topic="guided")
+    assert not result.is_error
+    caps = {
+        f"{a['entity']}.{a['action']}"
+        for a in result.structured_content["data"]["actions"]
+    }
+    assert "routing.guided_analysis" in caps
+    assert "routing.guided_analysis" in sem.knowledge_topics()
+
+
+def test_mcp_instructions_point_to_guided_analysis() -> None:
+    from engineering_app.interface.mcp.branding import (
+        EVA_MCP_INSTRUCTIONS,
+    )
+    assert "routing.guided_analysis" in EVA_MCP_INSTRUCTIONS
+    assert "routing.steps" in EVA_MCP_INSTRUCTIONS
+    assert "routing.line_balance" in EVA_MCP_INSTRUCTIONS
+
+
 # --- knowledge ---------------------------------------------------------------
 
 

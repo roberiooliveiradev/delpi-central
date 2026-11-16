@@ -1,5 +1,5 @@
 {
- "version": "1.7",
+ "version": "1.8",
  "owner": "engineering-api",
  "source": "EVA.MCP.SEMANTIC.R1 — conhecimento técnico versionado derivado dos contratos oficiais E-NC-01..11, doc 47/53 e regras de negócio vigentes da Engineering API. Não é fonte de dados operacionais; topic product.drawing_bom_comparison (G6) derivado do contrato do comparador oficial e do conhecimento legado onda-14 (ADAPT, sem dependencia runtime); topic product.lifecycle_traceability (G11) derivado dos contratos api-delpi/engineering vigentes e do fluxo de negócio informado pelo owner — itens pendentes de ratificação estão marcados.",
  "topics": {
@@ -567,6 +567,29 @@
     "analyze(routing.line_balance) executa estes cálculos deterministicamente sobre o roteiro oficial; dados insuficientes produzem análise parcial com missing_parameters — nunca completar com chutes."
    ],
    "scope": "Conceitos e método — não substitui os dados oficiais do roteiro nem decisão de Engenharia sobre layout/arranjo produtivo."
+  },
+  "routing.guided_analysis": {
+   "title": "Análise guiada de balanceamento de linha — método de condução EVA",
+   "revision": "1.0",
+   "sources": [
+    "Método de condução de análise de Engenharia Industrial (conhecimento geral, não regra DELPI)",
+    "Capacidades semânticas EVA: read(routing.steps), analyze(routing.line_balance), knowledge(routing.balance_guide) — Docs 122/123"
+   ],
+   "scope": "Como conduzir a conversa de diagnóstico — não substitui o guia de fórmulas (routing.balance_guide), os dados oficiais do roteiro nem a decisão de Engenharia.",
+   "guidance": [
+    "TRIGGER: ao reconhecer intenção de balancear/melhorar linha, identificar gargalos, reduzir operadores ou avaliar capacidade de um produto, busque este tópico UMA vez e conduza o método abaixo — não exija que o usuário conheça os parâmetros antecipadamente.",
+    "ETAPA A (produto): use o produto do contexto ou peça o código. Consulte read(routing.steps) — o payload repete operações por componente; trate como estágios por (product_code × bom_level), nunca como operações independentes. Se não houver roteiro, informe a ausência honestamente e só analise com dados fornecidos, rotulados PROVIDED.",
+    "ETAPA B (objetivo): entenda o que o usuário quer — atender demanda, achar gargalo, reduzir operadores, reduzir ociosidade, comparar alternativas. Uma pergunta por vez; linguagem acessível; explique por que cada informação é necessária.",
+    "ETAPA C (parâmetros): colete progressivamente apenas o relevante ao objetivo — demanda por período, minutos produtivos disponíveis, operadores/postos atuais, tamanho do lote, restrições de equipamento e precedências informadas. Nunca pergunte o que o roteiro oficial já responde; nunca repita pergunta já respondida.",
+    "ETAPA D (diagnóstico): chame analyze(routing.line_balance) com o que houver. Se o resultado vier PARTIAL, comunique os missing/invalid e peça só o essencial. Interprete os indicadores retornados — takt, conteúdo de trabalho, mínimo teórico de postos, gargalo, eficiência, ociosidade — nunca recalcule informalmente.",
+    "ETAPA E (investigação): faça perguntas que dependam do achado — operação acima do takt → pode dividir em dois postos ou está presa a um equipamento?; ociosidade → há restrição para transferir atividades?; setup relevante → qual o lote habitual?; múltiplos níveis BOM → balancear só a montagem final ou também as linhas de alimentação?",
+    "ETAPA F (simulação): cenários FFD são SIMULATION — não comprovam precedência, viabilidade física, layout ou disponibilidade real. Quando o pedido exceder a capacidade implementada, declare a limitação e proponha plano de investigação — nunca apresente simulação como solução executável.",
+    "ETAPA G (conclusão): feche com resumo — objetivo, produto/filial, fonte dos dados, parâmetros, diagnóstico, indicadores, gargalos/restrições, alternativas simuladas, benefícios e limitações, dados ainda faltantes, próximas ações e pontos que exigem revisão da Engenharia.",
+    "ROTULAGEM em toda resposta: OBSERVED (roteiro oficial), PROVIDED (informado pelo usuário), CALCULATED (determinístico), SIMULATION (hipotético), UNKNOWN (indisponível).",
+    "MUDANÇA DE PARÂMETRO: ao receber 'agora considere 700 peças', preserve os demais parâmetros válidos, rode o cálculo novamente e compare os cenários sem confundi-los — declare qual conjunto de parâmetros gerou cada resultado.",
+    "ESCRITA: 'atualize o roteiro' ou 'aplique o balanceamento' NÃO é capacidade EVA — não há contrato de escrita de roteiro. Responda que a proposta segue para revisão da Engenharia pelo processo governado; a EVA orienta e simula, a Engenharia decide.",
+    "SEM PERMISSÃO AMPLIADA: a análise só enxerga o que o usuário autenticado pode ver; ausência de dados pode ser forbidden/unavailable — declare o estado, nunca presuma 'sem roteiro'."
+   ]
   }
  },
  "planned_topics": [

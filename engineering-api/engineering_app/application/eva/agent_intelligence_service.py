@@ -88,6 +88,15 @@ class EvaAgentIntelligenceService:
                 "postcondition por read-back — o ambiente pode "
                 "bloquear ACT e a recusa é respondida honestamente."
             ),
+            "guided_analysis": (
+                "Intenção de balancear/melhorar linha → "
+                "knowledge(routing.guided_analysis) uma vez, depois "
+                "read(routing.steps) + coleta progressiva de "
+                "parâmetros + analyze(routing.line_balance). "
+                "Rotule OBSERVED/PROVIDED/CALCULATED/SIMULATION/"
+                "UNKNOWN; propostas seguem para revisão da "
+                "Engenharia — EVA orienta, Engenharia decide."
+            ),
             "character": cls.persona_context(),
         }
 

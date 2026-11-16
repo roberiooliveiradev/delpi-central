@@ -214,8 +214,11 @@ def create_mcp_server() -> MCPServer:
         description=(
             "Versioned owner-authorized Engineering guidance — "
             "nonconformity.guide (contract semantics), lmp.guide "
-            "(domain concepts), eva.usage (operation). Guidance, not "
-            "facts: unindexed topics answer not_implemented honestly."
+            "(domain concepts), eva.usage (operation), "
+            "routing.balance_guide (balancing methods), "
+            "routing.guided_analysis (guided diagnosis method). "
+            "Guidance, not facts: unindexed topics answer "
+            "not_implemented honestly."
         ),
         annotations=_annotations("knowledge", "Knowledge"),
         meta=meta,
