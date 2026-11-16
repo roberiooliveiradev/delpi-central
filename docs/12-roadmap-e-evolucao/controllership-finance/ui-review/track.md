@@ -41,6 +41,7 @@ Fonte: [review.md](./review.md). Autoridade: instruções oficiais do arquiteto 
 | U11 Sem análise anterior | INCLUÍDA NA U12 | — |
 | U14 Refinamento visual + defeitos da seleção + CLARA fora do Portal (F0–F5, com verificador) | DONE | [prompt](./prompts/U14-acabamento-visual.md) · [report](./report-u14.md) |
 | U15 Polimento (tema gráfico, daily AC-SEL-3, hero 390, KPIs 2 col) | DONE | [prompt](./prompts/U15-polimento.md) · [report](./report-u15.md) · residual P4b kit |
+| U15R Padrão Comercial no diário + KPI (R1–R3) | DONE | [prompt](./prompts/U15R-acabamento.md) · [report](./report-u15r.md) |
 | U13 Residuais da U12 (X1 axe, X2 testes antigos, X3 filtro) | DONE | [prompt](./prompts/U13-residuais.md) |
 | U12 Revisão 2 do owner (W0–W8) | DONE (W2–W8) | `ba53e55a2a` + tags rollback-ui-review-u12-* |
 | U13 Residuais da U12 (X1–X3) | DONE | `f546acd388` + tag `rollback-ui-review-u13-controllership-finance` |
@@ -404,3 +405,16 @@ PROD, 1440 e 390. PASS: P2 (com `day` selecionado o diário mantém os 7 dias, s
 Residuais → U15R: **P1 pela metade** — a medição olhou o contêiner (transparente), mas o `rect.__plot-area` segue com `fill="#ffffff"` (o kit aceita `chartParts.plotArea.style.fill`); valor de KPI com reticências («R$ 136.125,…» em 1440 com filtro; «R$ 1,06 …» em 390); ícone do KPI sobre o título em 390; lasca do dia 0 (introduzida pelo K1 da U14R2, não é residual de terceiros).
 
 **Correção (16/11, apontada pelo owner):** a «Evolução por dia» deve usar o pacote de gráficos do Comercial — `ChartViewShell` + `ChartTypeSegmentToggle` (family `period_compare`: coluna, linha, área) + `MultiTypeSeriesChart`, que já tem `onCategoryClick` e respeita o tema. A recomendação do `BarSeriesChart` (revisão da U14) foi erro do Claude: é o gráfico de deck/TV, daí o fundo branco e a lasca do dia 0. U15R versão 2 substitui Q1/Q4; a prop `onPointSelect` acrescentada ao `BarSeriesChart` na U14R2 fica no kit (aditiva) para o dono do plugin-ui decidir.
+
+### U15R — padrão Comercial + KPI (R1–R3) — DONE
+
+| Item | Valor |
+|---|---|
+| HEAD | MFE `4bc8a2c29e` |
+| Verifier | ACCEPT_WITH_RESIDUAL (r1; e2e HML não reexecutado pelo verificador; tsc pré-existente) |
+| Tag | `rollback-ui-review-u15r-controllership-finance` |
+| PROD | só MFE (`2026-11-16T10:00:17Z`–`10:00:27Z`) |
+| Report | [report-u15r.md](./report-u15r.md) |
+| Residual kit | `onPointSelect` do BarSeriesChart sem consumidor CF |
+
+Pedido ao owner: conferência visual em PROD (tipo de gráfico, day, tema escuro, KPI compacto, ícone 390).
