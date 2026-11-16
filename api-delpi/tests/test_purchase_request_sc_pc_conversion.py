@@ -1,6 +1,7 @@
 """GLPI #635 regressions: final SCR approval or issue date for released SC without SCR."""
 
 import pytest
+from datetime import date
 
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_sql import (
     build_conversion_cohort, build_conversion_page_sql, build_conversion_summary_sql,
@@ -14,12 +15,13 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 def test_cohort_uses_final_scr_release_not_sc_creation():
     cte, params, filters = build_conversion_cohort(
         branches=["01", "02"], date_from="2026-10-01", date_to="2026-10-31",
+        as_of_date=date(2026, 11, 16),
     )
     assert params == [
         "01", "02", "20261001", "20261031",
         "01", "02", "20261001", "20261031",
         "20261031", "20261001", "20261031",
-        "20261001", "20261031",
+        "20261001", "20261031", "20261116",
     ]
     assert "WITH release_candidates AS" in cte
     assert "UNION" in cte
@@ -53,6 +55,15 @@ def test_cohort_uses_final_scr_release_not_sc_creation():
     assert "AP.final_approval_date BETWEEN" in cte
     assert "R.first_order_date < E.effective_start_date" in cte
     assert "DATEDIFF(day, A.effective_start_date, A.first_order_date)" in cte
+    assert "DATEDIFF(day, A.effective_start_date, A.as_of_date)" in cte
+    assert "A.effective_start_date <= A.as_of_date" in cte
+    assert "TRY_CONVERT(date, ?, 112) AS as_of_date" in cte
+    assert "pending_age_days" in cte
+    summary = build_conversion_summary_sql(cte)
+    assert "AS avg_completed_days" in summary
+    assert "AS avg_pending_days" in summary
+    assert "AS sum_measured_days" in summary
+    assert "AS measured_requests" in summary
     assert "DATEDIFF(day, A.issue_date" not in cte
     assert "SUM(CASE WHEN start_date_source = 'issue_without_approval'" in build_conversion_summary_sql(cte)
     assert "ORDER BY effective_start_date DESC" in build_conversion_page_sql(cte)
@@ -94,14 +105,20 @@ class FakeRepository(PurchaseRequestScPcConversionRepository):
                     "with_approval": 3, "without_approval": 1,
                     "pending_requests": 1, "before_release": 1,
                     "invalid_order_dates": 1, "sum_conversion_days": 2,
-                    "avg_days": 2, "same_day": 0,
+                    "sum_pending_days": 3, "sum_measured_days": 5,
+                    "measured_requests": 2, "future_pending_requests": 0,
+                    "avg_days": 2.5, "avg_completed_days": 2,
+                    "avg_pending_days": 3, "same_day": 0,
                 },
                 {
                     "branch": "", "approved_requests": 4, "converted_requests": 1,
                     "with_approval": 3, "without_approval": 1,
                     "pending_requests": 1, "before_release": 1,
                     "invalid_order_dates": 1, "sum_conversion_days": 2,
-                    "avg_days": 2, "same_day": 0,
+                    "sum_pending_days": 3, "sum_measured_days": 5,
+                    "measured_requests": 2, "future_pending_requests": 0,
+                    "avg_days": 2.5, "avg_completed_days": 2,
+                    "avg_pending_days": 3, "same_day": 0,
                 },
             ]
         raise AssertionError("Paginated requests must use one SQL batch")
@@ -122,7 +139,7 @@ class FakeRepository(PurchaseRequestScPcConversionRepository):
                 "first_order_date": "2026-10-12",
                 "first_order_number": "00012",
                 "linked_order_count": 3, "conversion_status": "converted",
-                "conversion_days": 2,
+                "conversion_days": 2, "pending_age_days": "",
             },
             {
                 "branch": "01", "request_number": "171946",
@@ -131,28 +148,37 @@ class FakeRepository(PurchaseRequestScPcConversionRepository):
                 "start_date_source": "issue_without_approval",
                 "first_order_date": "", "linked_order_count": 0,
                 "conversion_status": "pending",
-                "conversion_days": "",
+                "conversion_days": 3, "pending_age_days": 3,
             },
             ]},
         ]
 
 
-def test_repository_excludes_pending_and_pre_release_from_mean():
+def test_repository_includes_pending_age_but_excludes_invalid_orders():
     data = FakeRepository().get_conversion(
         branches=["01"], date_from="2026-10-01", date_to="2026-10-31",
     )
     assert data["summary"]["approved_requests"] == 4
     assert data["summary"]["with_approval"] == 3
     assert data["summary"]["without_approval"] == 1
-    assert data["summary"]["avg_days"] == 2
+    assert data["summary"]["avg_days"] == 2.5
     assert data["branch_breakdown"].keys() == {"01"}
+    assert data["summary"]["avg_completed_days"] == 2
+    assert data["summary"]["avg_pending_days"] == 3
+    assert data["summary"]["measured_requests"] == 2
+    assert data["summary"]["sum_measured_days"] == 5
+    assert data["summary"]["sum_pending_days"] == 3
     assert data["summary"]["converted_requests"] == 1
     assert data["summary"]["pending_requests"] == 1
     assert data["summary"]["before_release"] == 1
-    assert data["summary"]["avg_days"] == 2
+    assert data["summary"]["avg_days"] == 2.5
     assert data["items"][0]["linked_order_count"] == 3
     assert data["items"][0]["conversion_days"] == 2
-    assert data["items"][1]["conversion_days"] is None
+    assert data["items"][1]["conversion_days"] == 3
+    assert data["items"][1]["pending_age_days"] == 3
+    assert data["items"][0]["pending_age_days"] is None
+    assert data["calculation_mode"] == "completed_or_pending_elapsed_as_of_today"
+    assert len(data["as_of_date"]) == 10
     assert data["items"][1]["final_approval_date"] is None
     assert data["items"][1]["first_order_date"] is None
     assert data["items"][1]["start_date_source"] == "issue_without_approval"
@@ -169,6 +195,8 @@ def test_summary_only_does_not_query_page():
     )
     assert data["items"] == []
     assert data["branch_breakdown"]["01"]["sum_conversion_days"] == 2
+    assert data["branch_breakdown"]["01"]["sum_pending_days"] == 3
+    assert data["branch_breakdown"]["01"]["sum_measured_days"] == 5
     assert data["total_pages"] == 0
 
 
@@ -180,12 +208,14 @@ def test_summary_no_valid_orders_keeps_null_average():
     assert result["approved_requests"] == 2
     assert result["avg_days"] is None
     assert result["without_approval"] == 2
+    assert result["avg_completed_days"] is None
+    assert result["avg_pending_days"] is None
 
 
 def test_cohort_sc_number_filter_keeps_binding_order():
     cte, params, _ = build_conversion_cohort(
         branches=["01"], date_from="2026-11-01", date_to="2026-11-16",
-        request_number="001234",
+        request_number="001234", as_of_date=date(2026, 11, 16),
     )
     assert "SC1.C1_NUM = ?" in cte
     assert params == [
@@ -193,4 +223,21 @@ def test_cohort_sc_number_filter_keeps_binding_order():
         "01", "20261101", "20261116",
         "20261116", "001234",
         "20261101", "20261116", "20261101", "20261116",
+        "20261116",
     ]
+
+
+def test_pending_future_start_is_not_negative_and_is_not_counted():
+    from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_sql import (
+        build_conversion_cohort, build_conversion_summary_sql,
+    )
+
+    cte, params, filters = build_conversion_cohort(
+        branches=["01"], date_from="2026-11-01", date_to="2026-12-01",
+        as_of_date=date(2026, 11, 16),
+    )
+    assert params[-1] == "20261116"
+    assert filters["as_of_date"] == "2026-11-16"
+    assert "A.effective_start_date <= A.as_of_date" in cte
+    assert "future_pending_requests" in build_conversion_summary_sql(cte)
+    assert "SUM(COALESCE(conversion_days, 0)) AS sum_measured_days" in build_conversion_summary_sql(cte)
