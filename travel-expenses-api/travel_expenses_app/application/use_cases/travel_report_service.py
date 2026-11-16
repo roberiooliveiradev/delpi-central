@@ -328,6 +328,8 @@ class TravelReportService:
         expense_date = _parse_date(body.get("expenseDate") or body.get("expense_date"))
         if not expense_date:
             raise TravelReportError("Informe a data da despesa.")
+        if category_id == "ground_transport" and not body.get("transportMode"):
+            raise TravelReportError("Selecione o tipo de deslocamento.")
         transport = self._expense_transport_fields(category_id=category_id, expense_date=expense_date, body=body)
         amount = transport.get("amount_brl")
         if amount is None:
