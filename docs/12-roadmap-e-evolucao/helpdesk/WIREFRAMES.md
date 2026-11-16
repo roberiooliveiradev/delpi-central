@@ -1,5 +1,8 @@
 # Wireframes — Meus Chamados de TI
 
+> **UX V3 FOLLOW-UP (16/11/2026, PO APPROVED / PLANNED):** [Padronização FilterX âmbar e ordenação por cabeçalho](../my-requests/UX-V3-FOLLOWUP-HEADER-SORT-AMBER-CLEAR-CROSS-MFE-PLAN.md). Reutilizar/generalizar no Plugin UI o **ícone atual do Helpdesk `FilterX`**, com destaque **amarelo/âmbar**, e movê-lo do `TicketListToolbar.trailing` próximo aos chips para a **esquerda imediata de Filtros** na linha inferior direita do Hero; depois `[Ordenar] [Colunas] [Tabela|Cards]`. Preservar sort GLPI e corrigir chip duplicado apenas se a investigação confirmar. **TARGET para este follow-up, não executado por esta edição de docs.**
+
+
 > **UX V3 — decisão visual aprovada (15/11/2026):** [Wireframe Helpdesk e paridade com My Requests](../my-requests/UX-V3-CROSS-MFE-HERO-LOWER-RIGHT-TOOLBAR-WIREFRAME-AND-ROLLOUT.md). Filtros → Ordenar → Colunas → Tabela/Cards no canto inferior direito do Hero; itens/página na tabela; remoção de helps `?` redundantes. **TARGET**, não implementado nesta revisão.
 
 
