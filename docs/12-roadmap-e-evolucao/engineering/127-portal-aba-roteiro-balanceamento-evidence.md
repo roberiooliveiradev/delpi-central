@@ -60,3 +60,21 @@ Status: IMPLEMENTADO | Data: 2025-12 | Task: EVA-PORTAL-ROUTING-TAB-AND-LINE-BAL
   de parâmetros no caso vazio, badge fallback — mitigados neste SHA).
 - Verificador oficial: INCONCLUSIVE por infra (devin sem auth, cursor
   sem cota) — fallback de subagente clean-context conforme precedente.
+
+## Deploy em produção (srv-api)
+
+- `COMMIT_SHA` publicado: `b5060b05b2` (rebase sobre `d41a92c62d` —
+  commits concorrentes Atlas/journal sem overlap de arquivos).
+- `git pull --ff-only` em `~/projetos/delpi-central` (operador@srv-api)
+  → HEAD `b5060b05b2`.
+- `up-prod-sequential.sh --build engineering-api` → container healthy;
+  `POST /v1/products/{code}/line-balance` registrada no OpenAPI prod.
+- `up-prod-sequential.sh --build engineering` → bundle novo (14:16);
+  `remoteEntry.js` via `/apps/engineering/assets/remoteEntry.js`
+  referencia `__federation_expose_App-BS1guqnU.js`; chunk
+  `App-BRcCFPJS.js` contém a rota `line-balance`.
+- Smoke prod sem token: GET routing → 401; POST line-balance → 401
+  (fail-closed preservado). Health `online`. Logs de startup sem erros.
+- Smoke autenticado em prod depende de principal humano Keycloak real
+  (AC-18) — validação E2E autenticada comprovada na stack canônica
+  local com token real e dados TOTVS reais (seção anterior).
