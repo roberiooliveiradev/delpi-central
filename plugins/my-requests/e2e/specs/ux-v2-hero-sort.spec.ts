@@ -137,12 +137,9 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
         exact: true,
       }),
     ).toBeVisible();
-    const metaBox = await tableMeta.boundingBox();
-    const heroBoxPre = await hero.boundingBox();
-    expect(metaBox).toBeTruthy();
-    expect(metaBox!.y).toBeGreaterThanOrEqual(
-      heroBoxPre!.y + heroBoxPre!.height - 2,
-    );
+    /* O compare geométrico hero↔meta acontece depois, com o heroBox
+     * medido pós-estabilização (chips/controles renderizam async e
+     * fazem o hero crescer nos primeiros ~200ms em telas estreitas). */
 
     /* Sem ícones "?" na toolbar/paginação — ajuda acessível sem glyph. */
     await expect(page.locator(`${TOOLBAR_HOST} ${HELP_ICON}`)).toHaveCount(0);
@@ -195,6 +192,14 @@ test.describe("UX-V2 — hero × grade × header-sort", () => {
     );
     expect(chipsBox!.x + chipsBox!.width).toBeLessThanOrEqual(
       heroBox!.x + heroBox!.width + 2,
+    );
+
+    /* «Itens por página» abaixo do hero, na região da grade (heroBox
+     * já estabilizado acima). */
+    const metaBox = await tableMeta.boundingBox();
+    expect(metaBox).toBeTruthy();
+    expect(metaBox!.y).toBeGreaterThanOrEqual(
+      heroBox!.y + heroBox!.height - 2,
     );
 
     /* Ordem visual FilterX → Filtros → Ordenar → Colunas → Tabela|Cards.
