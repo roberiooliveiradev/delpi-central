@@ -1553,6 +1553,10 @@ export function BarSeriesChart(props: AnyProps) {
     typeof props.onPointSelect === "function"
       ? (props.onPointSelect as (point: unknown, index: number | null) => void)
       : null;
+  const options =
+    props.options && typeof props.options === "object"
+      ? (props.options as Record<string, unknown>)
+      : {};
   return el(
     "div",
     {
@@ -1563,6 +1567,12 @@ export function BarSeriesChart(props: AnyProps) {
       "data-selected": props.selectedPointKey
         ? String(props.selectedPointKey)
         : undefined,
+      "data-theme":
+        typeof options.theme === "string" ? options.theme : undefined,
+      "data-bg":
+        typeof options.backgroundColor === "string"
+          ? options.backgroundColor
+          : undefined,
     },
     ...points.map((point, index) => {
       const item = point as { label?: string; value?: number };

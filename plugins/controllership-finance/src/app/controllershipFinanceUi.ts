@@ -74,6 +74,8 @@ import {
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
 
+import { usePortalColorScheme } from "./usePortalColorScheme";
+
 export const UI_PREFIX = "cf";
 export const CF_PORTAL_SCOPE = "dashboard-controllership-finance";
 
@@ -195,7 +197,13 @@ export function CfComparativeAreaChart(
 export function CfBarSeriesChart(
   props: ComponentProps<typeof BarSeriesChart>,
 ) {
-  return createElement(BarSeriesChart, { ...props });
+  const scheme = usePortalColorScheme();
+  const options = {
+    ...props.options,
+    theme: props.options?.theme ?? scheme,
+    backgroundColor: props.options?.backgroundColor ?? "transparent",
+  };
+  return createElement(BarSeriesChart, { ...props, options });
 }
 export const CfDistributionDonut = createDashboardDistributionDonut({
   prefix: UI_PREFIX,
