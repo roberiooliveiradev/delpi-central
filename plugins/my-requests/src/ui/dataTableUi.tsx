@@ -38,13 +38,8 @@ const paginationKit = createDashboardPaginationKit({
     label: "Itens por página",
     selectAriaLabel: "Itens por página",
   },
-  hints: {
-    previous: "Volta uma página.",
-    next: "Avança uma página.",
-    info: "Posição atual no conjunto filtrado.",
-    jump: "Digite o número da página e confirme.",
-    pageSize: "Quantidade de linhas por página.",
-  },
+  /* UX V3: sem ícones "?" na paginação — os labels/aria dos próprios
+   * controles já carregam a ajuda essencial (AC06). */
 });
 
 export const MyRequestsPagination = paginationKit.Pagination;

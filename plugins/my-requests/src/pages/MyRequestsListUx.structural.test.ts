@@ -29,6 +29,14 @@ const dataTableUi = readFileSync(
   resolve(dir, "../ui/dataTableUi.tsx"),
   "utf-8",
 );
+const kitSection = readFileSync(
+  resolve(dir, "../../../plugin-ui/src/components/data/DataTableSection.tsx"),
+  "utf-8",
+);
+const kitCss = readFileSync(
+  resolve(dir, "../../../plugin-ui/src/styles/data-table.css"),
+  "utf-8",
+);
 
 describe("Shell compartilhado — componentes do kit, não locais", () => {
   it("compõe hero, chips e a seção DataTable do kit", () => {
@@ -91,6 +99,49 @@ describe("Hero × grade — controles dentro do hero, sem card redundante", () =
   it("só colunas do contrato ganham affordance de sort", () => {
     expect(shell).toContain("sortable: true");
     expect(shell).toContain("columnSortMap[column.key]");
+  });
+});
+
+describe("UX V3 — toolbar inferior direita + itens/página na grade", () => {
+  it("itens por página sai da toolbar para a região da grade", () => {
+    expect(shell).toContain('pageSizePlacement="table"');
+    expect(kitSection).toContain("pageSizePlacement");
+    expect(kitSection).toContain("sectionClassNames.tableMeta");
+    expect(kitCss).toMatch(
+      /\.delpi-ui-table-section__table-meta[\s\S]*?justify-content:\s*flex-end/,
+    );
+  });
+
+  it("kit hero: busca → chips → controles (extras → Tabela|Cards) à direita", () => {
+    const iSearch = kitSection.indexOf("sectionClassNames.searchGroup");
+    const iChips = kitSection.indexOf("sectionClassNames.toolbarChips");
+    const iControls = kitSection.indexOf("sectionClassNames.toolbarControls");
+    expect(iSearch).toBeGreaterThan(-1);
+    /* na branch hero: searchGroup primeiro, chips depois, controles por último */
+    expect(iChips).toBeGreaterThan(iSearch);
+    expect(iControls).toBeGreaterThan(iChips);
+    /* controles: extras do consumidor/nativos antes do view-toggle */
+    const controls = kitSection.slice(iControls, iControls + 900);
+    expect(controls.indexOf("nativeToolbarExtra")).toBeLessThan(
+      controls.indexOf("viewToggle}"),
+    );
+    expect(kitCss).toMatch(
+      /\.delpi-ui-table-toolbar--hero\s*>\s*\.delpi-ui-table-toolbar__controls[\s\S]*?justify-content:\s*flex-end/,
+    );
+  });
+
+  it("search hint sem ícone ? — wrap com aria-describedby no hero", () => {
+    const heroBranch = kitSection.slice(
+      kitSection.indexOf('toolbarLayout === "hero" ?'),
+    );
+    expect(heroBranch).toContain("wrap");
+    /* HelpTooltip standalone (ícone ?) só na branch default */
+    const defaultBranch = heroBranch.slice(heroBranch.indexOf(") : ("));
+    expect(defaultBranch).toContain("className={sectionClassNames.searchHelp}");
+  });
+
+  it("paginação sem ícones ? — kit do MFE não passa hints", () => {
+    expect(dataTableUi).not.toContain("hints:");
   });
 });
 

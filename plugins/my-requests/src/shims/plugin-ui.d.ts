@@ -1862,6 +1862,8 @@ declare module "@delpi/plugin-ui/index" {
     toolbarLeading?: ReactNode;
     toolbarPortalTarget?: HTMLElement | null;
     toolbarLayout?: "default" | "hero";
+    /** `"table"` move «itens por página» para a região superior da grade. */
+    pageSizePlacement?: "toolbar" | "table";
     toolbarExtraPlacement?: "before" | "after";
     toolbarFilters?: ReactNode;
     columnPreferencesKey?: string;

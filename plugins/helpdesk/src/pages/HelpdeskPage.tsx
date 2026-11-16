@@ -202,6 +202,8 @@ import {
   HelpdeskAttachButton,
   HelpdeskConfirmModal,
   HelpdeskListPaginationFooter,
+  HelpdeskTablePageSizeSelect,
+  HELPDESK_PAGE_SIZE_OPTIONS,
   HelpdeskLoadingCard,
   HelpdeskMessageThread,
   HelpdeskPageHeader,
@@ -636,7 +638,7 @@ function TicketListPage() {
           <div className="helpdesk-list-controls">
             <form
               className="helpdesk-list-primary-bar"
-              aria-label="Busca e ações da lista"
+              aria-label="Busca da lista"
               onSubmit={(event: FormEvent<HTMLFormElement>) => {
                 event.preventDefault();
                 applySearch();
@@ -651,70 +653,6 @@ function TicketListPage() {
                   onChange={(value) => setSearchDraft(value)}
                 />
               </HintAction>
-              <div className="helpdesk-list-primary-bar__actions">
-                {filterActive ? (
-                  <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
-                    <HelpdeskIconButton aria-label="Limpar filtros" onClick={clearListFilters}>
-                      <FilterX size={16} aria-hidden />
-                    </HelpdeskIconButton>
-                  </HintAction>
-                ) : null}
-                <HintAction
-                  hint={helpTooltips.listUi.filterBuilderToggle}
-                  ariaLabel="Ajuda: Filtros avançados"
-                >
-                  <TicketListFilterPopover
-                    group={builderGroup}
-                    onChange={setBuilderGroup}
-                    urgencies={urgencies}
-                    categories={categories}
-                    assignees={assignees}
-                    requesters={requesters}
-                    onClear={() => setBuilderGroup(emptyFilterGroup())}
-                    onApply={() => {
-                      const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
-                      commitFilters(next);
-                    }}
-                  />
-                </HintAction>
-                <HintAction hint={helpTooltips.listUi.sortBuilderToggle} ariaLabel="Ajuda: Ordenação">
-                  <TicketListSortPopover
-                    levels={sortDraft}
-                    onChange={setSortDraft}
-                    summaryLabel={listViewModel.primarySortLabel}
-                    onApply={() => {
-                      commitFilters({
-                        ...filters,
-                        sort: formatTicketSortLevels(sortDraft),
-                        page: 1,
-                      });
-                    }}
-                  />
-                </HintAction>
-                {showCards ? null : (
-                  <HintAction hint={helpTooltips.listUi.columns} ariaLabel="Ajuda: Colunas">
-                    <TableColumnVisibilityMenu
-                      columns={menuColumns}
-                      visibility={visibility}
-                      onToggleColumn={setColumnVisible}
-                      onReset={resetPreferences}
-                      onReorderColumns={reorderColumns}
-                      labels={{
-                        trigger: "Colunas",
-                        panelTitle: "Colunas da lista",
-                        reset: "Restaurar padrão",
-                        hint: helpTooltips.listUi.columns,
-                        columnAriaLabel: (label) => `Mostrar coluna ${label}`,
-                      }}
-                    />
-                  </HintAction>
-                )}
-                <HintAction hint={helpTooltips.listUi.refreshList} ariaLabel="Ajuda: Atualizar lista">
-                  <HelpdeskIconButton aria-label="Atualizar lista" onClick={() => void load(filters)}>
-                    <RefreshCw size={16} aria-hidden />
-                  </HelpdeskIconButton>
-                </HintAction>
-              </div>
             </form>
 
             <div className="helpdesk-list-secondary-bar">
@@ -723,32 +661,107 @@ function TicketListPage() {
               </HintAction>
               <TicketListToolbar
                 viewModel={listViewModel}
-                leading={
-                  forceCards ? null : (
-                    <HintAction hint={helpTooltips.listUi.viewLayout} ariaLabel="Ajuda: Tabela ou Cards">
-                      <HelpdeskSegmentToggle
-                        ariaLabel="Modo de visualização"
-                        idPrefix="helpdesk-ticket-list-layout"
-                        size="sm"
-                        value={showCards ? "cards" : "table"}
-                        onChange={(value) => {
-                          if (value === "table" || value === "cards") setLayout(value);
-                        }}
-                        options={[
-                          { value: "table", label: "Tabela" },
-                          { value: "cards", label: "Cards" },
-                        ]}
-                      />
+                trailing={
+                  filterActive ? (
+                    <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
+                      <HelpdeskIconButton aria-label="Limpar filtros" onClick={clearListFilters}>
+                        <FilterX size={16} aria-hidden />
+                      </HelpdeskIconButton>
                     </HintAction>
-                  )
+                  ) : null
                 }
               />
+            </div>
+
+            {/* Última linha do hero — controles à direita, ordem canônica:
+                Filtros → Ordenar → Colunas → Tabela|Cards (UX V3). */}
+            <div className="helpdesk-list-controls-row">
+              <HintAction
+                hint={helpTooltips.listUi.filterBuilderToggle}
+                ariaLabel="Ajuda: Filtros avançados"
+              >
+                <TicketListFilterPopover
+                  group={builderGroup}
+                  onChange={setBuilderGroup}
+                  urgencies={urgencies}
+                  categories={categories}
+                  assignees={assignees}
+                  requesters={requesters}
+                  onClear={() => setBuilderGroup(emptyFilterGroup())}
+                  onApply={() => {
+                    const next = ticketListFiltersFromFilterGroup(builderGroup, filters);
+                    commitFilters(next);
+                  }}
+                />
+              </HintAction>
+              <HintAction hint={helpTooltips.listUi.sortBuilderToggle} ariaLabel="Ajuda: Ordenação">
+                <TicketListSortPopover
+                  levels={sortDraft}
+                  onChange={setSortDraft}
+                  summaryLabel={listViewModel.primarySortLabel}
+                  onApply={() => {
+                    commitFilters({
+                      ...filters,
+                      sort: formatTicketSortLevels(sortDraft),
+                      page: 1,
+                    });
+                  }}
+                />
+              </HintAction>
+              {showCards ? null : (
+                <HintAction hint={helpTooltips.listUi.columns} ariaLabel="Ajuda: Colunas">
+                  <TableColumnVisibilityMenu
+                    columns={menuColumns}
+                    visibility={visibility}
+                    onToggleColumn={setColumnVisible}
+                    onReset={resetPreferences}
+                    onReorderColumns={reorderColumns}
+                    labels={{
+                      trigger: "Colunas",
+                      panelTitle: "Colunas da lista",
+                      reset: "Restaurar padrão",
+                      hint: helpTooltips.listUi.columns,
+                      columnAriaLabel: (label) => `Mostrar coluna ${label}`,
+                    }}
+                  />
+                </HintAction>
+              )}
+              {forceCards ? null : (
+                <HintAction hint={helpTooltips.listUi.viewLayout} ariaLabel="Ajuda: Tabela ou Cards">
+                  <HelpdeskSegmentToggle
+                    ariaLabel="Modo de visualização"
+                    idPrefix="helpdesk-ticket-list-layout"
+                    size="sm"
+                    value={showCards ? "cards" : "table"}
+                    onChange={(value) => {
+                      if (value === "table" || value === "cards") setLayout(value);
+                    }}
+                    options={[
+                      { value: "table", label: "Tabela" },
+                      { value: "cards", label: "Cards" },
+                    ]}
+                  />
+                </HintAction>
+              )}
             </div>
           </div>
         ) : null}
       </HelpdeskPageHero>
 
       <div className="helpdesk-list-shell">
+        {view === "list" ? (
+          <div className="helpdesk-list-table-meta">
+            <HintAction hint={helpTooltips.listUi.pageSize} ariaLabel="Ajuda: Por página">
+              <HelpdeskTablePageSizeSelect
+                pageSize={filters.page_size}
+                pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
+                onPageSizeChange={(page_size) =>
+                  commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
+                }
+              />
+            </HintAction>
+          </div>
+        ) : null}
         {view === "loading" ? (
           <HelpdeskLoadingCard
             title="Carregando chamados…"
@@ -826,9 +839,6 @@ function TicketListPage() {
             pageSize={filters.page_size}
             total={paginationBounds.total}
             onPageChange={(page) => commitFilters({ ...filters, page })}
-            onPageSizeChange={(page_size) =>
-              commitFilters({ ...filters, page_size: page_size || 20, page: 1 })
-            }
           />
         ) : null}
       </div>

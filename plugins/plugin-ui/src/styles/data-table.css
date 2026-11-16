@@ -878,20 +878,31 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
 }
 
 /**
- * `toolbarLayout="hero"` — mesma toolbar, ordem de hero:
- * busca dominante (linha cheia) → extras (Filtros/Ordenar/Colunas)
- * + itens/página → Tabela|Cards + toolbarLeading (chips) por último.
- * Elementos mantêm a mesma instância — só `order` muda.
+ * `toolbarLayout="hero"` — mesma toolbar, composição de listagem V3:
+ * busca dominante (linha cheia) → chips (`toolbarLeading`) → última
+ * linha com o grupo de controles alinhado à direita (extras do
+ * consumidor, extras nativos — Filtros/Ordenar/Colunas — e
+ * Tabela|Cards). «Itens por página» pode sair da toolbar para a
+ * região da grade via `pageSizePlacement="table"`.
  */
 .delpi-ui-table-toolbar--hero {
+  flex-direction: column;
+  align-items: stretch;
   row-gap: 10px;
 }
 
-/* Busca em linha própria, largura total (dominante como no Helpdesk). */
-.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__search-group:has(.delpi-ui-table-search) {
-  order: -3;
-  flex: 1 1 100%;
+/* Busca em linha própria, largura total. */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__search-group {
+  flex: 0 0 auto;
+  width: 100%;
   white-space: normal;
+}
+
+/* Hint em modo wrap (sem ícone "?") precisa esticar para a busca ocupar a linha. */
+.delpi-ui-table-toolbar--hero .delpi-ui-table-search__help {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .delpi-ui-table-toolbar--hero .delpi-ui-table-search {
@@ -899,29 +910,37 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   max-width: none;
 }
 
-/* Extras do consumidor + nativos antes do seletor de itens/página. */
-.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__extra {
-  order: -2;
-  margin-left: 0;
-}
-
-.delpi-ui-table-toolbar--hero > .delpi-ui-table-page-size {
-  order: -1;
-}
-
-/* Última faixa: toolbarLeading (chips) à esquerda, Tabela|Cards à direita. */
-.delpi-ui-table-toolbar--hero
-  > .delpi-ui-table-toolbar__search-group:not(:has(.delpi-ui-table-search)) {
-  order: 0;
-  flex: 1 1 100%;
+/* Chips/escopo — segunda faixa, alinhados à esquerda. */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__chips {
+  display: flex;
   flex-wrap: wrap;
-  white-space: normal;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Última linha do hero: controles à direita, ordem do conteúdo preservada. */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
 }
 
 .delpi-ui-table-toolbar--hero .delpi-ui-table-toolbar__view-toggle {
-  order: 2;
-  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Região superior da grade — «itens por página» fora do hero. */
+.delpi-ui-table-section__table-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  margin-bottom: 8px;
 }
 
 /** FilterBar / formulários de filtro — linha dedicada abaixo da toolbar nativa. */

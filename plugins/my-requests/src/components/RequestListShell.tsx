@@ -4,7 +4,8 @@
  * PagePath clicável, hero compacto (título, descrição, contagem,
  * Atualizar, ação) com a toolbar da grade via `toolbarPortalTarget`
  * (mesma instância/estado do DataTableSection — busca dominante,
- * Filtros, Ordenar, Colunas, itens/página, chips, Tabela|Cards) e a
+ * chips e a linha inferior direita Filtros → Ordenar → Colunas →
+ * Tabela|Cards; itens/página na região superior da grade) e a
  * grade `embedded` logo abaixo, sem card externo redundante.
  *
  * O domínio (merge, contratos, colunas, cards) fica nas páginas.
@@ -281,6 +282,7 @@ export function RequestListShell<Row extends object>({
         toolbarPortalTarget={toolbarHost}
         toolbarLayout="hero"
         toolbarExtraPlacement="before"
+        pageSizePlacement="table"
         serverSort={
           columnSortMap && sort
             ? {

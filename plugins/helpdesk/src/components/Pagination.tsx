@@ -51,28 +51,18 @@ export type HelpdeskListPaginationFooterProps = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
 };
 
-/** Rodapé da lista: Por página + paginação do kit, ajuda via HintAction (sem ícones ?). */
+/** Rodapé da lista: navegação de páginas do kit (UX V3 — «Por página»
+ * vive na região superior da lista, `helpdesk-list-table-meta`). */
 export function HelpdeskListPaginationFooter({
   page,
   pageSize,
   total,
   onPageChange,
-  onPageSizeChange,
 }: HelpdeskListPaginationFooterProps) {
   return (
     <div className="helpdesk-list-pagination">
-      <HintAction hint={helpTooltips.listUi.pageSize} ariaLabel="Ajuda: Por página">
-        <div className="helpdesk-list-pagination__page-size" role="group" aria-label="Por página">
-          <HelpdeskTablePageSizeSelect
-            pageSize={pageSize}
-            pageSizeOptions={[...HELPDESK_PAGE_SIZE_OPTIONS]}
-            onPageSizeChange={onPageSizeChange}
-          />
-        </div>
-      </HintAction>
       <HintAction hint={P.nav} ariaLabel="Ajuda: Paginação">
         <div className="helpdesk-list-pagination__nav">
           <HelpdeskPagination

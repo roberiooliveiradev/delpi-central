@@ -151,7 +151,7 @@
 
 .dashboard-helpdesk .helpdesk-list-pagination {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   column-gap: 1rem;
   row-gap: 0.5rem;
@@ -160,17 +160,8 @@
   border-top: 1px solid var(--helpdesk-border, var(--delpi-ui-border, #334155));
 }
 
-.dashboard-helpdesk .helpdesk-list-pagination__page-size {
-  grid-column: 1;
-  cursor: help;
-}
-
-.dashboard-helpdesk .helpdesk-list-pagination__page-size .delpi-ui-table-page-size {
-  margin: 0;
-}
-
 .dashboard-helpdesk .helpdesk-list-pagination__nav {
-  grid-column: 2;
+  grid-column: 1;
   min-width: 0;
   cursor: help;
 }
@@ -212,11 +203,6 @@
 }
 
 @media (max-width: 640px) {
-  .dashboard-helpdesk .helpdesk-list-pagination {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-helpdesk .helpdesk-list-pagination__page-size,
   .dashboard-helpdesk .helpdesk-list-pagination__nav {
     grid-column: 1;
   }
@@ -435,12 +421,23 @@
   min-width: 0;
 }
 
-.dashboard-helpdesk .helpdesk-list-primary-bar__actions {
-  display: inline-flex;
+/* Última linha do hero: grupo Filtros/Ordenar/Colunas/Tabela|Cards à direita (UX V3). */
+.dashboard-helpdesk .helpdesk-list-controls-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
-  margin-inline-start: auto;
+  justify-content: flex-end;
+  gap: 0.4rem 0.5rem;
+  min-width: 0;
+}
+
+/* Região superior da lista — «Por página» fora do hero (UX V3). */
+.dashboard-helpdesk .helpdesk-list-table-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .dashboard-helpdesk .helpdesk-list-secondary-bar {
@@ -808,11 +805,6 @@
   .dashboard-helpdesk .helpdesk-open-ticket {
     flex: 1 1 auto;
     justify-content: center;
-  }
-
-  .dashboard-helpdesk .helpdesk-list-primary-bar__actions {
-    width: 100%;
-    margin-inline-start: 0;
   }
 }
 

@@ -45,7 +45,6 @@ describe("Helpdesk list UX structural", () => {
     expect(page).not.toContain("HelpdeskHostDrawer");
     expect(page).not.toContain("HelpdeskFilterBarShell");
     expect(page).not.toContain("HelpdeskCompactPagination");
-    expect(page).not.toContain("HelpdeskTablePageSizeSelect");
     expect(page).toContain("HELPDESK_TICKET_LIST_VIEW_LAYOUT_KEY");
     expect(page).toContain("usePersistedViewLayout");
     expect(ui).toContain("createDashboardPageHero");
@@ -154,6 +153,56 @@ describe("Helpdesk list UX structural", () => {
       /\.delpi-ui-filter-builder__rules[\s\S]*?max-height:\s*min\(12\.5rem,\s*32vh\)/,
     );
     expect(css).toMatch(/\.delpi-ui-filter-builder__rules[\s\S]*?overflow-y:\s*auto/);
+  });
+
+  it("UX V3: hero com busca → chips → linha inferior direita de controles", () => {
+    const page = read("HelpdeskPage.tsx");
+    const css = read("../index.css");
+    /* Três faixas em ordem no hero: busca, chips, controles. */
+    const controls = page.slice(
+      page.indexOf('className="helpdesk-list-controls"'),
+      page.indexOf("</HelpdeskPageHero>"),
+    );
+    const iSearch = controls.indexOf("helpdesk-list-primary-bar");
+    const iChips = controls.indexOf("helpdesk-list-secondary-bar");
+    const iRow = controls.indexOf("helpdesk-list-controls-row");
+    expect(iSearch).toBeGreaterThan(-1);
+    expect(iChips).toBeGreaterThan(iSearch);
+    expect(iRow).toBeGreaterThan(iChips);
+    /* Busca sozinha na faixa primária — sem barra de ações junto ao campo. */
+    expect(controls).not.toContain("helpdesk-list-primary-bar__actions");
+    expect(css).not.toContain(".helpdesk-list-primary-bar__actions");
+    /* Ordem canônica na linha: Filtros → Ordenar → Colunas → Tabela|Cards. */
+    const row = controls.slice(iRow);
+    const iFilter = row.indexOf("TicketListFilterPopover");
+    const iSort = row.indexOf("TicketListSortPopover");
+    const iCols = row.indexOf("TableColumnVisibilityMenu");
+    const iToggle = row.indexOf("HelpdeskSegmentToggle");
+    expect(iFilter).toBeGreaterThan(-1);
+    expect(iSort).toBeGreaterThan(iFilter);
+    expect(iCols).toBeGreaterThan(iSort);
+    expect(iToggle).toBeGreaterThan(iCols);
+    /* A linha é alinhada à direita via CSS do MFE (layout glue, sem kit copiado). */
+    expect(css).toMatch(
+      /\.helpdesk-list-controls-row[\s\S]*?justify-content:\s*flex-end/,
+    );
+    /* «Por página» na região superior da lista, fora do hero. */
+    expect(page).toContain("helpdesk-list-table-meta");
+    expect(page).toContain("HelpdeskTablePageSizeSelect");
+    expect(css).toMatch(
+      /\.helpdesk-list-table-meta[\s\S]*?justify-content:\s*flex-end/,
+    );
+    expect(page.indexOf("helpdesk-list-table-meta")).toBeGreaterThan(
+      page.indexOf("</HelpdeskPageHero>"),
+    );
+    /* Rodapé só com navegação — sem seletor duplicado. */
+    const footer = read("../components/Pagination.tsx");
+    expect(footer).not.toContain("onPageSizeChange");
+    expect(footer).not.toContain("page-size");
+    expect(css).not.toContain(".helpdesk-list-pagination__page-size");
+    /* Limpar filtros migrou para a faixa de chips (contexto dos filtros ativos). */
+    const chipsBlock = controls.slice(iChips, iRow);
+    expect(chipsBlock).toContain("clearListFilters");
   });
 
   it("paginação usa kit + HintAction no rodapé (sem ícones ? do HelpTooltip)", () => {

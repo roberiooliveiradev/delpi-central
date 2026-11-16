@@ -99,6 +99,9 @@ export type DataTableSectionClassNames = {
   searchInput: string;
   searchHelp: string;
   toolbarExtra: string;
+  toolbarChips: string;
+  toolbarControls: string;
+  tableMeta: string;
   footer: string;
   embeddedSection: string;
   interactiveModifier: string;
@@ -178,12 +181,22 @@ export type DataTableSectionProps<T> = {
   toolbarPortalTarget?: HTMLElement | null;
   /**
    * `"hero"` reorganiza visualmente a mesma toolbar para o padrão de
-   * listagens com hero: busca dominante em linha própria, ações em
-   * seguida e grupo Tabela/Cards + `toolbarLeading` na última faixa.
-   * Combina com `toolbarPortalTarget`, mas também funciona inline.
-   * Opt-in e retrocompatível (`"default"` mantém a ordem histórica).
+   * listagens com hero: busca dominante em linha própria, `toolbarLeading`
+   * (chips) na faixa seguinte e o grupo de controles — extras do
+   * consumidor, extras nativos e Tabela/Cards — na última linha,
+   * alinhado à direita. Combina com `toolbarPortalTarget`, mas também
+   * funciona inline. Opt-in e retrocompatível (`"default"` mantém a
+   * ordem histórica).
    */
   toolbarLayout?: "default" | "hero";
+  /**
+   * Onde o seletor «itens por página» é renderizado. `"toolbar"`
+   * (padrão) mantém o comportamento histórico dentro da toolbar.
+   * `"table"` move o controle para a região superior da grade —
+   * padrão de listagens com hero, em que a toolbar fica no hero e a
+   * paginação pertence à tabela. Opt-in e retrocompatível.
+   */
+  pageSizePlacement?: "toolbar" | "table";
   /**
    * Posição de `toolbarExtra` em relação aos extras nativos (export,
    * fonte, Colunas). `"before"` antecipa os controles do consumidor —
@@ -306,6 +319,12 @@ export function dataTableSectionBemClasses(prefix: string): DataTableSectionClas
     searchInput: delpiUiClass(`${search}__input`, `${uiSearch}__input`),
     searchHelp: delpiUiClass(`${search}__help`, `${uiSearch}__help`),
     toolbarExtra: delpiUiClass(`${toolbar}__extra`, `${uiToolbar}__extra`),
+    toolbarChips: delpiUiClass(`${toolbar}__chips`, `${uiToolbar}__chips`),
+    toolbarControls: delpiUiClass(
+      `${toolbar}__controls`,
+      `${uiToolbar}__controls`,
+    ),
+    tableMeta: delpiUiClass(`${section}__table-meta`, `${uiSection}__table-meta`),
     footer: delpiUiClass(`${section}__footer`, `${uiSection}__footer`),
     embeddedSection: delpiUiClass(
       `${section} ${section}--embedded`,
@@ -386,6 +405,7 @@ export function DataTableSection<T>({
   toolbarLeading,
   toolbarPortalTarget,
   toolbarLayout = "default",
+  pageSizePlacement = "toolbar",
   toolbarExtraPlacement = "after",
   tableLayout,
   hidePaginationWhenSinglePage = false,
@@ -701,50 +721,92 @@ export function DataTableSection<T>({
       ? withBemModifier(sectionClassNames.toolbar, "hero")
       : sectionClassNames.toolbar;
 
-  const toolbarNode = showToolbar ? (
-    <div className={toolbarClass}>
-      {viewToggle || toolbarLeading ? (
-        <div className={sectionClassNames.searchGroup}>
-          {viewToggle}
-          {toolbarLeading}
-        </div>
-      ) : null}
-
-      {!hidePageSizeSelect ? (
-        <TablePageSizeSelect
-          pageSize={paginationSize}
-          pageSizeOptions={pageSizeOptions}
-          onPageSizeChange={handlePageSizeChange}
-        />
-      ) : null}
-
-      {!hideSearch ? (
-        <div className={sectionClassNames.searchGroup}>
-          <div className={sectionClassNames.search} role="search">
-            <Search size={16} aria-hidden="true" className={sectionClassNames.searchIcon} />
-            <input
-              type="search"
-              className={sectionClassNames.searchInput}
-              value={search}
-              placeholder={searchPlaceholder ?? labels.searchPlaceholder}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              aria-label={labels.searchAriaLabel}
-            />
-          </div>
-          {searchHint ? (
-            <HelpTooltip
-              content={searchHint}
-              ariaLabel={labels.searchHelpAriaLabel}
-              className={sectionClassNames.searchHelp}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
-      {hasToolbarExtra ? (
-        <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
-      ) : null}
+  const searchBox = !hideSearch ? (
+    <div className={sectionClassNames.search} role="search">
+      <Search size={16} aria-hidden="true" className={sectionClassNames.searchIcon} />
+      <input
+        type="search"
+        className={sectionClassNames.searchInput}
+        value={search}
+        placeholder={searchPlaceholder ?? labels.searchPlaceholder}
+        onChange={(event) => handleSearchChange(event.target.value)}
+        aria-label={labels.searchAriaLabel}
+      />
     </div>
+  ) : null;
+
+  const pageSizeSelect = !hidePageSizeSelect ? (
+    <TablePageSizeSelect
+      pageSize={paginationSize}
+      pageSizeOptions={pageSizeOptions}
+      onPageSizeChange={handlePageSizeChange}
+    />
+  ) : null;
+
+  const toolbarNode = showToolbar ? (
+    toolbarLayout === "hero" ? (
+      <div className={toolbarClass}>
+        {searchBox ? (
+          <div className={sectionClassNames.searchGroup}>
+            {searchHint ? (
+              <HelpTooltip
+                content={searchHint}
+                ariaLabel={labels.searchHelpAriaLabel}
+                wrap
+                placement="bottom"
+                className={sectionClassNames.searchHelp}
+              >
+                {searchBox}
+              </HelpTooltip>
+            ) : (
+              searchBox
+            )}
+          </div>
+        ) : null}
+
+        {toolbarLeading ? (
+          <div className={sectionClassNames.toolbarChips}>{toolbarLeading}</div>
+        ) : null}
+
+        {hasToolbarExtra ||
+        viewToggle ||
+        (pageSizePlacement === "toolbar" && pageSizeSelect) ? (
+          <div className={sectionClassNames.toolbarControls}>
+            {hasToolbarExtra ? nativeToolbarExtra : null}
+            {viewToggle}
+            {pageSizePlacement === "toolbar" ? pageSizeSelect : null}
+          </div>
+        ) : null}
+      </div>
+    ) : (
+      <div className={toolbarClass}>
+        {viewToggle || toolbarLeading ? (
+          <div className={sectionClassNames.searchGroup}>
+            {viewToggle}
+            {toolbarLeading}
+          </div>
+        ) : null}
+
+        {pageSizePlacement === "toolbar" ? pageSizeSelect : null}
+
+        {searchBox ? (
+          <div className={sectionClassNames.searchGroup}>
+            {searchBox}
+            {searchHint ? (
+              <HelpTooltip
+                content={searchHint}
+                ariaLabel={labels.searchHelpAriaLabel}
+                className={sectionClassNames.searchHelp}
+              />
+            ) : null}
+          </div>
+        ) : null}
+
+        {hasToolbarExtra ? (
+          <div className={sectionClassNames.toolbarExtra}>{nativeToolbarExtra}</div>
+        ) : null}
+      </div>
+    )
   ) : null;
 
   const renderToolbar = () => {
@@ -829,6 +891,10 @@ export function DataTableSection<T>({
 
           {toolbarFilters ? (
             <div className={sectionClassNames.toolbarFilters}>{toolbarFilters}</div>
+          ) : null}
+
+          {pageSizePlacement === "table" && !hidePageSizeSelect ? (
+            <div className={sectionClassNames.tableMeta}>{pageSizeSelect}</div>
           ) : null}
 
           {showCards ? (
