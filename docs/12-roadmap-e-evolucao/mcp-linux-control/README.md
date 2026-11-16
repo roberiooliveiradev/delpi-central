@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao GitHub/CI/host/Core, journal transacional, versao instalada e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PROD_PREFLIGHT_OPERATOR_PASS / P2.2h.2 OCI_APPROVAL_BINDING_PENDING / ACT_DISABLED**; Core, journal, proxy ACL, migracao e PREPARE pendentes | Permissoes separadas, digest OCI assinado, runtime readback, concorrencia/revogacao testadas |
+| A2.2 | Atestacao CI/host/Core, journal OCI e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PREFLIGHT_OPERATOR_PASS / P2.2h.2a MERGED / P2.2h.2b CANDIDATE_IN_PR / ACT_DISABLED** | Banco descartável, revisão independente, aprovação nominativa e rollback exigidos |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -243,3 +243,12 @@ O operador executou `public-hub-release-preflight.sh --plan prod` apos `git pull
 O CLI retornou ainda `promotion=BLOCKED approval=NOT_IMPLEMENTED readiness=NOT_VERIFIED rollback=NOT_VERIFIED`. Nao houve alteracao de container nem readback de release instalada. A imagem assinada **nao** esta executando e nenhuma parte do workflow ACT foi habilitada.
 
 Proximo desenvolvimento: vincular digest OCI assinado + ImageID anterior/novo, CI e hostproof com challenge fresco a proposta Core/journal, e aprovacao nominativa fora do chat, **antes** de construir qualquer executor ativo. A estrutura de PREPARE existe de forma inerte no Portal TI, mas ainda nao sela esses campos OCI. Contratos e evidencia no [plano P2.2h](./10-atlas-p22h-runtime-digest-promotion-plan.md). **Revisao independente, schema owner, HML e rollback continuam obrigatorios.**
+
+
+## 21. P2.2h.2b: binding OCI transacional no journal (candidato em PR, 16/11/2026)
+
+O contrato puro OCI P2.2h.2a foi integrado pela [PR #197](https://github.com/roberiooliveiradev/delpi-central/pull/197), sem habilitar PREPARE/ACT. Este incremento propõe o adapter `atlas_deploy_oci_journal.py` para gravar, em **uma única transação PostgreSQL**, proposta genérica, vínculo imutável da imagem OCI assinada e evento `prepared`, com challenge consumido uma única vez e advisory lock de idempotência.
+
+O novo [schema OCI candidato](./12-atlas-p22h2b-disposable-oci-bindings.sql) é **somente documental e para banco descartável no CI**. Não é migration versionada e não pode ser aplicado no PostgreSQL de produção. [Documentação do incremento](./13-atlas-p22h2b-oci-journal-integration.md) descreve provas, invariantes, testes e lacunas.
+
+**Estado:** código em PR; CI e verificador independente ainda devem confirmar; nenhuma rota, grant, migração PROD, executor ou operação de container foi adicionada. O sucesso do pré-verificador `PLAN_OK_NO_DEPLOY` continua somente leitura; `ACT_DISABLED`.
