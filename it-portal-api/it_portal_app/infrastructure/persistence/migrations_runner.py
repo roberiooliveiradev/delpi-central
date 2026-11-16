@@ -17,6 +17,7 @@ from pathlib import Path
 import psycopg
 from psycopg.rows import tuple_row
 
+from it_portal_app.config import settings
 from it_portal_app.infrastructure.persistence.db import (
     SCHEMA_NAME,
     db_configured,
@@ -31,6 +32,15 @@ MIGRATIONS_DIR = Path(os.getenv("IT_PORTAL_MIGRATIONS_DIR") or API_ROOT / "migra
 _MIGRATION_NAME = re.compile(r"^V(\d+)__(.+)\.sql$")
 # Serializa execuções concorrentes (réplicas/restarts simultâneos).
 _ADVISORY_LOCK_KEY = 0x17_9047
+_ATLAS_MIGRATION_NAME = "V016__atlas_deploy_oci_journal.sql"
+
+
+def _migration_explicitly_enabled(path: Path) -> bool:
+    """V016 may never run as a side effect of normal production deployment."""
+    return (
+        path.name != _ATLAS_MIGRATION_NAME
+        or settings.ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED is True
+    )
 
 
 class MigrationError(RuntimeError):
@@ -89,6 +99,9 @@ def run_migrations() -> list[str]:
                             f"checksum divergente em {path.name} — migration aplicada "
                             "é imutável; crie uma nova versão"
                         )
+                    continue
+                if not _migration_explicitly_enabled(path):
+                    logger.info("atlas_journal_schema_migration_skipped_default_off")
                     continue
                 try:
                     with conn.cursor() as cur:
