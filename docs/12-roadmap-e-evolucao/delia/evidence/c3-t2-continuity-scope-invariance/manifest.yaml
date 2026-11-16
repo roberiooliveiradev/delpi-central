@@ -1,0 +1,89 @@
+task_id: DELIA-C3-T2-CENTRALIZED-INVESTIGATION-CONTINUITY-AND-SCOPE-INVARIANCE-01
+phase: C3/T2
+cp_rq: R2 Continuity · R5 Multipage Integrity · INT2 Required Scope
+mode: CANONICAL_REANCHOR / CAUSAL_DIAGNOSIS / REUSE_BEFORE_DESIGN /
+  BOUNDED_IMPLEMENTATION / REAL_GENERALIZATION_EVAL
+reference_functional: 10a9fa875d0787a46da9b04312ae14a4f0c7a8e5
+base_head: 0af682713b4dcd5cd83bf150eeb4c5bdbd007b8b
+delivered_head: (to be reconciled at commit)
+
+scope:
+  functional_changes:
+    - delia-api/app/application/capability_provision/semantic_capability_support.py
+      (_strip_window_args)
+  test_changes:
+    - delia-api/tests/test_c3_t2_continuity_scope_invariance.py (new)
+  forbidden_surfaces_untouched:
+    - Keycloak, Core RBAC, Domain APIs, DAVI, TÉO, Automation Hub,
+      MCP providers, database, migrations, production runtime
+
+mechanism:
+  first_divergent_boundary: >
+    _strip_window_args — a canonicalização de escopo removia seletores de
+    janela comprovados (page/page_size/offset/limit/cursor…, depth < 2) mas
+    deixava o container esvaziado para trás. `params:{page,page_size}`
+    → `params:{}` produzia par `params=<opaque>` e digest divergentes de
+    `params` ausente, quebrando a identidade de consulta em
+    _invocation_scope e gerando marcador `__container__=params` espúrio
+    em _required_scope_pairs.
+  observed_live: >
+    INT2_A/INT2_E (eval or-qwen14b-a7b1dfa635af): página 1 sem `params`,
+    páginas 2/3 com `params` contendo SOMENTE seletores de janela →
+    escopo idêntico materialmente, grupos divergentes → INCONCLUSIVE
+    honesto com união real 40+40+29=109. INT2_E também declarou
+    required_args `params:{page:2}` → `params=<opaque:44136fa355b3678a>`
+    + `__container__=params` — escopo requerido indemonstrável.
+  fix: >
+    container não-vazio que esvazia EXCLUSIVAMENTE por remoção de
+    seletores de janela é descartado da forma canônica — nenhum contrato
+    de owner define escopo material para container que só carregava
+    controles de janela. Container originalmente vazio preservado
+    (equivalência vazio≡ausente não comprovada → fail-closed).
+  fix_three_points: >
+    (a) _strip_window_args: container esvaziado exclusivamente por
+    strip de janela é descartado; (b) _required_scope_pairs: par
+    opaco de container top-level removido (marcador __container__ é a
+    restrição demonstrável); (c) _invocation_scope:
+    _drop_empty_scope_containers — container com zero argumentos-folha
+    é forma de envelope, não escopo (params:{} ≡ ausente; contrato
+    TÉO provado live). Required-side preserva __container__ para
+    declared-empty — 'params domain must be empty' continua
+    contradizendo folhas materiais.
+  same_diff_resolves: >
+    INT2-REQUIRED-SCOPE-OPAQUE-PARAMS — digest byte-idêntico
+    (44136fa355b3678a) comprova que o opaco era o container esvaziado;
+    required_args só-janela canonicaliza para escopo vazio e
+    declared-empty para marcador exact-domain.
+
+anchor_class_of_change: C — selector/window canonicalization (não agregador)
+
+invariants_preserved:
+  - I-1 material filters divergent → separate groups (C14)
+  - I-2 cross-owner never united (R5-N3)
+  - I-3 capability/scope divergence (R5-N5)
+  - I-6 envelope-shape differences w/o leaf args normalize (C07);
+    material leaves never normalize (C14)
+  - I-9 declared-empty required_args keeps __container__ marker
+  - nested business field named `page` (depth>=2) is material (C06)
+  - duplicate pages do not manufacture coverage (C10)
+  - divergent totals never complete (C11)
+  - incomplete windows stay INCONCLUSIVE (C12)
+
+tests:
+  red: 4 (c01 union, c03 identity, c05 window variants,
+    declared_window_only marker) — baseline INCONCLUSIVE/divergent
+  green: 17/17
+  regression: delia-api full suite 100% exit 0 (~2184+)
+  live_eval: >
+    or-qwen14b-7d3a76451844 (INT1 ×14 generalização) +
+    or-qwen14b-66c95e020128 (INT2 ×15, fix-1 apenas) +
+    or-qwen14b-2d82d7348d62 (INT2 A/E/R5/G2, variante final):
+    A SATISFIED, R5 SATISFIED, G SATISFIED; E honesto (divergência
+    material real + budget); zero falso SATISFIED/COMPLETE/WRITE.
+
+residuals:
+  closed_or_remediated:
+    - R2-CONTINUITY-MULTIPAGE-GROUP-SPLIT (fix at canonicalization owner)
+    - INT2-REQUIRED-SCOPE-OPAQUE-PARAMS (same root cause, digest-proven)
+  unchanged:
+    - R4-AUTHZ-DENY-IDENTITY (needs restricted identity — out of scope)

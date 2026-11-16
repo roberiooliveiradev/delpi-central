@@ -2706,14 +2706,38 @@ def _strip_window_args(value: object, depth: int = 0) -> object:
     contract authorizes that interpretation, so it stays in scope
     (UNKNOWN_ARGUMENT_SEMANTICS → preserve). Non-Mapping structure is
     preserved as-is for the canonical digest.
+
+    A container that becomes empty solely through selector removal
+    (``params: {page: 2, page_size: 40}`` → ``{}``) leaves no material
+    residue: keeping the empty mapping would manufacture a scope
+    difference no owner contract defines — a continuation invoked with
+    only window selectors carries the SAME material scope as one
+    invoked without the container (INT2_A/E group-split root cause).
+    A container declared empty from the start is preserved HERE:
+    ``_required_scope_pairs`` needs it to emit the exact-domain
+    ``__container__`` marker (declared ``params:{}`` = "params domain
+    must be empty"). Invocation-side canonicalization additionally
+    normalizes zero-argument containers via
+    ``_drop_empty_scope_containers``.
     """
     if isinstance(value, Mapping):
-        return {
-            key: _strip_window_args(item, depth + 1)
-            for key, item in value.items()
-            if depth >= 2
-            or str(key).strip().casefold() not in _PAGINATION_ARG_KEYS
-        }
+        stripped: dict[object, object] = {}
+        for key, item in value.items():
+            if (
+                depth < 2
+                and str(key).strip().casefold() in _PAGINATION_ARG_KEYS
+            ):
+                continue
+            stripped_item = _strip_window_args(item, depth + 1)
+            if (
+                item
+                and isinstance(item, Mapping)
+                and isinstance(stripped_item, Mapping)
+                and not stripped_item
+            ):
+                continue
+            stripped[key] = stripped_item
+        return stripped
     if isinstance(value, (list, tuple)):
         return [_strip_window_args(item, depth) for item in value]
     return value
@@ -2769,6 +2793,31 @@ def _scope_pairs(value: object, prefix: str, depth: int) -> list[str]:
     return pairs
 
 
+def _drop_empty_scope_containers(value: object) -> object:
+    """Remove Mappings that contribute zero leaf arguments.
+
+    An empty object is an envelope shape, not a material argument:
+    observed owner contracts (``params`` filter dicts) treat an absent
+    and an empty container identically — ``{params:{}}`` and no
+    ``params`` key query the same set, as does a container emptied
+    recursively (``a:{b:{}}``). A container with ANY leaf keeps its
+    material difference.
+    """
+    if isinstance(value, Mapping):
+        stripped = {
+            key: _drop_empty_scope_containers(item)
+            for key, item in value.items()
+        }
+        return {
+            key: item
+            for key, item in stripped.items()
+            if not (isinstance(item, Mapping) and not item)
+        }
+    if isinstance(value, (list, tuple)):
+        return [_drop_empty_scope_containers(item) for item in value]
+    return value
+
+
 def _invocation_scope(args: object) -> tuple[str, ...]:
     """Bounded canonical identity of the query scope.
 
@@ -2783,7 +2832,7 @@ def _invocation_scope(args: object) -> tuple[str, ...]:
     """
     if not isinstance(args, Mapping):
         return ()
-    stripped = _strip_window_args(args)
+    stripped = _drop_empty_scope_containers(_strip_window_args(args))
     try:
         canonical = json.dumps(
             stripped, sort_keys=True, default=str, separators=(",", ":")
@@ -2817,7 +2866,26 @@ def _required_scope_pairs(args: object) -> tuple[str, ...]:
     if not isinstance(args, Mapping):
         return ("__required_scope_incomplete__=true",)
     stripped = _strip_window_args(args)
-    pairs = _scope_pairs(stripped, "", 0)
+    container_names = {
+        str(key).strip().casefold()
+        for key, item in stripped.items()
+        if isinstance(item, Mapping)
+    }
+    # A declared Mapping already yields the exact-domain
+    # ``__container__=<name>`` marker below; its whole-map opaque leaf
+    # (an empty or unrenderable container) would demand a literal
+    # ``name=<opaque>`` echo no leaf-structured invocation produces,
+    # making ``required_args {params:{}}`` permanently unprovable.
+    # The marker is the provable constraint: any material leaf under
+    # the declared domain still narrows scope and stays unproven.
+    pairs = [
+        pair
+        for pair in _scope_pairs(stripped, "", 0)
+        if not (
+            "=<opaque:" in pair
+            and pair.partition("=")[0] in container_names
+        )
+    ]
     tokens = list(pairs[:32])
     if len(pairs) > 32:
         tokens.append("__required_scope_incomplete__=true")
