@@ -5795,3 +5795,27 @@ Pipeline lógico, módulos internos somente se necessários:
 ### 94.28.3 Gates pendentes
 
 Deploy e ChatGPT E2E dependem de aceite explícito da exceção do verificador pelo owner competente (§94.27.5 G24-E) e de Infra. Código publicado para revisão com residual; nenhuma autoridade, AuthZ, contrato MCP ou write foi alterado.
+
+## §94.29 — G24-R1: correção de papéis e isolamento de fontes na validação normativa
+
+**TASK_ID:** `EVA-E1-VAL01-G24-R1-NORMATIVE-SOURCE-ISOLATION-AND-ROLE-CORRECTNESS-01`  
+**Decisão:** Issue #131 #6921454421 · **Defeitos detectados em:** job MCP real `aj-f2097d6dc7d24d3b`.
+
+### 94.29.1 Causas-raiz
+
+1. **Papel errado:** `_normative_block` avaliava `parent_description`/`bom_desc_by_code[parent]` como PI sem checar se o pai era 50xx — para ocorrências PI filhas do PA `90263680`, produzia `pi_drawing_normative` com sujeito `90263680` (`NOT_APPLICABLE` espúrio).
+2. **Mistura de fontes:** `pi_desc = pi_draw or pi_bom` e `mp_descs = [draw, bom]` combinavam descrições de fontes distintas numa única coerência sem declarar o cruzamento.
+
+### 94.29.2 Correção (menor diff)
+
+- `parent_is_pi = is_pi50_code(parent_code)` gateia `pi_*_normative` e toda coerência; PA nunca é sujeito normativo PI.
+- `pi_bom_coherence` passa a ser **lista de 3 comparações tipadas**: `SAME_SOURCE` DRAWING×DRAWING, `SAME_SOURCE` TOTVS×TOTVS, `CROSS_SOURCE` PI-draw × MP-totvs — cada uma com `source_pair`, `pi_code`, `mp_code`, `occurrence_id`, `review_status: PENDING_ENGINEERING` e `source_pair` embutido em cada check.
+- Ausência de entrada → `INCONCLUSIVE` explícito por par ("absence is never filled from the other source"); pai não verificado → `INCONCLUSIVE`.
+- Regras normativas G24 intocadas: 1038/MABR `OWNER_BLOCKED`, `MM≠MM2`, posição E/D `NOT_APPLICABLE`, alias lexical não presumido.
+
+### 94.29.3 Evidências
+
+- Testes: **35/35** G24+R1 PASS (8 novos: papel PA, pares independentes, sem fallback, cross-source, D×D inconclusivo, dois PIs mesmo MP, pai ambíguo, contrato).
+- Regressão (worktree @ d3af593469+fix, container infra-engineering-api): **1390 pass, 2 fail, 21 skip** — `test_d16_attendance_flags` pré-existente idêntico à baseline G24; `test_lmp_domain` falhou só sem mount `/api-delpi` (artefato de ambiente, passa com mount); `test_rbac_resolution` passou.
+- Verificador: `INCONCLUSIVE` r1 — engine devin não autenticada; `.git/delpi-verifier/requests/g24-r1-source-isolation-r1.md`.
+- Contrato `normative_description.v1` preservado; `pi_bom_coherence` dict→lista tipada é correção de defeito do próprio campo (consumidor interno).
