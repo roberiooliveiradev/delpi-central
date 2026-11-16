@@ -10,6 +10,8 @@ on:
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_seal.py"
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_attestation.py"
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_attestation.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_registry.py"
+      - "it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
@@ -25,6 +27,8 @@ on:
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_seal.py"
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_attestation.py"
       - "it-portal-api/tests/unit/test_atlas_deploy_oci_attestation.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_registry.py"
+      - "it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
@@ -70,7 +74,8 @@ jobs:
           PYTHONPATH=it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \
             it-portal-api/tests/integration/test_atlas_postgres_journal.py \
             it-portal-api/tests/unit/test_atlas_deploy_oci_seal.py \
-            it-portal-api/tests/unit/test_atlas_deploy_oci_attestation.py
+            it-portal-api/tests/unit/test_atlas_deploy_oci_attestation.py \
+            it-portal-api/tests/unit/test_atlas_deploy_oci_registry.py
 
   disposable-docker:
     name: Real Docker read-only inspection, ephemeral only
