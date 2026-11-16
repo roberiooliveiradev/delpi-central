@@ -89,13 +89,13 @@ Cada fase com o verificador (`delpi-verifier`) antes do commit e do deploy; AC v
 |---|---|---|
 | D1 | As 9 permissões `financial.*` **não** são herdadas: as áreas financeiras ficam sob `controllership-finance.access`; `manage` segue para gestão. Ampliação de audiência aceita pelo owner | DECIDIDO |
 | D2 | Todos com acesso veem as duas filiais (sem permissão por filial) | DECIDIDO |
-| D3 | As rotas do Financeiro vão para a `controllership-finance-api` (ADR-004) | DECIDIDO — confirmar se a integração Questor fica na `financial-api` |
+| D3 | As rotas do Financeiro vão para a `controllership-finance-api` ([ADR-004](../adr/ADR-004-fusao-portal-financeiro.md)); a integração Questor **fica na `financial-api` por enquanto** (LNF e Auditoria de Entradas dependem dela em PROD). Futuro: §8 | DECIDIDO |
 | D4 | **Duas páginas**, não uma: o R10 é parte do Fechamento mensal; a do Financeiro é acompanhamento diário. Ver §7 | DECIDIDO (revisto) |
-| D5 | Notas Fiscais (Questor) no card «Notas fiscais» | a confirmar |
+| D5 | Notas Fiscais (Questor) no card «Notas fiscais», junto da Auditoria de Entradas e do LNF | DECIDIDO |
 | D6 | `dashboard-financial`, `financeiro-centro-custo` e `financeiro-inadimplencia` seguem no ar; desativar só com autorização do owner, depois da centralização | DECIDIDO |
 | D7 | Indicadores e Gestão à vista entram no Portal | DECIDIDO |
-| — | Exportar: `access` ou `manage` | a confirmar |
-| — | Plugin `financial` (`/apps/financial`): redireciona no corte; desativar só com autorização | a confirmar |
+| D8 | Exportar fica com `controllership-finance.access` (quem vê exporta) | DECIDIDO |
+| D9 | Plugin `financial` (`/apps/financial/*`) redireciona para as páginas do Portal no corte; desativar só com autorização do owner | DECIDIDO |
 
 ## 7. Despesas por centro de custo — Financeiro × R10 (conferido no código)
 
@@ -110,3 +110,9 @@ Não seguem o mesmo padrão; são motores diferentes na api-delpi e respondem pe
 | Saídas | resumo, série, ranking de CC e fornecedores, lançamentos, filtros | lista com universo cálculo/investigação, findings `POSSIBLE_DIVERGENCE`, export, CLARA |
 
 O doc 126 §4 já registrava: a view é `REUSE_PARTIAL` — «Não transplantar seleção da view» (set/2026 f01: 448 linhas na view; 269 de 353 do R10 cobertas). Consequência para a fusão: as duas páginas ficam, com nomes e ajuda que deixem claro a diferença (eixo de data e seleção), para o usuário não comparar números que não são comparáveis. O M0 mede a diferença em 2026-10 só para documentar a ajuda, não para escolher motor.
+
+## 8. Futuro (registrado, fora desta fusão): Questor na `external-data-api`
+
+Decisão do owner (16/11/2026): depois da fusão, as funcionalidades do Questor saem da `financial-api` e vão para a `external-data-api` — o serviço que já é dono compartilhado das integrações com fontes externas (CNPJ, dados de mercado; contrato `shared-integrations/EXTERNAL-DATA-API-CONTRACT-FREEZE-X0.md`). A `controllership-finance-api` passa a ser a BFF que consome a `external-data-api` para NF-e/CT-e recebidas, XML, DANFE/DACTE (LNF, Auditoria de Entradas e a página Notas Fiscais).
+
+Pontos a planejar quando a frente abrir: contrato aditivo da `external-data-api` para o Questor (sem AuthZ de usuário lá — fica na BFF); credenciais e cache de XML por chave (hoje V027 na CF-API, 90 dias); troca dos gateways do LNF e da Auditoria com paridade e rollback; só então a `financial-api` pode ser desativada (com autorização do owner).
