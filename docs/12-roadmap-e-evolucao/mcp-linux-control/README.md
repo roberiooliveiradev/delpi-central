@@ -3,7 +3,7 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-16
-> **Situacao em 2026-11-16:** P1 READ operando; P2.1 integrado; P2.2a-f em codigo; **P2.2g CI_SIGNED_RELEASE_PASS; P2.2h.1 PROD_PREFLIGHT_OPERATOR_PASS** no push `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`, manifesto `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`, atestacao Sigstore/SLSA verificada. **PROD NAO PROMOVIDA / HOST NAO VERIFICADO**; runtime, HML, permissao Core, journal/migrations, PREPARE/ACT e verificador independente pendentes.
+> **Situacao em 2026-11-16:** P1 READ operando; P2.1 integrado; P2.2a-f em codigo; **P2.2g CI_SIGNED_RELEASE_PASS; P2.2h.1 PROD_PREFLIGHT_OPERATOR_PASS; P2.2h.2b MERGED_PR_199; P2.2h.2c REVIEW_CANDIDATE_ONLY** no push `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`, manifesto `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`, atestacao Sigstore/SLSA verificada. **PROD NAO PROMOVIDA / HOST NAO VERIFICADO**; runtime, HML, permissao Core, journal/migrations, PREPARE/ACT e verificador independente pendentes.
 > **Repositorio:** `roberiooliveiradev/delpi-central`; PRs integradas [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) e [#193](https://github.com/roberiooliveiradev/delpi-central/pull/193). A P2.2g possui artefato OCI assinado, **nao equivale a deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao CI/host/Core, journal OCI e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PREFLIGHT_OPERATOR_PASS / P2.2h.2a MERGED / P2.2h.2b CANDIDATE_IN_PR / ACT_DISABLED** | Banco descartável, revisão independente, aprovação nominativa e rollback exigidos |
+| A2.2 | Atestacao CI/host/Core, journal OCI e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PREFLIGHT_OPERATOR_PASS / P2.2h.2a MERGED / P2.2h.2b MERGED_PR_199 / P2.2h.2c REVIEW_CANDIDATE_ONLY / ACT_DISABLED** | Banco descartável, revisão independente, aprovação nominativa e rollback exigidos |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -252,3 +252,9 @@ O contrato puro OCI P2.2h.2a foi integrado pela [PR #197](https://github.com/rob
 O novo [schema OCI candidato](./12-atlas-p22h2b-disposable-oci-bindings.sql) é **somente documental e para banco descartável no CI**. Não é migration versionada e não pode ser aplicado no PostgreSQL de produção. [Documentação do incremento](./13-atlas-p22h2b-oci-journal-integration.md) descreve provas, invariantes, testes e lacunas.
 
 **Estado:** código em PR; CI e verificador independente ainda devem confirmar; nenhuma rota, grant, migração PROD, executor ou operação de container foi adicionada. O sucesso do pré-verificador `PLAN_OK_NO_DEPLOY` continua somente leitura; `ACT_DISABLED`.
+
+## 22. P2.2h.2c: pré-validação Core e prévia de revisão, sem ACT (16/11/2026)
+
+PR [#199](https://github.com/roberiooliveiradev/delpi-central/pull/199) integrada à main; journal OCI transacional em código, migration não aplicada. O incremento P2.2h.2c adiciona apenas contrato Python **pure/inert** de revisão por usuário humano, permissões Core candidatas `it-portal.deploy.view` e `it-portal.deploy.approve`, janela temporal e proibição de autoaprovação. Retorno é somente `review_candidate_only`, nunca aprovação real. A prévia visual isolada em `plugins/it-portal/src/features/deploy-approvals/` exibe SHA/digest/ImageIDs, mas não está registrada em App, rotas, capabilities ou navegação; ambos botões permanentemente desabilitados.
+
+**Invariante operacional:** deploy manual existente do Git/Docker/Compose continua inalterado e sem dependência do ATLAS; mudança manual de runtime deve invalidar apenas planos ATLAS desatualizados. **Não há endpoint, grant, DB migration, restart, autorização externa ou ACT.** [Contrato de revisão P2.2h.2c](./14-atlas-p22h2c-approval-review-candidate.md). Revisor `delpi-verifier` ainda pendente. Próximo passo é autorizar permissões Core com o owner e construir GET real somente leitura antes de considerar aprovação POST.
