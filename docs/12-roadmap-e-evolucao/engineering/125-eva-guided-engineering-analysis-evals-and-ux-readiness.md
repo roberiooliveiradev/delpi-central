@@ -102,10 +102,12 @@ Critério de aceite OWNER: nenhuma invenção de valores, rótulos consistentes,
 ## 8. DEPLOY
 
 ```text
-COMMIT_SHA    (preencher após push)
+COMMIT_SHA    4e88f1d8380de76f1172bb8c1913b9213e588e79
+PUSH_VERIFIED origin/main == 4e88f1d838
 SCOPE         tests + docs apenas — zero delta de runtime
-DEPLOY        server pull sync; rebuild dispensado (nenhum arquivo de
-              runtime alterado — justificativa registrada)
+DEPLOY        server pull sync (HEAD=4e88f1d838); rebuild dispensado
+              (nenhum arquivo de runtime alterado — justificativa
+              registrada); delpi-engineering-api healthy
 ```
 
 ## 9. RESIDUAIS
