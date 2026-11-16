@@ -4,6 +4,7 @@ import pytest
 
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_sql import (
     build_conversion_cohort, build_conversion_page_sql, build_conversion_summary_sql,
+    build_conversion_batch_sql,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_repository import (
     PurchaseRequestScPcConversionRepository,
@@ -14,7 +15,22 @@ def test_cohort_uses_final_scr_release_not_sc_creation():
     cte, params, filters = build_conversion_cohort(
         branches=["01", "02"], date_from="2026-10-01", date_to="2026-10-31",
     )
-    assert params == ["01", "02", "20261031", "20261001", "20261031"]
+    assert params == [
+        "01", "02", "20261001", "20261031",
+        "20261031", "20261001", "20261031",
+    ]
+    assert "WITH release_candidates AS" in cte
+    assert "SCR.CR_DATALIB >= ? AND SCR.CR_DATALIB <= ?" in cte
+    assert "SC1.C1_FILIAL = C.branch" in cte
+    assert "C7.C7_FILIAL = E.branch" in cte
+    assert "C7.C7_NUMSC = E.request_number" in cte
+    assert "RTRIM(C7.C7_NUMSC) = E.request_number" not in cte
+    batch = build_conversion_batch_sql(cte)
+    assert batch.count("WITH release_candidates AS") == 1
+    assert "SELECT * INTO #sc_pc_conversion FROM measured" in batch
+    assert "FROM #sc_pc_conversion" in batch
+    assert "DROP TABLE #sc_pc_conversion" in batch
+    assert "SET NOCOUNT ON" in batch
     assert filters["date_from"] == "2026-10-01"
     assert "SCR010" in cte and "SC1010" in cte and "SC7010" in cte
     assert "RTRIM(SCR.CR_STATUS) = '03'" in cte
@@ -70,8 +86,16 @@ class FakeRepository(PurchaseRequestScPcConversionRepository):
                     "avg_days": 2, "same_day": 0,
                 },
             ]
+        raise AssertionError("Paginated requests must use one SQL batch")
+
+    def execute_query_multiple(self, sql, params):
+        assert "SELECT * INTO #sc_pc_conversion FROM measured" in sql
+        assert "FROM #sc_pc_conversion" in sql
+        assert sql.count("WITH release_candidates AS") == 1
         assert params[-2:] == (0, 25)
         return [
+            {"data": self.execute_query(sql, params[:-2])},
+            {"data": [
             {
                 "branch": "01", "request_number": "171945",
                 "final_approval_date": "2026-10-10",
@@ -87,6 +111,7 @@ class FakeRepository(PurchaseRequestScPcConversionRepository):
                 "conversion_status": "pending",
                 "conversion_days": None,
             },
+            ]},
         ]
 
 
