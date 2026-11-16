@@ -6129,3 +6129,36 @@ FALSE_PASS_RISKS: nenhum identificado (fail-closed em todos os caminhos incertos
 ### 94.34.10 Governança
 
 `CODE_CHANGED: NO` · `DEPLOY_EXECUTED: NO` · `BUSINESS_DATA_WRITES: 0` · `AUTOMATIC_NC: false` · `ENGINEERING_APPROVAL: NOT_APPROVED` (motor segue CANDIDATE). Caracterização executada no container produtivo — leitura apenas.
+
+
+## §94.35 — G25-L1: correção de seleção e validação normativa MP 1009
+
+**TASK_ID:** `EVA-E1-VAL01-G25-L1-MP1009-SUBTYPE-DISPATCH-AND-NORMATIVE-EVALUATORS-01` · **Decisão:** Issue #131 #6926223972 · **NO_DEPLOY** neste pacote.
+
+### 94.35.1 Causa-raiz e correção (G-01)
+
+**Causa-raiz:** `resolve_applicability` roteava **todo** o grupo 1009 para `_eval_isolator_1009`; a regra `MP-1009-PREFIX` (prefixo `ISOLADOR`) produzia `VIOLATION_CANDIDATE` em descrições oficiais conformes de INSERTO e CONECTOR.
+
+**Correção:** dispatcher `_eval_1009` seleciona o avaliador pelo **prefixo ITEM** (marcador normativo de subtipo — cada estrutura 1009 fixa o próprio prefixo). Subtipo ausente/desconhecido → regra `MP-1009-SUBTYPE` INCONCLUSIVE, **sem** avaliador arbitrário. Novos avaliadores:
+
+- `_eval_insert_1009` — `MP-1009I-*`: prefixo, TIPO (MACHO/FEMEA/MÓDULO/CEGO/FALSO/BLINDADO), VIAS/POLOS, LINHA/SÉRIE (HAN *), **BITOLA opcional → NOT_APPLICABLE quando ausente** (a norma a declara opcional), OBS, CERT.
+- `_eval_connector_1009` — `MP-1009C-*`: prefixo, TIPO (MODULAR/PORTA SOQUETE/RETO/ANGULAR), Nº VIAS, COR, OBS, CERT.
+- `_eval_isolator_1009` — **intocado**.
+
+`applied_ruleset` reflete o subtipo detectado (`MP_ISOLATOR_1009`/`MP_INSERT_1009`/`MP_CONNECTOR_1009` com refs de seção próprias) — contrato `normative_description.v1` preservado, mudança aditiva.
+
+### 94.35.2 Evidências
+
+- **Fixtures oficiais:** `ISOLADOR NYLON RETO 6,3 PT UL94 V2` → PASS; `INSERTO FEMEA 10 POLOS HAN D 0,14-2,50MM2 CRIMP UL` → **PASS (antes: VIOLATION_CANDIDATE)**; `CONECTOR MODULAR 3 VIAS AL C/TRAVA UL` → **PASS (antes: VIOLATION_CANDIDATE)**.
+- **10 testes L1:** subtipos, bitola opcional, subtipo ambíguo (zero regras de avaliador), descrição incompleta, prefixo identificado, 3 fontes (DRAWING/TOTVS/CANDIDATE), isolamento normativo, integração comparador com gates F01/F02.
+- **64/64** testes do arquivo; **suíte 1461 pass, 21 skip, 1 deselect (D16) + 2 falhas PRÉ-EXISTENTES** (`test_probe_route_not_in_production_openapi`, `test_only_authorized_business_routes_exposed` — rotas `/v1/product-registration/*/comments` do commit concorrente `2c3ab3c709` Issue #207 sem atualização de `ALLOWED_BUSINESS_PATHS`; owner: frente PRC).
+- F01/F02: regressão preservada (pais por fonte, divergência, cross `checks=[]`).
+- Verificador: `INCONCLUSIVE` r1 — engine devin `Not logged in` (8ª ocorrência). Request `.git/delpi-verifier/requests/g25-l1-mp1009-dispatch-r1.md`.
+
+### 94.35.3 Correção documental G-02
+
+Contagem do grupo 1008 em §94.34.3: são **sete** estruturas sem cobertura específica (PINO, FORQUILHA, ILHÓS/TUBULAR, LINGUETA, OLHAL/ANZOL, GENÉRICO, LUVA/EMENDA) de **oito** documentadas — FASTON/BANDEIRA é a única implementada.
+
+### 94.35.4 Residual
+
+`G-01` fechado funcionalmente; verificação independente efetiva e liberação produtiva permanecem gates da Coordination. G-02 a G-07 inalterados (lotes futuros).
