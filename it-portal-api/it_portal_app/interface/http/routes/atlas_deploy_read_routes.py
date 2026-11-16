@@ -19,10 +19,8 @@ from it_portal_app.domain.errors import PersistenceUnavailableError
 from it_portal_app.infrastructure.persistence.atlas_deploy_read_repository import (
     PostgresAtlasDeployReadRepository,
 )
-from it_portal_app.interface.http.authz import ACCESS, actor_from, authorize_write
+from it_portal_app.interface.http.authz import ACCESS, ATLAS_DEPLOY_VIEW, actor_from, authorize_write
 from it_portal_app.interface.http.schemas import ERROR_RESPONSES, Envelope
-
-ATLAS_DEPLOY_VIEW = "it-portal.deploy.view"
 
 router = APIRouter(
     tags=["ATLAS Journal (read-only)"],
