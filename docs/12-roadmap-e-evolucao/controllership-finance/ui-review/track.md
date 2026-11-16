@@ -396,3 +396,9 @@ Residuais → U15: fundo branco do BarSeriesChart no tema escuro (padrão do dec
 | Residual | P4b — lasca dia 0 em `ChartSeriesBar` (exige kit; proibido nesta U15) |
 
 Pedido ao owner: conferência visual em PROD (tema escuro do gráfico, daily com day, hero 390, KPIs 2 col).
+
+### Revisão do Claude sobre U15 (16/11) — ACCEPT_WITH_RESIDUAL
+
+PROD, 1440 e 390. PASS: P2 (com `day` selecionado o diário mantém os 7 dias, selecionado destacado), P3 (hero em 390 sem corte, 3 botões na tela), P4a (KPIs em 2 colunas).
+
+Residuais → U15R: **P1 pela metade** — a medição olhou o contêiner (transparente), mas o `rect.__plot-area` segue com `fill="#ffffff"` (o kit aceita `chartParts.plotArea.style.fill`); valor de KPI com reticências («R$ 136.125,…» em 1440 com filtro; «R$ 1,06 …» em 390); ícone do KPI sobre o título em 390; lasca do dia 0 (introduzida pelo K1 da U14R2, não é residual de terceiros).
