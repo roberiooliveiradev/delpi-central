@@ -727,6 +727,20 @@
 /* U15R R1: Evolução por dia usa ChartViewShell (eixo Y do MultiTypeSeriesChart). */
 .dashboard-controllership-finance .cf-analysis-daily-chart {
   min-width: 0;
+  background: transparent;
+}
+
+/* Tema escuro: nenhum fundo/plot branco no diário (MultiType / Recharts). */
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .recharts-wrapper,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .recharts-surface,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .delpi-ui-multi-type-series-chart,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .delpi-ui-chart-view-shell,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .delpi-ui-chart-view-shell__plot,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .cf-chart-view-shell,
+[data-theme="dark"] .dashboard-controllership-finance .cf-analysis-daily-chart .cf-chart-view-shell__plot {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* AC-TAB-3 / U14R H2: kit usa width:max-content; forçar caber no wrap em 1440. */

@@ -57,27 +57,45 @@ test.describe("U15R — medições HML", () => {
           '[aria-label="Evolução diária de ocorrências"]',
         );
         if (!root) throw new Error("chart ausente");
-        const whites: Array<{ tag: string; fill: string; bg: string }> = [];
+        const whites: Array<{
+          tag: string;
+          className: string;
+          fill: string;
+          bg: string;
+          w: number;
+          h: number;
+        }> = [];
+        const opaqueWhite = (value: string | null | undefined) => {
+          if (!value) return false;
+          const v = value.trim().toLowerCase();
+          if (v === "none" || v === "transparent") return false;
+          if (v === "#fff" || v === "#ffffff" || v === "white") return true;
+          return /^rgba?\(\s*255\s*,\s*255\s*,\s*255(\s*,\s*1(\.0+)?)?\s*\)$/.test(
+            v,
+          );
+        };
         const nodes = [root, ...Array.from(root.querySelectorAll("*"))];
         for (const node of nodes) {
           const el = node as HTMLElement;
-          const attrFill = el.getAttribute("fill");
           const cs = getComputedStyle(el);
-          const fill = attrFill || cs.fill;
+          if (cs.display === "none" || cs.visibility === "hidden") continue;
+          if (Number(cs.opacity || "1") === 0) continue;
+          const rect = el.getBoundingClientRect();
+          // Só o que pinta na tela (H6): área zero não conta.
+          if (rect.width < 1 || rect.height < 1) continue;
+          const attrFill = el.getAttribute("fill");
+          const fill = attrFill && attrFill !== "none" ? attrFill : cs.fill;
           const bg = cs.backgroundColor;
-          const opaqueWhite = (value: string | null | undefined) => {
-            if (!value) return false;
-            const v = value.trim().toLowerCase();
-            if (v === "#fff" || v === "#ffffff" || v === "white") return true;
-            return /^rgba?\(\s*255\s*,\s*255\s*,\s*255(\s*,\s*1(\.0+)?)?\s*\)$/.test(
-              v,
-            );
-          };
           if (opaqueWhite(fill) || opaqueWhite(bg)) {
             whites.push({
               tag: el.tagName.toLowerCase(),
+              className: String(
+                (el as SVGElement).className?.baseVal ?? el.className ?? "",
+              ).slice(0, 160),
               fill: String(fill ?? ""),
               bg: String(bg ?? ""),
+              w: Math.round(rect.width),
+              h: Math.round(rect.height),
             });
           }
         }
