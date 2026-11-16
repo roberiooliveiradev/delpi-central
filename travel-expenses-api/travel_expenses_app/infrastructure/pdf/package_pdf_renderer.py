@@ -166,7 +166,7 @@ class TravelPackagePdfRenderer:
             rows.append(
                 [
                     _text(expense.get("expenseDate")),
-                    labels.get(category_id, category_id),
+                    (labels.get(category_id, category_id) + {"own_vehicle": " / Veículo próprio", "ride_hailing": " / Aplicativo", "public_transport": " / Público"}.get(expense.get("transportMode"), "")),
                     _text(expense.get("merchant")),
                     _money(amount),
                     str(len(expense.get("receipts") or [])),
@@ -189,6 +189,14 @@ class TravelPackagePdfRenderer:
             )
         )
         story.append(table)
+        for expense in expenses:
+            if expense.get("transportMode") == "own_vehicle":
+                story.append(Paragraph(
+                    f"Veículo próprio: {_text(expense.get('distanceKm'))} km x "
+                    f"{_money(expense.get('rateBrlPerKm'))}/km = {_money(expense.get('amountBrl'))}. "
+                    f"{_text(expense.get('notes'))}",
+                    styles["Normal"],
+                ))
         story.append(Spacer(1, 18))
         story.append(Paragraph("Totais por categoria", styles["Heading3"]))
         story.append(Spacer(1, 6))
@@ -240,7 +248,7 @@ class TravelPackagePdfRenderer:
         story.append(Spacer(1, 16))
         story.append(
             Paragraph(
-                "Documento de rascunho — ainda não enviado ao financeiro.",
+                "Prestação de despesas de viagem — documento gerado pelo sistema.",
                 styles["Italic"],
             )
         )
