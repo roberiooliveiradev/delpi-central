@@ -3,7 +3,7 @@
 > **Projeto:** ATLAS — Infraestrutura Linux e Orquestracao de Operacoes DELPI
 > **Owner:** TI / Minha DELPI
 > **Atualizacao:** 2026-11-16
-> **Situacao em 2026-11-16:** P1 READ operando; P2.1 integrado; P2.2a-f em codigo; **P2.2g CI_SIGNED_RELEASE_PASS; P2.2h.1 PROD_PREFLIGHT_OPERATOR_PASS; P2.2h.2b MERGED_PR_199; P2.2h.2c MERGED_PR_202 / SELF_APPROVAL_ALLOWED_PR_203_MERGED; P2.2h.2d MERGED_PR_205 / PROD_GET_CODE_PRESENT_BUT_OFF; P2.2h.2e ACTIVATION_PREP_IN_PR** no push `f81ddd0075de1e4ef8bb68ca58791e9c43e70759`, manifesto `sha256:4689d4538134e5d9cb9de421569a132f733423f031300f160174e65e9853385a`, atestacao Sigstore/SLSA verificada. **PROD NAO PROMOVIDA / HOST NAO VERIFICADO**; runtime, HML, permissao Core, journal/migrations, PREPARE/ACT e verificador independente pendentes.
+> **Situacao em 2026-11-16:** P1 READ confirmado; P2.1 integrado; P2.2a–f em codigo; P2.2g OCI_SIGNED_CI_PASS; P2.2h.1 PROD_PREFLIGHT_OPERATOR_PASS; P2.2h.2b PR #199, P2.2h.2c PRs #202/#203 e P2.2h.2d PR #205 integradas; **P2.2h.2e PR #206 integrada e VIEW_ONLY_PROD_OPERATOR_CONFIRMED** (V016 instalada, role DB exclusiva e tela de consulta com zero propostas). **O release OCI assinado ainda nao foi promovido por digest em PROD; PREPARE/approval/ACT e executor isolado continuam pendentes.** `delpi-verifier` independente e testes negativos end-to-end ainda nao comprovados. Evidencias e pendencias em [registro de ativacao](./16-atlas-journal-v016-core-view-activation-plan.md).
 > **Repositorio:** `roberiooliveiradev/delpi-central`; PRs integradas [#184](https://github.com/roberiooliveiradev/delpi-central/pull/184), [#191](https://github.com/roberiooliveiradev/delpi-central/pull/191) e [#193](https://github.com/roberiooliveiradev/delpi-central/pull/193). A P2.2g possui artefato OCI assinado, **nao equivale a deploy**.
 > **Diretriz de produto:** objetivo principal = deploy controlado sob demanda; melhoria da telemetria geral Linux congelada ate nova prioridade.
 
@@ -38,7 +38,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
-| A2.2 | Atestacao CI/host/Core, journal OCI e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PREFLIGHT_OPERATOR_PASS / P2.2h.2a MERGED / P2.2h.2b MERGED_PR_199 / P2.2h.2c MERGED_PR_202 / SELF_APPROVAL_ALLOWED_PR_203_MERGED / P2.2h.2d MERGED_PR_205 / PROD_FLAG_OFF / P2.2h.2e V016_CORE_MANIFEST_PREP_IN_PR / ACT_DISABLED** | Banco descartável, revisão independente, aprovação nominativa e rollback exigidos |
+| A2.2 | Atestacao CI/host/Core, journal OCI e API PREPARE | **P2.2g SIGNED_CI_PASS / P2.2h.1 PREFLIGHT_OPERATOR_PASS / P2.2h.2b/c/d MERGED / P2.2h.2e VIEW_ONLY_PROD_OPERATOR_CONFIRMED / PREPARE_INATIVO / ACT_DISABLED** | Journal V016 e tela de leitura operacionais segundo evidencias do operador; ainda faltam verificador independente, negativas 403/503, criacao auditada de proposta, aprovacao e executor com rollback |
 | A2.3 | Tela de aprovacao nominativa no portal + expirar/revogar/cancelar | NAO_INICIADO | Ator autorizador, plano/hash e replay revalidados fora do ChatGPT |
 | A3.1 | Executor host isolado, catalogo um serviço HML, dry-run real | NAO_INICIADO | Sem shell/SSH/docker.sock no MCP, nenhum efeito em PROD |
 | A3.2 | Piloto de deploy HML com health e rollback/roll-forward | NAO_INICIADO | Same approved SHA, estado + smoke reais, negativo de rollback |
@@ -82,7 +82,7 @@ Antes de cada incremento: ler este README, o contrato P2-P4, `AGENTS.md`, as reg
 
 Depois de cada incremento, **na mesma entrega**: atualizar a linha do marco acima e registrar no contrato/diario o commit, escopo, testes efetivos, CI, flags, riscos, rollback, alteracoes realizadas e estado real de HML/PROD. Nao transformar PR em produção sem evidencia.
 
-**Proxima tarefa P2.2h.2:** implementar o executor isolado, journal e aprovacao nominativa Core para consumir a selecao de imagem assinada por digest e executar somente plano selado, com rollback e readback depois de HML. A divergencia entre imagem produtiva antiga e artefato CI foi **confirmada pelo operador**. Estado, riscos e gates em [plano P2.2h](./10-atlas-p22h-runtime-digest-promotion-plan.md). **Nenhum deploy agora; PREPARE/ACT desligados.**
+**Proxima tarefa P2.2h.2:** apos o aceite visual da consulta em PROD, fechar as evidencias de seguranca faltantes (403/503, grants Core, verificador independente e restore test); implementar **PREPARE persistido com proposta OCI assinada**, decisao nominativa no Portal e depois executor isolado com readback e rollback. **Nao habilitar ACT** apenas porque a pagina VIEW apareceu. O release OCI assinado segue sem promocao por digest no host. O deploy manual continua independente.
 
 ## 7. Marco validado
 
@@ -288,3 +288,14 @@ Frontend integrado com nova tela de lista/detalhe e historico, exibida no menu *
 **Nenhuma ativacao ou escrita produtiva ocorreu.** PR precisa de CI API/PostgreSQL/UI, revisao independente `delpi-verifier` e aprovacao DBA/Core. Apos merge, nao rodar SQL de docs manualmente: coordenar backup, migration V016 sob gate temporario, role/GRANT minima, registro estrutural do manifesto, atribuicao individual de `it-portal.deploy.view`, e **somente depois** habilitar `IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED=true`. Sem proposta OCI real, a lista aparecerá vazia mesmo apos ativar a interface. [Runbook de ativacao controlada](./16-atlas-journal-v016-core-view-activation-plan.md).
 
 **Invariantes:** `ACT_DISABLED`, PREPARE inerte, nenhuma aprovacao no ChatGPT, nenhuma mudanca em scripts `up-prod-sequential.sh`, `up-hml-sequential.sh`, `git pull` ou no deploy manual de outros desenvolvedores.
+
+
+## 26. P2.2h.2e: consulta do journal ATLAS validada visualmente em producao (16/11/2026)
+
+**Fonte:** confirmacoes do operador por terminal e captura da tela **Implantacoes ATLAS**. A [PR #206](https://github.com/roberiooliveiradev/delpi-central/pull/206) foi integrada a `main`. O operador gerou backup completo de `plugins_hub` (`pg_dump -Fc`, catalogo validado por `pg_restore -l`), aplicou V012–V015 e, depois, a V016 pelo runner versionado com gate temporario explicitamente habilitado. `schema_migrations` registrou V016; as quatro tabelas de journal apareceram no PostgreSQL.
+
+A role dedicada `it_portal_atlas_journal_reader` teve leitura validada nas tres tabelas de propostas/vinculos/eventos e **nao** em `challenges`. A API confirmou `atlas_journal_read_db_configured=True`, `current_user` igual a essa role e `default_transaction_read_only=on`, com **0 propostas reais**. A tela mostrada pelo operador inclui filtros, aviso de leitura e estado vazio **Nenhuma solicitacao encontrada**; portanto, a capacidade VIEW esta **visivel e funcional no nivel comprovado pela observacao do operador**. O manifesto `0.3.5` e a permissao Core `it-portal.deploy.view` sao precondicoes do codigo, mas seu registro e concessao exatos nao foram auditados separadamente nesta conversa.
+
+**Limites de aceite:** nenhuma proposta criada; nenhum PREPARE, aprovacao real, ACT, promocao OCI por digest ou rollback automatizado; somente visualizacao. Restam validacao independente `delpi-verifier`, teste completo de restauracao de backup, verificacao de triggers e testes negativos de API/segregacao (403 sem grant, 503 sem reader). A divergencia de collation do PostgreSQL foi identificada e **adiada por decisao do operador**, sem `REINDEX` nem `REFRESH COLLATION VERSION`; criar manutencao DBA separada. Esta fase **nao habilita** deploy automatico e nao altera o deploy manual existente.
+
+**Proximo incremento:** PREPARE real com atestacao confiavel, journal transacional e proposta assinada, seguido de aprovacao explicita e nominativa no Core, e somente apos os gates de host/rollback um executor ACT isolado. Registro detalhado: [V016 e aceite PROD VIEW](./16-atlas-journal-v016-core-view-activation-plan.md).
