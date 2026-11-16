@@ -217,7 +217,7 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
     def test_mixed_flask_and_fastapi_requires_literal_operation_id(self):
         source = '''\nfrom flask import Blueprint\nfrom fastapi import APIRouter\nbp = Blueprint("id", __name__)\nrouter = APIRouter()\n\n@bp.get("/flask")\ndef flask_route():\n    return {}\n\n@router.get("/fastapi")\ndef fastapi_route():\n    return {}\n'''
         findings = mod.scan_changed_fastapi_file(
-            "supplies-api/app/routes.py", source, {6, 10}
+            "supplies-api/app/routes.py", source, {11}
         )
         self.assertEqual(
             [finding.rule for finding in findings],
@@ -228,7 +228,7 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
     def test_unidentified_router_is_not_implicitly_exempt(self):
         source = '''\n@unknown.get("/items")\ndef list_items():\n    return []\n'''
         findings = mod.scan_changed_fastapi_file(
-            "orders-api/app/routes.py", source, {1}
+            "orders-api/app/routes.py", source, {2}
         )
         self.assertEqual(
             [finding.rule for finding in findings],
