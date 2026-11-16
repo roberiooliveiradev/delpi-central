@@ -300,10 +300,17 @@ const handoffPosts = (calls: FetchCall[]) =>
       (call.init?.method ?? "GET") === "POST" && call.url.includes("/handoff"),
   );
 
-const detailVisible = () =>
-  screen.queryByLabelText("Voltar para a fila") != null;
+// The detail view can stay open on the previous OP during an unresolved
+// readback. Checking its presence cannot prove which OP is being displayed.
+const visibleOperation = () => {
+  const search = new URLSearchParams(window.location.search);
+  return `${search.get("op")}:${search.get("operation")}`;
+};
 
 async function mountCockpit() {
+  // The cockpit persists its internal view in the URL. Each case begins
+  // on the published queue, independently of previous async navigation.
+  window.history.replaceState(null, "", window.location.pathname);
   window.localStorage.setItem("delpi.pcp.cockpit.work-center.02", "CT-63");
   window.sessionStorage.setItem(
     "delpi.pcp.cockpit.bench-session.02.CT-63",
@@ -359,7 +366,9 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
     // Readback posterior ao POST traz o run novo na fila nova.
     activeRun = RUN_B;
     await waitFor(() => expect(handoffPosts(calls)).toHaveLength(1));
-    await waitFor(() => expect(detailVisible()).toBe(true));
+    await waitFor(() =>
+      expect(visibleOperation()).toBe(`${RUN_B.productionOrder}:${RUN_B.operationCode}`),
+    );
     // Nenhum POST extra de escrita saiu durante a reconciliação.
     expect(handoffPosts(calls)).toHaveLength(1);
   });
@@ -380,7 +389,9 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
     failReadback = false;
     activeRun = RUN_B;
     fireEvent.click(refresh);
-    await waitFor(() => expect(detailVisible()).toBe(true));
+    await waitFor(() =>
+      expect(visibleOperation()).toBe(`${RUN_B.productionOrder}:${RUN_B.operationCode}`),
+    );
     expect(handoffPosts(calls)).toHaveLength(1);
   });
 
@@ -393,11 +404,13 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
     activeRun = RUN_FOREIGN;
     await waitFor(() => expect(handoffPosts(calls)).toHaveLength(1));
     await screen.findByRole("button", { name: /Atualizar/i });
-    expect(detailVisible()).toBe(false);
+    expect(visibleOperation()).toBe(`${RUN.productionOrder}:${RUN.operationCode}`);
     // Recuperação read-only: quando o readback fica coerente, navega.
     activeRun = RUN_B;
     fireEvent.click(screen.getByRole("button", { name: /Atualizar/i }));
-    await waitFor(() => expect(detailVisible()).toBe(true));
+    await waitFor(() =>
+      expect(visibleOperation()).toBe(`${RUN_B.productionOrder}:${RUN_B.operationCode}`),
+    );
     expect(handoffPosts(calls)).toHaveLength(1);
   });
 
@@ -435,7 +448,9 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
     // A resposta superada do retry explícito chega depois — neutra.
     stuckReload.resolve(okEnvelope(machineLoadPayload([OPERATION])));
 
-    await waitFor(() => expect(detailVisible()).toBe(true));
+    await waitFor(() =>
+      expect(visibleOperation()).toBe(`${RUN_B.productionOrder}:${RUN_B.operationCode}`),
+    );
     // Aviso resolvido pela leitura coerente — não fica pendente.
     await waitFor(() =>
       expect(
@@ -488,7 +503,7 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
         screen.getByRole("button", { name: /^Encerrar$/i }),
       ).toBeInTheDocument(),
     );
-    expect(detailVisible()).toBe(false);
+    expect(visibleOperation()).toBe(`${RUN.productionOrder}:${RUN.operationCode}`);
     expect(handoffPosts(calls)).toHaveLength(1);
   });
 
@@ -558,6 +573,13 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
         screen.queryByRole("button", { name: /Verificar troca pendente/i }),
       ).not.toBeInTheDocument(),
     );
+    // Recovery may leave the operator on the published queue rather than
+    // navigating automatically. Open the actual next OP before validating
+    // that its production controls are usable again.
+    if (!screen.queryByRole("button", { name: /^Encerrar$/i })) {
+      const details = await screen.findAllByRole("button", { name: /^Detalhes$/i });
+      fireEvent.click(details[0]!);
+    }
     await waitFor(() =>
       expect(
         screen.getByRole("button", { name: /^Encerrar$/i }),
