@@ -8,6 +8,8 @@ from travel_expenses_app.domain.services.transport_pricing import (
     ExpenseValueError, mileage_amount, parse_amount, parse_distance_km,
 )
 from travel_expenses_app.infrastructure.persistence.repositories.in_memory_report_repository import InMemoryTravelReportRepository
+from travel_expenses_app.application.services.package_storage import PackageStorageService
+from travel_expenses_app.application.services.receipt_storage import ReceiptStorageService
 
 
 def user():
@@ -26,9 +28,15 @@ class FakeMailer:
         self.calls.append(kwargs)
 
 
-def service():
+def service(tmp_path=None):
     repo = InMemoryTravelReportRepository()
-    return TravelReportService(repo), repo
+    if tmp_path is None:
+        return TravelReportService(repo), repo
+    return TravelReportService(
+        repo,
+        receipt_storage=ReceiptStorageService(base_dir=str(tmp_path / 'receipts')),
+        package_storage=PackageStorageService(base_dir=str(tmp_path / 'packages')),
+    ), repo
 
 
 @pytest.mark.parametrize("raw", ["R$324,00", "R$ 324,00", "324,00", "324", 324, "1.234,56"])
@@ -92,8 +100,8 @@ def test_invalid_manual_value_is_not_server_error():
         })
 
 
-def test_finance_submission_sends_pdf_with_cc_and_no_receipt():
-    svc, repo = service()
+def test_finance_submission_sends_pdf_with_cc_and_no_receipt(tmp_path):
+    svc, repo = service(tmp_path)
     actor = user()
     report = svc.create(actor, {"unitCode": "01", "destination": "Joinville"})
     svc.add_expense(actor, report["id"], {
