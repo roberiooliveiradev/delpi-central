@@ -6,6 +6,9 @@ on:
     paths:
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py"
       - "it-portal-api/tests/integration/test_atlas_postgres_journal.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_journal.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_seal.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_receipt.py"
@@ -16,6 +19,9 @@ on:
     paths:
       - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_journal.py"
       - "it-portal-api/tests/integration/test_atlas_postgres_journal.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_journal.py"
+      - "it-portal-api/it_portal_app/infrastructure/persistence/atlas_deploy_oci_seal.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/12-atlas-p22h2b-disposable-oci-bindings.sql"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_source.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_signer.py"
       - "linux-ops-mcp/linux_ops_mcp/deploy_host_receipt.py"
@@ -55,9 +61,11 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r it-portal-api/requirements.txt
           python -m pip install --disable-pip-version-check ./shared
-      - name: Verify SQL and concurrency on disposable PostgreSQL
+      - name: Verify SQL, OCI bindings and concurrent writes on disposable PostgreSQL
         run: |
-          PYTHONPATH=it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider it-portal-api/tests/integration/test_atlas_postgres_journal.py
+          PYTHONPATH=it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \
+            it-portal-api/tests/integration/test_atlas_postgres_journal.py \
+            it-portal-api/tests/unit/test_atlas_deploy_oci_seal.py
 
   disposable-docker:
     name: Real Docker read-only inspection, ephemeral only
