@@ -8,6 +8,9 @@ EXPECTED_OPERATIONS = {
     ("get", "/health"): "get_it_portal_health",
     ("get", "/me/capabilities"): "get_it_portal_capabilities",
     ("get", "/dashboard"): "get_it_portal_dashboard",
+    # ATLAS P2.2h.2d: default-OFF authenticated GET-only journal surface.
+    ("get", "/atlas/deployments"): "list_atlas_deploy_journal",
+    ("get", "/atlas/deployments/{proposal_id}"): "get_atlas_deploy_journal",
     ("get", "/workstations"): "list_it_workstations",
     ("post", "/workstations"): "create_it_workstation",
     ("get", "/workstations/{workstation_id}"): "get_it_workstation",
