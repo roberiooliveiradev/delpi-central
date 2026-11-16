@@ -72,6 +72,7 @@ responde 503. Apenas principals humanos (`principal_type=user`).
 | Permissão | Concede |
 |---|---|
 | `it-portal.access` | abrir o portal (`/me/capabilities`) |
+| `it-portal.deploy.view` | GET somente leitura da lista/detalhes do journal ATLAS; exige `it-portal.access`, consulta Core fresca e feature gate `IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED` |
 | `it-portal.servers.view` | inventário, detalhe, notas, histórico, dashboard |
 | `it-portal.servers.manage` | cadastrar, editar, arquivar, restaurar (com `servers.view`) |
 | `it-portal.notes.create` | registrar notas (com `servers.view`) |
@@ -187,3 +188,11 @@ Codigo puro sem rotas, migrations nem Docker em `it_portal_app/domain/remote_eng
 - `POST /workstations/{id}/agent-identity/revoke`: escrita fresh com computadores.view/manage e confirmacao; somente com DB mode + `IT_PORTAL_WORKSTATION_REVOKE_ENABLED=true`. Bloqueia DB primeiro, desabilita Client Keycloak individual e confirma; falha exige reconciliacao sem reativacao.
 - Testes `tests/test_workstation_dynamic_s2s_auth.py`, `tests/test_workstation_identity_provisioning.py`, `tests/test_workstation_snapshot_ingest.py` e migration PostgreSQL V013 em banco descartavel.
 - Sem deploy produtivo nem bootstrap de Windows neste incremento. [Runbook G2-S4-S2a](../docs/12-roadmap-e-evolucao/it-portal/delpi-remote/G2-S4-S2A-DYNAMIC-BINDINGS-REVOCATION.md).
+
+## ATLAS journal P2.2h.2e — V016 com gate independente
+
+`migrations/V016__atlas_deploy_oci_journal.sql` cria as quatro tabelas de journal OCI apenas quando `IT_PORTAL_ATLAS_JOURNAL_SCHEMA_APPLY_ENABLED=true` **e** o procedimento de migracoes autorizado invocar o runner. Por default, false: o runner ignora V016, sem registrar checksum e sem bloquear migracoes regulares V001-V015. O arquivo em Git nao autoriza executar em PROD. Evitar utilizar DDL de `docs/` no banco real.
+
+`IT_PORTAL_ATLAS_JOURNAL_READ_ENABLED=false` por default; VIEW do Core `it-portal.deploy.view` pertence ao manifesto do MFE v0.3.5, cujo registro e atribuicao a usuario/papel sao manuais no Portal Admin. Mesmo que a flag seja ligada, o repositorio de leitura exige login PostgreSQL **exclusivo** configurado via `IT_PORTAL_ATLAS_JOURNAL_READ_DB_USER` / `IT_PORTAL_ATLAS_JOURNAL_READ_DB_PASSWORD`, distinto de `IT_PORTAL_DB_USER`, com SELECT somente em propostas, binding e eventos (nao challenges). Nunca usar credenciais da role de escrita como fallback. Sem credenciais, Core grant ou tabelas, o endpoint falha fechado.
+
+A migracao, DB grant e UI nao habilitam PREPARE/ACT nem modificam os scripts manuais. [Runbook V016/Core](../docs/12-roadmap-e-evolucao/mcp-linux-control/16-atlas-journal-v016-core-view-activation-plan.md).
