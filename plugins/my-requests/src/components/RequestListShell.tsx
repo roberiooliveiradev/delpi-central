@@ -316,7 +316,7 @@ export function RequestListShell<Row extends object>({
         }
         toolbarExtra={
           <>
-            {onClearFilters ? (
+            {onClearFilters && filtersActive ? (
               <HintAction
                 hint={MY_REQUESTS_HELP_TOOLTIPS.listUi.clearFilters}
                 ariaLabel="Ajuda: Limpar filtros"
@@ -324,7 +324,6 @@ export function RequestListShell<Row extends object>({
                 <MyRequestsClearFiltersButton
                   variant="icon"
                   onClick={onClearFilters}
-                  disabled={!filtersActive}
                 />
               </HintAction>
             ) : null}

@@ -198,6 +198,9 @@ a.delpi-ui-action-btn--link:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Controle quadrado — nunca comprime numa linha de flex nem perde
+   * a largura mínima (o ícone ficaria espremido). */
+  flex-shrink: 0;
   min-width: 36px;
   min-height: 36px;
   padding: 0;

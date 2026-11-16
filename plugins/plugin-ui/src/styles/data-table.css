@@ -946,8 +946,11 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   flex: 0 1 auto;
 }
 
-.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__chips .delpi-ui-help-tooltip--wrap > *,
-.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls .delpi-ui-help-tooltip--wrap > * {
+/* `:not(.delpi-ui-icon-btn)` — o FilterX/IconButton mantém seu
+ * min-width:36px quadrado; zerá-lo deformava o botão (~18px de
+ * largura × 36px de altura). Regressão CROSS-MFE-UXV3-CLEAR-FILTERS. */
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__chips .delpi-ui-help-tooltip--wrap > *:not(.delpi-ui-icon-btn),
+.delpi-ui-table-toolbar--hero > .delpi-ui-table-toolbar__controls .delpi-ui-help-tooltip--wrap > *:not(.delpi-ui-icon-btn) {
   min-width: 0;
   max-width: 100%;
 }

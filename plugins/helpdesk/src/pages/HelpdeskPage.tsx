@@ -666,13 +666,14 @@ function TicketListPage() {
             {/* Última linha do hero — controles à direita, ordem canônica:
                 FilterX → Filtros → Ordenar → Colunas → Tabela|Cards (UX V3). */}
             <div className="helpdesk-list-controls-row">
-              <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
-                <HelpdeskClearFiltersButton
-                  variant="icon"
-                  onClick={clearListFilters}
-                  disabled={!filterActive}
-                />
-              </HintAction>
+              {filterActive ? (
+                <HintAction hint={helpTooltips.listUi.clearFilters} ariaLabel="Ajuda: Limpar filtros">
+                  <HelpdeskClearFiltersButton
+                    variant="icon"
+                    onClick={clearListFilters}
+                  />
+                </HintAction>
+              ) : null}
               <HintAction
                 hint={helpTooltips.listUi.filterBuilderToggle}
                 ariaLabel="Ajuda: Filtros avançados"
