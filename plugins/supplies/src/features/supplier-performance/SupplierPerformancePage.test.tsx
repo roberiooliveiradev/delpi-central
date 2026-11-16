@@ -11,12 +11,14 @@ import {
 import { ApiRequestError } from "../../api/httpClient";
 import {
   getSupplierPerformance,
+  downloadSupplierPerformanceXlsx,
   type SupplierPerformanceResponse,
 } from "../../api/supplierPerformance";
 import { SupplierPerformancePage } from "./SupplierPerformancePage";
 
 vi.mock("../../api/supplierPerformance", () => ({
   getSupplierPerformance: vi.fn(),
+  downloadSupplierPerformanceXlsx: vi.fn(),
 }));
 vi.mock("../../app/SuppliesSessionContext", () => {
   const session = { allowedUnits: ["01", "02"] };
@@ -107,6 +109,7 @@ beforeEach(() => {
     "?period=custom&from=2026-11-01&to=2026-11-16&branch=01,02",
   );
   vi.mocked(getSupplierPerformance).mockReset().mockResolvedValue(payload);
+  vi.mocked(downloadSupplierPerformanceXlsx).mockReset().mockResolvedValue();
 });
 afterEach(() => {
   cleanup();
@@ -122,7 +125,7 @@ function mount() {
 }
 
 describe("IDF page behavior", () => {
-  it("loads the selected scope, searches suppliers and opens exact composition in a contained dialog", async () => {
+  it("loads scope, selects supplier without typing, updates score and opens composition", async () => {
     mount();
     expect(screen.getByText("Consultando Qualidade e Entrega…")).toBeTruthy();
     await screen.findByText("Fornecedor Exemplo");
@@ -144,11 +147,13 @@ describe("IDF page behavior", () => {
       within(dialog).getByRole("button", { name: "Fechar detalhes" }),
     );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    fireEvent.change(screen.getByLabelText("Buscar fornecedor"), {
-      target: { value: "000002" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Fornecedor" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Outro fornecedor · 000002 / loja 02",
+    }));
     expect(screen.queryByText("Fornecedor Exemplo")).toBeNull();
-    expect(screen.getByText("Outro fornecedor")).toBeTruthy();
+    expect(screen.getAllByText("Outro fornecedor").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 com base incompleta")).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", {
         name: "Ver composição de Outro fornecedor, loja 02",
@@ -159,6 +164,37 @@ describe("IDF page behavior", () => {
         "Aguardando base completa",
       ),
     ).toBeTruthy();
+  });
+
+  it("exports only selected supplier and keeps period/branch filters", async () => {
+    mount();
+    await screen.findByText("Fornecedor Exemplo");
+    fireEvent.click(screen.getByRole("button", { name: "Fornecedor" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "Fornecedor Exemplo · 000001 / loja 01",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Excel" }));
+    await waitFor(() =>
+      expect(downloadSupplierPerformanceXlsx).toHaveBeenCalledWith(
+        { branches: ["01", "02"], from: "2026-11-01", to: "2026-11-16" },
+        expect.objectContaining({
+          supplier_code: "000001", supplier_store: "01",
+        }),
+      ),
+    );
+  });
+
+  it("shows a clear export failure without losing IDF data", async () => {
+    vi.mocked(downloadSupplierPerformanceXlsx).mockRejectedValueOnce(
+      new ApiRequestError("Export failure", {
+        status: 422, detail: "Reduza o período ou escolha um fornecedor.",
+      }),
+    );
+    mount();
+    await screen.findByText("Fornecedor Exemplo");
+    fireEvent.click(screen.getByRole("button", { name: "Exportar Excel" }));
+    await screen.findByText("Reduza o período ou escolha um fornecedor.");
+    expect(screen.getByText("Desempenho por fornecedor")).toBeTruthy();
   });
 
   it("shows upstream error and recovers on retry instead of empty success", async () => {

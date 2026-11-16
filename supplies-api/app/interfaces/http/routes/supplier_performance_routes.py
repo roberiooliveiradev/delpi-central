@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, Response, g, jsonify, request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.application.security.supplies_permissions import can_use_analytics
@@ -11,6 +11,9 @@ from app.infrastructure.gateways.delpi_api_gateway import (
     DelpiApiGatewayError,
 )
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
+from app.infrastructure.export.supplier_performance_xlsx import (
+    EXPORT_FILENAME, XLSX_MIME, build_supplier_performance_xlsx,
+)
 from app.interfaces.http.auth_decorators import require_policy, require_units
 
 supplier_performance_bp = Blueprint("supplier_performance", __name__)
@@ -76,6 +79,12 @@ class PerformanceDto(BaseModel):
     calculated_at: str
 
 
+class PerformanceExportDto(PerformanceDto):
+    inspections: list[dict]
+    deliveries: list[dict]
+    supplier_selected: dict[str, str] | None = None
+
+
 @supplier_performance_bp.get("/analytics/supplier-performance")
 @require_policy(can_use_analytics)
 @require_units("branch")
@@ -137,3 +146,68 @@ def get_portal_supplier_performance():
             502,
         )
     return jsonify(data), 200
+
+
+@supplier_performance_bp.get("/analytics/supplier-performance/export")
+@require_policy(can_use_analytics)
+@require_units("branch")
+def export_portal_supplier_performance():
+    """operationId: export_portal_supplier_performance — XLSX with source evidence."""
+    allowed = {"branch", "date_from", "date_to", "supplier_code", "supplier_store"}
+    keys = set(request.args.keys())
+    has_code = "supplier_code" in keys
+    has_store = "supplier_store" in keys
+    if (
+        keys - allowed
+        or has_code != has_store
+        or any(len(request.args.getlist(key)) != 1 for key in ("date_from", "date_to"))
+        or any(
+            len(request.args.getlist(key)) != 1
+            for key in ("supplier_code", "supplier_store")
+            if key in keys
+        )
+    ):
+        return jsonify({"detail": "Revise os filtros do relatório.", "code": "unprocessable"}), 422
+    pairs = [
+        (key, value) for key in request.args for value in request.args.getlist(key)
+    ]
+    try:
+        payload = _GATEWAY.get(
+            "/supplies/supplier-performance/evidence-export",
+            access_token=g.current_user.access_token or "",
+            params=pairs,
+        )
+    except DelpiApiGatewayError as exc:
+        if exc.status_code == 422:
+            return jsonify({
+                "detail": "Revise o período ou escolha um fornecedor: máximo de 12.000 registros por aba.",
+                "code": "unprocessable",
+            }), 422
+        if exc.status_code in (401, 403):
+            return jsonify({"detail": "Acesso negado.", "code": "forbidden"}), 403
+        return jsonify({
+            "detail": "Não foi possível consultar as evidências do IDF.",
+            "code": "bad_gateway",
+        }), 502
+    try:
+        data = PerformanceExportDto.model_validate(
+            unwrap_delpi_envelope(payload)
+        ).model_dump(by_alias=True)
+        if len(data["inspections"]) > 12000 or len(data["deliveries"]) > 12000:
+            raise ValueError("Limite de exportação excedido.")
+        body = build_supplier_performance_xlsx(data)
+    except (ValidationError, ValueError, TypeError, KeyError):
+        return jsonify({
+            "detail": "A base do relatório não pôde ser validada.",
+            "code": "bad_gateway",
+        }), 502
+    return Response(
+        body,
+        status=200,
+        mimetype=XLSX_MIME,
+        headers={
+            "Content-Disposition": f'attachment; filename="{EXPORT_FILENAME}"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

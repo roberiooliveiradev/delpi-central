@@ -5,7 +5,6 @@ import {
   SuppliesCompactPagination,
   SuppliesDataTable,
   SuppliesSelectField,
-  SuppliesTextField,
   type DataTableColumn,
 } from "../../app/suppliesUi";
 import {
@@ -23,13 +22,12 @@ export function SupplierPerformanceTable({
   items: SupplierPerformance[];
   onSelect: (item: SupplierPerformance) => void;
 }) {
-  const [query, setQuery] = useState("");
   const [coverage, setCoverage] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const filtered = useMemo(
-    () => filterSuppliers(items, query, coverage),
-    [items, query, coverage],
+    () => filterSuppliers(items, "", coverage),
+    [items, coverage],
   );
   const currentPage = Math.min(
     page,
@@ -111,15 +109,6 @@ export function SupplierPerformanceTable({
   return (
     <div className="sp-idf-ranking">
       <div className="sp-idf-ranking__toolbar">
-        <SuppliesTextField
-          label="Buscar fornecedor"
-          placeholder="Nome ou código"
-          value={query}
-          onChange={(value) => {
-            setQuery(value);
-            setPage(1);
-          }}
-        />
         <SuppliesSelectField
           label="Disponibilidade de dados"
           value={coverage}
@@ -146,7 +135,7 @@ export function SupplierPerformanceTable({
           currentPage * pageSize,
         )}
         rowKey={supplierKey}
-        emptyMessage="Nenhum fornecedor corresponde à busca e à disponibilidade selecionadas."
+        emptyMessage="Nenhum fornecedor corresponde à disponibilidade selecionada."
       />
       <SuppliesCompactPagination
         page={currentPage}

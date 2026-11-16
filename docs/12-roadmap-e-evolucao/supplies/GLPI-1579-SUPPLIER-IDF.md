@@ -155,3 +155,87 @@ falhou com `Network is unreachable`; nenhuma alteração foi aplicada ao servido
 - `minha-delpi-ai-api presentation`: falha de instalação `npm ci` por `react`/`react-dom` divergentes entre package e lock, outra frente. Não alterar dependências de DAVI/apresentação neste chamado.
 - Antes do deploy: revisão da PR de correção e confirmação do gate de arquitetura. Depois do deploy dos três serviços, validar UI desktop/mobile, RBAC, contagens, dados incompletos e consultas em produção conforme roteiro acima. Não marcar #1579 solucionado sem aceite.
 
+
+
+## Evolução solicitada após validação em produção — 16/11/2026
+
+Solicitante confirmou que a versão inicial do IDF foi validada em produção.
+Melhorias solicitadas: escolha de um fornecedor diretamente por seletor (sem
+digitação livre) e exportação Excel detalhada com evidências de recebimentos,
+inspeções, documentos e pedidos, visualmente formatada.
+
+### Fluxo implementado em PR #194
+
+- Página: o filtro **Fornecedor** tem seleção única e opção "Todos os
+  fornecedores". As opções vêm do mesmo conjunto autorizado pelo período e
+  filiais. Selecionar código+loja altera a composição, KPIs, quantidade e tabela
+  sem mudar os dados em cache ou criar classificação de desempenho.
+- Botão **Exportar Excel** exporta o período e filiais selecionados; com
+  fornecedor selecionado inclui `supplier_code` e `supplier_store`.
+  Quando nenhum está selecionado exporta todos os fornecedores do recorte,
+  respeitando os limites por fonte. A exportação é refeita com evidências
+  atuais, sem depender de uma tabela DOM paginada nem de cache da nota.
+- Fluxo protegido:
+  `plugins/supplies` → `GET /analytics/supplier-performance/export`
+  (BFF, `supplies.access` e RBAC de todas as filiais) →
+  `GET /supplies/supplier-performance/evidence-export` (api-delpi, prova
+  caller BFF) → views TOTVS via SQL parametrizado somente leitura.
+- Limites: até **12.000** inspeções e **12.000** linhas de recebimento por
+  exportação. Quando o resultado excede, retorna 422 pedindo filtro ou
+  período menor. Nunca exportar resultados incompletos sem aviso.
+- Acesso: sem permissão normal, sem filial válida ou com filtros ambíguos,
+  o backend recusa consulta. O arquivo é entregue com `no-store`. Nenhum
+  token, URL externa ou consulta SQL fica embutido no Excel.
+
+### Estrutura do XLSX
+
+| Aba | Informação |
+|---|---|
+| **Resumo IDF** | Fornecedor/código/loja/filiais; inspeções concluídas/aprovadas/rejeitadas/condicionais/urgentes; Qualidade e contribuição 70%; recebimentos/no prazo/fora do prazo/sem data; Entrega e contribuição 30%; IDF final e cobertura |
+| **Entregas** | Filial, fornecedor/loja, documento informado pela view OTD, pedido de compra/item, produto, descrição, tipo, quantidade, emissão do pedido, prazo previsto, data de digitação, emissão da NF, diferença de dias e situação |
+| **Inspeções** | Filial, fornecedor/loja, ID de inspeção, NF/série/item, produto, lotes, quantidade, datas e hora, status, código e resultado de inspeção, laudo, ensaiador, contagem de ensaios, condicionais/urgentes e justificativa |
+| **Critérios** | Fórmula, fontes/grão de contagem, periodicidade, base incompleta, limites, rastreabilidade e observações |
+
+Formatação: identidade Delpi azul-marinho/ciano, título destacado, cabeçalhos
+legíveis, cores alternadas, **borda fina completa em todas as células de
+dados e cabeçalhos**, congelamento de painéis, autofiltro, datas como datas
+Excel em `DD/MM/AAAA`, duas casas nas notas e código/loja/documentos
+preservados como texto (inclusive zeros à esquerda). Textos potencialmente
+interpretados como fórmulas são escapados. Relatório não traz senha nem token.
+
+### Rastreabilidade e diferenças de grão
+
+Inspeções contam uma linha por filial + ID de inspeção + código + loja,
+deduplicando múltiplos ensaios, conforme a apuração original.
+Recebimentos contam linhas de entrada, não pedidos únicos. Não se associa
+pedido e inspeção por número de NF presumido; as evidências são exibidas em
+abas separadas, com identificadores explícitos. A exportação recalcula
+a composição na api-delpi a partir das linhas consultadas no momento
+da geração, reutilizando a regra de Qualidade 70% + Entrega 30%.
+
+**Divergência registrada, não corrigida nesta PR:** o texto anterior do IDF
+afirma universo MP OU família 3019 para Entrega, mas
+`supplier_performance_sql.py` não filtra `V.TIPO_PRODUTO` ou o prefixo
+`V.PRODUTO`, ao contrário do OTD geral. Para não modificar as notas já
+validadas em produção, a consulta de Entrega exportada espelha o SQL
+atual do IDF. Corrigir esse escopo exige decisão e validação de Suprimentos
+e Qualidade em mudança específica. O texto explicativo da UI passa a
+distinguir as bases, evitando uma afirmação imprecisa.
+
+### Aceite da evolução
+
+1. Abrir IDF na produção, escolher cada fornecedor/loja e verificar que
+   a nota, contagens, tabela e composição passam ao fornecedor selecionado.
+2. Exportar sem filtro e com filtro; conferir 4 abas, bordas, filtros,
+   números de PC/documentos/NF com zeros à esquerda e datas legíveis.
+3. Conciliar pelo menos um fornecedor entre `Resumo IDF`, `Entregas`,
+   `Inspeções` e telas de origem no período/filial.
+4. Validar ausência de base, nota zero, períodos vazios e falha explícita
+   no excesso de linhas (sem arquivo parcial).
+5. Confirmar 401/403 sem acesso, ausência de vazamento entre filiais e
+   adequação em desktop/mobile.
+6. Publicar somente `api-delpi`, `supplies-api` e `supplies` pelo
+   script sequencial canônico, depois de revisão, checks e aceite.
+
+PR de evolução: https://github.com/roberiooliveiradev/delpi-central/pull/194
+A validação anterior em produção não equivale ao aceite destas melhorias.
