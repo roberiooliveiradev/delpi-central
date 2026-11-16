@@ -259,15 +259,18 @@ class SuppliesMetricsSnapshotService:
                 source = breakdown.get(code)
                 if not isinstance(source, dict):
                     continue
-                total = source.get("sum_conversion_days")
-                count = source.get("converted_requests")
+                # Main strategic KPI now includes the age of released SCs
+                # still waiting for a first PC; completed-only remains
+                # available separately in the Portal Suprimentos.
+                total = source.get("sum_measured_days")
+                count = source.get("measured_requests")
                 if (
                     type(total) is int and type(count) is int
                     and count >= 0 and total >= 0
                 ):
                     result[code] = {
-                        "sum_conversion_days": total,
-                        "converted_requests": count,
+                        "sum_measured_days": total,
+                        "measured_requests": count,
                     }
             return result
         except Exception:
