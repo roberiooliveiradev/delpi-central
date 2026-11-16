@@ -149,6 +149,8 @@ class SuppliesIndicatorsSnapshotProvider(
             value = round(total_days / total_count, 2) if total_count else None
         else:
             value = None
+        if snapshot.branch is None:
+            unit_values["consolidated"] = value
         return {
             "department_id": "supplies",
             "indicator_id": "supplies-sc-pc-conversion-days",
