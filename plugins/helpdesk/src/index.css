@@ -431,7 +431,7 @@
   min-width: 0;
 }
 
-/* Região superior da lista — «Por página» fora do hero (UX V3). */
+/* Faixa intermediária do hero — chips de escopo + chips de filtro. */
 .dashboard-helpdesk .helpdesk-list-secondary-bar {
   display: flex;
   flex-wrap: wrap;
