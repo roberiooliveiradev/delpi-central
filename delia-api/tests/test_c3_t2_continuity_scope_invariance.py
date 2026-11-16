@@ -112,10 +112,32 @@ def test_c05_window_selector_variants_same_identity():
         {
             "entity": "process",
             "action": "search",
-            "pagination": {"cursor": "abc123"},
+            "params": {"cursor": "abc123"},
+        },
+        {
+            "entity": "process",
+            "action": "search",
+            "arguments": {"page": 2, "per_page": 50},
         },
     ):
         assert _invocation_scope(args) == bare
+
+
+def test_c04_unknown_window_envelope_not_equivalent():
+    """C04 — a container named ``pagination``/``filter``/``meta`` is NOT
+    a contractual filter carrier: after its window keys are stripped
+    it becomes an empty unknown container whose presence semantics are
+    unproven → stays material, separate scope (fail-closed, not united)."""
+    bare = _invocation_scope({"entity": "process", "action": "search"})
+    for envelope in ("pagination", "filter", "meta", "q"):
+        scoped = _invocation_scope(
+            {
+                "entity": "process",
+                "action": "search",
+                envelope: {"page": 2},
+            }
+        )
+        assert scoped != bare
 
 
 def test_c14_material_filter_change_mid_sequence_never_united():
@@ -161,19 +183,46 @@ def test_c06_nested_business_page_field_is_material():
 
 
 def test_c07_empty_container_zero_args_structural():
-    """Case A — an explicitly empty ``params`` carries ZERO leaf
-    arguments: owner contracts treat it identically to absent params
-    (TÉO live: page 1 invoked ``params:{}`` returned the unfiltered
-    window). Structural difference only → same scope identity. Nested
-    containers emptied recursively behave the same."""
+    """Case A — an explicitly empty contractual carrier (``params`` or
+    ``arguments``) carries ZERO leaf arguments: owner contracts treat it
+    identically to absent params (TÉO live: page 1 invoked ``params:{}``
+    returned the unfiltered window). Structural difference only → same
+    scope identity. Equivalence is bounded to the published carriers."""
     bare = _invocation_scope({"entity": "process", "action": "search"})
-    emptied = _invocation_scope(
-        {"entity": "process", "action": "search", "params": {}}
-    )
-    nested_empty = _invocation_scope(
+    for emptied_args in (
+        {"entity": "process", "action": "search", "params": {}},
+        {"entity": "process", "action": "search", "arguments": {}},
+        {
+            "entity": "process",
+            "action": "search",
+            "params": {},
+            "arguments": {},
+        },
+    ):
+        assert _invocation_scope(emptied_args) == bare
+
+
+def test_c07c_unknown_empty_container_stays_material():
+    """I-6/C04 — an empty container whose name is not a contractual
+    carrier has unproven presence semantics → kept material (fail-
+    closed). Nested empty objects are likewise not normalized."""
+    bare = _invocation_scope({"entity": "process", "action": "search"})
+    unknown_empty = _invocation_scope(
         {"entity": "process", "action": "search", "meta": {"filters": {}}}
     )
-    assert bare == emptied == nested_empty
+    top_level_empty = _invocation_scope(
+        {"entity": "process", "action": "search", "meta": {}}
+    )
+    nested_empty = _invocation_scope(
+        {
+            "entity": "process",
+            "action": "search",
+            "params": {"filters": {}},
+        }
+    )
+    assert unknown_empty != bare
+    assert top_level_empty != bare
+    assert nested_empty != bare
 
 
 def test_c07b_int2_r5_originally_empty_params_union():
@@ -217,11 +266,33 @@ def test_declared_empty_container_marker_preserved():
     assert "__container__=params" in tokens
 
 
-def test_declared_window_only_required_args_no_material_marker():
+def test_declared_window_only_required_args_exact_domain_marker():
     """Declared ``required_args {params:{page:2}}`` holds only window
-    control → no material container requirement survives."""
+    control → the declared material params domain is EMPTY, encoded by
+    the ``__container__=params`` exact-domain marker: window invocations
+    prove it, a material filter under ``params`` stays unproven.
+    Discarding the declaration entirely would over-permit."""
+    from app.application.capability_provision.semantic_capability_support import (
+        _required_scope_state,
+    )
+
     tokens = _required_scope_pairs({"params": {"page": 2}})
-    assert "__container__=params" not in tokens
+    assert "__container__=params" in tokens
+    assert not any("=<opaque:" in token for token in tokens)
+    bare = _invocation_scope({"entity": "process", "action": "search"})
+    windowed = _invocation_scope(
+        {"entity": "process", "action": "search", "params": {"page": 3}}
+    )
+    filtered = _invocation_scope(
+        {
+            "entity": "process",
+            "action": "search",
+            "params": {"status": "ativo"},
+        }
+    )
+    assert _required_scope_state(tokens, bare) == "ok"
+    assert _required_scope_state(tokens, windowed) == "ok"
+    assert _required_scope_state(tokens, filtered) == "unproven"
 
 
 def test_c10_duplicate_pages_no_false_complete():

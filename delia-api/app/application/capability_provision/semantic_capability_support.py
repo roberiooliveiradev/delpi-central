@@ -2707,18 +2707,14 @@ def _strip_window_args(value: object, depth: int = 0) -> object:
     (UNKNOWN_ARGUMENT_SEMANTICS → preserve). Non-Mapping structure is
     preserved as-is for the canonical digest.
 
-    A container that becomes empty solely through selector removal
-    (``params: {page: 2, page_size: 40}`` → ``{}``) leaves no material
-    residue: keeping the empty mapping would manufacture a scope
-    difference no owner contract defines — a continuation invoked with
-    only window selectors carries the SAME material scope as one
-    invoked without the container (INT2_A/E group-split root cause).
-    A container declared empty from the start is preserved HERE:
-    ``_required_scope_pairs`` needs it to emit the exact-domain
-    ``__container__`` marker (declared ``params:{}`` = "params domain
-    must be empty"). Invocation-side canonicalization additionally
-    normalizes zero-argument containers via
-    ``_drop_empty_scope_containers``.
+    Containers emptied by selector removal are PRESERVED here:
+    ``{q: {page: 2}}`` → ``{q: {}}`` stays visible because ``q`` has
+    unproven presence semantics — dropping it would fabricate the
+    "empty ≡ absent" equivalence for an envelope no owner contract
+    defines. The equivalence is contractual only for the published
+    filter-carrier names, and it is applied at the top level by
+    ``_drop_empty_scope_containers`` (invocation side) — never by
+    this strip, which only removes proven selector keys.
     """
     if isinstance(value, Mapping):
         stripped: dict[object, object] = {}
@@ -2728,15 +2724,7 @@ def _strip_window_args(value: object, depth: int = 0) -> object:
                 and str(key).strip().casefold() in _PAGINATION_ARG_KEYS
             ):
                 continue
-            stripped_item = _strip_window_args(item, depth + 1)
-            if (
-                item
-                and isinstance(item, Mapping)
-                and isinstance(stripped_item, Mapping)
-                and not stripped_item
-            ):
-                continue
-            stripped[key] = stripped_item
+            stripped[key] = _strip_window_args(item, depth + 1)
         return stripped
     if isinstance(value, (list, tuple)):
         return [_strip_window_args(item, depth) for item in value]
@@ -2794,28 +2782,34 @@ def _scope_pairs(value: object, prefix: str, depth: int) -> list[str]:
 
 
 def _drop_empty_scope_containers(value: object) -> object:
-    """Remove Mappings that contribute zero leaf arguments.
+    """Drop top-level EMPTY containers whose names are contractual
+    filter carriers (``_SCOPE_CONTAINER_ALIASES``: ``params`` and
+    ``arguments``).
 
-    An empty object is an envelope shape, not a material argument:
-    observed owner contracts (``params`` filter dicts) treat an absent
-    and an empty container identically — ``{params:{}}`` and no
-    ``params`` key query the same set, as does a container emptied
-    recursively (``a:{b:{}}``). A container with ANY leaf keeps its
-    material difference.
+    The "empty ≡ absent" equivalence is contract-bounded: the carrier
+    of a capability's filter arguments contributes a constraint only
+    through its leaves, so ``{params: {}}``, a carrier emptied solely
+    by window-selector stripping (``{params: {page: 2}}`` → ``{}``),
+    and an absent key query the same material set — live INT2_A/R5
+    evidence (TÉO returned the unfiltered window for ``params:{}``).
+
+    No such contract exists for other names: an empty ``meta``,
+    ``filter``, ``q`` or a NESTED empty object (``params.filters:{}``)
+    may carry presence semantics, so it stays material and digests
+    honestly (UNKNOWN_ARGUMENT_SEMANTICS → fail-closed, C04).
     """
-    if isinstance(value, Mapping):
-        stripped = {
-            key: _drop_empty_scope_containers(item)
-            for key, item in value.items()
-        }
-        return {
-            key: item
-            for key, item in stripped.items()
-            if not (isinstance(item, Mapping) and not item)
-        }
-    if isinstance(value, (list, tuple)):
-        return [_drop_empty_scope_containers(item) for item in value]
-    return value
+    if not isinstance(value, Mapping):
+        return value
+    return {
+        key: item
+        for key, item in value.items()
+        if not (
+            isinstance(item, Mapping)
+            and not item
+            and str(key).strip().casefold()
+            in _EMPTY_EQUIVALENT_CONTAINER_KEYS
+        )
+    }
 
 
 def _invocation_scope(args: object) -> tuple[str, ...]:
@@ -2934,6 +2928,12 @@ _CONSULTATION_OPERATIONS = frozenset(
 _SCOPE_CONTAINER_ALIASES: tuple[tuple[str, str], ...] = (
     ("params", "arguments"),
     ("arguments", "params"),
+)
+
+# Container names whose empty form is contractually equivalent to
+# absence — the published filter-carrier aliases only.
+_EMPTY_EQUIVALENT_CONTAINER_KEYS: frozenset[str] = frozenset(
+    name for pair in _SCOPE_CONTAINER_ALIASES for name in pair
 )
 
 
@@ -3443,19 +3443,6 @@ def _presentation_evidence_source(
     if evidence_source is None:
         return False
     return evidence_source.casefold() in _PRESENTATION_EVIDENCE_SOURCES
-
-
-def _presentation_source_allows_aggregation(
-    evidence_source: str | None,
-) -> bool:
-    """Presentation anchor + aggregation delivery compat check.
-
-    Kept as the narrow aggregation predicate; new call sites should
-    use ``_presentation_evidence_source`` for the delivery-agnostic
-    class check and gate aggregation-specific behaviour on the
-    ``delivery`` parameter explicitly.
-    """
-    return _presentation_evidence_source(evidence_source)
 
 
 def _obligation_declared_entity_tokens(

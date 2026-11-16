@@ -7219,3 +7219,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESTRIÇÕES:** `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; migrations/DB/domínios owners intocados.
 - **PACOTE:** `evidence/c3-t2-continuity-scope-invariance/`.
 - **NEXT:** verificação independente delpi-verifier sobre o SHA entregue (engines: devin standalone sem auth / cursor quota — ver round table); coordenação decide próximo residual (budget/convergência de loop vs R4).
+
+## DELIA-C3-T2-FRAMEWORK-FIRST-NATIVE-ARCHITECTURE-CLEANUP-E2E-01
+
+- **MODELO:** audit-first cleanup sobre runtime já pós-migração-nativa (doc 291).
+- **INVENTÁRIO:** pydantic-ai 2.50.0/mcp 2.3.0 — MCPToolset+`process_tool_call` caminho único; FunctionToolset/WrapperToolset/ModelRetry/UsageLimits nativos; 0 dead symbols no orquestrador/orquestrador-governado; ports finas com consumidores reais. PARALLEL_ENGINE/PLANNER/REGISTRY/DISPATCH = NO.
+- **REMOÇÕES:** `_presentation_source_allows_aggregation` (wrapper morto pós-INT3, 0 consumidores).
+- **RQ-4 REVISÃO:** normalização de container vazio restringida aos carriers contratuais `params`/`arguments` (`_EMPTY_EQUIVALENT_CONTAINER_KEYS` derivado de `_SCOPE_CONTAINER_ALIASES`); envelopes desconhecidos e vazios aninhados → materiais, fail-closed. Declarado `{params:{page:2}}` → `__container__=params` (exact-domain; não descartar).
+- **TESTES:** 19/19 continuidade; regressão delia-api 100% exit 0; Phase3 + guardrails findings 0.
+- **EVAL:** paridade no superficie exercida (delta só toca envelopes não-carrier, não exercitados live); prova live de carriers permanece `or-qwen14b-2d82d7348d62` (A/R5/G SATISFIED, E honesto). A/B novo: TEST_NOT_RUN.
+- **VERIFIER:** engines bloqueados (probes) → INCONCLUSIVE r0, 0/3 rodadas.
+- **RESTRIÇÕES:** sem deploy, sem migrations/DB, sem promoção two-agent, sem avanço de fase; WIP concorrente preservado.
+- **PACOTE:** `evidence/c3-t2-framework-first-cleanup/`.
