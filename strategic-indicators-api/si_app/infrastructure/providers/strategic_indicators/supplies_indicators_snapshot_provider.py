@@ -126,13 +126,13 @@ class SuppliesIndicatorsSnapshotProvider(
     def _conversion_average(values: dict[str, int] | None) -> float | None:
         if values is None:
             return None
-        count = values.get("converted_requests", 0)
+        count = values.get("measured_requests", 0)
         if count <= 0:
             return None
-        return round(values["sum_conversion_days"] / count, 2)
+        return round(values["sum_measured_days"] / count, 2)
 
     def _build_sc_pc_conversion_measurement(self, *, snapshot) -> dict:
-        """Weighted by converted SC count, never average filial averages."""
+        """Weighted by SCs measured, including open ages, not mean of unit means."""
         counts = snapshot.sc_pc_conversion_by_branch or {}
         unit_values = {
             branch: self._conversion_average(counts.get(branch))
@@ -144,8 +144,8 @@ class SuppliesIndicatorsSnapshotProvider(
         if snapshot.branch in BRANCH_UNIT_CODES:
             value = unit_values.get(snapshot.branch)
         elif complete and valid:
-            total_count = sum(row["converted_requests"] for row in valid)
-            total_days = sum(row["sum_conversion_days"] for row in valid)
+            total_count = sum(row["measured_requests"] for row in valid)
+            total_days = sum(row["sum_measured_days"] for row in valid)
             value = round(total_days / total_count, 2) if total_count else None
         else:
             value = None
