@@ -9,10 +9,16 @@ export type ScPcConversionSummary = {
   without_approval: number;
   converted_requests: number;
   pending_requests: number;
+  future_pending_requests: number;
+  measured_requests: number;
   before_release: number;
   invalid_order_dates: number;
   sum_conversion_days: number;
+  sum_pending_days: number;
+  sum_measured_days: number;
   avg_days: number | null;
+  avg_completed_days: number | null;
+  avg_pending_days: number | null;
   same_day: number;
   one_to_two_days: number;
   three_to_five_days: number;
@@ -34,6 +40,7 @@ export type ScPcConversionItem = {
   item_count: number;
   conversion_status: ScPcConversionStatus;
   conversion_days: number | null;
+  pending_age_days: number | null;
 };
 
 export type ScPcConversionResponse = {
@@ -41,6 +48,8 @@ export type ScPcConversionResponse = {
   scope: "release_or_issue_without_approval_to_first_order";
   period_anchor: "effective_start_date";
   unit: "calendar_days";
+  calculation_mode: "completed_or_pending_elapsed_as_of_today";
+  as_of_date: string;
   summary: ScPcConversionSummary;
   branch_breakdown: Record<string, ScPcConversionSummary>;
   items: ScPcConversionItem[];
