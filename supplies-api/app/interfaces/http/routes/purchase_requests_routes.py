@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 from typing import Any
 from urllib.parse import urlencode
 
@@ -32,6 +33,7 @@ from app.application.services.requester_photo_scope import (
 from app.interfaces.http.auth_decorators import require_policy, require_unit, require_units
 
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
+_logger = logging.getLogger(__name__)
 
 _GATEWAY = PurchaseRequestsGateway()
 _APPROVAL_DELPI = DelpiApiGateway()
@@ -158,11 +160,30 @@ def get_portal_sc_pc_conversion():
             access_token=_access_token(), params=params,
         )
     except DelpiApiGatewayError as exc:
+        # Preserve the upstream cause for operations; do not expose SQL/DSN
+        # or request credentials to the browser.
+        _logger.warning(
+            "glpi635_sc_pc_upstream_failed status=%s code=%s",
+            exc.status_code, exc.code,
+        )
         if exc.status_code == 422:
             return jsonify({"detail": "Revise os filtros ou o período.", "code": "unprocessable"}), 422
         if exc.status_code in (401, 403):
             return jsonify({"detail": "Acesso negado.", "code": "forbidden"}), 403
-        return jsonify({"detail": "Não foi possível consultar a conversão SC/PC.", "code": "bad_gateway"}), 502
+        if exc.status_code == 504 or exc.code == "upstream_timeout":
+            return jsonify({
+                "detail": "A consulta ao Protheus excedeu o tempo de resposta.",
+                "code": "upstream_timeout",
+            }), 504
+        if exc.status_code == 503:
+            return jsonify({
+                "detail": "A base Protheus está indisponível para este indicador.",
+                "code": "totvs_unavailable",
+            }), 503
+        return jsonify({
+            "detail": "Falha na consulta ao indicador SC/PC. Verifique o log da api-delpi.",
+            "code": "upstream_failure",
+        }), 502
     data = unwrap_delpi_envelope(payload)
     if (
         not isinstance(data, dict)
