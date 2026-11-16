@@ -26,6 +26,7 @@ import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPag
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
 import { ApprovalLeadTimePage } from "./features/purchase-requests/ApprovalLeadTimePage";
+import { ScPcConversionPage } from "./features/purchase-requests/ScPcConversionPage";
 import { ConsumptionAuditPage } from "./features/consumption-audit/ConsumptionAuditPage";
 import { SafetyStockDetailPage } from "./features/safety-stock/SafetyStockDetailPage";
 import { SafetyStockPage } from "./features/safety-stock/SafetyStockPage";
@@ -149,6 +150,8 @@ function AppRoutes({
     content = <PurchaseRequestsPage basePath={basePath} />;
   } else if (view === "approval_lead_time") {
     content = <ApprovalLeadTimePage basePath={basePath} />;
+  } else if (view === "sc_pc_conversion") {
+    content = <ScPcConversionPage basePath={basePath} />;
   } else if (view === "purchase_request_detail") {
     content = (
       <PurchaseRequestDetailPage

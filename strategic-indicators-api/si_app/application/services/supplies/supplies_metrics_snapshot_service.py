@@ -30,6 +30,7 @@ class SuppliesMetricsSnapshot:
     otd_pct: float
     stock_value: float
     negotiation_savings_by_branch: dict[str, float | None] = field(default_factory=dict)
+    sc_pc_conversion_by_branch: dict[str, dict[str, int] | None] = field(default_factory=dict)
 
 
 class SuppliesMetricsSnapshotService:
@@ -193,6 +194,9 @@ class SuppliesMetricsSnapshotService:
                 start_date=start_date,
                 end_date=end_date,
             ),
+            sc_pc_conversion_by_branch=self._load_sc_pc_conversion(
+                branch=branch, start_date=start_date, end_date=end_date,
+            ),
         )
 
     def _load_negotiation_savings_by_branch(
@@ -226,6 +230,48 @@ class SuppliesMetricsSnapshotService:
             )
 
         return by_branch
+
+    def _load_sc_pc_conversion(
+        self,
+        *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, dict[str, int] | None]:
+        """Partial/failed source stays null, never 0 days."""
+        branches = [branch] if branch in BRANCH_UNIT_CODES else list(BRANCH_UNIT_CODES)
+        empty: dict[str, dict[str, int] | None] = {code: None for code in branches}
+        if not start_date or not end_date:
+            return empty
+        try:
+            payload = self._supplies_gateway.fetch_sc_pc_conversion_summary(
+                branch=branch, start_date=start_date, end_date=end_date,
+            )
+            if (
+                not isinstance(payload, dict)
+                or payload.get("source") != "SC1010+SCR010+SC7010"
+                or payload.get("scope") != "confirmed_release_to_first_order"
+            ):
+                return empty
+            breakdown = payload.get("branch_breakdown") or {}
+            result = dict(empty)
+            for code in branches:
+                source = breakdown.get(code)
+                if not isinstance(source, dict):
+                    continue
+                total = source.get("sum_conversion_days")
+                count = source.get("converted_requests")
+                if (
+                    type(total) is int and type(count) is int
+                    and count >= 0 and total >= 0
+                ):
+                    result[code] = {
+                        "sum_conversion_days": total,
+                        "converted_requests": count,
+                    }
+            return result
+        except Exception:
+            return empty
 
     def _to_float(self, value) -> float:
         if value is None:

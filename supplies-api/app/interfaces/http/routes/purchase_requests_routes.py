@@ -131,6 +131,52 @@ def get_portal_approval_lead_time():
     return jsonify(data), 200
 
 
+@purchase_requests_bp.route("/purchase-requests/sc-pc-conversion", methods=["GET"])
+@require_policy(can_use_purchase_requests)
+@require_units("branch")
+def get_portal_sc_pc_conversion():
+    """GLPI #635: somente BFF aplica RBAC/escopo; produtor valida a liberação SCR."""
+    allowed = {
+        "branch", "date_from", "date_to", "request_number", "page",
+        "page_size", "summary_only",
+    }
+    if any(key not in allowed for key in request.args.keys()):
+        return jsonify({"detail": "Filtro não suportado.", "code": "unprocessable"}), 422
+    if any(
+        len(request.args.getlist(key)) > 1
+        for key in ("date_from", "date_to", "request_number", "page", "page_size", "summary_only")
+    ):
+        return jsonify({"detail": "Filtro duplicado.", "code": "unprocessable"}), 422
+    params = [
+        (key, value)
+        for key in request.args.keys()
+        for value in request.args.getlist(key)
+    ]
+    try:
+        payload = _APPROVAL_DELPI.get(
+            "/supplies/purchase-requests/sc-pc-conversion",
+            access_token=_access_token(), params=params,
+        )
+    except DelpiApiGatewayError as exc:
+        if exc.status_code == 422:
+            return jsonify({"detail": "Revise os filtros ou o período.", "code": "unprocessable"}), 422
+        if exc.status_code in (401, 403):
+            return jsonify({"detail": "Acesso negado.", "code": "forbidden"}), 403
+        return jsonify({"detail": "Não foi possível consultar a conversão SC/PC.", "code": "bad_gateway"}), 502
+    data = unwrap_delpi_envelope(payload)
+    if (
+        not isinstance(data, dict)
+        or data.get("source") != "SC1010+SCR010+SC7010"
+        or data.get("scope") != "confirmed_release_to_first_order"
+        or data.get("period_anchor") != "final_approval_date"
+        or not isinstance(data.get("summary"), dict)
+        or not isinstance(data.get("branch_breakdown"), dict)
+        or not isinstance(data.get("items"), list)
+    ):
+        return jsonify({"detail": "Resposta inválida do indicador.", "code": "bad_gateway"}), 502
+    return jsonify(data), 200
+
+
 @purchase_requests_bp.get("/purchase-requests/summary")
 @require_policy(can_use_purchase_requests)
 @require_units("branch")

@@ -14,6 +14,7 @@ from delpi_auth.authorization import require_any_permission, require_auth
 from app.interface.http.supplies_bff_service_access import (
     PURCHASE_REQUESTS_API_CALLER,
     is_trusted_supplies_bff_call,
+    is_trusted_internal_caller,
     require_any_permission_or_trusted_caller,
 )
 
@@ -33,6 +34,9 @@ from app.composition.supplies_composer import (
 )
 from app.application.use_cases.supplies.get_purchase_request_approval_lead_time_use_case import (
     GetPurchaseRequestApprovalLeadTimeUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_sc_pc_conversion_repository import (
+    PurchaseRequestScPcConversionRepository,
 )
 from app.interface.http.schemas.purchase_request_pending_approvals_schema import PendingApprovalResponse
 from app.core.exceptions import DatabaseConnectionError
@@ -515,6 +519,51 @@ def get_supplies_purchase_request_approval_lead_time_route(
         return error_response("Base TOTVS indisponível.", status_code=503)
     except Exception as exc:
         log_error(f"Falha no indicador de alçadas: {exc}")
+        return error_response("Não foi possível consultar o indicador.", status_code=500)
+
+
+@router.get(
+    "/sc-pc-conversion",
+    operation_id="get_supplies_sc_pc_conversion",
+)
+@require_auth()
+def get_supplies_sc_pc_conversion_route(
+    branch: Annotated[list[str] | None, Query()] = None,
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    request_number: str | None = Query(default=None),
+    page: int = Query(1, ge=1, le=100000),
+    page_size: int = PAGE_SIZE_QUERY("page_25_100"),
+    summary_only: bool = Query(False),
+):
+    """GLPI #635: última liberação SCR -> primeiro PC; somente BFF autenticado."""
+    if not (is_trusted_supplies_bff_call() or (
+        summary_only and request_number is None
+        and is_trusted_internal_caller("strategic-indicators-api")
+    )):
+        return error_response("Acesso negado.", status_code=403)
+    try:
+        result = PurchaseRequestScPcConversionRepository().get_conversion(
+            branches=branch or [],
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            page=page,
+            page_size=page_size,
+            summary_only=summary_only,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_sc_pc_conversion",
+            message="Tempo entre liberação da SC e primeiro PC consultado.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível na conversão SC/PC: {exc}")
+        return error_response("Base TOTVS indisponível.", status_code=503)
+    except Exception as exc:
+        log_error(f"Falha ao consultar conversão SC/PC: {exc}")
         return error_response("Não foi possível consultar o indicador.", status_code=500)
 
 

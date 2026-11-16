@@ -140,3 +140,27 @@ class DelpiSuppliesGateway:
                 authorization=bearer_authorization_from_context(),
             ),
         )
+
+    def fetch_sc_pc_conversion_summary(
+        self, *,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, Any]:
+        """Confirmed SCR release -> first PC. No pagination in strategic snapshots."""
+        if not start_date or not end_date:
+            raise ValueError("Período obrigatório no indicador de conversão SC/PC.")
+        key = _cache_key(branch, start_date, end_date, "sc-pc-conversion")
+        branches = [branch] if branch in ("01", "02") else ["01", "02"]
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_supplies_sc_pc_conversion(
+                params={
+                    "branch": branches,
+                    "date_from": start_date,
+                    "date_to": end_date,
+                    "summary_only": "true",
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )

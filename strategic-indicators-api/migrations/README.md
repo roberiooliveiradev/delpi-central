@@ -40,6 +40,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V026 | commercial_per_unit_restructure | Comercial `average_of_units`; `commercial-rol` único; inativa rol-matrix/branch |
 | V031 | quality_ppm_plugs_indicators | PPM interno/externo plugues (PA 9048*) — TV meta/realizado |
 | V032 | quality_ppm_components_indicators | PPM interno/externo chicotes (PA 9026*, dashboard qualidade: Componentes) — TV meta/realizado |
+| V035 | supplies_sc_pc_conversion_days | KPI informativo em dias desde a última liberação SCR até o primeiro PC; peso zero, sem meta, consolidado ponderado |
 
 ## Comandos
 

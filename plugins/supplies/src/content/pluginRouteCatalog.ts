@@ -123,6 +123,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "purchaseRequests",
         keywords: ["alcada", "aprovação", "aprovacao", "indicador", "scr", "tempo"],
       },
+      {
+        id: "sc_pc_conversion",
+        label: "Conversão SC → PC",
+        viewId: "sc_pc_conversion",
+        requiredCap: "purchaseRequests",
+        keywords: ["conversao", "pc", "sc", "pedido", "liberacao", "tempo medio"],
+      },
     ],
   },
   {
