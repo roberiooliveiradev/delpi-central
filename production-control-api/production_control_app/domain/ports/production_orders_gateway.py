@@ -4,6 +4,11 @@ from typing import Any, Protocol, Sequence
 
 
 class ProductionOrdersGateway(Protocol):
+    def fetch_product_sales_analytics(
+        self, *, branch: str, product_code: str, months: int
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_pcp_orders_summary(self, *, branch: str) -> dict[str, Any]:
         ...
 

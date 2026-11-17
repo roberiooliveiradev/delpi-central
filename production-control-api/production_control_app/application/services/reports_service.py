@@ -241,6 +241,24 @@ class ReportsService:
             ],
         }
 
+    def product_sales(
+        self, user: object | None, *, branch: str, product_code: str, months: int
+    ) -> dict[str, Any]:
+        self._authorize(user, branch=branch)
+        code = _text(product_code)
+        if not code or len(code) > 40 or not all(
+            char.isascii() and (char.isalnum() or char in "_.-") for char in code
+        ):
+            raise ValueError("Informe um código de produto válido (até 40 caracteres).")
+        if months not in {12, 24, 36}:
+            raise ValueError("Período inválido. Use 12, 24 ou 36 meses.")
+        data = _unwrap_data(self._gateway.fetch_product_sales_analytics(
+            branch=branch, product_code=code, months=months
+        ))
+        if not data or not isinstance(data.get("product"), dict):
+            raise DelpiGatewayError("A api-delpi retornou um resultado inválido.")
+        return {"report_id": "product-sales", **data}
+
     def stock_balances(
         self,
         user: object | None,
