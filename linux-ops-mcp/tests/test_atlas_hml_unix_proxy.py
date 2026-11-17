@@ -53,6 +53,7 @@ def endpoint(tmp_path):
     path=root/"inspect.sock"
     listener=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
     listener.bind(str(path))
+    os.chmod(path, 0o660)
     listener.listen(3)
     try:
         yield path,listener
@@ -76,6 +77,7 @@ def start_one(endpoint,inspector, *, allowed_uid=None, owner_uid=None):
                 inspector=inspector,
                 expected_path=path,
                 owner_uid=os.getuid() if owner_uid is None else owner_uid,
+                socket_gid=os.getgid(),
             ))
         except Exception as exc:
             errors.append(exc)
@@ -261,6 +263,7 @@ def test_unsafe_listener_permissions_symlink_or_raw_socket_alias_refused(
             proxy.serve_one_prebound(
                 listener=listener,allowed_collector_uid=1001,
                 inspector=Source(),expected_path=alias,owner_uid=os.getuid(),
+                socket_gid=os.getgid(),
             )
         return
     elif unsafe=="raw-alias":
@@ -269,11 +272,12 @@ def test_unsafe_listener_permissions_symlink_or_raw_socket_alias_refused(
     else:
         raise AssertionError(unsafe)
     if unsafe!="raw-alias":
-        expected="HML_PROXY_LISTENER_UNTRUSTED"
+        expected="HML_PROXY_PATH_UNSAFE"
     with pytest.raises(proxy.HMLUnixProxyError,match=expected):
         proxy.serve_one_prebound(
             listener=listener,allowed_collector_uid=1001,
             inspector=Source(),expected_path=path,owner_uid=os.getuid(),
+            socket_gid=os.getgid(),
         )
 
 
@@ -283,7 +287,7 @@ def test_listener_not_same_path_refused_before_accept(endpoint,tmp_path):
         proxy.serve_one_prebound(
             listener=listener,allowed_collector_uid=1001,
             inspector=Source(),expected_path=tmp_path/"unexpected.sock",
-            owner_uid=os.getuid(),
+            owner_uid=os.getuid(),socket_gid=os.getgid(),
         )
 
 
@@ -294,6 +298,7 @@ def test_sender_must_be_nonroot_and_configured_exactly(endpoint):
             proxy.serve_one_prebound(
                 listener=listener,allowed_collector_uid=uid,
                 inspector=Source(),expected_path=path,owner_uid=os.getuid(),
+                socket_gid=os.getgid(),
             )
 
 
@@ -318,3 +323,54 @@ def test_source_contains_no_socket_creation_or_mutating_primitive():
         "INSERT INTO it_portal", "UPDATE it_portal", "os.system(",
     ):
         assert forbidden not in text
+
+
+def test_listener_rejects_non_listening_fd(endpoint):
+    path,listener=endpoint
+    listener.close()
+    unbound=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+    try:
+        with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_LISTENER_UNTRUSTED"):
+            proxy.serve_one_prebound(
+                listener=unbound,allowed_collector_uid=1001,
+                inspector=Source(),expected_path=path,owner_uid=os.getuid(),
+                socket_gid=os.getgid(),
+            )
+    finally:
+        unbound.close()
+
+
+@pytest.mark.parametrize("mode", [0o600, 0o666, 0o777, 0o660 | 0o1000])
+def test_socket_mode_must_match_exact_policy(endpoint,mode):
+    path,listener=endpoint
+    os.chmod(path,mode)
+    with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_PATH_UNSAFE"):
+        proxy.serve_one_prebound(
+            listener=listener,allowed_collector_uid=1001,
+            inspector=Source(),expected_path=path,owner_uid=os.getuid(),
+            socket_gid=os.getgid(),
+        )
+
+
+def test_wrong_socket_group_is_rejected(endpoint):
+    path,listener=endpoint
+    with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_PATH_UNSAFE"):
+        proxy.serve_one_prebound(
+            listener=listener,allowed_collector_uid=1001,
+            inspector=Source(),expected_path=path,owner_uid=os.getuid(),
+            socket_gid=os.getgid()+1,
+        )
+
+
+def test_upstream_inspector_deadline_does_not_authorize(endpoint,monkeypatch):
+    monkeypatch.setattr(proxy,"_peer_uid",lambda _:max(1,os.getuid()))
+    source=Source()
+    async def slow(_target):
+        raise asyncio.TimeoutError()
+    source.inspect=slow
+    thread,result,error=start_one(endpoint,source)
+    code,payload,_=raw_request(endpoint,GET)
+    assert code==502
+    assert payload=={"error":"HML_INSPECT_UNAVAILABLE"}
+    got=wait_for(thread,result,error)
+    assert got.status=="blocked" and not got.can_execute
