@@ -46,7 +46,11 @@ include = [
   "strategic_indicators_client*",
   "transformometro_client*",
   "bpmn_validation*",
+  "delpi_freight*",
 ]
+
+[tool.setuptools.package-data]
+delpi_freight = ["freight.json"]
 
 [tool.setuptools]
 zip-safe = false
