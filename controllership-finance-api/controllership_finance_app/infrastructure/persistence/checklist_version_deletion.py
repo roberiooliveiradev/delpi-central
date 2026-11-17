@@ -62,7 +62,6 @@ DEPENDENCY_LABELS = {
 # competência é vínculo operacional impeditivo; qualquer tabela
 # dependente desconhecida => BLOCKING (fail-closed).
 EXCLUSIVE_DEPENDENCIES = frozenset({"checklist_template_item"})
-BLOCKING_DEPENDENCIES = frozenset({"monthly_competence"})
 
 
 def diagnose_template_version_deletion(

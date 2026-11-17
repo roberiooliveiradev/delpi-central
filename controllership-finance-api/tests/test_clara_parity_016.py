@@ -414,6 +414,7 @@ MANAGE_CAPS = (
     "checklist.version_discard",
     "checklist.version_publish",
     "checklist.version_inactivate",
+    "checklist.version_delete",
     "checklist.doc_requirement",
     "clarification.resolve",
     "evidence.decide_item_set",

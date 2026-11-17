@@ -82,10 +82,11 @@ DEPENDENCY_LABELS = {
 # Dependências diretas de monthly_competence, classificadas:
 # - EXCLUSIVE: dados operacionais que só existem por causa da
 #   competência — removidos na exclusão governada confirmada.
-# - BLOCKING: artefatos oficiais de homologação/entrega — bloqueiam
-#   qualquer exclusão, mesmo governada.
-# Tabela dependente desconhecida => BLOCKING (fail-closed: evolução de
-# schema nunca vira cascade silencioso).
+# - BLOCKING: qualquer dependente fora de EXCLUSIVE — inclui os
+#   artefatos oficiais de homologação/entrega (closing_package,
+#   closing_review_assignment, closing_terminal_rejection) e toda
+#   tabela dependente desconhecida (fail-closed: evolução de schema
+#   nunca vira cascade silencioso).
 EXCLUSIVE_DEPENDENCIES = frozenset(
     {
         "competence_checklist_item",
@@ -100,13 +101,6 @@ EXCLUSIVE_DEPENDENCIES = frozenset(
         "closing_revalidation",
         "closing_stock_state",
         "closing_notification_event",
-    }
-)
-BLOCKING_DEPENDENCIES = frozenset(
-    {
-        "closing_package",
-        "closing_review_assignment",
-        "closing_terminal_rejection",
     }
 )
 
