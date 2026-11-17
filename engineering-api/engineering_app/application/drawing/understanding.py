@@ -5882,3 +5882,6 @@ def apply_native_table_observations(
             table["detection"] = "native_table_cells"
     updated = dict(understanding)
     updated["component_table"] = table
+    updated["table_perception"] = perceptions
+    updated["limitations"] = limitations
+    return updated
