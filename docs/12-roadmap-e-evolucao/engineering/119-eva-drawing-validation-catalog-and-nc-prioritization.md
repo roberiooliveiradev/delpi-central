@@ -6391,3 +6391,46 @@ Dispatcher `_eval_1008` por marcador `TERM. <TIPO>` (espelha o padrão do dispat
 - Demais estruturas 1008 com AWG/CARRETEL continuam `INCONCLUSIVE` até ratificação própria — `DISCOVERED_REQUIREMENT` para o owner normativo.
 - Doc histórica `openai-workspace-agent-davi.md` cita V2 como latest — saneamento documental futuro (não é autoridade).
 - Próximo bounded step: aceite E2E ChatGPT (produto real) + lote G-03 (certificações) conforme §94.34.9.
+
+## §94.41 — G25-L3: Vocabulário de Certificações e Normas Técnicas (G-03)
+
+**TASK_ID:** `EVA-E1-VAL01-G25-L3-NORMATIVE-CERTIFICATION-VOCABULARY-IMPLEMENTATION-AND-RELEASE-01`
+**AUTORIZAÇÃO:** Issue #131, comentário `6950259333`. Corpus DAVI V3 (`freeze-003`), hash normativo `c40413d2…414fe`. Contrato `normative_description.v1` inalterado.
+
+### 94.41.1 Causa-raiz
+
+Vocabulários de certificação do motor operavam por token exato simples (`_CABLE_CERTS`, `_TERM_CERT`, `_ISOLATOR_CERTS`, `_1009_CERTS`): referências compostas documentadas na norma (`NM 247-3`, `NM 247-5`, `NBR13249`, `NBR14136`, `DIN46228`, `UL94 V2`, `UL/CSA`) eram perdidas, truncadas a sub-tokens (`UL`, `V2`, `NBR`) ou caíam em `INCONCLUSIVE` indevido — falsos inconclusivos sem ampliar aplicabilidade.
+
+### 94.41.2 Implementação (menor diff — commit `1855e8e74b`, 2 arquivos)
+
+- Padrões compostos novos: `_REF_NM` (`NM \d{2,4}-\d{1,2}`), `_REF_NBR` (`NBR\d{4,5}`), `_REF_UL94` (`UL 94 V\d`), `_REF_ULCSA` (`UL/CSA`), `_REF_DIN` (`DIN\d{4,6}`); helper `_cert_refs(up, composites, vocab)` — matching ordenado (compostos antes de tokens simples), sem double-count (`UL94 V2` não vira `UL`+`V2`), preservando o texto bruto.
+- Escopo por avaliador existente: cabos 1001–1005 (`_REF_NM`, `_REF_NBR`), 1008 `_TERM_CERT` (compostos `DIN`/`NBR`), isolador 1009 (`_REF_UL94`, `_REF_DIN`, `_REF_NBR`), inserto 1009 (`_REF_ULCSA` exclusivo + demais), conector 1009 (sem `_REF_ULCSA` — `UL` e `CSA` contam separados).
+- Nenhum avaliador reimplementado; nenhuma norma/corpus alterado; `no_business_write=True`, `automatic_nc=false`, `review_status=DRAFT/CANDIDATE`.
+- Política preservada: `PASS` = referência lexical completa documentada no campo de nomenclatura — **não** comprova certificação/homologação do produto.
+
+### 94.41.3 Testes
+
+- 11 testes L3 novos (`test_l3_*`): 6 positivos oficiais + negativos (`NM` bare → `INCONCLUSIVE`; `NM` em 1008 → `NOT_APPLICABLE`, não vira cert; `NBR123` fora de formato → não conta; ausência de cert opcional → `NOT_APPLICABLE`).
+- Focados: **101/101** em `test_g24_normative_description.py`.
+- Suíte eng-api local: `1539 pass / 2 fail / 21 skip` (LMP mount ausente + `prc_eva_parity` da frente #207 `f7ef23e3ed` — fora do diff). Verificador: `1550/2` em `.venv` (`eva_val01_structure_table` + `visual_perception_r7` — ambientais, fora do diff; `prc_eva_parity` passou lá — divergência de ambiente registrada).
+- Guardrails: `audit_architecture_phase3 --check` 0 novas regressões; `audit_platform_guardrails --check` findings 0.
+
+### 94.41.4 Verificação independente
+
+- r1 (cursor/Composer, escopo `aeec615d8b..1855e8e74b`): **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção — relatório `.git/delpi-verifier/reports/20261117-111852-r1-cursor.md`. Todos os ACs RQ-01..RQ-04/AC-05..AC-08 `PASS` com evidência.
+- Resíduos (não bloqueantes): range git impuro (commits alheios CF-UX-054/PRC comerciais — delta G25 é de 2 arquivos); contagem de suíte divergente entre ambientes (falhas fora do diff); `NM` residual em `observations` no 1008 (token não consumido — não conta como cert, pré-existente); HEAD moveu durante a verificação (diff G25 vazio no delta).
+
+### 94.41.5 Deploy e smoke produtivo
+
+- Deploy canônico `srv-api` já efetivado no rebuild da frente `9e3445a53a` (contém `1855e8e74b`); código G25-L3 confirmado **dentro do container** (`_cert_refs`, `_REF_NM`, `_REF_UL94`, `_REF_ULCSA` presentes em `/app/.../normative_description.py`).
+- Imagem antes: `sha256:726e4fc0bbd6` (G25-L2-B) → depois: `sha256:380919358b64` (`infra-engineering-api:latest`). Rollback etiquetado: `infra-engineering-api:rollback-pre-g25l3` → `726e4fc0bbd6`. Container `delpi-engineering-api` healthy.
+- Smoke produtivo (`evaluate_description` read-only no container): `NM 247-3`/`NM 247-5` → `MP-CABO-CERT PASS` observed `['NM 247-3']`/`['NM 247-5']`; `NBR13249`+`NBR14136` → PASS ambos preservados; `NBR` simples → PASS (sem regressão); `NM` bare e `NBR123` → `INCONCLUSIVE`; `DIN46228` → `MP-1008I-CERT PASS` observed `['DIN46228']`; `NM` em terminal → `NOT_APPLICABLE`; `UL94 V2` → `MP-1009-CERT PASS` observed `['UL94 V2']`; `UL/CSA` → `MP-1009I-CERT PASS` observed `['UL/CSA']`; conector `CSA UL` → `MP-1009C-CERT PASS`.
+- Regressões ratificadas em prod: `10080106` real → overall `PASS` (`GAUGE=PASS 18-22AWG`, `PACK=PASS CARRETEL`, `CERT=PASS ['ROHS','UL']`); BALA oficial PASS; FASTON/BANDEIRA dispatch preservado; PI 50xx e F01/F02 inalterados (fora do diff); `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`.
+
+### 94.41.6 Residual e handoff
+
+- Gap **G-03** encerrado no escopo autorizado. Reconhecimento lexical ≠ certificação comprovada — claims de conformidade técnica seguem exigindo evidência oficial.
+- `NBR`/`UL`/`DIN` bare continuam contando como referência simples onde o vocabulário histórico os ratificou (sem regressão); formas incompletas novas (`NM` bare, `NBR123`) não são promovidas.
+- Falhas de suíte pré-existentes/ambientais inalteradas (D16, LMP mount, `prc_eva_parity`/`eva_val01`/`visual_perception` conforme ambiente) — fora do diff G25.
+- Issue #131 sem update automático (`gh` sem auth) — pendência manual. Issue #233 preservada como `PLANNED` (vocabulários configuráveis futuros).
+- Próximo bounded step: fila G25-L4/G25-L5 conforme §94.34.9, mediante nova autorização da Coordination. VAL-01 permanece aberto.
