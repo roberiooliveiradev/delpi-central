@@ -6344,3 +6344,50 @@ Dispatcher `_eval_1008` por marcador `TERM. <TIPO>` (espelha o padrão do dispat
 - Falhas pré-existentes inalteradas: D16, PRC #207, e outras fora do escopo eng-drawing.
 - Issue #131 não atualizada (gh sem auth) — pendência manual. Issue #233 preservada como decisão arquitetural.
 - Próximo bounded step: ratificação owner AWG/CARRETEL → promoção para `PASS`; lote G-03 (certificações) segue na fila.
+
+## §94.40 — G25-L2-B: Publicação Normativa MP1008, Corpus V3 e Alinhamento do Motor
+
+**TASK_ID:** `EVA-E1-VAL01-G25-L2-B-MP1008-NORMATIVE-PUBLICATION-AND-ENGINE-ALIGNMENT-01`
+
+### 94.40.1 Publicação normativa
+
+- **PR #238** mergeada (`f0f6b02606`, head `fddd88d5bc`): estrutura **Terminais (Genérico)** do grupo 1008 passa a documentar `RANGE DA BITOLA` em MM2 **ou AWG** e `EMBALAGEM` GRANEL, FITADO, BLISTER **ou CARRETEL**; proibida conversão automática AWG↔mm² e equivalência CARRETEL→FITADO; exemplo real `TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS` incluído; autorização expressa registrada no próprio texto ("Revisão normativa autorizada — 17/11/2026").
+- **Escopo:** somente a estrutura genérica; demais estruturas 1008 exigem ratificação própria.
+- Novo sha256 da norma: `c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe` (anterior `66aa9c13…4bd2`, preservado no manifesto V2).
+
+### 94.40.2 Corpus DAVI V3 — evolução aditiva, V1/V2 imutáveis
+
+- `davi-governed-knowledge-freeze-003.md` (commit `5a11f9a48d` = `FREEZE_SHA_V3`): 17 membros (mesmos paths), único conteúdo alterado = norma MP (PR #238); gate de autoridade registrado; boundary `KNOWLEDGE != SOURCE OF TRUTH` preservado.
+- `manifest-v3.json`: `manifest_sha256 = 0817c4a0…77a9`, `source_git_sha = 5a11f9a48d`; `topics-v3.json` (tópico MP → `FROZEN_V3`).
+- `davi_governed_knowledge_bundle_lib.py`: `V3_SPEC` + `PUBLISHED_V3_MANIFEST_IDENTITY` + `FROZEN_V3` em `APPROVED_TOPIC_STATUSES`; `LATEST_CORPUS_VERSION = 3`.
+- **Invariante de servimento:** `read_published_corpus` exige bytes pinados; V2 do doc alterado falha fechado (`CORPUS_UNAVAILABLE`) na árvore nova — comportamento de integridade do pipeline, não regressão; conteúdo V2 segue reproduzível via blob `source_git_sha` (testado). V1 (15 docs íntegros) continua servível.
+- Bundle derivado `dist/davi-governed-knowledge/v3` gerado (`build … verify` PASS).
+
+### 94.40.3 Motor EVA — ratificação escopada
+
+- `_t_gauge_rule(..., allow_awg=bool)` e `_t_pack_rule(..., allow_carretel=bool)`: flags `True` **somente** em `_eval_generic_1008`. AWG → `PASS` (raw + `unit=AWG`, zero conversão); CARRETEL → `PASS`. Fora do genérico, ambos seguem `INCONCLUSIVE` com razão de ratificação pendente.
+- `NORM_REFS`: 6 pins MP → `c40413d2…`; pin PI inalterado. Contrato `normative_description.v1` preservado; `no_business_write=True`.
+- Commit código: `a760c41e71` (pushed `26dc400220`).
+
+### 94.40.4 Testes, verificação e deploy
+
+- Focados eng-api: **90/90** (novos `test_l2b_awg_outside_generic_stays_inconclusive`, `test_l2b_carretel_outside_generic_stays_inconclusive`; casos L2-A promovidos a PASS no genérico).
+- Corpus: **48/48** (bundle + v1 + v2 + v3 novo, incluindo `test_v2_superseded_doc_fails_closed` e `test_v2_pinned_blob_still_servable`).
+- Suíte eng-api: `1511 pass / 2 fail` (D16 `requestId` + LMP mount ausente — pré-existentes/ambientais). Verificador reproduziu `1520/3` em `.venv` (resíduo ambiental, fora do diff).
+- Verificação independente r1 (cursor/Composer, `f0f6b02606..a760c41e71`): **ACCEPT_WITH_RESIDUAL**, zero ordens de correção — residuos: range impuro (commits alheios plugin-ui/keycloak), contagem suite divergente (ambiental), doc histórica `openai-workspace-agent-davi.md` ainda cita V2 (não-normativo), redação do freeze-003 sobre "verificável via corpus_version=2" levemente otimista (leitura falha fechado; blob pinado é a via canônica).
+- Deploy canônico `srv-api`: engineering-api `b6db540e9bcf` → `726e4fc0bbd6`; api-delpi `b3072117f2` → `efcd841e8fd1`. Ambos healthy; rollbacks retidos.
+
+### 94.40.5 Smoke produtivo
+
+- `evaluate_description` no container: `10080106` real → **overall PASS** (`MP-1008G-GAUGE=PASS 18-22AWG`, `MP-1008G-PACK=PASS CARRETEL`); `18-22 AWG` e `20-14AWG` → PASS; MM2 regressão PASS; GRANEL/FITADO/BLISTER/CARRETEL PASS no genérico; BALA oficial PASS.
+- **Escopo confirmado em prod:** FORQUILHA+AWG → `INCONCLUSIVE`; LUVA+CARRETEL → `INCONCLUSIVE`; 1009 INSERTO `20-14AWG` → PASS (ratificado ali).
+- Corpus em prod: `LATEST=3`, v3 serve norma com `18-22AWG`/`CARRETEL`, v1 serve 15 docs, v2 fail-closed (`Published document hash mismatch` — guard de integridade).
+- `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+
+### 94.40.6 Residual e handoff
+
+- Issue #131 e PR #238 não atualizadas via `gh` (sem auth) — pendência manual. Issue #233 preservada (`PLANNED`).
+- Aceite E2E real via conexão EVA/ChatGPT sobre `90264302/10080106` — handoff à Coordination (motor já responde PASS nos campos ratificados).
+- Demais estruturas 1008 com AWG/CARRETEL continuam `INCONCLUSIVE` até ratificação própria — `DISCOVERED_REQUIREMENT` para o owner normativo.
+- Doc histórica `openai-workspace-agent-davi.md` cita V2 como latest — saneamento documental futuro (não é autoridade).
+- Próximo bounded step: aceite E2E ChatGPT (produto real) + lote G-03 (certificações) conforme §94.34.9.
