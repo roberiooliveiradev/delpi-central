@@ -1,6 +1,6 @@
-/** Verificações estruturais da aba Roteiro (Doc 126) — a suíte do MFE
- * é source-based; comportamento dinâmico é coberto pelos unitários de
- * `routingGrouping` e pela validação visual/E2E. */
+/** Verificações estruturais da aba Roteiro — Routing Study Workspace V2.
+ * A suíte do MFE é source-based; comportamento dinâmico é coberto pelos
+ * unitários de `routingGrouping`/`routingStudyDraft` e pela E2E. */
 
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -9,6 +9,9 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "ProductRoutingTab.tsx"), "utf8");
+const posts = readFileSync(join(here, "PostConfigurator.tsx"), "utf8");
+const draft = readFileSync(join(here, "routingStudyDraft.ts"), "utf8");
+const hook = readFileSync(join(here, "useRoutingStudyDraft.ts"), "utf8");
 const page = readFileSync(
   join(here, "../pages/ProductDetailPage.tsx"),
   "utf8",
@@ -22,8 +25,9 @@ const api = readFileSync(
   "utf8",
 );
 const css = readFileSync(join(here, "../../../index.css"), "utf8");
+const all = `${src}\n${posts}\n${draft}\n${hook}`;
 
-describe("aba Roteiro — wiring", () => {
+describe("aba Roteiro V2 — wiring", () => {
   it("registra a aba routing na navegação da ficha", () => {
     expect(routes).toContain('"routing"');
     expect(page).toContain('key: "routing"');
@@ -39,10 +43,30 @@ describe("aba Roteiro — wiring", () => {
   });
 });
 
-describe("aba Roteiro — seções e estados honestos", () => {
-  it("implementa as três seções do wireframe", () => {
-    for (const id of ["operations", "balance", "visual"]) {
-      expect(src).toContain(`"${id}"`);
+describe("aba Roteiro V2 — página única scrollável", () => {
+  it("não possui navegação interna de três abas", () => {
+    expect(src).not.toContain("EngineeringTabs");
+    expect(src).not.toContain("SECTION_TABS");
+    expect(src).not.toContain("RoutingSection");
+    expect(src).not.toContain("routing-tab-");
+    expect(src).not.toContain("routing-panel-");
+  });
+
+  it("renderiza todas as seções no scroll — ordem do contrato V2", () => {
+    /* Ordem de render no JSX de ProductRoutingTab (não das definições). */
+    const order = [
+      '<EngineeringSectionCard\n              title="Roteiro de fabricação"',
+      "<StageKpis",
+      "<OperationsSection",
+      "<StudySection",
+      "<ResultsSection",
+      "<VisualSection",
+    ];
+    let last = -1;
+    for (const tag of order) {
+      const idx = src.indexOf(tag);
+      expect(idx, tag).toBeGreaterThan(last);
+      last = idx;
     }
   });
 
@@ -58,58 +82,96 @@ describe("aba Roteiro — seções e estados honestos", () => {
     expect(api).toContain("truncated");
     expect(src).toContain("Resposta parcial");
   });
+});
 
+describe("aba Roteiro V2 — estudo e domínio", () => {
   it("dedup visual usa a identidade oficial da operação", () => {
     expect(src).toContain("groupRoutingRows");
   });
 
   it("calculadora chama o domínio EVA — sem algoritmo local", () => {
     expect(src).toContain("postProductLineBalance");
-    expect(src).not.toContain("firstFitDecreasing");
-    expect(src).not.toContain("Math.ceil");
+    expect(all).not.toContain("firstFitDecreasing");
+    expect(all).not.toContain("Math.ceil");
   });
 
-  it("cenários são atribuíveis e limitados, sem persistência", () => {
-    expect(src).toContain("MAX_SCENARIOS");
-    expect(src).toContain("Comparação de cenários");
-    expect(src).not.toContain("localStorage");
+  it("cenários identificados A/B/C, limitados e comparáveis", () => {
+    expect(draft).toContain("STUDY_MAX_SCENARIOS");
+    expect(draft).toContain('["A", "B", "C", "D"]');
+    expect(src).toContain("Novo cenário");
+    expect(src).toContain("Cenário ${");
+    expect(src).toContain("Resultados e cenários");
   });
 
-  it("gráficos usam o componente oficial do kit", () => {
-    expect(src).toContain("ConfigurableSeriesChart");
-    expect(src).toContain("EngineeringChartCard");
+  it("postos hipotéticos declaram limitação do motor — sem falsa viabilidade", () => {
+    expect(src).toContain("DRAFT_LOCAL");
+    expect(src).toContain("não valida alocação por posto");
+    expect(src).toContain("não valida a distribuição manual");
   });
 
-  it("marca proveniência e simulação visualmente", () => {
-    expect(src).toContain("SIMULATION");
-    expect(src).toContain("OBSERVED");
-    expect(src).toContain("PROVIDED");
-    expect(src).toContain("CALCULATED");
+  it("postos usam multisseleção de operações oficiais — nunca livres", () => {
+    expect(posts).toContain("EngineeringMultiSelectField");
+    expect(posts).toContain("Somente operações oficiais");
+    expect(posts).toContain("CT não equivale a posto físico");
   });
 
-  it("controles acessíveis — tabs do kit e cards expansíveis do kit", () => {
-    expect(src).toContain('mode="tabs"');
-    expect(src).toContain("EngineeringInteractiveDataCard");
-    expect(src).toContain("onActivate");
-    expect(src).not.toContain("expandedRowKey");
-  });
-
-  it("operações são cards expansíveis — DataTable só onde é tabular", () => {
-    expect(src).not.toContain("OPERATION_COLUMNS");
-    expect(src).not.toContain("COMPONENT_COLUMNS");
-    // A DataTable permanece apenas na comparação de cenários (dados
-    // verdadeiramente tabulares), nunca como visualização primária.
-    expect(src).toContain("SCENARIO_COLUMNS");
+  it("ordenação de postos é por botões — acessível sem drag-and-drop", () => {
+    expect(posts).toContain("para cima");
+    expect(posts).toContain("para baixo");
+    expect(posts).toContain("EngineeringIconButton");
   });
 });
 
-describe("aba Roteiro — Plugin UI como fonte de apresentação", () => {
+describe("aba Roteiro V2 — rascunho de sessão", () => {
+  it("persiste em sessionStorage com chave por identidade e contexto", () => {
+    expect(draft).toContain("sessionStorage");
+    expect(hook).toContain("window.sessionStorage");
+    expect(src).not.toContain("localStorage");
+    expect(draft).toContain("buildStorageKey");
+    expect(draft).toContain("context.productCode");
+    expect(draft).toContain("context.branch");
+    expect(draft).toContain("context.stageKey");
+  });
+
+  it("chave usa sub do JWT — nunca token, email ou segredo", () => {
+    expect(src).toContain("getSubjectFromAccessToken");
+    expect(src).toContain("getCurrentAccessToken");
+    expect(draft).toContain("anonymous");
+    expect(all).not.toMatch(/storage\.setItem\([^)]*token/i);
+    expect(all).not.toContain("localStorage");
+  });
+
+  it("resultados nunca são persistidos — CALCULATED é transitório", () => {
+    expect(hook).toContain("computed`) são transitórios");
+    /* saveDraft serializa só o RoutingStudyDraft (inputs+postos+modo)
+     * — `computed` vive em estado separado e nunca entra no payload. */
+    expect(hook).toMatch(/saveDraft\(store, storageKey, \{\s*\.\.\.draft,[\s\S]*?savedAt/);
+    expect(src).toContain("STALE");
+    expect(draft).toContain("inputsFingerprint");
+  });
+
+  it("limpar exige confirmação e remove só a chave do contexto", () => {
+    expect(src).toContain("Limpar estudo");
+    expect(src).toContain("EngineeringConfirmDialog");
+    expect(src).toContain("Não altera roteiro");
+    expect(hook).toContain("clearStudy");
+    expect(draft).toContain("removeDraft");
+  });
+
+  it("estados de persistência são honestos", () => {
+    expect(src).toContain("Salvo nesta aba");
+    expect(src).toContain("Não foi possível salvar");
+    expect(src).toContain("Rascunho recuperado nesta aba");
+    expect(draft).toContain("QuotaExceededError");
+  });
+});
+
+describe("aba Roteiro V2 — Plugin UI como fonte de apresentação", () => {
   it("não reconstrói primitivos do kit — sem <table>/<select>/<button> manual", () => {
-    expect(src).not.toContain("<table");
-    expect(src).not.toContain("<select");
-    expect(src).not.toContain("<button");
+    expect(all).not.toContain("<table");
+    expect(all).not.toContain("<select");
+    expect(all).not.toContain("<button");
     expect(src).not.toContain("__expander");
-    expect(src).not.toContain("__components-table");
   });
 
   it("usa os componentes canônicos do kit para cada superfície", () => {
@@ -119,29 +181,53 @@ describe("aba Roteiro — Plugin UI como fonte de apresentação", () => {
       "EngineeringDetailCard",
       "EngineeringFilterSelect",
       "EngineeringFormActions",
-      "EngineeringTabs",
       "EngineeringEmptyState",
       "EngineeringStateBanner",
       "EngineeringStatusBadge",
       "EngineeringChartCard",
       "EngineeringLoadingActivityCard",
       "EngineeringInteractiveDataCard",
+      "EngineeringSegmentToggle",
+      "EngineeringScopeChipBar",
     ]) {
-      expect(src).toContain(component);
+      expect(src, component).toContain(component);
+    }
+    for (const component of [
+      "EngineeringMultiSelectField",
+      "EngineeringIconButton",
+      "EngineeringTextField",
+      "EngineeringTextAreaField",
+    ]) {
+      expect(posts, component).toContain(component);
     }
     expect(src).toContain("DataTable");
+    expect(src).toContain("EngineeringConfirmDialog");
   });
 
-  it("gráficos herdam o tema do portal e formatam escala legível", () => {
+  it("gráficos contextuais usam o componente oficial do kit", () => {
+    expect(src).toContain("ConfigurableSeriesChart");
     expect(src).toContain("usePortalTheme");
     expect(src).toContain("resolveChartTimeUnit");
     expect(src).toContain("decimalPlaces");
   });
 
+  it("marca proveniência e simulação visualmente", () => {
+    expect(all).toContain("SIMULATION");
+    expect(all).toContain("OBSERVED");
+    expect(all).toContain("PROVIDED");
+    expect(all).toContain("CALCULATED");
+  });
+
+  it("operações são cards expansíveis — DataTable só onde é tabular", () => {
+    expect(src).not.toContain("OPERATION_COLUMNS");
+    expect(src).toContain("SCENARIO_COLUMNS");
+    expect(src).toContain("ariaExpanded");
+    expect(src).not.toContain("expandedRowKey");
+  });
+
   it("CSS local é só composição — sem primitivos visuais duplicados", () => {
     expect(css).not.toContain(".engineering-routing__table");
     expect(css).not.toContain(".engineering-routing__expander");
-    expect(css).not.toContain(".engineering-routing__components-table");
     expect(css).not.toContain(".engineering-routing__filters");
     expect(css).not.toContain(".engineering-routing__calc-form");
   });

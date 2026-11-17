@@ -1,24 +1,20 @@
-/** Aba Roteiro da Ficha do Produto (Doc 126).
+/** Aba Roteiro da Ficha do Produto — Routing Study Workspace V2.
  *
- * Três seções internas — Operações, Balanceamento e Análise visual —
- * sobre o roteiro oficial (`GET /v1/products/{code}/routing`, delegação
- * ao owner) e a calculadora determinística do domínio EVA
- * (`POST /v1/products/{code}/line-balance`).
+ * UMA página scrollável (sem navegação interna de três abas — decisão
+ * V2): contexto/filtros → KPIs → operações oficiais → estudo de
+ * balanceamento (análise rápida OU postos hipotéticos) → resultados e
+ * cenários → análise visual → proveniência.
  *
- * Toda a apresentação reutilizável vem do @delpi/plugin-ui via façade
- * `engineeringUi` (SectionCard, KpiCard, DataTable, FilterSelect,
- * ChartCard + ConfigurableSeriesChart). CSS local é apenas composição
- * de layout da feature — nenhum primitivo visual é recriado aqui.
+ * Consulta oficial `GET /v1/products/{code}/routing` (delegação ao
+ * owner) e cálculo determinístico `POST /v1/products/{code}/line-balance`
+ * do domínio EVA. O MFE nunca recalcula: dedup, conteúdo de trabalho,
+ * takt e cenários FFD vêm do backend. Aritméticas locais são só de
+ * exibição (prévia de takt, consolidação visual, conversão min→s).
  *
- * O MFE nunca recalcula: dedup, conteúdo de trabalho, takt consolidado,
- * gargalos e cenários FFD são produzidos pelo backend. As únicas
- * aritméticas locais são de exibição: prévia de takt (disponível ÷
- * demanda), consolidação visual pela identidade oficial da operação e
- * conversão min→s do gráfico quando os tempos são subminuto.
- *
- * Classes de proveniência exibidas: OBSERVED (roteiro), PROVIDED
- * (parâmetros do usuário), CALCULATED (métricas do domínio) e
- * SIMULATION (cenários hipotéticos — nunca decisão de Engenharia). */
+ * Postos hipotéticos, operadores e paralelismo são `DRAFT_LOCAL /
+ * SIMULATION` — persistidos em sessionStorage por identidade+contexto
+ * (routing-study-session-state-contract.md), nunca enviados ao
+ * contrato `line-balance` nem apresentados como viabilidade validada. */
 
 import {
   useCallback,
@@ -37,7 +33,8 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { HomeApiError } from "../../../api/httpClient";
+import { getCurrentAccessToken, HomeApiError } from "../../../api/httpClient";
+import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
   EngineeringChartCard,
@@ -49,12 +46,14 @@ import {
   EngineeringInteractiveDataCard,
   EngineeringKpiCard,
   EngineeringLoadingActivityCard,
+  EngineeringScopeChipBar,
   EngineeringSectionCard,
+  EngineeringSegmentToggle,
   EngineeringStateBanner,
   EngineeringStatusBadge,
-  EngineeringTabs,
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
+import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
 import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
 import {
   fetchProductRouting,
@@ -71,6 +70,7 @@ import {
   toChartValue,
   type ChartTimeUnit,
 } from "./chartUnits";
+import { PostConfigurator } from "./PostConfigurator";
 import {
   formatHours,
   formatMinutes,
@@ -80,31 +80,15 @@ import {
   type RoutingOperationView,
   type RoutingStageView,
 } from "./routingGrouping";
+import { inputsFingerprint, type StudyInputs } from "./routingStudyDraft";
+import {
+  useRoutingStudyDraft,
+  type BalanceRunParams,
+  type ScenarioState,
+} from "./useRoutingStudyDraft";
 import { usePortalTheme } from "./usePortalTheme";
 
-type RoutingSection = "operations" | "balance" | "visual";
-
-const SECTION_TABS: { id: RoutingSection; label: string }[] = [
-  { id: "operations", label: "Operações" },
-  { id: "balance", label: "Balanceamento" },
-  { id: "visual", label: "Análise visual" },
-];
-
-const MAX_SCENARIOS = 4;
-
 type RoutingData = ProductRoutingResult & { truncated?: boolean };
-
-type BalanceScenario = {
-  id: number;
-  params: {
-    demand: number;
-    available_minutes: number;
-    num_stations?: number;
-    batch_size?: number;
-    branch?: string;
-  };
-  result: ProductLineBalanceResult;
-};
 
 function isForbidden(error: unknown): boolean {
   return error instanceof HomeApiError && error.status === 403;
@@ -254,18 +238,7 @@ function OperationCard({
   );
 }
 
-function OperationsSection({
-  stage,
-  rowsTotal,
-}: {
-  stage: RoutingStageView;
-  rowsTotal: number;
-}) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  useEffect(() => {
-    setExpandedKey(null);
-  }, [stage.key]);
-
+function StageKpis({ stage }: { stage: RoutingStageView }) {
   const workCenters = new Set(
     stage.operations.map((o) => o.work_center).filter(Boolean),
   ).size;
@@ -278,6 +251,47 @@ function OperationsSection({
     (sum, o) => sum + (o.time_minutes_piece ?? 0),
     0,
   );
+  return (
+    <div className="engineering-routing__kpis" role="group" aria-label="Indicadores do estágio selecionado">
+      <EngineeringKpiCard
+        title="Operações"
+        titleHint="Operações distintas pela identidade oficial (produto × nível × operação × CT × recurso) — não é o número de linhas do retorno."
+        value={String(stage.operations.length)}
+        icon={<ListOrdered size={18} aria-hidden="true" />}
+      />
+      <EngineeringKpiCard
+        title="Centro de trabalho"
+        value={String(workCenters)}
+        icon={<Factory size={18} aria-hidden="true" />}
+      />
+      <EngineeringKpiCard
+        title="Recurso"
+        value={String(resources)}
+        icon={<Wrench size={18} aria-hidden="true" />}
+      />
+      <EngineeringKpiCard
+        title="Tempo padrão"
+        titleHint="Soma dos tempos por peça com valor oficial no estágio selecionado — não soma outros níveis da BOM."
+        value={formatMinutes(stageMinutes)}
+        subtitle={allTimed ? undefined : "parcial — há operação sem tempo oficial"}
+        icon={<Clock3 size={18} aria-hidden="true" />}
+      />
+    </div>
+  );
+}
+
+function OperationsSection({
+  stage,
+  rowsTotal,
+}: {
+  stage: RoutingStageView;
+  rowsTotal: number;
+}) {
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  useEffect(() => {
+    setExpandedKey(null);
+  }, [stage.key]);
+
   const setupTotal = stage.operations.reduce(
     (sum, o) => sum + (o.setup_hours ?? 0),
     0,
@@ -285,32 +299,6 @@ function OperationsSection({
 
   return (
     <>
-      <div className="engineering-routing__kpis" role="group" aria-label="Indicadores do estágio selecionado">
-        <EngineeringKpiCard
-          title="Operações"
-          titleHint="Operações distintas pela identidade oficial (produto × nível × operação × CT × recurso) — não é o número de linhas do retorno."
-          value={String(stage.operations.length)}
-          icon={<ListOrdered size={18} aria-hidden="true" />}
-        />
-        <EngineeringKpiCard
-          title="Centro de trabalho"
-          value={String(workCenters)}
-          icon={<Factory size={18} aria-hidden="true" />}
-        />
-        <EngineeringKpiCard
-          title="Recurso"
-          value={String(resources)}
-          icon={<Wrench size={18} aria-hidden="true" />}
-        />
-        <EngineeringKpiCard
-          title="Tempo padrão"
-          titleHint="Soma dos tempos por peça com valor oficial no estágio selecionado — não soma outros níveis da BOM."
-          value={formatMinutes(stageMinutes)}
-          subtitle={allTimed ? undefined : "parcial — há operação sem tempo oficial"}
-          icon={<Clock3 size={18} aria-hidden="true" />}
-        />
-      </div>
-
       <EngineeringDetailCard
         title="Operações do estágio"
         titleHint="Um card por operação única. Selecione um card para expandir recurso, setup, obrigatoriedade e componentes."
@@ -389,7 +377,7 @@ function OperationsSection({
   );
 }
 
-/* --- Balanceamento ---------------------------------------------------- */
+/* --- Estudo de balanceamento ------------------------------------------- */
 
 function numberOrUndefined(text: string): number | undefined {
   const trimmed = text.trim();
@@ -398,41 +386,34 @@ function numberOrUndefined(text: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function BalanceSection({
-  stage,
-  branch,
-  onRun,
-  running,
-  scenarios,
-}: {
-  stage: RoutingStageView;
-  branch: string;
-  onRun: (params: BalanceScenario["params"]) => void;
-  running: boolean;
-  scenarios: BalanceScenario[];
-}) {
-  const [demand, setDemand] = useState("");
-  const [shiftMinutes, setShiftMinutes] = useState("");
-  const [breakMinutes, setBreakMinutes] = useState("");
-  const [numStations, setNumStations] = useState("");
-  const [batchSize, setBatchSize] = useState("");
+type StudyValidation = {
+  errors: string[];
+  params: BalanceRunParams | null;
+  taktPreview: number | null;
+};
 
-  const demandN = numberOrUndefined(demand);
-  const shiftN = numberOrUndefined(shiftMinutes);
-  const breakParsed = numberOrUndefined(breakMinutes);
+/** Validação dos inputs PROVIDed — mesmas regras do domínio (demanda e
+ * disponível > 0, pausas < turno, opcionais positivos quando presentes). */
+function validateStudyInputs(
+  inputs: StudyInputs,
+  branch: string,
+): StudyValidation {
+  const demandN = numberOrUndefined(inputs.demand);
+  const shiftN = numberOrUndefined(inputs.shiftMinutes);
+  const breakParsed = numberOrUndefined(inputs.breakMinutes);
   const breakN = breakParsed ?? 0;
-  const stationsN = numberOrUndefined(numStations);
-  const batchN = numberOrUndefined(batchSize);
+  const stationsN = numberOrUndefined(inputs.numStations);
+  const batchN = numberOrUndefined(inputs.batchSize);
 
   const errors: string[] = [];
-  if (demand.trim() && !(demandN !== undefined && demandN > 0)) {
+  if (inputs.demand.trim() && !(demandN !== undefined && demandN > 0)) {
     errors.push("Demanda deve ser um número maior que zero.");
   }
-  if (shiftMinutes.trim() && !(shiftN !== undefined && shiftN > 0)) {
+  if (inputs.shiftMinutes.trim() && !(shiftN !== undefined && shiftN > 0)) {
     errors.push("Duração do turno deve ser maior que zero.");
   }
   if (
-    breakMinutes.trim() &&
+    inputs.breakMinutes.trim() &&
     (breakParsed === undefined || breakParsed < 0)
   ) {
     errors.push("Pausas devem ser um número não negativo.");
@@ -440,38 +421,145 @@ function BalanceSection({
   if (
     shiftN !== undefined &&
     shiftN > 0 &&
-    breakMinutes.trim() &&
+    inputs.breakMinutes.trim() &&
     breakN >= shiftN
   ) {
     errors.push("Pausas devem ser menores que a duração do turno.");
   }
-  if (numStations.trim() && !(stationsN !== undefined && stationsN > 0)) {
+  if (
+    inputs.numStations.trim() &&
+    !(stationsN !== undefined && stationsN > 0)
+  ) {
     errors.push("Número de postos deve ser positivo.");
   }
-  if (batchSize.trim() && !(batchN !== undefined && batchN > 0)) {
+  if (inputs.batchSize.trim() && !(batchN !== undefined && batchN > 0)) {
     errors.push("Tamanho do lote deve ser positivo.");
   }
   const available = shiftN !== undefined ? shiftN - breakN : undefined;
-  const canSubmit =
+  const valid =
     demandN !== undefined &&
     demandN > 0 &&
     available !== undefined &&
     available > 0 &&
-    errors.length === 0 &&
-    !running;
+    errors.length === 0;
+  const params = valid
+    ? {
+        demand: demandN!,
+        available_minutes: available!,
+        ...(stationsN ? { num_stations: stationsN } : {}),
+        ...(batchN ? { batch_size: batchN } : {}),
+        ...(branch ? { branch } : {}),
+      }
+    : null;
   const taktPreview =
-    canSubmit && demandN ? available! / demandN : null;
+    params && demandN ? params.available_minutes / demandN : null;
+  return { errors, params, taktPreview };
+}
 
-  const stageResults = (s: BalanceScenario) =>
-    s.result.stages.find((st) => stageKeyOf(st) === stageKeyOf(stage)) ??
-    null;
+const SAVE_STATUS_LABEL: Record<string, string> = {
+  saving: "Salvando…",
+  saved: "Salvo nesta aba",
+  save_error: "Não foi possível salvar o rascunho",
+  storage_unavailable:
+    "Rascunho não persistido — armazenamento de sessão indisponível",
+};
+
+function StudySection({
+  study,
+  stage,
+  branch,
+  running,
+  balanceError,
+  onRun,
+  onRequestClear,
+}: {
+  study: ReturnType<typeof useRoutingStudyDraft>;
+  stage: RoutingStageView;
+  branch: string;
+  running: boolean;
+  balanceError: unknown;
+  onRun: (params: BalanceRunParams) => void;
+  onRequestClear: () => void;
+}) {
+  const active = study.active;
+  const validation = useMemo(
+    () => validateStudyInputs(active?.inputs ?? {
+      demand: "",
+      shiftMinutes: "",
+      breakMinutes: "",
+      batchSize: "",
+      numStations: "",
+    }, branch),
+    [active?.inputs, branch],
+  );
+  if (!active) return null;
+
+  const available =
+    validation.params?.available_minutes ??
+    (() => {
+      const shiftN = numberOrUndefined(active.inputs.shiftMinutes);
+      const breakN = numberOrUndefined(active.inputs.breakMinutes) ?? 0;
+      return shiftN !== undefined ? shiftN - breakN : undefined;
+    })();
+  const canSubmit = validation.params !== null && !running;
 
   return (
-    <>
-      {errors.length ? (
-        <EngineeringStateBanner variant="error">
-          {errors.join(" ")}
+    <EngineeringSectionCard
+      title="Estudo de balanceamento"
+      subtitle="Parâmetros PROVIDED + hipóteses SIMULATION de organização da linha — cálculo sempre pelo domínio oficial."
+      actions={
+        study.status !== "idle" ? (
+          <EngineeringStatusBadge
+            label={SAVE_STATUS_LABEL[study.status] ?? study.status}
+            variant={
+              study.status === "saved"
+                ? "success"
+                : study.status === "save_error" ||
+                    study.status === "storage_unavailable"
+                  ? "warning"
+                  : "neutral"
+            }
+          />
+        ) : (
+          <EngineeringStatusBadge label="Rascunho nesta aba" variant="neutral" />
+        )
+      }
+    >
+      {study.notice === "restored" ? (
+        <EngineeringStateBanner variant="default">
+          Rascunho recuperado nesta aba — resultados anteriores não são
+          restaurados; recalcule para valores atuais.
         </EngineeringStateBanner>
+      ) : null}
+      {study.notice === "restore_invalid" ? (
+        <EngineeringStateBanner variant="default">
+          Rascunho anterior incompatível descartado — o estudo recomeçou
+          vazio neste contexto.
+        </EngineeringStateBanner>
+      ) : null}
+      {study.notice === "stale_reference" ? (
+        <EngineeringStateBanner variant="default">
+          O roteiro oficial mudou desde o rascunho salvo — vínculos de
+          operações foram revisados pela fonte atual.
+        </EngineeringStateBanner>
+      ) : null}
+      {balanceError ? <RoutingSourceError error={balanceError} /> : null}
+      {validation.errors.length ? (
+        <EngineeringStateBanner variant="error">
+          {validation.errors.join(" ")}
+        </EngineeringStateBanner>
+      ) : null}
+
+      {study.scenarios.length > 1 ? (
+        <EngineeringScopeChipBar
+          aria-label="Cenários do estudo"
+          chips={study.scenarios.map((s) => ({
+            id: s.clientId,
+            label: `Cenário ${s.label}`,
+            active: s.clientId === study.activeScenarioId,
+            onSelect: () => study.selectScenario(s.clientId),
+          }))}
+        />
       ) : null}
 
       <div className="engineering-routing__balance-grid">
@@ -487,8 +575,8 @@ function BalanceSection({
             <EngineeringTextField
               id="routing-demand"
               label="Demanda por período (peças)"
-              value={demand}
-              onChange={setDemand}
+              value={active.inputs.demand}
+              onChange={(v) => study.updateInputs({ demand: v })}
               required
               hint="Peças a produzir no período analisado."
               disabled={running}
@@ -496,8 +584,8 @@ function BalanceSection({
             <EngineeringTextField
               id="routing-shift"
               label="Duração do turno (min)"
-              value={shiftMinutes}
-              onChange={setShiftMinutes}
+              value={active.inputs.shiftMinutes}
+              onChange={(v) => study.updateInputs({ shiftMinutes: v })}
               required
               hint="Minutos totais do período, antes das pausas."
               disabled={running}
@@ -505,8 +593,8 @@ function BalanceSection({
             <EngineeringTextField
               id="routing-break"
               label="Pausas (min)"
-              value={breakMinutes}
-              onChange={setBreakMinutes}
+              value={active.inputs.breakMinutes}
+              onChange={(v) => study.updateInputs({ breakMinutes: v })}
               hint="Minutos não produtivos do turno — subtraídos do tempo disponível."
               disabled={running}
             />
@@ -524,8 +612,8 @@ function BalanceSection({
               {
                 label: "Prévia do takt",
                 value:
-                  taktPreview !== null
-                    ? `${formatMinutes(taktPreview)} / peça`
+                  validation.taktPreview !== null
+                    ? `${formatMinutes(validation.taktPreview)} / peça`
                     : "—",
                 hint: "Prévia aritmética de interface (disponível ÷ demanda) — o resultado oficial vem do domínio.",
               },
@@ -534,9 +622,19 @@ function BalanceSection({
         </EngineeringDetailCard>
 
         <EngineeringDetailCard
-          title="Configuração opcional"
-          titleHint="Postos e lote são opcionais — sem lote explícito o setup não é amortizado por peça."
+          title="Organização da linha"
+          titleHint="Análise rápida usa só os parâmetros — configurar postos registra uma hipótese local de arranjo."
         >
+          <EngineeringSegmentToggle
+            ariaLabel="Organização da linha"
+            value={active.mode}
+            onChange={(m) => study.setMode(m)}
+            options={[
+              { value: "quick", label: "Análise rápida" },
+              { value: "posts", label: "Configurar postos" },
+            ]}
+            disabled={running}
+          />
           <div
             className="engineering-routing__form-grid"
             role="group"
@@ -545,51 +643,80 @@ function BalanceSection({
             <EngineeringTextField
               id="routing-stations"
               label="Postos atuais"
-              value={numStations}
-              onChange={setNumStations}
-              hint="Informado, o domínio verifica viabilidade e eficiência do arranjo — não equivale a operadores."
+              value={active.inputs.numStations}
+              onChange={(v) => study.updateInputs({ numStations: v })}
+              hint="Informado, o domínio verifica viabilidade e eficiência do arranjo — não equivale a operadores nem à quantidade de CTs."
               disabled={running}
             />
             <EngineeringTextField
               id="routing-batch"
               label="Tamanho do lote"
-              value={batchSize}
-              onChange={setBatchSize}
+              value={active.inputs.batchSize}
+              onChange={(v) => study.updateInputs({ batchSize: v })}
               hint="Somente com lote explícito o setup é amortizado por peça."
               disabled={running}
             />
           </div>
-          <EngineeringFormActions align="end">
-            <EngineeringActionButton
-              variant="primary"
-              disabled={!canSubmit}
-              onClick={() =>
-                onRun({
-                  demand: demandN!,
-                  available_minutes: available!,
-                  ...(stationsN ? { num_stations: stationsN } : {}),
-                  ...(batchN ? { batch_size: batchN } : {}),
-                  ...(branch ? { branch } : {}),
-                })
-              }
-            >
-              {running ? "Calculando…" : "Calcular balanceamento"}
-            </EngineeringActionButton>
-          </EngineeringFormActions>
         </EngineeringDetailCard>
       </div>
 
-      {scenarios.length ? (
-        <ScenarioComparison
-          scenarios={scenarios}
-          stageResults={stageResults}
-        />
-      ) : (
-        <EngineeringEmptyState message="Nenhum cenário calculado ainda — informe as condições e execute o balanceamento pelo motor oficial." />
-      )}
-    </>
+      {active.mode === "posts" ? (
+        <>
+          <EngineeringStateBanner variant="default">
+            Configuração hipotética — DRAFT_LOCAL/SIMULATION. O motor
+            atual não valida alocação por posto, precedência, operadores
+            ou paralelismo; a análise rápida abaixo calcula apenas com os
+            parâmetros e não verifica esta distribuição manual.
+          </EngineeringStateBanner>
+          <PostConfigurator
+            posts={active.posts}
+            operations={stage.operations}
+            maxPosts={study.maxPosts}
+            disabled={running}
+            onAdd={study.addPost}
+            onPatch={study.patchPost}
+            onMove={study.movePost}
+            onRemove={study.removePost}
+          />
+        </>
+      ) : null}
+
+      <EngineeringFormActions align="end">
+        <EngineeringActionButton
+          variant="default"
+          disabled={
+            running || study.scenarios.length >= study.maxScenarios
+          }
+          onClick={study.addScenario}
+        >
+          Novo cenário
+        </EngineeringActionButton>
+        <EngineeringActionButton
+          variant="default"
+          disabled={running}
+          onClick={onRequestClear}
+        >
+          Limpar estudo
+        </EngineeringActionButton>
+        <EngineeringActionButton
+          variant="primary"
+          disabled={!canSubmit}
+          onClick={() => validation.params && onRun(validation.params)}
+        >
+          {running ? "Calculando…" : "Calcular análise rápida"}
+        </EngineeringActionButton>
+      </EngineeringFormActions>
+      {active.mode === "posts" ? (
+        <p className="engineering-routing__muted">
+          A análise rápida não valida a distribuição manual configurada —
+          o cálculo usa somente os parâmetros informados.
+        </p>
+      ) : null}
+    </EngineeringSectionCard>
   );
 }
+
+/* --- Resultados e cenários ---------------------------------------------- */
 
 function BalanceStageFields({ stage }: { stage: LineBalanceStage }) {
   return (
@@ -636,42 +763,45 @@ function BalanceStageFields({ stage }: { stage: LineBalanceStage }) {
 }
 
 const SCENARIO_COLUMNS: DataTableColumn<{
-  scenario: BalanceScenario;
+  scenario: ScenarioState;
   stage: LineBalanceStage | null;
 }>[] = [
   {
     key: "id",
     header: "Cenário",
-    render: (r) => `Cenário ${r.scenario.id}`,
+    render: (r) => `Cenário ${r.scenario.label}`,
   },
   {
     key: "branch",
     header: "Filial",
-    render: (r) => r.scenario.params.branch ?? "—",
+    render: (r) => r.scenario.computed?.params.branch ?? "—",
   },
   {
     key: "demand",
     header: "Demanda",
     align: "right",
-    render: (r) => String(r.scenario.params.demand),
+    render: (r) => String(r.scenario.computed?.params.demand ?? "—"),
   },
   {
     key: "available",
     header: "Tempo produtivo",
     align: "right",
-    render: (r) => formatMinutes(r.scenario.params.available_minutes),
+    render: (r) =>
+      r.scenario.computed
+        ? formatMinutes(r.scenario.computed.params.available_minutes)
+        : "—",
   },
   {
     key: "stations",
     header: "Postos",
     align: "right",
-    render: (r) => String(r.scenario.params.num_stations ?? "—"),
+    render: (r) => String(r.scenario.computed?.params.num_stations ?? "—"),
   },
   {
     key: "batch",
     header: "Lote",
     align: "right",
-    render: (r) => String(r.scenario.params.batch_size ?? "—"),
+    render: (r) => String(r.scenario.computed?.params.batch_size ?? "—"),
   },
   {
     key: "takt",
@@ -704,99 +834,129 @@ const SCENARIO_COLUMNS: DataTableColumn<{
   },
 ];
 
-function ScenarioComparison({
+function ResultsSection({
   scenarios,
-  stageResults,
+  stage,
+  branch,
+  active,
 }: {
-  scenarios: BalanceScenario[];
-  stageResults: (s: BalanceScenario) => LineBalanceStage | null;
+  scenarios: ScenarioState[];
+  stage: RoutingStageView;
+  branch: string;
+  active: ScenarioState | null;
 }) {
-  const latest = scenarios[scenarios.length - 1];
-  const latestStage = stageResults(latest);
+  const stageResults = (s: ScenarioState) =>
+    s.computed?.result.stages.find(
+      (st) => stageKeyOf(st) === stageKeyOf(stage),
+    ) ?? null;
+
+  const withResult = scenarios.filter((s) => s.computed);
+  const activeStage = active ? stageResults(active) : null;
+  const currentFingerprint = active
+    ? inputsFingerprint(
+        validateStudyInputs(active.inputs, branch).params ?? {},
+      )
+    : null;
+  const activeStale = Boolean(
+    active?.computed && active.computed.fingerprint !== currentFingerprint,
+  );
+
+  if (!withResult.length) return null;
+
   return (
-    <>
-      {latestStage ? (
-        <EngineeringDetailCard
-          title="Resultado do balanceamento"
-          titleHint="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED e parâmetros PROVIDED."
-          headerActions={
-            <>
-              <EngineeringStatusBadge
-                label={`Cenário ${latest.id}`}
-                variant="neutral"
-              />
-              <EngineeringStatusBadge
-                label={latest.result.data_class || "—"}
-                variant={
-                  latest.result.data_class === "CALCULATED"
-                    ? "success"
-                    : latest.result.data_class === "PARTIAL"
-                      ? "warning"
-                      : "neutral"
-                }
-              />
-            </>
-          }
-        >
-          <BalanceStageFields stage={latestStage} />
-          {latestStage.station_check ? (
+    <EngineeringDetailCard
+      title="Resultados e cenários"
+      titleHint="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED e parâmetros PROVIDED — nunca dimensionamento aprovado."
+      headerActions={
+        <>
+          {active ? (
+            <EngineeringStatusBadge
+              label={`Cenário ${active.label}`}
+              variant="neutral"
+            />
+          ) : null}
+          {activeStale ? (
+            <EngineeringStatusBadge label="STALE" variant="warning" />
+          ) : null}
+          {active?.computed ? (
+            <EngineeringStatusBadge
+              label={active.computed.result.data_class || "—"}
+              variant={
+                active.computed.result.data_class === "CALCULATED"
+                  ? "success"
+                  : active.computed.result.data_class === "PARTIAL"
+                    ? "warning"
+                    : "neutral"
+              }
+            />
+          ) : null}
+        </>
+      }
+    >
+      {activeStale ? (
+        <EngineeringStateBanner variant="default">
+          Os parâmetros mudaram após este cálculo — o resultado abaixo é
+          STALE até nova execução do balanceamento.
+        </EngineeringStateBanner>
+      ) : null}
+      {active?.computed && activeStage ? (
+        <>
+          <BalanceStageFields stage={activeStage} />
+          {activeStage.station_check ? (
             <EngineeringStateBanner
               variant={
-                latestStage.station_check.feasible === false
+                activeStage.station_check.feasible === false
                   ? "error"
                   : "default"
               }
             >
-              {`Viabilidade com ${latestStage.station_check.num_stations} posto(s): ciclo requerido ${formatMinutes(latestStage.station_check.required_cycle_minutes)}${
-                latestStage.station_check.theoretical_efficiency != null
-                  ? ` · eficiência teórica ${formatRatio(latestStage.station_check.theoretical_efficiency)}`
+              {`Viabilidade com ${activeStage.station_check.num_stations} posto(s): ciclo requerido ${formatMinutes(activeStage.station_check.required_cycle_minutes)}${
+                activeStage.station_check.theoretical_efficiency != null
+                  ? ` · eficiência teórica ${formatRatio(activeStage.station_check.theoretical_efficiency)}`
                   : ""
               }${
-                latestStage.station_check.feasible === false
+                activeStage.station_check.feasible === false
                   ? " — abaixo do mínimo teórico, configuração inviável para o takt."
                   : ""
               }`}
             </EngineeringStateBanner>
           ) : null}
-          {latestStage.limitations.length ? (
+          {activeStage.limitations.length ? (
             <ul className="engineering-routing__limitations">
-              {latestStage.limitations.map((l, i) => (
+              {activeStage.limitations.map((l, i) => (
                 <li key={i}>{l}</li>
               ))}
             </ul>
           ) : null}
-          {latestStage.balance_scenario ? (
+          {activeStage.balance_scenario ? (
             <EngineeringStateBanner variant="default">
-              {`Cenário SIMULATION (${latestStage.balance_scenario.type}): ${latestStage.balance_scenario.stations_used} posto(s) hipotéticos, ociosidade ${formatMinutes(latestStage.balance_scenario.idle_minutes_total)} — alocação por capacidade de takt, sem precedência; exige revisão da Engenharia.`}
+              {`Cenário SIMULATION (${activeStage.balance_scenario.type}): ${activeStage.balance_scenario.stations_used} posto(s) hipotéticos, ociosidade ${formatMinutes(activeStage.balance_scenario.idle_minutes_total)} — alocação por capacidade de takt, sem precedência; exige revisão da Engenharia.`}
             </EngineeringStateBanner>
           ) : null}
-        </EngineeringDetailCard>
-      ) : (
+        </>
+      ) : active?.computed && !activeStage ? (
         <EngineeringStateBanner variant="default">
-          O cenário mais recente não retornou o estágio selecionado —
-          verifique filial e nível da BOM.
+          O cenário ativo não retornou o estágio selecionado — verifique
+          filial e nível da BOM.
         </EngineeringStateBanner>
+      ) : (
+        <EngineeringEmptyState message="Cenário ativo sem cálculo — execute a análise rápida para comparar." />
       )}
 
-      {scenarios.length > 1 ? (
-        <EngineeringDetailCard
-          title="Comparação de cenários"
-          titleHint="Cada linha preserva os parâmetros PROVIDED enviados — comparação atribuível, sem persistência."
-        >
-          <DataTable
-            columns={SCENARIO_COLUMNS}
-            rows={scenarios.map((s) => ({
-              scenario: s,
-              stage: stageResults(s),
-            }))}
-            rowKey={(r) => String(r.scenario.id)}
-            layout="embedded"
-            compact
-            emptyMessage="Sem cenários para comparar."
-          />
-        </EngineeringDetailCard>
+      {withResult.length > 1 ? (
+        <DataTable
+          columns={SCENARIO_COLUMNS}
+          rows={withResult.map((s) => ({
+            scenario: s,
+            stage: stageResults(s),
+          }))}
+          rowKey={(r) => r.scenario.clientId}
+          layout="embedded"
+          compact
+          emptyMessage="Sem cenários para comparar."
+        />
       ) : null}
-    </>
+    </EngineeringDetailCard>
   );
 }
 
@@ -841,14 +1001,7 @@ function ThemedSeriesChart({
             ],
           }
         : {})}
-      /* `backgroundColor` tema a moldura; a área de plotagem é parte do
-       * gráfico (`chartParts.plotArea`) — sem ela o kit mantém o plot
-       * claro "office" mesmo no tema escuro. */
       chartParts={{
-        /* `chartArea` precisa ser explícita: leitores de partes (título,
-         * legenda) derivam a cor do texto por contraste com o fill da
-         * área — sem ela assumem fundo claro e imprimem texto escuro no
-         * tema escuro. */
         chartArea: {
           visible: true,
           style: {
@@ -887,13 +1040,11 @@ function VisualSection({
   scenarios,
 }: {
   stage: RoutingStageView;
-  scenarios: BalanceScenario[];
+  scenarios: ScenarioState[];
 }) {
-  const latest = scenarios.length
-    ? scenarios[scenarios.length - 1]
-    : null;
-  const latestStage: LineBalanceStage | null = latest
-    ? (latest.result.stages.find(
+  const active = scenarios.find((s) => s.computed) ?? null;
+  const activeStage: LineBalanceStage | null = active?.computed
+    ? (active.computed.result.stages.find(
         (st) => stageKeyOf(st) === stageKeyOf(stage),
       ) ?? null)
     : null;
@@ -912,54 +1063,56 @@ function VisualSection({
     label: o.operation_code || "—",
     value: toChartValue(o.time_minutes_piece, unit),
   }));
-  const takt = latestStage?.takt_minutes ?? null;
-  const sim = latestStage?.balance_scenario ?? null;
+  const takt = activeStage?.takt_minutes ?? null;
+  const sim = activeStage?.balance_scenario ?? null;
   const unitHint = unit.unit === "s" ? ` ${unit.note}` : "";
+  const hasComputedCharts = takt != null || sim != null;
 
   return (
-    <div className="engineering-routing__charts">
-      <EngineeringChartCard
-        title="Tempo por peça"
-        titleHint={`Tempo padrão por peça — dados OBSERVED do roteiro oficial do estágio selecionado. Operações sem tempo oficial não são plotadas como zero.${unitHint}`}
-        hint={
-          missingCount
-            ? `${missingCount} operação(ões) sem tempo oficial excluída(s) do gráfico.`
-            : undefined
-        }
-      >
-        <ThemedSeriesChart
-          title={`Tempo por peça (${unit.unit})`}
-          unit={unit}
-          points={points}
-          emptyMessage="Nenhuma operação com tempo oficial neste estágio."
-        />
-      </EngineeringChartCard>
-
-      <EngineeringChartCard
-        title="Tempo × takt"
-        titleHint={`Comparação dos tempos por peça ao takt CALCULATED do cenário mais recente — operações acima da linha são candidatas a gargalo.${unitHint}`}
-      >
-        {takt != null ? (
+    <EngineeringSectionCard
+      title="Análise visual"
+      subtitle="Gráficos contextuais — tempos oficiais sempre disponíveis; takt e distribuição somente com resultado compatível."
+    >
+      <div className="engineering-routing__charts">
+        <EngineeringChartCard
+          title="Tempo por peça"
+          titleHint={`Tempo padrão por peça — dados OBSERVED do roteiro oficial do estágio selecionado. Operações sem tempo oficial não são plotadas como zero.${unitHint}`}
+          hint={
+            missingCount
+              ? `${missingCount} operação(ões) sem tempo oficial excluída(s) do gráfico.`
+              : undefined
+          }
+        >
           <ThemedSeriesChart
-            title={`Tempo × takt (${unit.unit})`}
+            title={`Tempo por peça (${unit.unit})`}
             unit={unit}
             points={points}
-            taktValue={takt}
-            colorByGoal
-            taktAsBar
             emptyMessage="Nenhuma operação com tempo oficial neste estágio."
           />
-        ) : (
-          <EngineeringEmptyState message="Execute um cenário de balanceamento para comparar as operações ao takt." />
-        )}
-      </EngineeringChartCard>
+        </EngineeringChartCard>
 
-      <EngineeringChartCard
-        title="Distribuição simulada"
-        titleHint={`Carga por posto hipotético do cenário FFD do domínio — alocação por capacidade de takt, sem precedência nem restrições físicas.${unitHint}`}
-      >
+        {takt != null ? (
+          <EngineeringChartCard
+            title="Tempo × takt"
+            titleHint={`Comparação dos tempos por peça ao takt CALCULATED do cenário ativo — operações acima são candidatas a gargalo.${unitHint}`}
+          >
+            <ThemedSeriesChart
+              title={`Tempo × takt (${unit.unit})`}
+              unit={unit}
+              points={points}
+              taktValue={takt}
+              colorByGoal
+              taktAsBar
+              emptyMessage="Nenhuma operação com tempo oficial neste estágio."
+            />
+          </EngineeringChartCard>
+        ) : null}
+
         {sim ? (
-          <>
+          <EngineeringChartCard
+            title="Distribuição simulada"
+            titleHint={`Carga por posto hipotético do cenário FFD do domínio — alocação por capacidade de takt, sem precedência nem restrições físicas.${unitHint}`}
+          >
             <EngineeringStatusBadge
               label="SIMULATION"
               variant="warning"
@@ -974,48 +1127,53 @@ function VisualSection({
               taktValue={takt}
               emptyMessage="Cenário sem postos."
             />
-          </>
-        ) : (
-          <EngineeringEmptyState message="Nenhum cenário simulado disponível — execute o balanceamento." />
-        )}
-      </EngineeringChartCard>
-    </div>
+          </EngineeringChartCard>
+        ) : null}
+      </div>
+      {!hasComputedCharts ? (
+        <p className="engineering-routing__muted">
+          Execute a análise rápida para comparar operações ao takt e ver
+          a distribuição simulada do domínio.
+        </p>
+      ) : null}
+    </EngineeringSectionCard>
   );
 }
 
 /* --- Aba --------------------------------------------------------------- */
 
 export function ProductRoutingTab({ code }: { code: string }) {
-  const [section, setSection] = useState<RoutingSection>("operations");
   const [branch, setBranch] = useState("");
   const [branches, setBranches] = useState<string[]>([]);
   const [routing, setRouting] = useState<RoutingData | null>(null);
   const [routingError, setRoutingError] = useState<unknown>(null);
   const [routingLoading, setRoutingLoading] = useState(true);
   const [stageKey, setStageKey] = useState<string | null>(null);
-  const [scenarios, setScenarios] = useState<BalanceScenario[]>([]);
   const [balanceRunning, setBalanceRunning] = useState(false);
   const [balanceError, setBalanceError] = useState<unknown>(null);
-  const scenarioSeq = useRef(0);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearedNotice, setClearedNotice] = useState(false);
   const balanceAbort = useRef<AbortController | null>(null);
 
-  /* Troca de produto: descarta cenários anteriores — atribuição por
-   * produto é condição da comparação honesta. */
+  /* `sub` do JWT — escopo estável do rascunho por identidade, sem
+   * persistir credencial nem PII (mesmo padrão dos favoritos do shell). */
+  const identity = useMemo(
+    () => getSubjectFromAccessToken(getCurrentAccessToken()),
+    [],
+  );
+
   useEffect(() => {
-    setScenarios([]);
     setBalanceError(null);
     setStageKey(null);
     setBranch("");
     setBranches([]);
+    setClearedNotice(false);
   }, [code]);
 
-  /* Troca de filial muda a fonte dos cenários — descartar resultados
-   * calculados sob outra filial mantém a comparação atribuível. */
   const prevBranch = useRef(branch);
   useEffect(() => {
     if (prevBranch.current !== branch) {
       prevBranch.current = branch;
-      setScenarios([]);
       setBalanceError(null);
     }
   }, [branch]);
@@ -1066,8 +1224,17 @@ export function ProductRoutingTab({ code }: { code: string }) {
     grouped.stages[0] ??
     null;
 
+  const study = useRoutingStudyDraft({
+    identity,
+    productCode: code,
+    branch,
+    stage,
+  });
+
   const runBalance = useCallback(
-    (params: BalanceScenario["params"]) => {
+    (params: BalanceRunParams) => {
+      if (!study.activeScenarioId) return;
+      const scenarioId = study.activeScenarioId;
       balanceAbort.current?.abort();
       const controller = new AbortController();
       balanceAbort.current = controller;
@@ -1076,11 +1243,7 @@ export function ProductRoutingTab({ code }: { code: string }) {
       postProductLineBalance(code, params, controller.signal)
         .then((result) => {
           if (controller.signal.aborted) return;
-          scenarioSeq.current += 1;
-          const id = scenarioSeq.current;
-          setScenarios((prev) =>
-            [...prev, { id, params, result }].slice(-MAX_SCENARIOS),
-          );
+          study.attachResult(scenarioId, params, result);
         })
         .catch((err) => {
           if (!controller.signal.aborted) setBalanceError(err);
@@ -1089,8 +1252,14 @@ export function ProductRoutingTab({ code }: { code: string }) {
           if (!controller.signal.aborted) setBalanceRunning(false);
         });
     },
-    [code],
+    [code, study],
   );
+
+  const confirmClear = useCallback(() => {
+    const removed = study.clearStudy();
+    setClearOpen(false);
+    if (removed) setClearedNotice(true);
+  }, [study]);
 
   const branchOptions = useMemo(
     () => [
@@ -1128,6 +1297,12 @@ export function ProductRoutingTab({ code }: { code: string }) {
                 apenas os registros recebidos.
               </EngineeringStateBanner>
             ) : null}
+            {clearedNotice ? (
+              <EngineeringStateBanner variant="default">
+                Estudo limpo nesta aba — o roteiro oficial não foi
+                alterado.
+              </EngineeringStateBanner>
+            ) : null}
 
             <EngineeringSectionCard
               title="Roteiro de fabricação"
@@ -1156,61 +1331,54 @@ export function ProductRoutingTab({ code }: { code: string }) {
                   ) : null}
                 </div>
               }
-            >
-              <EngineeringTabs
-                mode="tabs"
-                aria-label="Seções do roteiro"
-                activeId={section}
-                items={SECTION_TABS.map((t) => ({
-                  id: t.id,
-                  label: t.label,
-                  controlId: `routing-panel-${t.id}`,
-                  tabId: `routing-tab-${t.id}`,
-                  onSelect: () => setSection(t.id),
-                }))}
-              />
-            </EngineeringSectionCard>
+            />
 
-            <div
-              role="tabpanel"
-              id={`routing-panel-${section}`}
-              aria-labelledby={`routing-tab-${section}`}
-            >
-              {section === "operations" ? (
-                <OperationsSection
-                  stage={stage}
-                  rowsTotal={grouped.rows_total}
-                />
-              ) : null}
-              {section === "balance" ? (
-                <>
-                  {balanceError ? (
-                    <RoutingSourceError error={balanceError} />
-                  ) : null}
-                  <BalanceSection
-                    stage={stage}
-                    branch={branch}
-                    onRun={runBalance}
-                    running={balanceRunning}
-                    scenarios={scenarios}
-                  />
-                </>
-              ) : null}
-              {section === "visual" ? (
-                <VisualSection stage={stage} scenarios={scenarios} />
-              ) : null}
-            </div>
+            <StageKpis stage={stage} />
+
+            <OperationsSection stage={stage} rowsTotal={grouped.rows_total} />
+
+            {study.ready ? (
+              <StudySection
+                study={study}
+                stage={stage}
+                branch={branch}
+                running={balanceRunning}
+                balanceError={balanceError}
+                onRun={runBalance}
+                onRequestClear={() => setClearOpen(true)}
+              />
+            ) : null}
+
+            <ResultsSection
+              scenarios={study.scenarios}
+              stage={stage}
+              branch={branch}
+              active={study.active}
+            />
+
+            <VisualSection stage={stage} scenarios={study.scenarios} />
 
             <p className="engineering-routing__muted engineering-routing__provenance">
               Dados OBSERVED do roteiro oficial · métricas CALCULATED do
-              domínio EVA · cenários SIMULATION são hipóteses — a
-              Engenharia decide e aprova alterações de processo.
+              domínio EVA · postos e cenários são DRAFT_LOCAL/SIMULATION
+              — a Engenharia decide e aprova alterações de processo.
             </p>
           </>
         ) : (
           <EngineeringEmptyState message="Este produto não possui roteiro de fabricação na fonte oficial para o escopo selecionado." />
         )
       ) : null}
+
+      <EngineeringConfirmDialog
+        open={clearOpen}
+        title="Limpar estudo"
+        message="Este comando descarta os preenchimentos, postos hipotéticos, ordenação, vínculos de operações e cenários salvos nesta aba e para este contexto. Não altera roteiro, BOM, ERP ou qualquer registro oficial."
+        confirmLabel="Limpar estudo"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={confirmClear}
+        onCancel={() => setClearOpen(false)}
+      />
     </div>
   );
 }

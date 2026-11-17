@@ -6,15 +6,16 @@ import {
   expectNoFailures,
 } from "../helpers";
 
-/** Evidência visual da aba Roteiro (Doc 126 + REWORK-01).
+/** Evidência visual da aba Roteiro — Routing Study Workspace V2.
  *
- * Login SSO real → ficha do produto → Operações/Balanceamento/Análise
- * visual, nos dois temas e em todos os viewports do config (desktop,
- * tablet, mobile, 320px). Screenshots vão para artifacts/routing-visual
- * com nome de projeto+tema+seção — servem como "depois" do rework.
+ * Login SSO real → ficha do produto → página única scrollável
+ * (sem tabs internas): operações → estudo → resultados → análise
+ * visual. Cobre rascunho de sessão (refresh/restore), postos
+ * hipotéticos, cenários e limpeza confirmada — dark/light ×
+ * viewports do config. Screenshots em artifacts/routing-contract.
  *
- * Pré-condição: DEV_PORTAL_USERNAME/DEV_PORTAL_PASSWORD (infra/.env) e
- * stack dev no ar (portal + engineering-api + api-delpi). */
+ * Pré-condição: credenciais de teste (DEV_PORTAL_USERNAME /
+ * DEV_PORTAL_PASSWORD em infra/.env) e stack no ar. */
 
 const PRODUCT_WITH_ROUTING = "90264302";
 const DETAIL = (code: string) =>
@@ -25,6 +26,9 @@ async function openRoutingTab(page: Page, code: string) {
   await page.goto(DETAIL(code));
   await expect(
     page.getByRole("heading", { name: "Roteiro de fabricação" }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(
+    page.getByRole("heading", { name: "Estudo de balanceamento" }),
   ).toBeVisible({ timeout: 30_000 });
 }
 
@@ -44,7 +48,13 @@ async function shot(page: Page, name: string) {
   });
 }
 
-test.describe("aba Roteiro — evidência visual", () => {
+async function fillConditions(page: Page) {
+  await page.locator("#routing-demand").fill("500");
+  await page.locator("#routing-shift").fill("480");
+  await page.locator("#routing-break").fill("60");
+}
+
+test.describe("aba Roteiro V2 — evidência visual", () => {
   test.describe.configure({ mode: "serial" });
 
   let forbiddenCalls: string[] = [];
@@ -59,14 +69,23 @@ test.describe("aba Roteiro — evidência visual", () => {
     await loginAsDev(page);
   });
 
-  test("operações — dark e light, expansão e estágios", async ({
+  test("página única — operações dark/light, expansão e sem tabs internas", async ({
     page,
   }) => {
     const pageErrors = trackPageErrors(page);
     await openRoutingTab(page, PRODUCT_WITH_ROUTING);
 
+    /* V2: sem navegação interna — todas as seções no scroll. */
+    await expect(page.getByRole("tab")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Operações do estágio" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Análise visual" }),
+    ).toBeVisible();
+
     await setTheme(page, "dark");
-    await shot(page, "operations-dark");
+    await shot(page, "v2-page-dark-top");
 
     /* Expande a primeira operação — card expansível do kit. */
     await page
@@ -76,7 +95,7 @@ test.describe("aba Roteiro — evidência visual", () => {
     await expect(
       page.getByText("Linhas oficiais fundidas"),
     ).toBeVisible({ timeout: 10_000 });
-    await shot(page, "operations-dark-expanded");
+    await shot(page, "v2-operations-dark-expanded");
 
     /* Estágio técnico colapsável (detalhes secundários). */
     const techDetails = page.getByRole("button", {
@@ -84,86 +103,170 @@ test.describe("aba Roteiro — evidência visual", () => {
     });
     if (await techDetails.isVisible().catch(() => false)) {
       await techDetails.click();
-      await shot(page, "operations-dark-tech-details");
+      await shot(page, "v2-operations-dark-tech-details");
     }
 
     await setTheme(page, "light");
-    await shot(page, "operations-light");
+    await shot(page, "v2-page-light");
 
     await expectNoFailures(pageErrors, forbiddenCalls);
   });
 
-  test("balanceamento — formulário, validação e resultado", async ({
+  test("estudo — formulário, validação, resultado e cenários A/B", async ({
     page,
   }) => {
     const pageErrors = trackPageErrors(page);
     await openRoutingTab(page, PRODUCT_WITH_ROUTING);
-    await page.getByRole("tab", { name: "Balanceamento" }).click();
 
     await setTheme(page, "dark");
-    await shot(page, "balance-dark-empty");
+    await shot(page, "v2-study-dark-empty");
 
-    await page.locator("#routing-demand").fill("500");
-    await page.locator("#routing-shift").fill("480");
-    await page.locator("#routing-break").fill("60");
-    await shot(page, "balance-dark-filled-preview");
+    await fillConditions(page);
+    await shot(page, "v2-study-dark-filled-preview");
 
     await page
-      .getByRole("button", { name: "Calcular balanceamento" })
+      .getByRole("button", { name: "Calcular análise rápida" })
       .click();
-    await expect(page.getByText(/Resultado do balanceamento/)).toBeVisible({
+    await expect(page.getByText(/Resultados e cenários/)).toBeVisible({
       timeout: 30_000,
     });
-    await shot(page, "balance-dark-result");
+    await shot(page, "v2-study-dark-result");
 
-    /* Segundo cenário → tabela de comparação atribuível. */
+    /* Novo cenário preserva o anterior — A e B identificáveis. */
+    await page.getByRole("button", { name: "Novo cenário" }).click();
+    await expect(page.getByText("Cenário B")).toBeVisible();
     await page.locator("#routing-demand").fill("700");
     await page
-      .getByRole("button", { name: "Calcular balanceamento" })
+      .getByRole("button", { name: "Calcular análise rápida" })
       .click();
-    await expect(page.getByText("Comparação de cenários")).toBeVisible({
-      timeout: 30_000,
-    });
-    await shot(page, "balance-dark-comparison");
+    await expect(
+      page.getByRole("cell", { name: "Cenário A" }),
+    ).toBeVisible({ timeout: 30_000 });
+    /* Resultado de B recém-calculado — nada de STALE em resultado fresco. */
+    await expect(page.getByText("STALE")).toHaveCount(0);
+    await shot(page, "v2-study-dark-comparison");
 
     /* Validação honesta — demanda inválida. */
     await page.locator("#routing-demand").fill("abc");
     await expect(
       page.getByText(/Demanda deve ser um número maior que zero/),
     ).toBeVisible();
-    await shot(page, "balance-dark-validation-error");
+    await shot(page, "v2-study-dark-validation-error");
 
     await setTheme(page, "light");
-    await shot(page, "balance-light-result");
+    await shot(page, "v2-study-light-result");
 
     await expectNoFailures(pageErrors, forbiddenCalls);
   });
 
-  test("análise visual — gráficos temáticos e escala legível", async ({
+  test("configurar postos — cards hipotéticos e limitação explícita", async ({
     page,
   }) => {
     const pageErrors = trackPageErrors(page);
     await openRoutingTab(page, PRODUCT_WITH_ROUTING);
 
-    /* Cenário para habilitar tempo×takt e simulação. */
-    await page.getByRole("tab", { name: "Balanceamento" }).click();
-    await page.locator("#routing-demand").fill("500");
-    await page.locator("#routing-shift").fill("480");
-    await page.locator("#routing-break").fill("60");
     await page
-      .getByRole("button", { name: "Calcular balanceamento" })
+      .getByRole("button", { name: "Configurar postos" })
       .click();
-    await expect(page.getByText(/Resultado do balanceamento/)).toBeVisible({
+    await expect(page.getByText(/DRAFT_LOCAL/)).toBeVisible();
+    await shot(page, "v2-posts-dark-empty");
+
+    await page.getByRole("button", { name: "Adicionar posto" }).click();
+    await expect(page.getByText("Posto 01")).toBeVisible();
+    await page.getByRole("button", { name: "Adicionar posto" }).click();
+    await expect(page.getByText("Posto 02")).toBeVisible();
+    await shot(page, "v2-posts-dark-two");
+
+    /* Reordenação por botão — acessível sem drag-and-drop. */
+    await page
+      .getByRole("button", { name: /Mover Posto 02 para cima/ })
+      .click();
+    await shot(page, "v2-posts-dark-reordered");
+
+    /* Aviso: análise rápida não valida a distribuição manual. */
+    await expect(
+      page.getByText(/não valida a distribuição manual/),
+    ).toBeVisible();
+
+    await setTheme(page, "light");
+    await shot(page, "v2-posts-light");
+
+    await expectNoFailures(pageErrors, forbiddenCalls);
+  });
+
+  test("rascunho de sessão — persistir, refresh, recuperar e limpar", async ({
+    page,
+  }) => {
+    const pageErrors = trackPageErrors(page);
+    await openRoutingTab(page, PRODUCT_WITH_ROUTING);
+
+    await fillConditions(page);
+    await expect(page.getByText("Salvo nesta aba")).toBeVisible({
+      timeout: 10_000,
+    });
+
+    /* Refresh → rascunho recuperado na mesma aba. */
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Estudo de balanceamento" }),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Rascunho recuperado/)).toBeVisible();
+    await expect(page.locator("#routing-demand")).toHaveValue("500");
+    await expect(page.locator("#routing-shift")).toHaveValue("480");
+    await shot(page, "v2-study-restored");
+
+    /* Limpar — cancelar preserva tudo. */
+    await page.getByRole("button", { name: "Limpar estudo" }).click();
+    await expect(
+      page.getByText(/Não altera roteiro, BOM, ERP/),
+    ).toBeVisible();
+    await shot(page, "v2-clear-dialog");
+    await page.getByRole("button", { name: "Cancelar" }).click();
+    await expect(page.locator("#routing-demand")).toHaveValue("500");
+
+    /* Limpar — confirmar zera só o rascunho do contexto. */
+    await page.getByRole("button", { name: "Limpar estudo" }).click();
+    await page
+      .getByRole("button", { name: "Limpar estudo" })
+      .last()
+      .click();
+    await expect(page.locator("#routing-demand")).toHaveValue("");
+    await expect(page.getByText(/Estudo limpo nesta aba/)).toBeVisible();
+
+    /* O roteiro oficial permanece — operações ainda visíveis. */
+    await expect(
+      page.getByRole("heading", { name: "Operações do estágio" }),
+    ).toBeVisible();
+
+    await expectNoFailures(pageErrors, forbiddenCalls);
+  });
+
+  test("análise visual — gráficos contextuais temáticos", async ({
+    page,
+  }) => {
+    const pageErrors = trackPageErrors(page);
+    await openRoutingTab(page, PRODUCT_WITH_ROUTING);
+
+    /* Sem cálculo: tempo por peça visível; takt/distribuição ocultos. */
+    await expect(
+      page.getByRole("heading", { name: "Análise visual" }),
+    ).toBeVisible();
+    await shot(page, "v2-visual-dark-no-result");
+
+    /* Cenário para habilitar tempo×takt e simulação. */
+    await fillConditions(page);
+    await page
+      .getByRole("button", { name: "Calcular análise rápida" })
+      .click();
+    await expect(page.getByText(/Resultados e cenários/)).toBeVisible({
       timeout: 30_000,
     });
 
-    await page.getByRole("tab", { name: "Análise visual" }).click();
-
     await setTheme(page, "dark");
-    await shot(page, "visual-dark");
+    await shot(page, "v2-visual-dark");
 
-    /* Superfície do gráfico deve herdar o tema — não pode ser o
-     * fundo claro "office" no modo escuro. */
+    /* Superfície do gráfico deve herdar o tema — não o fundo claro
+     * "office" no modo escuro. */
     const chartBg = await page
       .locator("[class*='series-chart'], svg")
       .first()
@@ -175,7 +278,7 @@ test.describe("aba Roteiro — evidência visual", () => {
     });
 
     await setTheme(page, "light");
-    await shot(page, "visual-light");
+    await shot(page, "v2-visual-light");
 
     await expectNoFailures(pageErrors, forbiddenCalls);
   });
@@ -186,7 +289,7 @@ test.describe("aba Roteiro — evidência visual", () => {
     await expect(
       page.getByText(/não possui roteiro de fabricação/i),
     ).toBeVisible({ timeout: 30_000 });
-    await shot(page, "empty-routing-dark");
+    await shot(page, "v2-empty-routing-dark");
 
     await expectNoFailures(pageErrors, forbiddenCalls);
   });

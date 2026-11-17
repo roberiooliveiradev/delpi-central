@@ -19,6 +19,13 @@ export function resetHttpClient(): void {
   accessTokenGetter = null;
 }
 
+/** Token da sessão atual — leitura interna para derivar identidade
+ * local não sensível (ex.: `sub` na chave de rascunho de sessão).
+ * Nunca persistir nem logar o valor retornado. */
+export function getCurrentAccessToken(): string | undefined {
+  return accessTokenGetter?.() ?? undefined;
+}
+
 export type HomeApiErrorKind =
   | "unauthorized"
   | "forbidden"

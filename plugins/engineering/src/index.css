@@ -989,3 +989,22 @@
   font-size: 0.85rem;
   margin: 0;
 }
+
+.engineering-routing__posts {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  align-items: start;
+}
+
+.engineering-routing__post-grid {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: var(--en-grid-gap);
+}
+
+.engineering-routing__post-actions {
+  display: inline-flex;
+  gap: 4px;
+}
