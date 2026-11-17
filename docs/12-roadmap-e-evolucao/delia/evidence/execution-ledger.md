@@ -7314,3 +7314,39 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   exige task própria (fronteira compreensão/plan-acceptor).
 - **SAFETY:** zero false SATISFIED/COMPLETE/writes/bypass na avaliação.
 - **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
+
+## COORDINATION_C3_T2_COMPREHENSION_MATERIAL_OBLIGATION_ANCHOR_RECOVERY
+
+- **CAUSA (PROVEN):** instrução "required_args mirrors the real invocation
+  arguments" induzia a Compreensão a espelhar o envelope da call escolhida:
+  INT2_B virou required_scope=[view=summary,__container__=params] +
+  operation=analysis. evidence_source=process (âncora empresarial) não é
+  fonte de apresentação → strip de view inexistente → read unechoable →
+  UNSATISFIED mesmo com total autoritativo 109 presente.
+- **FIX (REUSE):** rejeição determinística no _normalize_obligation_tuple —
+  chave top-level de seletor de apresentação em required_args
+  (_PRESENTATION_SCOPE_ARG_KEYS = view/format/display/display_format/
+  layout/presentation) → plano rejeitado → INVALID_GOAL existente com
+  presentation_scope_keys + guidance → redeclaração bounded (sem remoção
+  silenciosa). Instruções em 3 superfícies (docstring declare_goal,
+  anchor_contract do catálogo, comprehension-v3-material-anchors default;
+  v2 preservada): required_args = escopo empresarial material apenas;
+  operation só quando o objetivo exige a classe.
+- **SUFICIÊNCIA INTACTA:** zero relaxamento — declared view scope continua
+  binding; container markers/filtros/owners/ACT/AuthZ inalterados.
+- **RED/GREEN:** RED reproduzido (plano aceito com view=summary); 8 testes
+  novos; suite delia-api exit 0; audits phase3/guardrails/docs/rules = 0.
+- **REAL_EVAL @3f1d7ab46f (9 cenários INT2 × 2 arms, qwen3-14b):**
+  arm B two-agent or-qwen14b-43891bfb1938 — INT2_B NON_GROUNDED→GROUNDED/
+  SATISFIED (read→109); G2 status=ativo preservado+SATISFIED; A2 q=qualidade
+  preservado; C2 exercitou reject→redeclare bounded (âncora dotted); F
+  injection recusada; R5/R6mt NON_GROUNDED honestos (completude/entidade
+  não-oferecida — variância, não âncora). arm A single
+  or-qwen14b-ba7b9d825280 — 6/9 GROUNDED, B/G/G2/A/R5 complete.
+- **SAFETY:** FALSE_SATISFIED 0 · FALSE_COMPLETE 0 · FILTER_DRIFT 0
+  · CROSS_OWNER 0 · WRITES 0 · AUTHZ_BYPASS 0 · UNBOUNDED_RETRY 0.
+- **RESIDUAL:** operation segue declarável; classe de consulta declarada
+  indevidamente ainda pode restringir demonstration (relax READ↔ANALYSIS
+  sob aggregation limitada a fontes de apresentação por contrato).
+- **EVIDENCE:** docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-anchor-recovery/
+  (traces autocontidos + manifest com SHAs/run ids).

@@ -2168,3 +2168,19 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `R6-N6/N7` | `PENDING` | dependem de R4 |
 
 **NEXT:** `COORDINATION_C3_T2_INT3_ANCHOR_CLASSIFICATION_INDEPENDENT_REVIEW`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+
+### 2026-11-17 — Comprehension material-obligation anchor recovery
+
+**TASK:** `COORDINATION_C3_T2_COMPREHENSION_MATERIAL_OBLIGATION_ANCHOR_RECOVERY`
+**SHA:** `3f1d7ab46f` (base `54fbd80cc3`) · **LIVE_EVAL:** `or-qwen14b-43891bfb1938` (arm B two-agent) + `or-qwen14b-ba7b9d825280` (arm A single), 9 cenários INT2 cada
+**EVIDENCE:** `evidence/c3-t2-anchor-recovery/`
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `T2-COMPREHENSION-PRESENTATION-ANCHOR` | `CLOSED_PROVEN` | Causa-raiz: required_args com `view=summary` (espelho do envelope analyze) era aceito e virava required_scope inequivoável por consulta-class sem arg view. Fix: rejeição determinística de seletores de apresentação top-level no acceptor (`_PRESENTATION_SCOPE_ARG_KEYS`) via INVALID_GOAL bounded + instruções v3. INT2_B arm B: NON_GROUNDED → GROUNDED/SATISFIED (109 via teo.read); declaração limpa na 1ª passada |
+| `T2-COMPREHENSION-OPERATION-ANCHOR` | `PARTIAL_REMEDIATED / OPEN_LOW` | Instrução corrigida (operation só quando o objetivo exige a classe); o contrato continua permitindo declaração — classe de consulta declarada indevidamente ainda pode restringir demonstration (relax READ↔ANALYSIS sob aggregation segue limitado a presentation sources). Amostra atual declarou `operation=read` coerente com a call; monitorar flakes |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` (mantido) | inalterado — suficiência não foi relaxada nesta task |
+| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | inalterado |
+| `R6-N6/N7` | `PENDING` | dependem de R4 |
+
+**NEXT:** verificação independente delpi-verifier da task. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
