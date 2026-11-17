@@ -11,7 +11,8 @@
 | **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `78f11fbd03`, deploy PROD e HML em 16–17/11/2026 (ver §5) |
 | **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f75d2385fe`, deploy PROD e HML em 17/11/2026; R8 obrigatório no P4 (ver §7) |
 | **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
-| **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§10) |
+| **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f124b28a9d`, deploy PROD e HML em 17/11/2026 (ver §11) |
+| **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§12) |
 | P6 | 7 | Página pública nova da Pesquisa no `public-hub` | **Somente HML** | A gerar |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
@@ -537,3 +538,43 @@ Questionário fictício neutro (ex.: avaliação de um treinamento interno), 2 e
 3. **Modo edição:** vindo da revisão, a etapa mostra só o primário “Voltar à revisão” (com validação) — **sem** botão Voltar para outras etapas.
 4. **Rolagem:** sem animação suave (`scrollIntoView()` padrão), respeitando quem usa movimento reduzido.
 5. **Aviso da nova tentativa:** usar o `FormNotice` existente (tom `warning`); não criar tom novo neste pacote.
+
+---
+
+## 11. Revisão do P5 (17/11/2026)
+
+**Veredito do coordenador:** `ACCEPT_WITH_RESIDUAL`, com **correção obrigatória antes do P6** (P5.1). Conferido: commit `f124b28a9d` em `main`, 14 arquivos só em `plugins/plugin-ui`, publicado pelo worktree temporário; nenhum componente P1–P4 alterado; ajustes do §10.8 presentes; sem `<form>`, sem persistência; demo fictícia. Verificador: `ACCEPT_WITH_RESIDUAL` na 1ª rodada.
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| **R14** | **Envio único não garantido.** `submit` usa só o estado React (`if (submitting) return; setSubmitting(true)`): dois toques/cliques no mesmo ciclo, antes da nova renderização, leem `submitting = false` e chamam `onSubmit` **duas vezes**. Na Pesquisa, a segunda chamada volta como “resposta já registrada” e pode **trocar o agradecimento por uma tela de conflito** depois de um envio válido | **P5.1 (obrigatório)** |
+| **R15** | `GuidedQuestionnaire` e os demais exports do kit não estão na lista `REQUIRED_HOST_EXPORTS` de `scripts/verify-host-exports.mjs` — uma otimização futura do build poderia removê-los do remote sem o build acusar | **P5.1** |
+| **R16** | Teste de “sem persistência” espia só `localStorage` | **P5.1** |
+| R17 | O foco da nova tentativa vai para o envoltório do aviso (`tabIndex=-1`) — aceitável, o leitor de tela lê o conteúdo | Aceito |
+| R4/R5 | Permissões no servidor (inclui logo 403 e script sem permissão de execução); erros de `tsc` pré-existentes | Pacote de infraestrutura / fora do escopo |
+
+## 12. Pacote P5.1 — Envio único garantido e proteção dos exports
+
+**Pré-requisito:** P5 aceito. **Escopo pequeno e fechado.**
+
+### 12.1 Escopo de arquivos permitido
+
+`plugins/plugin-ui/src/components/forms/questionnaire/GuidedQuestionnaire.tsx` e `GuidedQuestionnaire.test.tsx`; `plugins/plugin-ui/scripts/verify-host-exports.mjs` (somente a lista `REQUIRED_HOST_EXPORTS`). Nada mais.
+
+### 12.2 Entregáveis
+
+1. **R14:** trava síncrona com `useRef` (ex.: `submittingRef.current`), marcada **antes** do primeiro `await` e liberada no `finally`; o estado `submitting` continua só para o visual (`busy`). Nenhuma outra mudança de comportamento.
+2. **R15:** incluir em `REQUIRED_HOST_EXPORTS` os exports públicos do kit de formulário que os consumidores vão importar: `GuidedQuestionnaire`, `QuestionnaireThemeScope`, `FormPageLayout`, `FormResultPanel`, `FormLogo`, `FormButton`, `FormNotice`, `useSessionColorScheme`, `useQuestionnaireColorScheme` (ajustar à lista real de nomes exportados).
+3. **R16:** o teste de persistência espia também `sessionStorage` (e, se viável, `document.cookie`).
+
+### 12.3 Testes e aceite
+
+| # | Critério | Evidência |
+|---|---|---|
+| F1 | Dois cliques **no mesmo ciclo** (sem `await` entre eles, ex.: dois `fireEvent.click` seguidos ou `dispatchEvent` duplo) chamam `onSubmit` **uma única vez** | Teste novo que **falha** no código do P5 e passa no P5.1 (mostrar as duas execuções) |
+| F2 | Depois de `retry`, novo clique envia de novo (trava liberada) | Teste |
+| F3 | `verify-host-exports` acusa falha se um dos exports da lista sumir (demonstrar removendo temporariamente um, sem commitar) e passa com a lista completa | Saída |
+| F4 | Sem persistência em `localStorage` **e** `sessionStorage` | Teste |
+| F5 | Suite, build, auditorias, verificador; deploy PROD e HML do `plugin-ui` | Saídas |
+
+**Publicação:** worktree temporário do §6.8 item 4 se o stage ou o `main` local estiverem sujos.
