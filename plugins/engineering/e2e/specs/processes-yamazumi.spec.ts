@@ -51,7 +51,17 @@ async function chooseOption(
   const listbox = page.getByRole("listbox");
   await expect(listbox).toBeVisible({ timeout: 10_000 });
   await listbox.getByRole("button", { name: optionName }).first().click();
-  await expect(page.getByRole("listbox")).toHaveCount(0);
+  /* Em viewports estreitos o painel em portal pode permanecer aberto
+   * após a seleção — fecha com Escape sem invalidar a escolha. */
+  const closed = await page
+    .getByRole("listbox")
+    .waitFor({ state: "detached", timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!closed) {
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+  }
 }
 
 /** Abre a ferramenta, carrega o roteiro oficial e seleciona o
