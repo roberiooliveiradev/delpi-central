@@ -303,3 +303,67 @@ script canônico. Commits podem ser revertidos sem migração reversa.
 | ChatGPT live | `TEST_NOT_RUN` — token exige aud=URL-MCP + scope `mcp:tools`; validação pelo PO |
 | Rollback | retag `380919358b64` + `up-prod-sequential.sh --build engineering-api`; sem schema change |
 | Verificador | INCONCLUSIVE — motor `devin` sem login (persistente; não contornado) |
+
+---
+
+## Adendo — EVA-PRC-HOME-FORBIDDEN-ROOT-CAUSE-FIX-PROD-01 (17/11/2026)
+
+### Sintoma
+
+`read(entity="engineering", action="home")` → `data.status="partial"`
+com `sections.requests/tasks = "forbidden"`, enquanto
+`read(entity="product_registration", action="list")` retornava a fila
+autorizada com sucesso para a mesma identidade.
+
+### Root cause (CONFIRMADO_NO_CODIGO)
+
+`tool_bridge._source_context` (caminho MCP) construía
+`HomeSourceContext` **sem `permissions` e `is_superadmin`** — defaults
+`frozenset()`/`False`. A rota REST (`home_routes.py`) projetava ambos
+corretamente. As fontes in-process da Home
+(`PrcQueueHomeSource`/`PrcMineHomeSource`) montavam então
+`PrcActor(permissions=∅)` → `can_read=False` → `PrcForbiddenError` →
+seção degradada para `forbidden`.
+
+Caminho divergente validado: `product_registration.list` usa
+`prc_actor_from_principal(context.user)` — projeção completa — por
+isso funcionava. Hipóteses H1 (identidade) e H2 (permissões)
+confirmadas como manifestações do mesmo defeito; H3–H6 descartadas
+pelo diff de construção de contexto.
+
+### Correção (menor mudança, owner correto)
+
+`tool_bridge._source_context` passa a projetar
+`permissions=frozenset(...)` e `is_superadmin` do principal humano —
+mesma projeção da rota REST. Sem concessão de permissão, sem fallback
+privilegiado, sem alterar a autoridade do domínio PRC.
+
+### Testes (+3 em `test_eva_mcp.py`)
+
+- `test_home_source_context_propagates_identity` — ctx carrega
+  permissions/superadmin do humano.
+- `test_home_prc_sections_authorized_via_mcp` — full-path MCP → Home
+  → PRC: `requests`/`tasks` `available` com caso real.
+- `test_home_prc_scope_isolation_preserved` — `own_scope` mantido:
+  caso alheio nunca aparece (AC-04).
+
+Suíte: 172/172 (home + PRC + MCP). Falha residual fora do escopo:
+nenhuma nova.
+
+### Deploy
+
+| Ambiente | SHA | Digest | Saúde |
+|---|---|---|---|
+| HML | `b05bb83b62` | `sha256:24c99dc9de32` | healthy, 0 erros, fix no runtime |
+| PRD | `b05bb83b62` | `sha256:0386937783af` (anterior `5c1212331307` retido) | healthy, discovery 200, 0 erros, fix no runtime |
+
+Rollback: retag `5c1212331307` + `up-prod-sequential.sh --build
+engineering-api`. Live smoke via ChatGPT: `TEST_NOT_RUN` — depende de
+sessão legítima do PO; código do fix confirmado ativo no container PRD.
+Verificador independente: INCONCLUSIVE (motor `devin` sem login).
+
+### Residual search
+
+Único builder MCP de `HomeSourceContext` era `tool_bridge._source_context`
+(corrigido); rotas REST já projetavam permissões; demais fontes (LMP,
+overview, NC) usam `access_token` para delegação HTTP — não afetadas.
