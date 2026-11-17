@@ -7273,3 +7273,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESTRIÇÕES:** sem deploy, sem promoção, sem novos Agents,
   sem avanço de fase.
 - **PACOTE:** `evidence/c3-t2-two-agent-ab/`.
+
+## COORDINATION_C3_T2_TWO_AGENT_AGGREGATION_AND_HANDOFF_QUALITY_RECOVERY
+
+- **CAUSA:** MODEL_STRATEGY_VARIANCE — comprehension do braço B escolheu
+  teo.analyze(view=summary) cujo resultado não contém métrica de count;
+  Application corretamente manteve INCONCLUSIVE (não é defect).
+- **HANDOFF:** íntegro — view=summary declared ecoou em view=summary
+  invoked (arg top-level do analyze); nenhuma perda de escopo.
+- **REMEDIAÇÃO:** não aplicada — zero defeitos reproduzidos.
+- **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
+- **RESIDUAL novo:** analyze summary view sem count — owner capability gap.

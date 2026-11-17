@@ -35,3 +35,28 @@ BUSINESS_OUTCOME_SUPERIORITY: NOT_PROVEN — 8/15 vs 8/15 grounded,
   (n=1/cenário); B marginalmente mais barato (~11% menos tokens
   de input) mas sem outcome superior provado. Safety parity:
   writes=0, injection refused, filter drift=0 em ambos.
+
+## B/G divergence — causal analysis (trace-level, runs 1557f58b vs 1d86e34f)
+
+FIRST_DIVERGENT_BOUNDARY: COMPREHENSION — capability/strategy selection,
+não defect de contrato.
+
+INT2_G (B/two-agent): teo.analyze {view:"summary",params:{}} +
+{view:"processes"} — declared `view=summary` ECHOED correctly (view é
+top-level arg do analyze, sem mismatch de carrier). Owner retornou
+aggregated views sem métrica de count (meta.row_count=null). Modelo
+declarou "complete" → Application override → INCONCLUSIVE correto (S9).
+
+INT2_B (B/two-agent): mesmo padrão — analyze view=summary, obrigação
+operation=analysis; métrica não demonstrada → INCONCLUSIVE honesto.
+
+INT2_B/G (A/single): modelo escolheu teo.read search → total
+autoritativo do owner → SATISFIED legítimo.
+
+VERDICT: MODEL_STRATEGY_VARIANCE — ambos os caminhos são legítimos;
+a trajetória analyze coletou evidência que não continha a métrica
+pedida → INCONCLUSIVE é o outcome correto, não regressão. Nenhum
+defeito reproduzido → nenhuma alteração de código (RQ-7).
+
+RESIDUAL candidate: analyze summary view não expõe count de processos
+(limitação de capacidade do owner; alternativa read+total existe).
