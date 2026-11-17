@@ -1849,6 +1849,10 @@ _BALLOON_MARGIN_FRAC = 0.025
 # Fração mínima do círculo ocupada pelo glifo do rótulo — balões
 # preenchem quase todo o círculo; marcadores de zona/carimbo não.
 _BALLOON_GLYPH_FILL_MIN = 0.60
+# Dimensão mínima absoluta e relativa da primitiva — bowl de glifo
+# ('o', '0', 'e') e microcírculos não são balões de item.
+_BALLOON_MIN_PRIM_PX = 24.0
+_BALLOON_PRIM_MIN_RATIO = 1.0
 
 
 def _xyxy_of(box: list[float] | None) -> list[float] | None:
@@ -1862,28 +1866,35 @@ def _xyxy_of(box: list[float] | None) -> list[float] | None:
 
 def _circular_primitive_boxes(
     graphic_primitives: dict | list | None,
-) -> list[list[float]]:
-    """Bboxes das primitivas circulares/elípticas — aceita o dict real
-    do adapter (``circles``/``ellipses``/``arcs``) e a forma legada de
-    lista tipada (``type: circle|ellipse|arc``)."""
-    out: list[list[float]] = []
+) -> list[tuple[list[float], str]]:
+    """Bboxes das primitivas circulares/elípticas/fechadas, com fonte.
+
+    Aceita o dict real do adapter (``circles``/``ellipses``/``arcs``/
+    ``enclosures``) e a forma legada de lista tipada
+    (``type: circle|ellipse|arc|enclosure``). Retorna pares
+    ``(bbox_xyxy, source)`` ordenados por área — a primitiva mais
+    justa é avaliada primeiro."""
+    out: list[tuple[list[float], str]] = []
     prims: list = []
     if isinstance(graphic_primitives, dict):
-        for key in ("circles", "ellipses", "arcs"):
-            prims.extend(graphic_primitives.get(key) or [])
+        for key in ("circles", "ellipses", "arcs", "enclosures"):
+            for p in graphic_primitives.get(key) or []:
+                if isinstance(p, dict):
+                    prims.append((p, key[:-1]))
     elif isinstance(graphic_primitives, list):
-        prims = [
-            p for p in graphic_primitives
-            if (p.get("type") or "").lower() in {"circle", "ellipse", "arc"}
-        ]
-    for p in prims:
+        for p in graphic_primitives:
+            t = (p.get("type") or "").lower()
+            if t in {"circle", "ellipse", "arc", "enclosure"}:
+                prims.append((p, t))
+    for p, src in prims:
         box = (
             p.get("bounding_box_px") or p.get("box_px")
             if isinstance(p, dict) else None
         )
         xy = _xyxy_of(box)
         if xy:
-            out.append(xy)
+            out.append((xy, src))
+    out.sort(key=lambda b: (b[0][2] - b[0][0]) * (b[0][3] - b[0][1]))
     return out
 
 
@@ -1931,11 +1942,18 @@ def _detect_balloon_candidates(
         tb = _xyxy_of(a.get("bounding_box_px"))
         if tb is None:
             continue
-        for cb in prims:
-            if not (
-                cb[0] <= tb[0] and cb[2] >= tb[2]
-                and cb[1] <= tb[1] and cb[3] >= tb[3]
-            ):
+        tcx, tcy = (tb[0] + tb[2]) / 2, (tb[1] + tb[3]) / 2
+        for cb, psrc in prims:
+            # B1-R1: contenção relaxada — a caixa OCR pode exceder o
+            # contorno (padding de descender). Exige centro do token
+            # dentro da primitiva + ≥50% da área do token coberta.
+            if not (cb[0] <= tcx <= cb[2] and cb[1] <= tcy <= cb[3]):
+                continue
+            ix1 = max(tb[0], cb[0]); iy1 = max(tb[1], cb[1])
+            ix2 = min(tb[2], cb[2]); iy2 = min(tb[3], cb[3])
+            inter = max(0.0, ix2 - ix1) * max(0.0, iy2 - iy1)
+            tarea = (tb[2] - tb[0]) * (tb[3] - tb[1])
+            if tarea <= 0 or inter < tarea * 0.5:
                 continue
             cand = {
                 "item_label": raw,
@@ -1945,6 +1963,7 @@ def _detect_balloon_candidates(
                 "token_bounding_box_px": tb,
                 "coordinate_system": "pixels_pdfium_top_left",
                 "region": a.get("region"),
+                "primitive_source": psrc,
                 "identification_method": "primitive_containment",
                 "uncertainty_reason": (
                     "contenção geométrica é candidata — exige "
@@ -1956,6 +1975,13 @@ def _detect_balloon_candidates(
             tw, th = tb[2] - tb[0], tb[3] - tb[1]
             cw, ch = cb[2] - cb[0], cb[3] - cb[1]
             if (
+                min(cw, ch) < max(_BALLOON_MIN_PRIM_PX,
+                                  max(tw, th) * _BALLOON_PRIM_MIN_RATIO)
+            ):
+                # primitiva pequena demais para envolver o rótulo —
+                # bowl de glifo ('o'/'0') e microcírculos não são balão
+                reason = "circle_too_small_for_label"
+            elif (
                 cw > 0
                 and ch > 0
                 and (tw < cw * _BALLOON_GLYPH_FILL_MIN

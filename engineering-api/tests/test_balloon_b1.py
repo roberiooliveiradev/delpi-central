@@ -163,8 +163,8 @@ def test_b1_token_outside_circle_ignored():
 
 def test_b1_margin_zone_circle_excluded():
     """Marcador de zona da folha (círculo na borda) é excluído com razão."""
-    tokens = [_tok("C", 3, 395, 20, 425)]
-    prims = {"circles": [_circle(0, 390, 25, 430)]}
+    tokens = [_tok("C", 3, 395, 26, 425)]
+    prims = {"circles": [_circle(0, 388, 36, 434)]}
     u = build_understanding(
         tokens, document_hash=SHA, page=1,
         render_size_px=(1000, 700), graphic_primitives=prims,
@@ -533,3 +533,76 @@ def test_b1_oversized_circle_excluded():
     assert labels == ["B"]
     reasons = [e["excluded_reason"] for e in u["balloon_excluded"]]
     assert reasons.count("circle_oversized_for_label") == 2
+
+
+def _enclosure(x1, y1, x2, y2):
+    return {"type": "enclosure",
+            "bounding_box_px": [x1, y1, x2, y2],
+            "identification_method": "colored_outline_enclosure"}
+
+
+def test_b1r1_colored_enclosure_candidate():
+    """Interior fechado por contorno colorido (balão anotado a cor —
+    caso real A1–A4 do 90264311) gera candidato com fonte registrada."""
+    tokens = [_tok("A4", 732, 567, 829, 645)]
+    prims = {"circles": [], "enclosures": [_enclosure(715, 505, 840, 618)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert len(u["balloon_candidates"]) == 1
+    b = u["balloon_candidates"][0]
+    assert b["normalized_label"] == "A4"
+    assert b["primitive_source"] == "enclosure"
+    # caixa OCR excede o interior do contorno (~27px abaixo) — centro
+    # + overlap ≥50% ainda qualificam a evidência real
+    assert b["bounding_box_px"] == [715, 505, 840, 618]
+
+
+def test_b1r1_center_containment_partial_token_overlap():
+    """Token com centro dentro do círculo e overlap ≥50% — box OCR
+    maior que a primitiva não derruba o candidato."""
+    tokens = [_tok("A1", 605, 405, 640, 455)]
+    prims = {"circles": [_circle(595, 395, 650, 445)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert [b["normalized_label"] for b in u["balloon_candidates"]] == [
+        "A1"]
+
+
+def test_b1r1_center_outside_no_candidate():
+    """Centro do token fora da primitiva → sem candidato mesmo com
+    interseção parcial de bordas."""
+    tokens = [_tok("A1", 700, 400, 740, 450)]
+    prims = {"circles": [_circle(600, 395, 705, 455)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+
+
+def test_b1r1_glyph_bowl_not_balloon():
+    """Microcírculo do bowl de um glifo ('o'/'0') não é balão."""
+    tokens = [_tok("o", 605, 405, 615, 420)]
+    prims = {"circles": [_circle(603, 403, 617, 422)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+    reasons = [e["excluded_reason"] for e in u["balloon_excluded"]]
+    assert "circle_too_small_for_label" in reasons
+
+
+def test_b1r1_enclosure_via_adapter_dict_shape():
+    """A chave 'enclosures' do adapter real alimenta o detector."""
+    tokens = [_tok("A3", 605, 405, 645, 445)]
+    prims = {"enclosures": [{"bounding_box_px": [595, 395, 655, 455]}]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert len(u["balloon_candidates"]) == 1

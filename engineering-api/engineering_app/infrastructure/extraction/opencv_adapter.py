@@ -239,13 +239,67 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
                 )
     except cv2.error:
         circles = []
+    # E1/VAL-01 B1-R1 — contornos fechados em traço colorido (balões de
+    # anotação em cor): a decodificação em grayscale acima descarta cor;
+    # traços magenta/azul de balão não produzem voto suficiente no
+    # HoughCircles. O canal de saturação isola traço colorido de texto
+    # e linhas pretas; o flood-fill da borda na máscara invertida
+    # revela interiores delimitados por contorno colorido — genérico a
+    # qualquer matiz, posição e layout. Evidência candidata: rótulo,
+    # região e associação são decididos a jusante.
+    enclosures: list[dict] = []
+    try:
+        cimg = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if cimg is not None:
+            sat = cv2.cvtColor(cimg, cv2.COLOR_BGR2HSV)[:, :, 1]
+            walls = cv2.dilate(
+                (sat > 60).astype(np.uint8),
+                np.ones((3, 3), np.uint8),
+                iterations=1,
+            )
+            free = cv2.copyMakeBorder(
+                (1 - walls).astype(np.uint8), 1, 1, 1, 1,
+                cv2.BORDER_CONSTANT, value=1,
+            )
+            cv2.floodFill(
+                free,
+                np.zeros(
+                    (free.shape[0] + 2, free.shape[1] + 2), np.uint8),
+                (0, 0), 2,
+            )
+            enclosed = (free[1:-1, 1:-1] == 1).astype(np.uint8)
+            _n, _lab, stats, _cen = cv2.connectedComponentsWithStats(
+                enclosed, connectivity=8,
+            )
+            for i in range(1, _n):
+                x, y, ew, eh, _area = stats[i]
+                if (
+                    ew < 16 or eh < 16
+                    or ew > hw // 2 or eh > hh // 2
+                ):
+                    continue
+                enclosures.append(
+                    {
+                        "type": "enclosure",
+                        "bounding_box_px": [
+                            int(x), int(y),
+                            int(x + ew), int(y + eh),
+                        ],
+                        "identification_method":
+                            "colored_outline_enclosure",
+                    }
+                )
+            enclosures = enclosures[:300]
+    except cv2.error:
+        enclosures = []
     return {
         "h_lines": h_lines[:400],
         "v_lines": v_lines[:400],
         "rects": sorted(rects, key=lambda r: (r[3]-r[1])*(r[2]-r[0]), reverse=True)[:80],
         "circles": circles,
+        "enclosures": enclosures,
         "count": {
             "h": len(h_lines), "v": len(v_lines), "rects": len(rects),
-            "circles": len(circles),
+            "circles": len(circles), "enclosures": len(enclosures),
         },
     }
