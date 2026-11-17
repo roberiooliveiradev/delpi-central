@@ -133,13 +133,15 @@ def test_tv_weekly_ranking_preserves_groups_and_zeroes_brl_before_top():
     sql = subject.sql
     assert result["items"] == []
     assert "TOP (1)" in sql and "OUTER APPLY" in sql
-    assert "SUM(ABS(CAST(" in sql
+    assert "SUM(CASE WHEN" in sql
+    assert "THEN -ABS(CAST(" in sql
     assert "SB1V.B1_TPMAT" in sql
-    assert "SUM(ABS(CAST(SD3.D3_QUANT" in sql
+    assert "ABS(CAST(SD3.D3_QUANT" in sql
     assert "COUNT(*) AS movement_count" in sql
     assert "COUNT(*) OVER () AS total_groups" in sql
     assert sql.index("WITH AGG") < sql.index("SELECT TOP (?)")
-    assert "ORDER BY A.gross_value DESC" in sql
+    assert "ORDER BY ABS(A.signed_value) DESC" in sql
+    assert "GROUP BY RTRIM(SD3.D3_FILIAL), RTRIM(SD3.D3_COD)" in sql
     assert "unpriced_movements" in sql
 
 

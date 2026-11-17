@@ -370,3 +370,32 @@ def test_b3_summary_counts():
     assert s["compatible_candidates"] == 1
     assert s["conflict_candidates"] == 0
     assert s["inconclusive"] == 1
+
+
+def test_b3_glued_description_cell_extracts_color():
+    """Caso real 90264311: descrição colada numa célula única
+    (caboepr125/150°c22awgvm600v…) — VM extraído por substring
+    cromática com proveniência glued_substring; acrômico 'BR' dentro
+    de 'NBR9114' NÃO pode ser extraído."""
+    rows = [_row(0, "10380095", "A3",
+                 ["caboepr125/150°c22awgvm600vstyle3400csanbr9114"])]
+    bal = _balloon("A3", _leader_single(
+        obs=_obs(4.2, 0.16, hue=0)))
+    v = build_balloon_table_validation(_u(rows, [bal]))
+    ev = _cc(v["balloons"][0])["evaluations"][0]
+    d = ev["declared"]
+    assert d["category_class"] == "cable"
+    assert d["color_tokens"] == ["VM"]
+    assert d["color_token_source"] == "glued_substring"
+    assert "BR" not in d["color_tokens"]
+
+
+def test_b3_glued_achromatic_not_extracted():
+    """Texto colado sem cor cromática declarada → sem tokens (não
+    inventa 'BR' de 'NBR' nem 'PT' de 'PTO')."""
+    rows = [_row(0, "99999999", "Z",
+                 ["protetortermmagmaptonbr9114"])]
+    bal = _balloon("Z", _leader_single(obs=_obs(1.2, 0.1, hue=0)))
+    v = build_balloon_table_validation(_u(rows, [bal]))
+    ev = _cc(v["balloons"][0])["evaluations"][0]
+    assert ev["declared"]["color_tokens"] == []

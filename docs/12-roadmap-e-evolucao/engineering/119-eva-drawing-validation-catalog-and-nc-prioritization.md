@@ -6560,3 +6560,66 @@ Defeito de multiplicidade encontrado e corrigido no mapper: o vínculo `POINTS_T
 - Residuais: líderes diagonais/inclinados não detectados (canal `segments` arbitrário aceito pelo parser, sem emissor no adapter); junções cabo/terminal geram `AMBIGUOUS_REGIONS` legítimas que exigirão critério B3 ou GT para desempate; overlay e candidatos são evidência de revisão, não homologação.
 - Próximo bounded step: **B3** — coerência entre componente apontado, descrição na tabela e características visuais (somente com nova solicitação bounded + GT/thresholds da Engenharia).
 - Issue #131: update manual pendente (`gh` sem auth no ambiente).
+
+### 94.42.9 E1/VAL-01 — B3: Coerência Visual dos Componentes Apontados pelos Balões
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B3-VISUAL-COMPONENT-CONSISTENCY-01`
+**MODO:** `BOUNDED_DIAGNOSIS / CONTRACT_FIRST / CONDITIONAL_IMPLEMENTATION / EXISTING_FRAMEWORKS / READ_ONLY / INDEPENDENT_VERIFICATION / NO_DEPLOY`. Commits `7ddf732466` (feature) + `c94bbfe11a` (extração de cor em descrição colada) — 5 arquivos (`opencv_adapter.py`, `understanding.py`, `drawing_investigation.py`, `test_balloon_b1.py`, `test_balloon_b3.py`).
+
+#### Diagnóstico de suficiência do B2 (gate obrigatório)
+
+Sondagem real nos 3 PDFs (`run_visual_benchmark` in-process, modelos `paddlex` oficiais):
+
+| Desenho | Balões | SINGLE_REGION | AMBIGUOUS | Atributo declarado extraível | Atributo visual observável |
+|---|---|---|---|---|---|
+| 90261723 | 4 (1, A, B×2) | 2 (1, A→barra do cabo) | 2 (B×2, junção cabo/terminal) | sim — `cells` à direita do `component_code` | sim — AR≈21, sat≈0.91 na barra |
+| 90261731 | 4 | 2 | 2 (3 alternativas no B esq.) | idem | idem (AR≈21, sat≈0.91, hue≈30) |
+| 90264311 | 6 (A1,A2,A3×2,A4×2) | 2 (A3×2) | 4 | sim — célula única **colada** (`caboepr125/150°c22awgvm600v…`) | sim — regiões `mixed` AR≈3–4, sat≈0.16 |
+
+- **Líderes diagonais:** nenhum caso no corpus exige diagonal (todos eixo-alinhados) → **sem `B2_CAPABILITY_GAP`** para estas famílias; a limitação diagonal segue registrada como residual B2.
+- **Primeiro ponto de perda B3:** (a) `description_candidate` tipada carrega só um fragmento de célula — descrição real vive nas `cells` à direita do código; (b) regiões de destino não carregavam medida visual alguma; (c) semântica de cor do preenchimento não é convenção governada.
+- **Veredito do gate:** evidência suficiente para comparação delimitada — categoria declarada × classe visual da região, apenas em `SINGLE_REGION`. Implementação autorizada nesse envelope.
+
+#### Implementação
+
+- **`opencv_adapter.py`:** `region_observations` por rect retornado — `box_px`, `aspect_ratio`, `area_fraction`, `sat_coverage`, `dominant_hue`(+fração), `inner_primitive_count`, `fill_semantics` (fail-closed: nenhum emissor declara `material` hoje → `schematic_or_unknown`). Medida sobre as mesmas caixas ordenadas do payload — mesma primitiva, mesma observação.
+- **`understanding.py`:** `_target_regions` casa observação por caixa; `leader_line` ganha `target_observation` (SINGLE) e `alternative_targets` com observação por alternativa; `geometry_regions[].observation`. `leader_target_verified`/`POINTS_TO` `NOT_CHECKED` inalterados.
+- **`drawing_investigation.py`:** bloco `_b3_*` em `build_balloon_table_validation` — para cada ocorrência de balão com `SINGLE_REGION`, avalia cada linha declarada ligada (uma a uma, sem escolha) e consolida `component_consistency` por ocorrência + `component_consistency_summary`.
+- **RQ-B3-01 declarado:** descrição das `cells` à direita do `component_code` (`row_cells_right_of_component_code`), fallback ao campo tipado (`typed_description_field`); categoria pelo primeiro token (`CABO/TERM/LUVA/PROTETOR/…`); cor por abreviações com proveniência `word_boundary` ou `glued_substring` (descrição colada numa célula — caso real 64311; só conjunto cromático, `BR` de `NBR` não vira token); avaliação normativa governada anexada (`evaluate_description`, `DRAWING`) — `OWNER_BLOCKED`/`NOT_APPLICABLE` registrados, nunca contornados.
+- **RQ-B3-02 observado:** `shape_class` derivado só das medidas (`elongated_fill` AR≥5·sat≥0.5 | `compact_or_outline` AR<3 | `mixed` | `unknown`) — classificação geométrico-cromática, **não** reconhecimento de componente e nunca guiada pela expectativa declarada.
+- **RQ-B3-03 cor:** só compara com `fill_semantics="material"` (caminho exercido hoje apenas por fixtures). Preenchimento esquemático, contorno colorido e anotação **não** são cor de material → `NOT_COMPARABLE` com o matiz registrado como observação.
+- **RQ-B3-04 matriz:** `cable`×`elongated_fill` → `COMPATIBLE_CANDIDATE`; `cable`×`compact` → `CONFLICT_CANDIDATE`; família compacta×`elongated_fill` → `CONFLICT_CANDIDATE`; família compacta×`compact`/`mixed`, `cable`×`mixed`, sem categoria declarada, sem observação → `INCONCLUSIVE`; sem linha na tabela / sem destino → `NOT_COMPARABLE`/`INCONCLUSIVE` sem avaliação.
+- **RQ-B3-05 ambiguidade:** `AMBIGUOUS_REGIONS` nunca vira destino — `alternatives` levam `shape_class`+observação por região, sem veredito; linhas ambíguas avaliadas uma a uma; ocorrências repetidas avaliadas pela própria região (A3×2 independentes).
+- **RQ-B3-06 estados:** `COMPATIBLE_CANDIDATE`/`CONFLICT_CANDIDATE`/`AMBIGUOUS`/`INCONCLUSIVE`/`NOT_COMPARABLE` — todos `review_required=True`, `automatic_approval=False`, sem NC.
+
+#### Prova real (SHA `c94bbfe11a`, container efêmero `infra-engineering-api`, modelos paddlex read-only)
+
+- **90261723:** `a`→`COMPATIBLE_CANDIDATE` (cabo↔barra alongada, cor `NOT_COMPARABLE` esquemática); `b`×2→`INCONCLUSIVE` (ambiguidade B2 preservada, alternativas observadas); `1`→`NOT_COMPARABLE` (sem linha). Summary: 1 compat, 2 inconc, 1 n/c.
+- **90261731:** idem (`a` compat, hue 30 vs 60 do 723 — ambos elongated; divergência de matiz não gera comparação).
+- **90264311:** `a3`×2→`INCONCLUSIVE` (região `mixed` — vista composta cabo+terminais; `VM` extraído `glued_substring`, norm `OWNER_BLOCKED` preservado); `a1`/`a2`/`a4`×2→`INCONCLUSIVE` sem avaliação (ambíguas; alternativas com `shape_class`). Summary: 6 inconc, 0 conflitos.
+- **Falsos conflitos observados: 0.** Nenhum `CONFLICT_CANDIDATE` emitido por informação ausente ou ambiguidade.
+
+#### Testes
+
+- `tests/test_balloon_b3.py`: **21 testes** — matriz categoria×forma, `AMBIGUOUS_REGIONS` preservado, sem líder, sem linha, linhas ambíguas por linha, multiplicidade por ocorrência, cor esquemática→`NOT_COMPARABLE`, caminho `material` (compat+conflito), monocromático, fallback tipado, `OWNER_BLOCKED` preservado, summary, descrição colada (VM extraído, BR/NBR rejeitado).
+- `tests/test_balloon_b1.py`: +3 testes de propagação (`target_observation`, `alternative_targets`, `observation` ausente→`None`) — **52** no arquivo.
+- Conjunto completo engineering-api: **1677 PASS**, 0 regressões (21 skips pré-existentes).
+
+#### Verificação independente
+
+- Pedido `.git/delpi-verifier/requests/eva-b3-visual-consistency-r1.md`; resultado pendente nesta seção até a rodada do verificador (ver relatório final da task).
+
+#### Limitações e riscos de falso conflito
+
+- `shape_class` é proxy geométrico: barra alongada saturada ≈ corpo de cabo, mas uma vista longitudinal de outro componente poderia parecer barra — `COMPATIBLE_CANDIDATE` não prova identidade; `CONFLICT_CANDIDATE` exige contraditório de forma, nunca cor isolada.
+- Região `mixed` (caixa cobrindo cabo+terminais) abstém-se — não decide sub-componente.
+- Cor só compara com `fill_semantics` governado declarado pelo emissor; hoje nenhum → toda cor é `NOT_COMPARABLE` em produção.
+- Descrição colada: extração `glued_substring` restrita a tokens cromáticos; precisão menor marcada em `color_token_source`.
+- Thresholds `_B3_ELONGATED_MIN_AR/_B3_COMPACT_MAX_AR/sat` são calibragem de engenharia nos 3 PDFs — **não homologados**; GT/holdout pendentes (M0–M5).
+- Verificação executor-side: sonda real usa `run_visual_benchmark` `isolation="inprocess"` (o caminho isolado `run_pipeline_isolated` falha `worker_bad_response` quando paddlex escreve progresso no stdout do worker — limitação do ambiente de prova, não do pipeline de produção).
+
+#### Release, residuais e handoff
+
+- **`B3_IMPLEMENTED_VERIFIED_DEPLOY_BLOCKED`** (pendente veredito do verificador nesta iteração): deploy proibido; imagem de produção inalterada; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `AUTOMATIC_APPROVAL=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+- Próximo bounded step sugerido: dataset GT de coerência balão×componente para homologar thresholds e medir falsos conflitos/compatíveis; critério para `fill_semantics` governado se a Engenharia quiser ativar comparação de cor real.
+- Issue #131: update manual pendente (`gh` sem auth no ambiente).

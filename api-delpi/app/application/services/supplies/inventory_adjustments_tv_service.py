@@ -3,8 +3,9 @@
 A API mantém as três operações originais. start_date/end_date permitem que o
 filtro de período relativo do TV Dashboard (dateRangePreset) seja resolvido no
 gateway, enquanto granularity=day|week|month|year controla os agrupamentos
-temporais. Ranking continua por filial/produto/armazém/natureza, sempre dentro
-do período escolhido. Não há escrita nem nova definição contábil.
+temporais. O ranking de itens consolida por filial/produto, compensando
+falta/sobra entre armazéns (GLPI #1615) dentro do período escolhido.
+Os KPIs de divergência bruta continuam distintos do saldo líquido de itens.
 """
 from __future__ import annotations
 
@@ -343,9 +344,9 @@ class InventoryAdjustmentsTvService:
             "as_of": period.reference.isoformat(),
             "branch": branch_code or "all",
             "warehouse": warehouse_code,
-            # Grão do ranking não muda: produto+local+filial+natureza.
+            # Um produto por filial, com compensação física e financeira.
             "granularity": granularity,
-            "item_grain": "branch_product_warehouse_nature",
+            "item_grain": "branch_product",
             "period_start": period.start.isoformat(),
             "period_end": period.end.isoformat(),
             "week_start": period.start.isoformat() if granularity == "week" else None,

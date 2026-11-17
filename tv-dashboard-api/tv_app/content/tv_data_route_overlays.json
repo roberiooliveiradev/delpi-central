@@ -250,8 +250,8 @@
     },
     "get_supplies_inventory_adjustments_tv_weekly_items": {
       "label": "GR Diário · Itens com divergência no período",
-      "description": "Ranking dos itens com divergência na janela selecionada: hoje, semana, mês, ano ou datas personalizadas; filtra sem alterar o grão produto/armazém/natureza.",
-      "whenToUse": "Tabela TOP 5/10 por produto, código, descrição, quantidade e R$. Selecione Granularidade = semana e Período = Esta semana (até hoje) para o painel do GR Diário.",
+      "description": "Saldo líquido por filial e produto na janela selecionada; faltas e sobras compensadas entre armazéns, sem repetir linhas por natureza.",
+      "whenToUse": "Tabela TOP por maior impacto financeiro líquido absoluto, com quantidade e R$ com sinal. Um único produto por filial; confira os campos de saldo físico e financeiro se os sinais forem diferentes.",
       "category": "supplies",
       "paramStrategy": "direct",
       "allowedDisplayModes": [
@@ -271,7 +271,10 @@
         "product_description": "string",
         "branch": "string",
         "warehouse": "string",
+        "warehouse_count": "number",
         "nature_label": "string",
+        "quantity_nature_label": "string",
+        "financial_nature_label": "string",
         "quantity": "number",
         "value_brl": "number",
         "signed_quantity": "number",
@@ -281,12 +284,15 @@
         "product_code": "Código",
         "product_description": "Descrição",
         "branch": "Unidade",
-        "warehouse": "Armazém",
-        "nature_label": "Tipo",
-        "quantity": "Quantidade",
-        "value_brl": "Divergência (R$)",
-        "signed_quantity": "Quantidade com sinal",
-        "signed_value_brl": "Impacto com sinal (R$)"
+        "warehouse": "Armazéns considerados",
+        "warehouse_count": "Quantidade de armazéns",
+        "nature_label": "Resultado consolidado",
+        "quantity_nature_label": "Saldo físico",
+        "financial_nature_label": "Saldo financeiro",
+        "quantity": "Saldo físico absoluto",
+        "value_brl": "Saldo financeiro absoluto (R$)",
+        "signed_quantity": "Saldo físico (+ sobra / - falta)",
+        "signed_value_brl": "Saldo financeiro (+ sobra / - falta)"
       },
       "paramSchema": {
         "granularity": {
