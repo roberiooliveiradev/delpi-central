@@ -81,7 +81,7 @@ def _check_prebound_socket(
     if (
         type(listener) is not socket.socket
         or listener.family != socket.AF_UNIX
-        or type(expected_path) is not Path
+        or not isinstance(expected_path, Path)
         or not expected_path.is_absolute()
         or type(owner_uid) is not int or owner_uid < 0
     ):
