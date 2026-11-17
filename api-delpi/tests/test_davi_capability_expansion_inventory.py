@@ -126,6 +126,22 @@ _ELIGIBLE = {
     "get_si_indicators",
     "list_si_indicator_goals",
     "list_si_indicator_goal_history",
+    "get_si_department_details",
+    "get_si_departments_tree",
+    "get_si_departments_tree_snapshot",
+    "get_si_departments_tree_trends",
+    "get_si_alerts",
+    "get_si_trends",
+    "get_si_presentation",
+    "get_si_cache_refresh_status",
+    "get_si_job_status",
+    "get_si_settings",
+    "list_si_settings_audit",
+    "list_si_change_requests",
+    "list_si_admin_departments",
+    "list_si_admin_department_indicators",
+    "list_si_goal_years_overview",
+    "export_si_admin_config",
 }
 
 # Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
@@ -163,7 +179,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 99
+    assert len(eligible) == 115
 def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
     source_head = git_sha("HEAD")
     doc = build_inventory_document(source_head=source_head, origin_main=source_head)
@@ -191,9 +207,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 99
+    assert doc["wave_1_freeze"]["current_eligible"] == 115
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 102
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 118
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

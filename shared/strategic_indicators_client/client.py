@@ -307,6 +307,274 @@ class StrategicIndicatorsApiClient:
             authorization=authorization,
         )
 
+    def get_user_department_details(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            f"/strategic-indicators/departments/{department_id}",
+            params={
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_departments_tree(
+        self,
+        *,
+        authorization: str,
+        view_mode: str | None = None,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        months: int | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/departments/tree",
+            params={
+                "view_mode": view_mode,
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+                "months": months,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_departments_tree_snapshot(
+        self,
+        *,
+        authorization: str,
+        view_mode: str | None = None,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/departments/tree/snapshot",
+            params={
+                "view_mode": view_mode,
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_departments_tree_trends(
+        self,
+        *,
+        authorization: str,
+        view_mode: str | None = None,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        months: int | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/departments/tree/trends",
+            params={
+                "view_mode": view_mode,
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+                "months": months,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_alerts(
+        self,
+        *,
+        authorization: str,
+        department_id: str | None = None,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/alerts",
+            params={
+                "department_id": department_id,
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_trends(
+        self,
+        *,
+        authorization: str,
+        department_id: str | None = None,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        months: int | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/trends",
+            params={
+                "department_id": department_id,
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+                "months": months,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_presentation(
+        self,
+        *,
+        authorization: str,
+        branch: str | None = None,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        months: int | None = None,
+        include: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/presentation",
+            params={
+                "branch": branch,
+                "competence": competence,
+                "start_date": start_date,
+                "end_date": end_date,
+                "months": months,
+                "include": include,
+            },
+            authorization=authorization,
+        )
+
+    def get_user_cache_refresh_status(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/cache/refresh/status",
+            params=None,
+            authorization=authorization,
+        )
+
+    def get_user_job_status(
+        self,
+        *,
+        authorization: str,
+        job_id: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            f"/strategic-indicators/jobs/{job_id}",
+            params=None,
+            authorization=authorization,
+        )
+
+    # -- Admin-parity reads (settings.manage enforced at the SI boundary) --
+
+    def get_user_settings(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/settings",
+            params=None,
+            authorization=authorization,
+        )
+
+    def list_user_settings_audit(
+        self,
+        *,
+        authorization: str,
+        limit: int | None = None,
+        entity_key: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/settings/audit",
+            params={"limit": limit, "entity_key": entity_key},
+            authorization=authorization,
+        )
+
+    def list_user_change_requests(
+        self,
+        *,
+        authorization: str,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/change-requests",
+            params={"limit": limit, "offset": offset},
+            authorization=authorization,
+        )
+
+    def list_user_admin_departments(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/admin/departments",
+            params=None,
+            authorization=authorization,
+        )
+
+    def list_user_admin_department_indicators(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            f"/strategic-indicators/admin/departments/{department_id}/indicators",
+            params=None,
+            authorization=authorization,
+        )
+
+    def list_user_goal_years_overview(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/admin/goal-years/overview",
+            params=None,
+            authorization=authorization,
+        )
+
+    def export_user_admin_config(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._get_user_scoped(
+            "/strategic-indicators/admin/config/export",
+            params=None,
+            authorization=authorization,
+        )
+
     # -- User-parity writes (DAVI governed ACT surface) --------------------
     #
     # Same identity contract as the user-parity reads: the caller's own JWT
@@ -390,6 +658,299 @@ class StrategicIndicatorsApiClient:
                 "write_origin": write_origin,
                 "correlation_id": correlation_id,
             },
+            authorization=authorization,
+        )
+
+    def update_user_settings(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "PUT",
+            "/strategic-indicators/settings",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def create_user_change_request(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/change-requests",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def add_user_change_request_comment(
+        self,
+        *,
+        authorization: str,
+        change_request_id: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/change-requests/{change_request_id}/comments",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def submit_user_change_request(
+        self,
+        *,
+        authorization: str,
+        change_request_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/change-requests/{change_request_id}/submit",
+            authorization=authorization,
+        )
+
+    def create_user_admin_department(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/departments",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def update_user_admin_department(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "PUT",
+            f"/strategic-indicators/admin/departments/{department_id}",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def activate_user_admin_department(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/admin/departments/{department_id}/activate",
+            authorization=authorization,
+        )
+
+    def deactivate_user_admin_department(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/admin/departments/{department_id}/deactivate",
+            authorization=authorization,
+        )
+
+    def delete_user_admin_department(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "DELETE",
+            f"/strategic-indicators/admin/departments/{department_id}",
+            authorization=authorization,
+        )
+
+    def create_user_admin_department_indicator(
+        self,
+        *,
+        authorization: str,
+        department_id: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/admin/departments/{department_id}/indicators",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def update_user_admin_indicator(
+        self,
+        *,
+        authorization: str,
+        indicator_id: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "PUT",
+            f"/strategic-indicators/admin/indicators/{indicator_id}",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def activate_user_admin_indicator(
+        self,
+        *,
+        authorization: str,
+        indicator_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/admin/indicators/{indicator_id}/activate",
+            authorization=authorization,
+        )
+
+    def deactivate_user_admin_indicator(
+        self,
+        *,
+        authorization: str,
+        indicator_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            f"/strategic-indicators/admin/indicators/{indicator_id}/deactivate",
+            authorization=authorization,
+        )
+
+    def delete_user_admin_indicator(
+        self,
+        *,
+        authorization: str,
+        indicator_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "DELETE",
+            f"/strategic-indicators/admin/indicators/{indicator_id}",
+            authorization=authorization,
+        )
+
+    def delete_user_indicator_goal(
+        self,
+        *,
+        authorization: str,
+        goal_id: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "DELETE",
+            f"/strategic-indicators/indicator-goals/{goal_id}",
+            authorization=authorization,
+        )
+
+    def bulk_create_user_indicator_goals(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/indicator-goals/bulk-create",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def duplicate_user_indicator_goals_year(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/indicator-goals/duplicate-year",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def fill_missing_user_indicator_goals(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/indicator-goals/fill-missing",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def preview_user_admin_config_import(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/config/import/preview",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def apply_user_admin_config_import(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/admin/config/import/apply",
+            json_body=dict(body),
+            authorization=authorization,
+        )
+
+    def refresh_user_cache(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/cache/refresh",
+            json_body=dict(body) if body is not None else None,
+            authorization=authorization,
+        )
+
+    def invalidate_user_cache(
+        self,
+        *,
+        authorization: str,
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/cache/invalidate",
+            authorization=authorization,
+        )
+
+    def create_user_tree_load_job(
+        self,
+        *,
+        authorization: str,
+        body: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_user_scoped(
+            "POST",
+            "/strategic-indicators/departments/tree/load-job",
+            json_body=dict(body),
             authorization=authorization,
         )
 

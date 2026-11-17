@@ -153,7 +153,9 @@ def test_gpt_get_catalog_lists_v1_ops_without_raw_rbac(mock_can, mock_user) -> N
     assert "dashboard-engineering.view" not in payload
     assert "dashboard-lmps.view" not in payload
     directives = body["data"]["capability_surface"]["agent_directives"]
-    assert directives["read_only"] is True
+    # read_only=False since W012: execute is LIVE for governed si.goal.*
+    # capabilities (PREPARE/ACT) — the surface is no longer read-only.
+    assert directives["read_only"] is False
     assert directives["version"]
 
 

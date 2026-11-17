@@ -1395,3 +1395,177 @@ SI_INDICATOR_GOAL_HISTORY = agent_route(
     ),
     operation_id="list_si_indicator_goal_history",
 )
+
+SI_DEPARTMENT_DETAILS = agent_route(
+    summary="Strategic Indicators department detail",
+    description=(
+        "Detail view of a single Strategic Indicators department (scores, "
+        "indicators and metadata) for a competence/branch window. Owner: "
+        "strategic-indicators-api GET /strategic-indicators/departments/{id}. "
+        "Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_department_details",
+)
+
+SI_DEPARTMENTS_TREE = agent_route(
+    summary="Strategic Indicators departments tree",
+    description=(
+        "Hierarchical departments tree with per-node scores over the "
+        "selected window. Owner: strategic-indicators-api GET "
+        "/strategic-indicators/departments/tree. Requires "
+        "strategic-indicators.view."
+    ),
+    operation_id="get_si_departments_tree",
+)
+
+SI_DEPARTMENTS_TREE_SNAPSHOT = agent_route(
+    summary="Strategic Indicators departments tree snapshot",
+    description=(
+        "Point-in-time snapshot of the departments tree for a competence. "
+        "Owner: strategic-indicators-api GET "
+        "/strategic-indicators/departments/tree/snapshot. Requires "
+        "strategic-indicators.view."
+    ),
+    operation_id="get_si_departments_tree_snapshot",
+)
+
+SI_DEPARTMENTS_TREE_TRENDS = agent_route(
+    summary="Strategic Indicators departments tree trends",
+    description=(
+        "Month-over-month trends for the departments tree nodes. Owner: "
+        "strategic-indicators-api GET "
+        "/strategic-indicators/departments/tree/trends. Requires "
+        "strategic-indicators.view."
+    ),
+    operation_id="get_si_departments_tree_trends",
+)
+
+SI_ALERTS = agent_route(
+    summary="Strategic Indicators alerts",
+    description=(
+        "Active Strategic Indicators alerts for the selected "
+        "competence/branch window. Owner: strategic-indicators-api GET "
+        "/strategic-indicators/alerts. Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_alerts",
+)
+
+SI_TRENDS = agent_route(
+    summary="Strategic Indicators trends",
+    description=(
+        "Trend series for Strategic Indicators results over the selected "
+        "window. Owner: strategic-indicators-api GET "
+        "/strategic-indicators/trends. Requires "
+        "strategic-indicators.trends.view."
+    ),
+    operation_id="get_si_trends",
+)
+
+SI_PRESENTATION = agent_route(
+    summary="Strategic Indicators presentation sections",
+    description=(
+        "Composed presentation payload (executive summary, departments, "
+        "indicators, alerts, trends sections). Owner: "
+        "strategic-indicators-api GET /strategic-indicators/presentation. "
+        "Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_presentation",
+)
+
+SI_CACHE_REFRESH_STATUS = agent_route(
+    summary="Strategic Indicators cache refresh status",
+    description=(
+        "Status of the materialized Strategic Indicators read cache "
+        "refresh (running, last run timestamps and error). Owner: "
+        "strategic-indicators-api GET /strategic-indicators/cache/refresh/"
+        "status. Requires strategic-indicators.view."
+    ),
+    operation_id="get_si_cache_refresh_status",
+)
+
+SI_JOB_STATUS = agent_route(
+    summary="Strategic Indicators asynchronous job status",
+    description=(
+        "Status and result of an asynchronous Strategic Indicators job "
+        "(e.g. departments tree load). Owner: strategic-indicators-api GET "
+        "/strategic-indicators/jobs/{job_id}. Requires "
+        "strategic-indicators.view."
+    ),
+    operation_id="get_si_job_status",
+)
+
+SI_SETTINGS = agent_route(
+    summary="Strategic Indicators module settings",
+    description=(
+        "Current Strategic Indicators module settings (weights, goals, "
+        "parameters, governance). Owner: strategic-indicators-api GET "
+        "/strategic-indicators/settings. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="get_si_settings",
+)
+
+SI_SETTINGS_AUDIT = agent_route(
+    summary="Strategic Indicators settings audit trail",
+    description=(
+        "Audit trail of Strategic Indicators settings mutations. Owner: "
+        "strategic-indicators-api GET /strategic-indicators/settings/audit. "
+        "Requires strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_settings_audit",
+)
+
+SI_CHANGE_REQUESTS = agent_route(
+    summary="Strategic Indicators change requests",
+    description=(
+        "Change requests of the Strategic Indicators module (status, "
+        "comments, proposed payloads). Owner: strategic-indicators-api GET "
+        "/strategic-indicators/change-requests. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_change_requests",
+)
+
+SI_ADMIN_DEPARTMENTS = agent_route(
+    summary="Strategic Indicators administrative departments",
+    description=(
+        "Administrative list of all Strategic Indicators departments "
+        "(including inactive). Owner: strategic-indicators-api GET "
+        "/strategic-indicators/admin/departments. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_admin_departments",
+)
+
+SI_ADMIN_DEPARTMENT_INDICATORS = agent_route(
+    summary="Strategic Indicators administrative indicators of a department",
+    description=(
+        "Administrative list of the structural indicators configured for a "
+        "department (including inactive). Owner: strategic-indicators-api "
+        "GET /strategic-indicators/admin/departments/{id}/indicators. "
+        "Requires strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_admin_department_indicators",
+)
+
+SI_GOAL_YEARS_OVERVIEW = agent_route(
+    summary="Strategic Indicators goal years overview",
+    description=(
+        "Overview of the configured Strategic Indicators goal years "
+        "(coverage per annual cycle). Owner: strategic-indicators-api GET "
+        "/strategic-indicators/admin/goal-years/overview. Requires "
+        "strategic-indicators.settings.manage."
+    ),
+    operation_id="list_si_goal_years_overview",
+)
+
+SI_ADMIN_CONFIG_EXPORT = agent_route(
+    summary="Strategic Indicators administrative config export",
+    description=(
+        "Exportable bundle of the Strategic Indicators administrative "
+        "configuration (departments, indicators, goals, settings). Owner: "
+        "strategic-indicators-api GET /strategic-indicators/admin/config/"
+        "export. Requires strategic-indicators.settings.manage."
+    ),
+    operation_id="export_si_admin_config",
+)

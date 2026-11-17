@@ -308,6 +308,54 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_si_indicator_goal_history": RouteContract(
         "strategic_indicators_indicator_goal_history", "paged_list"
     ),
+    "get_si_department_details": RouteContract(
+        "strategic_indicators_department_details", "scalar"
+    ),
+    "get_si_departments_tree": RouteContract(
+        "strategic_indicators_departments_tree", "scalar"
+    ),
+    "get_si_departments_tree_snapshot": RouteContract(
+        "strategic_indicators_departments_tree", "scalar"
+    ),
+    "get_si_departments_tree_trends": RouteContract(
+        "strategic_indicators_departments_tree", "scalar"
+    ),
+    "get_si_alerts": RouteContract(
+        "strategic_indicators_alerts", "scalar"
+    ),
+    "get_si_trends": RouteContract(
+        "strategic_indicators_trends", "scalar"
+    ),
+    "get_si_presentation": RouteContract(
+        "strategic_indicators_presentation", "scalar"
+    ),
+    "get_si_cache_refresh_status": RouteContract(
+        "strategic_indicators_cache_refresh", "scalar"
+    ),
+    "get_si_job_status": RouteContract(
+        "strategic_indicators_job_status", "scalar"
+    ),
+    "get_si_settings": RouteContract(
+        "strategic_indicators_settings", "scalar"
+    ),
+    "list_si_settings_audit": RouteContract(
+        "strategic_indicators_settings_audit", "paged_list"
+    ),
+    "list_si_change_requests": RouteContract(
+        "strategic_indicators_change_requests", "paged_list"
+    ),
+    "list_si_admin_departments": RouteContract(
+        "strategic_indicators_admin_departments", "paged_list"
+    ),
+    "list_si_admin_department_indicators": RouteContract(
+        "strategic_indicators_admin_department_indicators", "paged_list"
+    ),
+    "list_si_goal_years_overview": RouteContract(
+        "strategic_indicators_goal_years", "paged_list"
+    ),
+    "export_si_admin_config": RouteContract(
+        "strategic_indicators_admin_config", "scalar"
+    ),
     "get_helpdesk_dashboard_summary": RouteContract(
         "helpdesk_dashboard_summary", "scalar"
     ),

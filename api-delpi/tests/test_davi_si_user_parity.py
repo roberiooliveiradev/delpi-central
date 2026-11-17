@@ -59,6 +59,22 @@ SI_READ_OPS = [
     "get_si_indicators",
     "list_si_indicator_goals",
     "list_si_indicator_goal_history",
+    "get_si_department_details",
+    "get_si_departments_tree",
+    "get_si_departments_tree_snapshot",
+    "get_si_departments_tree_trends",
+    "get_si_alerts",
+    "get_si_trends",
+    "get_si_presentation",
+    "get_si_cache_refresh_status",
+    "get_si_job_status",
+    "get_si_settings",
+    "list_si_settings_audit",
+    "list_si_change_requests",
+    "list_si_admin_departments",
+    "list_si_admin_department_indicators",
+    "list_si_goal_years_overview",
+    "export_si_admin_config",
 ]
 
 
@@ -533,3 +549,185 @@ def test_davi_read_rejects_non_allowlisted_capability() -> None:
             catalog_action_executor=executor,
         )
     assert executor.calls == []
+
+
+# ---------------------------------------------------------------------------
+# W013 surface — BFF projection inputs, /admin opt-in and permission parity
+# ---------------------------------------------------------------------------
+
+
+def test_service_settings_include_projection() -> None:
+    client = MagicMock()
+    client.get_user_settings.return_value = {
+        "weights": {"a": 1},
+        "goals": {"b": 2},
+        "parameters": {},
+        "governance": {},
+        "meta": {"source": "x"},
+    }
+    service = StrategicIndicatorsUserParityService(client=client)
+    payload = service.get_settings(
+        authorization="Bearer u", include="weights,meta"
+    )
+    assert payload == {"weights": {"a": 1}, "meta": {"source": "x"}}
+    # no include → full owner payload, untouched
+    full = service.get_settings(authorization="Bearer u")
+    assert set(full) == {"weights", "goals", "parameters", "governance", "meta"}
+
+
+def test_service_admin_list_pagination() -> None:
+    client = MagicMock()
+    client.list_user_admin_departments.return_value = {
+        "items": [{"id": i} for i in range(5)]
+    }
+    service = StrategicIndicatorsUserParityService(client=client)
+    payload = service.list_admin_departments(
+        authorization="Bearer u", limit=2, offset=1
+    )
+    assert payload["items"] == [{"id": 1}, {"id": 2}]
+    assert payload["total"] == 5
+    assert payload["limit"] == 2
+    assert payload["offset"] == 1
+    # no pagination args → payload passthrough
+    raw = service.list_admin_departments(authorization="Bearer u")
+    assert raw == {"items": [{"id": i} for i in range(5)]}
+
+
+def test_service_export_include_scope() -> None:
+    client = MagicMock()
+    client.export_user_admin_config.return_value = {
+        "schema_version": 1,
+        "exported_at": "t",
+        "departments": [],
+        "department_indicators": [],
+        "indicator_goals": [],
+        "module_settings": {},
+    }
+    service = StrategicIndicatorsUserParityService(client=client)
+    scoped = service.export_admin_config(
+        authorization="Bearer u", include="departments,module_settings"
+    )
+    assert set(scoped) == {"departments", "module_settings"}
+
+
+def test_admin_routes_deny_user_with_only_view() -> None:
+    """strategic-indicators.view must NOT reach settings.manage surfaces."""
+    client = TestClient(_make_app())
+    for path in (
+        "/strategic-indicators/settings",
+        "/strategic-indicators/settings/audit",
+        "/strategic-indicators/change-requests",
+        "/strategic-indicators/admin/departments",
+        "/strategic-indicators/admin/departments/dep-1/indicators",
+        "/strategic-indicators/admin/goal-years/overview",
+        "/strategic-indicators/admin/config/bundle",
+    ):
+        with patch(
+            "delpi_auth.authorization.resolve_user_context",
+            return_value=_denied_user(
+                permissions=["strategic-indicators.view"]
+            ),
+        ), pytest.raises(Exception, match="Forbidden"):
+            client.get(path, headers={"Authorization": "Bearer view"})
+
+
+def test_admin_routes_allowed_with_settings_manage() -> None:
+    mock_service = MagicMock()
+    mock_service.list_admin_departments.return_value = {"items": []}
+    mock_service.export_admin_config.return_value = {"departments": []}
+    mock_service.get_settings.return_value = {"weights": {}}
+    client = TestClient(_app_with_service(mock_service))
+    user = _denied_user(permissions=["strategic-indicators.settings.manage"])
+    with patch(
+        "delpi_auth.authorization.resolve_user_context", return_value=user
+    ):
+        for path in (
+            "/strategic-indicators/admin/departments",
+            "/strategic-indicators/admin/config/bundle",
+            "/strategic-indicators/settings",
+        ):
+            response = client.get(
+                path, headers={"Authorization": "Bearer admin"}
+            )
+            assert response.status_code == 200, path
+    # pagination args reach the service (BFF-side pagination)
+    call = mock_service.list_admin_departments.call_args
+    assert call.kwargs["authorization"] == "Bearer admin"
+
+
+def test_admin_routes_pagination_and_include_forwarded() -> None:
+    mock_service = MagicMock()
+    mock_service.list_admin_departments.return_value = {
+        "items": [],
+        "total": 0,
+        "limit": 10,
+        "offset": 5,
+    }
+    mock_service.get_settings.return_value = {"weights": {}}
+    client = TestClient(_app_with_service(mock_service))
+    user = _denied_user(permissions=["strategic-indicators.settings.manage"])
+    with patch(
+        "delpi_auth.authorization.resolve_user_context", return_value=user
+    ):
+        client.get(
+            "/strategic-indicators/admin/departments",
+            params={"limit": 10, "offset": 5},
+            headers={"Authorization": "Bearer admin"},
+        )
+        client.get(
+            "/strategic-indicators/settings",
+            params={"include": "weights,meta"},
+            headers={"Authorization": "Bearer admin"},
+        )
+    args = mock_service.list_admin_departments.call_args.kwargs
+    assert args["limit"] == 10
+    assert args["offset"] == 5
+    assert mock_service.get_settings.call_args.kwargs["include"] == "weights,meta"
+
+
+def test_trends_route_requires_trends_view() -> None:
+    """Sibling AuthZ: trends gated on strategic-indicators.trends.view."""
+    client = TestClient(_make_app())
+    with patch(
+        "delpi_auth.authorization.resolve_user_context",
+        return_value=_denied_user(
+            permissions=["strategic-indicators.view"]
+        ),
+    ), pytest.raises(Exception, match="Forbidden"):
+        client.get(
+            "/strategic-indicators/trends",
+            headers={"Authorization": "Bearer view-only"},
+        )
+
+
+def test_cache_status_route_requires_view_not_manage() -> None:
+    """Cache refresh status is a .view surface (parity with owner)."""
+    mock_service = MagicMock()
+    mock_service.get_cache_refresh_status.return_value = {"running": False}
+    client = TestClient(_app_with_service(mock_service))
+    user = _denied_user(permissions=["strategic-indicators.view"])
+    with patch(
+        "delpi_auth.authorization.resolve_user_context", return_value=user
+    ):
+        response = client.get(
+            "/strategic-indicators/cache-refresh/status",
+            headers={"Authorization": "Bearer viewer"},
+        )
+    assert response.status_code == 200
+
+
+def test_admin_ops_marked_restricted_path_read() -> None:
+    """/admin DAVI ops carry the trusted restrictedPathRead opt-in marker."""
+    allow = load_external_read_allowlist()
+    entries = {
+        (o.get("operationId") or ""): o for o in allow.get("operations") or []
+    }
+    for op_id in (
+        "list_si_admin_departments",
+        "list_si_admin_department_indicators",
+        "list_si_goal_years_overview",
+        "export_si_admin_config",
+    ):
+        assert entries[op_id].get("restrictedPathRead") == (
+            "BOUNDED_METADATA_READ"
+        ), op_id

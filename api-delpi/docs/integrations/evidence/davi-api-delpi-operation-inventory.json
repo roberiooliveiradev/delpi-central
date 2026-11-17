@@ -1,28 +1,39 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 793,
+  "baseline_operation_count": 819,
   "taskId": "DAVI-SI-READ-USER-PARITY-001",
-  "TOTAL_OPERATIONS": 793,
-  "TOTAL_GET": 590,
-  "TOTAL_WRITE_VERBS": 203,
-  "DAVI_ELIGIBLE_READ": 99,
-  "ELIGIBLE_BEFORE": 94,
-  "ELIGIBLE_AFTER": 99,
+  "TOTAL_OPERATIONS": 819,
+  "TOTAL_GET": 615,
+  "TOTAL_WRITE_VERBS": 204,
+  "DAVI_ELIGIBLE_READ": 115,
+  "ELIGIBLE_BEFORE": 99,
+  "ELIGIBLE_AFTER": 115,
   "NEWLY_ELIGIBLE": [
-    "get_si_departments",
-    "get_si_executive_summary",
-    "get_si_indicators",
-    "list_si_indicator_goal_history",
-    "list_si_indicator_goals"
+    "export_si_admin_config",
+    "get_si_alerts",
+    "get_si_cache_refresh_status",
+    "get_si_department_details",
+    "get_si_departments_tree",
+    "get_si_departments_tree_snapshot",
+    "get_si_departments_tree_trends",
+    "get_si_job_status",
+    "get_si_presentation",
+    "get_si_settings",
+    "get_si_trends",
+    "list_si_admin_department_indicators",
+    "list_si_admin_departments",
+    "list_si_change_requests",
+    "list_si_goal_years_overview",
+    "list_si_settings_audit"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
-    "previous_total_operations": 784,
-    "current_total_operations": 793,
-    "previous_total_get": 573,
-    "current_total_get": 590,
-    "added_operations": 9,
+    "previous_total_operations": 793,
+    "current_total_operations": 819,
+    "previous_total_get": 590,
+    "current_total_get": 615,
+    "added_operations": 26,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
@@ -244,18 +255,19 @@
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 71,
-    "DAVI_ELIGIBLE_READ": 99,
+    "DAVI_ELIGIBLE_READ": 115,
     "DESTRUCTIVE_OUT_OF_SCOPE": 19,
     "GENERIC_SQL_FORBIDDEN": 1,
     "LEGACY_UNSAFE": 2,
     "NEEDS_BOUNDED_EXECUTION": 3,
-    "NEEDS_MODEL_SAFE_PROJECTION": 366,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 57,
+    "NEEDS_MODEL_SAFE_PROJECTION": 372,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 60,
     "SEMANTICALLY_REDUNDANT": 2,
     "STREAM_BINARY_OUT_OF_SCOPE": 42,
-    "WRITE_OUT_OF_SCOPE": 131
+    "WRITE_OUT_OF_SCOPE": 132
   },
   "ELIGIBLE_OPERATION_IDS": [
+    "export_si_admin_config",
     "get_commercial_rol_by_branch",
     "get_commercial_rol_by_customer",
     "get_commercial_rol_by_product",
@@ -313,9 +325,19 @@
     "get_sales_order_otd_series",
     "get_sales_order_otd_series_by_customer",
     "get_sales_order_otd_summary",
+    "get_si_alerts",
+    "get_si_cache_refresh_status",
+    "get_si_department_details",
     "get_si_departments",
+    "get_si_departments_tree",
+    "get_si_departments_tree_snapshot",
+    "get_si_departments_tree_trends",
     "get_si_executive_summary",
     "get_si_indicators",
+    "get_si_job_status",
+    "get_si_presentation",
+    "get_si_settings",
+    "get_si_trends",
     "get_supplies_cpv",
     "get_supplies_inventory_accuracy_items",
     "get_supplies_inventory_accuracy_summary",
@@ -345,8 +367,13 @@
     "list_product_drawings",
     "list_production_order_operation_materials",
     "list_protheus_table_columns",
+    "list_si_admin_department_indicators",
+    "list_si_admin_departments",
+    "list_si_change_requests",
+    "list_si_goal_years_overview",
     "list_si_indicator_goal_history",
     "list_si_indicator_goals",
+    "list_si_settings_audit",
     "list_supplies_inventory_adjustments",
     "list_supplies_purchase_request_lines",
     "read_governed_technical_knowledge",
@@ -1068,6 +1095,16 @@
       "executable": false
     },
     {
+      "operationId": "export_si_admin_config",
+      "method": "GET",
+      "path": "/strategic-indicators/admin/config/bundle",
+      "summary": "Strategic Indicators administrative config export",
+      "entity": "strategic_indicators_admin_config",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_commercial_rol_by_branch",
       "method": "GET",
       "path": "/commercial/rol/by-branch",
@@ -1638,12 +1675,72 @@
       "executable": true
     },
     {
+      "operationId": "get_si_alerts",
+      "method": "GET",
+      "path": "/strategic-indicators/alerts",
+      "summary": "Strategic Indicators alerts",
+      "entity": "strategic_indicators_alerts",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_cache_refresh_status",
+      "method": "GET",
+      "path": "/strategic-indicators/cache-refresh/status",
+      "summary": "Strategic Indicators cache refresh status",
+      "entity": "strategic_indicators_cache_refresh",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_department_details",
+      "method": "GET",
+      "path": "/strategic-indicators/departments/{department_id}",
+      "summary": "Strategic Indicators department detail",
+      "entity": "strategic_indicators_department_details",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_si_departments",
       "method": "GET",
       "path": "/strategic-indicators/departments",
       "summary": "Strategic Indicators department results",
       "entity": "strategic_indicators_departments",
       "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_departments_tree",
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree",
+      "summary": "Strategic Indicators departments tree",
+      "entity": "strategic_indicators_departments_tree",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_departments_tree_snapshot",
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree/snapshot",
+      "summary": "Strategic Indicators departments tree snapshot",
+      "entity": "strategic_indicators_departments_tree",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_departments_tree_trends",
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree/trends",
+      "summary": "Strategic Indicators departments tree trends",
+      "entity": "strategic_indicators_departments_tree",
+      "shape": "scalar",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
     },
@@ -1664,6 +1761,46 @@
       "summary": "Strategic Indicators operational indicator results",
       "entity": "strategic_indicators_indicators",
       "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_job_status",
+      "method": "GET",
+      "path": "/strategic-indicators/jobs/{job_id}",
+      "summary": "Strategic Indicators asynchronous job status",
+      "entity": "strategic_indicators_job_status",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_presentation",
+      "method": "GET",
+      "path": "/strategic-indicators/presentation",
+      "summary": "Strategic Indicators presentation sections",
+      "entity": "strategic_indicators_presentation",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_settings",
+      "method": "GET",
+      "path": "/strategic-indicators/settings",
+      "summary": "Strategic Indicators module settings",
+      "entity": "strategic_indicators_settings",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "get_si_trends",
+      "method": "GET",
+      "path": "/strategic-indicators/trends",
+      "summary": "Strategic Indicators trends",
+      "entity": "strategic_indicators_trends",
+      "shape": "scalar",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
     },
@@ -1958,6 +2095,46 @@
       "executable": true
     },
     {
+      "operationId": "list_si_admin_department_indicators",
+      "method": "GET",
+      "path": "/strategic-indicators/admin/departments/{department_id}/indicators",
+      "summary": "Strategic Indicators administrative indicators of a department",
+      "entity": "strategic_indicators_admin_department_indicators",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "list_si_admin_departments",
+      "method": "GET",
+      "path": "/strategic-indicators/admin/departments",
+      "summary": "Strategic Indicators administrative departments",
+      "entity": "strategic_indicators_admin_departments",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "list_si_change_requests",
+      "method": "GET",
+      "path": "/strategic-indicators/change-requests",
+      "summary": "Strategic Indicators change requests",
+      "entity": "strategic_indicators_change_requests",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "list_si_goal_years_overview",
+      "method": "GET",
+      "path": "/strategic-indicators/admin/goal-years/overview",
+      "summary": "Strategic Indicators goal years overview",
+      "entity": "strategic_indicators_goal_years",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "list_si_indicator_goal_history",
       "method": "GET",
       "path": "/strategic-indicators/indicator-goals/history",
@@ -1973,6 +2150,16 @@
       "path": "/strategic-indicators/indicator-goals",
       "summary": "Configured Strategic Indicators goals and monthly curves",
       "entity": "strategic_indicators_indicator_goals",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "list_si_settings_audit",
+      "method": "GET",
+      "path": "/strategic-indicators/settings/audit",
+      "summary": "Strategic Indicators settings audit trail",
+      "entity": "strategic_indicators_settings_audit",
       "shape": "paged_list",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
@@ -2334,6 +2521,16 @@
       "summary": "List metallographic reports",
       "entity": "metallographic_report",
       "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "export_supplies_supplier_performance_evidence",
+      "method": "GET",
+      "path": "/supplies/supplier-performance/evidence-export",
+      "summary": "Export Supplies Supplier Performance Evidence",
+      "entity": "supplies_supplier_performance_evidence",
+      "shape": "document_export",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -3313,7 +3510,7 @@
       "path": "/quality/nonconformities/operators",
       "summary": "Get Nonconformity Operator Ranking Route",
       "entity": "nonconformity_operator_ranking",
-      "shape": "scalar",
+      "shape": "list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -3342,8 +3539,8 @@
       "method": "GET",
       "path": "/reports/providers/safety_stock_shortage_30d/pcp-pendencies",
       "summary": "Get Pcp Stock Rupture Pendencies",
-      "entity": "pcp_stock_rupture_pendencies",
-      "shape": "scalar",
+      "entity": "pcp_stock_rupture_pendency",
+      "shape": "paged_list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -4908,6 +5105,56 @@
       "executable": false
     },
     {
+      "operationId": "list_entry_audit_branches",
+      "method": "GET",
+      "path": "/financeiro/entry-audit/branches",
+      "summary": "Lista — Filiais da empresa para a auditoria de entradas",
+      "entity": "entry_audit_branch",
+      "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_entry_audit_documents",
+      "method": "GET",
+      "path": "/financeiro/entry-audit/documents",
+      "summary": "Lista paginada — Cabeçalhos de entrada (sf1) para a auditoria",
+      "entity": "entry_audit_document",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_entry_audit_fiscal_book",
+      "method": "GET",
+      "path": "/financeiro/entry-audit/fiscal-book",
+      "summary": "Lista paginada — Linhas do livro fiscal (sft) para a auditoria",
+      "entity": "entry_audit_fiscal_book_line",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_entry_audit_items",
+      "method": "GET",
+      "path": "/financeiro/entry-audit/items",
+      "summary": "Lista paginada — Itens de entrada (sd1) para a auditoria",
+      "entity": "entry_audit_item",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "list_entry_audit_tes",
+      "method": "GET",
+      "path": "/financeiro/entry-audit/tes",
+      "summary": "Lista paginada — Cadastro de tes (sf4) para a auditoria",
+      "entity": "entry_audit_tes",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "list_guias_procedimentos_departments",
       "method": "GET",
       "path": "/guias-procedimentos/departments",
@@ -5842,8 +6089,8 @@
       "method": "GET",
       "path": "/engineering/product-registration/catalogs/{catalog}",
       "summary": "List Prc Catalog Items",
-      "entity": "prc_catalog_items",
-      "shape": "scalar",
+      "entity": "prc_catalog_item",
+      "shape": "list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -5852,8 +6099,8 @@
       "method": "GET",
       "path": "/engineering/product-registration/suppliers",
       "summary": "Search Prc Suppliers",
-      "entity": "prc_supplier_search",
-      "shape": "scalar",
+      "entity": "prc_supplier",
+      "shape": "list",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -6418,6 +6665,36 @@
       "executable": false
     },
     {
+      "operationId": "get_supplies_purchase_request_approval_lead_time",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/approval-lead-time",
+      "summary": "Get Supplies Purchase Request Approval Lead Time Route",
+      "entity": "supplies_purchase_request_approval_lead_time",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_sc_pc_conversion",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/sc-pc-conversion",
+      "summary": "Get Supplies Sc Pc Conversion Route",
+      "entity": "supplies_sc_pc_conversion",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_supplier_performance",
+      "method": "GET",
+      "path": "/supplies/supplier-performance",
+      "summary": "Get Supplies Supplier Performance",
+      "entity": "supplies_supplier_performance",
+      "shape": "composite_analysis",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
       "operationId": "get_supplies_third_party_materials_shipment",
       "method": "GET",
       "path": "/supplies/third-party-materials/shipments/{shipment_recno}",
@@ -6782,7 +7059,7 @@
       "method": "GET",
       "path": "/quality/nonconformities/operators/export.xlsx",
       "summary": "Export Nonconformity Operator Ranking Excel Route",
-      "entity": "export_nonconformity_operator_ranking_excel",
+      "entity": "nonconformity_operator_ranking_export",
       "shape": "scalar",
       "davi_status": "STREAM_BINARY_OUT_OF_SCOPE",
       "executable": false
@@ -7102,7 +7379,7 @@
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates/{response_id}/cancel",
       "summary": "Cancel Nc Candidate",
-      "entity": "audit_5s_nc_candidate_without_plan",
+      "entity": "audit_5s_nc_candidate",
       "shape": "scalar",
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false
@@ -7604,6 +7881,16 @@
       "summary": "Lista — Customer outbound invoice line item",
       "entity": "customer_outbound_invoice_line_item",
       "shape": "list",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "list_entry_audit_documents_by_access_key",
+      "method": "POST",
+      "path": "/financeiro/entry-audit/documents/by-access-key",
+      "summary": "Lista paginada — Cabeçalhos de entrada (sf1) para a auditoria",
+      "entity": "entry_audit_document",
+      "shape": "paged_list",
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false
     },

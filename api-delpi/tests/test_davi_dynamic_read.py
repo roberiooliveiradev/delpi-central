@@ -222,6 +222,22 @@ _SI_USER_PARITY_OPERATION_IDS = frozenset({
     "get_si_indicators",
     "list_si_indicator_goals",
     "list_si_indicator_goal_history",
+    "get_si_department_details",
+    "get_si_departments_tree",
+    "get_si_departments_tree_snapshot",
+    "get_si_departments_tree_trends",
+    "get_si_alerts",
+    "get_si_trends",
+    "get_si_presentation",
+    "get_si_cache_refresh_status",
+    "get_si_job_status",
+    "get_si_settings",
+    "list_si_settings_audit",
+    "list_si_change_requests",
+    "list_si_admin_departments",
+    "list_si_admin_department_indicators",
+    "list_si_goal_years_overview",
+    "export_si_admin_config",
 })
 
 _ELIGIBLE_OPERATION_IDS = (
@@ -371,7 +387,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 31
+    assert allow.get("version") == 32
     assert allow.get("coverageDecision", {}).get("decision") == (
         "BOUNDED_SI_USER_PARITY_READ"
     )
@@ -572,7 +588,7 @@ def test_inventory_eligible_count_is_ninety_three():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 99
+    assert len(eligible) == 115
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 def test_argument_validation_matrix():
     action = _action(
@@ -1509,7 +1525,7 @@ def test_eligible_count_is_ninety_three():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 99
+    assert len(eligible) == 115
 
 
 # ---------------------------------------------------------------------------

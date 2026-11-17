@@ -4,11 +4,11 @@
 
 - Task: `DAVI-SI-READ-USER-PARITY-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **793**
-- TOTAL GET: **590**
-- WRITE VERBS (POST/PUT/PATCH/DELETE): **203**
-- DAVI_ELIGIBLE_READ (before→after): **94 → 99**
-- NEWLY ELIGIBLE: **5**
+- TOTAL OPERATIONS: **819**
+- TOTAL GET: **615**
+- WRITE VERBS (POST/PUT/PATCH/DELETE): **204**
+- DAVI_ELIGIBLE_READ (before→after): **99 → 115**
+- NEWLY ELIGIBLE: **16**
 
 ## Coverage decision
 
@@ -93,11 +93,11 @@
 
 ```json
 {
-  "previous_total_operations": 784,
-  "current_total_operations": 793,
-  "previous_total_get": 573,
-  "current_total_get": 590,
-  "added_operations": 9,
+  "previous_total_operations": 793,
+  "current_total_operations": 819,
+  "previous_total_get": 590,
+  "current_total_get": 615,
+  "added_operations": 26,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -108,19 +108,20 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 71 |
-| `DAVI_ELIGIBLE_READ` | 99 |
+| `DAVI_ELIGIBLE_READ` | 115 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 19 |
 | `GENERIC_SQL_FORBIDDEN` | 1 |
 | `LEGACY_UNSAFE` | 2 |
 | `NEEDS_BOUNDED_EXECUTION` | 3 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 366 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 57 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 372 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 60 |
 | `SEMANTICALLY_REDUNDANT` | 2 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 42 |
-| `WRITE_OUT_OF_SCOPE` | 131 |
+| `WRITE_OUT_OF_SCOPE` | 132 |
 
 ## Eligible operationIds
 
+- `export_si_admin_config`
 - `get_commercial_rol_by_branch`
 - `get_commercial_rol_by_customer`
 - `get_commercial_rol_by_product`
@@ -178,9 +179,19 @@
 - `get_sales_order_otd_series`
 - `get_sales_order_otd_series_by_customer`
 - `get_sales_order_otd_summary`
+- `get_si_alerts`
+- `get_si_cache_refresh_status`
+- `get_si_department_details`
 - `get_si_departments`
+- `get_si_departments_tree`
+- `get_si_departments_tree_snapshot`
+- `get_si_departments_tree_trends`
 - `get_si_executive_summary`
 - `get_si_indicators`
+- `get_si_job_status`
+- `get_si_presentation`
+- `get_si_settings`
+- `get_si_trends`
 - `get_supplies_cpv`
 - `get_supplies_inventory_accuracy_items`
 - `get_supplies_inventory_accuracy_summary`
@@ -210,8 +221,13 @@
 - `list_product_drawings`
 - `list_production_order_operation_materials`
 - `list_protheus_table_columns`
+- `list_si_admin_department_indicators`
+- `list_si_admin_departments`
+- `list_si_change_requests`
+- `list_si_goal_years_overview`
 - `list_si_indicator_goal_history`
 - `list_si_indicator_goals`
+- `list_si_settings_audit`
 - `list_supplies_inventory_adjustments`
 - `list_supplies_purchase_request_lines`
 - `read_governed_technical_knowledge`

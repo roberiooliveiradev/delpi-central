@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 793,
+  "operation_count": 819,
   "operations": [
     {
       "method": "GET",
@@ -31148,14 +31148,14 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=200 ge=1 le=500",
           "type": "integer",
           "default": 200
         }
       ],
       "xDelpi": {
-        "entity": "prc_catalog_items",
-        "shape": "scalar",
+        "entity": "prc_catalog_item",
+        "shape": "list",
         "params": {
           "limit": {
             "locale": {
@@ -31220,8 +31220,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "prc_supplier_search",
-        "shape": "scalar",
+        "entity": "prc_supplier",
+        "shape": "list",
         "params": {
           "page": {
             "locale": {
@@ -35804,6 +35804,543 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Financial expenses cost center series."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/entry-audit/branches",
+      "operationId": "list_entry_audit_branches",
+      "summary": "Lista — Filiais da empresa para a auditoria de entradas",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "entry_audit_branch",
+        "shape": "list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna filiais da empresa para a auditoria de entradas via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/entry-audit/documents",
+      "operationId": "list_entry_audit_documents",
+      "summary": "Lista paginada — Cabeçalhos de entrada (sf1) para a auditoria",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        },
+        {
+          "name": "received_from",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date from, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "received_to",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date to, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "species",
+          "in": "query",
+          "required": false,
+          "description": "Document species: SPED (NF-e) or CTE (CT-e). Repeatable.",
+          "type": "array",
+          "default": [
+            "SPED",
+            "CTE"
+          ]
+        },
+        {
+          "name": "access_keys",
+          "in": "query",
+          "required": false,
+          "description": "44-digit access keys. No receipt-date filter. At most 50; larger batches use POST /documents/by-access-key.",
+          "type": "array"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "entry_audit_document",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna cabeçalhos de entrada (SF1) para a auditoria via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "POST",
+      "path": "/financeiro/entry-audit/documents/by-access-key",
+      "operationId": "list_entry_audit_documents_by_access_key",
+      "summary": "Lista paginada — Cabeçalhos de entrada (sf1) para a auditoria",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "entry_audit_document",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna cabeçalhos de entrada (SF1) para a auditoria via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/entry-audit/fiscal-book",
+      "operationId": "list_entry_audit_fiscal_book",
+      "summary": "Lista paginada — Linhas do livro fiscal (sft) para a auditoria",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        },
+        {
+          "name": "received_from",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date from, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "received_to",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date to, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "species",
+          "in": "query",
+          "required": false,
+          "description": "Document species: SPED (NF-e) or CTE (CT-e). Repeatable.",
+          "type": "array",
+          "default": [
+            "SPED",
+            "CTE"
+          ]
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "entry_audit_fiscal_book_line",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna linhas do livro fiscal (SFT) para a auditoria via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/entry-audit/items",
+      "operationId": "list_entry_audit_items",
+      "summary": "Lista paginada — Itens de entrada (sd1) para a auditoria",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        },
+        {
+          "name": "received_from",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date from, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "received_to",
+          "in": "query",
+          "required": false,
+          "description": "Receipt date to, YYYY-MM-DD (F1_RECBMTO). Required unless access_keys is set.",
+          "type": "string"
+        },
+        {
+          "name": "species",
+          "in": "query",
+          "required": false,
+          "description": "Document species: SPED (NF-e) or CTE (CT-e). Repeatable.",
+          "type": "array",
+          "default": [
+            "SPED",
+            "CTE"
+          ]
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "entry_audit_item",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna itens de entrada (SD1) para a auditoria via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/financeiro/entry-audit/tes",
+      "operationId": "list_entry_audit_tes",
+      "summary": "Lista paginada — Cadastro de tes (sf4) para a auditoria",
+      "tags": [
+        "Financeiro — Entry Audit"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "entry_audit_tes",
+        "shape": "paged_list",
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna cadastro de TES (SF4) para a auditoria via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
     },
     {
       "method": "GET",
@@ -48929,8 +49466,27 @@
           "name": "topic",
           "in": "path",
           "required": true,
-          "description": "Approved V1 topics:",
-          "type": "string"
+          "description": "Approved governed-knowledge topic identifier from the corpus index.",
+          "type": "string",
+          "enum": [
+            "inventory_adjustments",
+            "warehouse_stock_balances",
+            "purchase_order_otd",
+            "sales_order_otd",
+            "warehouse_cost_model",
+            "branch_semantics",
+            "measurement_units",
+            "production_stock_entry",
+            "operation_reporting_hza",
+            "product_master_sb1",
+            "production_order_key",
+            "third_party_materials",
+            "weekly_portfolio",
+            "market_rol_cfop",
+            "machine_load",
+            "mp_description_standards",
+            "pi_intermediate_codes"
+          ]
         },
         {
           "name": "section",
@@ -50118,6 +50674,20 @@
             "summary": "Listar carteiras de vendedores",
             "description": "Lista carteiras de vendedores para gerentes.",
             "label": "Listar carteiras de vendedores"
+          }
+        },
+        "params": {
+          "active_only": {
+            "locale": {
+              "en": {
+                "description": "When true, only active goal versions are returned.",
+                "label": "Active only"
+              },
+              "pt-BR": {
+                "description": "Quando true, retorna apenas versões ativas de metas.",
+                "label": "Somente ativas"
+              }
+            }
           }
         },
         "tv": {
@@ -86630,7 +87200,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "audit_5s_nc_candidate_without_plan",
+        "entity": "audit_5s_nc_candidate",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       },
@@ -94498,7 +95068,7 @@
       ],
       "xDelpi": {
         "entity": "nonconformity_operator_ranking",
-        "shape": "scalar",
+        "shape": "list",
         "params": {
           "branch": {
             "locale": {
@@ -95192,7 +95762,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "export_nonconformity_operator_ranking_excel",
+        "entity": "nonconformity_operator_ranking_export",
         "shape": "scalar",
         "params": {
           "branch": {
@@ -102137,8 +102707,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "pcp_stock_rupture_pendencies",
-        "shape": "scalar",
+        "entity": "pcp_stock_rupture_pendency",
+        "shape": "paged_list",
         "params": {
           "branch": {
             "locale": {
@@ -106022,6 +106592,2971 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Update scheduling resource."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/admin/config/bundle",
+      "operationId": "export_si_admin_config",
+      "summary": "Strategic Indicators administrative config export",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "Optional comma-separated export sections to include (BFF-side scope selection; omit for the full bundle).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_admin_config",
+        "shape": "scalar",
+        "params": {
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Exportable bundle of the Strategic Indicators administrative configuration (departments, indicators, goals, settings). Owner: strategic-indicators-api GET /strategic-indicators/admin/config/export. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/admin/departments",
+      "operationId": "list_si_admin_departments",
+      "summary": "Strategic Indicators administrative departments",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max rows (BFF-side pagination).",
+          "type": "integer"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Pagination offset (BFF-side).",
+          "type": "integer"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_admin_departments",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Administrative list of all Strategic Indicators departments (including inactive). Owner: strategic-indicators-api GET /strategic-indicators/admin/departments. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/admin/departments/{department_id}/indicators",
+      "operationId": "list_si_admin_department_indicators",
+      "summary": "Strategic Indicators administrative indicators of a department",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "path",
+          "required": true,
+          "description": "Department id in the IDD dashboard.",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max rows (BFF-side pagination).",
+          "type": "integer"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Pagination offset (BFF-side).",
+          "type": "integer"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_admin_department_indicators",
+        "shape": "paged_list",
+        "params": {
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Administrative list of the structural indicators configured for a department (including inactive). Owner: strategic-indicators-api GET /strategic-indicators/admin/departments/{id}/indicators. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/admin/goal-years/overview",
+      "operationId": "list_si_goal_years_overview",
+      "summary": "Strategic Indicators goal years overview",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max rows (BFF-side pagination).",
+          "type": "integer"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Pagination offset (BFF-side).",
+          "type": "integer"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_goal_years",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Overview of the configured Strategic Indicators goal years (coverage per annual cycle). Owner: strategic-indicators-api GET /strategic-indicators/admin/goal-years/overview. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/alerts",
+      "operationId": "get_si_alerts",
+      "summary": "Strategic Indicators alerts",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_alerts",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Active Strategic Indicators alerts for the selected competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/alerts. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/cache-refresh/status",
+      "operationId": "get_si_cache_refresh_status",
+      "summary": "Strategic Indicators cache refresh status",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "Optional comma-separated top-level response keys to include.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_cache_refresh",
+        "shape": "scalar",
+        "params": {
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Status of the materialized Strategic Indicators read cache refresh (running, last run timestamps and error). Owner: strategic-indicators-api GET /strategic-indicators/cache/refresh/status. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/change-requests",
+      "operationId": "list_si_change_requests",
+      "summary": "Strategic Indicators change requests",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max rows (owner default: 100).",
+          "type": "integer"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Pagination offset.",
+          "type": "integer"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_change_requests",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Change requests of the Strategic Indicators module (status, comments, proposed payloads). Owner: strategic-indicators-api GET /strategic-indicators/change-requests. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/departments",
+      "operationId": "get_si_departments",
+      "summary": "Strategic Indicators department results",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_departments",
+        "shape": "paged_list",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Strategic Indicators department results",
+            "description": "Per-department IDD/score with weight, classification and variation for a competence.",
+            "whenToUse": "Use to compare department scores in a period.",
+            "whenNotToUse": "Do not use for indicator-level goals — prefer get_si_indicators or list_si_indicator_goals.",
+            "label": "Resultado por departamento"
+          },
+          "pt-BR": {
+            "summary": "Resultado de Indicadores Estratégicos por departamento",
+            "description": "IDD/score por departamento com peso, classificação e variação na competência.",
+            "whenToUse": "Use para comparar o desempenho dos departamentos em um período.",
+            "whenNotToUse": "Não use para metas por indicador — prefira get_si_indicators ou list_si_indicator_goals.",
+            "label": "Resultado por departamento"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para comparar o desempenho dos departamentos em um período.",
+          "whenNotToUse": "Não use para metas por indicador — prefira get_si_indicators ou list_si_indicator_goals.",
+          "description": "IDD/score por departamento com peso, classificação e variação na competência.",
+          "label": "Resultado por departamento"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Per-department IDD/score with weight, classification and variation for a competence."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree",
+      "operationId": "get_si_departments_tree",
+      "summary": "Strategic Indicators departments tree",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "view_mode",
+          "in": "query",
+          "required": false,
+          "description": "Tree view mode (owner default: consolidated).",
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "months",
+          "in": "query",
+          "required": false,
+          "description": "Trend window in months (owner default: 6, range 2-12).",
+          "type": "integer"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_departments_tree",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "months": {
+            "locale": {
+              "en": {
+                "description": "Months query parameter.",
+                "label": "Months"
+              },
+              "pt-BR": {
+                "description": "Quantidade de meses no intervalo analisado.",
+                "label": "Meses"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Hierarchical departments tree with per-node scores over the selected window. Owner: strategic-indicators-api GET /strategic-indicators/departments/tree. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree/snapshot",
+      "operationId": "get_si_departments_tree_snapshot",
+      "summary": "Strategic Indicators departments tree snapshot",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "view_mode",
+          "in": "query",
+          "required": false,
+          "description": "Tree view mode (owner default: consolidated).",
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_departments_tree",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Point-in-time snapshot of the departments tree for a competence. Owner: strategic-indicators-api GET /strategic-indicators/departments/tree/snapshot. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/departments-tree/trends",
+      "operationId": "get_si_departments_tree_trends",
+      "summary": "Strategic Indicators departments tree trends",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "view_mode",
+          "in": "query",
+          "required": false,
+          "description": "Tree view mode (owner default: consolidated).",
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "months",
+          "in": "query",
+          "required": false,
+          "description": "Trend window in months (owner default: 6, range 2-12).",
+          "type": "integer"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_departments_tree",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "months": {
+            "locale": {
+              "en": {
+                "description": "Months query parameter.",
+                "label": "Months"
+              },
+              "pt-BR": {
+                "description": "Quantidade de meses no intervalo analisado.",
+                "label": "Meses"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Month-over-month trends for the departments tree nodes. Owner: strategic-indicators-api GET /strategic-indicators/departments/tree/trends. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/departments/{department_id}",
+      "operationId": "get_si_department_details",
+      "summary": "Strategic Indicators department detail",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "path",
+          "required": true,
+          "description": "Department id in the IDD dashboard.",
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_department_details",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Detail view of a single Strategic Indicators department (scores, indicators and metadata) for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/departments/{id}. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/executive-summary",
+      "operationId": "get_si_executive_summary",
+      "summary": "Strategic Indicators executive summary for a competence",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_executive_summary",
+        "shape": "composite_analysis",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Strategic Indicators executive summary for a competence",
+            "description": "IGD rollup across departments for a competence/branch window.",
+            "whenToUse": "Use for the global strategic score (IGD) and per-department executive view of a month.",
+            "whenNotToUse": "Do not use for per-indicator realized values — prefer get_si_indicators.",
+            "label": "Resumo executivo de indicadores"
+          },
+          "pt-BR": {
+            "summary": "Resumo executivo de Indicadores Estratégicos por competência",
+            "description": "IGD consolidado dos departamentos para uma competência/filial.",
+            "whenToUse": "Use para o score estratégico global (IGD) e a visão executiva por departamento de um mês.",
+            "whenNotToUse": "Não use para valores realizados por indicador — prefira get_si_indicators.",
+            "label": "Resumo executivo de indicadores"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para o score estratégico global (IGD) e a visão executiva por departamento de um mês.",
+          "whenNotToUse": "Não use para valores realizados por indicador — prefira get_si_indicators.",
+          "description": "IGD consolidado dos departamentos para uma competência/filial.",
+          "label": "Resumo executivo de indicadores"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "IGD rollup across departments for a competence/branch window."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/indicator-goals",
+      "operationId": "list_si_indicator_goals",
+      "summary": "Configured Strategic Indicators goals and monthly curves",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "indicator_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional indicator id filter.",
+          "type": "string"
+        },
+        {
+          "name": "goal_year",
+          "in": "query",
+          "required": false,
+          "description": "Optional goal year filter (e.g. 2026).",
+          "type": "integer"
+        },
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "active_only",
+          "in": "query",
+          "required": false,
+          "description": "When true, only active goal versions are returned.",
+          "type": "boolean"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_indicator_goals",
+        "shape": "paged_list",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Configured Strategic Indicators goals and monthly curves",
+            "description": "Configured goals with goal_value, goal_mode, monthly_targets, scope and validity.",
+            "whenToUse": "Use to inspect configured goals/curves (requires settings.manage permission).",
+            "whenNotToUse": "Do not use for realized results — prefer get_si_indicators.",
+            "label": "Metas configuradas"
+          },
+          "pt-BR": {
+            "summary": "Metas configuradas e curvas mensais de Indicadores Estratégicos",
+            "description": "Metas configuradas com valor, modo, curva mensal, escopo e vigência.",
+            "whenToUse": "Use para inspecionar metas/curvas configuradas (exige permissão settings.manage).",
+            "whenNotToUse": "Não use para resultados realizados — prefira get_si_indicators.",
+            "label": "Metas configuradas"
+          }
+        },
+        "params": {
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "indicator_id": {
+            "locale": {
+              "en": {
+                "description": "Strategic indicator id (e.g. ind_fin_margin).",
+                "label": "Indicator"
+              },
+              "pt-BR": {
+                "description": "Identificador do indicador estratégico.",
+                "label": "Indicador"
+              }
+            }
+          },
+          "goal_year": {
+            "locale": {
+              "en": {
+                "description": "Reference year of the configured goal (e.g. 2026).",
+                "label": "Goal year"
+              },
+              "pt-BR": {
+                "description": "Ano de referência da meta configurada (ex.: 2026).",
+                "label": "Ano da meta"
+              }
+            }
+          },
+          "active_only": {
+            "locale": {
+              "en": {
+                "description": "When true, only active goal versions are returned.",
+                "label": "Active only"
+              },
+              "pt-BR": {
+                "description": "Quando true, retorna apenas versões ativas de metas.",
+                "label": "Somente ativas"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para inspecionar metas/curvas configuradas (exige permissão settings.manage).",
+          "whenNotToUse": "Não use para resultados realizados — prefira get_si_indicators.",
+          "description": "Metas configuradas com valor, modo, curva mensal, escopo e vigência.",
+          "label": "Metas configuradas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Configured goals with goal_value, goal_mode, monthly_targets, scope and validity."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/indicator-goals/history",
+      "operationId": "list_si_indicator_goal_history",
+      "summary": "Version history of a Strategic Indicators goal",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "indicator_id",
+          "in": "query",
+          "required": true,
+          "description": "Indicator id whose goal history is requested.",
+          "type": "string"
+        },
+        {
+          "name": "goal_year",
+          "in": "query",
+          "required": false,
+          "description": "Optional goal year filter (e.g. 2026).",
+          "type": "integer"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_indicator_goal_history",
+        "shape": "paged_list",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Version history of a Strategic Indicators goal",
+            "description": "All persisted versions of goals for an indicator (indicator_id required).",
+            "whenToUse": "Use to audit how a goal changed over time (requires settings.manage).",
+            "whenNotToUse": "Do not use for current realized performance — prefer get_si_indicators.",
+            "label": "Histórico de metas"
+          },
+          "pt-BR": {
+            "summary": "Histórico de versões da meta de um indicador",
+            "description": "Todas as versões persistidas das metas de um indicador (indicator_id obrigatório).",
+            "whenToUse": "Use para auditar como uma meta mudou ao longo do tempo (exige settings.manage).",
+            "whenNotToUse": "Não use para desempenho realizado atual — prefira get_si_indicators.",
+            "label": "Histórico de metas"
+          }
+        },
+        "params": {
+          "indicator_id": {
+            "locale": {
+              "en": {
+                "description": "Strategic indicator id (e.g. ind_fin_margin).",
+                "label": "Indicator"
+              },
+              "pt-BR": {
+                "description": "Identificador do indicador estratégico.",
+                "label": "Indicador"
+              }
+            }
+          },
+          "goal_year": {
+            "locale": {
+              "en": {
+                "description": "Reference year of the configured goal (e.g. 2026).",
+                "label": "Goal year"
+              },
+              "pt-BR": {
+                "description": "Ano de referência da meta configurada (ex.: 2026).",
+                "label": "Ano da meta"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para auditar como uma meta mudou ao longo do tempo (exige settings.manage).",
+          "whenNotToUse": "Não use para desempenho realizado atual — prefira get_si_indicators.",
+          "description": "Todas as versões persistidas das metas de um indicador (indicator_id obrigatório).",
+          "label": "Histórico de metas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "All persisted versions of goals for an indicator (indicator_id required)."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/indicators",
+      "operationId": "get_si_indicators",
+      "summary": "Strategic Indicators operational indicator results",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_indicators",
+        "shape": "paged_list",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Strategic Indicators operational indicator results",
+            "description": "Configured indicators with realized values, active goal, score, gap and classification.",
+            "whenToUse": "Use for realized vs goal per indicator in a period/department.",
+            "whenNotToUse": "Do not use for the goal catalog itself — prefer list_si_indicator_goals.",
+            "label": "Indicadores estratégicos"
+          },
+          "pt-BR": {
+            "summary": "Resultados operacionais dos indicadores estratégicos",
+            "description": "Indicadores configurados com realizado, meta ativa, score, gap e classificação.",
+            "whenToUse": "Use para realizado vs meta por indicador em um período/departamento.",
+            "whenNotToUse": "Não use para o catálogo de metas em si — prefira list_si_indicator_goals.",
+            "label": "Indicadores estratégicos"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para realizado vs meta por indicador em um período/departamento.",
+          "whenNotToUse": "Não use para o catálogo de metas em si — prefira list_si_indicator_goals.",
+          "description": "Indicadores configurados com realizado, meta ativa, score, gap e classificação.",
+          "label": "Indicadores estratégicos"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Configured indicators with realized values, active goal, score, gap and classification."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/jobs/{job_id}",
+      "operationId": "get_si_job_status",
+      "summary": "Strategic Indicators asynchronous job status",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_job_status",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Status and result of an asynchronous Strategic Indicators job (e.g. departments tree load). Owner: strategic-indicators-api GET /strategic-indicators/jobs/{job_id}. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/presentation",
+      "operationId": "get_si_presentation",
+      "summary": "Strategic Indicators presentation sections",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "months",
+          "in": "query",
+          "required": false,
+          "description": "Trend window in months (owner default: 6, range 2-12).",
+          "type": "integer"
+        },
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated sections: executive_summary, departments_overview, department_details_by_id, indicators_by_department_id, alerts, trends.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_presentation",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "months": {
+            "locale": {
+              "en": {
+                "description": "Months query parameter.",
+                "label": "Months"
+              },
+              "pt-BR": {
+                "description": "Quantidade de meses no intervalo analisado.",
+                "label": "Meses"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Composed presentation payload (executive summary, departments, indicators, alerts, trends sections). Owner: strategic-indicators-api GET /strategic-indicators/presentation. Requires strategic-indicators.view."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/settings",
+      "operationId": "get_si_settings",
+      "summary": "Strategic Indicators module settings",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "include",
+          "in": "query",
+          "required": false,
+          "description": "Optional comma-separated settings sections to include (weights, goals, parameters, governance, meta).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_settings",
+        "shape": "scalar",
+        "params": {
+          "include": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated flags for optional response sections (e.g. portfolio for weekly open orders).",
+                "label": "Include sections"
+              },
+              "pt-BR": {
+                "description": "Flags CSV para blocos extras na resposta (ex.: portfolio para carteira semanal).",
+                "label": "Seções opcionais"
+              }
+            },
+            "enumLabels": {
+              "portfolio": {
+                "en": {
+                  "label": "Portfolio"
+                },
+                "pt-BR": {
+                  "label": "Carteira semanal"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Current Strategic Indicators module settings (weights, goals, parameters, governance). Owner: strategic-indicators-api GET /strategic-indicators/settings. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/settings/audit",
+      "operationId": "list_si_settings_audit",
+      "summary": "Strategic Indicators settings audit trail",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max audit rows (owner default: 20).",
+          "type": "integer"
+        },
+        {
+          "name": "entity_key",
+          "in": "query",
+          "required": false,
+          "description": "Optional audit entity key filter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_settings_audit",
+        "shape": "paged_list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Audit trail of Strategic Indicators settings mutations. Owner: strategic-indicators-api GET /strategic-indicators/settings/audit. Requires strategic-indicators.settings.manage."
+    },
+    {
+      "method": "GET",
+      "path": "/strategic-indicators/trends",
+      "operationId": "get_si_trends",
+      "summary": "Strategic Indicators trends",
+      "tags": [
+        "strategic-indicators"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "in": "query",
+          "required": false,
+          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "competence",
+          "in": "query",
+          "required": false,
+          "description": "Competence reference in YYYY-MM format.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period start date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Optional period end date filter in YYYY-MM-DD format.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "months",
+          "in": "query",
+          "required": false,
+          "description": "Trend window in months (owner default: 6, range 2-12).",
+          "type": "integer"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "strategic_indicators_trends",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Competence query parameter.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "Department id in the IDD dashboard.",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            },
+            "enumLabels": {
+              "commercial": {
+                "en": {
+                  "label": "Commercial"
+                },
+                "pt-BR": {
+                  "label": "Comercial"
+                }
+              },
+              "engineering": {
+                "en": {
+                  "label": "Engineering"
+                },
+                "pt-BR": {
+                  "label": "Engenharia"
+                }
+              },
+              "financial": {
+                "en": {
+                  "label": "Financial"
+                },
+                "pt-BR": {
+                  "label": "Financeiro"
+                }
+              },
+              "hr": {
+                "en": {
+                  "label": "HR"
+                },
+                "pt-BR": {
+                  "label": "RH"
+                }
+              },
+              "production": {
+                "en": {
+                  "label": "Production"
+                },
+                "pt-BR": {
+                  "label": "Produção"
+                }
+              },
+              "quality": {
+                "en": {
+                  "label": "Quality"
+                },
+                "pt-BR": {
+                  "label": "Qualidade"
+                }
+              },
+              "supplies": {
+                "en": {
+                  "label": "Supplies"
+                },
+                "pt-BR": {
+                  "label": "Suprimentos"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "months": {
+            "locale": {
+              "en": {
+                "description": "Months query parameter.",
+                "label": "Months"
+              },
+              "pt-BR": {
+                "description": "Quantidade de meses no intervalo analisado.",
+                "label": "Meses"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Trend series for Strategic Indicators results over the selected window. Owner: strategic-indicators-api GET /strategic-indicators/trends. Requires strategic-indicators.trends.view."
     },
     {
       "method": "GET",
@@ -111943,6 +115478,175 @@
     },
     {
       "method": "GET",
+      "path": "/supplies/purchase-requests/approval-lead-time",
+      "operationId": "get_supplies_purchase_request_approval_lead_time",
+      "summary": "Get Supplies Purchase Request Approval Lead Time Route",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "request_number",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=25 ge=1 le=100 (purchase request lines)",
+          "type": "integer",
+          "default": 25
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_request_approval_lead_time",
+        "shape": "composite_analysis",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "SCR-only approved-history KPI; only trusted supplies-api may query globally.\n\nThis endpoint never accepts a user-supplied branch scope as an authorization\nsubstitute: caller must be the authenticated internal supplies BFF."
+    },
+    {
+      "method": "GET",
       "path": "/supplies/purchase-requests/approval-states",
       "operationId": "list_supplies_purchase_request_approval_states",
       "summary": "Lista — Supplies purchase request approval state",
@@ -113665,6 +117369,195 @@
         },
         "presentationStrategy": "as_delivered"
       }
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-requests/sc-pc-conversion",
+      "operationId": "get_supplies_sc_pc_conversion",
+      "summary": "Get Supplies Sc Pc Conversion Route",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "request_number",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=25 ge=1 le=100 (purchase request lines)",
+          "type": "integer",
+          "default": 25
+        },
+        {
+          "name": "summary_only",
+          "in": "query",
+          "required": false,
+          "description": "When true, returns summary only without the detail list.",
+          "type": "boolean",
+          "default": false
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_sc_pc_conversion",
+        "shape": "composite_analysis",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "summary_only": {
+            "locale": {
+              "en": {
+                "description": "When true, returns summary only without the detail list.",
+                "label": "Summary only"
+              },
+              "pt-BR": {
+                "description": "Quando ativo, retorna só o resumo sem a lista detalhada.",
+                "label": "Somente resumo"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "GLPI #635: última liberação SCR -> primeiro PC; somente BFF autenticado."
     },
     {
       "method": "GET",
@@ -117048,6 +120941,290 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna supplies supplier catalog item via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/supplier-performance",
+      "operationId": "get_supplies_supplier_performance",
+      "summary": "Get Supplies Supplier Performance",
+      "tags": [
+        "Supplies — supplier performance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "One or more Protheus branch codes (01 or 02). Repeat the query param: ?branch=01&branch=02.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": true,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": true,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_supplier_performance",
+        "shape": "composite_analysis",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "IDF 70/30; private to the trusted supplies BFF, which enforces user access."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/supplier-performance/evidence-export",
+      "operationId": "export_supplies_supplier_performance_evidence",
+      "summary": "Export Supplies Supplier Performance Evidence",
+      "tags": [
+        "Supplies — supplier performance"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "One or more Protheus branch codes (01 or 02). Repeat the query param: ?branch=01&branch=02.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": true,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": true,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "supplier_code",
+          "in": "query",
+          "required": false,
+          "description": "Supplier code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "supplier_store",
+          "in": "query",
+          "required": false,
+          "description": "Supplier store query parameter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_supplier_performance_evidence",
+        "shape": "document_export",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "supplier_code": {
+            "locale": {
+              "en": {
+                "description": "Supplier code query parameter.",
+                "label": "Supplier code"
+              },
+              "pt-BR": {
+                "description": "Código do fornecedor no Protheus.",
+                "label": "Código do fornecedor"
+              }
+            }
+          },
+          "supplier_store": {
+            "locale": {
+              "en": {
+                "description": "Supplier store query parameter.",
+                "label": "Supplier store"
+              },
+              "pt-BR": {
+                "description": "Loja do fornecedor.",
+                "label": "Loja do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Bounded evidence for XLSX; BFF-only, read-only, never raw SQL to clients."
     },
     {
       "method": "GET",
@@ -120680,926 +124857,6 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Protheus table schema."
-    },
-    {
-      "method": "GET",
-      "path": "/strategic-indicators/departments",
-      "operationId": "get_si_departments",
-      "summary": "Strategic Indicators department results",
-      "tags": [
-        "strategic-indicators"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
-          "enum": [
-            "commercial",
-            "engineering",
-            "financial",
-            "hr",
-            "production",
-            "quality",
-            "supplies"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "competence",
-          "in": "query",
-          "required": false,
-          "description": "Competence reference in YYYY-MM format.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period start date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period end date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "strategic_indicators_departments",
-        "shape": "paged_list",
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "all": {
-                "en": {
-                  "label": "All"
-                },
-                "pt-BR": {
-                  "label": "Todas"
-                }
-              },
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              },
-              "ES": {
-                "en": {
-                  "label": "ES"
-                },
-                "pt-BR": {
-                  "label": "ES"
-                }
-              },
-              "SC": {
-                "en": {
-                  "label": "SC"
-                },
-                "pt-BR": {
-                  "label": "SC"
-                }
-              }
-            }
-          },
-          "competence": {
-            "locale": {
-              "en": {
-                "description": "Competence query parameter.",
-                "label": "Competence"
-              },
-              "pt-BR": {
-                "description": "Competência no formato AAAA-MM (mês de referência).",
-                "label": "Competência"
-              }
-            }
-          },
-          "department_id": {
-            "locale": {
-              "en": {
-                "description": "Department id in the IDD dashboard.",
-                "label": "Department"
-              },
-              "pt-BR": {
-                "description": "Identificador do departamento no painel IDD.",
-                "label": "Departamento"
-              }
-            },
-            "enumLabels": {
-              "commercial": {
-                "en": {
-                  "label": "Commercial"
-                },
-                "pt-BR": {
-                  "label": "Comercial"
-                }
-              },
-              "engineering": {
-                "en": {
-                  "label": "Engineering"
-                },
-                "pt-BR": {
-                  "label": "Engenharia"
-                }
-              },
-              "financial": {
-                "en": {
-                  "label": "Financial"
-                },
-                "pt-BR": {
-                  "label": "Financeiro"
-                }
-              },
-              "hr": {
-                "en": {
-                  "label": "HR"
-                },
-                "pt-BR": {
-                  "label": "RH"
-                }
-              },
-              "production": {
-                "en": {
-                  "label": "Production"
-                },
-                "pt-BR": {
-                  "label": "Produção"
-                }
-              },
-              "quality": {
-                "en": {
-                  "label": "Quality"
-                },
-                "pt-BR": {
-                  "label": "Qualidade"
-                }
-              },
-              "supplies": {
-                "en": {
-                  "label": "Supplies"
-                },
-                "pt-BR": {
-                  "label": "Suprimentos"
-                }
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Per-department Strategic Indicators results (IDD, score, trend) for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/departments. Requires strategic-indicators.view."
-    },
-    {
-      "method": "GET",
-      "path": "/strategic-indicators/executive-summary",
-      "operationId": "get_si_executive_summary",
-      "summary": "Strategic Indicators executive summary for a competence",
-      "tags": [
-        "strategic-indicators"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
-          "enum": [
-            "commercial",
-            "engineering",
-            "financial",
-            "hr",
-            "production",
-            "quality",
-            "supplies"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "competence",
-          "in": "query",
-          "required": false,
-          "description": "Competence reference in YYYY-MM format.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period start date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period end date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "strategic_indicators_executive_summary",
-        "shape": "composite_analysis",
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "all": {
-                "en": {
-                  "label": "All"
-                },
-                "pt-BR": {
-                  "label": "Todas"
-                }
-              },
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              },
-              "ES": {
-                "en": {
-                  "label": "ES"
-                },
-                "pt-BR": {
-                  "label": "ES"
-                }
-              },
-              "SC": {
-                "en": {
-                  "label": "SC"
-                },
-                "pt-BR": {
-                  "label": "SC"
-                }
-              }
-            }
-          },
-          "competence": {
-            "locale": {
-              "en": {
-                "description": "Competence query parameter.",
-                "label": "Competence"
-              },
-              "pt-BR": {
-                "description": "Competência no formato AAAA-MM (mês de referência).",
-                "label": "Competência"
-              }
-            }
-          },
-          "department_id": {
-            "locale": {
-              "en": {
-                "description": "Department id in the IDD dashboard.",
-                "label": "Department"
-              },
-              "pt-BR": {
-                "description": "Identificador do departamento no painel IDD.",
-                "label": "Departamento"
-              }
-            },
-            "enumLabels": {
-              "commercial": {
-                "en": {
-                  "label": "Commercial"
-                },
-                "pt-BR": {
-                  "label": "Comercial"
-                }
-              },
-              "engineering": {
-                "en": {
-                  "label": "Engineering"
-                },
-                "pt-BR": {
-                  "label": "Engenharia"
-                }
-              },
-              "financial": {
-                "en": {
-                  "label": "Financial"
-                },
-                "pt-BR": {
-                  "label": "Financeiro"
-                }
-              },
-              "hr": {
-                "en": {
-                  "label": "HR"
-                },
-                "pt-BR": {
-                  "label": "RH"
-                }
-              },
-              "production": {
-                "en": {
-                  "label": "Production"
-                },
-                "pt-BR": {
-                  "label": "Produção"
-                }
-              },
-              "quality": {
-                "en": {
-                  "label": "Quality"
-                },
-                "pt-BR": {
-                  "label": "Qualidade"
-                }
-              },
-              "supplies": {
-                "en": {
-                  "label": "Supplies"
-                },
-                "pt-BR": {
-                  "label": "Suprimentos"
-                }
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Executive summary of Strategic Indicators (IDD rollup across departments) for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/executive-summary. Requires the caller's strategic-indicators.view permission; the request is forwarded with the caller identity only."
-    },
-    {
-      "method": "GET",
-      "path": "/strategic-indicators/indicator-goals",
-      "operationId": "list_si_indicator_goals",
-      "summary": "Configured Strategic Indicators goals and monthly curves",
-      "tags": [
-        "strategic-indicators"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "indicator_id",
-          "in": "query",
-          "required": false,
-          "description": "Optional indicator id filter.",
-          "type": "string"
-        },
-        {
-          "name": "goal_year",
-          "in": "query",
-          "required": false,
-          "description": "Optional goal year filter (e.g. 2026).",
-          "type": "integer"
-        },
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
-          "enum": [
-            "commercial",
-            "engineering",
-            "financial",
-            "hr",
-            "production",
-            "quality",
-            "supplies"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "active_only",
-          "in": "query",
-          "required": false,
-          "description": "When true, only active goal versions are returned.",
-          "type": "boolean"
-        }
-      ],
-      "xDelpi": {
-        "entity": "strategic_indicators_indicator_goals",
-        "shape": "paged_list",
-        "params": {
-          "department_id": {
-            "locale": {
-              "en": {
-                "description": "Department id in the IDD dashboard.",
-                "label": "Department"
-              },
-              "pt-BR": {
-                "description": "Identificador do departamento no painel IDD.",
-                "label": "Departamento"
-              }
-            },
-            "enumLabels": {
-              "commercial": {
-                "en": {
-                  "label": "Commercial"
-                },
-                "pt-BR": {
-                  "label": "Comercial"
-                }
-              },
-              "engineering": {
-                "en": {
-                  "label": "Engineering"
-                },
-                "pt-BR": {
-                  "label": "Engenharia"
-                }
-              },
-              "financial": {
-                "en": {
-                  "label": "Financial"
-                },
-                "pt-BR": {
-                  "label": "Financeiro"
-                }
-              },
-              "hr": {
-                "en": {
-                  "label": "HR"
-                },
-                "pt-BR": {
-                  "label": "RH"
-                }
-              },
-              "production": {
-                "en": {
-                  "label": "Production"
-                },
-                "pt-BR": {
-                  "label": "Produção"
-                }
-              },
-              "quality": {
-                "en": {
-                  "label": "Quality"
-                },
-                "pt-BR": {
-                  "label": "Qualidade"
-                }
-              },
-              "supplies": {
-                "en": {
-                  "label": "Supplies"
-                },
-                "pt-BR": {
-                  "label": "Suprimentos"
-                }
-              }
-            }
-          },
-          "indicator_id": {
-            "locale": {
-              "en": {
-                "description": "Strategic indicator id (e.g. ind_fin_margin).",
-                "label": "Indicator"
-              },
-              "pt-BR": {
-                "description": "Identificador do indicador estratégico.",
-                "label": "Indicador"
-              }
-            }
-          },
-          "goal_year": {
-            "locale": {
-              "en": {
-                "description": "Reference year of the configured goal (e.g. 2026).",
-                "label": "Goal year"
-              },
-              "pt-BR": {
-                "description": "Ano de referência da meta configurada (ex.: 2026).",
-                "label": "Ano da meta"
-              }
-            }
-          },
-          "active_only": {
-            "locale": {
-              "en": {
-                "description": "When true, only active goal versions are returned.",
-                "label": "Active only"
-              },
-              "pt-BR": {
-                "description": "Quando true, retorna apenas versões ativas de metas.",
-                "label": "Somente ativas"
-              }
-            }
-          }
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Configured goals (goal_value, goal_mode, monthly_targets curve, scope and validity) for indicators, optionally filtered by indicator/department/year. Owner: strategic-indicators-api GET /strategic-indicators/indicator-goals. Requires strategic-indicators.settings.manage."
-    },
-    {
-      "method": "GET",
-      "path": "/strategic-indicators/indicator-goals/history",
-      "operationId": "list_si_indicator_goal_history",
-      "summary": "Version history of a Strategic Indicators goal",
-      "tags": [
-        "strategic-indicators"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "indicator_id",
-          "in": "query",
-          "required": true,
-          "description": "Indicator id whose goal history is requested.",
-          "type": "string"
-        },
-        {
-          "name": "goal_year",
-          "in": "query",
-          "required": false,
-          "description": "Optional goal year filter (e.g. 2026).",
-          "type": "integer"
-        }
-      ],
-      "xDelpi": {
-        "entity": "strategic_indicators_indicator_goal_history",
-        "shape": "paged_list",
-        "params": {
-          "indicator_id": {
-            "locale": {
-              "en": {
-                "description": "Strategic indicator id (e.g. ind_fin_margin).",
-                "label": "Indicator"
-              },
-              "pt-BR": {
-                "description": "Identificador do indicador estratégico.",
-                "label": "Indicador"
-              }
-            }
-          },
-          "goal_year": {
-            "locale": {
-              "en": {
-                "description": "Reference year of the configured goal (e.g. 2026).",
-                "label": "Goal year"
-              },
-              "pt-BR": {
-                "description": "Ano de referência da meta configurada (ex.: 2026).",
-                "label": "Ano da meta"
-              }
-            }
-          }
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "All persisted versions of goals for an indicator (requires indicator_id; goal_year optional). Owner: strategic-indicators-api GET /strategic-indicators/indicator-goals/history. Requires strategic-indicators.settings.manage."
-    },
-    {
-      "method": "GET",
-      "path": "/strategic-indicators/indicators",
-      "operationId": "get_si_indicators",
-      "summary": "Strategic Indicators operational indicator results",
-      "tags": [
-        "strategic-indicators"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "department_id",
-          "in": "query",
-          "required": false,
-          "description": "Optional SI department id filter (commercial, hr, production, financial, supplies, engineering, quality).",
-          "enum": [
-            "commercial",
-            "engineering",
-            "financial",
-            "hr",
-            "production",
-            "quality",
-            "supplies"
-          ],
-          "type": "string"
-        },
-        {
-          "name": "competence",
-          "in": "query",
-          "required": false,
-          "description": "Competence reference in YYYY-MM format.",
-          "type": "string"
-        },
-        {
-          "name": "start_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period start date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "end_date",
-          "in": "query",
-          "required": false,
-          "description": "Optional period end date filter in YYYY-MM-DD format.",
-          "type": "string",
-          "format": "date"
-        },
-        {
-          "name": "branch",
-          "in": "query",
-          "required": false,
-          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
-          "enum": [
-            "all",
-            "01",
-            "02"
-          ],
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "strategic_indicators_indicators",
-        "shape": "paged_list",
-        "params": {
-          "branch": {
-            "locale": {
-              "en": {
-                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-                "label": "Filial"
-              }
-            },
-            "enumLabels": {
-              "all": {
-                "en": {
-                  "label": "All"
-                },
-                "pt-BR": {
-                  "label": "Todas"
-                }
-              },
-              "01": {
-                "en": {
-                  "label": "Branch 01"
-                },
-                "pt-BR": {
-                  "label": "Filial 01"
-                }
-              },
-              "02": {
-                "en": {
-                  "label": "Branch 02"
-                },
-                "pt-BR": {
-                  "label": "Filial 02"
-                }
-              },
-              "ES": {
-                "en": {
-                  "label": "ES"
-                },
-                "pt-BR": {
-                  "label": "ES"
-                }
-              },
-              "SC": {
-                "en": {
-                  "label": "SC"
-                },
-                "pt-BR": {
-                  "label": "SC"
-                }
-              }
-            }
-          },
-          "competence": {
-            "locale": {
-              "en": {
-                "description": "Competence query parameter.",
-                "label": "Competence"
-              },
-              "pt-BR": {
-                "description": "Competência no formato AAAA-MM (mês de referência).",
-                "label": "Competência"
-              }
-            }
-          },
-          "department_id": {
-            "locale": {
-              "en": {
-                "description": "Department id in the IDD dashboard.",
-                "label": "Department"
-              },
-              "pt-BR": {
-                "description": "Identificador do departamento no painel IDD.",
-                "label": "Departamento"
-              }
-            },
-            "enumLabels": {
-              "commercial": {
-                "en": {
-                  "label": "Commercial"
-                },
-                "pt-BR": {
-                  "label": "Comercial"
-                }
-              },
-              "engineering": {
-                "en": {
-                  "label": "Engineering"
-                },
-                "pt-BR": {
-                  "label": "Engenharia"
-                }
-              },
-              "financial": {
-                "en": {
-                  "label": "Financial"
-                },
-                "pt-BR": {
-                  "label": "Financeiro"
-                }
-              },
-              "hr": {
-                "en": {
-                  "label": "HR"
-                },
-                "pt-BR": {
-                  "label": "RH"
-                }
-              },
-              "production": {
-                "en": {
-                  "label": "Production"
-                },
-                "pt-BR": {
-                  "label": "Produção"
-                }
-              },
-              "quality": {
-                "en": {
-                  "label": "Quality"
-                },
-                "pt-BR": {
-                  "label": "Qualidade"
-                }
-              },
-              "supplies": {
-                "en": {
-                  "label": "Supplies"
-                },
-                "pt-BR": {
-                  "label": "Suprimentos"
-                }
-              }
-            }
-          },
-          "end_date": {
-            "locale": {
-              "en": {
-                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "start_date": {
-            "locale": {
-              "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          }
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Configured indicators with realized values, active goal, score, gap and classification for a competence/branch window. Owner: strategic-indicators-api GET /strategic-indicators/indicators. Requires strategic-indicators.view."
     }
   ]
 }

@@ -243,6 +243,7 @@ METALOGRAPHY_CREATE = "metalography.create"
 # Mesmos códigos canônicos do manifesto `plugins/strategic-indicators` —
 # resolvidos pela Core API; não é um segundo RBAC.
 STRATEGIC_INDICATORS_VIEW = "strategic-indicators.view"
+STRATEGIC_INDICATORS_TRENDS_VIEW = "strategic-indicators.trends.view"
 STRATEGIC_INDICATORS_SETTINGS_MANAGE = "strategic-indicators.settings.manage"
 METALOGRAPHY_EDIT = "metalography.edit"
 METALOGRAPHY_DELETE = "metalography.delete"

@@ -57,7 +57,7 @@
  "surface_parity": {
   "mcp_tools": 5,
   "gpt_actions_legacy": 2,
-  "note": "Capability parity ≠ transport count. get_context + knowledge + read + analyze are LIVE. execute is LIVE bounded to si.goal.create/update/activate/deactivate (PREPARE/ACT, confirm_before_act, owner AuthZ + OCC). delete remains PLANNED_NOT_IMPLEMENTED. search_products via read/analyze. Descriptive, not alternate SoT. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only); gpt_get_catalog carries live directives, not those operations."
+  "note": "Capability parity ≠ transport count. get_context + knowledge + read + analyze are LIVE. execute is LIVE bounded to si.goal.create/update/activate/deactivate (PREPARE/ACT, confirm_before_act, owner AuthZ + OCC). delete remains PLANNED_NOT_IMPLEMENTED. search_products via read/analyze. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only); gpt_get_catalog carries live directives, not those operations."
  },
  "anti_patterns": [
   "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
