@@ -167,6 +167,15 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_inventory_accuracy_item": (
         "eventos de acuracidade do inventário físico"
     ),
+    "supplies_inventory_divergence_tv_summary": (
+        "resumo da divergência de inventário para o GR Diário"
+    ),
+    "supplies_inventory_divergence_tv_month": (
+        "série mensal das divergências de inventário (faltas e sobras)"
+    ),
+    "supplies_inventory_divergence_tv_weekly_item": (
+        "produtos com divergência de inventário na semana"
+    ),
     "supplies_inventory_adjustments_summary": (
         "resumo de ajustes de inventário (furos e sobras)"
     ),
