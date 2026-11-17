@@ -60,6 +60,11 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_candidate.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_process_evidence.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_continuity.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_presenter_process_guard.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_file_session.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_presenter_process_guard.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_snapshot_file_session.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/50-atlas-hml-b-preflight-e-sessao-failstop.md"
       - "linux-ops-mcp/tests/test_atlas_hml_b_process_evidence.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_snapshot_continuity.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/49-atlas-hml-b-process-replay-failclosed-source-only.md"
@@ -148,6 +153,11 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_candidate.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_process_evidence.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_continuity.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_presenter_process_guard.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_file_session.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_presenter_process_guard.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_snapshot_file_session.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/50-atlas-hml-b-preflight-e-sessao-failstop.md"
       - "linux-ops-mcp/tests/test_atlas_hml_b_process_evidence.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_snapshot_continuity.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/49-atlas-hml-b-process-replay-failclosed-source-only.md"
@@ -286,6 +296,8 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_snapshot_candidate.py \
             linux-ops-mcp/tests/test_atlas_hml_b_process_evidence.py \
             linux-ops-mcp/tests/test_atlas_hml_b_snapshot_continuity.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_presenter_process_guard.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_snapshot_file_session.py \
             linux-ops-mcp/tests/test_atlas_hml_b_preactivation_evidence.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_file_reader.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_presenter_candidate.py \

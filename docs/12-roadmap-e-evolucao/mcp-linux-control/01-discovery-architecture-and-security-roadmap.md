@@ -686,3 +686,15 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Cobertura de testes positivos e adversariais integrada ao workflow Linux/Docker descartável. Uma declaração de processo íntegro, referência SHA-256 e histórico em memória **não provam** host real, autenticação do produtor, ausência de endpoints alternativos, nem impedem replay após reinício.
 - Sem entrada operacional, instalação systemd, ferramenta MCP adicional, alteração Docker, acesso a servidor, migrações, PREPARE/ACT ou deploy. O protocolo permanece **BLOCKED**; SEC-01 a SEC-10 e revisão humana independente ainda abertos.
 - Próximo marco: avaliar resultados CI, revisão DELPI Verifier única ao fim do pacote, posterior plano de atestação Linux real sob mudança operacional expressamente autorizada. **Progresso geral: 52%; não executar pull/deploy no srv-api.**
+
+
+## Etapa 59 | 17/11/2026 | Guarda de processo real no CI e sessão de snapshots via FD
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 50](./50-atlas-hml-b-preflight-e-sessao-failstop.md). **Status:** Draft PR / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Guarda reutilizável do próprio subprocesso Linux lê /proc/self/status e FDs; verifica UID/GID efetivos, salvos e de filesystem, grupos, capacidades, descritor prebound e variáveis de transporte Docker. Teste de subprocesso descartável usa a guarda e falha antes de atender ao receber FD Docker herdado; não é mais apenas asserção duplicada no harness.
+- Leitor root:grupo/0640 via descritor mantém API anterior e agora expõe registro **interno** com bytes e fingerprint do inode para testar continuidade; sem redução de verificações ACL, symlink, TOCTOU ou TTL.
+- Sessão source-only fail-stop aceita GETs repetidos sobre o mesmo arquivo imutável, recusa substituição suspeita, timestamp regressivo, identity change, falha de produtor/publicação e shutdown. Sem persistência, sem autenticação do produtor, sem autorização para retomar após falha.
+- Workflow de testes Linux e Docker descartável ampliado e cenários adversariais adicionados. Revisão independente do código apenas **uma vez** após CI da PR consolidada, conforme contrato; não equivale a SEC-01 humana.
+- Continuam pendentes: evidência do PID real em `srv-api`, isolamento Docker por todos os caminhos, origem criptograficamente atestada, replay após restart, privilégio do produtor root, ACL/LSM reais, rollback testado, SEC-01..10 e change-control.
+- **Progresso 52% conservador.** Quatro MCP READ, PREPARE/ACT OFF. Sem deploy, systemd, Docker/Compose PROD, contas, grupo, socket, filesystem `/run`, migração ou alterações operacionais.
