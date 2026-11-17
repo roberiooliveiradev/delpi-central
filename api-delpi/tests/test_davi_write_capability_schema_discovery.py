@@ -31,7 +31,7 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
 
 def test_schema_covers_every_approved_write_capability() -> None:
     assert set(WRITE_CAPABILITY_ARG_SCHEMAS) == set(WRITE_CAPABILITIES)
-    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 14
+    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 16
 
 
 def test_schema_endpoint_serves_write_capability() -> None:
@@ -54,10 +54,12 @@ def test_schema_endpoint_serves_all_14_caps() -> None:
 
 
 def test_schema_endpoint_unknown_capability_still_unknown() -> None:
-    out = davi_get_context(action="schema", capability="si.settings.update")
+    out = davi_get_context(action="schema", capability="si.department.delete")
     assert out["capability"]["available"] is False
     assert out["capability"]["davi_status"] == "UNKNOWN"
-    out = davi_get_context(action="schema", capability="si.department.deactivate")
+    out = davi_get_context(action="schema", capability="si.indicator.delete")
+    assert out["capability"]["available"] is False
+    out = davi_get_context(action="schema", capability="si.goal.delete")
     assert out["capability"]["available"] is False
     out = davi_get_context(action="schema", capability="http.post")
     assert out["capability"]["available"] is False
@@ -71,9 +73,9 @@ def test_read_capability_schema_unchanged() -> None:
 
 
 def test_get_write_capability_schema_rejects_non_write() -> None:
-    assert get_write_capability_schema("si.settings.update") is None
+    assert get_write_capability_schema("si.department.delete") is None
     assert get_write_capability_schema("list_si_admin_departments") is None
-    assert get_write_capability_schema("si.department.deactivate") is None
+    assert get_write_capability_schema("si.config.import") is None
 
 
 def test_schema_key_sets_match_closed_vocabularies() -> None:
@@ -92,6 +94,8 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
         "si.department.create": admin._DEPT_CREATE_ARGS,
         "si.department.update": admin._DEPT_UPDATE_ARGS,
         "si.department.activate": admin._DEPT_REF_ARGS,
+        "si.department.deactivate": admin._DEPT_REF_ARGS,
+        "si.settings.update": admin._SETTINGS_UPDATE_ARGS,
         "si.indicator.create": admin._IND_CREATE_ARGS,
         "si.indicator.update": admin._IND_UPDATE_ARGS,
         "si.indicator.activate": admin._IND_REF_ARGS,

@@ -57,7 +57,7 @@
  "surface_parity": {
   "mcp_tools": 5,
   "gpt_actions_legacy": 2,
-  "note": "Capability parity ≠ transport count. get_context + knowledge + read + analyze are LIVE. execute is LIVE bounded to governed capabilities si.goal.*/si.department.*/si.indicator.*/si.change_request.* (PREPARE/ACT, confirm, owner AuthZ + OCC). delete remains PLANNED_NOT_IMPLEMENTED. search_products via read/analyze. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only); gpt_get_catalog carries live directives, not those operations."
+  "note": "Capability parity ≠ transport count. get_context + knowledge + read + analyze are LIVE. execute is LIVE bounded to governed capabilities si.goal.*/si.department.*/si.indicator.*/si.change_request.*/si.settings.update (PREPARE/ACT+confirm). delete remains PLANNED_NOT_IMPLEMENTED. search_products via read/analyze. GPT Actions = LEGACY_TRANSITIONAL (gpt_get_catalog + gpt_search_products only); gpt_get_catalog carries live directives, not those operations."
  },
  "anti_patterns": [
   "Inventar estoque, preço, BOM, fornecedor ou status sem retorno de tool.",
@@ -73,7 +73,7 @@
   "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
  },
  "not_exposed": {
-  "writes": "BOUNDED — somente capabilities aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*) via execute; restante NOT_EXPOSED",
+  "writes": "BOUNDED — apenas capabilities aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*/si.settings.update) via execute; restante NOT_EXPOSED",
   "sql_arbitrary": "FORBIDDEN",
   "generic_proxy": "FORBIDDEN",
   "prepare_act": "LIVE somente para capabilities aprovadas via execute; demais domínios sem write path",
@@ -465,7 +465,7 @@
     "never_claim_persisted_without_verify"
    ],
    "confirmation_policy": "confirm_before_act",
-   "note": "Somente as capabilities aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*) são executáveis; outra escrita (delete, settings.update, batch, SQL genérico) é negada — reportar limite.",
+   "note": "Somente as capabilities aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*) são executáveis; outra escrita (delete, batch, import, SQL) é negada — reportar limite.",
    "confirmation_rule": "A confirmação exige UMA resposta afirmativa explícita do usuário sobre a proposta apresentada, em mensagem posterior ao PREPARE. O pedido inicial de escrita nunca é a confirmação; não chamar ACT antes da nova manifestação."
   },
   "system_metadata": {
@@ -782,5 +782,5 @@
    }
   ]
  },
- "write_surface": "BOUNDED_GOVERNED — execute PREPARE/ACT apenas para capabilities aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*); demais writes NOT_EXPOSED"
+ "write_surface": "BOUNDED_GOVERNED — execute PREPARE/ACT apenas para aprovadas (si.goal.*/si.department.*/si.indicator.*/si.change_request.*/si.settings.update); demais NOT_EXPOSED"
 }

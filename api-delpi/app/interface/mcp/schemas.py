@@ -295,7 +295,7 @@ class ExecuteInput(BaseModel):
         max_length=128,
         description=(
             "Approved governed write capability id (e.g. si.goal.*, "
-            "si.department.*, si.indicator.*, si.change_request.* — "
+            "si.department.*, si.indicator.*, si.change_request.*, "
             "published by get_context). Not a URL, path, method or SQL."
         ),
     )
@@ -343,7 +343,7 @@ class ExecuteInput(BaseModel):
         max_length=128,
         description=(
             "Approved governed write capability id (e.g. si.goal.*, "
-            "si.department.*, si.indicator.*, si.change_request.* — "
+            "si.department.*, si.indicator.*, si.change_request.*, "
             "published by get_context). Not a URL, path, method or SQL."
         ),
     )
