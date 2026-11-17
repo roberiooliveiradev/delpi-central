@@ -159,3 +159,7 @@ Sem sync bem-sucedido, rotas novas **não aparecerão na seleção de fontes**. 
 - Segurança e critérios fiscais permanecem iguais: `api-delpi.access`, consultas somente leitura, `INVENT`, estornos excluídos, faltas/sobras separadas, `D3_CUSTO1` operacional (não substitui TTAT as-of do R07).
 - **Não requer novo DataModel nem alteração da UI do TV Dashboard**: o catálogo das três fontes recebe `granularity` e as datas canônicas, reconhecidas pelo seletor nativo de Período.
 - **Pendente:** PR revisada, CI, deploy `api-delpi` e `tv-dashboard-api`, sincronização OpenAPI, homologação com valores do Protheus e verificação dos presets no editor real.
+
+## GLPI #1615 — alteração posterior do grão do ranking de itens (17/11/2026)
+
+A seção 4.3 descreve o contrato **histórico** (filial+produto+armazém+natureza). O contrato vigente após a PR do chamado #1615 passa a ser **filial+produto** com faltas e sobras compensadas entre armazéns dentro do período selecionado. Os campos quantity/value_brl representam o módulo do saldo líquido e os campos signed_quantity/signed_value_brl preservam os sinais. O item_grain é branch_product. A série e os KPIs de divergência bruta não mudam. Para regra atual, exemplos e testes, ver [GLPI #1615](./GLPI-1615-GR-DIARIO-SALDO-POR-PRODUTO.md).
