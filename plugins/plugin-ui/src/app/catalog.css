@@ -1001,3 +1001,18 @@
   align-items: flex-end;
   gap: 16px;
 }
+
+/* Moldura rolável do FormStepFooter: o quadro É o scrollport (overflow auto)
+   e o rodapé fica sticky na sua base. Entre o rodapé e o scrollport nenhum
+   ancestral pode ter overflow != visible — contrato verificado no P6. */
+.dashboard-plugin-ui .puc-form-footer-scroll {
+  height: 520px;
+  overflow: auto;
+  border: 1px solid var(--puc-border);
+  border-radius: 12px;
+  padding: 0 16px;
+  background: var(--delpi-ui-form-page-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

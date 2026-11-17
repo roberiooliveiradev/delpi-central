@@ -155,9 +155,10 @@ describe("RatingScale", () => {
       container.querySelector<HTMLInputElement>('input[value="0"]')!.checked,
     ).toBe(true);
 
-    // legenda acima: __ends vem antes de __options-row no DOM
+    // legenda acima: __ends é o primeiro filho de __main (R8)
     const scale = container.firstElementChild!;
-    expect(scale.firstElementChild!.className).toContain(
+    const main = scale.querySelector(".delpi-ui-form-scale__main")!;
+    expect(main.firstElementChild!.className).toContain(
       "delpi-ui-form-scale__ends",
     );
     expect(scale.textContent).toContain("0 · Nada");
@@ -225,11 +226,64 @@ describe("RatingScale", () => {
     }
   });
 
-  it("endLabelsPosition='below' coloca a legenda depois das opções", () => {
-    const { container } = render(<RatingScale {...baseProps()} />);
-    const scale = container.firstElementChild!;
-    expect(scale.lastElementChild!.className).toContain(
-      "delpi-ui-form-scale__ends",
+  it("R8 below: __main tem opções e depois a legenda; N/A vem depois dela", () => {
+    const { container } = render(
+      <RatingScale
+        {...baseProps({
+          selectionCaption: (n) => `Nota ${n}`,
+          notApplicable: { label: "Não se aplica" },
+          value: 3,
+        })}
+      />,
     );
+    const main = container.querySelector(".delpi-ui-form-scale__main")!;
+    const row = container.querySelector(".delpi-ui-form-scale__options-row")!;
+    expect(row.firstElementChild).toBe(main);
+    expect(main.children[0].className).toContain("__options");
+    expect(main.lastElementChild!.className).toContain("__ends");
+    const classes = Array.from(row.children).map((el) => el.className);
+    expect(classes.findIndex((c) => c.includes("__caption"))).toBe(1);
+    expect(classes.findIndex((c) => c.includes("__divider"))).toBe(2);
+    expect(classes.findIndex((c) => c.includes("form-na"))).toBe(3);
+  });
+
+  it("R8 above: __main tem a legenda antes das opções, dentro da mesma coluna", () => {
+    const { container } = render(
+      <RatingScale {...baseProps({ endLabelsPosition: "above" })} />,
+    );
+    const scale = container.firstElementChild!;
+    expect(scale.className).toContain("--ends-above");
+    const main = container.querySelector(".delpi-ui-form-scale__main")!;
+    expect(main.children[0].className).toContain("__ends");
+    expect(main.children[1].className).toContain("__options");
+  });
+
+  it("R9: Home vai para a primeira nota e End para o N/A (último do grupo)", () => {
+    function Harness() {
+      const [value, setValue] = useState<RatingScaleValue>("na");
+      return (
+        <RatingScale
+          {...baseProps({
+            value,
+            onChange: setValue,
+            notApplicable: { label: "Não se aplica" },
+          })}
+        />
+      );
+    }
+    const { container, getByRole } = render(<Harness />);
+    const radios = Array.from(
+      container.querySelectorAll<HTMLInputElement>('input[type="radio"]'),
+    );
+    const last = radios[radios.length - 1];
+    expect(last).toBe(getByRole("radio", { name: "Não se aplica" }));
+
+    fireEvent.keyDown(last, { key: "Home" });
+    expect(document.activeElement).toBe(radios[0]);
+    expect(radios[0].checked).toBe(true);
+
+    fireEvent.keyDown(radios[0], { key: "End" });
+    expect(document.activeElement).toBe(last);
+    expect(last.checked).toBe(true);
   });
 });

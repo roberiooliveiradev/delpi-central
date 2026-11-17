@@ -122,6 +122,7 @@ export function RatingScale({
     <div
       className={[
         cn(""),
+        endLabelsPosition === "above" ? cn("--ends-above") : "",
         invalid ? cn("--invalid") : "",
         className,
       ]
@@ -130,21 +131,22 @@ export function RatingScale({
       role="group"
       aria-describedby={describedBy}
     >
-      {endLabelsPosition === "above" && endsBlock}
       <div
         ref={rowRef}
         className={cn("__options-row")}
         onKeyDown={handleKeyDown}
       >
-        <div
-          className={[
-            cn("__options"),
-            dense ? cn("__options--dense") : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={{ "--delpi-ui-form-scale-cols": columns } as CSSProperties}
-        >
+        <div className={cn("__main")}>
+          {endLabelsPosition === "above" && endsBlock}
+          <div
+            className={[
+              cn("__options"),
+              dense ? cn("__options--dense") : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ "--delpi-ui-form-scale-cols": columns } as CSSProperties}
+          >
           {notes.map((note) => (
             <label key={note} className={cn("__option")}>
               <input
@@ -163,6 +165,8 @@ export function RatingScale({
               </span>
             </label>
           ))}
+          </div>
+          {endLabelsPosition === "below" && endsBlock}
         </div>
         {numericValue != null && selectionCaption != null && (
           <p className={cn("__caption")}>{selectionCaption(numericValue)}</p>
@@ -183,7 +187,6 @@ export function RatingScale({
           </>
         )}
       </div>
-      {endLabelsPosition === "below" && endsBlock}
     </div>
   );
 }

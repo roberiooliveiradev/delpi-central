@@ -505,6 +505,31 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Pilha da área de resposta do QuestionCard (R6): ritmo 12/14 px entre escala, legenda, N/A e campo dentro do fieldset.",
   }),
+  vc("forms", "FormButton", {
+    addedAt: "2026-11-17",
+    description:
+      "Botão do formulário sobre o ActionButton intacto: primary/secondary, busy com softDisabled (mantém foco), visual via seletores escopados na raiz do kit.",
+  }),
+  vc("forms", "FormStepFooter", {
+    addedAt: "2026-11-17",
+    description:
+      "Rodapé de ações da etapa: sticky na base abaixo de 600 px, mensagem role=status, Voltar secundário + próximo primário com busy.",
+  }),
+  vc("forms", "FormNotice", {
+    addedAt: "2026-11-17",
+    description:
+      "Aviso em bloco role=note: tons warning (tokens --delpi-ui-form-warning-*) e info (tint + accent-text), raio 12 px.",
+  }),
+  vc("forms", "FormReviewSection", {
+    addedAt: "2026-11-17",
+    description:
+      "Seção de revisão sobre FormCard: título + Editar (lápis, hit ≥44 px) e dl/dt/dd com linhas muted (itálico) e block (pre-line).",
+  }),
+  vc("forms", "FormResultPanel", {
+    addedAt: "2026-11-17",
+    description:
+      "Painel de resultado centrado: círculo success 72 px com check, role status/alert por tom, título/mensagem/hint/ação por props.",
+  }),
   // export
   vc("export", "TabularExportButtons"),
   vc("export", "DocumentExportActions"),

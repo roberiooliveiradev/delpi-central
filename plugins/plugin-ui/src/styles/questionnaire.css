@@ -11,6 +11,7 @@
   --delpi-ui-form-page-bg: #f3f4f6;
   --delpi-ui-form-band-bg: #0c6fb0;
   --delpi-ui-form-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --delpi-ui-form-footer-shadow: 0 -4px 12px rgba(16, 24, 40, 0.08);
   --delpi-ui-form-accent-text: #0a5a8f;
   --delpi-ui-form-tint: #eaf3fb;
   --delpi-ui-form-border-soft: #d0d7de;
@@ -43,6 +44,7 @@
   --delpi-ui-form-page-bg: #041b2e;
   --delpi-ui-form-band-bg: #003866;
   --delpi-ui-form-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --delpi-ui-form-footer-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
   --delpi-ui-form-accent-text: #7fd3f5;
   --delpi-ui-form-tint: #103c55;
   --delpi-ui-form-border-soft: #788792;
@@ -442,6 +444,13 @@
   gap: 12px;
 }
 
+.delpi-ui-form-scale__main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
 .delpi-ui-form-scale__options {
   display: grid;
   grid-template-columns: repeat(
@@ -665,9 +674,13 @@
      da nota vai para baixo (order 3 + base 100%). */
   .delpi-ui-form-scale__options-row {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 12px 16px;
+    gap: 12px 24px;
+  }
+
+  .delpi-ui-form-scale__main {
+    flex: 1 1 auto;
   }
 
   /* Item flex com min-width: 0 — sem isso a trilha não encolhe abaixo da
@@ -707,11 +720,21 @@
     order: 1;
     align-self: stretch;
     width: 1px;
+    margin-bottom: 26px;
     background: var(--delpi-ui-form-track);
+  }
+
+  .delpi-ui-form-scale--ends-above .delpi-ui-form-scale__divider {
+    margin-top: 26px;
+    margin-bottom: 0;
   }
 
   .delpi-ui-form-scale__na {
     order: 2;
+  }
+
+  .delpi-ui-form-scale--ends-above .delpi-ui-form-scale__na {
+    margin-top: 26px;
   }
 
   .delpi-ui-form-scale__caption {
@@ -722,5 +745,244 @@
 
   .delpi-ui-form-na {
     min-height: 52px;
+  }
+}
+
+/* --- FormButton (P4): sobre o ActionButton sem alterá-lo --------------------
+   Seletores escopados na raiz do kit vencem `.delpi-ui-action-btn*` por
+   especificidade — não dependem da ordem dos @import em styles.css. */
+
+.delpi-ui-form-root .delpi-ui-form-button {
+  height: 48px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.delpi-ui-form-root .delpi-ui-form-button--primary {
+  padding: 0 24px;
+  background: var(--delpi-ui-accent);
+  border-color: var(--delpi-ui-accent);
+  color: var(--delpi-ui-on-accent);
+}
+
+.delpi-ui-form-root .delpi-ui-form-button--secondary {
+  padding: 0 20px;
+  background: var(--delpi-ui-surface);
+  border-color: var(--delpi-ui-form-border-soft);
+  color: var(--delpi-ui-text);
+}
+
+.delpi-ui-form-root .delpi-ui-form-button:focus-visible {
+  box-shadow: var(--delpi-ui-focus-ring);
+}
+
+.delpi-ui-form-root .delpi-ui-form-button--full {
+  width: 100%;
+}
+
+/* --- FormStepFooter ------------------------------------------------------ */
+
+.delpi-ui-form-step-footer {
+  position: sticky;
+  bottom: 0;
+  margin: 8px -16px 0;
+  padding: 12px 16px 16px;
+  background: var(--delpi-ui-surface);
+  border-top: 1px solid var(--delpi-ui-border);
+  box-shadow: var(--delpi-ui-form-footer-shadow);
+}
+
+.delpi-ui-form-step-footer__message {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-danger);
+}
+
+.delpi-ui-form-step-footer__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.delpi-ui-form-step-footer__next {
+  flex: 1;
+}
+
+/* --- FormNotice ------------------------------------------------------------ */
+
+.delpi-ui-form-notice {
+  padding: 14px 16px;
+  border: 1px solid var(--delpi-ui-form-track);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.delpi-ui-form-notice--warning {
+  background: var(--delpi-ui-form-warning-bg);
+  border-color: var(--delpi-ui-form-warning-border);
+  color: var(--delpi-ui-form-warning-text);
+}
+
+.delpi-ui-form-notice--info {
+  background: var(--delpi-ui-form-tint);
+  border-color: var(--delpi-ui-form-tint);
+  color: var(--delpi-ui-form-accent-text);
+}
+
+/* --- FormReviewSection ----------------------------------------------------- */
+
+.delpi-ui-form-review__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-form-review__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.delpi-ui-form-review__edit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--delpi-ui-form-border-soft);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-accent);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Área clicável ≥ 44 px mantendo a altura visual de 36 px. */
+.delpi-ui-form-review__edit::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.delpi-ui-form-review__edit:focus-visible {
+  box-shadow: var(--delpi-ui-focus-ring);
+  outline: none;
+}
+
+.delpi-ui-form-review__rows {
+  margin: 0;
+}
+
+.delpi-ui-form-review__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--delpi-ui-form-track);
+  font-size: 14px;
+}
+
+.delpi-ui-form-review__label {
+  color: var(--delpi-ui-muted);
+}
+
+.delpi-ui-form-review__value {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.delpi-ui-form-review__row--muted .delpi-ui-form-review__value {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--delpi-ui-muted);
+}
+
+.delpi-ui-form-review__row--block {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-ui-form-review__row--block .delpi-ui-form-review__value {
+  text-align: left;
+  white-space: pre-line;
+}
+
+/* --- FormResultPanel -------------------------------------------------------- */
+
+.delpi-ui-form-result__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 36px 24px;
+  text-align: center;
+}
+
+.delpi-ui-form-result__circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--delpi-ui-success);
+  color: var(--delpi-ui-on-accent);
+}
+
+.delpi-ui-form-result__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.delpi-ui-form-result__message {
+  margin: 0;
+  font-size: 16px;
+}
+
+.delpi-ui-form-result__hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--delpi-ui-muted);
+}
+
+@media (min-width: 600px) {
+  .delpi-ui-form-step-footer {
+    position: static;
+    margin: 0;
+    padding: 8px 0 0;
+    background: transparent;
+    border-top: 0;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .delpi-ui-form-step-footer__message {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .delpi-ui-form-step-footer__actions {
+    flex: none;
+  }
+
+  .delpi-ui-form-step-footer__next {
+    flex: none;
+    min-width: 160px;
   }
 }

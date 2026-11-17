@@ -33,6 +33,10 @@ const TOKEN_VALUES: Record<string, { light: string; dark: string }> = {
     light: "0 1px 2px rgba(16, 24, 40, 0.06)",
     dark: "0 1px 2px rgba(0, 0, 0, 0.35)",
   },
+  "--delpi-ui-form-footer-shadow": {
+    light: "0 -4px 12px rgba(16, 24, 40, 0.08)",
+    dark: "0 -4px 12px rgba(0, 0, 0, 0.4)",
+  },
   "--delpi-ui-form-accent-text": { light: "#0a5a8f", dark: "#7fd3f5" },
   "--delpi-ui-form-tint": { light: "#eaf3fb", dark: "#103c55" },
   "--delpi-ui-form-border-soft": { light: "#d0d7de", dark: "#788792" },
@@ -155,6 +159,88 @@ describe("questionnaire.css — contrato de tokens e escopo", () => {
     for (const selector of REQUIRED_SELECTORS) {
       expect(css, selector).toContain(selector);
     }
+  });
+
+  it("P4: classes novas de ação/fechamento existem", () => {
+    const REQUIRED_SELECTORS = [
+      ".delpi-ui-form-scale__main",
+      ".delpi-ui-form-scale--ends-above",
+      ".delpi-ui-form-button",
+      ".delpi-ui-form-button--primary",
+      ".delpi-ui-form-button--secondary",
+      ".delpi-ui-form-button--full",
+      ".delpi-ui-form-step-footer",
+      ".delpi-ui-form-step-footer__message",
+      ".delpi-ui-form-step-footer__actions",
+      ".delpi-ui-form-step-footer__next",
+      ".delpi-ui-form-notice",
+      ".delpi-ui-form-notice--warning",
+      ".delpi-ui-form-notice--info",
+      ".delpi-ui-form-review__head",
+      ".delpi-ui-form-review__title",
+      ".delpi-ui-form-review__edit",
+      ".delpi-ui-form-review__rows",
+      ".delpi-ui-form-review__row",
+      ".delpi-ui-form-review__row--muted",
+      ".delpi-ui-form-review__row--block",
+      ".delpi-ui-form-result__inner",
+      ".delpi-ui-form-result__circle",
+      ".delpi-ui-form-result__title",
+      ".delpi-ui-form-result__message",
+      ".delpi-ui-form-result__hint",
+    ];
+    for (const selector of REQUIRED_SELECTORS) {
+      expect(css, selector).toContain(selector);
+    }
+  });
+
+  it("P4: FormButton é escopado na raiz do kit — vence ActionButton por especificidade", () => {
+    // §8.7: a sobrescrita do ActionButton não pode depender da ordem dos
+    // @import em styles.css — os seletores do FormButton DEVEM carregar a
+    // raiz `.delpi-ui-form-root` (especificidade 0-2-0 > 0-1-0).
+    const SCOPED_SELECTORS = [
+      /\.delpi-ui-form-root\s+\.delpi-ui-form-button\s*\{/,
+      /\.delpi-ui-form-root\s+\.delpi-ui-form-button--primary\s*\{/,
+      /\.delpi-ui-form-root\s+\.delpi-ui-form-button--secondary\s*\{/,
+      /\.delpi-ui-form-root\s+\.delpi-ui-form-button:focus-visible\s*\{/,
+      /\.delpi-ui-form-root\s+\.delpi-ui-form-button--full\s*\{/,
+    ];
+    for (const pattern of SCOPED_SELECTORS) {
+      expect(css, String(pattern)).toMatch(pattern);
+    }
+    // Nenhum seletor de form-button desescopado (perderia para a ordem).
+    const unscoped = css.match(
+      /(^|\})\s*\.delpi-ui-form-button[^{]*\{/g,
+    );
+    for (const rule of unscoped ?? []) {
+      expect(rule).toMatch(/\.delpi-ui-form-root\s/);
+    }
+    // E nunca !important (já coberto pelo teste global, reforçado aqui).
+    expect(css).not.toMatch(/!important/);
+  });
+
+  it("P4: rodapé fixo só abaixo de 600 px (sticky + static no media)", () => {
+    const footerBlock = declarationBlock(
+      /\.delpi-ui-form-step-footer\s*\{([^}]*)\}/,
+    );
+    const footer = normalize(footerBlock);
+    expect(footer).toContain("position: sticky");
+    expect(footer).toContain("bottom: 0");
+    expect(footer).toContain("margin: 8px -16px 0");
+    expect(footer).toContain(
+      "border-top: 1px solid var(--delpi-ui-border)",
+    );
+    expect(footer).toContain(
+      "box-shadow: var(--delpi-ui-form-footer-shadow)",
+    );
+    const mediaFooter = css.match(
+      /@media[^{]*min-width:\s*600px[^}]*\}[^@]*\.delpi-ui-form-step-footer\s*\{([^}]*)\}/,
+    ) ??
+      css.match(/\.delpi-ui-form-step-footer\s*\{[^}]*position:\s*static[^}]*\}/);
+    expect(mediaFooter).toBeTruthy();
+    expect(normalize(mediaFooter![1] ?? mediaFooter![0])).toContain(
+      "position: static",
+    );
   });
 
   it("R6: a pilha da resposta tem gap 12 px (estreito) e 14 px (≥600)", () => {

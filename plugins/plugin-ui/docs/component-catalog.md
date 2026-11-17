@@ -1511,6 +1511,46 @@ Envolve o `TextAreaField` **sem alterá-lo** (aparência só via classes `.delpi
 
 Pilha vertical 12 px (14 px ≥600) que resolve o R6: os filhos não-`legend` do `fieldset` vivem num content box anônimo onde o gap do `FormCard` não se aplica — usar dentro de `QuestionCard` envolvendo escala, campo e demais respostas. O erro do cartão segue logo após a pilha.
 
+## Ações e fechamento do kit de formulário (P4)
+
+Todos genéricos: textos e callbacks por props, zero lógica de fluxo.
+
+### `FormButton`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `variant` | `"primary" \| "secondary"` | Primary = accent/on-accent; secondary = surface + border-soft |
+| `busy` / `busyLabel` | `boolean` / `ReactNode` | `disabled` + `softDisabled` do ActionButton (foco preservado) e rótulo alternativo |
+| `fullWidth` / `type` / `onClick` | — | Largura total, `button`/`submit`, callback |
+
+Renderiza `ActionButton` **sem alterá-lo**. As regras de visual são seletores `.delpi-ui-form-root .delpi-ui-form-button*` (especificidade maior que `.delpi-ui-action-btn*`) — não dependem da ordem dos `@import` de `styles.css` nem de `!important` (§8.7; coberto pelo contrato CSS).
+
+### `FormStepFooter`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `message` | `ReactNode` | Pendência da etapa, `role="status"`, `--delpi-ui-danger` |
+| `back` | `{ label, onClick }` | Botão secundário (omitido se ausente) |
+| `next` | `{ label, onClick, busy?, busyLabel? }` | Botão primário |
+
+< 600 px: `position: sticky; bottom: 0` com margem negativa de 16 px até as bordas da coluna, superfície, borda superior e sombra para cima (`--delpi-ui-form-footer-shadow`). ≥ 600 px: flui no fim da coluna, mensagem à esquerda e botões à direita, primário ≥160 px. **Contrato (P6 obrigatório):** `sticky` só funciona se nenhum ancestral tiver `overflow` diferente de `visible` — verificar na página pública.
+
+### `FormNotice`
+
+`tone: "warning" | "info"`, `children`, `role="note"`. Warning usa `--delpi-ui-form-warning-*`; info usa `--delpi-ui-form-tint` + `--delpi-ui-form-accent-text`.
+
+### `FormReviewSection` / `FormReviewRow`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `title` | `ReactNode` | Título da seção (16 px/700) |
+| `edit` | `{ label, ariaLabel, onClick }` | Botão 36 px com lápis (lucide), hit area ≥44 px via `::before` |
+| `rows` | `{ label, value, muted?, block? }[]` | `dl`/`dt`/`dd`; `muted` = itálico `--delpi-ui-muted`; `block` = rótulo acima, `white-space: pre-line` |
+
+### `FormResultPanel`
+
+`tone: "success" | "info" | "warning" | "error"`, `title`, `message`, `hint?`, `action?`, `logo?`. Centralizada sobre `FormCard`. `success` mostra o círculo 72 px `--delpi-ui-success` com `Check` em `--delpi-ui-on-accent` (único tom com círculo). `role="status"` em success/info/warning e `role="alert"` em error.
+
 ---
 
 ## Família `charts` — matriz impacto × esforço

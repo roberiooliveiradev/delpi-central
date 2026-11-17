@@ -7,9 +7,14 @@ import {
   FormCard,
   FormHeaderCard,
   FormIntroCard,
+  FormButton,
   FormLogo,
+  FormNotice,
   FormPageLayout,
   FormProgress,
+  FormResultPanel,
+  FormReviewSection,
+  FormStepFooter,
   FormThemeToggle,
   NotApplicableOption,
   QuestionAnswerStack,
@@ -793,6 +798,238 @@ export const questionnaireCatalogEntries: CatalogEntryDraft[] = [
                   <TextAnswerDemo />
                 </QuestionAnswerStack>
               </QuestionCard>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.FormButton",
+    family: "forms",
+    exportName: "FormButton",
+    title: "FormButton",
+    description:
+      "Botão do formulário sobre o ActionButton intacto (§8.7): visual escopado na raiz do kit vence por especificidade; busy mantém o foco.",
+    docAnchor: "acoes-e-fechamento-do-kit-de-formulario-p4",
+    propsSummary: [
+      "variant",
+      "busy",
+      "busyLabel",
+      "fullWidth",
+      "type",
+      "onClick",
+      "children",
+    ],
+    demos: [
+      {
+        id: "variants",
+        label: "primário · secundário · enviando",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <QuestionAnswerStack prefix={P}>
+                <FormButton prefix={P} onClick={() => {}}>
+                  Avançar
+                </FormButton>
+                <FormButton
+                  prefix={P}
+                  variant="secondary"
+                  onClick={() => {}}
+                >
+                  Voltar
+                </FormButton>
+                <FormButton prefix={P} busy busyLabel="Enviando…">
+                  Enviar respostas
+                </FormButton>
+              </QuestionAnswerStack>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.FormStepFooter",
+    family: "forms",
+    exportName: "FormStepFooter",
+    title: "FormStepFooter",
+    description:
+      "Rodapé de ações: sticky na base abaixo de 600 px (exige ancestrais com overflow visible — verificação obrigatória do P6), mensagem role=status e botões Voltar/Avançar.",
+    docAnchor: "acoes-e-fechamento-do-kit-de-formulario-p4",
+    propsSummary: ["message", "back", "next", "prefix", "className"],
+    demos: [
+      {
+        id: "sticky",
+        label: "com e sem Voltar · mensagem · enviando (role no quadro)",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <div className="puc-form-footer-scroll">
+                <QuestionAnswerStack prefix={P}>
+                  <QuestionCard
+                    prefix={P}
+                    number={1}
+                    prompt="Como você avalia a experiência?"
+                    required
+                    requiredLabel="obrigatória"
+                  >
+                    <Scale15Demo />
+                  </QuestionCard>
+                  <QuestionCard
+                    prefix={P}
+                    number={2}
+                    prompt="Deixe uma sugestão de melhoria."
+                    optionalLabel="(opcional)"
+                  >
+                    <TextAnswerDemo />
+                  </QuestionCard>
+                </QuestionAnswerStack>
+                <FormStepFooter
+                  prefix={P}
+                  back={{ label: "Voltar", onClick: () => {} }}
+                  next={{ label: "Avançar", onClick: () => {} }}
+                />
+                <FormStepFooter
+                  prefix={P}
+                  message="Responda a questão 1 para continuar."
+                  back={{ label: "Voltar", onClick: () => {} }}
+                  next={{
+                    label: "Enviar respostas",
+                    onClick: () => {},
+                    busy: true,
+                    busyLabel: "Enviando…",
+                  }}
+                />
+              </div>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.FormNotice",
+    family: "forms",
+    exportName: "FormNotice",
+    title: "FormNotice",
+    description:
+      "Aviso em bloco (role=note): warning usa --delpi-ui-form-warning-*; info usa tint + accent-text. Textos por children.",
+    docAnchor: "acoes-e-fechamento-do-kit-de-formulario-p4",
+    propsSummary: ["tone", "children", "prefix", "className"],
+    demos: [
+      {
+        id: "tones",
+        label: "warning · info",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <QuestionAnswerStack prefix={P}>
+                <FormNotice prefix={P}>
+                  Suas respostas são anônimas e usadas apenas para melhoria.
+                </FormNotice>
+                <FormNotice prefix={P} tone="info">
+                  Você pode voltar e revisar antes de enviar.
+                </FormNotice>
+              </QuestionAnswerStack>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.FormReviewSection",
+    family: "forms",
+    exportName: "FormReviewSection",
+    title: "FormReviewSection",
+    description:
+      "Seção de revisão: título + Editar (hit ≥44 px) e dl/dt/dd — linhas comuns, muted (itálico) e block (comentário com pre-line).",
+    docAnchor: "acoes-e-fechamento-do-kit-de-formulario-p4",
+    propsSummary: ["title", "edit", "rows", "prefix", "className"],
+    demos: [
+      {
+        id: "rows",
+        label: "valor · N/A · vazio · comentário",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <FormReviewSection
+                prefix={P}
+                title="Suas respostas"
+                edit={{
+                  label: "Editar",
+                  ariaLabel: "Editar respostas desta etapa",
+                  onClick: () => {},
+                }}
+                rows={[
+                  { label: "Atendimento", value: "5 · Muito satisfeito" },
+                  { label: "Prazo de entrega", value: "Não se aplica" },
+                  {
+                    label: "Recomendação",
+                    value: "Sem resposta",
+                    muted: true,
+                  },
+                  {
+                    label: "Comentário",
+                    value:
+                      "Equipe atenciosa.\nEntrega dentro do prazo combinado.",
+                    block: true,
+                  },
+                ]}
+              />
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.FormResultPanel",
+    family: "forms",
+    exportName: "FormResultPanel",
+    title: "FormResultPanel",
+    description:
+      "Tela de resultado centrada: círculo success 72 px + check (só no tom success), role status/alert, título/mensagem/hint/ação por props.",
+    docAnchor: "acoes-e-fechamento-do-kit-de-formulario-p4",
+    propsSummary: [
+      "tone",
+      "title",
+      "message",
+      "hint",
+      "action",
+      "logo",
+      "prefix",
+      "className",
+    ],
+    demos: [
+      {
+        id: "tones",
+        label: "sucesso · erro com ação",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <QuestionAnswerStack prefix={P}>
+                <FormResultPanel
+                  prefix={P}
+                  tone="success"
+                  title="Respostas enviadas"
+                  message="Obrigado por participar. Sua opinião ajuda a melhorar nossos serviços."
+                  hint="Você já pode fechar esta página."
+                />
+                <FormResultPanel
+                  prefix={P}
+                  tone="error"
+                  title="Não foi possível enviar"
+                  message="Ocorreu uma falha ao registrar suas respostas."
+                  hint="Tente novamente em alguns instantes."
+                  action={
+                    <FormButton prefix={P} onClick={() => {}}>
+                      Tentar novamente
+                    </FormButton>
+                  }
+                />
+              </QuestionAnswerStack>
             )}
           </ThemedPair>
         ),
