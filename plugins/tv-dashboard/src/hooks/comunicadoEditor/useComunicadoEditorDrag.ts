@@ -492,20 +492,20 @@ export function useComunicadoEditorDrag({
             before.blocks?.find((block) => block.id === gesture.memberIds[0]);
           if (anchor) {
             const snappedGroup = snapComunicadoFrame(
-              { ...anchor, frame: gesture.group.frame } as ComunicadoBlock,
-              gesture.group.frame,
+              { ...anchor, frame: finalGesture.group.frame } as ComunicadoBlock,
+              finalGesture.group.frame,
               mode === "resize" ? "resize" : "move",
               snapPercents,
             );
             if (mode === "move") {
               finalGesture = {
-                ...gesture,
-                group: { ...gesture.group, frame: snappedGroup },
+                ...finalGesture,
+                group: { ...finalGesture.group, frame: snappedGroup },
               };
             } else if (mode === "resize") {
               finalGesture = applyGroupScale(
                 {
-                  ...gesture,
+                  ...finalGesture,
                   dragFromChrome: true,
                   interactionStartFrame: { ...gesture.childExtent },
                 },
@@ -521,11 +521,11 @@ export function useComunicadoEditorDrag({
               id: "group-chrome",
               frame: gesture.group.frame,
             } as unknown as ComunicadoBlock,
-            gesture.group.frame,
+            finalGesture.group.frame,
           );
           finalGesture = {
-            ...gesture,
-            group: { ...gesture.group, frame: clamped },
+            ...finalGesture,
+            group: { ...finalGesture.group, frame: clamped },
           };
         }
 
