@@ -9,6 +9,7 @@ from __future__ import annotations
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
+from app.domain.totvs.protheus_product_types import THIRD_PARTY_PRODUCT_TPMAT
 from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
     InventoryAdjustmentsRepository,
     _NATURE,
@@ -137,7 +138,7 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
                          THEN ABS(CAST({_VALUE} AS DECIMAL(28, 6)))
                          ELSE 0 END) AS signed_value,
                 SUM(CASE WHEN SD3.D3_CUSTO1 IS NULL
-                         AND LTRIM(RTRIM(ISNULL(SB1V.B1_TPMAT, ''))) <> '2'
+                         AND LTRIM(RTRIM(ISNULL(SB1V.B1_TPMAT, ''))) <> '{THIRD_PARTY_PRODUCT_TPMAT}'
                          THEN 1 ELSE 0 END)
                     AS unpriced_movements
             FROM SD3010 SD3 WITH (NOLOCK)
