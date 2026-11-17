@@ -7,16 +7,23 @@ Semântica oficial (Protheus MATA270):
 - B7_STATUS = '1'/'' → pendente de processamento → fora do denominador
   avaliável (exclusão auditável, não descarte silencioso).
 - Contagem processada sem ajuste SD3 INVENT = veredito oficial "correta";
-  com ajuste INVENT = "divergente". Ausência de ajuste não prova igualdade
-  física — prova a decisão oficial do Protheus dentro de sua tolerância.
-- Saldo teórico exibido por evento deriva da decisão oficial:
-  teórico = contado + furo_RE0 - sobra_DE0 (a autoridade é o ajuste SD3).
+  com ajuste INVENT = "divergente". Esta classificação continua auditável
+  porém NÃO é mais a fórmula do KPI de acuracidade.
+- Saldo teórico por evento deriva da decisão oficial:
+  teórico = contado + furo_RE0 - sobra_DE0 (ajuste SD3).
+- Acuracidade POR CONTAGEM = max(0, 100 * [1 - abs(contado-teórico)/teórico]).
+  Sobra e falta penalizam igualmente a diferença absoluta. Se o teórico
+  não é positivo, o percentual é indisponível e o evento não entra na média.
+- Acuracidade DO PERÍODO = média ARITMÉTICA SIMPLES dos percentuais de cada
+  contagem processada com teórico positivo, sem ponderar por quantidade ou R$.
+  Nenhum dado é fabricado em períodos sem base válida.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 OUTCOME_ACCURATE = "accurate"
 OUTCOME_DIVERGENT = "divergent"
@@ -148,6 +155,36 @@ def accuracy_percentage(accurate: int, evaluable: int) -> float | None:
     if evaluable <= 0:
         return None
     return round(accurate * 100.0 / evaluable, 2)
+
+
+def quantity_accuracy_percentage(
+    *, counted: float | int | str, theoretical: float | int | str,
+) -> float | None:
+    """Percentual de coincidência entre quantidade contada e teórica.
+
+    100 -> 10 = 10%; 100 -> 110 = 90%; 100 -> 200 = 0%.
+    Não existe denominador válido quando o teórico <= 0.
+    """
+    try:
+        reference = Decimal(str(theoretical))
+        actual = Decimal(str(counted))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    if not reference.is_finite() or not actual.is_finite() or reference <= 0:
+        return None
+    ratio = (Decimal(1) - abs(actual - reference) / reference) * Decimal(100)
+    score = max(Decimal(0), min(Decimal(100), ratio))
+    return float(score.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def mean_quantity_accuracy(
+    *, accuracy_sum: float | int | str, scored_count: int,
+) -> float | None:
+    """Média não ponderada, arredondada APENAS após somar os eventos."""
+    if scored_count <= 0:
+        return None
+    result = Decimal(str(accuracy_sum)) / Decimal(scored_count)
+    return float(result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 def summarize_availability(
