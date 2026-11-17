@@ -540,7 +540,7 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
 
             {study.scenarios.length ? (
               <EngineeringScopeChipBar
-                items={study.scenarios.map((s) => ({
+                chips={study.scenarios.map((s) => ({
                   id: s.clientId,
                   label: `Cenário ${s.label}`,
                   active: s.clientId === study.activeScenarioId,
