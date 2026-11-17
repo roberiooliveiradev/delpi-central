@@ -9,6 +9,7 @@ from __future__ import annotations
 import errno
 import json
 import os
+import stat
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -280,3 +281,98 @@ def test_candidate_has_no_production_entrypoint_or_mcp_interface():
         "create_mcp_server", "deploy", "get_docker_client",
     ):
         assert not hasattr(candidate, name)
+
+
+@pytest.mark.parametrize("attribute", [
+    "system.posix_acl_access",
+    "system.posix_acl_default",
+])
+def test_publisher_rejects_directory_acl_before_writing(handoff, monkeypatch, attribute):
+    directory, *_ = handoff
+    metadata = os.stat(directory)
+    original = candidate.os.getxattr
+
+    def injected_acl(fd, name):
+        observed = os.fstat(fd)
+        if (
+            name == attribute
+            and (observed.st_dev, observed.st_ino) == (metadata.st_dev, metadata.st_ino)
+        ):
+            return b"synthetic-extra-acl"
+        return original(fd, name)
+
+    monkeypatch.setattr(candidate.os, "getxattr", injected_acl)
+    assert_denied("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED", lambda: publish(handoff))
+    assert list(directory.iterdir()) == []
+
+
+def test_publisher_denies_extended_acl_on_existing_destination(handoff, monkeypatch):
+    publish(handoff)
+    directory = handoff[0]
+    path = directory / "inspect-snapshot.json"
+    old = path.read_bytes()
+    previous = os.stat(path)
+    original = candidate.os.getxattr
+
+    def injected_acl(fd, name):
+        observed = os.fstat(fd)
+        if (
+            name == "system.posix_acl_access"
+            and (observed.st_dev, observed.st_ino) == (previous.st_dev, previous.st_ino)
+        ):
+            return b"synthetic-extra-acl"
+        return original(fd, name)
+
+    monkeypatch.setattr(candidate.os, "getxattr", injected_acl)
+    assert_denied("HML_SNAPSHOT_DESTINATION_ACL_UNTRUSTED", lambda: publish(handoff))
+    assert path.read_bytes() == old
+    assert_clean_directory(handoff)
+
+
+def test_publisher_rejects_acl_on_new_stage_before_rename(handoff, monkeypatch):
+    original = candidate.has_no_extended_posix_acl
+
+    def injected_stage_acl(fd, *, directory):
+        if not directory:
+            return False
+        return original(fd, directory=directory)
+
+    monkeypatch.setattr(candidate, "has_no_extended_posix_acl", injected_stage_acl)
+    assert_denied("HML_SNAPSHOT_STAGE_ACL_UNTRUSTED", lambda: publish(handoff))
+    assert list(handoff[0].iterdir()) == []
+    assert_clean_directory(handoff)
+
+
+def test_publisher_denies_uninspectable_directory_acl(handoff, monkeypatch):
+    def inaccessible(_fd, _name):
+        raise OSError(errno.EOPNOTSUPP, "synthetic private extended ACL error")
+
+    monkeypatch.setattr(candidate.os, "getxattr", inaccessible)
+    assert_denied("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED", lambda: publish(handoff))
+    assert list(handoff[0].iterdir()) == []
+
+
+def test_publisher_acl_check_after_fsync_protects_previous_generation(handoff, monkeypatch):
+    publish(handoff)
+    directory, _, _, _ = handoff
+    old = (directory / "inspect-snapshot.json").read_bytes()
+    original_acl = candidate.has_no_extended_posix_acl
+    original_fsync = candidate.os.fsync
+    state = {"fsynced_stage": False}
+
+    def fsync_then_flip(fd):
+        result = original_fsync(fd)
+        if not stat.S_ISDIR(os.fstat(fd).st_mode):
+            state["fsynced_stage"] = True
+        return result
+
+    def late_acl(fd, *, directory):
+        if not directory and state["fsynced_stage"]:
+            return False
+        return original_acl(fd, directory=directory)
+
+    monkeypatch.setattr(candidate.os, "fsync", fsync_then_flip)
+    monkeypatch.setattr(candidate, "has_no_extended_posix_acl", late_acl)
+    assert_denied("HML_SNAPSHOT_STAGE_ACL_UNTRUSTED", lambda: publish(handoff))
+    assert (directory / "inspect-snapshot.json").read_bytes() == old
+    assert_clean_directory(handoff)
