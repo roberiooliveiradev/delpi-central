@@ -18,6 +18,8 @@ export type ChartAxisLinesProps = {
   showY?: boolean;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
+  /** Colunas/barras: o eixo categórico cruza o eixo numérico no zero. */
+  zeroValueBaseline?: boolean;
 };
 
 export function ChartAxisLines({
@@ -27,6 +29,7 @@ export function ChartAxisLines({
   showY,
   interaction,
   chartParts,
+  zeroValueBaseline = false,
 }: ChartAxisLinesProps) {
   const cn = useSeriesChartClasses();
   const drawX = visible !== false && showX !== false;
@@ -34,7 +37,13 @@ export function ChartAxisLines({
   if (!drawX && !drawY) return null;
 
   const { margin, plotW, plotH } = layout;
-  const xAxisY = margin.top + plotH;
+  const alignZero = zeroValueBaseline && layout.axisMin <= 0 && layout.axisMax >= 0;
+  const xAxisY = alignZero && layout.orientation === "vertical"
+    ? layout.toY(0)
+    : margin.top + plotH;
+  const yAxisX = alignZero && layout.orientation === "horizontal" && layout.toValueX
+    ? layout.toValueX(0)
+    : margin.left;
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const xRef = { kind: "axis" as const, axis: "x" as const };
   const yRef = { kind: "axis" as const, axis: "y" as const };
@@ -116,20 +125,20 @@ export function ChartAxisLines({
         >
           {interactive ? (
             <line
-              x1={margin.left}
+              x1={yAxisX}
               y1={margin.top}
-              x2={margin.left}
-              y2={xAxisY}
+              x2={yAxisX}
+              y2={margin.top + plotH}
               stroke="transparent"
               strokeWidth={10}
               pointerEvents="stroke"
             />
           ) : null}
           <line
-            x1={margin.left}
+            x1={yAxisX}
             y1={margin.top}
-            x2={margin.left}
-            y2={xAxisY}
+            x2={yAxisX}
+            y2={margin.top + plotH}
             className={[cn.axisLine, ySelected ? `${cn.root}__part--selected` : ""]
               .filter(Boolean)
               .join(" ")}

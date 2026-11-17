@@ -460,6 +460,9 @@ export function ChartPlotAreaGroup({
           visible={cartesianAxes}
           showX={cartesianAxes && config.showXAxisLabels !== false}
           showY={cartesianAxes && config.showYAxisLabels !== false}
+          zeroValueBaseline={
+            chartType === "bar" || chartType === "horizontal_bar" || chartType === "combo"
+          }
           interaction={interaction}
           chartParts={chartParts}
         />
