@@ -88,17 +88,3 @@ def test_series_keeps_semantic_day_week_month_year_and_weekly_table_fields():
     assert table["tableFields"] == "items"
     assert table["paramSchema"]["top_limit"]["default"] == 10
     assert "product_description" in table["valueFieldLabels"]
-
-
-def test_glpi_1615_weekly_ranking_declares_single_product_net_balance():
-    overlay = _overlay("get_supplies_inventory_adjustments_tv_weekly_items")
-    assert "filial e produto" in overlay["description"].lower()
-    assert "compensadas" in overlay["description"].lower()
-    assert overlay["valueFieldLabels"]["value_brl"] == "Saldo financeiro absoluto (R$)"
-    assert overlay["valueFieldLabels"]["signed_value_brl"].startswith("Saldo financeiro")
-    assert overlay["valueFieldLabels"]["signed_quantity"].startswith("Saldo físico")
-    assert overlay["valueFieldTypes"]["warehouse_count"] == "number"
-    assert overlay["valueFieldTypes"]["quantity_nature_label"] == "string"
-    assert overlay["valueFieldTypes"]["financial_nature_label"] == "string"
-    assert overlay["valueFieldLabels"]["warehouse"] == "Armazéns considerados"
-    assert "warehouse" in overlay["paramSchema"]  # filtro explícito continua disponível

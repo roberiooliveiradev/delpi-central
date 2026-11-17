@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
-from app.domain.totvs.protheus_product_types import THIRD_PARTY_PRODUCT_TPMAT
 from app.domain.totvs.protheus_warehouses import (
     COST_UNIT_WAREHOUSE,
     WAREHOUSE_FABRICA,
@@ -12,7 +11,8 @@ VALID_REFUGOS_BRANCHES = frozenset(PROTHEUS_BRANCH_CODES)
 # BC_TIPO = 'R' → refugo (painel). Scrap ('S') fica fora do escopo do dashboard.
 REFUGOS_LOSS_TYPE = "R"
 
-# SB1.B1_TPMAT = 2: constante de domínio reexportada do cadastro SB1.
+# SB1.B1_TPMAT (SX3 «Produto de Terceiro»): 1=Não, 2=Sim — painel exclui Sim.
+THIRD_PARTY_PRODUCT_TPMAT = "2"
 
 # Reexport — custo de refugo = almoxarifado (padrão Delpi).
 # Ver api-delpi/docs/api/padroes-totvs/armazem-custo.md

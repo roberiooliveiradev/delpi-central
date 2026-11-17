@@ -650,6 +650,37 @@ _B3_TOKEN_HUE = {
 _B3_ACHROMATIC = {"PT", "BR", "CZ", "BN", "AL"}
 
 
+def _b3_color_tokens(desc: str | None) -> tuple[list[str], str | None]:
+    """Tokens de cor declarados com proveniência.
+
+    Caminho normal: fronteira de palavra (``\\b``). Caso real do
+    90264311: a descrição chega colada numa única célula
+    (``caboepr125/150°c22awgvm600v…``) — sem separadores, o token
+    existe mas não tem borda. Nesse caso faz varredura gulosa só com
+    o conjunto cromático (acrômaticos como ``BR`` produzem falsos
+    positivos em ``NBR``/``PTO`` colados); a fonte
+    ``glued_substring`` registra a menor precisão da evidência."""
+    if not desc:
+        return [], None
+    up = desc.upper()
+    hits = _B3_COLOR_TOKEN_RE.findall(up)
+    if hits:
+        return hits, "word_boundary"
+    if len(up.split()) > 1 or len(up) < 12:
+        return [], None
+    tokens = sorted(set(_B3_TOKEN_HUE), key=len, reverse=True)
+    found: list[str] = []
+    i = 0
+    while i < len(up):
+        m = next((t for t in tokens if up.startswith(t, i)), None)
+        if m:
+            found.append(m)
+            i += len(m)
+        else:
+            i += 1
+    return found, ("glued_substring" if found else None)
+
+
 def _b3_component_description(row: dict) -> tuple[str | None, str | None]:
     """Texto declarado do componente com proveniência.
 
@@ -700,6 +731,7 @@ def _b3_declared_attributes(row: dict) -> dict[str, Any]:
         "category_token": None,
         "category_class": None,
         "color_tokens": [],
+        "color_token_source": None,
         "norm_applied": None,
         "norm_status": None,
     }
@@ -710,7 +742,8 @@ def _b3_declared_attributes(row: dict) -> dict[str, Any]:
             declared["category_token"] = first
             declared["category_class"] = klass
             break
-    declared["color_tokens"] = _B3_COLOR_TOKEN_RE.findall(up)
+    declared["color_tokens"], declared["color_token_source"] = (
+        _b3_color_tokens(desc))
     code = _row_field(row, "component_code")
     if desc:
         try:

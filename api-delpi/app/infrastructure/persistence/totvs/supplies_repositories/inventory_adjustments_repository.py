@@ -20,17 +20,12 @@ from app.domain.services.supplies.inventory_adjustment_service import (
     resolve_inventory_provenance,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
-from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustment_product_sql import (
-    inventory_adjustment_product_apply,
-)
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 _NATURE = InventoryAdjustmentClassification.NATURE_SQL_EXPRESSION
 _SIGNED_QTY = InventoryAdjustmentClassification.SIGNED_QUANTITY_SQL_EXPRESSION
 _SIGNED_VAL = InventoryAdjustmentClassification.SIGNED_VALUE_SQL_EXPRESSION
-_VALUE = InventoryAdjustmentClassification.MONETARY_VALUE_SQL_EXPRESSION
-_PRODUCT_APPLY = inventory_adjustment_product_apply()
 
 # Aggregate classification must reuse the canonical domain expression.  The
 # repository must not independently infer shortage/surplus from TM/CF/TPMOVAJ.
@@ -123,27 +118,26 @@ def _summary_select(dim_sql: str) -> str:
             ) AS net_adjustment_quantity,
             SUM(
                 CASE
-                  WHEN {_RECOGNIZED_NATURE_PREDICATE} THEN ABS({_VALUE})
+                  WHEN {_RECOGNIZED_NATURE_PREDICATE} THEN ABS(SD3.D3_CUSTO1)
                   ELSE 0
                 END
             ) AS gross_adjustment_value,
             SUM(
                 CASE
-                  WHEN {_SURPLUS_PREDICATE} THEN ABS({_VALUE})
-                  WHEN {_SHORTAGE_PREDICATE} THEN -ABS({_VALUE})
+                  WHEN {_SURPLUS_PREDICATE} THEN ABS(SD3.D3_CUSTO1)
+                  WHEN {_SHORTAGE_PREDICATE} THEN -ABS(SD3.D3_CUSTO1)
                   ELSE 0
                 END
             ) AS net_adjustment_value,
             SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN SD3.D3_QUANT ELSE 0 END)
                 AS shortage_quantity,
-            SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN ABS({_VALUE}) ELSE 0 END)
+            SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
                 AS shortage_value,
             SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN SD3.D3_QUANT ELSE 0 END)
                 AS surplus_quantity,
-            SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN ABS({_VALUE}) ELSE 0 END)
+            SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
                 AS surplus_value
         FROM SD3010 SD3 WITH (NOLOCK)
-        {_PRODUCT_APPLY}
     """
 
 
@@ -206,8 +200,8 @@ class InventoryAdjustmentsRepository(
             SD3.D3_EMISSAO AS issue_date,
             SD3.D3_FILIAL AS branch,
             SD3.D3_COD AS product_code,
-            SB1V.B1_DESC AS product_description,
-            SB1V.B1_UM AS unit,
+            SB1.B1_DESC AS product_description,
+            SB1.B1_UM AS unit,
             SD3.D3_LOCAL AS warehouse,
             RTRIM(LTRIM(SD3.D3_DOC)) AS document,
             SD3.D3_TM AS movement_type,
@@ -219,13 +213,15 @@ class InventoryAdjustmentsRepository(
             END AS movement_direction,
             SD3.D3_QUANT AS quantity,
             {_SIGNED_QTY} AS signed_quantity,
-            {_VALUE} AS movement_value,
+            SD3.D3_CUSTO1 AS movement_value,
             {_SIGNED_VAL} AS signed_value,
             provenance.candidate_document_count AS provenance_candidate_count,
             provenance.inventory_document AS provenance_document,
             provenance.counted_quantity AS provenance_counted_quantity
         FROM SD3010 SD3 WITH (NOLOCK)
-        {_PRODUCT_APPLY}
+        LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SD3.D3_COD
+           AND SB1.D_E_L_E_T_ = ''
         {_PROVENANCE_OUTER_APPLY}
         WHERE {where}
         ORDER BY SD3.D3_EMISSAO DESC, SD3.R_E_C_N_O_ DESC

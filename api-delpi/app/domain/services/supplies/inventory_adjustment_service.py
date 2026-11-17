@@ -40,7 +40,6 @@ e o repositório a referencia, sem duplicar condições.
 
 from __future__ import annotations
 
-from app.domain.totvs.protheus_product_types import THIRD_PARTY_PRODUCT_TPMAT
 from app.domain.totvs.protheus_internal_movements import (
     ADJUSTMENT_NATURE_SHORTAGE,
     ADJUSTMENT_NATURE_SURPLUS,
@@ -55,24 +54,6 @@ NATURE_LABELS: dict[str, str] = {
     NATURE_SHORTAGE: "Furo de inventário",
     NATURE_SURPLUS: "Sobra de inventário",
 }
-
-
-
-def inventory_adjustment_monetary_value_sql(
-    *, movement_alias: str = "SD3", product_alias: str = "SB1V"
-) -> str:
-    """Valor do movimento INVENT da perspectiva da Delpi, sem mudar o ERP.
-
-    SB1.B1_TPMAT='2' identifica material do cliente. Mantemos a movimentação
-    física para contagem e acuracidade, mas o custo gerencial deve ser zero.
-    A consulta deve fornecer product_alias via OUTER APPLY de cardinalidade 0..1.
-    D3_CUSTO1 é o valor TOTAL do movimento, nunca multiplicar por D3_QUANT.
-    """
-    return (
-        f"(CASE WHEN LTRIM(RTRIM(ISNULL({product_alias}.B1_TPMAT, ''))) "
-        f"= '{THIRD_PARTY_PRODUCT_TPMAT}' THEN 0 "
-        f"ELSE ISNULL({movement_alias}.D3_CUSTO1, 0) END)"
-    )
 
 
 class InventoryAdjustmentClassification:
@@ -96,12 +77,11 @@ class InventoryAdjustmentClassification:
           ELSE SD3.D3_QUANT
         END
     """
-    MONETARY_VALUE_SQL_EXPRESSION = inventory_adjustment_monetary_value_sql()
-    SIGNED_VALUE_SQL_EXPRESSION = f"""
+    SIGNED_VALUE_SQL_EXPRESSION = """
         CASE
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN {MONETARY_VALUE_SQL_EXPRESSION}
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -{MONETARY_VALUE_SQL_EXPRESSION}
-          ELSE {MONETARY_VALUE_SQL_EXPRESSION}
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_CUSTO1
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_CUSTO1
+          ELSE SD3.D3_CUSTO1
         END
     """
 
