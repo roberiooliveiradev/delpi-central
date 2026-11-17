@@ -51,6 +51,7 @@ jobs:
             tests/test_davi_knowledge_orchestration.py \
             tests/test_davi_enterprise_intelligence_acceptance_v1.py \
             tests/test_davi_concept_intent_guard.py \
+            tests/test_supplies_freight_impact.py \
             tests/test_supplies_inventory_adjustments.py \
             -q
 
