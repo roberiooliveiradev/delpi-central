@@ -117,14 +117,18 @@ function detailFields(
       value: formatNcDate(record.last_revision_date),
     },
     {
+      /* Executado/Liberado por são texto livre (sem amarração a
+       * usuário do Portal) — renderizam como campo de dados simples,
+       * sem avatar: exibir rosto/iniciais sugeriria identidade que o
+       * registro não possui. */
       label: "Executado por",
       hint: NC_HELP.executedBy,
-      value: <NcUserIdentity name={record.executed_by} />,
+      value: record.executed_by?.trim() || "—",
     },
     {
       label: "Liberado por",
       hint: NC_HELP.releasedBy,
-      value: <NcUserIdentity name={record.released_by} />,
+      value: record.released_by?.trim() || "—",
     },
     {
       label: "Criado por",

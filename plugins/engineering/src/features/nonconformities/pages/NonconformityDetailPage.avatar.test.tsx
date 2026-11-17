@@ -29,15 +29,19 @@ describe("NonconformityDetailPage — avatar canônico (Core via BFF)", () => {
     );
   });
 
-  it("campos sem id auditável permanecem em iniciais (sem foto errada)", () => {
-    // executed_by/released_by são labels livres do registro — não
-    // recebem src derivado (avatarFor só aparece em created/updated).
+  it("campos de texto livre não exibem avatar (sem identidade)", () => {
+    // executed_by/released_by são labels digitados — renderizam como
+    // valor simples, sem NcUserIdentity nem avatar: amostrar rosto ou
+    // iniciais sugeriria vínculo de usuário que o registro não tem.
     const executed = SRC.indexOf('label: "Executado por"');
     const created = SRC.indexOf('label: "Criado por"');
-    const executedBlock = SRC.slice(executed, created);
-    expect(executedBlock).not.toMatch(/avatarFor/);
-    const released = SRC.indexOf('label: "Liberado por"');
-    const releasedBlock = SRC.slice(released, created);
-    expect(releasedBlock).not.toMatch(/avatarFor/);
+    const freeTextBlock = SRC.slice(executed, created);
+    expect(freeTextBlock).not.toMatch(/NcUserIdentity|avatarFor|Avatar/);
+    expect(SRC).toMatch(
+      /record\.executed_by\?\.trim\(\) \|\| "—"/,
+    );
+    expect(SRC).toMatch(
+      /record\.released_by\?\.trim\(\) \|\| "—"/,
+    );
   });
 });
