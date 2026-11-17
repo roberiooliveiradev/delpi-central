@@ -33,4 +33,16 @@ describe("PrcDetailPage — conversa PRC (estrutural)", () => {
     expect(SRC).toMatch(/loadAvatar=\{loadConversationAvatar\}/);
     expect(SRC).toMatch(/downloadParticipantAvatarBlob/);
   });
+
+  it("FIX-F01 — evento realtime do caso refaz a leitura via refreshKey", () => {
+    expect(SRC).toMatch(/refreshKey=\{conversationRefreshKey\}/);
+    /* bump dentro do callback do usePrcCaseSync (escopo do caso) e
+     * antes do gate de edição — rascunho/anexo do composer
+     * preservados pelo reload interno do painel. */
+    const sync = SRC.indexOf("usePrcCaseSync(");
+    const bump = SRC.indexOf("setConversationRefreshKey((key) => key + 1)");
+    const editGate = SRC.indexOf("setRemoteChanged(true)", sync);
+    expect(bump).toBeGreaterThan(sync);
+    expect(bump).toBeLessThan(editGate);
+  });
 });

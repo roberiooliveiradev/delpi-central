@@ -219,12 +219,17 @@ export function PrcDetailPage({
    * não sobrescrever o rascunho; ao sair da edição, recarrega. */
   const editingRef = useRef(editing);
   const [remoteChanged, setRemoteChanged] = useState(false);
+  /* FIX-F01 — evento realtime do caso aberto refaz a leitura da
+   * conversa via refreshKey do kit; draft/anexos/edição do composer
+   * não são tocados pelo reload interno do painel. */
+  const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
   useEffect(() => {
     editingRef.current = editing;
   }, [editing]);
   usePrcCaseSync(
     requestId,
     useCallback(() => {
+      setConversationRefreshKey((key) => key + 1);
       if (editingRef.current) {
         setRemoteChanged(true);
         return;
@@ -879,6 +884,7 @@ export function PrcDetailPage({
             <ConversationPanel
               requestId={detail.id}
               api={prcConversationApi}
+              refreshKey={conversationRefreshKey}
               canComment={
                 detail.status !== "completed" && detail.status !== "rejected"
               }
