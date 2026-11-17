@@ -1,0 +1,65 @@
+name: Supplies | Inventory quantity accuracy quality
+
+on:
+  pull_request:
+    paths:
+      - "api-delpi/app/**/inventory_accuracy*"
+      - "api-delpi/tests/test_supplies_inventory_accuracy.py"
+      - "plugins/dashboard-supplies/src/pages/InventoryAccuracyPage.tsx"
+      - "plugins/dashboard-supplies/src/types/supplies.ts"
+      - "plugins/dashboard-supplies/src/content/helpTooltips.ts"
+      - ".github/workflows/supplies-inventory-accuracy-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "api-delpi/app/**/inventory_accuracy*"
+      - "api-delpi/tests/test_supplies_inventory_accuracy.py"
+      - "plugins/dashboard-supplies/src/pages/InventoryAccuracyPage.tsx"
+      - "plugins/dashboard-supplies/src/types/supplies.ts"
+      - "plugins/dashboard-supplies/src/content/helpTooltips.ts"
+      - ".github/workflows/supplies-inventory-accuracy-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  accuracy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - name: Dependências da API
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r api-delpi/requirements.txt
+      - name: Testes de acuracidade por quantidade
+        working-directory: api-delpi
+        run: PYTHONPATH=. pytest tests/test_supplies_inventory_accuracy.py -q
+
+  accuracy-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: plugins/dashboard-supplies/package-lock.json
+      - name: Instalar kit visual compartilhado
+        run: npm ci --prefix plugins/plugin-ui
+      - name: Instalar Dashboard Suprimentos
+        run: npm ci --prefix plugins/dashboard-supplies
+      - name: Lint dos arquivos alterados
+        working-directory: plugins/dashboard-supplies
+        run: npx eslint src/pages/InventoryAccuracyPage.tsx src/types/supplies.ts src/content/helpTooltips.ts
+      # O Dockerfile oficial publica com vite build. O tsc -b completo
+      # atualmente falha em arquivos pré-existentes do kit compartilhado
+      # (ConversationPanel.tsx e prcCatalogStore.ts), fora desta PR.
+      # O escopo modificado passa pelo lint acima e pelo build real de deploy.
+      - name: Build de produção (mesmo comando do Dockerfile)
+        working-directory: plugins/dashboard-supplies
+        run: npx vite build

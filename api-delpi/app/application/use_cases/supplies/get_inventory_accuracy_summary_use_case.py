@@ -40,10 +40,35 @@ class GetInventoryAccuracySummaryUseCase:
         valid = totals["valid_count_total"]
         evaluable = totals["evaluable_count_total"]
         accurate = totals["accurate_count"]
+        # A contagem de eventos "corretos" continua diagnóstica, mas o KPI
+        # passa a ser a média simples dos percentuais QUANTITATIVOS.
+        scored = totals.get("scored_count", 0)
+        unscorable = totals.get("unscorable_count", 0)
+        quantity_accuracy = svc.mean_quantity_accuracy(
+            accuracy_sum=totals.get("quantity_accuracy_sum", 0),
+            scored_count=scored,
+        )
 
         status, reason = svc.summarize_availability(
             valid_count=valid, evaluable_count=evaluable
         )
+
+        # Se há contagens processadas mas nenhuma com saldo teórico positivo,
+        # não mostrar "0%" de acuracidade: sinalizar indisponibilidade.
+        if status == "ok" and quantity_accuracy is None:
+            status, reason = "unavailable", "no_scorable_theoretical_quantity"
+
+        by_branch = []
+        for row in data["by_branch"]:
+            branch_scored = row.get("scored_count", 0)
+            by_branch.append({
+                **row,
+                "accuracy_percentage": svc.mean_quantity_accuracy(
+                    accuracy_sum=row.get("quantity_accuracy_sum", 0),
+                    scored_count=branch_scored,
+                ),
+                "accuracy_calculation": "arithmetic_mean_quantity_accuracy",
+            })
 
         return {
             "reference": {
@@ -59,16 +84,17 @@ class GetInventoryAccuracySummaryUseCase:
                 "evaluable_count_total": evaluable,
                 "accurate_count": accurate,
                 "divergent_count": totals["divergent_count"],
-                "accuracy_percentage": svc.accuracy_percentage(
-                    accurate, evaluable
-                ),
+                "accuracy_percentage": quantity_accuracy,
+                "accuracy_calculation": "arithmetic_mean_quantity_accuracy",
+                "scored_count": scored,
+                "unscorable_count": unscorable,
                 "coverage_percentage": svc.accuracy_percentage(
                     evaluable, valid
                 ),
                 "shortage_value_total": totals["shortage_value_total"],
                 "surplus_value_total": totals["surplus_value_total"],
                 "comparison_source": (
-                    "protheus_mata270_adjustment_decision"
+                    "protheus_mata270_quantity_difference"
                 ),
                 "status": status,
                 "unavailable_reason": reason,
@@ -78,8 +104,9 @@ class GetInventoryAccuracySummaryUseCase:
                     "excluded_pending_processing"
                 ],
                 "cancelled": cancelled,
+                "unscorable_nonpositive_theoretical": unscorable,
             },
-            "by_branch": data["by_branch"],
+            "by_branch": by_branch,
         }
 
 

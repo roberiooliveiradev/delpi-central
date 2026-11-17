@@ -53,6 +53,7 @@ jobs:
             tests/test_davi_concept_intent_guard.py \
             tests/test_supplies_freight_impact.py \
             tests/test_supplies_inventory_adjustments.py \
+            tests/test_supplies_inventory_accuracy.py \
             tests/test_tv_inventory_divergences_1598.py \
             -q
 

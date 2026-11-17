@@ -45,7 +45,13 @@ _SUMMARY_FIELDS = {
         "label": "Contagens divergentes", "type": "integer"
     },
     "accuracy_percentage": {
-        "label": "% acuracidade", "type": "number"
+        "label": "% acuracidade quantitativa média", "type": "number"
+    },
+    "scored_count": {
+        "label": "Contagens com percentual calculável", "type": "integer"
+    },
+    "unscorable_count": {
+        "label": "Contagens sem saldo teórico positivo", "type": "integer"
     },
     "coverage_percentage": {
         "label": "% cobertura", "type": "number"
@@ -67,6 +73,9 @@ _ITEM_FIELDS = {
     "counted_quantity": {"label": "Quantidade contada", "type": "number"},
     "theoretical_quantity": {
         "label": "Saldo teórico", "type": "number"
+    },
+    "quantity_accuracy_percentage": {
+        "label": "Acuracidade da contagem (%)", "type": "number"
     },
     "outcome": {"label": "Resultado", "type": "string"},
     "inventory_document": {

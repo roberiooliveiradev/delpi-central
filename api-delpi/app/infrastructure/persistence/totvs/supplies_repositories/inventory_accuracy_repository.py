@@ -79,6 +79,9 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
                 "surplus_value_total": _f(
                     totals.get("surplus_value_total")
                 ),
+                "scored_count": _i(totals.get("scored_count")),
+                "unscorable_count": _i(totals.get("unscorable_count")),
+                "quantity_accuracy_sum": _f(totals.get("quantity_accuracy_sum")),
             },
             "by_branch": [
                 {
@@ -96,6 +99,9 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
                     "surplus_value_total": _f(
                         row.get("surplus_value_total")
                     ),
+                    "scored_count": _i(row.get("scored_count")),
+                    "unscorable_count": _i(row.get("unscorable_count")),
+                    "quantity_accuracy_sum": _f(row.get("quantity_accuracy_sum")),
                 }
                 for row in by_branch
             ],
@@ -176,6 +182,10 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
                 "count_date": _iso_date(row.get("count_date")),
                 "counted_quantity": _f(row.get("counted_quantity")),
                 "theoretical_quantity": _f(row.get("theoretical_quantity")),
+                "quantity_accuracy_percentage": (
+                    None if row.get("quantity_accuracy_percentage") is None
+                    else _f(row.get("quantity_accuracy_percentage"))
+                ),
                 "divergence_quantity": _f(row.get("theoretical_quantity"))
                 - _f(row.get("counted_quantity")),
                 "shortage_quantity": _f(row.get("shortage_quantity")),

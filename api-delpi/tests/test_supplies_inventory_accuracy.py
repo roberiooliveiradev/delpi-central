@@ -255,8 +255,18 @@ class _StubRepo:
                 "excluded_pending_processing": 11,
                 "shortage_value_total": 1710000.0,
                 "surplus_value_total": 1650000.0,
+                # Soma dos percentuais de cada evento (não da quantidade).
+                "scored_count": 309,
+                "unscorable_count": 0,
+                "quantity_accuracy_sum": 28428.0,  # 92% em média
             },
-            "by_branch": [],
+            "by_branch": [
+                {
+                    "branch": "02", "scored_count": 3,
+                    "unscorable_count": 0,
+                    "quantity_accuracy_sum": 190.0,  # 10%, 90%, 90% => 63.33
+                }
+            ],
         }
 
     def count_cancelled_events(self, **kwargs):
@@ -275,11 +285,14 @@ def test_summary_use_case_real_shape() -> None:
     assert s["valid_count_total"] == 320
     assert s["evaluable_count_total"] == 309
     assert s["accurate_count"] == 5
-    assert s["accuracy_percentage"] == 1.62
+    assert s["accuracy_percentage"] == 92.0
+    assert s["accuracy_calculation"] == "arithmetic_mean_quantity_accuracy"
+    assert s["scored_count"] == 309
     assert s["coverage_percentage"] == 96.56
+    assert result["by_branch"][0]["accuracy_percentage"] == 63.33
     assert s["status"] == "ok"
     assert s["comparison_source"] == (
-        "protheus_mata270_adjustment_decision"
+        "protheus_mata270_quantity_difference"
     )
     assert result["reference"]["reference_month"] == "2026-09"
     assert result["reference"]["period_closed"] is True
@@ -386,3 +399,77 @@ def test_sql_sort_tiebreaker_stable() -> None:
         assert "branch ASC" in order_by
         assert "warehouse ASC" in order_by
         assert "count_date" in order_by
+
+
+
+# --- regra aprovada pela área: acuracidade física POR QUANTIDADE ---
+
+@pytest.mark.parametrize(
+    ("expected", "counted", "accuracy"),
+    [
+        (100, 10, 10.00),     # perda de 90 unidades
+        (100, 110, 90.00),   # sobra de 10: também penaliza a diferença
+        (100, 100, 100.00),  # contagem exata
+        (100, 0, 0.00),      # perda total
+        (100, 200, 0.00),    # excesso de 100
+        (100, 400, 0.00),    # não permitir acuracidade negativa
+        (93, 55, 59.14),    # exemplo de SB7×SD3 da filial 02
+        (256.105, 249.8, 97.54),
+    ],
+)
+def test_quantity_accuracy_uses_absolute_quantity_difference(expected, counted, accuracy):
+    assert svc.quantity_accuracy_percentage(
+        theoretical=expected, counted=counted,
+    ) == accuracy
+
+
+def test_quantity_accuracy_zero_or_negative_theoretical_is_not_scored():
+    assert svc.quantity_accuracy_percentage(theoretical=0, counted=0) is None
+    assert svc.quantity_accuracy_percentage(theoretical=0, counted=10) is None
+    assert svc.quantity_accuracy_percentage(theoretical=-5, counted=3) is None
+    assert svc.mean_quantity_accuracy(accuracy_sum=0, scored_count=0) is None
+
+
+def test_mean_of_percentages_not_weighted_by_inventory_quantities():
+    # Eventos: 100 esperadas, 10 contadas -> 10%; 1 esperada, 1
+    # contada -> 100%. Média correta = 55%, sem ponderar 100:1.
+    first = svc.quantity_accuracy_percentage(theoretical=100, counted=10)
+    second = svc.quantity_accuracy_percentage(theoretical=1, counted=1)
+    assert svc.mean_quantity_accuracy(
+        accuracy_sum=first + second, scored_count=2
+    ) == 55.0
+
+
+def test_mean_rounding_only_after_aggregating_all_items():
+    # Soma dos percentuais com precisão SQL, arredondamento na média final.
+    assert svc.mean_quantity_accuracy(
+        accuracy_sum="196.666666", scored_count=3
+    ) == 65.56
+
+
+def test_sql_uses_per_item_quantity_score_and_avg_without_legacy_count_ratio():
+    q, params = sql.build_summary_queries(
+        branches=("02",), period_start="20261101",
+        period_end_exclusive="20261201",
+    )
+    assert "theoretical_quantity > 0" in q
+    assert "ABS(counted_quantity - theoretical_quantity)" in q
+    assert "quantity_accuracy_sum" in q
+    assert "scored_count" in q
+    assert "unscorable_count" in q
+    assert "SUM(" in q
+    assert "CASE" in q
+    assert "NULLIF(theoretical_quantity, 0)" in q
+    assert "GROUP BY branch" in q
+    assert params == ["02", "20261101", "20261201", "02", "20261101", "20261201"]
+
+
+def test_sql_items_exposes_per_count_percentage_for_audit_and_export():
+    q, _ = sql.build_items_query(
+        branches=("02",), period_start="20261101",
+        period_end_exclusive="20261201", outcome=None, search=None,
+        sort="count_date_desc", offset=0, page_size=50,
+    )
+    assert "AS quantity_accuracy_percentage" in q
+    assert "FROM evaluated" in q
+    assert "theoretical_quantity <= 0" in q

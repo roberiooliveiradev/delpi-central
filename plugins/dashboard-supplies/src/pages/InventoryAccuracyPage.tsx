@@ -87,6 +87,7 @@ function itemToExportRecord(row: InventoryAccuracyItem) {
     warehouse: row.warehouse,
     counted: row.counted_quantity,
     theoretical: row.theoretical_quantity,
+    quantity_accuracy_percentage: row.quantity_accuracy_percentage,
     divergence: row.divergence_quantity,
     outcome: outcomeLabel(row.outcome),
     document: row.inventory_document ?? "",
@@ -252,6 +253,12 @@ export function InventoryAccuracyPage({
         render: (row) => formatDecimal(row.divergence_quantity),
       },
       {
+        key: "quantity_accuracy_percentage",
+        header: "Acuracidade (%)",
+        className: "ds-table__col--numeric",
+        render: (row) => formatPercent(row.quantity_accuracy_percentage),
+      },
+      {
         key: "outcome",
         header: "Resultado",
         render: (row) => outcomeLabel(row.outcome),
@@ -379,7 +386,9 @@ export function InventoryAccuracyPage({
           title="Acuracidade"
           titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.inventoryAccuracy}
           value={formatPercent(data?.summary.accuracy_percentage)}
-          subtitle={`${periodLabel} · ${branchLabel} · universo: contagens oficiais`}
+          subtitle={`${periodLabel} · ${branchLabel} · média de ${formatInteger(
+            data?.summary.scored_count
+          )} contagens com saldo teórico positivo`}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy}
         />
@@ -530,6 +539,11 @@ export function InventoryAccuracyPage({
               value: formatDecimal(row.divergence_quantity),
             },
             {
+              id: "quantity_accuracy_percentage",
+              label: "Acuracidade da contagem",
+              value: formatPercent(row.quantity_accuracy_percentage),
+            },
+            {
               id: "branch",
               label: "Filial",
               value: row.branch,
@@ -613,10 +627,16 @@ export function InventoryAccuracyPage({
       {data ? (
         <p className="ds-footnote">
           Divergência = teórico − contado (positivo = falta, negativo =
-          sobra) · Acuracidade mede apenas o universo contado oficialmente
-          no período, não o estoque total · Filtros de resultado, busca e
-          ordenação afetam apenas a listagem — os KPIs refletem o universo
-          do recorte
+          sobra) · Acuracidade por item = 100% menos a diferença absoluta
+          entre contado e teórico, proporcional ao saldo teórico. O indicador
+          geral é a média simples desses percentuais, sem ponderar pelo
+          valor ou quantidade de estoque. Contagens processadas com teórico
+          zero ou negativo não entram na média
+          {data.summary.unscorable_count > 0
+            ? ` (${formatInteger(data.summary.unscorable_count)} sem base de cálculo)`
+            : ""} · O indicador representa apenas os itens contados
+          oficialmente no período, não o estoque total · Filtros de resultado,
+          busca e ordenação afetam apenas a listagem
           {data.exclusions.pending_processing > 0 ||
           data.exclusions.cancelled > 0
             ? ` · ${formatInteger(

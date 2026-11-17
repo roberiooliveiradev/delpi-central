@@ -33,6 +33,38 @@ DEFAULT_SORT = "count_date_desc"
 
 _INBOUND = MOVEMENT_TYPE_INBOUND_THRESHOLD  # '500' — TM < 500 = sobra/entrada
 
+# Quantidade esperada = contado + falta - sobra (pareamento MATA270/SD3).
+# Acuracidade de cada evento = max(0, 100 * [1 - |contado - teórico| / teórico]).
+# Apenas eventos processados, com teórico positivo, são pontuáveis.
+# A média mensal é SIMPLES: soma dos percentuais por evento / nº de eventos
+# pontuáveis; não ponderamos pelo tamanho do estoque ou pelo valor financeiro.
+# Não arredondar individualmente antes da média; Decimal preserva a precisão.
+_QUANTITY_ACCURACY_SQL = """
+CASE
+    WHEN outcome NOT IN ('accurate', 'divergent') OR theoretical_quantity <= 0
+        THEN NULL
+    WHEN ABS(counted_quantity - theoretical_quantity) >= theoretical_quantity
+        THEN CAST(0 AS DECIMAL(18, 6))
+    ELSE CAST(
+        100.0 - 100.0 * ABS(counted_quantity - theoretical_quantity)
+                / NULLIF(theoretical_quantity, 0)
+        AS DECIMAL(18, 6)
+    )
+END
+""".strip()
+
+def _accuracy_summary_sql() -> str:
+    return f"""
+    SUM(CASE WHEN outcome IN ('accurate','divergent')
+                  AND theoretical_quantity > 0 THEN 1 ELSE 0 END)
+        AS scored_count,
+    SUM(CASE WHEN outcome IN ('accurate','divergent')
+                  AND theoretical_quantity <= 0 THEN 1 ELSE 0 END)
+        AS unscorable_count,
+    SUM({_QUANTITY_ACCURACY_SQL}) AS quantity_accuracy_sum,
+"""
+
+
 
 def _in_placeholders(values: Sequence[str]) -> str:
     return ", ".join("?" for _ in values)
@@ -151,7 +183,7 @@ def build_summary_queries(
         period_start=period_start,
         period_end_exclusive=period_end_exclusive,
     )
-    combined = cte + """
+    combined = cte + f"""
 SELECT * INTO #evaluated FROM evaluated;
 
 SELECT
@@ -164,7 +196,8 @@ SELECT
     SUM(CASE WHEN exclusion_reason = 'pending_processing'
              THEN 1 ELSE 0 END) AS excluded_pending_processing,
     SUM(shortage_value) AS shortage_value_total,
-    SUM(surplus_value) AS surplus_value_total
+    SUM(surplus_value) AS surplus_value_total,
+    {_accuracy_summary_sql().strip().rstrip(',')}
 FROM #evaluated;
 
 SELECT branch,
@@ -178,7 +211,8 @@ SELECT branch,
        SUM(CASE WHEN outcome = 'excluded' THEN 1 ELSE 0 END)
            AS excluded_count,
        SUM(shortage_value) AS shortage_value_total,
-       SUM(surplus_value) AS surplus_value_total
+       SUM(surplus_value) AS surplus_value_total,
+       {_accuracy_summary_sql().strip().rstrip(',')}
 FROM #evaluated
 GROUP BY branch;
 
@@ -256,7 +290,8 @@ SELECT branch, product_code, description, unit_of_measure, blocked,
        warehouse, count_date, counted_quantity, theoretical_quantity,
        shortage_quantity, surplus_quantity, shortage_value, surplus_value,
        adjustment_rows, physical_lines, inventory_document, count_status,
-       outcome, exclusion_reason
+       outcome, exclusion_reason,
+       {_QUANTITY_ACCURACY_SQL} AS quantity_accuracy_percentage
 FROM evaluated
 {where}
 ORDER BY {order}
