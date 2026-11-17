@@ -10,8 +10,8 @@
 | **P1** | 0 + 1 | Inventário, tokens claro/escuro, controle de tema, layout da página, demos no catálogo | PluginUI: DEV → **PROD** (componentes genéricos) | **ACEITO COM RESÍDUOS** — commit `7abe0b338b`, deploy PROD e HML em 16/11/2026 (ver §3) |
 | **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `78f11fbd03`, deploy PROD e HML em 16–17/11/2026 (ver §5) |
 | **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f75d2385fe`, deploy PROD e HML em 17/11/2026; R8 obrigatório no P4 (ver §7) |
-| **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§8) |
-| P5 | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | A gerar |
+| **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
+| **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§10) |
 | P6 | 7 | Página pública nova da Pesquisa no `public-hub` | **Somente HML** | A gerar |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
@@ -412,3 +412,120 @@ Os anteriores, mais: nenhuma lógica de fluxo (navegação entre etapas, valida�
 1. **R8:** aceita a estrutura proposta (`__main` com números + legenda; “Sua nota”, divisor e N/A como irmãos; reposicionamento por `order` só a partir de 600 px; ordem de foco inalterada).
 2. **`FormButton` sem depender da ordem dos `@import`:** a sobrescrita do `ActionButton` não pode depender de `questionnaire.css` vir depois de `action-controls.css` em `styles.css` (frágil: qualquer reordenação quebra o visual). Escopar os seletores na raiz do kit, ex.: `.delpi-ui-form-root .delpi-ui-form-button`, ganhando especificidade sem `!important` e sem tocar no `ActionButton`; incluir no teste de contrato.
 3. **Rodapé fixo:** registrar no relatório que o `position: sticky` só funciona se nenhum ancestral tiver `overflow` diferente de `visible` — conferir na demo e anotar como verificação obrigatória da página pública (P6).
+
+---
+
+## 9. Revisão do P4 (17/11/2026)
+
+**Veredito do coordenador:** `ACCEPT_WITH_RESIDUAL`. Conferido: commit `52064ee9d3` em `main`, 20 arquivos só em `plugins/plugin-ui`; `ActionButton`, `src/index.ts` e `src/styles.css` intocados. **R8 corrigido**: números e legenda no bloco `__main`; “Sua nota”, divisor e N/A como irmãos. `FormButton` com seletores escopados na raiz do kit, coberto por teste de contrato. Rodapé fixo medido em 360/375 px nos dois temas. Contrastes de texto e ícones ≥ 4,5:1 nos dois temas. Verificador: `ACCEPT_WITH_RESIDUAL` na 1ª rodada, sem ordens de correção.
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| R10 | Bordas `border-soft`, aviso e trilho abaixo de 3:1 no claro (1,45 / 1,36 / 1,21) | Aceito: elementos com texto ou ícone próprios; controles de resposta usam `control-border` (3,04:1) |
+| R11 | `FormButton` com `busy` + `type="submit"` cai no `disabled` nativo do `ActionButton` | O fluxo do P5 usa `type="button"`; sem envio por `<form>` |
+| R12 | Sem teste dedicado para `FormNotice` tom `warning` → `status` | Incluir no P5 |
+| R13 | Executor usou índice Git temporário para isolar o commit com stage de terceiros e “ressincronizou” caminhos do pacote | Aceito; no P5 preferir o worktree temporário do §6.8 se o stage compartilhado estiver sujo |
+| — | Rodapé fixo exige ancestrais com `overflow: visible` | Verificação obrigatória no P6 |
+
+## 10. Pacote P5 — `GuidedQuestionnaire`: o formulário guiado completo
+
+**Fase do plano:** 5. **Pré-requisito:** P4 aceito.
+
+### 10.1 Objetivo
+
+Criar no kit o componente que monta **todo o fluxo** — abertura → etapas → revisão → envio → resultado — a partir de uma **definição declarativa**, usando somente os componentes do P1–P4. Validado com um questionário **de exemplo fictício** (não a Pesquisa). Regras: [UI-03 §4](./UI-03-FORMULARIO-PUBLICO.md#4-regras-funcionais-vigentes-inalteradas-desde-11112026) e §5.3.
+
+### 10.2 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/plugin-ui/src/components/forms/questionnaire/` | Novos: `GuidedQuestionnaire.tsx`, `guidedQuestionnaireTypes.ts`, `guidedQuestionnaireState.ts` (lógica pura: validação, progresso, transições), `useUnsavedChangesWarning.ts` + testes; `index.ts` |
+| `plugins/plugin-ui/src/styles/questionnaire.css` | Só se faltar algum ajuste de layout do fluxo |
+| `plugins/plugin-ui/src/components/forms/index.ts` | Exports |
+| `plugins/plugin-ui/src/catalog/visualComponents.ts`, `demos/questionnaire.tsx`, `src/app/catalog.css` | Inventário e demo interativa |
+| `plugins/plugin-ui/docs/component-catalog.md` | Documentação do contrato |
+
+### 10.3 Contrato (nomes propostos; ajustar ao padrão do kit sem mudar o comportamento)
+
+**Definição**
+
+```ts
+type QuestionnaireAnswer = number | "na" | string;
+type QuestionnaireAnswers = Record<string, QuestionnaireAnswer>;
+
+type QuestionnaireQuestion =
+  | { kind: "scale"; key: string; number?: ReactNode; eyebrow?: ReactNode; prompt: ReactNode; required: boolean;
+      scale: { min: number; max: number; optionLabel(n: number): string;
+               endLabels: { min: ReactNode; max: ReactNode }; endLabelsPosition?: "below" | "above";
+               narrowColumns?: number; selectionCaption?(n: number): ReactNode;
+               notApplicable?: { label: string }; reviewValue?(n: number): ReactNode } }
+  | { kind: "text"; key: string; number?: ReactNode; eyebrow?: ReactNode; prompt: ReactNode; required: boolean;
+      text: { label: string; placeholder?: string; maxLength?: number } };
+
+type QuestionnaireStep = { id: string; title: string; reviewTitle?: string; questions: QuestionnaireQuestion[] };
+```
+
+**Propriedades do `GuidedQuestionnaire`**
+
+| Prop | Conteúdo |
+|---|---|
+| `logo` | `{ src, alt }` (usa `FormLogo`) |
+| `intro` | `eyebrow?`, `title`, `context?`, `description?`, `items?`, `startLabel`, `footnote?` |
+| `header` | `title`, `subtitle?`, `meta?` |
+| `steps` | `QuestionnaireStep[]` |
+| `texts` | **todos os textos obrigatórios** (o kit não tem texto fixo): voltar, avançar, revisar, voltar à revisão, editar + nome acessível por etapa, enviar, enviando, obrigatória (leitor de tela), opcional, erro de escala com N/A, erro de escala sem N/A, erro de texto obrigatório, pendência no rodapé (`(n) => string`), rótulo da etapa (`(i, total, title) => string`), progresso (`(done, total) => string`) e seu nome acessível, título/orientação da revisão, progresso da revisão, valor N/A na revisão, resposta vazia, aviso de imutabilidade, erro genérico de envio, nome acessível do botão de tema |
+| `colorScheme?` / `showThemeToggle?` | padrão `"auto"` / `true` |
+| `onSubmit(answers)` | `Promise<QuestionnaireSubmitOutcome>` |
+| `warnOnUnsaved?` | padrão `true` |
+
+```ts
+type QuestionnaireSubmitOutcome =
+  | { type: "result"; result: FormResultPanelProps }   // tela final ou terminal; respostas descartadas
+  | { type: "retry"; message: ReactNode };               // permanece na revisão com as respostas
+```
+
+Exceção lançada por `onSubmit` = `retry` com o texto genérico de erro de envio.
+
+### 10.4 Comportamento obrigatório
+
+1. **Estados:** `intro` → `step(i)` → `review` → `submitting` → `result`. Do `review`, **Editar** leva à etapa i em modo edição: o botão primário vira “Voltar à revisão” (com validação da etapa) e não há navegação para outras etapas.
+2. **Validação por etapa:** pergunta de escala obrigatória exige nota ou N/A (se existir N/A); texto obrigatório exige conteúdo após `trim`; opcionais nunca bloqueiam. Ao tentar avançar com pendências: marcar cada pergunta pendente (erro no `QuestionCard` + escala inválida), mostrar a contagem no rodapé e **levar o foco à primeira pendência** (primeiro `radio` do grupo ou o campo), com rolagem até ela. Pendência some ao responder.
+3. **Progresso:** `obrigatórias respondidas ÷ total de obrigatórias` de **todas** as etapas, recalculado a cada resposta; exibido no cabeçalho das etapas e da revisão.
+4. **Troca de etapa:** rolar ao topo e mover o foco para o título da etapa (anúncio ao leitor de tela). Voltar não valida e não apaga respostas.
+5. **Revisão:** uma `FormReviewSection` por etapa (título = `reviewTitle ?? title`), linhas com o rótulo do tema (ou o enunciado) e o valor: escala → `reviewValue?.(n) ?? n`; N/A → texto de N/A; texto vazio → resposta vazia em itálico; texto preenchido em bloco. `FormNotice` de imutabilidade antes do rodapé.
+6. **Envio único:** “Enviar” só na revisão; botão `type="button"` com `busy` durante `submitting`; cliques repetidos ignorados; nenhuma chamada a `onSubmit` em outro momento.
+7. **Resultado:** `result` → `FormResultPanel` com o que o app mandar, sem cabeçalho/rodapé de ações; `retry` → volta à revisão com `FormNotice` de erro e respostas intactas.
+8. **Sem persistência:** respostas só em estado React; nada em `localStorage`, `sessionStorage`, IndexedDB, cookie ou URL.
+9. **Aviso de saída:** `beforeunload` ativo quando há ao menos uma resposta e o estado não é `result`; removido no `result` e ao desmontar.
+10. **Tema:** tudo dentro de `QuestionnaireThemeScope` + `FormPageLayout` (`tall` na abertura e no resultado, `compact` nas etapas e na revisão); `FormThemeToggle` no cabeçalho da abertura, das etapas e da revisão quando `showThemeToggle`; trocar o tema não apaga respostas.
+11. **Teclado:** Enter nunca envia; todos os botões `type="button"`; não usar `<form onSubmit>`.
+
+### 10.5 Testes mínimos
+
+1. Lógica pura (`guidedQuestionnaireState`): validação (obrigatória com e sem N/A, texto obrigatório com espaços, opcional vazio), progresso (0, parcial, total; opcionais ignoradas), transições.
+2. Fluxo completo com a definição de exemplo: abertura → etapa 1 com pendência (foco na primeira, contagem no rodapé) → responder → etapa 2 → voltar preserva → revisão com valores, N/A, vazio e bloco → Editar etapa 1 → “Voltar à revisão” → enviar.
+3. Envio: `onSubmit` chamado **uma vez** com as respostas (texto vazio omitido), duplo clique ignorado, `result` mostra o painel, `retry` e exceção mantêm as respostas e mostram o aviso.
+4. Sem persistência: espiões de `localStorage`/`sessionStorage` sem chamadas durante o fluxo.
+5. `beforeunload`: registrado após a primeira resposta, removido no `result` e no desmontar.
+6. Troca de tema no meio do fluxo preserva respostas.
+7. Foco ao trocar de etapa no título da etapa.
+8. R12: `FormNotice` tom `warning` → `status`, se esse mapeamento existir; senão, testar o papel real.
+9. `componentRegistry.test.ts` verde.
+
+### 10.6 Demo no catálogo
+
+Questionário fictício neutro (ex.: avaliação de um treinamento interno), 2 etapas: uma com 3 escalas 1–5 com N/A + 1 escala 0–10 sem N/A; outra com 1 escala obrigatória e 2 textos opcionais. `onSubmit` de demo com opções “sucesso”, “tentar de novo” e “erro” (controle de demo **fora** do componente). Dois temas.
+
+### 10.7 Critérios de aceite
+
+| # | Critério | Evidência esperada |
+|---|---|---|
+| E1 | Comportamentos 1–11 do §10.4 cobertos por testes | Lista teste ↔ item |
+| E2 | Demo navegável no catálogo nos dois temas, celular e computador | Capturas da abertura, etapa com pendência, revisão, retry e sucesso |
+| E3 | Nenhum texto fixo e nenhuma referência à Pesquisa | `grep` |
+| E4 | Usa só componentes do P1–P4; nenhum componente novo de visual além do fluxo | Diff |
+| E5 | Sem persistência no navegador | Teste 4 |
+| E6 | Auditorias, build e `verify-host-exports` ok; deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Saídas |
+| E7 | Verificador independente aprovado | Veredito sem edição |
+
+**Publicação:** se o stage ou o `main` local estiverem com mudanças de outro trabalho, usar o worktree temporário do §6.8 item 4.
