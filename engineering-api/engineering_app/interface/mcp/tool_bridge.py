@@ -937,6 +937,17 @@ def _source_context(context) -> HomeSourceContext:
         user_id=str(getattr(context.user, "id", "") or ""),
         access_token=access_token,
         request_id=get_request_id(),
+        # Mesma projeção de identidade da rota REST (home_routes.py):
+        # fontes in-process (ex.: PRC) decidem escopo/AuthZ pelo ator
+        # real — sem permissões propagadas o ator vira "sem acesso" e
+        # a seção degrada para forbidden indevidamente.
+        permissions=frozenset(
+            str(p)
+            for p in (getattr(context.user, "permissions", None) or [])
+        ),
+        is_superadmin=bool(
+            getattr(context.user, "is_superadmin", False)
+        ),
     )
 
 

@@ -364,6 +364,167 @@ def test_home_delegates_use_case_with_human_token(monkeypatch) -> None:
     assert captured["ctx"].user_id == "user-1"
 
 
+def test_home_source_context_propagates_identity(monkeypatch) -> None:
+    """EVA-PRC-HOME-FORBIDDEN-ROOT-CAUSE-FIX-PROD-01 — o ctx MCP deve
+    projetar permissões/is_superadmin do humano como a rota REST; sem
+    isso o PrcActor vira "sem acesso" e a seção degrada a forbidden."""
+    user = _human_user(
+        permissions=("engineering.access", "my-requests.access"),
+        is_superadmin=False,
+    )
+    _set_context(user)
+    ctx = bridge._source_context(
+        SimpleNamespace(user=user, authorization="Bearer human-token")
+    )
+    assert ctx.permissions == frozenset(
+        {"engineering.access", "my-requests.access"}
+    )
+    assert ctx.is_superadmin is False
+    sa = _human_user(is_superadmin=True)
+    _set_context(sa)
+    ctx_sa = bridge._source_context(
+        SimpleNamespace(user=sa, authorization="Bearer human-token")
+    )
+    assert ctx_sa.is_superadmin is True
+
+
+def _home_use_case_with_prc(repo):
+    """GetEngineeringHome real com fontes PRC in-process + LMP stub."""
+    from engineering_app.application.use_cases.get_engineering_home import (
+        GetEngineeringHome,
+    )
+    from engineering_app.application.ports.home_sources import (
+        SectionFetch,
+    )
+    from engineering_app.application.use_cases.product_registration.service import (
+        ProductRegistrationService,
+    )
+    from engineering_app.infrastructure.gateways.prc_home_sources import (
+        PrcMineHomeSource,
+        PrcQueueHomeSource,
+    )
+
+    service = ProductRegistrationService(repo, official_reader=None)
+
+    class _EmptyLmp:
+        system = "api-delpi"
+        endpoint = "GET /engineering/lmps"
+
+        async def fetch(self, ctx, *, limit):
+            return SectionFetch(status="empty", total=0)
+
+    return GetEngineeringHome(
+        tasks_source=PrcQueueHomeSource(lambda: service),
+        requests_source=PrcMineHomeSource(lambda: service),
+        lmps_source=_EmptyLmp(),
+        section_limit=10,
+        source_timeout_seconds=5.0,
+        max_concurrent_sources=4,
+    )
+
+
+def test_home_prc_sections_authorized_via_mcp(monkeypatch) -> None:
+    """Mesma identidade, mesmo caso: Home não pode marcar forbidden o
+    que product_registration.list retorna com sucesso."""
+    from engineering_app.infrastructure.persistence.product_registration.in_memory_repository import (
+        InMemoryProductRegistrationRepository,
+    )
+
+    repo = InMemoryProductRegistrationRepository()
+    repo.create_request(
+        request={
+            "id": "home-1",
+            "request_type": "create",
+            "status": "submitted",
+            "source": "my-requests",
+            "requester_subject": "user-1",
+            "requester_display_name": "Test User",
+            "assigned_to_subject": None,
+            "assigned_to_display_name": None,
+            "official_product_code": None,
+            "row_version": 1,
+            "created_at": "2026-11-17T12:00:00+00:00",
+            "requested_payload": {"description": "MP X"},
+            "external_request_id": "ext-h1",
+        },
+        draft={},
+        event={"event_type": "submitted", "sequence_number": 1},
+    )
+    monkeypatch.setattr(
+        bridge,
+        "build_get_engineering_home_use_case",
+        lambda: _home_use_case_with_prc(repo),
+    )
+    _set_context(
+        _human_user(
+            permissions=(
+                "engineering.access", "my-requests.raw-material-creation"
+            )
+        )
+    )
+    result = asyncio.run(bridge.tool_get_engineering_home())
+    assert not result.is_error
+    sections = result.structured_content["data"]["sections"]
+    assert sections["requests"]["status"] == "available"
+    assert any(
+        i["id"] == "home-1" for i in sections["requests"]["items"]
+    )
+    # analista (engineering.access) → fila global acionável
+    assert sections["tasks"]["status"] == "available"
+
+
+def test_home_prc_scope_isolation_preserved(monkeypatch) -> None:
+    """AC-04 — solicitante nunca vê caso de outro usuário na seção
+    requests (own_scope), mesmo com a permissão propagada."""
+    from engineering_app.infrastructure.persistence.product_registration.in_memory_repository import (
+        InMemoryProductRegistrationRepository,
+    )
+
+    repo = InMemoryProductRegistrationRepository()
+    repo.create_request(
+        request={
+            "id": "other-1",
+            "request_type": "create",
+            "status": "submitted",
+            "source": "my-requests",
+            "requester_subject": "other-user",
+            "requester_display_name": "Other",
+            "assigned_to_subject": None,
+            "assigned_to_display_name": None,
+            "official_product_code": None,
+            "row_version": 1,
+            "created_at": "2026-11-17T12:00:00+00:00",
+            "requested_payload": {"description": "MP Y"},
+            "external_request_id": "ext-o1",
+        },
+        draft={},
+        event={"event_type": "submitted", "sequence_number": 1},
+    )
+    monkeypatch.setattr(
+        bridge,
+        "build_get_engineering_home_use_case",
+        lambda: _home_use_case_with_prc(repo),
+    )
+    _set_context(
+        _human_user(
+            permissions=(
+                "engineering.access",
+                "my-requests.raw-material-creation",
+            )
+        )
+    )
+    result = asyncio.run(bridge.tool_get_engineering_home())
+    assert not result.is_error
+    sections = result.structured_content["data"]["sections"]
+    # own_scope — caso alheio não aparece na seção requests nem
+    # para analista (requester_only); "empty", nunca vazamento
+    assert sections["requests"]["status"] == "empty"
+    ids = {i["id"] for i in sections["requests"]["items"]}
+    assert "other-1" not in ids
+    # analista → tasks é fila global acionável (escopo legítimo)
+    assert sections["tasks"]["status"] == "available"
+
+
 def test_overview_filter_validation() -> None:
     _set_context(_human_user())
     bad = asyncio.run(
