@@ -66,6 +66,10 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_supervisor_blueprint_review.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py"
+      - "linux-ops-mcp/review-only/**"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/42-atlas-hml-supervisor-blueprint-review.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/41-atlas-hml-one-shot-candidate.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/40-atlas-hml-snapshot-atomic-handoff.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/39-atlas-hml-snapshot-file-reader.md"
@@ -137,6 +141,10 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_supervisor_blueprint_review.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py"
+      - "linux-ops-mcp/review-only/**"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/42-atlas-hml-supervisor-blueprint-review.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/41-atlas-hml-one-shot-candidate.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/40-atlas-hml-snapshot-atomic-handoff.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/39-atlas-hml-snapshot-file-reader.md"
@@ -253,6 +261,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_snapshot_file_reader.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_publisher_candidate.py \
             linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py \
+            linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py \
             linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py \
             linux-ops-mcp/tests/test_atlas_hml_real_engine_chain_ci.py \
             linux-ops-mcp/tests/test_atlas_docker_engine_ci.py

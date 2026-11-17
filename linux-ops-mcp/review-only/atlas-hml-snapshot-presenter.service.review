@@ -1,0 +1,33 @@
+# ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD UNIT.
+# Presenter must never open Docker Engine; no inherited privileged FDs.
+# A future socket-activated binary has NOT been implemented or reviewed.
+[Unit]
+Description=ATLAS HML SNAPSHOT PRESENTER REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Service]
+Type=simple
+User=atlas-hml
+Group=atlas-hml
+SupplementaryGroups=
+ExecStart=/usr/bin/false
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+InaccessiblePaths=/run/docker.sock /var/run/docker.sock
+ReadOnlyPaths=/run/atlas-hml-readonly
+UMask=0077
