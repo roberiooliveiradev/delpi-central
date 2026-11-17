@@ -97,6 +97,10 @@ _TERMINAL_TYPES = {"FASTON", "BANDEIRA"}
 _TERMINAL_BATH = {"ESTANHADO", "NIQUELADO"}
 _TERMINAL_BATH_NU = _TERMINAL_BATH | {"NU"}
 _TERMINAL_PACK = {"GRANEL", "FITADO", "BLISTER"}
+# CARRETEL is TOTVS-observed (e.g. 10080106) but NOT ratified in the
+# 1008 structures — recognized lexically, evaluated INCONCLUSIVE
+# pending Engineering ratification (RQ-B03, G25-L2-A).
+_TERMINAL_PACK_RECOGNIZED = _TERMINAL_PACK | {"CARRETEL"}
 # 1008 subtype markers documented in the norm sections (ILHÓS→ILHOS
 # accent-normalized); a TIPO outside this set falls to the documented
 # generic structure ("uso geral não cobertos por outras normas 1008").
@@ -129,6 +133,10 @@ _VOLT = re.compile(r"\b\d{2,4}(?:/\d{2,4})?\s*V\b")
 _COLOR_ABBR = re.compile(r"\b(PT|BN|AZ|VD|VM|AM|LR|CZ|RS|BR|AL)\b")
 _DIM_PAIR = re.compile(r"\b\d+([,.]\d+)?\s*[Xx]\s*\d+([,.]\d+)?\b")
 _RANGE_MM2 = re.compile(r"\b\d+([,.]\d+)?\s*-\s*\d+([,.]\d+)?\s*(MM2|MM)\b")
+# AWG ranges like 18-22AWG / 20-14AWG — documented for cables
+# (1001-1005) and 1009 Inserto; for 1008 they are recognized
+# lexically but stay INCONCLUSIVE until ratified (RQ-A03, G25-L2-A).
+_GAUGE_AWG_RANGE = re.compile(r"\b\d{1,2}\s*-\s*\d{1,2}\s*AWG\b")
 _COMP_MM = re.compile(r"\bCOMP\s+\d+[,.]?\d*\s*MM\b")
 _SCREW_M = re.compile(r"\bM\d+\b")
 _BARE_MM = re.compile(r"\b\d+[,.]\d+\s*MM\b")
@@ -283,15 +291,17 @@ def _eval_terminal_1008(desc: str) -> dict[str, Any]:
     ttype = next((t for t in _TERMINAL_TYPES if t in tokens), None)
     dim = _DIM_PAIR.search(up)
     rng = _RANGE_MM2.search(up)
+    awg = _GAUGE_AWG_RANGE.search(up)
     bath = next((b for b in _TERMINAL_BATH if b in tokens), None)
     iso = ("C/ISOLACAO" if "C/ISOLACAO" in up.replace("Ç", "C")
            else "S/ISOLACAO" if "S/ISOLACAO" in up.replace("Ç", "C")
            else None)
-    pack = next((p for p in _TERMINAL_PACK if p in tokens), None)
+    pack = next((p for p in _TERMINAL_PACK_RECOGNIZED
+                 if p in tokens), None)
     attrs += [
         _attr("terminal_type", ttype, "vocab", "EXTRACTED" if ttype else "ABSENT"),
         _attr("dimensions", dim.group(0) if dim else None, "regex", "EXTRACTED" if dim else "ABSENT", unit="mm"),
-        _attr("gauge_range", rng.group(0) if rng else None, "regex", "EXTRACTED" if rng else "ABSENT"),
+        _attr("gauge_range", (rng or awg).group(0) if (rng or awg) else None, "regex", "EXTRACTED" if (rng or awg) else "ABSENT", unit="AWG" if (awg and not rng) else None),
         _attr("plating", bath, "vocab", "EXTRACTED" if bath else "ABSENT"),
         _attr("insulation_flag", iso, "vocab", "EXTRACTED" if iso else "ABSENT"),
         _attr("packaging", pack, "vocab", "EXTRACTED" if pack else "ABSENT"),
@@ -311,12 +321,17 @@ def _eval_terminal_1008(desc: str) -> dict[str, Any]:
         rng_status = "WARNING"
         rng_reason = ("unit 'MM' — norm expects 'MM2'; MM is not "
                       "silently normalized to MM2 (D3 pending)")
+    elif awg:
+        rng_status = "INCONCLUSIVE"
+        rng_reason = ("AWG range recognized — AWG is not documented "
+                      "for 1008 structures; pending Engineering "
+                      "ratification (not normalized to MM2)")
     else:
         rng_status, rng_reason = "INCONCLUSIVE", None
     rules.append(_rule(
         "MP-1008-RANGE", "gauge range in MM2 (e.g. 0,50-1,50MM2)", True,
-        rng_status, rng.group(0) if rng else None, "x,x-y,yMM2",
-        rng_reason))
+        rng_status, (rng or awg).group(0) if (rng or awg) else None,
+        "x,x-y,yMM2", rng_reason))
     rules.append(_rule(
         "MP-1008-BATH", "plating (ESTANHADO, NIQUELADO)", True,
         "PASS" if bath else "INCONCLUSIVE",
@@ -324,10 +339,7 @@ def _eval_terminal_1008(desc: str) -> dict[str, Any]:
     rules.append(_rule(
         "MP-1008-ISO", "insulation flag C/ISOLACAO or S/ISOLACAO", True,
         "PASS" if iso else "INCONCLUSIVE", iso))
-    rules.append(_rule(
-        "MP-1008-PACK", "packaging (GRANEL, FITADO, BLISTER)", True,
-        "PASS" if pack else "INCONCLUSIVE",
-        pack, sorted(_TERMINAL_PACK)))
+    rules.append(_t_pack_rule("MP-1008-PACK", pack))
     return attrs, rules
 
 
@@ -344,14 +356,18 @@ def _t_tokens(up: str) -> list[str]:
     return [t for t in _t_norm(up).split() if t]
 
 
-def _t_gauge(up: str) -> tuple[re.Match | None, re.Match | None]:
-    """Return (range_match, single_match). Range checked first so a
-    range is never misread as a single value."""
-    return _RANGE_MM2.search(up), _MM2.search(up)
+def _t_gauge(up: str) -> tuple[re.Match | None, re.Match | None,
+                               re.Match | None]:
+    """Return (mm_range, single_mm2, awg_range). Range checked first so
+    a range is never misread as a single value."""
+    return (_RANGE_MM2.search(up), _MM2.search(up),
+            _GAUGE_AWG_RANGE.search(up))
 
 
 def _t_gauge_rule(rule_id: str, rng: re.Match | None,
-                  single: re.Match | None, *, allow_single: bool) -> dict:
+                  single: re.Match | None,
+                  awg: re.Match | None = None,
+                  *, allow_single: bool) -> dict:
     if rng and rng.group(3) == "MM2":
         return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
                      True, "PASS", rng.group(0), "x,x-y,yMM2")
@@ -360,6 +376,15 @@ def _t_gauge_rule(rule_id: str, rng: re.Match | None,
                      True, "WARNING", rng.group(0), "x,x-y,yMM2",
                      "unit 'MM' — norm expects 'MM2'; MM is not "
                      "silently normalized to MM2 (D3 pending)")
+    if awg:
+        # AWG is documented for cables 1001-1005 and 1009 Inserto —
+        # NOT for the 1008 structures. Lexical recognition only:
+        # never converted to mm2, never declared conformant.
+        return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
+                     True, "INCONCLUSIVE", awg.group(0), "x,x-y,yMM2",
+                     "AWG range recognized — AWG is not documented "
+                     "for 1008 structures; pending Engineering "
+                     "ratification (not normalized to MM2)")
     if single:
         if allow_single:
             return _rule(rule_id, "gauge in MM2 (range or single, "
@@ -372,6 +397,19 @@ def _t_gauge_rule(rule_id: str, rng: re.Match | None,
                  True, "INCONCLUSIVE", None, "x,x-y,yMM2")
 
 
+def _t_pack_rule(rule_id: str, pack: str | None) -> dict:
+    if pack in _TERMINAL_PACK:
+        return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
+                     True, "PASS", pack, sorted(_TERMINAL_PACK))
+    if pack == "CARRETEL":
+        return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
+                     True, "INCONCLUSIVE", pack, sorted(_TERMINAL_PACK),
+                     "packaging 'CARRETEL' recognized — TOTVS-observed "
+                     "value pending normative ratification (RQ-B03)")
+    return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
+                 True, "INCONCLUSIVE", pack, sorted(_TERMINAL_PACK))
+
+
 def _t_common(up: str, *, bath_vocab: set[str],
               iso_vocab: tuple[str, ...]) -> dict[str, Any]:
     tokens = set(_t_tokens(up))
@@ -379,7 +417,8 @@ def _t_common(up: str, *, bath_vocab: set[str],
                  if re.search(rf"\b{re.escape(b)}\b", up)), None)
     iso = next((i for i in iso_vocab
                 if re.search(rf"\b{re.escape(i)}\b", up)), None)
-    pack = next((p for p in _TERMINAL_PACK if p in tokens), None)
+    pack = next((p for p in _TERMINAL_PACK_RECOGNIZED
+                 if p in tokens), None)
     certs = _TERM_CERT.findall(up)
     comp = _COMP_MM.search(up)
     return {"bath": bath, "iso": iso, "pack": pack,
@@ -402,7 +441,7 @@ def _t_obs(up: str, consumed: list) -> str | None:
         rem = re.sub(rf"\b{re.escape(c)}\b", " ", rem, count=1)
     rem = _t_norm(rem)
     residual = [t for t in re.findall(r"[A-Z]{2,}", rem)
-                if t not in _TERMINAL_PACK]
+                if t not in _TERMINAL_PACK_RECOGNIZED]
     return ",".join(residual) or None
 
 
@@ -431,9 +470,7 @@ def _t_bath_iso_pack_rules(rid: str, c: dict[str, Any], *,
         _rule(f"{rid}-ISO", "insulation flag "
               + "/".join(iso_vocab), True,
               "PASS" if c["iso"] else "INCONCLUSIVE", c["iso"]),
-        _rule(f"{rid}-PACK", "packaging (GRANEL, FITADO, BLISTER)",
-              True, "PASS" if c["pack"] else "INCONCLUSIVE",
-              c["pack"], sorted(_TERMINAL_PACK)),
+        _t_pack_rule(f"{rid}-PACK", c["pack"]),
     ]
 
 
@@ -442,15 +479,15 @@ def _eval_pino_1008(desc: str) -> dict[str, Any]:
     up = desc.upper()
     tokens = set(_t_tokens(up))
     variant = next((v for v in _PINO_VARIANTS if v in tokens), None)
-    rng, single = _t_gauge(up)
+    rng, single, awg = _t_gauge(up)
     c = _t_common(up, bath_vocab=_TERMINAL_BATH,
                   iso_vocab=("C/ISOLACAO", "S/ISOLACAO"))
-    obs = _t_obs(up, [rng, single, c["comp"], variant, "PINO", "TERM.",
+    obs = _t_obs(up, [rng, single, awg, c["comp"], variant, "PINO", "TERM.",
                       "TERM", c["bath"], c["iso"], c["pack"]])
     attrs = [
         _attr("terminal_type", "PINO", "item_type", "EXTRACTED", "PINO"),
         _attr("variant", variant, "vocab", "EXTRACTED" if variant else "ABSENT"),
-        _attr("gauge", (rng or single).group(0) if (rng or single) else None, "regex", "EXTRACTED" if (rng or single) else "ABSENT"),
+        _attr("gauge", (rng or single or awg).group(0) if (rng or single or awg) else None, "regex", "EXTRACTED" if (rng or single or awg) else "ABSENT", unit="AWG" if (awg and not (rng or single)) else None),
         _attr("pin_length", c["comp"].group(0) if c["comp"] else None, "regex", "EXTRACTED" if c["comp"] else "ABSENT", unit="mm"),
         _attr("plating", c["bath"], "vocab", "EXTRACTED" if c["bath"] else "ABSENT"),
         _attr("insulation_flag", c["iso"], "vocab", "EXTRACTED" if c["iso"] else "ABSENT"),
@@ -463,7 +500,7 @@ def _eval_pino_1008(desc: str) -> dict[str, Any]:
         _rule("MP-1008P-VARIANT", "variant RETO|CURVO|DUPLO", True,
               "PASS" if variant else "INCONCLUSIVE",
               variant, sorted(_PINO_VARIANTS)),
-        _t_gauge_rule("MP-1008P-GAUGE", rng, single, allow_single=True),
+        _t_gauge_rule("MP-1008P-GAUGE", rng, single, awg, allow_single=True),
         _rule("MP-1008P-LENGTH", "pin length COMP x,xxMM", True,
               "PASS" if c["comp"] else "INCONCLUSIVE",
               c["comp"].group(0) if c["comp"] else None),
@@ -478,15 +515,15 @@ def _eval_pino_1008(desc: str) -> dict[str, Any]:
 def _eval_eyelet_1008(desc: str) -> dict[str, Any]:
     """1008 · ILHOS/TUBULAR — TERM. TIPO BITOLA COMP BANHO ISO EMB OBS NORMAS."""
     up = desc.upper()
-    rng, single = _t_gauge(up)
+    rng, single, awg = _t_gauge(up)
     c = _t_common(up, bath_vocab=_TERMINAL_BATH,
                   iso_vocab=("C/ISOLACAO", "S/ISOLACAO"))
     ttype = _t_tokens(up)[1]
-    obs = _t_obs(up, [rng, single, c["comp"], ttype, "TERM.", "TERM",
+    obs = _t_obs(up, [rng, single, awg, c["comp"], ttype, "TERM.", "TERM",
                       c["bath"], c["iso"], c["pack"]])
     attrs = [
         _attr("terminal_type", ttype, "item_type", "EXTRACTED", ttype),
-        _attr("gauge", rng.group(0) if rng else None, "regex", "EXTRACTED" if rng else "ABSENT"),
+        _attr("gauge", (rng or single or awg).group(0) if (rng or single or awg) else None, "regex", "EXTRACTED" if (rng or single or awg) else "ABSENT", unit="AWG" if (awg and not (rng or single)) else None),
         _attr("barrel_length", c["comp"].group(0) if c["comp"] else None, "regex", "EXTRACTED" if c["comp"] else "ABSENT", unit="mm"),
         _attr("plating", c["bath"], "vocab", "EXTRACTED" if c["bath"] else "ABSENT"),
         _attr("insulation_flag", c["iso"], "vocab", "EXTRACTED" if c["iso"] else "ABSENT"),
@@ -497,7 +534,7 @@ def _eval_eyelet_1008(desc: str) -> dict[str, Any]:
     rules = [
         _rule("MP-1008I-TYPE", "type ILHOS or TUBULAR", True,
               "PASS", ttype, ["ILHOS", "TUBULAR"]),
-        _t_gauge_rule("MP-1008I-GAUGE", rng, single, allow_single=False),
+        _t_gauge_rule("MP-1008I-GAUGE", rng, single, awg, allow_single=False),
         _rule("MP-1008I-LENGTH", "barrel length COMP x,xxMM", True,
               "PASS" if c["comp"] else "INCONCLUSIVE",
               c["comp"].group(0) if c["comp"] else None),
@@ -513,15 +550,15 @@ def _eval_lingueta_1008(desc: str) -> dict[str, Any]:
     """1008 · LINGUETA — TERM. LINGUETA LARGxTAB BITOLA BANHO ISO EMB OBS CERT."""
     up = desc.upper()
     dim = _DIM_PAIR.search(up)
-    rng, single = _t_gauge(up)
+    rng, single, awg = _t_gauge(up)
     c = _t_common(up, bath_vocab=_TERMINAL_BATH,
                   iso_vocab=("C/ISOLACAO", "S/ISOLACAO"))
-    obs = _t_obs(up, [dim, rng, single, "LINGUETA", "TERM.", "TERM",
+    obs = _t_obs(up, [dim, rng, single, awg, "LINGUETA", "TERM.", "TERM",
                       c["bath"], c["iso"], c["pack"]])
     attrs = [
         _attr("terminal_type", "LINGUETA", "item_type", "EXTRACTED", "LINGUETA"),
         _attr("dimensions", dim.group(0) if dim else None, "regex", "EXTRACTED" if dim else "ABSENT", unit="mm"),
-        _attr("gauge", rng.group(0) if rng else None, "regex", "EXTRACTED" if rng else "ABSENT"),
+        _attr("gauge", (rng or single or awg).group(0) if (rng or single or awg) else None, "regex", "EXTRACTED" if (rng or single or awg) else "ABSENT", unit="AWG" if (awg and not (rng or single)) else None),
         _attr("plating", c["bath"], "vocab", "EXTRACTED" if c["bath"] else "ABSENT"),
         _attr("insulation_flag", c["iso"], "vocab", "EXTRACTED" if c["iso"] else "ABSENT"),
         _attr("packaging", c["pack"], "vocab", "EXTRACTED" if c["pack"] else "ABSENT"),
@@ -533,7 +570,7 @@ def _eval_lingueta_1008(desc: str) -> dict[str, Any]:
         _rule("MP-1008L-DIM", "width x tab (e.g. 6,30X0,80)", True,
               "PASS" if dim else "INCONCLUSIVE",
               dim.group(0) if dim else None),
-        _t_gauge_rule("MP-1008L-GAUGE", rng, single, allow_single=False),
+        _t_gauge_rule("MP-1008L-GAUGE", rng, single, awg, allow_single=False),
     ]
     rules += _t_bath_iso_pack_rules(
         "MP-1008L", c, bath_vocab=_TERMINAL_BATH,
@@ -567,16 +604,23 @@ def _ring_1008(desc: str, rid: str, ttype: str) -> dict[str, Any]:
     up = desc.upper()
     d = _ring_dims(up)
     rng_single = _MM2.search(up) if not d["gauge"] else None
+    rng_awg = _GAUGE_AWG_RANGE.search(up) if not d["gauge"] else None
     c = _t_common(up, bath_vocab=_TERMINAL_BATH,
                   iso_vocab=("C/ISOLACAO", "S/ISOLACAO"))
     obs = _t_obs(up, [d["screw"], d["dint"], d["gauge"], rng_single,
-                      d["dext"], d["comp"], ttype, "TERM.", "TERM",
+                      rng_awg, d["dext"], d["comp"], ttype, "TERM.", "TERM",
                       c["bath"], c["iso"], c["pack"]])
     attrs = [
         _attr("terminal_type", ttype, "item_type", "EXTRACTED", ttype),
         _attr("screw", d["screw"].group(0) if d["screw"] else None, "regex", "EXTRACTED" if d["screw"] else "ABSENT"),
         _attr("inner_diameter", d["dint"].group(0) if d["dint"] else None, "regex", "EXTRACTED" if d["dint"] else "ABSENT", unit="mm"),
-        _attr("gauge", d["gauge"].group(0) if d["gauge"] else None, "regex", "EXTRACTED" if d["gauge"] else "ABSENT"),
+        _attr("gauge", (d["gauge"] or rng_single or rng_awg).group(0)
+              if (d["gauge"] or rng_single or rng_awg) else None,
+              "regex",
+              "EXTRACTED" if (d["gauge"] or rng_single or rng_awg)
+              else "ABSENT",
+              unit="AWG" if (rng_awg and not (d["gauge"] or rng_single))
+              else None),
         _attr("outer_diameter", d["dext"].group(0) if d["dext"] else None, "regex", "EXTRACTED" if d["dext"] else "ABSENT", unit="mm"),
         _attr("length", d["comp"].group(0) if d["comp"] else None, "regex", "EXTRACTED" if d["comp"] else "ABSENT", unit="mm"),
         _attr("plating", c["bath"], "vocab", "EXTRACTED" if c["bath"] else "ABSENT"),
@@ -594,7 +638,7 @@ def _ring_1008(desc: str, rid: str, ttype: str) -> dict[str, Any]:
               True, "PASS" if d["dint"] else "INCONCLUSIVE",
               d["dint"].group(0) if d["dint"] else None, "x,xxMM"),
         _t_gauge_rule(f"{rid}-GAUGE", d["gauge"], rng_single,
-                      allow_single=False),
+                      rng_awg, allow_single=False),
         _rule(f"{rid}-DEXT", "outer diameter x,xxMM after gauge",
               True, "PASS" if d["dext"] else "INCONCLUSIVE",
               d["dext"].group(0) if d["dext"] else None, "x,xxMM"),
@@ -615,14 +659,14 @@ def _eval_generic_1008(desc: str) -> dict[str, Any]:
     up = desc.upper()
     toks = _t_tokens(up)
     ttype = toks[1] if len(toks) > 1 else None
-    rng, single = _t_gauge(up)
+    rng, single, awg = _t_gauge(up)
     c = _t_common(up, bath_vocab=_TERMINAL_BATH_NU,
                   iso_vocab=())
-    obs = _t_obs(up, [rng, single, ttype, "TERM.", "TERM",
+    obs = _t_obs(up, [rng, single, awg, ttype, "TERM.", "TERM",
                       c["bath"], c["pack"]])
     attrs = [
         _attr("terminal_type", ttype, "item_type", "EXTRACTED" if ttype else "ABSENT"),
-        _attr("gauge", rng.group(0) if rng else None, "regex", "EXTRACTED" if rng else "ABSENT"),
+        _attr("gauge", (rng or single or awg).group(0) if (rng or single or awg) else None, "regex", "EXTRACTED" if (rng or single or awg) else "ABSENT", unit="AWG" if (awg and not (rng or single)) else None),
         _attr("plating", c["bath"], "vocab", "EXTRACTED" if c["bath"] else "ABSENT"),
         _attr("packaging", c["pack"], "vocab", "EXTRACTED" if c["pack"] else "ABSENT"),
         _attr("observations", obs, "residual", "EXTRACTED" if obs else "ABSENT"),
@@ -632,13 +676,11 @@ def _eval_generic_1008(desc: str) -> dict[str, Any]:
         _rule("MP-1008G-TYPE", "terminal type (free technical type, "
               "e.g. BALA)", True,
               "PASS" if ttype else "INCONCLUSIVE", ttype),
-        _t_gauge_rule("MP-1008G-GAUGE", rng, single, allow_single=False),
+        _t_gauge_rule("MP-1008G-GAUGE", rng, single, awg, allow_single=False),
         _rule("MP-1008G-BATH", "plating (ESTANHADO, NIQUELADO, NU)",
               True, "PASS" if c["bath"] else "INCONCLUSIVE",
               c["bath"], sorted(_TERMINAL_BATH_NU)),
-        _rule("MP-1008G-PACK", "packaging (GRANEL, FITADO, BLISTER)",
-              True, "PASS" if c["pack"] else "INCONCLUSIVE",
-              c["pack"], sorted(_TERMINAL_PACK)),
+        _t_pack_rule("MP-1008G-PACK", c["pack"]),
     ]
     rules += _t_obs_cert_rules("MP-1008G", obs, c["certs"])
     return attrs, rules
@@ -649,7 +691,7 @@ def _eval_luva_1008(desc: str) -> dict[str, Any]:
     NU is documented both for BANHO and ISOLAÇÃO (positional)."""
     up = desc.upper()
     ttype = _t_tokens(up)[1]
-    rng, single = _t_gauge(up)
+    rng, single, awg = _t_gauge(up)
     comp = _COMP_MM.search(up)
     tokens = set(_t_tokens(up))
     bath = next((b for b in _TERMINAL_BATH if b in tokens), None)
@@ -662,13 +704,14 @@ def _eval_luva_1008(desc: str) -> dict[str, Any]:
         nus.pop(0)
     if iso is None and nus:
         iso = "NU"
-    pack = next((p for p in _TERMINAL_PACK if p in tokens), None)
+    pack = next((p for p in _TERMINAL_PACK_RECOGNIZED
+                 if p in tokens), None)
     certs = sorted(set(_TERM_CERT.findall(up)))
-    obs = _t_obs(up, [rng, single, comp, ttype, "TERM.", "TERM",
+    obs = _t_obs(up, [rng, single, awg, comp, ttype, "TERM.", "TERM",
                       bath, iso, pack])
     attrs = [
         _attr("terminal_type", ttype, "item_type", "EXTRACTED", ttype),
-        _attr("gauge", rng.group(0) if rng else None, "regex", "EXTRACTED" if rng else "ABSENT"),
+        _attr("gauge", (rng or single or awg).group(0) if (rng or single or awg) else None, "regex", "EXTRACTED" if (rng or single or awg) else "ABSENT", unit="AWG" if (awg and not (rng or single)) else None),
         _attr("length", comp.group(0) if comp else None, "regex", "EXTRACTED" if comp else "ABSENT", unit="mm"),
         _attr("plating", bath, "vocab", "EXTRACTED" if bath else "ABSENT"),
         _attr("insulation_flag", iso, "vocab", "EXTRACTED" if iso else "ABSENT"),
@@ -679,7 +722,7 @@ def _eval_luva_1008(desc: str) -> dict[str, Any]:
     rules = [
         _rule("MP-1008E-TYPE", "type LUVA or EMENDA", True,
               "PASS", ttype, ["LUVA", "EMENDA"]),
-        _t_gauge_rule("MP-1008E-GAUGE", rng, single, allow_single=False),
+        _t_gauge_rule("MP-1008E-GAUGE", rng, single, awg, allow_single=False),
         _rule("MP-1008E-LENGTH", "length COMP x,xxMM", True,
               "PASS" if comp else "INCONCLUSIVE",
               comp.group(0) if comp else None),
@@ -688,9 +731,7 @@ def _eval_luva_1008(desc: str) -> dict[str, Any]:
               bath, sorted(_TERMINAL_BATH_NU)),
         _rule("MP-1008E-ISO", "insulation C/ISOLACAO | S/ISOLACAO | NU",
               True, "PASS" if iso else "INCONCLUSIVE", iso),
-        _rule("MP-1008E-PACK", "packaging (GRANEL, FITADO, BLISTER)",
-              True, "PASS" if pack else "INCONCLUSIVE",
-              pack, sorted(_TERMINAL_PACK)),
+        _t_pack_rule("MP-1008E-PACK", pack),
     ]
     rules += _t_obs_cert_rules("MP-1008E", obs, certs)
     return attrs, rules
@@ -827,7 +868,8 @@ def _eval_insert_1009(desc: str) -> dict[str, Any]:
     ttype = next((t for t in _INSERT_TYPES if t in tokens), None)
     ways = _WAYS.search(up)
     serie = _INSERT_SERIE.search(up)
-    gauge = _RANGE_MM2.search(up) or _MM2.search(up) or _AWG.search(up)
+    gauge = (_RANGE_MM2.search(up) or _GAUGE_AWG_RANGE.search(up)
+             or _MM2.search(up) or _AWG.search(up))
     obs = next((o for o in _INSERT_OBS if re.search(rf"\b{o}\b", up)), None)
     certs = sorted(c for c in _1009_CERTS
                    if re.search(rf"\b{c}\b", up))

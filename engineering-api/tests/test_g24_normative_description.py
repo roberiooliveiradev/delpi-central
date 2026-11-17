@@ -256,6 +256,110 @@ def test_l2_1009_isolation_regression():
     assert all("1008" not in i for i in ids)
 
 
+# ---- G25-L2-A — bitola AWG e embalagem CARRETEL ----
+def test_l2a_real_10080106_awg_and_carretel_recognized():
+    """Caso real do aceite: reconhecimento lexical ≠ conformidade."""
+    r = ev("10080106", "MP",
+           "TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS")
+    st = _rules(r)
+    gauge = next(x for x in r["rule_results"]
+                 if x["rule_id"] == "MP-1008G-GAUGE")
+    pack = next(x for x in r["rule_results"]
+                if x["rule_id"] == "MP-1008G-PACK")
+    assert gauge["status"] == "INCONCLUSIVE"
+    assert gauge["observed"] == "18-22AWG"          # não converte p/ mm2
+    assert "ratification" in (gauge["reason"] or "")
+    assert pack["status"] == "INCONCLUSIVE"
+    assert pack["observed"] == "CARRETEL"           # embalagem, não obs
+    assert "ratification" in (pack["reason"] or "")
+    assert st["MP-1008G-BATH"] == "PASS"
+    assert st["MP-1008G-CERT"] == "PASS"
+    # AWG não vira observação residual
+    obs = next(a for a in r["extracted_attributes"]
+               if a["name"] == "observations")
+    assert "AWG" not in (obs["normalized_value"] or "")
+    gauge_attr = next(a for a in r["extracted_attributes"]
+                      if a["name"] == "gauge")
+    assert gauge_attr["unit"] == "AWG"
+
+
+def test_l2a_awg_range_variants():
+    for desc in ("TERM. BALA 18-22 AWG ESTANHADO GRANEL",
+                 "TERM. BALA 20-14AWG NU GRANEL"):
+        r = ev("10080130", "MP", desc)
+        g = next(x for x in r["rule_results"]
+                 if x["rule_id"] == "MP-1008G-GAUGE")
+        assert g["status"] == "INCONCLUSIVE"
+        assert "AWG" in g["observed"]
+
+
+def test_l2a_awg_not_converted_to_mm2():
+    r = ev("10080130", "MP", "TERM. BALA 18-22AWG NU GRANEL")
+    g = next(a for a in r["extracted_attributes"]
+             if a["name"] == "gauge")
+    assert g["normalized_value"] == "18-22AWG"
+    assert g["unit"] == "AWG"
+
+
+def test_l2a_pack_ratified_vocab_still_pass():
+    r = ev("10080118", "MP", "TERM. BALA 2,50-6,00MM2 NU GRANEL CURTO UL")
+    st = _rules(r)
+    assert st["MP-1008G-PACK"] == "PASS"
+    assert r["overall_status"] == "PASS"
+
+
+def test_l2a_carretel_in_specific_subtype():
+    # reconhecimento lexical também nos subtipos específicos
+    r = ev("10080119", "MP",
+           "TERM. LUVA 2,00-4,00MM2 COMP 10,00MM ESTANHADO "
+           "S/ISOLACAO CARRETEL ROHS")
+    p = next(x for x in r["rule_results"]
+             if x["rule_id"] == "MP-1008E-PACK")
+    assert p["status"] == "INCONCLUSIVE"
+    assert p["observed"] == "CARRETEL"
+
+
+def test_l2a_carretel_not_obs_confusion():
+    # CARRETEL não pode vazar para observações
+    r = ev("10080106", "MP",
+           "TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS")
+    obs = next(a for a in r["extracted_attributes"]
+               if a["name"] == "observations")
+    assert "CARRETEL" not in (obs["normalized_value"] or "")
+
+
+def test_l2a_unknown_packaging_still_inconclusive_null():
+    r = ev("10080130", "MP", "TERM. BALA 2,50-6,00MM2 NU CAIXA UL")
+    p = next(x for x in r["rule_results"]
+             if x["rule_id"] == "MP-1008G-PACK")
+    assert p["status"] == "INCONCLUSIVE"
+    assert p["observed"] is None
+
+
+def test_l2a_ring_subtype_awg_attr_exposed():
+    # OC-1 (verificador r1): FORQUILHA/OLHAL devem expor AWG no attr
+    r = ev("10080112", "MP",
+           "TERM. FORQUILHA M3 3,40MM 18-22AWG 6,20MM "
+           "COMP 20,00MM ESTANHADO S/ISOLACAO GRANEL")
+    g = next(a for a in r["extracted_attributes"]
+             if a["name"] == "gauge")
+    assert g["normalized_value"] == "18-22AWG"
+    assert g["unit"] == "AWG"
+    rule = next(x for x in r["rule_results"]
+                if x["rule_id"] == "MP-1008F-GAUGE")
+    assert rule["status"] == "INCONCLUSIVE"
+    assert rule["observed"] == "18-22AWG"
+
+
+def test_l2a_insert_1009_awg_documented():
+    # norma do Inserto documenta '20-14AWG' — a faixa inteira é extraída
+    r = ev("10090002", "MP",
+           "INSERTO FEMEA 10 POLOS HAN D 20-14AWG CRIMP UL")
+    g = next(a for a in r["extracted_attributes"]
+             if a["name"] == "gauge")
+    assert g["normalized_value"] == "20-14AWG"
+
+
 # ---- MP 1009 isolators ----
 def test_isolator_1009_canonical():
     r = ev("10090010", "MP", "ISOLADOR NYLON RETO 6,3 PT UL94 V2")
