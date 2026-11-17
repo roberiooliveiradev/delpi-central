@@ -23,6 +23,7 @@ from typing import Callable
 
 import httpx
 
+from .atlas_hml_git_head_peek import GitHeadMetadataPeek, GitHeadPeekError
 from .deploy_git_checkout_readonly import (
     GitCheckoutReadError, GitCheckoutReadOnlyObserver, _ROOT as _CHECKOUT,
 )
@@ -70,6 +71,7 @@ class LocalHMLProbeReport:
     git_head: str | None = None
     git_branch: str | None = None
     git_clean_nonignored: bool | None = None
+    git_observation_method: str | None = None
     docker_image_id: str | None = None
     docker_running: bool | None = None
     docker_healthy: bool | None = None
@@ -174,6 +176,8 @@ async def inspect_hml_local(
     observer: GitCheckoutReadOnlyObserver,
     inspector: DockerReadOnlyInspect | None,
     proxy_error: str | None = None,
+    metadata_only: bool = False,
+    metadata_reader: GitHeadMetadataPeek | None = None,
     clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
 ) -> LocalHMLProbeReport:
     """Observe HML once, always blocked. Injections are for isolated CI only."""
@@ -190,7 +194,31 @@ async def inspect_hml_local(
         # Even Git status is skipped if the identity is too privileged.
         blocks.append("HOST_OBSERVATION_REFUSED_UNSAFE_ACCOUNT")
     else:
-        if type(observer) is not GitCheckoutReadOnlyObserver:
+        if type(metadata_only) is not bool:
+            raise HMLProbeError("HML_GIT_MODE_INVALID")
+        if metadata_only:
+            # A shared, group-writable host checkout is not a trusted Git
+            # execution source. Read only HEAD/main ref; NEVER run git status,
+            # safe.directory bypass, local Git config, hooks or filters.
+            if type(metadata_reader) is not GitHeadMetadataPeek:
+                blocks.append("HML_GIT_METADATA_READER_INVALID")
+            else:
+                try:
+                    meta = metadata_reader.read()
+                    info.update(
+                        git_head=meta.head_sha,
+                        git_branch=meta.branch,
+                        git_observation_method=meta.source,
+                    )
+                    blocks.extend((
+                        "HML_GIT_METADATA_ONLY_UNTRUSTED",
+                        "HML_GIT_STATUS_NOT_CHECKED",
+                    ))
+                except GitHeadPeekError:
+                    blocks.append("HML_GIT_METADATA_UNAVAILABLE")
+                except Exception:
+                    blocks.append("HML_GIT_METADATA_UNAVAILABLE")
+        elif type(observer) is not GitCheckoutReadOnlyObserver:
             blocks.append("GIT_OBSERVER_INVALID")
         else:
             try:
@@ -199,6 +227,7 @@ async def inspect_hml_local(
                     git_head=git.head_sha,
                     git_branch=git.branch,
                     git_clean_nonignored=git.tracked_and_untracked_clean,
+                    git_observation_method="git_status_local_untrusted",
                 )
                 if not git.tracked_and_untracked_clean:
                     blocks.append("HML_CHECKOUT_DIRTY")
@@ -253,6 +282,8 @@ def main() -> int:
             observer=GitCheckoutReadOnlyObserver(),
             inspector=inspector,
             proxy_error=error,
+            metadata_only=True,
+            metadata_reader=GitHeadMetadataPeek(checkout_root=_CHECKOUT),
         ))
         print(json.dumps(asdict(report), sort_keys=True, separators=(",", ":")))
         return 0
