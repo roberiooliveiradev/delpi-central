@@ -1,6 +1,7 @@
 import {
   DECK_THEME_DARK,
   DECK_THEME_LIGHT,
+  SIGN_SCALE_COLORS,
 } from "@delpi/plugin-ui/index";
 import {
   getDelpiBrandAccent,
@@ -31,6 +32,9 @@ export type ChartStyleRecipe = {
 
 const delpiDark = getDelpiBrandMode("dark");
 const delpiLight = getDelpiBrandColors("light");
+
+/** Preset opt-in: marca individual da coluna pelo sinal, não posição da categoria. */
+export const SIGN_COLOR_PALETTE_ID = "sign-negative-positive";
 
 export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
   {
@@ -93,6 +97,18 @@ export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
     seriesColor: "#1f2937",
     colors: ["#1f2937", "#4b5563", "#9ca3af", "#d1d5db"],
     kind: "categorical",
+  },
+  {
+    id: SIGN_COLOR_PALETTE_ID,
+    label: "Negativo / positivo",
+    seriesColor: SIGN_SCALE_COLORS.positive,
+    colors: [
+      SIGN_SCALE_COLORS.negative,
+      SIGN_SCALE_COLORS.zero,
+      SIGN_SCALE_COLORS.positive,
+    ],
+    kind: "semantic",
+    hint: "Colunas negativas em vermelho, positivas em verde e zero em cinza. Cores pelo sinal de cada valor.",
   },
   {
     id: "rag-good-first",
@@ -203,11 +219,23 @@ export function applyChartColorPalette(
     seriesColor: palette.seriesColor,
     categoryColors: [...palette.colors],
   };
-  if ((palette.kind ?? "categorical") === "semantic") {
+  if (palette.id === SIGN_COLOR_PALETTE_ID) {
     next.colorScale = {
-      mode: options.colorScale?.mode ?? "off",
+      mode: "by_sign",
+      polarity: options.colorScale?.polarity ?? "high_is_good",
+      paletteId: palette.id,
+    };
+  } else if ((palette.kind ?? "categorical") === "semantic") {
+    next.colorScale = {
+      mode: options.colorScale?.mode === "by_sign" ? "off" : options.colorScale?.mode ?? "off",
       polarity: options.colorScale?.polarity ?? "high_is_bad",
       paletteId: palette.id,
+    };
+  } else if (options.colorScale?.mode === "by_sign") {
+    // Reaplicar uma paleta comum deve remover o preset por sinal.
+    next.colorScale = {
+      mode: "off",
+      polarity: options.colorScale.polarity,
     };
   }
   return next;
@@ -246,9 +274,11 @@ export function applyChartColorScaleMode(
       },
     };
   }
+  const selected = findChartColorPalette(options.colorScale?.paletteId);
   const palette =
-    findChartColorPalette(options.colorScale?.paletteId) ??
-    findChartColorPalette(DEFAULT_VALUE_SCALE_PALETTE_ID)!;
+    selected && selected.id !== SIGN_COLOR_PALETTE_ID
+      ? selected
+      : findChartColorPalette(DEFAULT_VALUE_SCALE_PALETTE_ID)!;
   return {
     ...options,
     seriesColor: palette.seriesColor,
@@ -303,7 +333,12 @@ export function isChartColorPaletteActive(
   palette: ChartColorPalette,
   options: ComunicadoChartOptions,
 ): boolean {
-  if (options.colorScale?.paletteId === palette.id) return true;
+  if (palette.id === SIGN_COLOR_PALETTE_ID) {
+    return options.colorScale?.mode === "by_sign";
+  }
+  if (options.colorScale?.paletteId === palette.id && options.colorScale?.mode !== "by_sign") {
+    return true;
+  }
   return (
     options.seriesColor === palette.seriesColor &&
     JSON.stringify(options.categoryColors ?? []) === JSON.stringify(palette.colors)
