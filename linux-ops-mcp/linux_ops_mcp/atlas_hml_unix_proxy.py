@@ -17,13 +17,15 @@ import json
 import os
 import re
 import socket
-import stat
 import struct
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 from .deploy_host_source import RuntimeContainer, RuntimeTarget
+from .atlas_hml_uds_policy import (
+    HMLUDSPolicyError, verify_socket_metadata,
+)
 
 _HML_PATH = Path("/run/atlas-hml-readonly/inspect.sock")
 _DOCKER_RAW = (Path("/run/docker.sock"), Path("/var/run/docker.sock"))
@@ -73,46 +75,31 @@ class SingleRequestProxyResult:
 
 def _check_prebound_socket(
     listener: socket.socket, *, expected_path: Path, owner_uid: int,
+    socket_gid: int | None = None,
 ) -> None:
-    """Check fixed path, descriptor kind and ownership. Test path is DI only."""
+    """Check the listening FD and shared UNIX pathname security policy."""
     if (
         type(listener) is not socket.socket
         or listener.family != socket.AF_UNIX
-        or listener.type & socket.SOCK_STREAM != socket.SOCK_STREAM
-        or not isinstance(expected_path, Path)
+        or type(expected_path) is not Path
         or not expected_path.is_absolute()
         or type(owner_uid) is not int or owner_uid < 0
     ):
         raise HMLUnixProxyError("HML_PROXY_LISTENER_UNTRUSTED")
     try:
-        if listener.getsockname() != str(expected_path):
-            raise HMLUnixProxyError("HML_PROXY_LISTENER_UNTRUSTED")
-        parent = expected_path.parent.lstat()
-        entry = expected_path.lstat()
-        own = os.fstat(listener.fileno())
         if (
-            expected_path.parent.is_symlink()
-            or not stat.S_ISDIR(parent.st_mode)
-            or not stat.S_ISSOCK(entry.st_mode)
-            or parent.st_uid != owner_uid
-            or entry.st_uid != owner_uid
-            or parent.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
-            or entry.st_mode & stat.S_IWOTH
-            or not stat.S_ISSOCK(own.st_mode)
+            listener.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE) != socket.SOCK_STREAM
+            or listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) != 1
+            or listener.getsockname() != str(expected_path)
         ):
             raise HMLUnixProxyError("HML_PROXY_LISTENER_UNTRUSTED")
-        for raw in _DOCKER_RAW:
-            try:
-                st = raw.stat()
-            except OSError:
-                continue
-            if (st.st_dev, st.st_ino) == (entry.st_dev, entry.st_ino):
-                raise HMLUnixProxyError("HML_RAW_DOCKER_SOCKET_DENIED")
-    except HMLUnixProxyError:
-        raise
+        verify_socket_metadata(
+            path=expected_path, owner_uid=owner_uid, socket_gid=socket_gid,
+        )
+    except HMLUDSPolicyError as exc:
+        raise HMLUnixProxyError(exc.code) from None
     except OSError:
         raise HMLUnixProxyError("HML_PROXY_LISTENER_UNTRUSTED") from None
-
 
 def _peer_uid(client: socket.socket) -> int:
     try:
@@ -226,6 +213,7 @@ def serve_one_prebound(
     inspector: BoundedRuntimeInspector,
     expected_path: Path = _HML_PATH,
     owner_uid: int = 0,
+    socket_gid: int | None = None,
 ) -> SingleRequestProxyResult:
     """Serve exactly one approved GET, then stop without closing supervisor FD.
 
@@ -241,6 +229,7 @@ def serve_one_prebound(
         raise HMLUnixProxyError("HML_PROXY_NOT_CONFIGURED")
     _check_prebound_socket(
         listener, expected_path=expected_path, owner_uid=owner_uid,
+        socket_gid=socket_gid,
     )
     client = None
     try:
@@ -261,7 +250,7 @@ def serve_one_prebound(
             _response(client, code, {"error": "HML_REQUEST_DENIED"})
             return SingleRequestProxyResult("blocked", code, False)
         try:
-            container = asyncio.run(inspector.inspect(_TARGET))
+            container = asyncio.run(asyncio.wait_for(inspector.inspect(_TARGET), timeout=4.0))
             payload = _sanitized_runtime(container)
         except Exception:
             _response(client, 502, {"error": "HML_INSPECT_UNAVAILABLE"})
