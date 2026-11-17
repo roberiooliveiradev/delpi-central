@@ -51,6 +51,7 @@ on:
       - "linux-ops-mcp/tests/test_atlas_hml_uds_policy.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_engine_boundary.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
       - ".github/workflows/atlas-p22e-integration.yml"
@@ -103,6 +104,7 @@ on:
       - "linux-ops-mcp/tests/test_atlas_hml_uds_policy.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_engine_boundary.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
       - ".github/workflows/atlas-p22e-integration.yml"
@@ -191,6 +193,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_local_probe.py \
             linux-ops-mcp/tests/test_atlas_hml_git_head_peek.py \
             linux-ops-mcp/tests/test_atlas_hml_unix_proxy.py \
+            linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py \
             linux-ops-mcp/tests/test_atlas_docker_engine_ci.py
       - name: Remove only the ephemeral pilot
         if: always()
