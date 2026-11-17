@@ -41,7 +41,7 @@ def read_governed_technical_knowledge(
                       description=_TOPIC_DESCRIPTION, json_schema_extra={"enum": _TOPIC_IDS} if _TOPIC_IDS else {}),
     section: str | None = Query(None, pattern=r"^s[0-9]{4}$", description="Stable heading identifier returned in excerpts, scoped to this source version."),
     subject: str | None = Query(None, min_length=1, max_length=240, description="Optional subject/designation lookup: ranks document sections deterministically by published content (headings weigh more than body; contiguous phrases get a bounded bonus). Returns only matching sections ordered by relevance; empty items with coverage=NO_MATCH when the document has no pertinent excerpt. Combinable with section (subject ranks within that scope)."),
-    corpus_version: int = Query(LATEST_CORPUS_VERSION, ge=1, le=1000, description="Corpus version to read. Published: 1 (V1, 15 topics), 2 (V2 adds MP/PI norms). Default is the latest published version; other versions return STALE_VERSION."),
+    corpus_version: int = Query(LATEST_CORPUS_VERSION, ge=1, le=1000, description="Corpus version to read. Published: 1 (V1, 15 topics), 2 (V2 adds MP/PI norms), 3 (V3 MP1008 generic AWG+CARRETEL revision). Default is the latest published version; other versions return STALE_VERSION."),
     page: int = Query(1, ge=1, le=10000),
     page_size: int = PAGE_SIZE_QUERY("knowledge_page_3_3"),
 ):

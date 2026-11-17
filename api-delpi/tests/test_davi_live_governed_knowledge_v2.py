@@ -20,10 +20,19 @@ _PI_DOC = "api-delpi/docs/api/padroes-totvs/codigos-intermediarios-pi.md"
 
 @pytest.fixture()
 def published_corpus_v2(tmp_path):
-    """Stage V1+V2 evidence files and all corpus documents in a sandbox."""
+    """Stage V1+V2 evidence files and all corpus documents in a sandbox.
+
+    Documents that drifted from their pinned hash (e.g. the MP norm after
+    the V3 revision) are staged from the pinned ``source_git_sha`` blob so
+    each version is served at its own published content.
+    """
+    import subprocess
+
     root = Path(__file__).resolve().parents[1]
+    repo_root = root.parent
     evidence = root / _EVIDENCE
     paths: set[str] = set()
+    pinned: dict[str, str] = {}
     for version in (1, 2):
         manifest = json.loads(
             (evidence / f"davi-governed-knowledge-manifest-v{version}.json").read_text()
@@ -31,16 +40,34 @@ def published_corpus_v2(tmp_path):
         index = json.loads(
             (evidence / f"davi-governed-knowledge-topics-v{version}.json").read_text()
         )
-        paths.update(entry["path"] for entry in manifest["documents"])
+        for entry in manifest["documents"]:
+            paths.add(entry["path"])
+            pinned.setdefault(
+                (entry["path"], manifest["source_git_sha"]),
+                entry["sha256"],
+            )
         paths.update(entry["source_path"] for entry in index["deferred_sources"])
         paths.add(manifest["freeze_artifact"])
         paths.add(f"api-delpi/{_EVIDENCE}/davi-governed-knowledge-manifest-v{version}.json")
         paths.add(f"api-delpi/{_EVIDENCE}/davi-governed-knowledge-topics-v{version}.json")
+    drifted = {
+        path for (path, _sha), pinned_sha in pinned.items()
+        if hashlib.sha256((root / path.removeprefix("api-delpi/")).read_bytes()).hexdigest() != pinned_sha
+    }
     for source in paths:
         relative = source.removeprefix("api-delpi/")
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(root / relative, target)
+        if source in drifted:
+            git_sha = next(
+                sha for (path, sha), pinned_sha in pinned.items()
+                if path == source
+            )
+            target.write_bytes(subprocess.run(
+                ["git", "show", f"{git_sha}:{source}"],
+                cwd=repo_root, capture_output=True, check=True).stdout)
+        else:
+            shutil.copyfile(root / relative, target)
     return tmp_path
 
 
@@ -125,7 +152,7 @@ def test_version_selection_and_v1_compatibility(published_corpus_v2):
     with pytest.raises(KnowledgeReadError, match="NOT_FOUND"):
         reader.execute(topic="pi_intermediate_codes", corpus_version=1)
     # Unsupported versions fail closed with STALE_VERSION.
-    for version in (0, 3, 99):
+    for version in (0, 4, 99):
         with pytest.raises(KnowledgeReadError, match="STALE_VERSION"):
             reader.execute(topic="product_master_sb1", corpus_version=version)
 

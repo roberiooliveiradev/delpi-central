@@ -20,7 +20,7 @@ class GovernedKnowledgePage(BaseModel):
     content_format: Literal["plain_text"]
     topic: str
     corpus_id: str
-    corpus_version: Literal[1]
+    corpus_version: Literal[1, 2, 3]
     manifest_identity: str
     source_path: str
     source_git_sha: str

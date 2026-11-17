@@ -37,13 +37,13 @@ NORM_REFS: dict[str, dict[str, str]] = {
     "MP_CABLES_1001_1005": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1001-1005",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "cables, groups 1001-1005",
     },
     "MP_TERMINAL_1008": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1008",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "terminals group 1008 — subtype dispatched "
                         "(PINO|FORQUILHA|ILHOS/TUBULAR|LINGUETA|"
                         "FASTON/BANDEIRA|OLHAL/ANZOL|generic|LUVA/EMENDA)",
@@ -51,26 +51,26 @@ NORM_REFS: dict[str, dict[str, str]] = {
     "MP_1009": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1009",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "group 1009 — subtype dispatched "
                         "(ISOLADOR | INSERTO | CONECTOR)",
     },
     "MP_ISOLATOR_1009": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1009-isoladores",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "isolators, group 1009",
     },
     "MP_INSERT_1009": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1009-inserto",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "insertos, group 1009",
     },
     "MP_CONNECTOR_1009": {
         "owner": "ENGENHARIA",
         "ref": "normas-tecnicas-descricao-materias-primas.md#1009-conectores",
-        "sha256": "66aa9c13e5666fc1e515ec743a925c322467578384ab90140290339e54424bd2",
+        "sha256": "c40413d2b23684e44409e867aea3f46157da57ad722c3d4c0c6f49844cd414fe",
         "applicability": "conectores, group 1009",
     },
 }
@@ -97,9 +97,9 @@ _TERMINAL_TYPES = {"FASTON", "BANDEIRA"}
 _TERMINAL_BATH = {"ESTANHADO", "NIQUELADO"}
 _TERMINAL_BATH_NU = _TERMINAL_BATH | {"NU"}
 _TERMINAL_PACK = {"GRANEL", "FITADO", "BLISTER"}
-# CARRETEL is TOTVS-observed (e.g. 10080106) but NOT ratified in the
-# 1008 structures — recognized lexically, evaluated INCONCLUSIVE
-# pending Engineering ratification (RQ-B03, G25-L2-A).
+# CARRETEL is ratified by the norm revision (PR #238) only for the
+# generic 1008 structure — recognized lexically everywhere; only the
+# generic evaluator passes allow_carretel=True (G25-L2-B).
 _TERMINAL_PACK_RECOGNIZED = _TERMINAL_PACK | {"CARRETEL"}
 # 1008 subtype markers documented in the norm sections (ILHÓS→ILHOS
 # accent-normalized); a TIPO outside this set falls to the documented
@@ -134,8 +134,8 @@ _COLOR_ABBR = re.compile(r"\b(PT|BN|AZ|VD|VM|AM|LR|CZ|RS|BR|AL)\b")
 _DIM_PAIR = re.compile(r"\b\d+([,.]\d+)?\s*[Xx]\s*\d+([,.]\d+)?\b")
 _RANGE_MM2 = re.compile(r"\b\d+([,.]\d+)?\s*-\s*\d+([,.]\d+)?\s*(MM2|MM)\b")
 # AWG ranges like 18-22AWG / 20-14AWG — documented for cables
-# (1001-1005) and 1009 Inserto; for 1008 they are recognized
-# lexically but stay INCONCLUSIVE until ratified (RQ-A03, G25-L2-A).
+# (1001-1005), 1009 Inserto and, since PR #238, the generic 1008
+# structure; other 1008 structures stay INCONCLUSIVE (G25-L2-B).
 _GAUGE_AWG_RANGE = re.compile(r"\b\d{1,2}\s*-\s*\d{1,2}\s*AWG\b")
 _COMP_MM = re.compile(r"\bCOMP\s+\d+[,.]?\d*\s*MM\b")
 _SCREW_M = re.compile(r"\bM\d+\b")
@@ -367,47 +367,58 @@ def _t_gauge(up: str) -> tuple[re.Match | None, re.Match | None,
 def _t_gauge_rule(rule_id: str, rng: re.Match | None,
                   single: re.Match | None,
                   awg: re.Match | None = None,
-                  *, allow_single: bool) -> dict:
+                  *, allow_single: bool,
+                  allow_awg: bool = False) -> dict:
+    req = ("gauge range in MM2 or AWG (e.g. 0,50-1,50MM2 / 18-22AWG)"
+           if allow_awg else
+           "gauge range in MM2 (e.g. 0,50-1,50MM2)")
     if rng and rng.group(3) == "MM2":
-        return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
-                     True, "PASS", rng.group(0), "x,x-y,yMM2")
+        return _rule(rule_id, req, True, "PASS", rng.group(0),
+                     "x,x-y,yMM2")
     if rng:
-        return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
-                     True, "WARNING", rng.group(0), "x,x-y,yMM2",
+        return _rule(rule_id, req, True, "WARNING", rng.group(0),
+                     "x,x-y,yMM2",
                      "unit 'MM' — norm expects 'MM2'; MM is not "
                      "silently normalized to MM2 (D3 pending)")
     if awg:
-        # AWG is documented for cables 1001-1005 and 1009 Inserto —
-        # NOT for the 1008 structures. Lexical recognition only:
-        # never converted to mm2, never declared conformant.
-        return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
-                     True, "INCONCLUSIVE", awg.group(0), "x,x-y,yMM2",
-                     "AWG range recognized — AWG is not documented "
-                     "for 1008 structures; pending Engineering "
+        # AWG is ratified only where the norm revision states it
+        # (1008 generic structure, PR #238) — allow_awg is scoped to
+        # that evaluator; other 1008 structures stay INCONCLUSIVE.
+        # Never converted to mm2.
+        if allow_awg:
+            return _rule(rule_id, req, True, "PASS", awg.group(0),
+                         "x,x-y,yMM2 or NN-NNAWG")
+        return _rule(rule_id, req, True, "INCONCLUSIVE", awg.group(0),
+                     "x,x-y,yMM2",
+                     "AWG range recognized — AWG is not ratified for "
+                     "this 1008 structure; pending Engineering "
                      "ratification (not normalized to MM2)")
     if single:
         if allow_single:
             return _rule(rule_id, "gauge in MM2 (range or single, "
                          "both documented)", True, "PASS",
                          single.group(0), "x,xMM2 or x,x-y,yMM2")
-        return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
-                     True, "INCONCLUSIVE", single.group(0), "x,x-y,yMM2",
+        return _rule(rule_id, req, True, "INCONCLUSIVE", single.group(0),
+                     "x,x-y,yMM2",
                      "single MM2 present — norm documents a range")
-    return _rule(rule_id, "gauge range in MM2 (e.g. 0,50-1,50MM2)",
-                 True, "INCONCLUSIVE", None, "x,x-y,yMM2")
+    return _rule(rule_id, req, True, "INCONCLUSIVE", None,
+                 "x,x-y,yMM2")
 
 
-def _t_pack_rule(rule_id: str, pack: str | None) -> dict:
-    if pack in _TERMINAL_PACK:
-        return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
-                     True, "PASS", pack, sorted(_TERMINAL_PACK))
+def _t_pack_rule(rule_id: str, pack: str | None,
+                 *, allow_carretel: bool = False) -> dict:
+    vocab = (_TERMINAL_PACK | ({"CARRETEL"} if allow_carretel else set()))
+    req = ("packaging (GRANEL, FITADO, BLISTER"
+           + (" or CARRETEL" if allow_carretel else "") + ")")
+    if pack in vocab:
+        return _rule(rule_id, req, True, "PASS", pack, sorted(vocab))
     if pack == "CARRETEL":
-        return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
-                     True, "INCONCLUSIVE", pack, sorted(_TERMINAL_PACK),
-                     "packaging 'CARRETEL' recognized — TOTVS-observed "
-                     "value pending normative ratification (RQ-B03)")
-    return _rule(rule_id, "packaging (GRANEL, FITADO, BLISTER)",
-                 True, "INCONCLUSIVE", pack, sorted(_TERMINAL_PACK))
+        return _rule(rule_id, req, True, "INCONCLUSIVE", pack,
+                     sorted(vocab),
+                     "packaging 'CARRETEL' recognized — not ratified "
+                     "for this 1008 structure (PR #238 scope: generic "
+                     "structure only)")
+    return _rule(rule_id, req, True, "INCONCLUSIVE", pack, sorted(vocab))
 
 
 def _t_common(up: str, *, bath_vocab: set[str],
@@ -676,11 +687,12 @@ def _eval_generic_1008(desc: str) -> dict[str, Any]:
         _rule("MP-1008G-TYPE", "terminal type (free technical type, "
               "e.g. BALA)", True,
               "PASS" if ttype else "INCONCLUSIVE", ttype),
-        _t_gauge_rule("MP-1008G-GAUGE", rng, single, awg, allow_single=False),
+        _t_gauge_rule("MP-1008G-GAUGE", rng, single, awg,
+                      allow_single=False, allow_awg=True),
         _rule("MP-1008G-BATH", "plating (ESTANHADO, NIQUELADO, NU)",
               True, "PASS" if c["bath"] else "INCONCLUSIVE",
               c["bath"], sorted(_TERMINAL_BATH_NU)),
-        _t_pack_rule("MP-1008G-PACK", c["pack"]),
+        _t_pack_rule("MP-1008G-PACK", c["pack"], allow_carretel=True),
     ]
     rules += _t_obs_cert_rules("MP-1008G", obs, c["certs"])
     return attrs, rules

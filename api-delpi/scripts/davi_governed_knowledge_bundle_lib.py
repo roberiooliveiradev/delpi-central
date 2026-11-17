@@ -52,6 +52,22 @@ TOPIC_INDEX_V2_REPO_PATH = (
 )
 PUBLISHED_V2_MANIFEST_IDENTITY = "10f1983cbbdfd7e229265ab9feebf11853f730a4040a37b305046d3a4b98beb1"
 
+# Corpus V3 — additive revision: V2 membership preserved; MP norm document
+# revised (MP1008 generic AWG range + CARRETEL packaging, PR #238).
+CORPUS_VERSION_V3 = 3
+FREEZE_ARTIFACT_V3 = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-freeze-003.md"
+)
+FREEZE_SHA_V3 = "5a11f9a48d10d82a6a613a73f654eee84d79eaae"  # freeze-003 commit
+MANIFEST_V3_REPO_PATH = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-manifest-v3.json"
+)
+MEMBERSHIP_MARKER_V3 = "## FROZEN_CORPUS_V3"
+TOPIC_INDEX_V3_REPO_PATH = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-topics-v3.json"
+)
+PUBLISHED_V3_MANIFEST_IDENTITY = "0817c4a05546f15a0f46c8d3223104ef5dd393c993a9082a3a5a7f9e6be877a9"
+
 
 @dataclass(frozen=True)
 class CorpusVersionSpec:
@@ -84,11 +100,20 @@ V2_SPEC = CorpusVersionSpec(
     membership_marker=MEMBERSHIP_MARKER_V2,
     manifest_identity=PUBLISHED_V2_MANIFEST_IDENTITY,
 )
+V3_SPEC = CorpusVersionSpec(
+    corpus_version=CORPUS_VERSION_V3,
+    manifest_repo_path=MANIFEST_V3_REPO_PATH,
+    topic_index_repo_path=TOPIC_INDEX_V3_REPO_PATH,
+    freeze_artifact=FREEZE_ARTIFACT_V3,
+    freeze_sha=FREEZE_SHA_V3,
+    membership_marker=MEMBERSHIP_MARKER_V3,
+    manifest_identity=PUBLISHED_V3_MANIFEST_IDENTITY,
+)
 PUBLISHED_CORPUS_VERSIONS: dict[int, CorpusVersionSpec] = {
-    spec.corpus_version: spec for spec in (V1_SPEC, V2_SPEC)
+    spec.corpus_version: spec for spec in (V1_SPEC, V2_SPEC, V3_SPEC)
 }
 LATEST_CORPUS_VERSION = max(PUBLISHED_CORPUS_VERSIONS)
-APPROVED_TOPIC_STATUSES = frozenset({"FROZEN_V1", "FROZEN_V2"})
+APPROVED_TOPIC_STATUSES = frozenset({"FROZEN_V1", "FROZEN_V2", "FROZEN_V3"})
 
 
 def corpus_version_spec(corpus_version: int) -> CorpusVersionSpec:

@@ -258,7 +258,8 @@ def test_l2_1009_isolation_regression():
 
 # ---- G25-L2-A — bitola AWG e embalagem CARRETEL ----
 def test_l2a_real_10080106_awg_and_carretel_recognized():
-    """Caso real do aceite: reconhecimento lexical ≠ conformidade."""
+    """Caso real do aceite — G25-L2-B: AWG+CARRETEL ratificados no
+    genérico 1008 (PR #238) → PASS; raw/unidade preservados."""
     r = ev("10080106", "MP",
            "TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS")
     st = _rules(r)
@@ -266,14 +267,13 @@ def test_l2a_real_10080106_awg_and_carretel_recognized():
                  if x["rule_id"] == "MP-1008G-GAUGE")
     pack = next(x for x in r["rule_results"]
                 if x["rule_id"] == "MP-1008G-PACK")
-    assert gauge["status"] == "INCONCLUSIVE"
+    assert gauge["status"] == "PASS"
     assert gauge["observed"] == "18-22AWG"          # não converte p/ mm2
-    assert "ratification" in (gauge["reason"] or "")
-    assert pack["status"] == "INCONCLUSIVE"
+    assert pack["status"] == "PASS"
     assert pack["observed"] == "CARRETEL"           # embalagem, não obs
-    assert "ratification" in (pack["reason"] or "")
     assert st["MP-1008G-BATH"] == "PASS"
     assert st["MP-1008G-CERT"] == "PASS"
+    assert r["overall_status"] == "PASS"
     # AWG não vira observação residual
     obs = next(a for a in r["extracted_attributes"]
                if a["name"] == "observations")
@@ -284,13 +284,36 @@ def test_l2a_real_10080106_awg_and_carretel_recognized():
 
 
 def test_l2a_awg_range_variants():
+    # AWG ratificado na estrutura genérica 1008 (PR #238)
     for desc in ("TERM. BALA 18-22 AWG ESTANHADO GRANEL",
                  "TERM. BALA 20-14AWG NU GRANEL"):
         r = ev("10080130", "MP", desc)
         g = next(x for x in r["rule_results"]
                  if x["rule_id"] == "MP-1008G-GAUGE")
-        assert g["status"] == "INCONCLUSIVE"
+        assert g["status"] == "PASS"
         assert "AWG" in g["observed"]
+
+
+def test_l2b_awg_outside_generic_stays_inconclusive():
+    # Escopo PR #238: AWG só é conformidade na estrutura genérica 1008.
+    r = ev("10080112", "MP",
+           "TERM. FORQUILHA M3 3,40MM 18-22AWG 6,20MM "
+           "COMP 20,00MM ESTANHADO S/ISOLACAO GRANEL")
+    rule = next(x for x in r["rule_results"]
+                if x["rule_id"] == "MP-1008F-GAUGE")
+    assert rule["status"] == "INCONCLUSIVE"
+    assert rule["observed"] == "18-22AWG"
+
+
+def test_l2b_carretel_outside_generic_stays_inconclusive():
+    # CARRETEL segue reconhecido lexicalmente, sem PASS fora do genérico.
+    r = ev("10080119", "MP",
+           "TERM. LUVA 2,00-4,00MM2 COMP 10,00MM ESTANHADO "
+           "S/ISOLACAO CARRETEL ROHS")
+    p = next(x for x in r["rule_results"]
+             if x["rule_id"] == "MP-1008E-PACK")
+    assert p["status"] == "INCONCLUSIVE"
+    assert p["observed"] == "CARRETEL"
 
 
 def test_l2a_awg_not_converted_to_mm2():

@@ -121,10 +121,11 @@ def test_version_section_pagination_and_sizes(published_corpus):
     from app.application.use_cases.read_governed_technical_knowledge_use_case import KnowledgeReadError
     reader = _reader(published_corpus)
     with pytest.raises(KnowledgeReadError, match="STALE_VERSION"):
-        reader.execute(topic="product_master_sb1", corpus_version=3)
-    # V2 is published but not staged in this V1-only fixture -> fail closed.
-    with pytest.raises(KnowledgeReadError, match="CORPUS_UNAVAILABLE"):
-        reader.execute(topic="product_master_sb1", corpus_version=2)
+        reader.execute(topic="product_master_sb1", corpus_version=4)
+    # V2/V3 are published but not staged in this V1-only fixture -> fail closed.
+    for version in (2, 3):
+        with pytest.raises(KnowledgeReadError, match="CORPUS_UNAVAILABLE"):
+            reader.execute(topic="product_master_sb1", corpus_version=version)
     with pytest.raises(KnowledgeReadError, match="NOT_FOUND"):
         reader.execute(topic="product_master_sb1", corpus_version=1, section="missing_section")
     for arguments in ({"page_size": 4}, {"page": 0}, {"page": 10001}):
