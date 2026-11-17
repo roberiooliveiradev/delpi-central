@@ -143,7 +143,7 @@ def test_real_kernel_peer_uid_and_docker_client_interop(endpoint):
     assert not result.can_execute
 
 
-@pytest.mark.parametrize("request,status",[
+@pytest.mark.parametrize("request_bytes,status",[
     (b"POST /containers/delpi-hml-public-hub/json HTTP/1.1\r\nHost: docker.local\r\n\r\n",405),
     (b"DELETE /containers/delpi-hml-public-hub/json HTTP/1.1\r\nHost: docker.local\r\n\r\n",405),
     (b"HEAD /containers/delpi-hml-public-hub/json HTTP/1.1\r\nHost: docker.local\r\n\r\n",405),
@@ -164,12 +164,12 @@ def test_real_kernel_peer_uid_and_docker_client_interop(endpoint):
      b"Host: docker.local\r\nX-Filler: "+b"A"*2100+b"\r\n\r\n",400),
 ])
 def test_non_whitelisted_method_path_header_or_pipelining_is_denied(
-    endpoint,request,status,monkeypatch,
+    endpoint,request_bytes,status,monkeypatch,
 ):
     monkeypatch.setattr(proxy,"_peer_uid",lambda _:max(1,os.getuid()))
     source=Source()
     thread,result,error=start_one(endpoint,source)
-    code,payload,headers=raw_request(endpoint,request)
+    code,payload,headers=raw_request(endpoint,request_bytes)
     got=wait_for(thread,result,error)
     assert code==status
     assert payload=={"error":"HML_REQUEST_DENIED"}
