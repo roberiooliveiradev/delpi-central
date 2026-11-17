@@ -9,8 +9,8 @@
 |---|---|---|---|---|
 | **P1** | 0 + 1 | Inventário, tokens claro/escuro, controle de tema, layout da página, demos no catálogo | PluginUI: DEV → **PROD** (componentes genéricos) | **ACEITO COM RESÍDUOS** — commit `7abe0b338b`, deploy PROD e HML em 16/11/2026 (ver §3) |
 | **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `78f11fbd03`, deploy PROD e HML em 16–17/11/2026 (ver §5) |
-| **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§6) |
-| P4 | 4 | Rodapé de ações, revisão, tela de resultado | PluginUI → PROD | A gerar |
+| **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f75d2385fe`, deploy PROD e HML em 17/11/2026; R8 obrigatório no P4 (ver §7) |
+| **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§8) |
 | P5 | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | A gerar |
 | P6 | 7 | Página pública nova da Pesquisa no `public-hub` | **Somente HML** | A gerar |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
@@ -319,3 +319,90 @@ Os do P1/P2, mais: nenhuma lógica de obrigatoriedade, progresso ou envio (isso 
 2. **Campo de texto:** aceito o envoltório com `role="group"` + `aria-describedby`, sem alterar o `TextAreaField`. Novo resíduo **R7**: o `TextAreaField` não repassa `aria-*` ao `<textarea>`; como as perguntas abertas são opcionais, o impacto é baixo; mudança no componente compartilhado fica para decisão própria.
 3. **`addedAt`:** usar a data real da inclusão (`2026-11-17`), não a do P1.
 4. **Publicação com `main` divergente:** a cópia local do executor tinha um commit de outro trabalho ainda não publicado (`ee7a961633`, correção de engineering). **Proibido publicar esse commit junto com o P3** (`AGENTS.md`, Regra 9: não misturar tarefas). Caminho autorizado pelo solicitante para este pacote: criar um **worktree temporário** a partir de `origin/main`, aplicar nele só o commit do P3, publicar a partir dele e removê-lo em seguida, sem alterar o worktree principal nem o commit do outro trabalho; registrar no relatório.
+
+---
+
+## 7. Revisão do P3 (17/11/2026)
+
+**Veredito do coordenador:** `ACCEPT_WITH_RESIDUAL`, com correção obrigatória no início do P4. Conferido: commit `f75d2385fe` em `main`, 16 arquivos só em `plugins/plugin-ui`; o commit de outro trabalho (`ee7a961633` e sucessores) **não** foi publicado; publicação feita pelo worktree temporário autorizado e removido. Grupo `radio` nativo com o mesmo `name`, N/A no grupo, `0` válido, Enter sem envio, `aria-invalid`, sem texto fixo. Contrastes medidos dentro do alvo (borda de controle 3,04:1 claro / 4,29:1 escuro). Verificador: `ACCEPT_WITH_RESIDUAL` na 1ª rodada.
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| **R8** | **Posição da legenda das pontas:** com `endLabelsPosition="below"`, o bloco “1 · … / 5 · …” é renderizado **depois** de toda a linha de opções — no celular fica abaixo da linha da nota e do “Não se aplica”; no computador, abaixo da linha inteira (inclusive do N/A). Na referência, a legenda fica **logo abaixo dos números**, antes da linha “Sua nota…” e do N/A (celular) e dentro da coluna das notas, à esquerda do divisor (computador) | **Corrigir no P4 (§8.3a)** |
+| R9 | Setas/Home/End implementados à mão (determinístico), sem teste dedicado para Home/End | Testes no P4 |
+| R4 | Permissões nos clones do servidor (inclui logo 403, D3) | Pacote de infraestrutura antes do P6 |
+| R5 | 2 erros de `tsc` pré-existentes | Fora do escopo |
+| R7 | `TextAreaField` sem repasse de `aria-*` | Decisão própria futura |
+
+## 8. Pacote P4 — Correção R8, botões, rodapé de ações, aviso, revisão e resultado
+
+**Fase do plano:** 4. **Pré-requisito:** P3 aceito.
+
+### 8.1 Objetivo
+
+Corrigir a posição da legenda da escala (R8) e criar os componentes de **ação e fechamento** do formulário — botões do formulário, rodapé de ações, aviso, seção de revisão e tela de resultado —, nos dois temas. Ainda **sem** o fluxo completo (P5).
+
+### 8.2 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/plugin-ui/src/components/forms/questionnaire/` | Ajustar `RatingScale.tsx` (R8) e testes (R9); novos: `FormButton.tsx`, `FormStepFooter.tsx`, `FormNotice.tsx`, `FormReviewSection.tsx` (+ `FormReviewRow`), `FormResultPanel.tsx` + testes; `index.ts` |
+| `plugins/plugin-ui/src/styles/questionnaire.css` e `questionnaireCssContract.test.ts` | Estilos e contrato |
+| `plugins/plugin-ui/src/components/forms/index.ts` | Exports |
+| `plugins/plugin-ui/src/catalog/visualComponents.ts`, `demos/questionnaire.tsx`, `src/app/catalog.css` | Inventário (`addedAt` = data real) e demos |
+| `plugins/plugin-ui/docs/component-catalog.md` | Documentação |
+
+**Não alterar** `ActionButton`, `src/index.ts`, `src/styles.css` nem outros componentes existentes.
+
+### 8.3 Entregáveis
+
+Referência: [UI-03 §3.3–§3.6](./UI-03-FORMULARIO-PUBLICO.md#33-estrutura-da-página) e a [referência visual](./UI-03-REFERENCIA-VISUAL.html). Nenhum texto fixo.
+
+**a) R8 — legenda das pontas** — ordem final da escala:
+- **Estreito:** números → legenda das pontas (se `below`) → “Sua nota…” → “Não se aplica”. Com `above`: legenda → números → “Sua nota…”.
+- **≥ 600 px:** coluna da esquerda com números + legenda (abaixo ou acima); divisor vertical de 1 px; “Não se aplica” à direita, alinhado à linha dos números; “Sua nota…” abaixo de tudo, em largura total.
+- Manter o grupo `radio` e a ordem de foco: números e depois N/A.
+- Testes que verificam a ordem no DOM nos dois casos (`below`/`above`) + **R9**: testes de Home/End (incluindo N/A como último).
+
+**b) `FormButton`** — botões do formulário sobre o `ActionButton` existente (sem alterá-lo), com classe de escopo: `variant: "primary" | "secondary"`, `busy?` + `busyLabel` (desabilitado e mantendo o foco, via `softDisabled`), `fullWidth?`. Medidas: altura 48 px, raio 8 px, 16 px peso 600, padding 0 24 px (primário) / 0 20 px (secundário). Primário: fundo `--delpi-ui-accent`, texto `--delpi-ui-on-accent`; secundário: superfície, borda `--delpi-ui-form-border-soft`, texto `--delpi-ui-text`. Foco com `--delpi-ui-focus-ring`. **Se o CSS do `ActionButton` impedir o visual sem `!important` ou sem alterá-lo, parar e reportar (`DECISION_REQUIRED`).**
+
+**c) `FormStepFooter`** — `message?: ReactNode` (pendência, 13–14 px, 600, `--delpi-ui-danger`, com `role="status"`), `back?: { label, onClick }`, `next: { label, onClick, busy?, busyLabel? }`.
+- **< 600 px:** fixo na base (`position: sticky; bottom: 0`), ocupando a largura da coluna até as bordas (margem negativa de 16 px), fundo da superfície, borda superior `--delpi-ui-border`, sombra leve para cima, padding 12 × 16 × 16 px; mensagem em cima; Voltar (secundário) à esquerda e o primário ocupando o restante.
+- **≥ 600 px:** no fim da coluna, sem fixar; mensagem à esquerda, botões à direita; primário com largura mínima 160 px.
+
+**d) `FormNotice`** — aviso em bloco: `tone: "warning" | "info"`, `children`; warning com `--delpi-ui-form-warning-bg/-border/-text`, raio 12 px, padding 14 × 16 px, 14 px, altura de linha 1,5; `role="note"`.
+
+**e) `FormReviewSection` + `FormReviewRow`** — seção da revisão sobre `FormCard`: `title` (16 px, 700), `edit: { label, ariaLabel, onClick }` (botão 36 px de altura com ícone de lápis do `lucide-react`, borda `--delpi-ui-form-border-soft`, texto `--delpi-ui-accent`, área clicável ≥ 44 px), `rows: { label, value, muted?, block? }[]`. Linha: borda superior `--delpi-ui-form-track`, padding 10 px 0, 14 px; rótulo à esquerda e valor à direita em peso 600; `muted` = itálico em `--delpi-ui-muted`; `block` = rótulo em cima e valor embaixo (comentários longos, com quebra de linha preservada). Usar lista semântica (`dl`/`dt`/`dd`).
+
+**f) `FormResultPanel`** — tela final ou de estado, centralizada sobre `FormCard`: `tone: "success" | "info" | "warning" | "error"`, `logo?`, `title` (26 px, 700), `message` (16 px), `hint?` (14 px, `--delpi-ui-muted`), `action?: ReactNode`. `success`: círculo 72 px em `--delpi-ui-success` com ícone de confirmação em `--delpi-ui-on-accent` (garantir contraste nos dois temas e medir); demais tons: sem círculo verde (ícone discreto opcional). `role="status"` em sucesso/informação e `role="alert"` em erro.
+
+**g) Demos no catálogo** — nos dois temas: escala com R8 corrigido (1–5 com N/A; 0–10 com legenda acima); rodapé com e sem Voltar, com mensagem e enviando; aviso; seção de revisão com valores, N/A, vazio em itálico e comentário em bloco; resultado de sucesso e de erro com ação. Textos neutros.
+
+### 8.4 Invariantes
+
+Os anteriores, mais: nenhuma lógica de fluxo (navegação entre etapas, validação, envio) — os componentes só recebem dados e funções; `ActionButton` intocado.
+
+### 8.5 Testes mínimos
+
+1. R8: ordem no DOM para `below` e `above`; N/A depois da legenda no estreito. R9: Home/End.
+2. `FormButton`: variantes, `busy` mostra `busyLabel`, mantém foco e não dispara `onClick`.
+3. `FormStepFooter`: sem `back` não renderiza Voltar; mensagem com `role="status"`; botão primário recebe `busy`.
+4. `FormReviewSection`: `dl/dt/dd`; Editar com nome acessível; `muted` e `block`.
+5. `FormResultPanel`: papel `status`/`alert` por tom; círculo só em `success`.
+6. `FormNotice`: tom e `role="note"`.
+7. Contrato do CSS estendido; `componentRegistry.test.ts` verde.
+
+### 8.6 Critérios de aceite
+
+| # | Critério | Evidência esperada |
+|---|---|---|
+| D1 | R8 corrigido: legenda imediatamente abaixo (ou acima) dos números, em 360 px e 1280 px, nos dois temas | Capturas comparadas com a referência |
+| D2 | Componentes exportados, documentados e no catálogo | Diff + catálogo |
+| D3 | Visual conforme UI-03 §3.3–§3.5 em 360, 375, ~700 e 1280 px, nos dois temas; rodapé fixo só abaixo de 600 px | Capturas |
+| D4 | Contraste do ícone de sucesso e dos botões medido nos dois temas | Tabela no relatório |
+| D5 | `ActionButton` intocado; nenhum `!important` | Diff + contrato |
+| D6 | Zero texto fixo e zero referência à Pesquisa | `grep` |
+| D7 | Auditorias, build e `verify-host-exports` ok; deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Saídas |
+| D8 | Verificador independente aprovado | Veredito sem edição |
+
+**Publicação:** se o `main` local voltar a ter commit de outro trabalho não publicado, usar o mesmo caminho autorizado no §6.8 item 4 (worktree temporário a partir de `origin/main`, só o commit do pacote).
