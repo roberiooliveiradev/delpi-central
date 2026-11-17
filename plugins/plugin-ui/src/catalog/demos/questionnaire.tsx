@@ -1,5 +1,5 @@
 import { Clock, ShieldCheck } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { PUC_PREFIX } from "../../app/bemPrefix";
 import { ActionButton } from "../../components/actions/ActionButton";
@@ -11,8 +11,13 @@ import {
   FormPageLayout,
   FormProgress,
   FormThemeToggle,
+  NotApplicableOption,
+  QuestionAnswerStack,
   QuestionCard,
+  QuestionTextAnswer,
   QuestionnaireThemeScope,
+  RatingScale,
+  type RatingScaleValue,
 } from "../../components/forms/questionnaire";
 import type { CatalogEntryDraft } from "../types";
 
@@ -67,12 +72,74 @@ function ThemedPair({ children }: { children: (dark: boolean) => ReactNode }) {
   );
 }
 
-/** Área de resposta neutra (escala/campo chegam nos pacotes seguintes). */
-function AnswerPlaceholder() {
+const SCALE_MEANINGS = [
+  "Muito insatisfeito",
+  "Insatisfeito",
+  "Neutro",
+  "Satisfeito",
+  "Muito satisfeito",
+];
+
+const scaleLabel = (n: number) => `${n} — ${SCALE_MEANINGS[n - 1]}`;
+
+/** Escala 1–5 controlada para as demos (estado local, sem persistência). */
+function Scale15Demo({
+  initial = null,
+  invalid = false,
+}: {
+  initial?: RatingScaleValue;
+  invalid?: boolean;
+}) {
+  const [value, setValue] = useState<RatingScaleValue>(initial);
   return (
-    <div className="puc-questionnaire-answer-placeholder">
-      Área de resposta — escala/campo (pacotes seguintes)
-    </div>
+    <RatingScale
+      prefix={P}
+      name={`demo-15-${String(invalid)}-${String(initial)}`}
+      min={1}
+      max={5}
+      value={value}
+      onChange={setValue}
+      optionLabel={scaleLabel}
+      endLabels={{ min: "1 · Muito insatisfeito", max: "5 · Muito satisfeito" }}
+      selectionCaption={(n) => `Sua nota: ${n} · ${SCALE_MEANINGS[n - 1]}`}
+      notApplicable={{ label: "Não se aplica" }}
+      invalid={invalid}
+    />
+  );
+}
+
+/** Escala 0–10 controlada (legenda acima, sem N/A). */
+function Scale010Demo() {
+  const [value, setValue] = useState<RatingScaleValue>(null);
+  return (
+    <RatingScale
+      prefix={P}
+      name="demo-010"
+      min={0}
+      max={10}
+      value={value}
+      onChange={setValue}
+      optionLabel={(n) => `Nota ${n}`}
+      endLabels={{ min: "0 · Nada provável", max: "10 · Extremamente provável" }}
+      endLabelsPosition="above"
+      narrowColumns={6}
+      selectionCaption={(n) => `Sua nota: ${n}`}
+    />
+  );
+}
+
+/** Campo aberto controlado. */
+function TextAnswerDemo({ initial = "" }: { initial?: string }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <QuestionTextAnswer
+      prefix={P}
+      label="Sua resposta"
+      placeholder="Escreva sua resposta"
+      value={value}
+      onChange={setValue}
+      maxLength={500}
+    />
   );
 }
 
@@ -455,7 +522,9 @@ export const questionnaireCatalogEntries: CatalogEntryDraft[] = [
                   required
                   requiredLabel="obrigatória"
                 >
-                  <AnswerPlaceholder />
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo />
+                  </QuestionAnswerStack>
                 </QuestionCard>
                 <QuestionCard
                   prefix={P}
@@ -463,7 +532,9 @@ export const questionnaireCatalogEntries: CatalogEntryDraft[] = [
                   prompt="Deixe uma sugestão de melhoria."
                   optionalLabel="(opcional)"
                 >
-                  <AnswerPlaceholder />
+                  <QuestionAnswerStack prefix={P}>
+                    <TextAnswerDemo />
+                  </QuestionAnswerStack>
                 </QuestionCard>
                 <QuestionCard
                   prefix={P}
@@ -473,9 +544,255 @@ export const questionnaireCatalogEntries: CatalogEntryDraft[] = [
                   requiredLabel="obrigatória"
                   error="Selecione uma opção para continuar."
                 >
-                  <AnswerPlaceholder />
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo invalid />
+                  </QuestionAnswerStack>
                 </QuestionCard>
               </>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.RatingScale",
+    family: "forms",
+    exportName: "RatingScale",
+    title: "RatingScale",
+    description:
+      "Escala numérica genérica (1–5, 0–10…): grupo radio nativo exclusivo com N/A, teclado por setas, caption da nota e estado inválido.",
+    docAnchor: "respostas-do-kit-de-formulario",
+    propsSummary: [
+      "name",
+      "min",
+      "max",
+      "value",
+      "onChange",
+      "optionLabel",
+      "endLabels",
+      "endLabelsPosition",
+      "narrowColumns",
+      "selectionCaption",
+      "notApplicable",
+      "invalid",
+      "describedBy",
+      "disabled",
+    ],
+    demos: [
+      {
+        id: "states",
+        label: "sem escolha · nota · N/A · erro",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <>
+                <QuestionCard
+                  prefix={P}
+                  eyebrow="Atendimento"
+                  number={1}
+                  prompt="Como você avalia o atendimento?"
+                  required
+                  requiredLabel="obrigatória"
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+                <QuestionCard
+                  prefix={P}
+                  number={2}
+                  prompt="Como foi o prazo de entrega?"
+                  required
+                  requiredLabel="obrigatória"
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo initial={4} />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+                <QuestionCard
+                  prefix={P}
+                  number={3}
+                  prompt="A equipe técnica atendeu ao combinado?"
+                  required
+                  requiredLabel="obrigatória"
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo initial="na" />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+                <QuestionCard
+                  prefix={P}
+                  number={4}
+                  prompt="Avalie a comunicação durante o processo."
+                  required
+                  requiredLabel="obrigatória"
+                  error="Selecione uma nota ou “Não se aplica”."
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <Scale15Demo invalid />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+              </>
+            )}
+          </ThemedPair>
+        ),
+      },
+      {
+        id: "range-0-10",
+        label: "0–10 (legenda acima, sem N/A)",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <QuestionCard
+                prefix={P}
+                number={5}
+                prompt="Qual a chance de você indicar esta unidade?"
+                required
+                requiredLabel="obrigatória"
+              >
+                <QuestionAnswerStack prefix={P}>
+                  <Scale010Demo />
+                </QuestionAnswerStack>
+              </QuestionCard>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.NotApplicableOption",
+    family: "forms",
+    exportName: "NotApplicableOption",
+    title: "NotApplicableOption",
+    description:
+      "Pílula 'não se aplica' do MESMO grupo radio da escala: indicador de 18 px, estados normal/selecionado/inválido — nunca controle isolado.",
+    docAnchor: "respostas-do-kit-de-formulario",
+    propsSummary: [
+      "name",
+      "label",
+      "checked",
+      "onChange",
+      "disabled",
+      "invalid",
+      "prefix",
+    ],
+    demos: [
+      {
+        id: "states",
+        label: "normal · selecionada · inválida",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <div className="puc-questionnaire-inline">
+                <NotApplicableOption
+                  prefix={P}
+                  name="demo-na-1"
+                  label="Não se aplica"
+                />
+                <NotApplicableOption
+                  prefix={P}
+                  name="demo-na-2"
+                  label="Não se aplica"
+                  checked
+                  onChange={() => {}}
+                />
+                <NotApplicableOption
+                  prefix={P}
+                  name="demo-na-3"
+                  label="Não se aplica"
+                  invalid
+                />
+              </div>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.QuestionTextAnswer",
+    family: "forms",
+    exportName: "QuestionTextAnswer",
+    title: "QuestionTextAnswer",
+    description:
+      "Resposta aberta sobre o TextAreaField (intacto): mín. 96 px, fundo de campo, borda de controle; describedBy via role=group (R7).",
+    docAnchor: "respostas-do-kit-de-formulario",
+    propsSummary: [
+      "label",
+      "value",
+      "onChange",
+      "placeholder",
+      "hint",
+      "rows",
+      "maxLength",
+      "describedBy",
+      "disabled",
+      "id",
+    ],
+    demos: [
+      {
+        id: "states",
+        label: "vazio · preenchido",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <>
+                <QuestionCard
+                  prefix={P}
+                  number={6}
+                  prompt="Conte algo que podemos melhorar."
+                  optionalLabel="(opcional)"
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <TextAnswerDemo />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+                <QuestionCard
+                  prefix={P}
+                  number={7}
+                  prompt="Deixe um comentário livre."
+                  optionalLabel="(opcional)"
+                >
+                  <QuestionAnswerStack prefix={P}>
+                    <TextAnswerDemo initial="O atendimento foi claro e rápido durante todo o processo." />
+                  </QuestionAnswerStack>
+                </QuestionCard>
+              </>
+            )}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
+  {
+    id: "forms.QuestionAnswerStack",
+    family: "forms",
+    exportName: "QuestionAnswerStack",
+    title: "QuestionAnswerStack",
+    description:
+      "Pilha da área de resposta do QuestionCard (R6): ritmo 12 px / 14 px (≥600) entre escala, legenda, N/A e campo — o gap do cartão não atravessa a legend.",
+    docAnchor: "respostas-do-kit-de-formulario",
+    propsSummary: ["prefix", "className", "children"],
+    demos: [
+      {
+        id: "rhythm",
+        label: "escala + campo na mesma pilha",
+        render: () => (
+          <ThemedPair>
+            {() => (
+              <QuestionCard
+                prefix={P}
+                number={8}
+                prompt="Avalie e comente, se quiser detalhar."
+                optionalLabel="(opcional)"
+              >
+                <QuestionAnswerStack prefix={P}>
+                  <Scale15Demo />
+                  <TextAnswerDemo />
+                </QuestionAnswerStack>
+              </QuestionCard>
             )}
           </ThemedPair>
         ),

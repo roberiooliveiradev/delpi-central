@@ -417,6 +417,217 @@
   border: 0;
 }
 
+/* --- Pilha da área de resposta (QuestionAnswerStack, R6) --------------------
+   Filhos não-legend do fieldset vivem num content box anônimo — o gap do
+   cartão não se aplica entre eles. A pilha garante o ritmo 12/14 px. */
+
+.delpi-ui-form-answer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Escala numérica (RatingScale) ----------------------------------------- */
+
+.delpi-ui-form-scale {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Estreito: coluna — opções, linha da nota, N/A (divisor some). */
+.delpi-ui-form-scale__options-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delpi-ui-form-scale__options {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--delpi-ui-form-scale-cols, 5),
+    minmax(0, 1fr)
+  );
+  gap: 8px;
+}
+
+/* O `label` é o botão visual; o `input` nativo fica recortado e focável. */
+.delpi-ui-form-scale__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  border: 1px solid var(--delpi-ui-control-border);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--delpi-ui-text);
+  cursor: pointer;
+}
+
+/* Escalas longas (0–10): 46 px conforme UI-03 §3.4. */
+.delpi-ui-form-scale__options--dense .delpi-ui-form-scale__option {
+  height: 46px;
+  font-size: 16px;
+}
+
+.delpi-ui-form-scale__input,
+.delpi-ui-form-na__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.delpi-ui-form-scale__option:has(.delpi-ui-form-scale__input:checked) {
+  background: var(--delpi-ui-accent);
+  border-color: var(--delpi-ui-accent);
+  color: var(--delpi-ui-on-accent);
+}
+
+.delpi-ui-form-scale__option:has(.delpi-ui-form-scale__input:focus-visible) {
+  box-shadow: var(--delpi-ui-focus-ring);
+}
+
+.delpi-ui-form-scale__option:has(.delpi-ui-form-scale__input:disabled) {
+  cursor: default;
+}
+
+/* Inválido (§6.4a/§6.8): borda danger nos botões — a segunda regra cobre o
+   estado marcado, cujo :has() tem especificidade maior. */
+.delpi-ui-form-scale--invalid .delpi-ui-form-scale__option,
+.delpi-ui-form-scale--invalid
+  .delpi-ui-form-scale__option:has(.delpi-ui-form-scale__input:checked) {
+  border-color: var(--delpi-ui-danger);
+}
+
+.delpi-ui-form-scale__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--delpi-ui-muted);
+}
+
+.delpi-ui-form-scale__caption {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-form-accent-text);
+}
+
+.delpi-ui-form-scale__divider {
+  display: none;
+}
+
+/* --- Não se aplica (NotApplicableOption) ------------------------------------ */
+
+.delpi-ui-form-na {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--delpi-ui-control-border);
+  border-radius: 999px;
+  background: var(--delpi-ui-surface);
+  font-size: 15px;
+  color: var(--delpi-ui-text);
+  cursor: pointer;
+}
+
+.delpi-ui-form-na__indicator {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px solid var(--delpi-ui-control-border);
+  border-radius: 50%;
+}
+
+.delpi-ui-form-na:has(.delpi-ui-form-na__input:checked) {
+  border-color: var(--delpi-ui-accent);
+  background: var(--delpi-ui-form-tint);
+  font-weight: 600;
+  color: var(--delpi-ui-form-accent-text);
+}
+
+.delpi-ui-form-na:has(.delpi-ui-form-na__input:checked)
+  .delpi-ui-form-na__indicator {
+  border-width: 6px;
+  border-color: var(--delpi-ui-accent);
+}
+
+.delpi-ui-form-na:has(.delpi-ui-form-na__input:focus-visible) {
+  box-shadow: var(--delpi-ui-focus-ring);
+}
+
+.delpi-ui-form-na:has(.delpi-ui-form-na__input:disabled) {
+  cursor: default;
+}
+
+/* Inválido: a pílula acompanha o grupo (inclusive marcada); o modificador
+   cobre uso avulso. */
+.delpi-ui-form-scale--invalid .delpi-ui-form-na,
+.delpi-ui-form-scale--invalid
+  .delpi-ui-form-na:has(.delpi-ui-form-na__input:checked),
+.delpi-ui-form-na--invalid {
+  border-color: var(--delpi-ui-danger);
+}
+
+/* --- Resposta aberta (QuestionTextAnswer sobre TextAreaField) --------------- */
+
+.delpi-ui-form-textanswer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-form-textanswer__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--delpi-ui-text);
+  cursor: pointer;
+}
+
+.delpi-ui-form-textanswer__control--textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--delpi-ui-control-border);
+  border-radius: 8px;
+  background: var(--delpi-ui-form-input-bg);
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--delpi-ui-text);
+  resize: vertical;
+}
+
+.delpi-ui-form-textanswer__control--textarea::placeholder {
+  color: var(--delpi-ui-muted);
+}
+
+.delpi-ui-form-textanswer__control--textarea:focus-visible {
+  outline: none;
+  border-color: var(--delpi-ui-accent);
+  box-shadow: var(--delpi-ui-focus-ring);
+}
+
+.delpi-ui-form-textanswer__control--textarea:disabled {
+  cursor: default;
+}
+
 @media (min-width: 600px) {
   .delpi-ui-form-card {
     padding: 28px 32px;
@@ -444,5 +655,72 @@
 
   .delpi-ui-form-question__prompt {
     font-size: 17px;
+  }
+
+  .delpi-ui-form-answer-stack {
+    gap: 14px;
+  }
+
+  /* Computador: escala em linha — botões, divisor, N/A à direita; a linha
+     da nota vai para baixo (order 3 + base 100%). */
+  .delpi-ui-form-scale__options-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+  }
+
+  /* Item flex com min-width: 0 — sem isso a trilha não encolhe abaixo da
+     soma das bases e estoura o cartão em contêineres estreitos. */
+  .delpi-ui-form-scale__options {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  /* Escala longa: ocupa a linha e divide o espaço por igual (0–10 sempre
+     numa linha, sem rolagem horizontal). */
+  .delpi-ui-form-scale__options--dense {
+    flex: 1 1 auto;
+  }
+
+  /* 64 × 52 px, encolhendo por igual quando o contêiner não comporta a
+     largura cheia. */
+  .delpi-ui-form-scale__option {
+    flex: 0 1 64px;
+    width: 64px;
+    height: 52px;
+    min-width: 0;
+    font-size: 18px;
+  }
+
+  .delpi-ui-form-scale__options--dense .delpi-ui-form-scale__option {
+    flex: 1 1 0;
+    width: auto;
+    height: 52px;
+    font-size: 18px;
+  }
+
+  .delpi-ui-form-scale__divider {
+    display: block;
+    order: 1;
+    align-self: stretch;
+    width: 1px;
+    background: var(--delpi-ui-form-track);
+  }
+
+  .delpi-ui-form-scale__na {
+    order: 2;
+  }
+
+  .delpi-ui-form-scale__caption {
+    order: 3;
+    flex-basis: 100%;
+    font-size: 14px;
+  }
+
+  .delpi-ui-form-na {
+    min-height: 52px;
   }
 }

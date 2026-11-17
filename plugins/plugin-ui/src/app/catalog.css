@@ -997,16 +997,7 @@
 
 .dashboard-plugin-ui .puc-questionnaire-inline {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 16px;
-}
-
-/* Marcador neutro da área de resposta (escala/campo — pacotes seguintes) */
-.dashboard-plugin-ui .puc-questionnaire-answer-placeholder {
-  padding: 14px;
-  border: 1px dashed var(--delpi-ui-form-border-soft);
-  border-radius: 10px;
-  color: var(--delpi-ui-muted);
-  font-size: 13px;
-  text-align: center;
 }

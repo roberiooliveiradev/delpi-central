@@ -131,4 +131,40 @@ describe("questionnaire.css — contrato de tokens e escopo", () => {
     }
     expect(violations).toEqual([]);
   });
+
+  it("P3: classes novas de resposta existem e só usam tokens de cor", () => {
+    const REQUIRED_SELECTORS = [
+      ".delpi-ui-form-answer-stack",
+      ".delpi-ui-form-scale",
+      ".delpi-ui-form-scale__options-row",
+      ".delpi-ui-form-scale__options",
+      ".delpi-ui-form-scale__options--dense",
+      ".delpi-ui-form-scale__option",
+      ".delpi-ui-form-scale__input",
+      ".delpi-ui-form-scale__ends",
+      ".delpi-ui-form-scale__caption",
+      ".delpi-ui-form-scale__divider",
+      ".delpi-ui-form-scale--invalid",
+      ".delpi-ui-form-na",
+      ".delpi-ui-form-na__indicator",
+      ".delpi-ui-form-na--invalid",
+      ".delpi-ui-form-textanswer",
+      ".delpi-ui-form-textanswer__label",
+      ".delpi-ui-form-textanswer__control--textarea",
+    ];
+    for (const selector of REQUIRED_SELECTORS) {
+      expect(css, selector).toContain(selector);
+    }
+  });
+
+  it("R6: a pilha da resposta tem gap 12 px (estreito) e 14 px (≥600)", () => {
+    const stackBlock = declarationBlock(
+      /\.delpi-ui-form-answer-stack\s*\{([^}]*)\}/,
+    );
+    expect(normalize(stackBlock)).toContain("gap: 12px");
+    const stackMedia = css.match(
+      /\.delpi-ui-form-answer-stack\s*\{[^}]*gap:\s*14px[^}]*\}/,
+    );
+    expect(stackMedia).toBeTruthy();
+  });
 });

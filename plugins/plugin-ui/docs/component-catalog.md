@@ -1456,6 +1456,63 @@ Divisor em `--delpi-ui-form-track` aparece quando há `step` ou `progress`.
 
 ---
 
+## Respostas do kit de formulário
+
+Controles de resposta dos questionários — um grupo `radio` nativo exclusivo (notas + "não se aplica" com o mesmo `name`), campo aberto sobre o `TextAreaField` intacto e a pilha de ritmo da área de resposta. Mesmas regras: dual-class `{prefix}-form-*` + `delpi-ui-form-*`, cores só `var(--delpi-ui-*)`, todos os textos por prop.
+
+### `RatingScale`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `name` | `string` | — | `name` compartilhado por todas as opções do grupo |
+| `min` / `max` | `number` | — | Extremos da escala (`max - min ≥ 10` → visual denso) |
+| `value` | `number \| "na" \| null` | — | `null` = nenhuma opção marcada; `0` é valor válido |
+| `onChange` | `(value) => void` | — | Recebe a nota ou `"na"` |
+| `optionLabel` | `(n) => string` | — | Nome acessível de cada nota (aria-label do input) |
+| `endLabels` | `{ min, max }` | — | Legendas das pontas, à esquerda e à direita |
+| `endLabelsPosition` | `"below" \| "above"` | `"below"` | `above` na escala de recomendação |
+| `narrowColumns` | `number` | qtd. de notas | Colunas na grade estreita (0–10 usa 6) |
+| `selectionCaption` | `(n) => ReactNode` | — | Linha após escolher nota — nunca com `"na"` |
+| `notApplicable` | `{ label }` | — | Renderiza `NotApplicableOption` no mesmo grupo |
+| `invalid` | `boolean` | `false` | Borda `--delpi-ui-danger` nos botões + `aria-invalid` |
+| `describedBy` | `string` | — | `aria-describedby` no `role="group"` (ex.: erro do cartão) |
+| `disabled` | `boolean` | `false` | Desabilita o grupo |
+
+Estrutura: `<label>` = botão visual com `input[type=radio]` recortado (focável); seleção/foco via `:has(input:checked)` / `:focus-visible`. Estreito: grade `repeat(narrowColumns, 1fr)`, altura 48 px (46 px denso); ≥600: botões 64×52 px (`flex: 0 1 64px` — o 0–10 encolhe por igual para caber numa linha, sem rolagem), N/A à direita após divisor de 1 px, caption em linha própria. Teclado: Tab entra/sai; setas/Home/End movem e escolhem; Enter nunca envia.
+
+### `NotApplicableOption`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `name` | `string` | Mesmo `name` do `RatingScale` — exclusividade nativa |
+| `label` | `string` | Texto visível **e** nome acessível |
+| `checked` / `onChange` | — | Estado controlado do grupo |
+| `disabled` / `invalid` | `boolean` | `invalid` → borda danger + `aria-invalid` |
+
+Pílula 44 px (52 px ≥600), raio total, indicador 18 px com anel de 6 px em `--delpi-ui-accent` quando escolhida; selecionada usa `--delpi-ui-form-tint` + `--delpi-ui-form-accent-text`. Normalmente renderizada pelo próprio `RatingScale` (`notApplicable`) — o uso avulso existe para composições custom.
+
+### `QuestionTextAnswer`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `label` | `string` | Rótulo visível ligado ao textarea |
+| `value` / `onChange` | — | Estado controlado |
+| `placeholder` / `hint` / `rows` / `maxLength` / `disabled` / `id` | — | Repassados ao `TextAreaField` |
+| `describedBy` | `string` | `aria-describedby` no envoltório `role="group"` |
+
+Envolve o `TextAreaField` **sem alterá-lo** (aparência só via classes `.delpi-ui-form-textanswer*` no escopo do formulário: mín. 96 px, padding 12, fundo `--delpi-ui-form-input-bg`, borda de controle, raio 8, 15 px, resize vertical). Resíduo **R7**: o componente base não repassa `aria-*` ao `<textarea>` — o `role="group"` carrega o `describedBy` e o erro da pergunta segue anunciado pelo `aria-describedby` do `fieldset` do `QuestionCard`.
+
+### `QuestionAnswerStack`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `children` | `ReactNode` | Controles da área de resposta, em ordem |
+| `prefix` / `className` | `string` | BEM dual / classes extras |
+
+Pilha vertical 12 px (14 px ≥600) que resolve o R6: os filhos não-`legend` do `fieldset` vivem num content box anônimo onde o gap do `FormCard` não se aplica — usar dentro de `QuestionCard` envolvendo escala, campo e demais respostas. O erro do cartão segue logo após a pilha.
+
+---
+
 ## Família `charts` — matriz impacto × esforço
 
 Scatter SVG headless para priorização de revisões (Playbook 21 Transformômetro). **Cálculo na API** — o MFE só passa pontos já normalizados.

@@ -485,6 +485,26 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Quadro da pergunta (fieldset+legend): eyebrow, número, enunciado, obrigatória/opcional, erro com aria-describedby e tone invalid.",
   }),
+  vc("forms", "RatingScale", {
+    addedAt: "2026-11-17",
+    description:
+      "Escala numérica genérica (1–5, 0–10…): grupo radio nativo exclusivo com N/A, setas selecionam, caption da nota, estado inválido.",
+  }),
+  vc("forms", "NotApplicableOption", {
+    addedAt: "2026-11-17",
+    description:
+      "Pílula 'não se aplica' do mesmo grupo radio da escala: indicador 18 px, pill 44/52 px, estados normal/selecionado/inválido.",
+  }),
+  vc("forms", "QuestionTextAnswer", {
+    addedAt: "2026-11-17",
+    description:
+      "Resposta aberta sobre o TextAreaField intacto: mín. 96 px, fundo de campo, borda de controle, describedBy via role=group (R7).",
+  }),
+  vc("forms", "QuestionAnswerStack", {
+    addedAt: "2026-11-17",
+    description:
+      "Pilha da área de resposta do QuestionCard (R6): ritmo 12/14 px entre escala, legenda, N/A e campo dentro do fieldset.",
+  }),
   // export
   vc("export", "TabularExportButtons"),
   vc("export", "DocumentExportActions"),

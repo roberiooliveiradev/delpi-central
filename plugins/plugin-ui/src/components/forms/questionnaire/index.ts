@@ -41,9 +41,31 @@ export {
 } from "./FormThemeToggle";
 
 export {
+  NotApplicableOption,
+  type NotApplicableOptionProps,
+} from "./NotApplicableOption";
+
+export {
+  QuestionAnswerStack,
+  type QuestionAnswerStackProps,
+} from "./QuestionAnswerStack";
+
+export {
   QuestionCard,
   type QuestionCardProps,
 } from "./QuestionCard";
+
+export {
+  QuestionTextAnswer,
+  type QuestionTextAnswerProps,
+} from "./QuestionTextAnswer";
+
+export {
+  RatingScale,
+  type RatingScaleEndLabels,
+  type RatingScaleProps,
+  type RatingScaleValue,
+} from "./RatingScale";
 
 export {
   QuestionnaireThemeScope,
