@@ -275,7 +275,7 @@ jobs:
           PYTHON_BIN="$(python -c 'import sys; print(sys.executable)')"
           # CI-only elevated test: the child immediately drops UID/GID and groups.
           # This tests the *risk* of inherited connected Docker FDs. No PROD host.
-          sudo -n env GITHUB_ACTIONS=true ATLAS_DISPOSABLE_DOCKER=true ATLAS_REAL_HML_CHAIN_CI=true PYTHONDONTWRITEBYTECODE=1 \
+          sudo -n env GITHUB_ACTIONS=true ATLAS_DISPOSABLE_DOCKER=true ATLAS_REAL_HML_CHAIN_CI=true PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=linux-ops-mcp:it-portal-api \
             "$PYTHON_BIN" -m pytest -q -p no:cacheprovider \
             linux-ops-mcp/tests/test_atlas_hml_os_boundary_real_ci.py
       - name: Remove only the ephemeral pilot
