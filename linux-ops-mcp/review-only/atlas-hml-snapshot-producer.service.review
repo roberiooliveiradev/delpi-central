@@ -1,0 +1,31 @@
+# ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD UNIT.
+# Root Docker API is host-equivalent privilege. This is NOT a sandbox proof.
+# No implementation of a privileged producer is approved or connected.
+[Unit]
+Description=ATLAS HML SNAPSHOT PRODUCER REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/false
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+ReadWritePaths=/run/atlas-hml-readonly
+UMask=0077
