@@ -158,7 +158,7 @@ def test_unhealthy_hml_claim_still_blocked(fixture):
 
 
 @pytest.mark.skipif(os.getuid() == 0, reason="kernel positive UID requires nonroot CI")
-@pytest.mark.parametrize("request,status", [
+@pytest.mark.parametrize("packet,status", [
     (b"POST /v1/hml/public-hub/snapshot HTTP/1.1\r\nHost: atlas-hml.local\r\n\r\n", 405),
     (b"DELETE /v1/hml/public-hub/snapshot HTTP/1.1\r\nHost: atlas-hml.local\r\n\r\n", 405),
     (b"HEAD /v1/hml/public-hub/snapshot HTTP/1.1\r\nHost: atlas-hml.local\r\n\r\n", 405),
@@ -174,7 +174,7 @@ def test_unhealthy_hml_claim_still_blocked(fixture):
     (_REQUEST[:-2] + b"X-Filler: " + b"x" * 600 + b"\r\n\r\n", 400),
 ])
 def test_method_host_target_body_and_pipelining_denied_before_read(
-    fixture, request, status,
+    fixture, packet, status,
 ):
     calls = []
 
@@ -183,7 +183,7 @@ def test_method_host_target_body_and_pipelining_denied_before_read(
         raise AssertionError("reader invoked for rejected request")
 
     thread, results, errors = _start(fixture, reader=must_not_read)
-    code, payload, head = _client(fixture, request)
+    code, payload, head = _client(fixture, packet)
     result = _wait(thread, results, errors)
     assert code == status
     assert payload == {"error": "HML_PRESENTER_REQUEST_DENIED"}
