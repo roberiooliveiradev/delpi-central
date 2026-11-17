@@ -24,7 +24,7 @@ from typing import Protocol
 
 from .deploy_host_source import RuntimeContainer, RuntimeTarget
 from .atlas_hml_uds_policy import (
-    HMLUDSPolicyError, verify_socket_metadata,
+    HMLUDSPolicyError, atlas_collector_identity, verify_socket_metadata,
 )
 
 _HML_PATH = Path("/run/atlas-hml-readonly/inspect.sock")
@@ -227,6 +227,13 @@ def serve_one_prebound(
         or not callable(getattr(inspector, "inspect", None))
     ):
         raise HMLUnixProxyError("HML_PROXY_NOT_CONFIGURED")
+    if expected_path == _HML_PATH:
+        try:
+            collector_uid, _ = atlas_collector_identity()
+        except HMLUDSPolicyError as exc:
+            raise HMLUnixProxyError(exc.code) from None
+        if allowed_collector_uid != collector_uid:
+            raise HMLUnixProxyError("HML_PROXY_IDENTITY_UNAVAILABLE")
     _check_prebound_socket(
         listener, expected_path=expected_path, owner_uid=owner_uid,
         socket_gid=socket_gid,
