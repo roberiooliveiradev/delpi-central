@@ -222,3 +222,27 @@ Relatório operacional anterior: `HOMOLOGATION_PLATFORM_SERVICES_ACTIVATION_REPO
 - `infra/scripts/up-hml-sequential.sh` — dia a dia (espelho de `up-prod-sequential.sh` para o inventário HML)
 - `gateway/nginx.hml.conf`, `gateway/snippets/hml-proxy-locations.conf`, `gateway/Dockerfile.hml`
 - `infra/env.hml.example`, `infra/docker-compose.hml.yml`
+
+---
+
+## Admin do Keycloak HML — URL canônica (DELPI-HML-KEYCLOAK-ADMIN-ROUTING-RECOVERY-01)
+
+**URL administrativa correta:** `https://192.168.1.237:18443/auth/admin/`
+(redireciona para `/auth/admin/master/console/` — Keycloak 24.0.5,
+`KC_HTTP_RELATIVE_PATH=/auth`, `KC_HOSTNAME_PORT=18443`).
+
+**Incidente 2026-11-17 — causa-raiz (sem alteração de config):**
+acessar `https://192.168.1.237/auth/admin/` **sem a porta 18443** cai
+no nginx systemd do host (`/etc/nginx/sites-enabled/api-totvs`), que é
+o `default_server` implícito da 443 e encaminha ao container legado
+`api-delpi` (`127.0.0.1:3000`, imagem `api-delpi-py-api`). Esse serviço
+usa `GPT_API_TOKEN` e responde `401 {"success":false,"message":"Token
+não informado…"}` para qualquer path — **não é o Keycloak**. O aviso de
+certificado nessa URL também é esperado: o cert do site `api-totvs`
+cobre `api.transformamaisdelpi.com.br`, não o IP. A pilha DELPI HML
+usa exclusivamente `:18443` (gateway) — nada na porta 443 pertence ao
+ambiente de homologação DELPI.
+
+**Regressão validada (anônima):** console HTML 200; OIDC discovery
+emissor `…:18443/auth/realms/delpi`; Portal e MFEs HML respondem 200.
+**Rollback:** n/a — zero diff em infraestrutura.
