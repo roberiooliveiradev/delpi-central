@@ -2,7 +2,7 @@
 
 **TASK_ID:** `EVA-PRC-COMPLETE-FLOW-SEMANTIC-PARITY-02`
 **BASE_HEAD:** `6e9edf8ca3` (baseline funcional `74992dafd7`)
-**Status:** IMPLEMENTED — HML/PRD pending
+**Status:** DEPLOYED — HML + PRD publicados, ChatGPT smoke pendente PO
 **Owner:** Engineering API (autoridade de dados, workflow, AuthZ)
 **Fachada:** EVA/MCP — exatamente 6 tools, sem novas tools
 
@@ -255,9 +255,9 @@ das exclusões (binário, deprecated).
 - [x] Exatamente 6 tools MCP
 - [x] Toda capability `proven` tem dispatch + teste no gate real
 - [x] Exclusões justificadas (deprecated, transporte binário)
-- [ ] HML deploy + gates
-- [ ] PRD deploy + evidências
-- [ ] ChatGPT live smoke (ou `TEST_NOT_RUN` honesto)
+- [x] HML deploy + gates (PASS)
+- [x] PRD deploy + evidências (PASS)
+- [ ] ChatGPT live smoke — `TEST_NOT_RUN` (sem credencial legítima; validação pelo PO)
 
 ## 16. Plano HML
 
@@ -293,5 +293,13 @@ script canônico. Commits podem ser revertidos sem migração reversa.
 | Decisão requerida | 0 |
 | Testes novos | 17 (parity flow) |
 | Falha pré-existente | 1 (`val01 structure_table_roundtrip`, baseline) |
-| HML | pendente |
-| PRD | pendente |
+| HML SHA | `21eb7f627f` |
+| HML digest | `sha256:810a0edeaf51` — healthy, /health 200, discovery 200, 0 erros |
+| HML runtime | 56 caps proven, 0 planned, 6 tools, 16 novas presentes |
+| PRD SHA | `21eb7f627f` (mesmo commit — artefato equivalente) |
+| PRD digest before | `sha256:380919358b64` (retido p/ rollback) |
+| PRD digest after | `sha256:5c1212331307` — healthy, discovery 200, 0 erros |
+| PRD runtime | 56 caps proven, 0 planned, 6 tools |
+| ChatGPT live | `TEST_NOT_RUN` — token exige aud=URL-MCP + scope `mcp:tools`; validação pelo PO |
+| Rollback | retag `380919358b64` + `up-prod-sequential.sh --build engineering-api`; sem schema change |
+| Verificador | INCONCLUSIVE — motor `devin` sem login (persistente; não contornado) |
