@@ -106,6 +106,11 @@ class Settings:
         _get_env("PROTHEUS_SUPPLIER_UPDATE_ENABLED", default="false").lower()
         in ("true", "1", "yes", "on")
     )
+    # Product PUT (delpiproduto) stays disabled until homologated on TST.
+    PROTHEUS_PRODUCT_UPDATE_ENABLED: bool = (
+        _get_env("PROTHEUS_PRODUCT_UPDATE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
     # Expected REST target for THIS runtime (fail-closed write guard — C1).
     # Writes compare the resolved PARAMETROS URL_REST against this value;
     # missing/mismatched expected target blocks the write deterministically.

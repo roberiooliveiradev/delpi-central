@@ -45,6 +45,7 @@ INDETERMINATE_ERROR_CODES = frozenset(
 
 INTEGRATION_KEY = "protheus"
 RESOURCE_SUPPLIER = "supplier"
+RESOURCE_PRODUCT = "product"
 
 
 def environment_key_from_config(config: ProtheusRestConfig, params_ambiente: str) -> str:
@@ -85,6 +86,7 @@ class ProtheusWriteTracker:
         outbound_body: dict[str, Any],
         correlation_id: str | None,
         request_id: str | None,
+        resource: str = RESOURCE_SUPPLIER,
         field_provenance: list[dict] | None = None,
     ) -> str:
         """Persist CREATED then SENDING. Any failure aborts before send."""
@@ -92,14 +94,14 @@ class ProtheusWriteTracker:
         request_payload = build_request_payload(dict(request_fields))
         outbound_payload = build_outbound_payload(
             method=method,
-            resource=RESOURCE_SUPPLIER,
+            resource=resource,
             resource_key=resource_key,
             body=outbound_body,
         )
         try:
             operation_id = tracker.begin_operation(
                 integration=INTEGRATION_KEY,
-                resource=RESOURCE_SUPPLIER,
+                resource=resource,
                 action=action,
                 resource_key=resource_key,
                 environment_key=environment_key,
@@ -113,7 +115,7 @@ class ProtheusWriteTracker:
                 request_hash=canonical_hash(
                     {
                         "action": action,
-                        "resource": RESOURCE_SUPPLIER,
+                        "resource": resource,
                         "resource_key": resource_key,
                         "fields": dict(request_fields),
                     }

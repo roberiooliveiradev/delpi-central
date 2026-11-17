@@ -11,6 +11,9 @@ from app.application.use_cases.integrations.create_protheus_rest_supplier_use_ca
 from app.application.use_cases.integrations.update_protheus_rest_supplier_use_case import (
     UpdateProtheusRestSupplierUseCase,
 )
+from app.application.use_cases.integrations.update_protheus_product_use_case import (
+    UpdateProtheusProductUseCase,
+)
 from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
     GetProtheusIntegrationStatusUseCase,
 )
@@ -86,6 +89,16 @@ def build_create_protheus_rest_supplier_use_case() -> CreateProtheusRestSupplier
 
 def build_update_protheus_rest_supplier_use_case() -> UpdateProtheusRestSupplierUseCase:
     return UpdateProtheusRestSupplierUseCase(
+        params_repository=build_protheus_params_repository(),
+        token_service=build_protheus_token_service(),
+        gateway=build_protheus_rest_gateway(),
+        identity_gateway=build_core_protheus_identity_gateway(),
+        tracker=build_integration_tracking_service(),
+    )
+
+
+def build_update_protheus_product_use_case() -> UpdateProtheusProductUseCase:
+    return UpdateProtheusProductUseCase(
         params_repository=build_protheus_params_repository(),
         token_service=build_protheus_token_service(),
         gateway=build_protheus_rest_gateway(),

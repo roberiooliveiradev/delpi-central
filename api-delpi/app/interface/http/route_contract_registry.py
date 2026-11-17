@@ -456,6 +456,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financial_purchase_freight_links": RouteContract(
         "financial_purchase_freight_link", "paged_list"
     ),
+    "get_supplies_freight_impact": RouteContract(
+        "supplies_freight_impact", "collection"
+    ),
     "get_financial_ebitda_pct": RouteContract("financial_ebitda_pct", "scalar"),
     "get_financial_fixed_cost_pct": RouteContract("financial_fixed_cost_pct", "scalar"),
     "get_financial_pmr": RouteContract("financial_pmr", "scalar"),
@@ -1444,6 +1447,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "update_protheus_rest_supplier": RouteContract(
         "protheus_rest_supplier", "scalar"
+    ),
+    "update_protheus_product": RouteContract(
+        "protheus_product", "scalar"
     ),
     "list_supplier_field_provenance": RouteContract(
         "supplier_field_provenance", "composite_analysis"

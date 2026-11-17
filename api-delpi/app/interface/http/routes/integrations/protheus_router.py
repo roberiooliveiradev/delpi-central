@@ -11,6 +11,7 @@ from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
     PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    PROTHEUS_PRODUCT_UPDATE_PERMISSIONS,
     PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
     PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS,
 )
@@ -22,6 +23,7 @@ from app.composition.protheus_rest_composer import (
     build_create_protheus_rest_supplier_use_case,
     build_get_protheus_integration_status_use_case,
     build_get_protheus_rest_supplier_use_case,
+    build_update_protheus_product_use_case,
     build_update_protheus_rest_supplier_use_case,
 )
 from app.core.responses import error_response, not_found_response
@@ -310,6 +312,85 @@ def update_protheus_rest_supplier_route(
         log_error(f"Erro inesperado na alteração Protheus: {type(exc).__name__}")
         return error_response(
             "Erro interno ao alterar fornecedor no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+@router.put(
+    "/products/{product_code}",
+    operation_id="update_protheus_product",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_PRODUCT_UPDATE_PERMISSIONS,
+    required_scopes=("products.update",),
+    allowed_clients=("engineering-api",),
+)
+def update_protheus_product_route(
+    request: Request,
+    product_code: str = Path(
+        ...,
+        min_length=1,
+        max_length=15,
+        pattern=r"^[A-Za-z0-9]{1,15}$",
+        description="Product code (B1_COD), 1-15 alphanumeric characters",
+    ),
+    body: dict[str, Any] = Body(...),
+):
+    """Update a product via Protheus REST (delpiproduto) — full representation.
+
+    Upstream maps all B1_* keys unconditionally, so the body must carry the
+    complete field snapshot (read the record first); B1_COD comes from the
+    path. There is no codusr field upstream — the actor identity resolved
+    from Core is kept in the integration tracking ledger for attribution.
+    """
+    if not isinstance(body, dict):
+        return error_response(
+            "Corpo da requisição deve ser um objeto JSON.",
+            status_code=422,
+            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+            recoverable=False,
+        )
+    for forbidden in ("codusr", "user_id", "usr_id", "protheus_user_id"):
+        if forbidden in body:
+            return error_response(
+                "Identidade Protheus não pode ser enviada pelo cliente.",
+                status_code=422,
+                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+                recoverable=False,
+            )
+    product = body.get("product", body)
+    try:
+        actor_id = _actor_user_id()
+        data = build_update_protheus_product_use_case().execute(
+            actor_user_id=actor_id,
+            product_code=product_code,
+            product=product if isinstance(product, dict) else product,
+            **_tracking_context(request),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="update_protheus_product",
+            message=(
+                "Solicitação de alteração de produto enviada ao Protheus; "
+                "persistência ainda não comprovada pelo contrato."
+            ),
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+            fields=exc.fields,
+        )
+    except Exception as exc:
+        log_error(
+            f"Erro inesperado na alteração de produto: {type(exc).__name__}"
+        )
+        return error_response(
+            "Erro interno ao alterar produto no Protheus.",
             status_code=500,
             code="PROTHEUS_INTERNAL_ERROR",
             recoverable=True,

@@ -196,6 +196,22 @@ class ProtheusRestGateway:
         response = self._send("PUT", url, headers=headers, json_body=body)
         return _map_supplier_write_response(response, url=url, operation="update")
 
+    def update_product(
+        self,
+        *,
+        url: str,
+        body: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """PUT product update via delpiproduto — single attempt; timeout is indeterminate."""
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        response = self._send("PUT", url, headers=headers, json_body=body)
+        return _map_product_write_response(response, url=url)
+
     def _get_with_retry(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
         last_error: ProtheusRestError | None = None
         for attempt in range(1, _MAX_GET_ATTEMPTS + 1):
@@ -564,6 +580,64 @@ def _raise_supplier_update_error(
         code="PROTHEUS_UPSTREAM_ERROR",
         status_code=502,
     )
+
+
+def _map_product_write_response(
+    response: httpx.Response,
+    *,
+    url: str,
+) -> dict[str, Any]:
+    """delpiproduto contract: HTTP 200 on success, 400 with error log on refusal."""
+    if response.status_code in {401, 403}:
+        raise ProtheusRestError(
+            "Token Protheus inválido ou expirado.",
+            code="PROTHEUS_TOKEN_INVALID",
+            status_code=502,
+        )
+
+    payload = _json_payload(response)
+
+    if response.status_code >= 500:
+        log_error(
+            f"Protheus product update HTTP {response.status_code} "
+            f"url={redact_text(url)}"
+        )
+        raise ProtheusRestError(
+            "Erro inesperado no Protheus ao alterar produto.",
+            code="PROTHEUS_UPSTREAM_ERROR",
+            status_code=502,
+        )
+
+    if response.status_code >= 400:
+        error_text = _extract_error_text(payload)
+        code_error = _extract_code_error(payload)
+        safe_detail = redact_text(error_text)[:240] if error_text else ""
+        # Any 4xx is a deterministic refusal — nothing was written upstream.
+        # (Upstream error bodies may carry non-UTF8 bytes, so JSON parsing can
+        # legitimately leave no extractable detail.)
+        if not (code_error or safe_detail):
+            log_error(
+                f"Protheus product update HTTP {response.status_code} "
+                f"url={redact_text(url)}"
+            )
+        raise ProtheusRestError(
+            "Alteração de produto rejeitada pelo Protheus."
+            + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+            code="PROTHEUS_PRODUCT_UPDATE_REJECTED",
+            status_code=400,
+            recoverable=False,
+        )
+
+    # Success is an acknowledgement — read-after-write evidence is handled
+    # separately; never claim persistence from the upstream ACK alone.
+    return {
+        "write_outcome": "accepted_by_upstream",
+        "update_acknowledged": True,
+        "update_confirmed": False,
+        "persistence_proven": False,
+        "http_status": response.status_code,
+        "upstream": payload or None,
+    }
 
 
 def _pick_first_str(payload: dict[str, Any], keys: tuple[str, ...]) -> str | None:
