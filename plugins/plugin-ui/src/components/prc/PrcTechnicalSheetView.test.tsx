@@ -90,6 +90,30 @@ describe("PrcTechnicalSheetView — ficha CREATE", () => {
     render(<PrcTechnicalSheetView draft={null} />);
     expect(screen.getByText("Nenhum fornecedor vinculado.")).toBeTruthy();
   });
+
+  /* Regressão — CREATE concluído: o código oficial só é informado na
+   * conclusão e vive em detail.officialCode, não no draft. */
+  it("exibe officialCode quando o draft não traz officialProductCode", () => {
+    const { officialProductCode: _omit, ...draftSemCodigo } = CREATE_DRAFT;
+    render(
+      <PrcTechnicalSheetView
+        draft={draftSemCodigo}
+        officialCode="10080025"
+      />,
+    );
+    expect(screen.getByText("10080025")).toBeTruthy();
+    expect(screen.queryByText("CANDIDATO")).toBeNull();
+  });
+
+  it("draft.officialProductCode prevalece sobre o fallback", () => {
+    render(
+      <PrcTechnicalSheetView
+        draft={CREATE_DRAFT}
+        officialCode="10080025"
+      />,
+    );
+    expect(screen.getByText("CANDIDATO")).toBeTruthy();
+  });
 });
 
 describe("PrcTechnicalSheetView — UPDATE (baseline + justificativas)", () => {

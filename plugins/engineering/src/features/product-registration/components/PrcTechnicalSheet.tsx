@@ -99,6 +99,7 @@ function PrcTechnicalSheetRead({
   return (
     <PrcTechnicalSheetView
       draft={draft}
+      officialCode={detail.officialCode}
       requestType={detail.requestType === "update" ? "update" : "create"}
       changedPaths={Array.from(changedPaths).map((p) => ({
         path: p,

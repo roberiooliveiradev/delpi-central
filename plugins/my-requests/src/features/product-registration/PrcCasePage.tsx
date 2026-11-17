@@ -405,6 +405,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
 
                 <PrcTechnicalSheetView
                   draft={detail.technicalDraft}
+                  officialCode={detail.officialCode}
                   requestType={
                     detail.requestType === "update" ? "update" : "create"
                   }

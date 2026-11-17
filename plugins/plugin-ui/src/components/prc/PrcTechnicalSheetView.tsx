@@ -56,6 +56,11 @@ export type PrcSheetBaselineLink = {
 export type PrcTechnicalSheetViewProps = {
   /** `technicalDraft` oficial do caso (candidato CREATE/UPDATE). */
   draft: Record<string, unknown> | null | undefined;
+  /** Código oficial do caso (`detail.officialCode`) — fallback de
+   * exibição quando o draft não traz `officialProductCode`
+   * (ex.: CREATE concluído, cujo código só é informado na conclusão
+   * e vive em `request.official_product_code`, não no draft). */
+  officialCode?: string | null;
   /** Tipo da solicitação — `update` ativa a visualização de alterações
    * solicitadas (apenas campos/vínculos efetivamente envolvidos). */
   requestType?: "create" | "update";
@@ -170,9 +175,12 @@ function UpdateChangesSheet({
   suppliersHeaderActions,
   fieldAdornment,
   supplierAdornment,
+  officialCode: officialCodeProp,
 }: Props) {
   const data = draft || {};
-  const officialCode = scalarText(data.officialProductCode);
+  const officialCode = scalarText(
+    data.officialProductCode || officialCodeProp,
+  );
   const scalarChanges = changedPaths.filter(
     (c) => !NON_SCALAR_CHANGE_PATHS.has(c.path),
   );
@@ -387,6 +395,7 @@ export function PrcTechnicalSheetView({
 
 function CreateSheet({
   draft,
+  officialCode,
   changedPaths = [],
   specNotes,
   baselineFields,
@@ -430,7 +439,12 @@ function CreateSheet({
             <div className="delpi-prc__sheet-grid">
               {paths.map((p) => {
                 const label = fieldLabel(p);
-                const value = displayValue(p, data[p]);
+                const value = displayValue(
+                  p,
+                  p === "officialProductCode"
+                    ? data[p] || officialCode
+                    : data[p],
+                );
                 return (
                   <div
                     key={p}
