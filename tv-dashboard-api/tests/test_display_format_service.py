@@ -509,3 +509,62 @@ def test_chart_percentage_is_not_written_when_content_is_off():
     block = {"type": "chart_view", "chartOptions": {"dataLabels": {"showPercentage": False}}}
     out = DisplayFormatService.apply_to_resolved(resolved, block)
     assert "displayPercentageOfTotal" not in out["chart"]["points"][0]
+
+
+def test_table_identifier_fields_keep_erp_codes_literal_glpi_1609():
+    """GR Diário: product_code não pode aparecer com pontos de milhar."""
+    resolved = {
+        "table": {
+            "columns": [
+                {"key": "product_code", "label": "Código"},
+                {"key": "signed_value_brl", "label": "Valor (R$)"},
+                {"key": "signed_quantity", "label": "Quantidade"},
+            ],
+            "rows": [
+                {"product_code": "10080711", "signed_value_brl": 12345.67, "signed_quantity": -25},
+                {"product_code": "00123456", "signed_value_brl": 2500, "signed_quantity": 15},
+                {"product_code": 10080711, "signed_value_brl": 1000, "signed_quantity": 2},
+            ],
+        }
+    }
+    block = {
+        "type": "table_view",
+        "tableOptions": {"valueFormat": "number"},
+    }
+    out = DisplayFormatService.apply_to_resolved(resolved, block)
+    rows = out["table"]["displayRows"]
+    assert [row["product_code"] for row in rows] == [
+        "10080711", "00123456", "10080711"
+    ]
+    assert rows[0]["signed_value_brl"] != "12345.67"
+    assert rows[0]["signed_quantity"] != ""
+
+
+def test_table_identifier_code_and_id_not_localized_glpi_1609():
+    resolved = {
+        "table": {
+            "columns": [
+                {"key": "code", "label": "Código"},
+                {"key": "material_code", "label": "Material"},
+                {"key": "supplier_id", "label": "Fornecedor"},
+                {"key": "quantity", "label": "Quantidade"},
+            ],
+            "rows": [
+                {"code": "10080711", "material_code": "00080711", "supplier_id": "0012", "quantity": 12000},
+            ],
+        }
+    }
+    block = {
+        "type": "table_view",
+        "tableOptions": {"valueFormat": "auto"},
+        "tableProjection": {
+            "columns": [
+                {"key": "material_code", "displayFormat": {"category": "number", "decimalPlaces": 0}},
+            ],
+        },
+    }
+    row = DisplayFormatService.apply_to_resolved(resolved, block)["table"]["displayRows"][0]
+    assert row["code"] == "10080711"
+    assert row["material_code"] == "00080711"
+    assert row["supplier_id"] == "0012"
+    assert row["quantity"] != "12000"

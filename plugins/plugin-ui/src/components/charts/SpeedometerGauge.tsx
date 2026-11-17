@@ -664,7 +664,17 @@ export function SpeedometerGauge({
           >
             {display}
             {numeric != null && unit ? (
-              <tspan className={classNames.unit} dx={3}>
+              <tspan
+                className={classNames.unit}
+                dx={3}
+                // A classe da unidade tem fill próprio e antes ignorava a
+                // cor escolhida para gaugeValue. Pintar ambos no SVG.
+                style={
+                  valuePart.style?.color
+                    ? { fill: valuePart.style.color }
+                    : undefined
+                }
+              >
                 {unit}
               </tspan>
             ) : null}

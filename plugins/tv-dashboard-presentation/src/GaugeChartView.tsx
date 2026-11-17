@@ -63,6 +63,15 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
   const chartArea = resolveChartAreaStyle(options, chartParts);
   const plotArea = resolvePlotAreaStyle(chartParts);
   const interactive = Boolean(interaction);
+  // O rótulo inferior é independente de ChartTitle, mas precisa respeitar
+  // o toggle "Rótulo do velocímetro". Sem estado de parte, vale showGaugeLabel.
+  // Antes o texto da rota continuava visível mesmo com ambos desligados.
+  const gaugeLabelVisible =
+    getChartPartState(chartParts, { kind: "gaugeLabel" })?.visible ??
+    (options.showGaugeLabel !== false);
+  const titleVisible =
+    model.showTitle &&
+    getChartPartState(chartParts, { kind: "title" })?.visible !== false;
   const chartAreaRef = { kind: "chartArea" as const };
   const plotAreaRef = { kind: "plotArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
@@ -201,7 +210,7 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
         prefix="tdp"
         value={model.value}
         goal={model.goal}
-        label={model.label}
+        label={gaugeLabelVisible ? model.label : undefined}
         unit={model.valueDisplay ? "" : model.unit}
         formatValue={
           model.valueDisplay || model.goalDisplay
@@ -251,7 +260,7 @@ function GaugeChartViewInner({ model, options, chartParts, interaction }: Props)
       >
         <ChartTitle
           title={model.title}
-          visible={model.showTitle}
+          visible={titleVisible}
           interaction={interactive ? interaction : null}
           chartParts={chartParts}
         />

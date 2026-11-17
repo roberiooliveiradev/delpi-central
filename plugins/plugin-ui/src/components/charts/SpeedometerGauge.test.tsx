@@ -286,3 +286,27 @@ describe("SpeedometerGauge", () => {
     expect(root.style.getPropertyValue("--delpi-ui-speedometer-caption")).toBe("#ffffff");
   });
 });
+
+
+describe("GLPI #1609 · cor do valor no velocímetro", () => {
+  it("aplica a mesma cor ao número e ao sufixo de percentual", () => {
+    const { container } = render(
+      <SpeedometerGauge
+        value={45.48}
+        unit="%"
+        chartParts={{ gaugeValue: { style: { color: "#fe12ab" } } }}
+      />,
+    );
+    const value = container.querySelector(".delpi-ui-speedometer-gauge__value") as SVGTextElement;
+    const unit = container.querySelector(".delpi-ui-speedometer-gauge__unit") as SVGTSpanElement;
+    expect(value.style.fill).toBe("rgb(254, 18, 171)");
+    expect(unit.style.fill).toBe("rgb(254, 18, 171)");
+    expect(value.textContent).toContain("%");
+  });
+
+  it("mantém estilo original da unidade quando nenhuma cor foi escolhida", () => {
+    const { container } = render(<SpeedometerGauge value={78} unit="%" />);
+    const unit = container.querySelector(".delpi-ui-speedometer-gauge__unit") as SVGTSpanElement;
+    expect(unit.style.fill).toBe("");
+  });
+});
