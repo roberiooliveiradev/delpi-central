@@ -2015,6 +2015,349 @@ def _detect_balloon_candidates(
     return out, excluded
 
 
+# ---------- E1/VAL-01 B2 — linhas indicadoras (RQ-B2-01..05) ---------
+# Um líder é um segmento com UMA ponta na faixa de fronteira do balão
+# (fora do contorno, até _LEADER_ATTACH_PX) e a outra fora dele — os
+# traços do próprio anel têm as duas pontas dentro e são rejeitados.
+# Traços paralelos da mesma linha (espessura 2–3 px) fundem por
+# proximidade de eixo; o caminho segue encadeando por proximidade de
+# ponta, nunca por cruzamento no meio do segmento. A região de destino
+# é evidência candidata — POINTS_TO permanece NOT_CHECKED.
+_LEADER_ATTACH_PX = 18.0
+_LEADER_CLUSTER_PX = 8.0
+_LEADER_MAX_SEGMENTS = 4
+_LEADER_TARGET_NEAR_PX = 22.0
+_TARGET_MAX_AREA_FRAC = 0.60
+
+
+def _segments_of_primitives(
+    graphic_primitives: dict | None,
+) -> list[tuple[float, float, float, float]]:
+    """Segmentos eixo-alinhados do adapter → (x1, y1, x2, y2).
+
+    ``h_lines``/``v_lines`` são corridas morfológicas; ``segments``
+    (canal aditivo) aceita dicts com ``points_px`` para traços
+    arbitrários emitidos futuramente.
+    """
+    gp = graphic_primitives or {}
+    segs: list[tuple[float, float, float, float]] = []
+    for key in ("h_lines", "v_lines"):
+        for s in gp.get(key) or []:
+            if len(s) >= 4:
+                segs.append(
+                    (float(s[0]), float(s[1]), float(s[2]), float(s[3]))
+                )
+    for s in gp.get("segments") or []:
+        p = (
+            s.get("points_px") or s.get("line_px")
+            if isinstance(s, dict) else s
+        )
+        if p and len(p) >= 4:
+            segs.append(
+                (float(p[0]), float(p[1]), float(p[2]), float(p[3]))
+            )
+    return segs
+
+
+def _pt_in_expanded_box(
+    px: float, py: float, box: list[float], margin: float,
+) -> bool:
+    return (
+        box[0] - margin <= px <= box[2] + margin
+        and box[1] - margin <= py <= box[3] + margin
+    )
+
+
+def _leader_roots(
+    segs: list[tuple[float, float, float, float]],
+    cb: list[float],
+    dim_boxes: list[list[float]],
+) -> list[int]:
+    """Índices dos segmentos anexados à fronteira do balão.
+
+    Exatamente uma ponta deve estar na faixa de fronteira (dentro da
+    caixa expandida, fora da caixa estrita) e a outra fora da caixa
+    expandida. Segmentos dentro de caixas de cota não são líderes.
+    """
+    def _attach(px: float, py: float) -> bool:
+        return _pt_in_expanded_box(px, py, cb, _LEADER_ATTACH_PX) and not (
+            cb[0] <= px <= cb[2] and cb[1] <= py <= cb[3]
+        )
+
+    roots: list[int] = []
+    for i, (x1, y1, x2, y2) in enumerate(segs):
+        a1, a2 = _attach(x1, y1), _attach(x2, y2)
+        if a1 == a2:
+            continue
+        ox, oy = (x2, y2) if a1 else (x1, y1)
+        if _pt_in_expanded_box(ox, oy, cb, _LEADER_ATTACH_PX):
+            continue
+        seg_box = [
+            min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)]
+        in_dim = any(
+            seg_box[0] <= db[2] and db[0] <= seg_box[2]
+            and seg_box[1] <= db[3] and db[1] <= seg_box[3]
+            for db in dim_boxes
+        )
+        if in_dim:
+            continue
+        roots.append(i)
+    return roots
+
+
+def _cluster_segments(
+    segs: list[tuple[float, float, float, float]],
+    idxs: list[int],
+) -> list[list[int]]:
+    """Funde traços paralelos/sobrepostos da mesma linha.
+
+    Dois segmentos pertencem ao mesmo traço quando compartilham
+    orientação e seu eixo principal difere ≤ _LEADER_CLUSTER_PX com
+    intervalos sobrepostos ou adjacentes.
+    """
+    def _axis(s: tuple[float, float, float, float]) -> str:
+        return "v" if abs(s[2] - s[0]) <= abs(s[3] - s[1]) else "h"
+
+    clusters: list[list[int]] = []
+    for i in idxs:
+        s = segs[i]
+        placed = False
+        for cl in clusters:
+            ref = segs[cl[0]]
+            if _axis(s) != _axis(ref):
+                continue
+            if _axis(s) == "v":
+                same_lane = abs(s[0] - ref[0]) <= _LEADER_CLUSTER_PX
+                lo = min(s[1], s[3]); hi = max(s[1], s[3])
+                rlo = min(ref[1], ref[3]); rhi = max(ref[1], ref[3])
+            else:
+                same_lane = abs(s[1] - ref[1]) <= _LEADER_CLUSTER_PX
+                lo = min(s[0], s[2]); hi = max(s[0], s[2])
+                rlo = min(ref[0], ref[2]); rhi = max(ref[0], ref[2])
+            overlap = lo <= rhi + _LEADER_CLUSTER_PX and rlo <= hi + _LEADER_CLUSTER_PX
+            if same_lane and overlap:
+                cl.append(i)
+                placed = True
+                break
+        if not placed:
+            clusters.append([i])
+    return clusters
+
+
+def _merge_cluster(
+    segs: list[tuple[float, float, float, float]],
+    cl: list[int],
+) -> tuple[float, float, float, float]:
+    xs = [segs[i][0] for i in cl] + [segs[i][2] for i in cl]
+    ys = [segs[i][1] for i in cl] + [segs[i][3] for i in cl]
+    ref = segs[cl[0]]
+    if abs(ref[2] - ref[0]) <= abs(ref[3] - ref[1]):
+        return (sum(xs) / len(xs), min(ys), sum(xs) / len(xs), max(ys))
+    return (min(xs), sum(ys) / len(ys), max(xs), sum(ys) / len(ys))
+
+
+def _target_regions(
+    graphic_primitives: dict | None,
+    page_size: tuple[float, float],
+    exclude_box: list[float],
+) -> list[tuple[list[float], str]]:
+    """Regiões candidatas a destino: rects/enclosures/circles abaixo
+    de _TARGET_MAX_AREA_FRAC da página (moldura não é componente)."""
+    gp = graphic_primitives or {}
+    w, h = page_size
+    max_area = w * h * _TARGET_MAX_AREA_FRAC
+    out: list[tuple[list[float], str]] = []
+    for key in ("rects", "enclosures", "circles"):
+        for p in gp.get(key) or []:
+            box = (
+                p.get("bounding_box_px") or p.get("box_px") or p
+                if isinstance(p, dict) else p
+            )
+            xy = _xyxy_of(box)
+            if not xy:
+                continue
+            if (xy[2] - xy[0]) * (xy[3] - xy[1]) > max_area:
+                continue
+            if xy == list(exclude_box):
+                continue
+            out.append((xy, key[:-1] if key != "rects" else "rect"))
+    return out
+
+
+def _detect_leader_lines(
+    balloons: list[dict],
+    graphic_primitives: dict | None,
+    *,
+    page: int,
+    page_size: tuple[float, float],
+    dimension_boxes: list[list[float] | None] | None = None,
+) -> list[dict]:
+    """Anexa evidência de linha indicadora a cada balão (RQ-B2-01..05).
+
+    Emite por ocorrência ``leader_line`` (state, segments_px,
+    endpoint_px, target_*) e ``target_region`` (id da região em
+    ``geometry_regions``) apenas quando o destino é região única —
+    alternativas ambíguas ficam registradas sem vínculo declarado.
+    Ausência de segmento anexado → NOT_FOUND (nunca fabrica linha).
+    """
+    targets: list[dict] = []
+    segs = _segments_of_primitives(graphic_primitives)
+    dim_boxes = [
+        b for b in (_xyxy_of(d) for d in (dimension_boxes or [])) if b
+    ]
+    region_index: dict[tuple, str] = {}
+    for b in balloons:
+        cb = b.get("bounding_box_px")
+        info: dict[str, Any] = {
+            "state": "NOT_FOUND",
+            "segments_px": [],
+            "endpoint_px": None,
+            "target_state": None,
+            "target_region_id": None,
+            "target_region_px": None,
+            "alternative_target_regions_px": [],
+            "identification_method": (
+                "segment_boundary_attachment_chain"
+            ),
+            "uncertainty_reason": None,
+        }
+        if cb and segs:
+            roots = _leader_roots(segs, list(cb), dim_boxes)
+            clusters = _cluster_segments(segs, roots)
+            if len(clusters) > 1:
+                info["state"] = "AMBIGUOUS"
+                info["uncertainty_reason"] = (
+                    f"{len(clusters)} segmentos anexados ao contorno — "
+                    "caminho não escolhido sem evidência"
+                )
+                info["segments_px"] = [
+                    [round(v, 0) for v in _merge_cluster(segs, cl)]
+                    for cl in clusters
+                ]
+            elif len(clusters) == 1:
+                path = list(clusters[0])
+                used = set(path)
+                # encadeia por proximidade de ponta — cruzamento no
+                # meio do traço nunca conecta
+                far = list(clusters[0])
+                merged = _merge_cluster(segs, far)
+                cx = merged[0]; cy = merged[1]
+                ex, ey = merged[2], merged[3]
+                # ponta mais distante do centro do balão = extremidade
+                bcx = (cb[0] + cb[2]) / 2; bcy = (cb[1] + cb[3]) / 2
+                if (
+                    (cx - bcx) ** 2 + (cy - bcy) ** 2
+                    > (ex - bcx) ** 2 + (ey - bcy) ** 2
+                ):
+                    ex, ey = cx, cy
+                cur = (ex, ey)
+                regions = _target_regions(
+                    graphic_primitives, page_size, list(cb)
+                )
+                for _hop in range(_LEADER_MAX_SEGMENTS - 1):
+                    hit = next(
+                        (
+                            r for r in regions
+                            if _pt_in_expanded_box(
+                                cur[0], cur[1], r[0],
+                                _LEADER_TARGET_NEAR_PX,
+                            )
+                        ),
+                        None,
+                    )
+                    if hit:
+                        break
+                    nxt = None
+                    for j, s in enumerate(segs):
+                        if j in used:
+                            continue
+                        for e in ((s[0], s[1]), (s[2], s[3])):
+                            d2 = (
+                                (e[0] - cur[0]) ** 2
+                                + (e[1] - cur[1]) ** 2
+                            )
+                            if d2 <= _LEADER_ATTACH_PX ** 2:
+                                other = (
+                                    (s[2], s[3])
+                                    if e == (s[0], s[1])
+                                    else (s[0], s[1])
+                                )
+                                if _pt_in_expanded_box(
+                                    other[0], other[1], list(cb), 0
+                                ):
+                                    continue
+                                if (
+                                    nxt is None
+                                    or d2 < nxt[0]
+                                ):
+                                    nxt = (d2, j, other)
+                    if nxt is None:
+                        break
+                    used.add(nxt[1])
+                    path.append(nxt[1])
+                    cur = nxt[2]
+                info["state"] = "CANDIDATE"
+                info["segments_px"] = [
+                    [round(v, 0) for v in segs[j]] for j in path
+                ]
+                info["endpoint_px"] = [
+                    round(cur[0], 0), round(cur[1], 0)
+                ]
+                hits = [
+                    (r, kind)
+                    for r, kind in regions
+                    if _pt_in_expanded_box(
+                        cur[0], cur[1], r, _LEADER_TARGET_NEAR_PX
+                    )
+                ]
+                if len(hits) == 1:
+                    r, kind = hits[0]
+                    key = tuple(round(v) for v in r)
+                    gid = region_index.get(key)
+                    if gid is None:
+                        gid = f"uleadtgt:{len(region_index)}"
+                        region_index[key] = gid
+                        targets.append({
+                            "id": gid,
+                            "type": "leader_target",
+                            "region_source": kind,
+                            "box_px": r,
+                            "page": page,
+                            "state": "candidate",
+                        })
+                    info["target_state"] = "SINGLE_REGION"
+                    info["target_region_id"] = gid
+                    info["target_region_px"] = r
+                    info["uncertainty_reason"] = (
+                        "caminho e destino são evidência geométrica "
+                        "candidata — não verificam o balão"
+                    )
+                elif hits:
+                    info["target_state"] = "AMBIGUOUS_REGIONS"
+                    info["alternative_target_regions_px"] = [
+                        r for r, _k in hits
+                    ]
+                    info["uncertainty_reason"] = (
+                        f"{len(hits)} regiões na extremidade — "
+                        "destino não escolhido sem evidência"
+                    )
+                else:
+                    info["target_state"] = "NOT_IDENTIFIED"
+                    info["uncertainty_reason"] = (
+                        "extremidade registrada — região de destino "
+                        "não identificada"
+                    )
+            else:
+                info["uncertainty_reason"] = (
+                    "nenhum segmento anexado ao contorno — ausência "
+                    "de detecção não prova ausência de líder"
+                )
+        b["leader_line"] = info
+        if info["target_state"] == "SINGLE_REGION":
+            b["target_region"] = info["target_region_id"]
+    return targets
+
+
 def build_understanding(
     tokens: list[dict],
     *,
@@ -2480,6 +2823,18 @@ def build_understanding(
             d.get("bounding_box_px") for d in dimensions
         ],
     )
+    # E1/VAL-01 B2 — linhas indicadoras: anexa leader_line por
+    # ocorrência e coleta regiões de destino únicas (POINTS_TO
+    # permanece NOT_CHECKED no mapper).
+    leader_target_regions = _detect_leader_lines(
+        balloon_candidates,
+        graphic_primitives,
+        page=page,
+        page_size=(w, h),
+        dimension_boxes=[
+            d.get("bounding_box_px") for d in dimensions
+        ],
+    )
 
     out: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -2489,6 +2844,7 @@ def build_understanding(
         "page_size_px": [round(w, 0), round(h, 0)],
         "balloon_candidates": balloon_candidates,
         "balloon_excluded": balloon_excluded,
+        "geometry_regions": leader_target_regions,
         "regions": regions,
         "ownership_conflicts": ownership_conflicts,
         "regions_summary": dict(regions_seen),
@@ -2635,6 +2991,7 @@ def build_document_understanding(
         by_page[1] = []
 
     regions_all: list[dict] = []
+    geometry_regions_all: list[dict] = []
     conflicts_all: list[dict] = []
     fields_all: list[dict] = []
     dims_all: list[dict] = []
@@ -2703,6 +3060,10 @@ def build_document_understanding(
             reg2 = dict(reg)
             reg2["page"] = p
             regions_all.append(reg2)
+        for greg in u.get("geometry_regions") or []:
+            greg2 = dict(greg)
+            greg2["page"] = p
+            geometry_regions_all.append(greg2)
         conflicts_all.extend(u.get("ownership_conflicts") or [])
         fields_all.extend(u.get("identifier_candidates") or [])
         dims_all.extend(u.get("dimension_candidates") or [])
@@ -2780,6 +3141,7 @@ def build_document_understanding(
         "pages_analyzed": sorted(by_page),
         "page_results": page_results,
         "regions": regions_all,
+        "geometry_regions": geometry_regions_all,
         "ownership_conflicts": conflicts_all,
         "regions_summary": dict(regions_seen),
         "tokens_processed": tokens_processed,
@@ -5520,6 +5882,3 @@ def apply_native_table_observations(
             table["detection"] = "native_table_cells"
     updated = dict(understanding)
     updated["component_table"] = table
-    updated["table_perception"] = perceptions
-    updated["limitations"] = limitations
-    return updated

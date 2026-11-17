@@ -641,6 +641,7 @@ def build_balloon_table_validation(u: dict) -> dict:
             "token_bounding_box_px": b.get(
                 "token_bounding_box_px"),
             "identification_method": b.get("identification_method"),
+            "leader_line": b.get("leader_line"),
             "leader_target_verified": False,
             "review_required": True,
         }
@@ -761,7 +762,10 @@ def build_balloon_table_validation(u: dict) -> dict:
         "unassociated_balloon_labels": unmatched_labels,
         "table_items_without_balloon": items_without_balloon,
         "leader_lines_verified": False,
-        "leader_line_scope": "B2 — não avaliado neste lote",
+        "leader_line_scope": (
+            "B2 — caminho/destino geométrico candidato anexado por "
+            "ocorrência; verificação do destino permanece NOT_CHECKED"
+        ),
         "summary": counts,
         "limitations": [
             "OCR/primitiva não localizar balão ≠ balão ausente no desenho",

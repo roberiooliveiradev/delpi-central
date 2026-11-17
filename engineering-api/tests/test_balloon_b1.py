@@ -606,3 +606,222 @@ def test_b1r1_enclosure_via_adapter_dict_shape():
         render_size_px=(1000, 700), graphic_primitives=prims,
     )
     assert len(u["balloon_candidates"]) == 1
+
+
+# ---------- E1/VAL-01 B2 — linhas indicadoras (RQ-B2-01..05) ----------
+
+_B2_BALLOON = (100, 100, 160, 160)
+
+
+def _b2_u(h=None, v=None, rects=None, enc=None, extra_toks=None):
+    """Understanding com 1 balão A1 + primitivas geométricas B2."""
+    tokens = [_tok("A1", 105, 110, 155, 150)] + list(extra_toks or [])
+    prims = {
+        "circles": [_circle(*_B2_BALLOON)],
+        "enclosures": enc or [],
+        "rects": rects or [],
+        "h_lines": h or [],
+        "v_lines": v or [],
+    }
+    return build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2000, 1400), graphic_primitives=prims,
+    )
+
+
+def test_b2_vertical_leader_to_single_rect_target():
+    """RQ-B2-01/03: segmento anexado à borda → caminho + destino único."""
+    u = _b2_u(v=[[130, 161, 130, 220]], rects=[[80, 210, 400, 240]])
+    b = u["balloon_candidates"][0]
+    ll = b["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["endpoint_px"] == [130.0, 220.0]
+    assert ll["target_state"] == "SINGLE_REGION"
+    assert ll["target_region_px"] == [80, 210, 400, 240]
+    assert b["target_region"] == "uleadtgt:0"
+    assert u["geometry_regions"][0]["box_px"] == [80, 210, 400, 240]
+    assert u["geometry_regions"][0]["type"] == "leader_target"
+
+
+def test_b2_parallel_strokes_merge_into_one_leader():
+    """Traço de 2–3 px emite runs paralelos — fundem num único líder."""
+    u = _b2_u(
+        v=[[130, 162, 130, 220], [131, 162, 131, 220],
+           [132, 170, 132, 200]],
+        rects=[[80, 210, 400, 240]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2_no_attached_segment_not_found():
+    """Balão sem segmento anexado → NOT_FOUND, sem linha inventada."""
+    u = _b2_u(v=[[500, 600, 500, 700]])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
+    assert ll["endpoint_px"] is None
+
+
+def test_b2_contour_stroke_not_leader():
+    """Traço do próprio anel (duas pontas dentro) não é líder."""
+    u = _b2_u(v=[[140, 110, 140, 150]])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
+
+
+def test_b2_two_attached_leaders_ambiguous():
+    """Dois líderes anexados → AMBIGUOUS, caminho não escolhido."""
+    u = _b2_u(v=[[130, 161, 130, 220], [130, 40, 130, 99]])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "AMBIGUOUS"
+    assert len(ll["segments_px"]) == 2
+    assert ll["endpoint_px"] is None
+
+
+def test_b2_bent_leader_chained_by_endpoint():
+    """RQ-B2-02: dobra encadeada por proximidade de ponta."""
+    u = _b2_u(
+        v=[[130, 161, 130, 220]],
+        h=[[130, 220, 250, 220]],
+        rects=[[240, 210, 300, 230]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert len(ll["segments_px"]) == 2
+    assert ll["endpoint_px"] == [250.0, 220.0]
+    assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2_crossing_line_does_not_connect():
+    """Cruzamento no meio do traço não conecta segmentos."""
+    u = _b2_u(
+        v=[[130, 161, 130, 220]],
+        h=[[60, 180, 200, 180]],  # cruza o líder em y=180, sem junção
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert len(ll["segments_px"]) == 1
+    assert ll["endpoint_px"] == [130.0, 220.0]
+    assert ll["target_state"] == "NOT_IDENTIFIED"
+
+
+def test_b2_disconnected_line_not_leader():
+    """Linha próxima sem ponta na fronteira não é líder."""
+    u = _b2_u(v=[[130, 190, 130, 260]])  # começa 30px abaixo do anel
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
+
+
+def test_b2_leader_to_empty_space_target_not_identified():
+    """Extremidade sem região → endpoint registrado, destino nulo."""
+    u = _b2_u(v=[[130, 161, 130, 900]])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["endpoint_px"] == [130.0, 900.0]
+    assert ll["target_state"] == "NOT_IDENTIFIED"
+    assert "target_region" not in u["balloon_candidates"][0]
+
+
+def test_b2_page_frame_not_target():
+    """Moldura da folha (>60% da página) nunca é destino."""
+    u = _b2_u(
+        v=[[130, 161, 130, 900]],
+        rects=[[10, 10, 1990, 1390]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["target_state"] == "NOT_IDENTIFIED"
+
+
+def test_b2_multiple_target_regions_ambiguous():
+    """Duas regiões na extremidade → alternativas, sem vínculo."""
+    u = _b2_u(
+        v=[[130, 161, 130, 220]],
+        rects=[[80, 215, 400, 240], [90, 190, 140, 235]],
+    )
+    b = u["balloon_candidates"][0]
+    ll = b["leader_line"]
+    assert ll["target_state"] == "AMBIGUOUS_REGIONS"
+    assert len(ll["alternative_target_regions_px"]) == 2
+    assert "target_region" not in b
+
+
+def test_b2_dimension_line_not_leader():
+    """Linha de cota cruzando a caixa de um token de cota não é líder."""
+    # balão [100,100,160,160]; cota '10±1' logo abaixo com seta
+    # horizontal que tocaria a borda — deve ser rejeitada.
+    u = _b2_u(
+        h=[[105, 165, 175, 165]],
+        extra_toks=[_tok("10±1", 118, 162, 170, 185)],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
+
+
+def test_b2_repeated_label_distinct_targets():
+    """RQ-B2-05: A3×2 — cada ocorrência segue seu próprio caminho."""
+    tokens = [
+        _tok("A3", 105, 110, 155, 150),
+        _tok("A3", 605, 110, 655, 150),
+    ]
+    prims = {
+        "circles": [_circle(100, 100, 160, 160),
+                    _circle(600, 100, 660, 160)],
+        "enclosures": [], "rects": [[80, 215, 400, 240],
+                                    [580, 215, 900, 240]],
+        "h_lines": [],
+        "v_lines": [[130, 161, 130, 220], [630, 161, 630, 220]],
+    }
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2000, 1400), graphic_primitives=prims,
+    )
+    assert len(u["balloon_candidates"]) == 2
+    r1, r2 = (b["leader_line"]["target_region_px"]
+              for b in u["balloon_candidates"])
+    assert r1 == [80, 215, 400, 240]
+    assert r2 == [580, 215, 900, 240]
+    assert len(u["geometry_regions"]) == 2
+
+
+def test_b2_points_to_per_occurrence_not_by_label():
+    """Mapper: POINTS_TO por ocorrência — labels iguais não misturam
+    alvos (correção do casamento por item_label)."""
+    u = _u(balloons=[
+        {**_balloon("A3", 100, 100, 160, 160),
+         "target_region": "uleadtgt:0"},
+        {**_balloon("A3", 600, 100, 660, 160),
+         "target_region": "uleadtgt:1"},
+    ])
+    u["geometry_regions"] = [
+        {"id": "uleadtgt:0", "type": "leader_target",
+         "box_px": [80, 215, 400, 240], "page": 1},
+        {"id": "uleadtgt:1", "type": "leader_target",
+         "box_px": [580, 215, 900, 240], "page": 1},
+    ]
+    out = build_object_profiles(
+        bom_occurrences=[], visual_observations=[], understanding=u,
+        document_sha=SHA, official_source_ref=SRC,
+        official_source_state="AVAILABLE", product_code="90264302",
+        include_investigations=True,
+    )
+    pts = [
+        r for r in out["relations"]
+        if r["relation_type"] == "POINTS_TO"
+    ]
+    targets = sorted(r["target_object_id"] for r in pts)
+    assert len(pts) == 2
+    assert len(set(targets)) == 2
+    assert all(
+        r["verification_state"] == "NOT_CHECKED" for r in pts
+    )
+
+
+def test_b2_leader_line_echoed_in_validation():
+    """Investigation: leader_line presente por balão; verificado=F."""
+    u = _b2_u(v=[[130, 161, 130, 220]], rects=[[80, 210, 400, 240]])
+    v = build_balloon_table_validation(u)
+    ll = v["balloons"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert v["balloons"][0]["leader_target_verified"] is False
+    assert v["leader_lines_verified"] is False

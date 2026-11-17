@@ -329,11 +329,11 @@ def populate_from_understanding(
                 relations_added += 1
     # BALLOON → DRAWING_GEOMETRY: alvo declarado na fonte; fallback por
     # contenção do contorno na região geométrica (candidato, não verificado).
-    for bo, bbox in bal_objs:
-        target_id = None
-        for b in bal_sources:
-            if b.get("item_label") == bo.attributes.get("item_label"):
-                target_id = b.get("points_to") or b.get("target_region")
+    # B2: alinhamento por índice — ``bal_objs`` segue a ordem de
+    # ``bal_sources``; casar por rótulo misturaria alvos de
+    # ocorrências repetidas (ex.: A3×2).
+    for (bo, bbox), bsrc in zip(bal_objs, bal_sources):
+        target_id = bsrc.get("points_to") or bsrc.get("target_region")
         if not target_id and bbox:
             bc = _quad_center(bbox)
             for gobj, gbox in geo_objs:
