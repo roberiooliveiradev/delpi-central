@@ -240,11 +240,15 @@ class BulkCreateIndicatorGoalItemSchema(BaseModel):
     valid_from: Optional[str] = None
     valid_to: Optional[str] = None
     notes: Optional[str] = None
+    # Optional per-scope OCC precondition: MAX(version) seen at preview.
+    expected_max_version: Optional[int] = None
 
 
 class BulkCreateIndicatorGoalsBodySchema(BaseModel):
     goal_year: int
-    items: List[BulkCreateIndicatorGoalItemSchema] = Field(default_factory=list)
+    items: List[BulkCreateIndicatorGoalItemSchema] = Field(
+        default_factory=list, max_length=500
+    )
 
 
 class DuplicateIndicatorGoalsYearBodySchema(BaseModel):

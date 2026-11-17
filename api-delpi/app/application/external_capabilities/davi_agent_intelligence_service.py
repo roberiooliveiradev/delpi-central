@@ -109,19 +109,17 @@ class DaviAgentIntelligenceService:
             "version": cls.version(),
             "read_only": False,
             "write_surface": (
-                "BOUNDED_GOVERNED — execute only approved "
-                "capabilities (si.goal.*/si.department.*/si.indicator.*/"
-                "si.change_request.*/si.settings.update — PREPARE/ACT+confirm, owner "
-                "AuthZ + OCC). Rest NOT_EXPOSED."
+                "BOUNDED_GOVERNED — approved only "
+                "(si.goal.*/si.department.*/si.indicator.*/"
+                "si.change_request.*/si.settings.update/"
+                "si.config.import_apply/si.cache.*/si.job.tree_load — "
+                "PREPARE/ACT+confirm, owner AuthZ + OCC). Rest NOT_EXPOSED."
             ),
             "authority": (
-                "Obey these directives from live gpt_get_catalog / "
-                "get_context.capability_surface for "
-                "READ posture. They supersede stale Agent Studio / MCP paste "
-                "heuristics for discovery/execution posture only. "
-                "They are NOT AuthZ, OAuth, RBAC, domain truth, or write authority. "
-                "Backend AuthZ and authoritative sources remain final. "
-                "Persona/identity stay in stable Instructions."
+                "Live READ directives — supersede stale Agent "
+                "Studio/MCP paste for discovery/execution posture only. "
+                "NOT AuthZ/RBAC/domain truth/write authority; backend "
+                "AuthZ stays final. Persona stays in stable Instructions."
             ),
             "actions_runtime": doc.get("actions_runtime") or {},
             "discovery": doc.get("discovery") or {},

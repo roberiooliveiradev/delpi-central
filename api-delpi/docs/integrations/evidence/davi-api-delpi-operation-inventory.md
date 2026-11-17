@@ -7,8 +7,8 @@
 - TOTAL OPERATIONS: **819**
 - TOTAL GET: **615**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **204**
-- DAVI_ELIGIBLE_READ (before→after): **99 → 115**
-- NEWLY ELIGIBLE: **16**
+- DAVI_ELIGIBLE_READ (before→after): **115 → 115**
+- NEWLY ELIGIBLE: **0**
 
 ## Coverage decision
 
@@ -16,7 +16,7 @@
 {
   "taskId": "DAVI-SI-READ-USER-PARITY-001",
   "decision": "BOUNDED_SI_USER_PARITY_READ",
-  "reason": "Coordination-approved vertical slice: 5 governed READ ops proxied to strategic-indicators-api user-facing routes with caller-JWT-only transport (no internal service token). SI permissions remain effective at both boundaries (strategic-indicators.view for operational reads; strategic-indicators.settings.manage for goal list/history). No writes, no job dispatch, no generic endpoint access. Dashboard-BFF routes intentionally NOT reused (different permission domain).",
+  "reason": "Coordination-approved user-parity READ surface: 21 governed READ ops proxied to strategic-indicators-api user-facing routes with caller-JWT-only transport (no internal service token). SI permissions remain effective at both boundaries (strategic-indicators.view for operational reads; strategic-indicators.trends.view for trend series; strategic-indicators.settings.manage for goal list/history, settings, audit, change-requests and bounded admin metadata). No writes, no job dispatch, no generic endpoint access. Dashboard-BFF routes intentionally NOT reused (different permission domain).",
   "previousDecision": {
     "taskId": "DAVI-INTELLIGENCE-002",
     "decision": "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY",
@@ -93,11 +93,11 @@
 
 ```json
 {
-  "previous_total_operations": 793,
+  "previous_total_operations": 819,
   "current_total_operations": 819,
-  "previous_total_get": 590,
+  "previous_total_get": 615,
   "current_total_get": 615,
-  "added_operations": 26,
+  "added_operations": 0,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }

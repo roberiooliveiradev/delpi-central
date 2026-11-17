@@ -8,6 +8,7 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
     invalidate_strategic_indicators_snapshot_cache,
 )
 from si_app.application.services.strategic_indicators.tree_load_jobs_service import (
+    TreeLoadJobAdmissionError,
     get_tree_load_jobs_service,
 )
 from si_app.interface.http.si_read_route_support import run_logged_read_route
@@ -151,13 +152,15 @@ def _validate_audit_meta(
     carries the caller's opaque correlation handle (e.g. the governed
     proposal id) — truncated and never trusted for authorization.
     """
-    origin = (write_origin or "").strip() or None
+    origin = (write_origin if isinstance(write_origin, str) else "").strip() or None
     if origin is not None and origin not in _VALID_WRITE_ORIGINS:
         raise HTTPException(
             status_code=400,
             detail="write_origin inválido.",
         )
-    correlation = (correlation_id or "").strip() or None
+    correlation = (
+        correlation_id if isinstance(correlation_id, str) else ""
+    ).strip() or None
     if correlation is not None and len(correlation) > _MAX_CORRELATION_ID_LENGTH:
         raise HTTPException(
             status_code=400,
@@ -582,6 +585,8 @@ def create_admin_department(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -619,6 +624,8 @@ def update_admin_department(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -655,6 +662,8 @@ def deactivate_admin_department(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -726,6 +735,8 @@ def create_admin_department_indicator(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -763,6 +774,8 @@ def update_admin_department_indicator(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -798,6 +811,8 @@ def activate_admin_department_indicator(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -833,6 +848,8 @@ def deactivate_admin_department_indicator(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -951,6 +968,8 @@ def create_indicator_goal(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1003,6 +1022,8 @@ def update_indicator_goal(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1044,6 +1065,8 @@ def activate_indicator_goal(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1085,6 +1108,8 @@ def deactivate_indicator_goal(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1135,19 +1160,31 @@ def list_goal_years_overview():
 def bulk_create_indicator_goals(
     body: BulkCreateIndicatorGoalsBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_bulk_create_strategic_indicators_indicator_goals_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1160,19 +1197,33 @@ def bulk_create_indicator_goals(
 def duplicate_indicator_goals_year(
     body: DuplicateIndicatorGoalsYearBodySchema,
     request: Request,
+    expected_source_digest: str | None = Query(None),
+    expected_existing_digest: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_duplicate_strategic_indicators_indicator_goals_year_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-
+            expected_source_digest=expected_source_digest,
+            expected_existing_digest=expected_existing_digest,
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1185,19 +1236,33 @@ def duplicate_indicator_goals_year(
 def fill_missing_indicator_goals(
     body: FillMissingIndicatorGoalsBodySchema,
     request: Request,
+    expected_target_digest: str | None = Query(None),
+    expected_source_digest: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_fill_missing_strategic_indicators_indicator_goals_use_case()
         result = use_case.execute(
             body=body.model_dump(),
             actor_user_id=actor_user_id,
-
+            expected_target_digest=expected_target_digest,
+            expected_source_digest=expected_source_digest,
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         result["items"] = [_serialize_goal_item(item) for item in result.get("items", [])]
         return _invalidate_read_cache_after_mutation(result)
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1253,9 +1318,30 @@ def preview_admin_config(body: ImportAdminConfigBodySchema):
 def apply_admin_config(
     body: ImportAdminConfigBodySchema,
     request: Request,
+    expected_departments: int | None = Query(None),
+    expected_department_indicators: int | None = Query(None),
+    expected_indicator_goals: int | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
+    counts = {
+        "departments": expected_departments,
+        "department_indicators": expected_department_indicators,
+        "indicator_goals": expected_indicator_goals,
+    }
+    # Guard against the /admin/config/import alias invoking this handler
+    # directly: uninstantiated Query defaults arrive as Param objects,
+    # not None — only real int values bind a precondition.
+    expected_counts = (
+        {key: value if isinstance(value, int) else 0 for key, value in counts.items()}
+        if any(isinstance(value, int) for value in counts.values())
+        else None
+    )
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         bundle, mode, include_goals = _admin_config_import_payload(body)
         use_case = build_import_strategic_indicators_admin_config_use_case()
         return _invalidate_read_cache_after_mutation(
@@ -1264,10 +1350,17 @@ def apply_admin_config(
                 actor_user_id=actor_user_id,
                 include_goals=include_goals,
                 mode=mode,
+                expected_counts=expected_counts,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1406,6 +1499,7 @@ def get_strategic_indicators_departments_tree_snapshot(
 @router.post("/departments/tree/load-job")
 @require_permission("strategic-indicators.view")
 def create_departments_tree_load_job(
+    request: Request,
     view_mode: str = Body("consolidated"),
     branch: str | None = Body(None),
     competence: str | None = Body(None),
@@ -1426,12 +1520,14 @@ def create_departments_tree_load_job(
             GetDepartmentsTreeTrendsRequest,
         )
 
+        actor_user_id = _extract_actor(request)
         jobs = get_tree_load_jobs_service()
 
         snapshot_uc = build_get_departments_tree_snapshot_use_case()
         trends_uc = build_get_departments_tree_trends_use_case()
 
         status = jobs.create_and_start(
+            actor_user_id=actor_user_id,
             snapshot_fn=lambda: snapshot_uc.execute(
                 GetDepartmentsTreeSnapshotRequest(
                     view_mode=view_mode,
@@ -1462,6 +1558,8 @@ def create_departments_tree_load_job(
             "created_at": status.created_at,
             "updated_at": status.updated_at,
         }
+    except TreeLoadJobAdmissionError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1471,9 +1569,9 @@ def create_departments_tree_load_job(
 
 @router.get("/jobs/{job_id}")
 @require_permission("strategic-indicators.view")
-def get_strategic_indicators_job_status(job_id: str):
+def get_strategic_indicators_job_status(job_id: str, request: Request):
     jobs = get_tree_load_jobs_service()
-    status = jobs.get(job_id)
+    status = jobs.get(job_id, actor_user_id=_extract_actor(request))
     if status is None:
         raise HTTPException(status_code=404, detail="Job não encontrado.")
     return {

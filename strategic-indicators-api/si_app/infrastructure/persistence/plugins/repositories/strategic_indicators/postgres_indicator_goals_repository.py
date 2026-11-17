@@ -1297,31 +1297,103 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         goal_year: int,
         items: list[dict],
         actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         created_items: list[dict] = []
 
-        for item in items:
-            created_items.append(
-                self.create_indicator_goal(
-                    indicator_id=item["indicator_id"],
-                    goal_year=goal_year,
-                    goal_label=item["goal_label"],
-                    goal_value=float(item["goal_value"]),
-                    goal_periodicity=item["goal_periodicity"],
-                    goal_mode=item.get("goal_mode", "standard"),
-                    goal_scope_branch=item.get("goal_scope_branch") or "",
-                    monthly_targets=item.get("monthly_targets") or [],
-                    valid_from=item.get("valid_from"),
-                    valid_to=item.get("valid_to"),
-                    notes=item.get("notes"),
-                    actor_user_id=actor_user_id,
+        # One transaction for the whole batch — without the UoW each item
+        # committed separately and a mid-batch failure left a partial set.
+        with self._unit_of_work():
+            for item in items:
+                created_items.append(
+                    self.create_indicator_goal(
+                        indicator_id=item["indicator_id"],
+                        goal_year=goal_year,
+                        goal_label=item["goal_label"],
+                        goal_value=float(item["goal_value"]),
+                        goal_periodicity=item["goal_periodicity"],
+                        goal_mode=item.get("goal_mode", "standard"),
+                        goal_scope_branch=item.get("goal_scope_branch") or "",
+                        monthly_targets=item.get("monthly_targets") or [],
+                        valid_from=item.get("valid_from"),
+                        valid_to=item.get("valid_to"),
+                        notes=item.get("notes"),
+                        actor_user_id=actor_user_id,
+                        expected_max_version=item.get("expected_max_version"),
+                        audit_origin=audit_origin,
+                        correlation_id=correlation_id,
+                    )
                 )
-            )
 
         return {
             "message": "Metas analíticas criadas em lote com sucesso.",
             "items": created_items,
         }
+
+    @staticmethod
+    def _goals_rows_digest(rows: list[dict], fields: tuple[str, ...]) -> str:
+        """Deterministic digest of a goal row set (PREPARE↔ACT binding).
+
+        Shared contract with the DAVI BFF: sha256 over the sorted
+        ``|``-joined field tuples — any drift in membership or copied
+        content changes the digest and must surface a typed conflict.
+        """
+        import hashlib
+
+        def _norm(field: str, value) -> str:
+            if value is None:
+                return ""
+            # Numeric fields may surface as Decimal/float/int depending on
+            # the driver path — coerce through float so the BFF-computed
+            # digest over the JSON contract is byte-identical.
+            if field == "goal_value":
+                try:
+                    return str(float(value))
+                except (TypeError, ValueError):
+                    return str(value)
+            return str(value)
+
+        tuples = sorted(
+            "|".join(_norm(field, row.get(field)) for field in fields)
+            for row in rows
+        )
+        return hashlib.sha256("\n".join(tuples).encode("utf-8")).hexdigest()
+
+    _BULK_SOURCE_DIGEST_FIELDS = (
+        "indicator_id",
+        "goal_scope_branch",
+        "goal_label",
+        "goal_value",
+        "goal_periodicity",
+        "goal_mode",
+    )
+    _BULK_EXISTING_DIGEST_FIELDS = (
+        "indicator_id",
+        "goal_scope_branch",
+        "goal_year",
+    )
+
+    def _require_bulk_digest(
+        self,
+        *,
+        expected: str | None,
+        actual_rows: list[dict],
+        fields: tuple[str, ...],
+        label: str,
+    ) -> None:
+        if expected is None:
+            return
+        actual = self._goals_rows_digest(actual_rows, fields)
+        if actual != expected:
+            from si_app.application.services.strategic_indicators.admin_write_conflict_error import (
+                StrategicIndicatorsAdminConflictError,
+            )
+
+            raise StrategicIndicatorsAdminConflictError(
+                f"Conjunto '{label}' diverge do preview aprovado — "
+                "o estado mudou desde a leitura. Recarregue e tente novamente."
+            )
 
     def duplicate_goals_year(
         self,
@@ -1331,6 +1403,10 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         indicator_ids: list[str] | None,
         overwrite_existing: bool,
         actor_user_id: str | None,
+        expected_source_digest: str | None = None,
+        expected_existing_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         source_query = """
             SELECT
@@ -1357,128 +1433,207 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
 
         source_query += " ORDER BY indicator_id ASC"
 
-        source_rows = self.fetch_all(source_query, tuple(params))
-        created_items: list[dict] = []
+        with self._unit_of_work():
+            # First pass (pre-lock): discover the touched scopes so the
+            # advisory locks can be taken in deterministic order.
+            probe_rows = self.fetch_all(source_query, tuple(params))
+            touched_scopes = sorted(
+                {
+                    (row["indicator_id"], row.get("goal_scope_branch") or "")
+                    for row in probe_rows
+                }
+            )
+            for indicator_id, goal_scope_branch in touched_scopes:
+                self._lock_goal_scope(
+                    indicator_id=indicator_id,
+                    goal_year=target_year,
+                    goal_scope_branch=goal_scope_branch,
+                )
 
-        for row in source_rows:
-            goal_scope_branch = row.get("goal_scope_branch") or ""
-
-            existing = self.fetch_one(
+            # Second pass (post-lock): re-read both snapshots under the
+            # held locks so the digests and existing-set reflect the state
+            # that will actually be mutated — a concurrent writer cannot
+            # slip a commit between read and lock.
+            source_rows = self.fetch_all(source_query, tuple(params))
+            # A source scope may have appeared between probe and re-read;
+            # lock it too (advisory locks participate in PG deadlock
+            # detection, so a conflicting order aborts safely).
+            for indicator_id, goal_scope_branch in sorted(
+                {
+                    (row["indicator_id"], row.get("goal_scope_branch") or "")
+                    for row in source_rows
+                }
+                - set(touched_scopes)
+            ):
+                self._lock_goal_scope(
+                    indicator_id=indicator_id,
+                    goal_year=target_year,
+                    goal_scope_branch=goal_scope_branch,
+                )
+            existing_target_rows = self.fetch_all(
                 """
-                SELECT id
+                SELECT indicator_id, goal_scope_branch, goal_year
                 FROM strategic_indicators.indicator_goals
-                WHERE indicator_id = %s
-                  AND goal_year = %s
-                  AND goal_scope_branch = %s
+                WHERE goal_year = %s
                   AND is_active = TRUE
-                LIMIT 1
+                ORDER BY indicator_id ASC, goal_scope_branch ASC
                 """,
-                (row["indicator_id"], target_year, goal_scope_branch),
+                (target_year,),
+            )
+            existing_keys = {
+                (row["indicator_id"], row.get("goal_scope_branch") or "")
+                for row in existing_target_rows
+            }
+
+            # PREPARE↔ACT binding: the source set and the existing target
+            # set must match the approved preview, otherwise a concurrent
+            # change would be silently applied.
+            self._require_bulk_digest(
+                expected=expected_source_digest,
+                actual_rows=source_rows,
+                fields=self._BULK_SOURCE_DIGEST_FIELDS,
+                label="source",
+            )
+            self._require_bulk_digest(
+                expected=expected_existing_digest,
+                actual_rows=existing_target_rows,
+                fields=self._BULK_EXISTING_DIGEST_FIELDS,
+                label="target_existing",
             )
 
-            if existing and not overwrite_existing:
-                continue
+            created_items: list[dict] = []
 
-            if existing and overwrite_existing:
-                self.execute(
+            for row in source_rows:
+                goal_scope_branch = row.get("goal_scope_branch") or ""
+                scope_key = (row["indicator_id"], goal_scope_branch)
+                has_existing = scope_key in existing_keys
+
+                if has_existing and not overwrite_existing:
+                    continue
+
+                if has_existing and overwrite_existing:
+                    self.execute(
+                        """
+                        UPDATE strategic_indicators.indicator_goals
+                        SET
+                            is_active = FALSE,
+                            updated_by_user_id = %s,
+                            updated_by_email = %s,
+                            updated_at = NOW()
+                        WHERE indicator_id = %s
+                          AND goal_year = %s
+                          AND goal_scope_branch = %s
+                          AND is_active = TRUE
+                        """,
+                        (
+                            actor_user_id,
+                            None,
+                            row["indicator_id"],
+                            target_year,
+                            goal_scope_branch,
+                        ),
+                    )
+                    self._insert_goal_audit_event(
+                        event_type="indicator_goal.deactivated",
+                        goal_row={
+                            "indicator_id": row["indicator_id"],
+                            "goal_year": target_year,
+                            "goal_scope_branch": goal_scope_branch,
+                            "version": "bulk-supersede",
+                        },
+                        payload_before={"is_active": True},
+                        actor_user_id=actor_user_id,
+                        audit_origin=audit_origin,
+                        correlation_id=correlation_id,
+                    )
+
+                version_row = self.fetch_one(
                     """
-                    UPDATE strategic_indicators.indicator_goals
-                    SET
-                        is_active = FALSE,
-                        updated_by_user_id = %s,
-                        updated_by_email = %s,
-                        updated_at = NOW()
+                    SELECT COALESCE(MAX(version), 0) AS max_version
+                    FROM strategic_indicators.indicator_goals
                     WHERE indicator_id = %s
                       AND goal_year = %s
                       AND goal_scope_branch = %s
                     """,
+                    (row["indicator_id"], target_year, goal_scope_branch),
+                )
+                next_version = int((version_row or {}).get("max_version") or 0) + 1
+
+                created = self.execute_returning_one(
+                    """
+                    INSERT INTO strategic_indicators.indicator_goals (
+                        indicator_id,
+                        goal_year,
+                        goal_label,
+                        goal_value,
+                        goal_periodicity,
+                        goal_mode,
+                        goal_scope_branch,
+                        version,
+                        is_active,
+                        valid_from,
+                        valid_to,
+                        notes,
+                        copied_from_goal_id,
+                        copied_from_year,
+                        created_by_user_id,
+                        created_by_email,
+                        updated_by_user_id,
+                        updated_by_email
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING *
+                    """,
                     (
-                        actor_user_id,
-                        None,
                         row["indicator_id"],
                         target_year,
+                        row["goal_label"],
+                        0.0
+                        if row.get("goal_mode") == "monthly_curve"
+                        else row["goal_value"],
+                        row["goal_periodicity"],
+                        row.get("goal_mode", "standard"),
                         goal_scope_branch,
+                        next_version,
+                        row.get("valid_from"),
+                        row.get("valid_to"),
+                        row.get("notes"),
+                        row["id"],
+                        source_year,
+                        actor_user_id,
+                        None,
+                        actor_user_id,
+                        None,
                     ),
                 )
 
-            version_row = self.fetch_one(
-                """
-                SELECT COALESCE(MAX(version), 0) AS max_version
-                FROM strategic_indicators.indicator_goals
-                WHERE indicator_id = %s
-                  AND goal_year = %s
-                  AND goal_scope_branch = %s
-                """,
-                (row["indicator_id"], target_year, goal_scope_branch),
-            )
-            next_version = int((version_row or {}).get("max_version") or 0) + 1
+                if row.get("goal_mode") == "monthly_curve":
+                    monthly_targets = self.list_monthly_targets(
+                        indicator_goal_id=row["id"]
+                    )
+                    self.replace_monthly_targets(
+                        indicator_goal_id=created["id"],
+                        monthly_targets=monthly_targets,
+                    )
 
-            created = self.execute_returning_one(
-                """
-                INSERT INTO strategic_indicators.indicator_goals (
-                    indicator_id,
-                    goal_year,
-                    goal_label,
-                    goal_value,
-                    goal_periodicity,
-                    goal_mode,
-                    goal_scope_branch,
-                    version,
-                    is_active,
-                    valid_from,
-                    valid_to,
-                    notes,
-                    copied_from_goal_id,
-                    copied_from_year,
-                    created_by_user_id,
-                    created_by_email,
-                    updated_by_user_id,
-                    updated_by_email
+                created["monthly_targets"] = self.list_monthly_targets(
+                    indicator_goal_id=created["id"]
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
-                """,
-                (
-                    row["indicator_id"],
-                    target_year,
-                    row["goal_label"],
-                    0.0
-                    if row.get("goal_mode") == "monthly_curve"
-                    else row["goal_value"],
-                    row["goal_periodicity"],
-                    row.get("goal_mode", "standard"),
-                    goal_scope_branch,
-                    next_version,
-                    row.get("valid_from"),
-                    row.get("valid_to"),
-                    row.get("notes"),
-                    row["id"],
-                    source_year,
-                    actor_user_id,
-                    None,
-                    actor_user_id,
-                    None,
-                ),
-            )
-
-            if row.get("goal_mode") == "monthly_curve":
-                monthly_targets = self.list_monthly_targets(
-                    indicator_goal_id=row["id"]
+                self._insert_goal_audit_event(
+                    event_type="indicator_goal.created",
+                    goal_row=created,
+                    payload_before=None,
+                    actor_user_id=actor_user_id,
+                    audit_origin=audit_origin,
+                    correlation_id=correlation_id,
+                    audit_meta={"operation": "duplicate_year"},
                 )
-                self.replace_monthly_targets(
-                    indicator_goal_id=created["id"],
-                    monthly_targets=monthly_targets,
-                )
+                created_items.append(created)
 
-            created["monthly_targets"] = self.list_monthly_targets(
-                indicator_goal_id=created["id"]
-            )
-            created_items.append(created)
-
-        return {
-            "message": "Duplicação de metas concluída com sucesso.",
-            "items": created_items,
-        }
+            return {
+                "message": "Duplicação de metas concluída com sucesso.",
+                "items": created_items,
+            }
 
     def fill_missing_goals(
         self,
@@ -1487,29 +1642,48 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         indicator_ids: list[str],
         copy_from_year: int | None,
         actor_user_id: str | None,
+        expected_target_digest: str | None = None,
+        expected_source_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
-        created_items: list[dict] = []
+        with self._unit_of_work():
+            normalized_ids = [
+                str(item).strip() for item in (indicator_ids or []) if str(item).strip()
+            ]
+            placeholders = ", ".join(["%s"] * len(normalized_ids)) or "NULL"
 
-        for indicator_id in indicator_ids:
-            existing = self.fetch_one(
-                """
-                SELECT id
+            # Serialize writers of every touched scope before reading the
+            # snapshots the digests will be checked against (sorted → no
+            # deadlock; a concurrent writer cannot slip a commit between
+            # the lock and the read).
+            for indicator_id in sorted(normalized_ids):
+                self._lock_goal_scope(
+                    indicator_id=indicator_id,
+                    goal_year=goal_year,
+                    goal_scope_branch="",
+                )
+
+            existing_rows = self.fetch_all(
+                f"""
+                SELECT indicator_id, goal_year, goal_scope_branch
                 FROM strategic_indicators.indicator_goals
-                WHERE indicator_id = %s
-                  AND goal_year = %s
+                WHERE goal_year = %s
                   AND is_active = TRUE
-                LIMIT 1
+                  AND indicator_id IN ({placeholders})
+                ORDER BY indicator_id ASC
                 """,
-                (indicator_id, goal_year),
+                (goal_year, *normalized_ids),
             )
-            if existing:
-                continue
+            existing_ids = {row["indicator_id"] for row in existing_rows}
 
-            if copy_from_year is not None:
-                source = self.fetch_one(
-                    """
-                    SELECT
+            source_rows: list[dict] = []
+            if copy_from_year is not None and normalized_ids:
+                source_rows = self.fetch_all(
+                    f"""
+                    SELECT DISTINCT ON (indicator_id)
                         id,
+                        indicator_id,
                         goal_label,
                         goal_value,
                         goal_periodicity,
@@ -1518,91 +1692,122 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                         valid_to,
                         notes
                     FROM strategic_indicators.indicator_goals
-                    WHERE indicator_id = %s
-                      AND goal_year = %s
+                    WHERE goal_year = %s
                       AND is_active = TRUE
-                    ORDER BY version DESC, updated_at DESC
-                    LIMIT 1
+                      AND indicator_id IN ({placeholders})
+                    ORDER BY indicator_id ASC, version DESC, updated_at DESC
                     """,
-                    (indicator_id, copy_from_year),
+                    (copy_from_year, *normalized_ids),
                 )
-                if source:
-                    version_row = self.fetch_one(
-                        """
-                        SELECT COALESCE(MAX(version), 0) AS max_version
-                        FROM strategic_indicators.indicator_goals
-                        WHERE indicator_id = %s
-                          AND goal_year = %s
-                        """,
-                        (indicator_id, goal_year),
-                    )
-                    next_version = int((version_row or {}).get("max_version") or 0) + 1
+            source_by_indicator = {row["indicator_id"]: row for row in source_rows}
 
-                    created = self.execute_returning_one(
-                        """
-                        INSERT INTO strategic_indicators.indicator_goals (
-                            indicator_id,
-                            goal_year,
-                            goal_label,
-                            goal_value,
-                            goal_periodicity,
-                            goal_mode,
-                            version,
-                            is_active,
-                            valid_from,
-                            valid_to,
-                            notes,
-                            copied_from_goal_id,
-                            copied_from_year,
-                            created_by_user_id,
-                            created_by_email,
-                            updated_by_user_id,
-                            updated_by_email
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING *
-                        """,
-                        (
-                            indicator_id,
-                            goal_year,
-                            source["goal_label"],
-                            0.0
-                            if source.get("goal_mode") == "monthly_curve"
-                            else source["goal_value"],
-                            source["goal_periodicity"],
-                            source.get("goal_mode", "standard"),
-                            next_version,
-                            source.get("valid_from"),
-                            source.get("valid_to"),
-                            source.get("notes"),
-                            source["id"],
-                            copy_from_year,
-                            actor_user_id,
-                            None,
-                            actor_user_id,
-                            None,
-                        ),
-                    )
+            self._require_bulk_digest(
+                expected=expected_target_digest,
+                actual_rows=existing_rows,
+                fields=self._BULK_EXISTING_DIGEST_FIELDS,
+                label="target_existing",
+            )
+            self._require_bulk_digest(
+                expected=expected_source_digest,
+                actual_rows=source_rows,
+                fields=self._BULK_SOURCE_DIGEST_FIELDS,
+                label="source",
+            )
 
-                    if source.get("goal_mode") == "monthly_curve":
-                        monthly_targets = self.list_monthly_targets(
-                            indicator_goal_id=source["id"]
-                        )
-                        self.replace_monthly_targets(
-                            indicator_goal_id=created["id"],
-                            monthly_targets=monthly_targets,
-                        )
+            created_items: list[dict] = []
 
-                    created["monthly_targets"] = self.list_monthly_targets(
-                        indicator_goal_id=created["id"]
-                    )
-                    created_items.append(created)
+            for indicator_id in normalized_ids:
+                if indicator_id in existing_ids:
                     continue
 
-        return {
-            "message": "Preenchimento de metas faltantes concluído com sucesso.",
-            "items": created_items,
-        }
+                source = source_by_indicator.get(indicator_id)
+                if source is None:
+                    continue
+
+                version_row = self.fetch_one(
+                    """
+                    SELECT COALESCE(MAX(version), 0) AS max_version
+                    FROM strategic_indicators.indicator_goals
+                    WHERE indicator_id = %s
+                      AND goal_year = %s
+                    """,
+                    (indicator_id, goal_year),
+                )
+                next_version = int((version_row or {}).get("max_version") or 0) + 1
+
+                created = self.execute_returning_one(
+                    """
+                    INSERT INTO strategic_indicators.indicator_goals (
+                        indicator_id,
+                        goal_year,
+                        goal_label,
+                        goal_value,
+                        goal_periodicity,
+                        goal_mode,
+                        version,
+                        is_active,
+                        valid_from,
+                        valid_to,
+                        notes,
+                        copied_from_goal_id,
+                        copied_from_year,
+                        created_by_user_id,
+                        created_by_email,
+                        updated_by_user_id,
+                        updated_by_email
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING *
+                    """,
+                    (
+                        indicator_id,
+                        goal_year,
+                        source["goal_label"],
+                        0.0
+                        if source.get("goal_mode") == "monthly_curve"
+                        else source["goal_value"],
+                        source["goal_periodicity"],
+                        source.get("goal_mode", "standard"),
+                        next_version,
+                        source.get("valid_from"),
+                        source.get("valid_to"),
+                        source.get("notes"),
+                        source["id"],
+                        copy_from_year,
+                        actor_user_id,
+                        None,
+                        actor_user_id,
+                        None,
+                    ),
+                )
+
+                if source.get("goal_mode") == "monthly_curve":
+                    monthly_targets = self.list_monthly_targets(
+                        indicator_goal_id=source["id"]
+                    )
+                    self.replace_monthly_targets(
+                        indicator_goal_id=created["id"],
+                        monthly_targets=monthly_targets,
+                    )
+
+                created["monthly_targets"] = self.list_monthly_targets(
+                    indicator_goal_id=created["id"]
+                )
+                self._insert_goal_audit_event(
+                    event_type="indicator_goal.created",
+                    goal_row=created,
+                    payload_before=None,
+                    actor_user_id=actor_user_id,
+                    audit_origin=audit_origin,
+                    correlation_id=correlation_id,
+                    audit_meta={"operation": "fill_missing"},
+                )
+                created_items.append(created)
+
+            return {
+                "message": "Preenchimento de metas faltantes concluído com sucesso.",
+                "items": created_items,
+            }
 
     def list_branch_scoped_goals_ignoring_validity(
         self,

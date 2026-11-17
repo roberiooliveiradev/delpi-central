@@ -22,6 +22,10 @@ class FillMissingStrategicIndicatorsIndicatorGoalsUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
+        expected_target_digest: str | None = None,
+        expected_source_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         goal_year = int(body.get("goal_year") or 0)
         department_ids = body.get("department_ids") or []
@@ -44,4 +48,8 @@ class FillMissingStrategicIndicatorsIndicatorGoalsUseCase:
             indicator_ids=indicator_ids,
             copy_from_year=copy_from_year,
             actor_user_id=actor_user_id,
+            expected_target_digest=expected_target_digest,
+            expected_source_digest=expected_source_digest,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

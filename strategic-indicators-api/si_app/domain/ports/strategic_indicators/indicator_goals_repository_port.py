@@ -148,6 +148,8 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         goal_year: int,
         items: list[dict],
         actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -160,6 +162,10 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         indicator_ids: list[str] | None,
         overwrite_existing: bool,
         actor_user_id: str | None,
+        expected_source_digest: str | None = None,
+        expected_existing_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -171,6 +177,10 @@ class StrategicIndicatorsIndicatorGoalsRepositoryPort(ABC):
         indicator_ids: list[str],
         copy_from_year: int | None,
         actor_user_id: str | None,
+        expected_target_digest: str | None = None,
+        expected_source_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 

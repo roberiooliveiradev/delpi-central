@@ -22,6 +22,10 @@ class DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
+        expected_source_digest: str | None = None,
+        expected_existing_digest: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         source_year = int(body.get("source_year") or 0)
         target_year = int(body.get("target_year") or 0)
@@ -45,4 +49,8 @@ class DuplicateStrategicIndicatorsIndicatorGoalsYearUseCase:
             indicator_ids=indicator_ids,
             overwrite_existing=overwrite_existing,
             actor_user_id=actor_user_id,
+            expected_source_digest=expected_source_digest,
+            expected_existing_digest=expected_existing_digest,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

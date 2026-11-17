@@ -17,9 +17,14 @@ class TreeLoadJobStatus:
     message: str
     created_at: str
     updated_at: str
+    created_by_user_id: str | None = None
     snapshot: dict[str, Any] | None = None
     trends: dict[str, Any] | None = None
     error: str | None = None
+
+
+class TreeLoadJobAdmissionError(Exception):
+    """Raised when the job registry refuses a new dispatch (limits hit)."""
 
 
 def _utc_now_iso() -> str:
@@ -35,6 +40,10 @@ class TreeLoadJobsService:
     (Postgres/Redis) para garantir consistência entre instâncias.
     """
 
+    MAX_ACTIVE_JOBS_PER_ACTOR = 2
+    MAX_ACTIVE_JOBS_TOTAL = 8
+    _ACTIVE_STATES = ("queued", "running")
+
     def __init__(self, *, ttl_seconds: int = 15 * 60) -> None:
         self._ttl_seconds = int(ttl_seconds)
         self._lock = threading.Lock()
@@ -47,25 +56,69 @@ class TreeLoadJobsService:
         for job_id in expired:
             self._jobs.pop(job_id, None)
 
-    def get(self, job_id: str) -> TreeLoadJobStatus | None:
+    def get(
+        self, job_id: str, *, actor_user_id: str | None = None
+    ) -> TreeLoadJobStatus | None:
+        status = self._get_status(job_id)
+        if status is None:
+            return None
+        # Jobs are private to their creator — a different actor sees 404
+        # rather than the existence/payload of someone else's job. Fail
+        # closed: a bound job stays invisible when the caller has no
+        # resolved actor identity.
+        if (
+            status.created_by_user_id is not None
+            and status.created_by_user_id != actor_user_id
+        ):
+            return None
+        return status
+
+    def _get_status(self, job_id: str) -> TreeLoadJobStatus | None:
+        """Internal lookup without actor scoping — used by the worker
+        thread, which is part of the job itself, not an external caller."""
         with self._lock:
             self._gc()
             entry = self._jobs.get(job_id)
-            if entry is None:
-                return None
-            return entry[1]
+            return entry[1] if entry is not None else None
 
     def _set(self, status: TreeLoadJobStatus) -> None:
         with self._lock:
             self._gc()
             self._jobs[status.job_id] = (time.time(), status)
 
+    def _check_admission(self, actor_user_id: str | None) -> None:
+        with self._lock:
+            self._gc()
+            active_total = 0
+            active_actor = 0
+            for _, status in self._jobs.values():
+                if status.state not in self._ACTIVE_STATES:
+                    continue
+                active_total += 1
+                if (
+                    actor_user_id is not None
+                    and status.created_by_user_id == actor_user_id
+                ):
+                    active_actor += 1
+            if active_total >= self.MAX_ACTIVE_JOBS_TOTAL:
+                raise TreeLoadJobAdmissionError(
+                    "Limite de jobs simultâneos atingido; aguarde a conclusão "
+                    "de um job em andamento."
+                )
+            if active_actor >= self.MAX_ACTIVE_JOBS_PER_ACTOR:
+                raise TreeLoadJobAdmissionError(
+                    "Você já possui jobs em andamento; aguarde a conclusão "
+                    "antes de disparar outro."
+                )
+
     def create_and_start(
         self,
         *,
         snapshot_fn,
         trends_fn,
+        actor_user_id: str | None = None,
     ) -> TreeLoadJobStatus:
+        self._check_admission(actor_user_id)
         job_id = str(uuid4())
         now = _utc_now_iso()
         status = TreeLoadJobStatus(
@@ -76,12 +129,13 @@ class TreeLoadJobsService:
             message="Preparando carregamento...",
             created_at=now,
             updated_at=now,
+            created_by_user_id=actor_user_id,
         )
         self._set(status)
 
         def run() -> None:
             try:
-                st = self.get(job_id)
+                st = self._get_status(job_id)
                 if st is None:
                     return
                 st.state = "running"
@@ -92,7 +146,7 @@ class TreeLoadJobsService:
                 self._set(st)
 
                 snapshot_payload = snapshot_fn()
-                st = self.get(job_id)
+                st = self._get_status(job_id)
                 if st is None:
                     return
                 st.snapshot = snapshot_payload
@@ -103,7 +157,7 @@ class TreeLoadJobsService:
                 self._set(st)
 
                 trends_payload = trends_fn()
-                st = self.get(job_id)
+                st = self._get_status(job_id)
                 if st is None:
                     return
                 st.trends = trends_payload
@@ -114,7 +168,7 @@ class TreeLoadJobsService:
                 st.updated_at = _utc_now_iso()
                 self._set(st)
             except Exception as exc:  # noqa: BLE001 - surface error to UI
-                st = self.get(job_id)
+                st = self._get_status(job_id)
                 if st is None:
                     return
                 st.state = "failed"

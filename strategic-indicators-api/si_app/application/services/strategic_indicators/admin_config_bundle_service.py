@@ -78,6 +78,9 @@ class AdminConfigBundleService:
         actor_user_id: str | None,
         mode: AdminConfigImportMode = "replace",
         include_goals: bool = True,
+        expected_counts: dict | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         preview = self.preview(
             bundle=bundle,
@@ -89,18 +92,18 @@ class AdminConfigBundleService:
             raise ValueError("; ".join(str(item) for item in errors))
 
         effective_include_goals = True if mode == "replace" else include_goals
-        stats = self._repository.import_bundle(
+        # The config.imported audit event is written by the repository
+        # inside the same transaction as the mutation — audit and import
+        # commit or roll back together.
+        return self._repository.import_bundle(
             bundle=bundle,
             actor_user_id=actor_user_id,
             include_goals=effective_include_goals,
             mode=mode,
+            expected_counts=expected_counts,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )
-        self._record_audit(
-            event_type="config.imported",
-            actor_user_id=actor_user_id,
-            payload_after={"mode": mode, "stats": stats},
-        )
-        return stats
 
     def export(self, *, actor_user_id: str | None = None) -> dict[str, Any]:
         bundle = self._repository.export_bundle()

@@ -31,7 +31,7 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
 
 def test_schema_covers_every_approved_write_capability() -> None:
     assert set(WRITE_CAPABILITY_ARG_SCHEMAS) == set(WRITE_CAPABILITIES)
-    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 16
+    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 23
 
 
 def test_schema_endpoint_serves_write_capability() -> None:
@@ -50,7 +50,9 @@ def test_schema_endpoint_serves_all_14_caps() -> None:
     for cap_id in sorted(WRITE_CAPABILITIES):
         out = davi_get_context(action="schema", capability=cap_id)
         assert out["capability"]["available"] is True, cap_id
-        assert out["capability"]["argument_schema"]["properties"]
+        # Zero-argument capabilities (si.cache.invalidate) legitimately
+        # publish an empty properties map.
+        assert "properties" in out["capability"]["argument_schema"]
 
 
 def test_schema_endpoint_unknown_capability_still_unknown() -> None:
@@ -86,6 +88,10 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
         si_goal_capabilities as goals,
     )
 
+    from app.application.external_capabilities.governed_writes import (
+        si_w014_capabilities as w014,
+    )
+
     vocab = {
         "si.goal.create": goals._CREATE_ARGS,
         "si.goal.update": goals._UPDATE_ARGS,
@@ -103,6 +109,13 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
         "si.change_request.create": admin._CR_CREATE_ARGS,
         "si.change_request.comment": admin._CR_COMMENT_ARGS,
         "si.change_request.submit": admin._CR_REF_ARGS,
+        "si.goal.bulk_create": w014._BULK_CREATE_ARGS,
+        "si.goal.duplicate_year": w014._DUPLICATE_YEAR_ARGS,
+        "si.goal.fill_missing": w014._FILL_MISSING_ARGS,
+        "si.config.import_apply": w014._IMPORT_APPLY_ARGS,
+        "si.cache.refresh": w014._CACHE_REFRESH_ARGS,
+        "si.cache.invalidate": w014._CACHE_INVALIDATE_ARGS,
+        "si.job.tree_load": w014._JOB_TREE_LOAD_ARGS,
     }
     for cap_id, allowed in vocab.items():
         props = set(WRITE_CAPABILITY_ARG_SCHEMAS[cap_id]["properties"])

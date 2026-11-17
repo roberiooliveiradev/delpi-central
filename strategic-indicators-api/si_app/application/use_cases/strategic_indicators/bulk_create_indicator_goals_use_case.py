@@ -20,6 +20,7 @@ from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port im
 class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
     VALID_PERIODICITIES = {"monthly", "annual", "quarterly", "weekly"}
     VALID_GOAL_MODES = {"standard", "monthly_curve"}
+    MAX_BULK_ITEMS = 500
 
     def __init__(
         self,
@@ -32,6 +33,8 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
         *,
         body: dict,
         actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         goal_year = int(body.get("goal_year") or 0)
         items = body.get("items") or []
@@ -41,6 +44,11 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
 
         if not isinstance(items, list) or not items:
             raise ValueError("items deve ser uma lista não vazia.")
+
+        if len(items) > self.MAX_BULK_ITEMS:
+            raise ValueError(
+                f"items excede o limite de {self.MAX_BULK_ITEMS} metas por lote."
+            )
 
         normalized_items: list[dict] = []
 
@@ -103,6 +111,7 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                     "valid_from": item.get("valid_from"),
                     "valid_to": item.get("valid_to"),
                     "notes": (item.get("notes") or "").strip() or None,
+                    "expected_max_version": item.get("expected_max_version"),
                 }
             )
 
@@ -110,4 +119,6 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
             goal_year=goal_year,
             items=normalized_items,
             actor_user_id=actor_user_id,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

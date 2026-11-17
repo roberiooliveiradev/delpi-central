@@ -241,6 +241,9 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
         actor_user_id: str | None,
         include_goals: bool = True,
         mode: str = "replace",
+        expected_counts: dict | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         schema_version = int(bundle.get("schema_version") or 0)
         if schema_version != self.SCHEMA_VERSION:
@@ -257,6 +260,9 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                         actor_user_id=actor_user_id,
                         include_goals=include_goals,
                         mode=mode,
+                        expected_counts=expected_counts,
+                        audit_origin=audit_origin,
+                        correlation_id=correlation_id,
                     )
                     connection.commit()
                     return stats
@@ -270,6 +276,9 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
                 actor_user_id=actor_user_id,
                 include_goals=include_goals,
                 mode=mode,
+                expected_counts=expected_counts,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
             )
         except Exception:
             self.rollback()
@@ -282,7 +291,30 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
         actor_user_id: str | None,
         include_goals: bool,
         mode: str,
+        expected_counts: dict | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
+        if expected_counts is not None:
+            # PREPARE↔ACT binding enforced inside the mutation
+            # transaction: the catalog must still match the approved
+            # preview — a concurrent change since preview fails closed.
+            current = self.count_catalog()
+            expected = {
+                key: int(expected_counts.get(key) or 0)
+                for key in ("departments", "department_indicators", "indicator_goals")
+            }
+            if current != expected:
+                from si_app.application.services.strategic_indicators.admin_write_conflict_error import (
+                    StrategicIndicatorsAdminConflictError,
+                )
+
+                raise StrategicIndicatorsAdminConflictError(
+                    "Catálogo alterado desde o preview aprovado "
+                    f"(esperado={expected}, atual={current}). "
+                    "Gere um novo preview e tente novamente."
+                )
+
         departments = bundle.get("departments") or []
         indicators = bundle.get("department_indicators") or []
         goals = bundle.get("indicator_goals") or [] if include_goals else []
@@ -331,6 +363,35 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
         stats["module_settings_updated"] = self._import_module_settings(
             module_settings,
             actor_user_id=actor_user_id,
+        )
+
+        # The audit event commits in the same transaction as the import —
+        # identical to the goal-repo pattern, with correlation metadata
+        # embedded under ``_audit_meta`` (the audit schema has no
+        # dedicated correlation columns).
+        from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
+            PostgresStrategicIndicatorsSettingsAuditRepository,
+        )
+
+        payload_after: dict = {"mode": mode, "stats": stats}
+        meta = {
+            key: value
+            for key, value in (
+                ("write_origin", audit_origin),
+                ("correlation_id", correlation_id),
+            )
+            if value
+        }
+        if meta:
+            payload_after["_audit_meta"] = meta
+        PostgresStrategicIndicatorsSettingsAuditRepository(
+            self._injected_connection
+        ).insert_audit_event(
+            entity_key="admin.config",
+            payload_before=None,
+            payload_after=payload_after,
+            changed_by_user_id=actor_user_id,
+            event_type="config.imported",
         )
         return stats
 

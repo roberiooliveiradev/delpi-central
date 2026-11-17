@@ -223,16 +223,24 @@ def test_injected_connection_execute_does_not_auto_commit():
 
 
 def test_apply_writes_config_imported_audit():
+    # W014: the config.imported audit event is written by the repository
+    # inside the same transaction as the import — the service threads the
+    # audit metadata through instead of auditing post-commit.
     repo = _repo_mock()
     repo.import_bundle.return_value = {"mode": "replace", "departments_upserted": 1}
     audit = MagicMock()
     service = AdminConfigBundleService(repo, audit_repository=audit)
-    service.apply(bundle=_bundle(), actor_user_id="user-1", mode="replace")
-    audit.insert_audit_event.assert_called_once()
-    kwargs = audit.insert_audit_event.call_args.kwargs
-    assert kwargs["event_type"] == "config.imported"
-    assert kwargs["payload_after"]["mode"] == "replace"
-    assert kwargs["payload_after"]["stats"]["departments_upserted"] == 1
+    service.apply(
+        bundle=_bundle(),
+        actor_user_id="user-1",
+        mode="replace",
+        audit_origin="davi-mcp",
+        correlation_id="prop-1",
+    )
+    audit.insert_audit_event.assert_not_called()
+    kwargs = repo.import_bundle.call_args.kwargs
+    assert kwargs["audit_origin"] == "davi-mcp"
+    assert kwargs["correlation_id"] == "prop-1"
 
 
 def test_preview_does_not_write_audit():

@@ -40,6 +40,10 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
     SiGoalWriteStack,
     owner_error_to_governed,
 )
+from app.application.external_capabilities.governed_writes.si_w014_capabilities import (
+    SI_W014_WRITE_CAPABILITIES,
+    SiW014WriteStack,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +58,11 @@ _RECONCILIATION_HINT = (
 )
 
 # All approved capabilities require the two-step confirmation flow.
-WRITE_CAPABILITIES = SI_GOAL_WRITE_CAPABILITIES | SI_ADMIN_WRITE_CAPABILITIES
+WRITE_CAPABILITIES = (
+    SI_GOAL_WRITE_CAPABILITIES
+    | SI_ADMIN_WRITE_CAPABILITIES
+    | SI_W014_WRITE_CAPABILITIES
+)
 
 
 def _require_identity(actor_id: str | None, authorization: str | None) -> str:
@@ -72,13 +80,17 @@ class DaviGovernedWriteOrchestrator:
         self,
         si_stack: SiGoalWriteStack | None = None,
         admin_stack: SiAdminWriteStack | None = None,
+        w014_stack: SiW014WriteStack | None = None,
     ) -> None:
         self._si_stack = si_stack or SiGoalWriteStack()
         self._admin_stack = admin_stack or SiAdminWriteStack()
+        self._w014_stack = w014_stack or SiW014WriteStack()
 
     def _stack_for(self, capability: str):
         if capability in SI_ADMIN_WRITE_CAPABILITIES:
             return self._admin_stack
+        if capability in SI_W014_WRITE_CAPABILITIES:
+            return self._w014_stack
         return self._si_stack
 
     # ------------------------------------------------------------- PREPARE

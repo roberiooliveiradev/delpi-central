@@ -17,6 +17,9 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
 from app.application.external_capabilities.governed_writes.si_admin_capabilities import (
     SI_ADMIN_WRITE_CAPABILITIES,
 )
+from app.application.external_capabilities.governed_writes.si_w014_capabilities import (
+    SI_W014_WRITE_CAPABILITIES,
+)
 
 _STR = {"type": "string"}
 _NUM = {"type": "number"}
@@ -213,6 +216,76 @@ WRITE_CAPABILITY_ARG_SCHEMAS: dict[str, dict[str, Any]] = {
     "si.change_request.submit": _schema(
         {"change_request_id": _STR}, ["change_request_id"]
     ),
+    # ---- W014 bulk / operational --------------------------------------
+    "si.goal.bulk_create": _schema(
+        {
+            "goal_year": {**_INT, "minimum": 2020, "maximum": 2100},
+            "items": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "indicator_id",
+                        "goal_label",
+                        "goal_value",
+                        "goal_periodicity",
+                    ],
+                    "properties": {
+                        k: v for k, v in _GOAL_FIELDS.items() if k != "goal_year"
+                    },
+                },
+            },
+        },
+        ["goal_year", "items"],
+    ),
+    "si.goal.duplicate_year": _schema(
+        {
+            "source_year": {**_INT, "minimum": 2020, "maximum": 2100},
+            "target_year": {**_INT, "minimum": 2020, "maximum": 2100},
+            "department_ids": {"type": "array", "items": _STR, "maxItems": 200},
+            "overwrite_existing": _BOOL,
+        },
+        ["source_year", "target_year"],
+    ),
+    "si.goal.fill_missing": _schema(
+        {
+            "goal_year": {**_INT, "minimum": 2020, "maximum": 2100},
+            "department_ids": {"type": "array", "items": _STR, "maxItems": 200},
+            "copy_from_year": {**_INT, "minimum": 2020, "maximum": 2100},
+        },
+        ["goal_year"],
+    ),
+    "si.config.import_apply": _schema(
+        {
+            "bundle": _OBJ,
+            "include_goals": _BOOL,
+        },
+        ["bundle"],
+    ),
+    "si.cache.refresh": _schema(
+        {
+            "competence": _STR,
+            "trends_months": {**_INT, "minimum": 1, "maximum": 24},
+        },
+        [],
+    ),
+    "si.cache.invalidate": _schema({}, []),
+    "si.job.tree_load": _schema(
+        {
+            "view_mode": {
+                "type": "string",
+                "enum": ["consolidated", "per_unit"],
+            },
+            "branch": _STR,
+            "competence": _STR,
+            "start_date": _STR,
+            "end_date": _STR,
+            "months": {**_INT, "minimum": 2, "maximum": 12},
+        },
+        [],
+    ),
 }
 
 WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
@@ -238,6 +311,13 @@ WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
         ("si.change_request.create", "change_request", "Create a change request proposal."),
         ("si.change_request.comment", "change_request", "Add a comment to a change request."),
         ("si.change_request.submit", "change_request", "Submit a draft change request."),
+        ("si.goal.bulk_create", "indicator_goal", "Batch-create goals (≤500 items, per-scope OCC)."),
+        ("si.goal.duplicate_year", "indicator_goal", "Copy goals from one year to another (digest-bound preview)."),
+        ("si.goal.fill_missing", "indicator_goal", "Create goals only for indicators missing one in a year."),
+        ("si.config.import_apply", "admin_config", "Apply an exported config bundle (merge only; replace is reserved)."),
+        ("si.cache.refresh", "si_cache", "Schedule a materialized period_scores refresh."),
+        ("si.cache.invalidate", "si_cache", "Wipe materialized snapshots and schedule a recompute."),
+        ("si.job.tree_load", "tree_load_job", "Dispatch an async department-tree load job."),
     )
 }
 
@@ -245,7 +325,11 @@ WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
 def get_write_capability_schema(capability: str) -> dict[str, Any] | None:
     """Return the PREPARE argument schema for a governed write capability,
     or ``None`` when the id is not an approved write capability."""
-    if capability not in (SI_GOAL_WRITE_CAPABILITIES | SI_ADMIN_WRITE_CAPABILITIES):
+    if capability not in (
+        SI_GOAL_WRITE_CAPABILITIES
+        | SI_ADMIN_WRITE_CAPABILITIES
+        | SI_W014_WRITE_CAPABILITIES
+    ):
         return None
     schema = WRITE_CAPABILITY_ARG_SCHEMAS.get(capability)
     if schema is None:

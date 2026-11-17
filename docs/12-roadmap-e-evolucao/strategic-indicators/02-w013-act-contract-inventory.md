@@ -3,7 +3,7 @@
 **TASK_ID origem:** `DAVI-SI-W013-READ-CLOSURE-AND-ACT-READINESS-01` (Frente B)
 **Status:** `READ_ONLY_INVENTORY / CONTRACT_SPEC / NO_CODE / NO_DEPLOY / NO_WRITE`
 **Autoridade:** Strategic Indicators API é owner de dados, regras, AuthZ efetiva, persistência e auditoria. DAVI/api-delpi é façade semântica; nenhum write é executado em banco nem com service token.
-**Wave:** W013-ACT (departments, indicators, settings, change requests). Não confundir com W014 (batch/jobs/config-import) e W015 (deletes destrutivos), que seguem bloqueados.
+**Wave:** W013-ACT (departments, indicators, settings, change requests). W014 (batch/jobs/config-import/cache) foi implementada neste mesmo contrato (§10); W015 (deletes destrutivos + mode=replace) segue bloqueado.
 
 Este documento NÃO autoriza implementação. Cada operação abaixo requer briefing de implementação aprovado pela Coordination antes de virar capability `si.*` no `execute` governado.
 
@@ -101,7 +101,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | READY_FOR_IMPLEMENTATION (contrato completo no owner) | D1, D2, D3, I1, I2, I3, I4, C1, C2, C3 |
 | IMPLEMENTED (§9) | D4 `si.department.deactivate` + S1 `si.settings.update` (owner OCC corrigido; 16 capabilities governadas no total) |
 | NEEDS_OWNER_CONTRACT | indicator re-association; CR approve/reject/cancel/update |
-| BLOCKED (outra wave) | D5, I5 (W015); batch/import/jobs/cache (W014) |
+| BLOCKED (outra wave) | D5, I5 (W015); `mode=replace` destrutivo do import (W015); `si.config.import` genérico (sem capability) — batch/import-merge/jobs/cache (W014) implementados, ver §10 |
 
 ## 8. Próximo briefing de implementação (proposta para Coordination)
 
@@ -154,3 +154,19 @@ Decisão original: **`S1_CONTRACT_GAP`** — bloqueado até o owner ganhar preco
 4. **Drift owner corrigido:** o repo exigia kwargs `weights`/`goals` que port/use case não passavam — `PUT /settings` falhava com TypeError (500) em produção. `weights`/`goals` agora opcionais; o bloco legado executa somente quando enviado.
 5. Portal compatibilizado: MFE lê `meta.versions` e envia os dois xmin no save — o guard OCC vale para portal e DAVI.
 6. Capability `si.settings.update`: complete-state proposal — PREPARE lê estado completo, diffs por `key` (preserved/modified/added/removed + remoções implícitas), versões seladas; ACT full-replace com versões; read-back compara blocos persistidos com o proposto.
+
+## 10. Atualização de wave — W014 implementada (bulk goals, import merge, cache, jobs)
+
+**`DAVI-SI-W014-BULK-IMPORT-JOBS-IMPLEMENTATION-01`:** as quatro famílias mapeadas na §6 foram implementadas sob o mesmo contrato governado PREPARE→ACT. O conjunto executável passou de 16 → **23 capabilities**; nenhuma tool MCP nova (5 estáveis).
+
+| Capability | Owner route | Controles aplicados |
+|---|---|---|
+| `si.goal.bulk_create` | `POST /admin/indicator-goals/bulk-create` | tx única p/ o lote (UoW re-entrante); `expected_max_version` por escopo (schema passou a aceitar — antes strippado); cap 500 itens; audit `indicator_goal.created` na mesma tx; superseded em `_audit_meta` |
+| `si.goal.duplicate_year` | `POST /admin/indicator-goals/duplicate-year` | locks advisory sorted + re-read pós-lock; `expected_source_digest`/`expected_existing_digest` conferidos SOB LOCK → 409; audit mesma tx |
+| `si.goal.fill_missing` | `POST /admin/indicator-goals/fill-missing` | locks por indicador; `expected_target_digest`/`expected_source_digest` sob lock → 409; audit mesma tx |
+| `si.config.import_apply` | `POST /admin/config/import/apply` | **merge only** — `mode=replace` rejeitado no BFF (W015); `expected_counts` (departments/department_indicators/indicator_goals) conferidos DENTRO da tx de mutação → 409; `config.imported` audit na mesma tx (era pós-commit) |
+| `si.cache.refresh` | `POST /cache/refresh` (`view`) | single-flight owner (`already_running` não é falha); fingerprint sobre status do refresh |
+| `si.cache.invalidate` | `POST /cache/invalidate` (`settings.manage`) | zero-args; wipe snapshots + schedule refresh (semântica owner inalterada) |
+| `si.job.tree_load` | `POST /departments/tree/load-job` (`view`) | `created_by_user_id` bound; `get` actor-scoped fail-closed (cross-actor/anon → 404); admission caps 2/ator + 8 global → 429; worker interno usa lookup sem scoping (OC-1 do verificador corrigida) |
+
+Permanecem BLOCKED: `si.config.import` (nome genérico — sem capability), `mode=replace` destrutivo (W015), todos os deletes (W015), `http.post`/SQL genérico. Rotas W014 validam `write_origin`/`correlation_id` via `_validate_audit_meta` (allowlist `davi-mcp`); `except HTTPException: raise` adicionado nas rotas W014 **e** W012/W013 (write_origin inválido era 500 — agora 400).

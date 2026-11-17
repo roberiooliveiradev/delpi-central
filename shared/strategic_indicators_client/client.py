@@ -943,10 +943,16 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/admin/indicator-goals/bulk-create",
+            params={
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -956,10 +962,20 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        expected_source_digest: str | None = None,
+        expected_existing_digest: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/admin/indicator-goals/duplicate-year",
+            params={
+                "expected_source_digest": expected_source_digest,
+                "expected_existing_digest": expected_existing_digest,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -969,10 +985,20 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        expected_target_digest: str | None = None,
+        expected_source_digest: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/admin/indicator-goals/fill-missing",
+            params={
+                "expected_target_digest": expected_target_digest,
+                "expected_source_digest": expected_source_digest,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -995,10 +1021,23 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        expected_counts: Mapping[str, Any] | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
+        counts = dict(expected_counts or {})
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/admin/config/import/apply",
+            params={
+                "expected_departments": counts.get("departments"),
+                "expected_department_indicators": counts.get(
+                    "department_indicators"
+                ),
+                "expected_indicator_goals": counts.get("indicator_goals"),
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )

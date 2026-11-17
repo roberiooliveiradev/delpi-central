@@ -16,6 +16,9 @@ class ImportStrategicIndicatorsAdminConfigUseCase:
         actor_user_id: str | None,
         include_goals: bool = True,
         mode: str = "replace",
+        expected_counts: dict | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if mode not in ("merge", "replace"):
             raise ValueError("mode inválido: use merge ou replace.")
@@ -24,6 +27,9 @@ class ImportStrategicIndicatorsAdminConfigUseCase:
             actor_user_id=actor_user_id,
             include_goals=include_goals,
             mode=mode,
+            expected_counts=expected_counts,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )
         return {
             "message": "Configuração importada com sucesso.",
