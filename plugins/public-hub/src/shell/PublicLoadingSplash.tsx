@@ -1,10 +1,9 @@
 import { ScreenLoading } from "@delpi/plugin-ui/screen-loading";
 import { usePublicThemeMode } from "./ThemeToggle";
-import type { PublicChrome } from "./types";
 
 type PublicLoadingSplashProps = {
   /** Chrome do palco — kiosk usa tela cheia escura. */
-  chrome?: PublicChrome;
+  chrome?: "default" | "kiosk" | "fullpage";
   label?: string;
 };
 

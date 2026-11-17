@@ -11,12 +11,6 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
-from app.domain.services.supplies.inventory_adjustment_service import (
-    inventory_adjustment_monetary_value_sql,
-)
-from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustment_product_sql import (
-    inventory_adjustment_product_apply,
-)
 from app.domain.totvs.protheus_internal_movements import (
     INVENTORY_ADJUSTMENT_DOCUMENT,
     MOVEMENT_TYPE_INBOUND_THRESHOLD,
@@ -38,9 +32,6 @@ _SORT_MAP = {
 DEFAULT_SORT = "count_date_desc"
 
 _INBOUND = MOVEMENT_TYPE_INBOUND_THRESHOLD  # '500' — TM < 500 = sobra/entrada
-# Material de terceiro segue no evento físico, mas vale R$ 0 para a Delpi.
-_VALUE = inventory_adjustment_monetary_value_sql(movement_alias="D")
-_PRODUCT_APPLY = inventory_adjustment_product_apply(movement_alias="D")
 
 # Quantidade esperada = contado + falta - sobra (pareamento MATA270/SD3).
 # Acuracidade de cada evento = max(0, 100 * [1 - |contado - teórico| / teórico]).
@@ -121,9 +112,9 @@ adjustments AS (
                  THEN CAST(D.D3_QUANT AS DECIMAL(18,6)) ELSE 0 END)
             AS surplus_quantity,
         SUM(CASE WHEN D.D3_TM >= '{_INBOUND}'
-                 THEN ABS({_VALUE}) ELSE 0 END) AS shortage_value,
+                 THEN ABS(D.D3_CUSTO1) ELSE 0 END) AS shortage_value,
         SUM(CASE WHEN D.D3_TM < '{_INBOUND}'
-                 THEN ABS({_VALUE}) ELSE 0 END) AS surplus_value,
+                 THEN ABS(D.D3_CUSTO1) ELSE 0 END) AS surplus_value,
         COUNT(*) AS adjustment_rows
     FROM SD3010 D WITH (NOLOCK)
     JOIN events e
@@ -131,7 +122,6 @@ adjustments AS (
      AND e.product_code = D.D3_COD
      AND e.warehouse = D.D3_LOCAL
      AND e.count_date = D.D3_EMISSAO
-    {_PRODUCT_APPLY}
     WHERE D.D_E_L_E_T_ = ''
       AND RTRIM(ISNULL(D.D3_ESTORNO, '')) <> 'S'
       AND RTRIM(LTRIM(D.D3_DOC)) = '{INVENTORY_ADJUSTMENT_DOCUMENT}'

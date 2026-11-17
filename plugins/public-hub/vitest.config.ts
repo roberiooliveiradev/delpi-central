@@ -8,10 +8,6 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    // O teste do §14.10 importa o código-fonte do PluginUI por caminho relativo;
-    // sem dedupe, o fonte resolve a cópia própria de react e quebra hooks.
-    // Espelha o dedupe do vite.config.ts (build).
-    dedupe: ["react", "react-dom", "lucide-react"],
     alias: [
       // `@delpi/plugin-ui` é remote de Module Federation no build real;
       // em teste resolve para um stub local (componentes no-op).

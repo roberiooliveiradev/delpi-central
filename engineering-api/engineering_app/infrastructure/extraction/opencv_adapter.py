@@ -325,32 +325,16 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
                 roi_sat = sat_ch[y1:y2, x1:x2]
                 mask = roi_sat > 60
                 n_sat = int(mask.sum())
-                box_area = float((x2 - x1) * (y2 - y1))
-                inner = sum(
-                    1
-                    for o in boxes
-                    if o is not bx
-                    and o[0] >= x1 - 2 and o[1] >= y1 - 2
-                    and o[2] <= x2 + 2 and o[3] <= y2 + 2
-                    and (o[2] - o[0]) * (o[3] - o[1]) < 0.95 * box_area
-                )
                 entry = {
                     "box_px": [x1, y1, x2, y2],
                     "aspect_ratio": round(
                         max(x2 - x1, y2 - y1)
                         / max(1.0, min(x2 - x1, y2 - y1)), 2),
-                    "area_fraction": round(
-                        box_area / float(hw * hh), 6),
                     "sat_coverage": round(
                         n_sat / float(mask.size), 3),
                     "dominant_hue": None,
                     "dominant_hue_fraction": 0.0,
                     "saturated_px": n_sat,
-                    "inner_primitive_count": inner,
-                    # fail-closed: nenhum emissor declara aqui que o
-                    # preenchimento é cor de material — cor de
-                    # contorno/anotação/esquemático nunca é promovida.
-                    "fill_semantics": "schematic_or_unknown",
                 }
                 if n_sat:
                     hist = np.bincount(

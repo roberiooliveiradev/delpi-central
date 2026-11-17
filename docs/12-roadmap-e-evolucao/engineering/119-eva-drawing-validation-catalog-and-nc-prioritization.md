@@ -6607,7 +6607,9 @@ Sondagem real nos 3 PDFs (`run_visual_benchmark` in-process, modelos `paddlex` o
 
 #### Verificação independente
 
-- Pedido `.git/delpi-verifier/requests/eva-b3-visual-consistency-r1.md`; resultado pendente nesta seção até a rodada do verificador (ver relatório final da task).
+- r1 (cursor/Composer, `7ddf732466..c94bbfe11a`): **REWORK** — OC-1: commit `c94bbfe11a` contaminado (herança de tree trouxe o commit delia `3f1d7ab46f`, +456 linhas, WIP alheio publicado indevidamente); OC-2: `region_observations` sem `area_fraction`/`inner_primitive_count`/`fill_semantics`.
+- **Correções:** `7726124ebe` reverte os 5 arquivos delia aos blobs pré-delia (`7ddf732466`; commit local preservado no reflog para o owner) e completa os campos do adapter (`fill_semantics="schematic_or_unknown"`, fail-closed).
+- r2 (cursor/Composer, `7ddf732466^..7726124ebe`): **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção — OC-1/OC-2 confirmadas corrigidas; AC-01..14 PASS (código + 73 testes focados + 1679 suíte). Residuais: prova PDF real `NAO_VERIFICAVEL` pelo verificador (contrato); range git poliglota (declarado, disjunto); sem teste que falhe se o adapter omitir `area_fraction` (emissão confirmada por leitura, conf. ~60); `automatic_approval=False` no agregado, não por bloco (conf. <80); commit de doc `30888b81c7` carrega artefatos delia-evidence alheios no range (ruído, sem código delia no tip).
 
 #### Limitações e riscos de falso conflito
 
@@ -6620,6 +6622,6 @@ Sondagem real nos 3 PDFs (`run_visual_benchmark` in-process, modelos `paddlex` o
 
 #### Release, residuais e handoff
 
-- **`B3_IMPLEMENTED_VERIFIED_DEPLOY_BLOCKED`** (pendente veredito do verificador nesta iteração): deploy proibido; imagem de produção inalterada; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `AUTOMATIC_APPROVAL=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+- **`B3_IMPLEMENTED_VERIFIED_DEPLOY_BLOCKED`**: deploy proibido; imagem de produção inalterada; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `AUTOMATIC_APPROVAL=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
 - Próximo bounded step sugerido: dataset GT de coerência balão×componente para homologar thresholds e medir falsos conflitos/compatíveis; critério para `fill_semantics` governado se a Engenharia quiser ativar comparação de cor real.
 - Issue #131: update manual pendente (`gh` sem auth no ambiente).

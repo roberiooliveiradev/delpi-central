@@ -586,3 +586,68 @@ def test_r6_clarification_reply_in_input_authorizes():
         prior_turns=(),
     )
     assert invented == []
+
+
+# -------------------------------------------------------------------
+# INT2_B anchor recovery — declared-scope invariants for the
+# comprehension material-obligation fix (acceptor-side; sufficiency
+# matching is NOT relaxed — these pin the unchanged verdicts).
+# -------------------------------------------------------------------
+
+
+def test_int2b_clean_count_obligation_satisfied_by_unfiltered_read():
+    """Target end-state: a count obligation anchored on the business
+    entity with an explicitly unfiltered carrier and no operation
+    restriction is demonstrated by an unfiltered owner READ carrying
+    the authoritative total — the INT2_B trajectory that should have
+    been reachable."""
+    obligation = _obligation_item(
+        {
+            "description": "Total de processos cadastrados",
+            "evidence_source": "process",
+            "required_args": {"params": {}},
+        }
+    )
+    attempt = _teo_process_page(
+        total=109,
+        args={"entity": "process", "action": "search"},
+    )
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] == OBLIGATION_SATISFIED
+
+
+def test_int2b_filtered_read_does_not_satisfy_unfiltered_count():
+    """Filter-drift guard: a status-filtered query narrows the declared
+    unfiltered carrier — it can never demonstrate the unfiltered
+    total (the declared ``params:{}`` marker stays load-bearing)."""
+    obligation = _obligation_item(
+        {
+            "description": "Total de processos cadastrados",
+            "evidence_source": "process",
+            "required_args": {"params": {}},
+        }
+    )
+    attempt = _teo_process_page(total=109)
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED
+
+
+def test_int2b_declared_view_scope_still_binding():
+    """No sufficiency relaxation: a declared ``view=summary`` scope on
+    a business-anchored obligation is still unechoable by a READ —
+    the fix prevents the anchor at declaration, it does not weaken
+    the deterministic verdict for declared scope."""
+    obligation = _obligation_item(
+        {
+            "description": "Total de processos cadastrados",
+            "evidence_source": "process",
+            "operation": "analysis",
+            "required_args": {"view": "summary", "params": {}},
+        }
+    )
+    attempt = _teo_process_page(
+        total=109,
+        args={"entity": "process", "action": "search"},
+    )
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED

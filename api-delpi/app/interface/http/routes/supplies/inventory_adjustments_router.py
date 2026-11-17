@@ -258,11 +258,8 @@ def get_inventory_adjustments_tv_monthly_series(
 @router.get(
     "/tv/weekly-items",
     operation_id="get_supplies_inventory_adjustments_tv_weekly_items",
-    summary="Itens com saldo líquido de inventário consolidado por produto",
-    description=(
-        "GR Diário: uma linha por filial e produto, compensando faltas e sobras "
-        "de todos os armazéns selecionados no período. Quantidade e R$ líquidos."
-    ),
+    summary="Ranking semanal de produtos com ajustes de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
 )
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_weekly_items(
@@ -277,7 +274,7 @@ def get_inventory_adjustments_tv_weekly_items(
         description="Quantidade de linhas do ranking (1 a 50; padrão 10).",
     ),
 ):
-    """Ranking do período, com uma linha por filial × produto e saldo líquido."""
+    """Ranking da semana corrente, grão filial × produto × armazém × natureza."""
     return _tv_response(
         operation_id="get_supplies_inventory_adjustments_tv_weekly_items",
         action="weekly_items",

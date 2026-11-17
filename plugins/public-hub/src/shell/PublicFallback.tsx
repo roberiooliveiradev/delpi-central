@@ -1,5 +1,3 @@
-import type { PublicChrome } from "./types";
-
 type PublicFallbackKind = "not-found" | "error";
 
 type PublicFallbackProps = {
@@ -9,7 +7,7 @@ type PublicFallbackProps = {
   /** Título opcional; senão usa padrão por `kind`. */
   title?: string;
   /** `kiosk` (TV) usa composição em tela cheia com marca — o Stage kiosk não exibe logo. */
-  chrome?: PublicChrome;
+  chrome?: "default" | "kiosk" | "fullpage";
   /** Falha de chunk após deploy — botão força nova recuperação. */
   showRetry?: boolean;
   onRetry?: () => void;

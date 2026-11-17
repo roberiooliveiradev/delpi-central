@@ -392,9 +392,7 @@ def test_sql_sort_tiebreaker_stable() -> None:
             offset=0,
             page_size=50,
         )
-        # O lookup SB1 usa ORDER BY interno para priorizar filial;
-        # o desempate de itens deve inspecionar apenas o ORDER BY externo.
-        order_by = query.rsplit("ORDER BY", 1)[1]
+        order_by = query.split("ORDER BY", 1)[1]
         expressions = order_by.split("OFFSET", 1)[0].strip().split(",")
         columns = [term.strip().rsplit(" ", 1)[0] for term in expressions]
         assert len(columns) == len(set(columns)), order_by

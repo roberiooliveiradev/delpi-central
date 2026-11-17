@@ -1,0 +1,353 @@
+/* Pesquisa de Satisfação (UI-03). Tokens de marca do public-hub (--pub-*); sem CSS do kit/Portal. */
+.satform {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--pub-text-body);
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 18px 40px rgba(3, 40, 70, 0.18));
+}
+
+.satform--message {
+  text-align: center;
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-top: 8px solid var(--pub-accent);
+  border-radius: 16px;
+  padding: 32px 24px;
+}
+
+.satform-header {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-top: 8px solid var(--pub-accent);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 24px 18px;
+  text-align: center;
+}
+
+.satform-eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pub-text-soft);
+  margin-bottom: 6px;
+}
+
+.satform-title {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+  line-height: 1.25;
+  color: var(--pub-text);
+}
+
+.satform-title:focus {
+  outline: none;
+}
+
+.satform-subtitle {
+  margin: 0 0 12px;
+  color: var(--pub-text-body);
+}
+
+.satform-help {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--pub-text-soft);
+}
+
+.satform-check {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  color: var(--pub-on-brand);
+  background: var(--pub-accent);
+}
+
+.satform-progress {
+  margin-top: 12px;
+}
+
+.satform-progress__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pub-option-bg);
+  overflow: hidden;
+}
+
+.satform-progress__fill {
+  height: 100%;
+  background: var(--pub-accent);
+  transition: width 0.2s ease;
+}
+
+.satform-progress__label {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--pub-text-soft);
+}
+
+.satform-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  padding: 24px;
+  text-align: left;
+}
+
+.satform-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.satform-field:focus {
+  outline: none;
+}
+
+.satform-field.is-invalid {
+  border-left: 4px solid var(--pub-danger);
+  padding-left: 10px;
+}
+
+.satform-label {
+  font-weight: 600;
+  color: var(--pub-text);
+  padding: 0;
+}
+
+.satform-req {
+  color: var(--pub-danger);
+  font-style: normal;
+}
+
+.satform-opt-tag {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--pub-text-faint);
+}
+
+.satform-scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.satform-nps {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.satform-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 4px;
+  border: 1px solid var(--pub-input-border);
+  border-radius: 10px;
+  background: var(--pub-option-bg);
+  color: var(--pub-input-text);
+  text-align: center;
+  cursor: pointer;
+}
+
+.satform-opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.satform-opt:focus-within {
+  outline: 3px solid var(--pub-primary);
+  outline-offset: 2px;
+}
+
+.satform-opt.is-on {
+  background: var(--pub-accent);
+  border-color: var(--pub-accent);
+  color: var(--pub-on-brand);
+}
+
+.satform-opt__num {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.satform-opt__text {
+  font-size: 0.7rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.satform-opt--na {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  border-style: dashed;
+}
+
+.satform-opt--nps {
+  min-height: 48px;
+  padding: 6px 0;
+}
+
+.satform-textarea,
+.satform-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--pub-input-text);
+  background: var(--pub-input-bg);
+  border: 1px solid var(--pub-input-border);
+  border-radius: 10px;
+}
+
+.satform-textarea::placeholder {
+  color: var(--pub-placeholder);
+}
+
+.satform-error {
+  margin: 0;
+  color: var(--pub-danger);
+  font-size: 0.9rem;
+}
+
+.satform-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.satform-btn {
+  min-height: 44px;
+  padding: 10px 20px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.satform-btn:focus-visible,
+.satform-link:focus-visible {
+  outline: 3px solid var(--pub-primary);
+  outline-offset: 2px;
+}
+
+.satform-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.satform-btn--primary {
+  background: var(--pub-accent);
+  color: var(--pub-on-brand);
+}
+
+.satform-btn--ghost {
+  background: transparent;
+  color: var(--pub-accent);
+  border-color: var(--pub-accent);
+}
+
+.satform-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--pub-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.satform-review-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.satform-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.satform-page-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--pub-text);
+}
+
+.satform-review-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.satform-review-item dt {
+  font-size: 0.9rem;
+  color: var(--pub-text-soft);
+}
+
+.satform-review-item dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  color: var(--pub-text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+  .satform-header,
+  .satform-card {
+    padding: 16px;
+  }
+
+  .satform-scale {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .satform-nps {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .satform-nav {
+    flex-direction: column-reverse;
+  }
+
+  .satform-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .satform-progress__fill {
+    transition: none;
+  }
+}
