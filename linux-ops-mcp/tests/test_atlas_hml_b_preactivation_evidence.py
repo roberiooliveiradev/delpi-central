@@ -27,7 +27,7 @@ def sample(*, status="PENDENTE") -> dict:
                 else next(iter(gate._ORIGINS[key]))
             ),
             "evidence_ref": None if status == "PENDENTE" else f"EVID-TEST{i:04d}AB",
-            "sha256": None if status == "PENDENTE" else chr(97 + i) * 64,
+            "sha256": None if status == "PENDENTE" else "abcdef0123"[i] * 64,
         })
     return {
         "schema": gate._SCHEMA,
