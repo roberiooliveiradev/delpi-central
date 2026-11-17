@@ -1,5 +1,7 @@
 # EVA / Portal Engenharia — Routing Tab Visual Contract V1
 
+> **DECISÃO POSTERIOR — V2 (2026-11-17):** A navegação interna em três abas aqui descrita foi **substituída** por uma única página scrollável na aba Roteiro. O PNG de seis telas segue como referência **de estilo/composição dos cards e temas**, não como arquitetura de navegação vigente. Aplicar [Routing Study Workspace V2 — Visual Contract](./routing-study-workspace-v2-visual-contract.md), [Session State & Rules](./routing-study-session-state-contract.md) e [Acceptance V2](./routing-study-v2-acceptance.md). **V2 = TARGET; não afirmar implementação.**
+
 **Status:** `TARGET / OWNER-DIRECTED / IMPLEMENTATION_NOT_AUTHORIZED_BY_THIS_DOC`  
 **Data:** 2026-11-16  
 **Owner de UX:** Portal Engenharia. **Owner de componentes:** `@delpi/plugin-ui`. **Owner dos dados:** Domain APIs/API-DELPI. **Owner do cálculo:** domínio determinístico Engenharia/EVA.  
