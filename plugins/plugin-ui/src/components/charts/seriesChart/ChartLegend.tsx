@@ -138,13 +138,13 @@ export function ChartLegend({
             key={`${entry.name}-${entry.color}-${seriesIndex}`}
             className={[
               cn.legendItem,
-              seriesSelected ? `${cn.root}__part--selected` : "",
+              !entry.semantic && seriesSelected ? `${cn.root}__part--selected` : "",
             ]
               .filter(Boolean)
               .join(" ")}
-            {...seriesDom}
+            {...(entry.semantic ? {} : seriesDom)}
             onPointerDown={
-              onSeriesPointerDown
+              !entry.semantic && onSeriesPointerDown
                 ? (event) => {
                     event.stopPropagation();
                     onSeriesPointerDown(event);
@@ -152,7 +152,7 @@ export function ChartLegend({
                 : undefined
             }
             onDoubleClick={
-              onSeriesDoubleClick
+              !entry.semantic && onSeriesDoubleClick
                 ? (event) => {
                     event.stopPropagation();
                     onSeriesDoubleClick(event);
