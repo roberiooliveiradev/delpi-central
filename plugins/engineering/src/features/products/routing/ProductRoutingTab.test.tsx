@@ -117,7 +117,6 @@ describe("aba Roteiro — Plugin UI como fonte de apresentação", () => {
       "EngineeringSectionCard",
       "EngineeringKpiCard",
       "EngineeringDetailCard",
-      "EngineeringFiltersRow",
       "EngineeringFilterSelect",
       "EngineeringFormActions",
       "EngineeringTabs",

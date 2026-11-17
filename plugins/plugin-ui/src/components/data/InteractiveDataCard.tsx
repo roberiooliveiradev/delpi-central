@@ -33,6 +33,8 @@ export type InteractiveDataCardProps = {
   actions?: ReactNode;
   openHint?: ReactNode;
   ariaLabel?: string;
+  /** Estado de expansão quando o card funciona como disparador de expandir/recolher. */
+  ariaExpanded?: boolean;
   onActivate?: () => void;
   interactive?: boolean;
   className?: string;
@@ -90,6 +92,7 @@ export function InteractiveDataCard({
   actions,
   openHint,
   ariaLabel,
+  ariaExpanded,
   onActivate,
   interactive = Boolean(onActivate),
   className,
@@ -140,6 +143,7 @@ export function InteractiveDataCard({
       className={rootClass}
       aria-label={ariaLabel}
       role={interactive ? "button" : undefined}
+      aria-expanded={interactive ? ariaExpanded : undefined}
       tabIndex={interactive ? 0 : undefined}
       onClick={interactive ? onActivate : undefined}
       onKeyDown={interactive ? onKeyDown : undefined}

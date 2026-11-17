@@ -45,7 +45,6 @@ import {
   EngineeringDetailFieldGrid,
   EngineeringEmptyState,
   EngineeringFilterSelect,
-  EngineeringFiltersRow,
   EngineeringFormActions,
   EngineeringInteractiveDataCard,
   EngineeringKpiCard,
@@ -218,30 +217,38 @@ function OperationCard({
       : "—";
   return (
     <EngineeringInteractiveDataCard
-      ariaLabel={`Operação ${op.operation_code || "—"}${
-        expanded ? " — expandida" : ""
+      ariaLabel={`Operação ${op.operation_code || "—"} · ${
+        op.operation_description ?? "—"
       }`}
+      ariaExpanded={expanded}
       onActivate={onToggle}
-      openHint={
-        expanded ? (
-          <ChevronUp size={18} aria-hidden="true" />
-        ) : (
-          <ChevronDown size={18} aria-hidden="true" />
-        )
-      }
     >
-      <EngineeringDetailFieldGrid
-        fields={[
-          {
-            label: `Operação ${op.operation_code || "—"}`,
-            value: op.operation_description ?? "—",
-          },
-          {
-            label: "CT · tempo por peça",
-            value: `${op.work_center ?? "—"} · ${timeLabel}`,
-          },
-        ]}
-      />
+      <div className="engineering-routing__op-head">
+        <span className="engineering-routing__op-num" aria-hidden="true">
+          {op.operation_code || "—"}
+        </span>
+        <span className="engineering-routing__op-text">
+          <strong className="engineering-routing__op-desc">
+            {op.operation_description ?? "—"}
+          </strong>
+          <span className="engineering-routing__op-meta">
+            {op.work_center ?? "—"} · {timeLabel}
+          </span>
+        </span>
+        {expanded ? (
+          <ChevronUp
+            className="engineering-routing__op-chevron"
+            size={18}
+            aria-hidden="true"
+          />
+        ) : (
+          <ChevronDown
+            className="engineering-routing__op-chevron"
+            size={18}
+            aria-hidden="true"
+          />
+        )}
+      </div>
       {expanded ? <OperationDetail op={op} /> : null}
     </EngineeringInteractiveDataCard>
   );
@@ -712,23 +719,25 @@ function ScenarioComparison({
         <EngineeringDetailCard
           title="Resultado do balanceamento"
           titleHint="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED e parâmetros PROVIDED."
+          headerActions={
+            <>
+              <EngineeringStatusBadge
+                label={`Cenário ${latest.id}`}
+                variant="neutral"
+              />
+              <EngineeringStatusBadge
+                label={latest.result.data_class || "—"}
+                variant={
+                  latest.result.data_class === "CALCULATED"
+                    ? "success"
+                    : latest.result.data_class === "PARTIAL"
+                      ? "warning"
+                      : "neutral"
+                }
+              />
+            </>
+          }
         >
-          <div className="engineering-routing__badges">
-            <EngineeringStatusBadge
-              label={`Cenário ${latest.id}`}
-              variant="neutral"
-            />
-            <EngineeringStatusBadge
-              label={latest.result.data_class || "—"}
-              variant={
-                latest.result.data_class === "CALCULATED"
-                  ? "success"
-                  : latest.result.data_class === "PARTIAL"
-                    ? "warning"
-                    : "neutral"
-              }
-            />
-          </div>
           <BalanceStageFields stage={latestStage} />
           {latestStage.station_check ? (
             <EngineeringStateBanner
@@ -836,6 +845,19 @@ function ThemedSeriesChart({
        * gráfico (`chartParts.plotArea`) — sem ela o kit mantém o plot
        * claro "office" mesmo no tema escuro. */
       chartParts={{
+        /* `chartArea` precisa ser explícita: leitores de partes (título,
+         * legenda) derivam a cor do texto por contraste com o fill da
+         * área — sem ela assumem fundo claro e imprimem texto escuro no
+         * tema escuro. */
+        chartArea: {
+          visible: true,
+          style: {
+            fill: portalTheme.surface,
+            stroke: "transparent",
+            strokeWidth: 0,
+            borderRadius: 0,
+          },
+        },
         plotArea: {
           visible: true,
           style: { fill: portalTheme.surface, strokeWidth: 0, borderRadius: 0 },
@@ -1111,9 +1133,10 @@ export function ProductRoutingTab({ code }: { code: string }) {
               title="Roteiro de fabricação"
               subtitle={`${code} · Operações e análises de processo`}
               actions={
-                <EngineeringFiltersRow
-                  compact
-                  ariaLabel="Escopo do roteiro"
+                <div
+                  className="engineering-routing__scope"
+                  role="group"
+                  aria-label="Escopo do roteiro"
                 >
                   <EngineeringFilterSelect
                     label="Filial"
@@ -1131,7 +1154,7 @@ export function ProductRoutingTab({ code }: { code: string }) {
                       disabled={routingLoading}
                     />
                   ) : null}
-                </EngineeringFiltersRow>
+                </div>
               }
             >
               <EngineeringTabs
@@ -1178,13 +1201,11 @@ export function ProductRoutingTab({ code }: { code: string }) {
               ) : null}
             </div>
 
-            <EngineeringStateBanner variant="default">
-              Dados OBSERVED do roteiro oficial; métricas CALCULATED do
-              domínio EVA; cenários SIMULATION são hipóteses — a
-              Engenharia decide e aprova alterações de processo. Para
-              análise guiada, use a EVA pelo assistente com acesso ao MCP
-              de Engenharia (canal conversacional fora do Portal).
-            </EngineeringStateBanner>
+            <p className="engineering-routing__muted engineering-routing__provenance">
+              Dados OBSERVED do roteiro oficial · métricas CALCULATED do
+              domínio EVA · cenários SIMULATION são hipóteses — a
+              Engenharia decide e aprova alterações de processo.
+            </p>
           </>
         ) : (
           <EngineeringEmptyState message="Este produto não possui roteiro de fabricação na fonte oficial para o escopo selecionado." />

@@ -2638,6 +2638,8 @@ declare module "@delpi/plugin-ui/index" {
     actions?: ReactNode;
     openHint?: ReactNode;
     ariaLabel?: string;
+    /** Estado de expansão quando o card funciona como disparador de expandir/recolher. */
+    ariaExpanded?: boolean;
     onActivate?: () => void;
     interactive?: boolean;
     className?: string;

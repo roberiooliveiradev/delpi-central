@@ -874,6 +874,58 @@
   gap: var(--en-grid-gap);
 }
 
+.engineering-routing__scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--en-grid-gap);
+}
+
+.engineering-routing__op-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.engineering-routing__op-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--en-accent) 14%, transparent);
+  color: var(--en-accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.engineering-routing__op-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.engineering-routing__op-desc {
+  color: var(--en-text);
+  font-size: 0.95rem;
+}
+
+.engineering-routing__op-meta {
+  color: var(--en-text-muted);
+  font-size: 0.82rem;
+}
+
+.engineering-routing__op-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--en-text-muted);
+}
+
 .engineering-routing__op-detail {
   display: flex;
   flex-direction: column;
@@ -913,6 +965,12 @@
   display: grid;
   gap: var(--en-grid-gap);
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  /* Altura compacta de gráfico embutido — token documentado do kit. */
+  --delpi-ui-series-chart-plot-height: 170px;
+}
+
+.engineering-routing__balance-grid .engineering-routing__form-grid {
+  grid-template-columns: 1fr;
 }
 
 .engineering-routing__limitations {
@@ -920,6 +978,10 @@
   font-size: 0.85rem;
   margin: 8px 0 0;
   padding-left: 18px;
+}
+
+.engineering-routing__provenance {
+  text-align: right;
 }
 
 .engineering-routing__muted {

@@ -12,7 +12,7 @@
 | C02 | Cartão de seção | `EngineeringSectionCard` ou `EngineeringDetailCard` | façade `createDashboardSectionCard` / `createDashboardDetailCard` | **REUSE** um shell por intenção, sem duplo contorno — PROVEN_EXPORT |
 | C03 | Navegação interna | `EngineeringTabs` (`createDashboardUnderlineNav`) | façade | **REUSE**, mode=tabs quando aplicável; verificar props e foco — PROVEN_EXPORT |
 | C04 | KPI | `EngineeringKpiCard` (`createDashboardKpiCard`) | façade / `ProductRoutingTab.tsx` | **REUSE** quatro cards com density compacta; verificar variant/props reais — PROVEN_USAGE |
-| C05 | Filial/estágio | `EngineeringFiltersRow` + `EngineeringFilterSelect`, ou `EngineeringSelectField` | façade / routing | **REUSE**, compactar layout sem perder ação de troca — PROVEN_USAGE |
+| C05 | Filial/estágio | `EngineeringFilterSelect` (par) em container de composição | façade / routing | **REUSE** dos selects — `FiltersRow` renderiza chrome de barra de filtros (box/borda/padding) que não existe no header compacto do PNG; container flex é layout, não primitiva |
 | C06 | Chip contextual | `EngineeringStatusBadge` ou `EngineeringScopeChipBar` | façade | **OPTIONAL**, não substituir seletor por badge estático — PROVEN_EXPORT |
 | C07 | Lista de operações | `EngineeringInteractiveDataCard` | `plugins/plugin-ui/src/components/data/InteractiveDataCard.tsx`; façade `createDashboardInteractiveDataCard` | **COMPOSE** — campos-resumo via `EngineeringDetailFieldGrid` dentro de `children`; `DataTable` proibida como layout primário. Implementado em `OperationCard` — PROVEN_USAGE |
 | C08 | Expansão/accordion | `EngineeringInteractiveDataCard` (`onActivate`/`openHint`, `role="button"`, Enter/Space, `aria-label`) | `InteractiveDataCard.tsx` — interação nativa do kit | **COMPOSE** — estado `expanded` é da feature; chrome, foco e teclado do kit — PROVEN_USAGE |
@@ -31,7 +31,7 @@
 
 ### Lacunas registradas (2026-11-16)
 
-- **PLUGIN_UI_GAP C08a — `aria-expanded` ausente em `InteractiveDataCard`:** o card interativo expõe `role="button"` + teclado, mas não aceita `ariaExpanded`/estado de disclosure. Mitigação aplicada na feature: `ariaLabel` inclui "— expandida" quando aberto. Correção correta é no owner `@delpi/plugin-ui` (prop `ariaExpanded?: boolean` no `<article>`), não wrapper local.
+- **C08a — `aria-expanded` em `InteractiveDataCard` — RESOLVIDO no kit (2026-11-17):** prop `ariaExpanded?: boolean` adicionada em `InteractiveDataCard` (`<article aria-expanded>`), consumida pelo card de operação do roteiro. Sem mais mitigação por `ariaLabel`.
 
 ## 2. Gates de escolha de componente (antes do JSX)
 

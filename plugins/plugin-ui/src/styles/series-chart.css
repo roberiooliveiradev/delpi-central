@@ -23,7 +23,8 @@
 .delpi-ui-series-chart-plot {
   width: 100%;
   height: var(--delpi-ui-series-chart-plot-height, 260px);
-  min-height: 200px;
+  /* O piso não pode exceder a altura pedida pelo consumidor. */
+  min-height: min(200px, var(--delpi-ui-series-chart-plot-height, 200px));
 }
 
 .delpi-ui-series-chart-plot .delpi-ui-series-chart-shell,
