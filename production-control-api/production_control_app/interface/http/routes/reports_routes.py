@@ -37,7 +37,7 @@ def get_reports_catalog(
     return ok(data)
 
 
-@router.get("/reports/product-sales")
+@router.get("/reports/product-sales", operation_id="get_pcp_product_sales_report")
 def get_product_sales_report(
     request: Request,
     branch: str = Query(..., pattern=r"^(01|02)$"),

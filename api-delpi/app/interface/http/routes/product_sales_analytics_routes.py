@@ -16,7 +16,7 @@ from app.utils.logger import log_error
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("/{code}/sales/analytics")
+@router.get("/{code}/sales/analytics", operation_id="get_product_sales_analytics")
 @require_any_permission_or_trusted_caller(KPI_PRODUCTION_ACCESS, caller="production-control-api")
 def get_product_sales_analytics(
     code: str = Path(..., min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$"),
