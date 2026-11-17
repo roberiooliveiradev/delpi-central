@@ -198,14 +198,14 @@ def test_dedicated_unix_socket_path_is_required_and_raw_alias_denied(tmp_path,mo
     path=folder/"inspect.sock"
     monkeypatch.setattr(probe,"_PROXY_SOCKET",path)
     with pytest.raises(probe.HMLProbeError,match="HML_PROXY_UNAVAILABLE"):
-        probe._stat_fixed_proxy()
+        probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
     unix=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
     unix.bind(str(path))
     try:
-        probe._stat_fixed_proxy()
-        monkeypatch.setattr(probe,"_RAW_SOCKETS",(path,))
+        os.chmod(path,0o660)
+        probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
         with pytest.raises(probe.HMLProbeError,match="HML_RAW_DOCKER_SOCKET_DENIED"):
-            probe._stat_fixed_proxy()
+            probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid(),_test_raw_sockets=(path,))
     finally:
         unix.close()
         path.unlink()
@@ -221,17 +221,17 @@ def test_proxy_symlink_world_writable_parent_and_node_denied(tmp_path,monkeypatc
     try:
         os.chmod(folder,0o777)
         with pytest.raises(probe.HMLProbeError,match="HML_PROXY_PATH_UNSAFE"):
-            probe._stat_fixed_proxy()
+            probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
         os.chmod(folder,0o700)
         os.chmod(path,0o777)
         with pytest.raises(probe.HMLProbeError,match="HML_PROXY_PATH_UNSAFE"):
-            probe._stat_fixed_proxy()
-        os.chmod(path,0o700)
+            probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
+        os.chmod(path,0o660)
         link=folder/"alias.sock"
         link.symlink_to(path)
         monkeypatch.setattr(probe,"_PROXY_SOCKET",link)
         with pytest.raises(probe.HMLProbeError,match="HML_PROXY_PATH_UNSAFE"):
-            probe._stat_fixed_proxy()
+            probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
     finally:
         unix.close()
         path.unlink()
