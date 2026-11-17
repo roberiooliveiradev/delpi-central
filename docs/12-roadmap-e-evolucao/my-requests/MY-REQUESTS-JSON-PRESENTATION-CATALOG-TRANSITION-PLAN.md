@@ -137,3 +137,28 @@ recebem fallback dos textos da API (não são ocultados).
 **Limitações da fase:** copy centralizada apenas para tipos
 catalogados; CRUD administrativo, edição in-app, ícones e ajuda curta
 ficam para a fase futura do catálogo administrativo governado.
+
+---
+
+## 11. RELEASE PRD — `MY-REQUESTS-JSON-CATALOG-CONTROLLED-PRD-DEPLOY-01` (2026-11-17)
+
+- **Aceite HML:** `HML_VISUAL_ACCEPTANCE_PASS` (PO, screenshot
+  `/apps/my-requests/new` — 4 cards, nova copy, tema escuro).
+- **Preflight:** `4f53c50370` em `origin/main`; zero commits em
+  `plugins/my-requests/` e `plugins/vite/` após o SHA aprovado →
+  artefato equivalente; build determinístico confirmado — bundle
+  `App-DbhXYWTI.js` com o MESMO nome-hash do servido em HML.
+- **Deploy:** apenas `delpi-my-requests` rebuildado —
+  `5d5f350e0eaa` → `9bf854d7e10163015768c32f6993d8fd4ff3bcbf6f561d113fbf999a37b42c3c`;
+  running, gateway `/apps/my-requests/` → 200, zero erros nos logs.
+- **Conteúdo no bundle PRD:** «Criação e alteração de matéria-prima»,
+  «Emissão de notas fiscais», «O que você precisa solicitar»,
+  «Escolha o tipo», fallbacks «Problema de Processo» e «Abertura de
+  Chamado» presentes.
+- **Smoke autenticado PRD:** `TEST_NOT_RUN` — requer login humano no
+  Portal (sem mecanismo agente-usável; password grant proibido em PRD).
+- **Rollback:** imagem `5d5f350e0eaa` retida no host; retorno =
+  retag `infra-my-requests` + `up -d --no-deps`; frontend-only, sem
+  rollback de banco.
+- **Zero:** migrations, mudanças de API, RBAC, TOTVS writes.
+- Verificador: `INCONCLUSIVE` (motor sem login).
