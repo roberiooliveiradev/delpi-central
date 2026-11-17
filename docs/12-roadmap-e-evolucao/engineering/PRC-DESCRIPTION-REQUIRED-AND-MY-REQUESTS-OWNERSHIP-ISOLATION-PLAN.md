@@ -102,3 +102,23 @@ mudança de RBAC/Keycloak, `TOTVS_WRITES=0` — rollback = retag +
   o endpoint operacional continua permitindo analistas por design.
 - Sub-recursos (timeline/anexos/comentários) mantêm a AuthZ vigente;
   a página pessoal só os consulta após o detalhe `scope=mine` passar.
+
+## 9. PRD — evidência de publicação
+
+- SHA: `f7a785ef94` (fast-forward; inclui `6116a5231a` + doc).
+- Digests (antes → depois):
+  - engineering-api `0386937783af` → `a31ac31e5fd5`
+  - plugin-ui `ddbc29b04bfb` → `73ca7ad0e20d`
+  - my-requests `9bf854d7e101` → `50c6f4805d9d`
+- Rollback: retag dos digests anteriores + `up-prod-sequential.sh`.
+- Runtime PRD: `allow_blank` e `own_scope=scope=="mine"` ativos no
+  container; engineering-api healthy; 0 erros no log pós-start.
+- MCP: 6 tools (`analyze, delete, execute, get_context, knowledge,
+  read`), 56 capacidades PRC, `scope` presente em `list`/`detail`.
+- engineering MFE não republicado — consome plugin-ui como remote de
+  Module Federation (nova validação servida pelo container plugin-ui).
+- `PRD_AUTHENTICATED_SMOKE = TEST_NOT_RUN` — validação visual e de
+  identidades reais fica com o PO (nenhuma sessão legítima disponível
+  ao agente; sem dados artificiais em produção).
+- Verificador independente: `INCONCLUSIVE` (rodada 1 — motor 'devin'
+  sem login; bloqueio persistente, não contornado).
