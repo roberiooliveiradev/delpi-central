@@ -367,3 +367,76 @@ Verificador independente: INCONCLUSIVE (motor `devin` sem login).
 Único builder MCP de `HomeSourceContext` era `tool_bridge._source_context`
 (corrigido); rotas REST já projetavam permissões; demais fontes (LMP,
 overview, NC) usam `access_token` para delegação HTTP — não afetadas.
+
+---
+
+## Adendo de encerramento — EVA-PRC-HOME-FORBIDDEN-PROD-SMOKE-CLOSURE-01
+
+**Data do smoke:** 17/11/2026 ~12h23 (Brasília) — sessão legítima do
+ChatGPT no MCP produtivo, executada pelo Product Owner (**execução
+externa reportada; o Devin não executou pessoalmente a chamada**).
+
+### Resultado reportado
+
+| Consulta | Resultado |
+|---|---|
+| `read(engineering.home)` | `success=true`, `data.status="available"` |
+| `sections.tasks` | `available`, `total=2` |
+| `sections.requests` | `empty`, `total=0` |
+| `sections.lmps` | `available` |
+| `read(product_registration.list, view=pending)` | `success=true`, `total=2` (`in_progress=1`, `submitted=1`) |
+
+### Paridade dos registros
+
+`89c7447e` (create, in_progress — TERMOENCOLHIVEL 19,10X0,40) e
+`5cfc449d` (create, submitted — TERM. OLHAL M4) presentes nos dois
+caminhos aplicáveis.
+
+### Interpretação semântica (CONFIRMADO no contrato)
+
+- `tasks = available/2`: fila global acionável do analista
+  (`PrcQueueHomeSource`, statuses não-terminais) — consistente.
+- `requests = empty`: escopo `own_scope` estrito (casos criados pelo
+  próprio ator). A sessão do smoke não é a solicitante dos casos
+  (Lucas Dalsoquio) → `empty` é o valor **correto**, não resíduo do
+  defeito. Diferente de `forbidden`, `empty` é um estado válido
+  (RQ-04: zero resultados ≠ acesso negado).
+- O defeito original (FORBIDDEN em ambas as seções) **não se
+  reproduziu** em produção.
+
+### Reconciliação dos critérios de aceite
+
+| AC | Resultado | Evidência |
+|---|---|---|
+| AC-01 Home autorizada | PASS | smoke: tasks available com os 2 casos |
+| AC-02 Consistência de caminhos | PASS | mesmos 2 ids nos dois caminhos |
+| AC-03 Negação preservada | PASS | testes anteriores (403 gate + can_read) |
+| AC-04 Isolamento | PASS | own_scope mantido; requests=empty é a prova — caso alheio não vaza |
+| AC-05 Degradação controlada | PASS | status partial/unavailable inalterados |
+| AC-06 Regressão | PASS | 172/172; PRC list inalterado |
+| AC-07 Smoke produtivo | PASS (execução externa PO/ChatGPT) | resultado acima |
+| AC-08 Segurança | PASS | zero concessão; mesmo actor/AuthZ |
+
+### Veredito
+
+`IMPLEMENTATION=PASS / REGRESSION=PASS / SECURITY=PASS /
+HML_DEPLOY=PASS / PRD_DEPLOY=PASS / CHATGPT_LIVE_SMOKE=PASS (externo)
+/ AC_07=PASS / EXECUTION_DRIFT=NONE`
+
+### Limitações da evidência
+
+- Execução externa reportada pelo PO — não reproduzida
+  independentemente pelo Devin (sem credencial MCP legítima); a
+  evidência diretamente recuperável permanece: fix verificado no
+  runtime PRD via inspect + contrato semântico do own_scope testado.
+- Estados dos dois casos podem evoluir (não são fixtures).
+
+### Riscos residuais
+
+- Nenhum residual funcional identificado; residual de evidência:
+  dependência de revalidação manual se `HomeSourceContext` ganhar
+  novos campos de identidade (mitigado pelo teste
+  `test_home_source_context_propagates_identity`).
+- Issue GitHub do tracker: não localizada/atualizável pelo agente
+  (`gh` sem autenticação nesta estação) — encerramento no tracker
+  fica com o PO/mantenedor.
