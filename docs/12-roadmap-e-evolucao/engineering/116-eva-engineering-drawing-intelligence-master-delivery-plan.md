@@ -603,3 +603,63 @@ Traces `source→OCR→SLANet→understanding→comparison→report→MCP/UI`; c
 **Regra de continuidade:** diagnóstico G2 e preparação técnica de etapas posteriores **não implicam homologação do G1**; não transformar falta de aprovação em bloqueio de investigação que preserva `DRAFT`. Por outro lado, não autoriza pular G2/G3, treinar com holdout, alterar fontes oficiais, implantar sem testes, ampliar E2–E7 ou declarar `VAL01_COMPLETED`. Executor segue Doc 119 §61: `EXECUTION_DRIFT→STOP atividade afetada→Coordination` para mudança real de owner/authority/escopo. **Nenhum novo engine, bounded context, MCP ou source of truth**.
 
 **Estado inicial deste adendo:** `PLANNED`; `TOTUS_HIERARCHY_CONTRACT=TO_INVENTORY`; `G2_FIRST_LOSS=AUTHORIZED_DIAGNOSTIC`; `G1_OWNER_GT=OWNER_BLOCKED`; `G5_GENERALIZATION=NOT_APPROVED`; `VAL01_COMPLETED=false`.
+
+
+## Adendo — 2026-11-17 | E1/VAL-01: integridade de balões, linhas indicadoras e itens da tabela
+
+**Decisão de produto/Coordination:** priorizar a validação dos balões **dentro do E1/VAL-01 já ativo**, como requisito da integridade da estrutura representada no desenho. **Status: PLANNED / NÃO IMPLEMENTADO NESTE ADENDO**. Não abrir uma arquitetura paralela, novo MCP, novo serviço, nova autoridade ou lote de bitola entre geometria e TOTVS. Issue #131 e Doc 119 permanecem o tracker e o plano funcional vivos. A regra é **avaliar apenas evidências efetivamente apresentadas no desenho**, complementadas por fontes oficiais somente onde houver comparação legítima.
+
+### Problema real e valor esperado
+
+Em revisões de desenhos/LMPs podem existir balões trocados, ausentes ou apontando para o componente errado. A tabela de materiais pode identificar `A1/A2/A3/A4/B` e suas descrições, mas **ler a tabela e detectar o círculo do balão não verifica, por si, onde termina sua linha indicadora**. O objetivo é detectar suspeitas rastreáveis antes da revisão/liberação pelo owner de Engenharia, não produzir não conformidade ou aprovação automática. Benefícios: foco da inspeção humana, mitigação de troca de indicação, redução de retrabalho e rastreabilidade por evidência.
+
+### Evidência inicial e dataset controlado
+
+Três documentos fornecidos para análise visual manual em 17/11/2026, **ainda sem ground truth homologado nem benchmark automatizado EVA nesta frente**:
+
+| PDF | Relações candidatas observadas manualmente | Risco / limite do teste |
+|---|---|---|
+| `90261723.pdf` | `1` intermediário `50222487`; `A` cabo com `VDAR`; `B` terminal de duas extremidades, quantidade 2 | Cor desenhada e texto podem corroborar, mas não provar seguimento de linha indicadora |
+| `90261731.pdf` | `1` intermediário `50222495`; `A` cabo `VDAR`; `B` terminais nas extremidades | Layout similar não demonstra generalização nem ausência definitiva de erro |
+| `90264311.pdf` | `A1` protetor, `A2` luva, `A3` cabo com cor `VM/VERM`, `A4` terminal | Há múltiplos intermediários vermelhos: mesma cor não diferencia códigos nem prova vínculo |
+
+Os exemplos são **candidatos para anotação e revisão pelo GT owner**. Não afirmar que o algoritmo atual acertou os balões desses três PDFs. Criar casos negativos controlados (rótulo trocado, alvo incorreto, balão ausente/duplicado, linha cruzada, texto de balão não-tabela), **sem alterar o documento oficial**. Separar desenvolvimento e holdout real; medir falso positivo/falso negativo e abstenção.
+
+### Arquitetura existente a reutilizar (sem segunda pipeline)
+
+`Domain API desenho oficial autorizado → PDFium → PaddleOCR (tokens, caixas) + OpenCV/adapters existentes (primitivas/linhas) + SLANet (tabela) → drawing_understanding.v1 → understanding_object_mapper / DrawingObjectSet → drawing_investigation → relatório DRAFT/CANDIDATE → revisão Engenharia`.
+
+- **Infraestrutura/ports existentes:** `engineering_app/infrastructure/extraction`, `visual_benchmark.py` e pipeline visual já isolado, sequencial e limitado por orçamento de CPU/memória; não adicionar engine pesada por padrão.
+- **Application:** `understanding.py`, `understanding_object_mapper.py`, `object_profiles_builder.py`, `drawing_investigation.py`. Reutilizar a leitura das linhas da tabela `item/qty/code/description`, suas evidências e `drawing_understanding.v1`; não reprocessar OCR uma vez por balão.
+- **Domain puro:** `domain/drawing/object_profiles.py` já representa `DRAWING_TABLE_ITEM`, `BALLOON`, `DRAWING_GEOMETRY`, `DrawingRelation`, `REFERENCED_BY`, `POINTS_TO` e estados de incerteza. **Não duplicar grafo nem promover relação `NOT_CHECKED` para vínculo verificado por mera proximidade/containment.**
+- **Interface:** manter `product.drawing_understanding` e/ou projeção autorizada `product.drawing_analysis`; mudanças aditivas/versionadas de saída somente após inventariar consumidores. MCP é interface, não source of truth.
+
+### Entrega bounded por capacidades e gates (sem frentes paralelas)
+
+**B1 — Cobertura e identidade balão × tabela (menor risco).**
+- Reconhecer candidatos reais `A1/A2/A3/A4/B/1` em círculos/elipses e preservar `page/bbox/token/document_sha`. Separar balões da área gráfica de referências textuais na tabela e do índice da folha.
+- Correlacionar rótulos a `DRAWING_TABLE_ITEM.item_label` tipado; tratar múltiplas ocorrências do mesmo rótulo, a quantidade e o pai da linha corretamente.
+- Entregar `BALLOON_LABEL_IDENTIFIED`, `TABLE_ITEM_FOUND`, `AMBIGUOUS`, `NOT_LOCATED` como semântica interna/projeção compatível, conforme contratos reais; **OCR não localizar ≠ balão ausente**.
+
+**B2 — Balão → linha indicadora → região de destino (gap crítico).**
+- Usar primitivas/segmentos/caminhos e transformações de coordenadas dos adapters já existentes; avaliar extremidades, descontinuidades, cruzamentos, conectividade, setas e escala da página.
+- Só compor `POINTS_TO` com evidência espacial/estrutural verificável e uncertainty explícita; proximidade do círculo ou pertença à região gráfica não bastam. Sem linha confiável → `INCONCLUSIVE/NOT_CHECKED`, nunca acusação automática de troca.
+- Se recursos existentes forem insuficientes, documentar primeiro ponto de perda e aplicar Abstraction Gate antes de um módulo simples, nova dependência ou modelo. Não inventar conectividade geométrica.
+
+**B3 — Coerência balão × descrição × evidência visual.**
+- Após associação B2 minimamente válida, comparar somente atributos observáveis e autorizados: cor aparente do cabo, tipo visual do terminal, região de luva/protetor e texto do desenho/tabela.
+- Normalizar `VM/VERM`, `VDAR` e demais códigos **somente sob fonte normativa/documentada** e preservar raw; imagem monocromática, sobreposição, estilo de desenho ou cabos de mesma cor tornam resultado `INCONCLUSIVE` quando não discriminantes.
+- Uma cor coincidente **não prova** código/posição correto; desacordo aparente exige revisão técnica antes de uma `CONFLICT_CANDIDATE` sustentada. Não inferir bitola a partir de cotas, geometria ou cor, nem exigir informação ausente do desenho.
+
+### Critérios de aceite/segurança
+
+1. GT por Engenharia: PDF SHA/revisão, anotação por balão `label → linha → destino`, relação com linha da tabela, multiplicidade, valor esperado, evidência visual e caso de abstenção; threshold e split/holdout aprovados no marco M0/M3.
+2. Testes positivos/negativos com os três desenhos e outros layouts/revisões diversos; casos de falsos balões da tabela, múltiplos `A3`, linhas cruzadas/ausentes, tabelas parciais, cor não-determinante, PDFs sem cor, ausência de BOM e revisões incompatíveis.
+3. Outcomes separados: **rótulo identificado**, **item mapeado**, **linha/destino verificáveis**, **compatibilidade visual candidata**. Não divulgar `BALLOON_CORRECT`/troca comprovada se B2 não passou.
+4. Métricas de detecção, associação e classificação avaliadas separadamente, erro por layout, falso alerta, abstenção, recursos (CPU/RSS/tempo) e boundary de permissão.
+5. `no_business_write=true`, `automatic_nc=false`, `engineering_approval=DRAFT/CANDIDATE`; AuthZ live e sem OCR de documentos não autorizados; sem autoaprovar desenho/LMP.
+6. Submissão de diff mínimo com testes no SHA, verificador independente, residual search, Doc 119/Issue #131 atualizados e decisão de aceite owner. Deploy somente com gates operacionais e rollback.
+
+**Alinhamento de marcos:** B1 pertence a M1/M2 (extração tipada), B2 a M3 (associação técnico-geométrica), B3 a M4 (checagem governada); M0 (GT/avaliação) e M5 (aceite/release) continuam gates. O adendo não altera cronograma nem declara estágio implementado, qualidade medida ou `VAL01_COMPLETED`.
+
+**Decisão de sequência:** antes de avançar a novas famílias normativas ou iniciar uma análise abstrata de coerência de bitolas, priorizar o **gap de integridade balão↔item↔destino** necessário ao E1. Proposta técnica PLANNED; início de execução e critérios RQ/AC finais requerem pacote bounded aprovado pela Coordination, respeitando a regra de frente única do Doc 119.
