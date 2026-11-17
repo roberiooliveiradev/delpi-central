@@ -214,18 +214,24 @@ export function applyChartColorPalette(
   palette: ChartColorPalette,
   options: ComunicadoChartOptions,
 ): ComunicadoChartOptions {
+  if (palette.id === SIGN_COLOR_PALETTE_ID) {
+    // Não substituir a paleta pessoal ao ativar o preset semântico:
+    // desligar a regra por sinal deve restaurar as cores originais.
+    return {
+      ...options,
+      colorScale: {
+        mode: "by_sign",
+        polarity: options.colorScale?.polarity ?? "high_is_good",
+        paletteId: palette.id,
+      },
+    };
+  }
   const next: ComunicadoChartOptions = {
     ...options,
     seriesColor: palette.seriesColor,
     categoryColors: [...palette.colors],
   };
-  if (palette.id === SIGN_COLOR_PALETTE_ID) {
-    next.colorScale = {
-      mode: "by_sign",
-      polarity: options.colorScale?.polarity ?? "high_is_good",
-      paletteId: palette.id,
-    };
-  } else if ((palette.kind ?? "categorical") === "semantic") {
+  if ((palette.kind ?? "categorical") === "semantic") {
     next.colorScale = {
       mode: options.colorScale?.mode === "by_sign" ? "off" : options.colorScale?.mode ?? "off",
       polarity: options.colorScale?.polarity ?? "high_is_bad",
