@@ -83,7 +83,7 @@ def _u(rows=None, balloons=None):
 
 def test_b1_detects_balloon_in_drawing_area():
     """Token curto contido em círculo na área gráfica → candidato."""
-    tokens = [_tok("A1", 605, 405, 625, 425)]
+    tokens = [_tok("A1", 600, 400, 630, 430)]
     prims = {"circles": [_circle(595, 395, 635, 435)], "rects": [],
              "h_lines": [], "v_lines": []}
     u = build_understanding(
@@ -103,9 +103,9 @@ def test_b1_detects_balloon_in_drawing_area():
 def test_b1_numeric_and_letter_labels():
     """Rótulos '1', 'A', 'B' (casos 90261723/90261731) são detectados."""
     tokens = [
-        _tok("1", 605, 405, 615, 425),
-        _tok("A", 705, 505, 715, 525),
-        _tok("B", 805, 305, 815, 325),
+        _tok("1", 600, 400, 620, 430),
+        _tok("A", 700, 500, 720, 530),
+        _tok("B", 800, 300, 820, 330),
     ]
     prims = {"circles": [
         _circle(595, 395, 625, 435),
@@ -123,8 +123,8 @@ def test_b1_numeric_and_letter_labels():
 def test_b1_multiplicity_preserved_two_same_label():
     """Dois balões 'B' nas duas extremidades do cabo são preservados."""
     tokens = [
-        _tok("B", 605, 405, 615, 425),
-        _tok("B", 805, 605, 815, 625),
+        _tok("B", 600, 400, 620, 430),
+        _tok("B", 800, 600, 820, 630),
     ]
     prims = {"circles": [_circle(595, 395, 625, 435),
                          _circle(795, 595, 825, 635)]}
@@ -163,7 +163,7 @@ def test_b1_token_outside_circle_ignored():
 
 def test_b1_margin_zone_circle_excluded():
     """Marcador de zona da folha (círculo na borda) é excluído com razão."""
-    tokens = [_tok("C", 5, 400, 15, 420)]
+    tokens = [_tok("C", 3, 395, 20, 425)]
     prims = {"circles": [_circle(0, 390, 25, 430)]}
     u = build_understanding(
         tokens, document_hash=SHA, page=1,
@@ -225,8 +225,8 @@ def test_b1_long_token_rejected():
 def test_b1_document_level_merges_pages():
     """Multipágina: candidatos propagam com a página de origem."""
     tokens = [
-        _tok("A1", 605, 405, 625, 425, page=1),
-        _tok("B", 705, 505, 715, 525, page=2),
+        _tok("A1", 600, 400, 630, 430, page=1),
+        _tok("B", 700, 500, 720, 530, page=2),
     ]
     prims = {
         1: {"circles": [_circle(595, 395, 635, 435)]},
@@ -445,7 +445,7 @@ def test_b1_notes_region_circled_token_is_candidate():
     """Balão na faixa heurística 'notes' (topo-esquerda sobre a área
     gráfica) permanece elegível — o 'B' esquerdo real do 90261723 cai
     nessa região. Região fica registrada no candidato."""
-    tokens = [_tok("B", 100, 80, 120, 100)]
+    tokens = [_tok("B", 95, 75, 125, 105)]
     prims = {"circles": [_circle(90, 70, 130, 110)]}
     u = build_understanding(
         tokens, document_hash=SHA, page=1,
@@ -509,3 +509,27 @@ def test_b1_validation_cell_shape_ambiguous_abstains():
     b = v["balloons"][0]
     assert b["state"] == "NOT_LOCATED"
     assert v["table_items_with_label"] == 0
+
+
+def test_b1_oversized_circle_excluded():
+    """Círculo grande com glifo pequeno (marcador de zona/carimbo —
+    caso real '01'/'00' do 90261731 e zonas '10'/'A' do 90264311) é
+    excluído: o glifo do balão preenche quase todo o círculo."""
+    tokens = [
+        _tok("01", 300, 1910, 350, 1947),   # carimbo circulado
+        _tok("A", 30, 40, 50, 67),          # marcador de zona
+        _tok("B", 605, 405, 652, 460),      # balão real
+    ]
+    prims = {"circles": [
+        _circle(249, 1867, 365, 1983),
+        _circle(10, 26, 116, 132),
+        _circle(595, 395, 665, 465),
+    ]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 2339), graphic_primitives=prims,
+    )
+    labels = [b["normalized_label"] for b in u["balloon_candidates"]]
+    assert labels == ["B"]
+    reasons = [e["excluded_reason"] for e in u["balloon_excluded"]]
+    assert reasons.count("circle_oversized_for_label") == 2

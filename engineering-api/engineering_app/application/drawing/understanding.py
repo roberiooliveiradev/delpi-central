@@ -1846,6 +1846,9 @@ def _is_dimension_candidate(
 # registrada — exclusão auditável, nunca silenciosa. Contenção é
 # evidência candidata: não prova nem o destino da linha indicadora.
 _BALLOON_MARGIN_FRAC = 0.025
+# Fração mínima do círculo ocupada pelo glifo do rótulo — balões
+# preenchem quase todo o círculo; marcadores de zona/carimbo não.
+_BALLOON_GLYPH_FILL_MIN = 0.60
 
 
 def _xyxy_of(box: list[float] | None) -> list[float] | None:
@@ -1950,7 +1953,19 @@ def _detect_balloon_candidates(
             }
             key = (label, *cb)
             reason = None
-            if key in seen:
+            tw, th = tb[2] - tb[0], tb[3] - tb[1]
+            cw, ch = cb[2] - cb[0], cb[3] - cb[1]
+            if (
+                cw > 0
+                and ch > 0
+                and (tw < cw * _BALLOON_GLYPH_FILL_MIN
+                     or th < ch * _BALLOON_GLYPH_FILL_MIN)
+            ):
+                # glifo não preenche o círculo — marcador de zona/carimbo,
+                # não balão de item (evidência real: balões ≥0,72×0,88;
+                # falsos ≤0,58×0,44)
+                reason = "circle_oversized_for_label"
+            elif key in seen:
                 reason = "duplicate_candidate"
             elif any(
                 db[0] <= tb[0] and db[2] >= tb[2]
