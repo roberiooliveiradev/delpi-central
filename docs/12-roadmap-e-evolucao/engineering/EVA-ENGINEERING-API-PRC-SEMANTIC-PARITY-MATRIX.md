@@ -25,8 +25,8 @@ completo (gate + AuthZ + service) neste SHA.
 
 | REST | Capability | Tool | Estado |
 |---|---|---|---|
-| GET /requests (+view=pending) | `product_registration.list` | read | PROVEN |
-| GET /requests/{id} | `product_registration.detail` | read | PROVEN (prévio) |
+| GET /requests (+view=pending, +scope=mine/authorized) | `product_registration.list` | read | PROVEN |
+| GET /requests/{id} (+scope=mine) | `product_registration.detail` | read | PROVEN (prévio) |
 | GET /requests/{id}/timeline | `product_registration.timeline` | read | PROVEN |
 | GET /requests/{id}/verifications | `product_registration.verifications` | read | PROVEN |
 | GET /reference-data | `product_registration.reference_data` | read | PROVEN |
