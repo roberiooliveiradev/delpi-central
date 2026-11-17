@@ -258,7 +258,6 @@ def test_unsafe_listener_permissions_symlink_or_raw_socket_alias_refused(
     elif unsafe=="symlink":
         alias=path.parent/"alias.sock"
         alias.symlink_to(path)
-        monkeypatch.setattr(proxy,"_HML_PATH",alias)
         with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_LISTENER_UNTRUSTED"):
             proxy.serve_one_prebound(
                 listener=listener,allowed_collector_uid=1001,
