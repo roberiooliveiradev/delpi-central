@@ -6474,3 +6474,45 @@ Cadeia de perda em três níveis, medida antes do código: **(L1)** `opencv_adap
 - Residuais: recall de balões no layout 90264311 não medido; `cell_item_shape` é evidência mais fraca que coluna tipada (registrado no payload); 200 círculos/desenho (cap do adapter) não degradou os casos avaliados.
 - Próximo bounded step: **B2** — verificação da ponta da linha indicadora e região de destino (`POINTS_TO`), e dataset de anotações para GT de balões (formato §12 da task) — mediante decisão da Coordination.
 - Issue #131 sem update automático (`gh` sem auth) — pendência manual. Issue #233 e adendo do Doc 116 preservados.
+
+### 94.42.7 B1-R1 — Correção de Cobertura da Detecção de Balões
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B1-R1-VISUAL-DETECTION-COVERAGE-AND-GENERALIZATION-01`
+**MODO:** `BOUNDED_CORRECTION / EXISTING_FRAMEWORKS / READ_ONLY / REAL_PDF_EVIDENCE / INDEPENDENT_VERIFICATION / NO_DEPLOY`. Commits `ebeab366eb` + `883e52c37d` (3 arquivos; rebase publicado sobre `ef69652983`/`38207688d3`).
+
+#### Causa-raiz e primeira perda (matriz por balão)
+
+| Balão | Primitiva | OCR | Região | Guard | Primeiro ponto de perda |
+|---|---|---|---|---|---|
+| A1–A4 | Elipse de contorno colorido (azul/magenta) ~75×74 px | token ~95×72 px presente e correto | `drawing_area` | n/a | **L1: adapter decodificava `IMREAD_GRAYSCALE` — canal de cor nunca chegava ao detector; Hough não resolve contorno colorido fino e alongado** |
+
+Perdas secundárias comprovadas: cap `circles[:200]` (1263 círculos brutos Hough); contenção AABB estrita (caixa OCR excede o anel em ~1,31× pelo padding de descender).
+
+#### Correção (menor diff, cor-agnóstico)
+
+- `opencv_adapter.py`: segundo decode `IMREAD_COLOR` → máscara de saturação genérica (`sat>60`, qualquer matiz) → fechamento/dilatação → **flood-fill da borda** → interiores fechados por contorno colorido emitidos como `enclosures` (aditivo; `circles`/Hough inalterados).
+- `understanding.py`: `_circular_primitive_boxes` consome `enclosures` além de `circles`/`ellipses`/`arcs`, retorna pares `(bbox, source)` **ordenados por área** (primitiva justa avaliada primeiro — no A4b real havia enclosure de 1164 px contendo o centro; a de 74 px venceu). Contenção relaxada: **centro do token dentro da primitiva + overlap ≥50 % da área do token**. Novo guard `circle_too_small_for_label` = **piso absoluto 24 px** (bowl de glifo `o`/`0`/`e`); a razão relativa `prim≥token` foi removida após evidência real (caixa OCR excede o interior). `primitive_source` registrada em candidato e excluído.
+- Guards preservados inalterados: `duplicate_candidate`, `token_is_dimension_candidate`, `circle_in_page_margin_zone`, `circle_oversized_for_label` (`_BALLOON_GLYPH_FILL_MIN=0.60` não recalibrado), não-ASCII, regiões estruturadas.
+
+#### Prova real (SHA `883e52c37d`, container efêmero `infra-engineering-api:latest`, modelos prod `/opt/ocr-models` read-only)
+
+- **90264311** (`d6a2bf2250b5ee11…`): **antes** 0 candidatos → **depois 6 candidatos** `{A1, A2, A3×2, A4×2}`, todos `drawing_area` com `primitive_source=enclosure`. Associação: `A1`→linha 0 `10081674` (protetor térmico) `MATCH_CANDIDATE`; `A2`→linha 1 `10090482` (luva) `MATCH_CANDIDATE`; `A3`×2→`AMBIGUOUS` (rótulo casa 3 linhas — abstenção correta); `A4`×2→`AMBIGUOUS` (2 linhas). Excluídos: `A`, `10`, `472`, `10`, `60` → `circle_oversized_for_label` (marcadores de zona — **0 falsos positivos**). `items_without_balloon` vazio. Overlay de revisão humana: balões A1–A4 contornados sobre as elipses magenta/azul reais, marcadores de zona e cotas circuladas marcados como excluídos.
+- **90261723** (`f721e4d9aa6f5d11…`): preservado — `{B(notes), 1, A, B}`, `A`→`10420256`, `B`×2→`10080110`, `1`→`NOT_LOCATED`.
+- **90261731** (`0470d37ffce57f61…`): preservado — mesmos 4 candidatos/associações; excluídos `1`,`2`,`3`,`4`,`02`,`01`,`00` `circle_oversized_for_label` (zonas+carimbo).
+
+#### Testes
+
+- `tests/test_balloon_b1.py`: **34 testes** (29 B1 + 5 R1: enclosure real com caixa OCR excedente, centro+overlap, centro fora→vazio, bowl de glifo→`circle_too_small_for_label`, dict `enclosures` do adapter).
+- Conjunto desenho: **300 PASS** no SHA final. Zero regressões novas.
+
+#### Verificação independente
+
+- r1 (cursor/Composer, escopo `ef69652983..883e52c37d`): **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção, sem escalonamento — pedido `.git/delpi-verifier/requests/eva-b1r1-balloon-coverage-r1.md`. AC-01..10 PASS (canal cor genérico, sem hardcode, Hough preservado, centro+overlap, ordenação por área, `primitive_source`, guards, preservação 723/731, semântica candidata, A1–A4 via enclosure).
+- Resíduos (não materiais): provas PDF reais `NAO_VERIFICAVEL` pelo verificador (mesmo padrão do B1); nenhum teste chama `detect_graphic_primitives` diretamente — cobertura do enclosure é via fixture dict (`cv2` ausente no `.venv` local, adapter retorna `None` neste ambiente); fixture de margem alterada junto ao churn da rodada (comportamento preservado); gates transversais não rodados (diff local a drawing/opencv); range continha docs alheios (disjunção confirmada).
+- `GENERALIZATION_ACCEPTANCE=INCONCLUSIVE` — os 3 PDFs serviram de desenvolvimento+avaliação; sem holdout aprovado.
+
+#### Release, residuais e handoff
+
+- **DEPLOY_BLOCKED / OWNER_ACCEPTANCE_PENDING** mantido: sem GT/thresholds ratificados; imagem de produção inalterada; zero escrita/NC.
+- Residuais: bowl de glifo grande (>24 px) dentro de primitiva própria não é distinguível por tamanho — coberto parcialmente pelo guard de preenchimento; enclosure exige contorno colorido — balão em traço preto não saturado segue dependendo do Hough (canal `circles`); cap 200 `circles` mantido.
+- Próximo bounded step: **B2** — ponta da linha indicadora e região de destino (`POINTS_TO`); dataset de anotações GT para holdout.
