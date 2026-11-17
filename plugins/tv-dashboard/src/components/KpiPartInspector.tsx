@@ -271,6 +271,8 @@ export function KpiPartInspector({ pane = false, block }: Props) {
               label={boxLabels.fill}
               value={partState?.style?.fill ?? options.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor}
               onChange={(color) => persistPart({ style: { fill: color } })}
+              showNoFill
+              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
             />
           </DeckField>
           <DeckField id="td-kpi-part-card-stroke" label={boxLabels.stroke}>
