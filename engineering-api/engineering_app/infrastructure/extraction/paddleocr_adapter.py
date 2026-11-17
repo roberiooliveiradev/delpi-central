@@ -39,13 +39,16 @@ from engineering_app.application.drawing.pdf_text_extractor import (
 )
 
 try:
-    import cv2  # type: ignore
     import numpy as np  # type: ignore
+except Exception:  # pragma: no cover - environment-dependent
+    np = None  # type: ignore
+
+try:
+    import cv2  # type: ignore
 
     _CV2_AVAILABLE = True
 except Exception:  # pragma: no cover - environment-dependent
     cv2 = None  # type: ignore
-    np = None  # type: ignore
     _CV2_AVAILABLE = False
 
 try:
@@ -315,10 +318,10 @@ def _normalize_box(polys, index: int) -> list[float] | None:
     except Exception:
         return None
     try:
-        pts = np.asarray(poly, dtype=float).reshape(-1, 2)
+        if np is not None:
+            pts = np.asarray(poly, dtype=float).reshape(-1, 2)
+        else:
+            pts = [[float(pair[0]), float(pair[1])] for pair in poly]
     except Exception:
-        try:
-            pts = [[float(v) for v in poly]]
-        except Exception:
-            return None
+        return None
     return [round(float(v), 2) for pair in pts for v in pair]

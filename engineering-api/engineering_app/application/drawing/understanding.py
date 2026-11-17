@@ -4144,6 +4144,10 @@ def rows_from_native_cells(
     group_anchor_ids: set[int] = set()
     group_y_anchors: list[tuple[float, str]] = []
     anchor_cell_cys: dict[tuple[int, str], float] = {}
+    # Caixa física da âncora: em observação SLANet real o polígono da
+    # célula mesclada cobre a extensão verdadeira do bloco — a
+    # recentering só pode reivindicar linhas que essa caixa toca.
+    anchor_cell_boxes: dict[tuple[int, str], list[float]] = {}
     # G18/RQ01: descrição do bloco-pai (PI) — célula mesclada irmã do
     # código, mesmo rowspan (layout DELPI: col código + col descrição).
     anchor_descs: dict[tuple[int, str], str] = {}
@@ -4214,6 +4218,11 @@ def rows_from_native_cells(
         if cy is not None:
             group_y_anchors.append((cy, code))
             anchor_cell_cys[(row_index, code)] = cy
+        box = cell.get("bounding_box_px")
+        if isinstance(box, (list, tuple)) and len(box) >= 4:
+            anchor_cell_boxes[(row_index, code)] = [
+                float(v) for v in box
+            ]
 
     # A âncora pode viver na linha de cabeçalho (bloco mesclado
     # absorvendo o rótulo): rowspan>1 + código de grupo já exclui
@@ -4538,6 +4547,30 @@ def rows_from_native_cells(
         if cy is None or span < 2:
             return row_index, row_index + span
 
+        # A caixa física da âncora é a evidência da extensão real da
+        # célula mesclada: uma janela candidata só pode reivindicar
+        # linhas cujas bandas essa caixa toca — absorver banda fora
+        # do polígono publicaria filha de outro bloco (fail-closed).
+        box = anchor_cell_boxes.get((row_index, code))
+        anchor_box: tuple[float, float] | None = None
+        if box:
+            box_ys = [v for i, v in enumerate(box) if i % 2 == 1]
+            if box_ys:
+                anchor_box = (min(box_ys), max(box_ys))
+
+        def _touched_by_box(first: int, last: int) -> bool:
+            if last < first:
+                return False
+            for r in range(first, last + 1):
+                ext = _extent(r)
+                if ext is None:
+                    continue
+                if not (
+                    ext[0] < anchor_box[1] and ext[1] > anchor_box[0]
+                ):
+                    return False
+            return True
+
         def _score(start: int, sp: int) -> float | None:
             # Pontua a janela EFETIVA: linhas além da próxima âncora
             # declarada já pertencem a ela na resolução de
@@ -4570,6 +4603,11 @@ def rows_from_native_cells(
                 continue
             for cand_span in (span, span + 1):
                 if (cand_start, cand_span) == (row_index, span):
+                    continue
+                if anchor_box is not None and not _touched_by_box(
+                    cand_start,
+                    min(cand_start + cand_span, next_declared_row) - 1,
+                ):
                     continue
                 s = _score(cand_start, cand_span)
                 if s is None:
