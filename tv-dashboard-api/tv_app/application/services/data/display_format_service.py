@@ -776,6 +776,20 @@ def _stringify_fallback(value: Any) -> str:
     return str(value)
 
 
+def _is_identifier_table_field(key: str) -> bool:
+    """Product/ERP codes are identifiers, not quantities to localize.
+
+    The GR Diário route marks product_code as string, but the general
+    formatter previously coerced numeric-looking codes to 10.080.711.
+    Keep all code/id fields lossless, including leading zeroes.
+    """
+    normalized = key.strip().lower()
+    return (
+        normalized in {"code", "codigo", "sku", "barcode", "ean", "gtin", "ncm", "cest"}
+        or normalized.endswith(("_code", "_codigo", "_id"))
+    )
+
+
 def _round_half_up(value: float, places: int) -> float:
     """Match Intl/JS half-up (Python round() is bankers)."""
     from decimal import Decimal, ROUND_HALF_UP
@@ -2836,7 +2850,14 @@ class DisplayFormatService:
                 continue
             display_row: dict[str, str] = {}
             for key, spec in col_specs.items():
-                display_row[key] = cls.format_value(row.get(key), spec or default_spec)
+                value = row.get(key)
+                # Identificadores de domínio não são números, mesmo quando
+                # chegam com apenas algarismos. Evita pontos de milhar e
+                # perda dos zeros à esquerda em códigos de produto.
+                if _is_identifier_table_field(key):
+                    display_row[key] = _stringify_fallback(value)
+                else:
+                    display_row[key] = cls.format_value(value, spec or default_spec)
             display_rows.append(display_row)
 
         next_table = dict(table)
