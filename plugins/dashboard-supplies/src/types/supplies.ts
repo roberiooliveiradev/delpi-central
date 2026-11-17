@@ -331,6 +331,11 @@ export type InventoryAccuracyBranchBreakdown = {
   excluded_count: number;
   shortage_value_total: number;
   surplus_value_total: number;
+  scored_count: number;
+  unscorable_count: number;
+  quantity_accuracy_sum: number;
+  accuracy_percentage: number | null;
+  accuracy_calculation: string;
 };
 
 export type InventoryAccuracySummaryData = {
@@ -341,6 +346,9 @@ export type InventoryAccuracySummaryData = {
     accurate_count: number;
     divergent_count: number;
     accuracy_percentage: number | null;
+    accuracy_calculation: string;
+    scored_count: number;
+    unscorable_count: number;
     coverage_percentage: number | null;
     shortage_value_total: number;
     surplus_value_total: number;
@@ -351,6 +359,7 @@ export type InventoryAccuracySummaryData = {
   exclusions: {
     pending_processing: number;
     cancelled: number;
+    unscorable_nonpositive_theoretical: number;
   };
   by_branch: InventoryAccuracyBranchBreakdown[];
 };
@@ -370,6 +379,7 @@ export type InventoryAccuracyItem = {
   count_date: string | null;
   counted_quantity: number;
   theoretical_quantity: number;
+  quantity_accuracy_percentage: number | null;
   divergence_quantity: number;
   shortage_quantity: number;
   surplus_quantity: number;
