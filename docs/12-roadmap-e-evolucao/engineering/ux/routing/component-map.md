@@ -1,5 +1,7 @@
 # EVA / Routing — Component Map V1 (source-backed)
 
+> **DECISÃO POSTERIOR — V2 (2026-11-17):** C03 `EngineeringTabs` não deve criar as três tabs internas do Roteiro. A aba da Ficha do Produto permanece; operações, calculadora, resultados e gráficos compartilham a mesma página scrollável. O mapeamento de componentes abaixo permanece referência para componentes individuais, sujeito ao [Visual Contract V2](./routing-study-workspace-v2-visual-contract.md) e ao [contrato de estudo local](./routing-study-session-state-contract.md). Novos cards de posto, multiseleção e confirmação devem usar controles do Plugin UI após inventário. `TARGET`, não implementação comprovada.
+
 **Estado:** `PROVEN_EXPORT / TARGET_COMPOSITION / IMPLEMENTATION_PENDING`.  
 **Fontes inspecionadas (2026-11-16):** `plugins/engineering/src/ui/engineeringUi.ts`, `plugins/engineering/src/features/products/routing/ProductRoutingTab.tsx`, `plugins/plugin-ui/src/index.ts`, `plugins/plugin-ui/docs/component-catalog.md`, Doc 61, Doc 126.  
 **Regra:** distinguir `PROVEN_EXPORT`, `PROVEN_USAGE`, `TARGET` e `TO_INVENTORY`. Um export real não prova adequação da composição visual desejada.

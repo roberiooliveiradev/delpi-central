@@ -1,5 +1,7 @@
 # EVA / Routing — Visual Acceptance Matrix V1
 
+> **DECISÃO POSTERIOR — V2 (2026-11-17):** Os testes abaixo descrevem o alvo V1 de três seções em tabs. A **matriz vigente para a próxima evolução** é [Routing Study V2 Acceptance](./routing-study-v2-acceptance.md): página única scrollável, rascunho em `sessionStorage`, configurar postos hipotéticos, recuperar após refresh e limpar após confirmação. O PNG V1 continua apenas como referência de linguagem visual. Não tratar casos antigos das tabs internas como AC obrigatório para V2.
+
 **Estado:** `TARGET / EXECUTION_NOT_RUN` — plano de evidência, não resultados.  
 **Owner do aceite visual:** Product Owner do Portal Engenharia. **Executor:** agente de implementação. **Verificação:** independente, conforme governança canônica.  
 **Escopo:** componentes reais, UX, fidelidade composicional, estados e acessibilidade; preservar leitura oficial e motor determinístico.
