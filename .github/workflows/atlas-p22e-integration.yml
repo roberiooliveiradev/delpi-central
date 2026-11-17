@@ -43,6 +43,8 @@ on:
       - "linux-ops-mcp/tests/test_atlas_cross_context_host_contract.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_local_probe.py"
       - "linux-ops-mcp/tests/test_atlas_hml_local_probe.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_git_head_peek.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_git_head_peek.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_unix_proxy.py"
       - "linux-ops-mcp/tests/test_atlas_hml_unix_proxy.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
@@ -89,6 +91,8 @@ on:
       - "linux-ops-mcp/tests/test_atlas_cross_context_host_contract.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_local_probe.py"
       - "linux-ops-mcp/tests/test_atlas_hml_local_probe.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_git_head_peek.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_git_head_peek.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_unix_proxy.py"
       - "linux-ops-mcp/tests/test_atlas_hml_unix_proxy.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
@@ -177,6 +181,7 @@ jobs:
             linux-ops-mcp/tests/test_deploy_host_checkout_evidence_bundle.py \
             linux-ops-mcp/tests/test_atlas_cross_context_host_contract.py \
             linux-ops-mcp/tests/test_atlas_hml_local_probe.py \
+            linux-ops-mcp/tests/test_atlas_hml_git_head_peek.py \
             linux-ops-mcp/tests/test_atlas_hml_unix_proxy.py \
             linux-ops-mcp/tests/test_atlas_docker_engine_ci.py
       - name: Remove only the ephemeral pilot
