@@ -401,15 +401,28 @@ Terminais do grupo 1008 com variações de formato, mantendo campos básicos de 
 | ---------------- | --------------------------------- |
 | TERM.            | Prefixo fixo                      |
 | TIPO DE TERMINAL | Tipo técnico (ex.: BALA)          |
-| RANGE DA BITOLA  | Ex.: 0,50-1,50MM2                 |
+| RANGE DA BITOLA  | Faixa em MM2 (ex.: 0,50-1,50MM2) ou AWG (ex.: 18-22AWG) |
 | MATERIAL BANHO   | Ex.: ESTANHADO, NIQUELADO, NU     |
-| EMBALAGEM        | GRANEL, FITADO, BLISTER           |
+| EMBALAGEM        | GRANEL, FITADO, BLISTER ou CARRETEL |
 | OBSERVAÇÕES      | Ex.: ALTA TEMP., LONGO, REFORÇADO |
 | NORMAS           | RoHS, UL, IEC, ABNT NBR, DIN      |
 
 ### Exemplo
 
 **TERM. BALA 2,50-6,00MM2 NU GRANEL CURTO UL**
+
+**Exemplo adicional de terminologia utilizada em cadastro (verificar demais campos e características conforme datasheet):**
+
+**TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS**
+
+### Nota de revisão normativa — 17/11/2026
+
+- **Escopo desta revisão:** somente a estrutura **Terminais (Genérico)** do grupo 1008. Outras estruturas 1008 exigem avaliação própria antes de aceitar as mesmas opções.
+- **Bitola:** reconhecer e aceitar faixa de bitola identificada em `MM2` ou `AWG`, preservando a unidade de origem e o intervalo informado. `18-22AWG` e `18-22 AWG` representam o mesmo formato textual; não realizar conversão automática AWG ↔ MM2 ou inferir equivalência dimensional.
+- **Embalagem:** `CARRETEL` constitui uma opção de apresentação/fornecimento distinta; não substituir automaticamente por `FITADO`, `GRANEL` ou `BLISTER`.
+- **Evidência e validação:** o reconhecimento desses termos não substitui conferência da especificação do fabricante, do código e das demais características técnicas pertinentes. Ausência de dados essenciais ou contradição comprovada continua sujeita a análise/inconclusão, não a aprovação automática.
+- **Governança:** alteração solicitada pelo responsável do projeto EVA em 17/11/2026; registro de revisão a ser validado no fluxo oficial de Engenharia antes da publicação normativa. Esta revisão não modifica automaticamente os avaliadores existentes nem o contrato `normative_description.v1`.
+
 
 **Fonte:** DELPI
 **Origem:** ENGENHARIA
