@@ -43,6 +43,10 @@ jobs:
         run: |
           set -o pipefail
           PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_local_probe | python -c 'import json,sys; x=json.load(sys.stdin); assert x["status"] == "blocked" and x["prepare_eligible"] is False and x["can_execute"] is False; print("HML local preflight remains blocked")'
+      - name: ATLAS HML collector isolation CLI smoke (always BLOCKED)
+        run: |
+          set -o pipefail
+          PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_collector_isolation | python -c 'import json,sys; r=json.load(sys.stdin); assert r["status"] == "blocked" and r["prepare_eligible"] is False and r["can_execute"] is False; print("HML collector isolation remains blocked")'
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
