@@ -1,0 +1,11 @@
+# ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD TIMER.
+# Timer activation must be approved independently; no producer exists yet.
+[Unit]
+Description=ATLAS HML SNAPSHOT PRODUCER TIMER REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Timer]
+OnUnitActiveSec=30s
+Unit=atlas-hml-snapshot-producer.service
+Persistent=no
