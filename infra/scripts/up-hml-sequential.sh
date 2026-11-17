@@ -63,6 +63,7 @@ FASE_MFE=(
   lancamento-notas-fiscais
   commercial
   public-hub
+  helpdesk
 )
 FASE_API=(
   production-control-api
@@ -71,6 +72,7 @@ FASE_API=(
   financial-api
   controllership-finance-api
   commercial-api
+  helpdesk-api
 )
 
 # União ordenada (core → remote → mfe → api) — fonte única para --list / validação.
