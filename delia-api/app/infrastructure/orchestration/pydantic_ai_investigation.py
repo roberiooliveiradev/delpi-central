@@ -73,9 +73,12 @@ from app.application.capability_provision.semantic_capability_support import (
     _PAGINATION_ARG_KEYS,
     _LAST_CATALOG_FAILURES,
     _OBLIGATION_OPERATIONS,
+    OBLIGATION_SATISFIED,
     _attempt_identifier_roots,
     _emit_activity,
+    _evaluate_material_obligations,
     _is_business_evidence_attempt,
+    _plan_delivery_mode,
     classify_investigation_progress,
     observation_content_fingerprint,
 )
@@ -2922,6 +2925,58 @@ class PydanticAiInvestigationOrchestrator:
                         "remaining identifier, or re-declare as "
                         "insufficient/partial with unmet_obligations."
                     )
+            # INT-1/INT-3 bounded correction (same one-shot budget,
+            # provider-neutral): a COMPLETE/PARTIAL declaration whose
+            # collected business evidence does not demonstrate every
+            # material obligation is rejected silently by the
+            # deterministic acceptor — the model never learned which
+            # obligation remains open. Evaluate the obligations with
+            # the same deterministic helper the acceptor uses; when
+            # any stays undemonstrated and tool budget remains, buy
+            # ONE native pass naming the gap so the model may call a
+            # complementary governed capability or re-declare
+            # honestly. Verdict authority stays with the acceptor — a
+            # second unproven declaration finalizes INCONCLUSIVE.
+            if (
+                output.status
+                in (
+                    InvestigationAnswerStatus.COMPLETE,
+                    InvestigationAnswerStatus.PARTIAL,
+                )
+                and ctx.deps.investigation_plan is not None
+                and ctx.deps.collected
+                and not ctx.deps.insufficiency_retry_used
+                and ctx.deps.tool_calls < self._tool_calls_limit
+            ):
+                plan = ctx.deps.investigation_plan
+                needed = getattr(plan, "evidence_needed", ()) or ()
+                if needed:
+                    coverage = _evaluate_material_obligations(
+                        obligations=needed,
+                        business=tuple(
+                            item
+                            for item in ctx.deps.collected
+                            if _is_business_evidence_attempt(item)
+                        ),
+                        delivery=_plan_delivery_mode(plan),
+                    )
+                    unmet = [
+                        description
+                        for description, state in coverage
+                        if state != OBLIGATION_SATISFIED
+                    ]
+                    if unmet:
+                        ctx.deps.insufficiency_retry_used = True
+                        raise ModelRetry(
+                            "Your declared answer does not yet "
+                            "demonstrate these material obligations: "
+                            f"{unmet[:4]}. If another listed governed "
+                            "capability can supply the missing evidence "
+                            "under the accepted plan, call it now; "
+                            "otherwise re-declare honestly as "
+                            "insufficient/partial with "
+                            "unmet_obligations."
+                        )
             # Cosmetic normalization only — the internal evidence
             # handle ``[obs:N]`` is an implementation detail, never
             # user-facing answer text. Evidence binding is unchanged.

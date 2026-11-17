@@ -60,3 +60,43 @@ defeito reproduzido → nenhuma alteração de código (RQ-7).
 
 RESIDUAL candidate: analyze summary view não expõe count de processos
 (limitação de capacidade do owner; alternativa read+total existe).
+
+## INVESTIGATION↔SUFFICIENCY gap — remediated (bounded native correction)
+
+DEFECT_PROVEN: output validator had NO bounded correction for
+"COMPLETE/PARTIAL declared with collected evidence while material
+obligations remain undemonstrated" — the model was never told which
+obligation stayed open; the deterministic acceptor silently
+overrode to INCONCLUSIVE (the B/G outcome).
+
+RED: test_unmet_obligation_complete_declaration_buys_one_pass fails on
+baseline (no RetryPromptPart) — proven by reverting the fix.
+
+FIX (REUSE, ~55 LOC, zero new abstraction): 5th one-shot branch in
+_investigation_answer_shape — when COMPLETE/PARTIAL + plan +
+collected evidence + budget remain, evaluate obligations via the SAME
+deterministic _evaluate_material_obligations/_plan_delivery_mode the
+acceptor uses; if any != SATISFIED → one ModelRetry naming the unmet
+obligations. Model may call a complementary governed capability or
+re-declare honestly. Verdict authority unchanged — a second unproven
+declaration finalizes INCONCLUSIVE. Shares the existing
+insufficiency_retry_used flag → strictly one extra pass, bounded by
+tool_calls_limit.
+
+GREEN: 3 new tests (gap feedback fires + complementary call; budget-
+exhausted guard; one-shot bound). Full delia-api suite exit 0.
+
+Q-ANSWERS: Q1 YES (NEW_INFORMATION); Q2 YES (acceptor); Q3 was NO →
+now YES via governed ModelRetry; Q4 now YES; Q5 yes-premature now
+corrected; Q6 was NO → now bounded correction exists; Q7 gated by
+tool_calls_limit; Q8 model chooses from live catalog (no hardcode);
+Q9 one-shot + existing no-progress detectors; Q10 decided by model.
+
+SAFETY invariants preserved: no false SATISFIED path added; obligation
+evaluation read-only reuse; plan/filters/scope untouched; no
+owner/capability hardcode; no ACT.
+
+REAL_EVAL: ENV_BLOCKED — only delia-delia-api container up; eval stack
+(gateway/keycloak/teo) down. Unit-level real-path proof via
+FunctionModel through the real Agent/toolset/governed invoke chain.
+Paired OpenRouter eval remains a residual pending stack recovery.

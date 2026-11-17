@@ -671,3 +671,187 @@ def test_anchor_candidates_never_fabricate_vocabulary():
     # keys → nothing fabricated.
     assert not first.get("anchor_candidates")
     assert "alpha.search_items" in (first.get("rejected_anchors") or [])
+
+
+# -------------------------------------------------------------------
+# INT-1/INT-3 bounded correction — COMPLETE with undemonstrated
+# material obligations must feed the gap back to the model once
+# -------------------------------------------------------------------
+
+
+def test_unmet_obligation_complete_declaration_buys_one_pass():
+    """A COMPLETE declaration whose collected business evidence does
+    not demonstrate a plan obligation is silently overridden by the
+    acceptor — the model never learned which obligation stayed open.
+    The bounded correction names the gap once; the model may then call
+    a complementary governed capability or re-declare honestly."""
+    gates = _gates()
+    owner_calls: list[str] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        owner_calls.append(str(kwargs.get("capability_id") or ""))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    saw_retry = {"v": False}
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                for part in m.parts:
+                    if isinstance(part, RetryPromptPart):
+                        saw_retry["v"] = True
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": [
+                                {
+                                    "description": "orientação beta",
+                                    "evidence_source": "read_guidance",
+                                    "operation": "read",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
+            # Wrong capability for the declared obligation — the
+            # alpha.read evidence cannot demonstrate the beta-bound
+            # obligation.
+            return ModelResponse(parts=[_read_call()])
+        if prior == 2:
+            # Declared COMPLETE while the beta obligation stays
+            # undemonstrated → bounded correction must fire.
+            return _final_complete()
+        if prior == 3:
+            # After the correction the model calls the complementary
+            # capability that can demonstrate the obligation.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("beta.read_guidance", {"arguments": {}})
+                ]
+            )
+        return _final_complete()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=8
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("preciso da orientação")
+    assert saw_retry["v"] is True
+    assert "beta.read_guidance" in owner_calls
+
+
+def test_unmet_obligation_correction_respects_tool_budget():
+    """Negative control: with the tool-call budget already consumed the
+    bounded correction must NOT fire — no illegitimate continuation."""
+    gates = _gates()
+    saw_retry = {"v": False}
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                for part in m.parts:
+                    if isinstance(part, RetryPromptPart):
+                        saw_retry["v"] = True
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": [
+                                {
+                                    "description": "orientação beta",
+                                    "evidence_source": "read_guidance",
+                                    "operation": "read",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
+            return ModelResponse(parts=[_read_call()])
+        return _final_complete()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=2
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("preciso da orientação")
+    assert saw_retry["v"] is False
+
+
+def test_unmet_obligation_correction_is_one_shot():
+    """Bounded: a second unmet declaration finalizes honestly through
+    the deterministic acceptor — exactly one RetryPromptPart, no
+    unbounded passes."""
+    gates = _gates()
+    retries = {"n": 0}
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                for part in m.parts:
+                    if isinstance(part, RetryPromptPart):
+                        retries["n"] += 1
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": [
+                                {
+                                    "description": "orientação beta",
+                                    "evidence_source": "read_guidance",
+                                    "operation": "read",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if prior == 1:
+            return ModelResponse(parts=[_read_call()])
+        return _final_complete()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=8
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("preciso da orientação")
+    assert retries["n"] <= 1
+
+
+def _final_complete() -> ModelResponse:
+    return ModelResponse(
+        parts=[
+            ToolCallPart(
+                "final_result",
+                {
+                    "schema_version": "1",
+                    "status": "complete",
+                    "answer": "done",
+                    "evidence_refs": [0],
+                    "unmet_obligations": [],
+                    "limitations": [],
+                },
+            )
+        ]
+    )

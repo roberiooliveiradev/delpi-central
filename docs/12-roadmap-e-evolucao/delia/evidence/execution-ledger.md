@@ -7284,3 +7284,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REMEDIAÇÃO:** não aplicada — zero defeitos reproduzidos.
 - **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
 - **RESIDUAL novo:** analyze summary view sem count — owner capability gap.
+
+## COORDINATION_C3_T2_INVESTIGATION_SUFFICIENCY_GAP_RECOVERY
+
+- **DEFEITO (PROVEN):** validator sem bounded-correction para
+  COMPLETE/PARTIAL com obrigações não demonstradas — modelo nunca
+  soube qual obrigação ficou aberta; acceptor sobrescrevia p/ INCONCLUSIVE.
+- **FIX:** 5ª branch one-shot no output validator — avalia
+  _evaluate_material_obligations (mesma autoridade determinística) e
+  emite UM ModelRetry nomeando as obrigações não demonstradas quando
+  budget resta. REUSE total, zero nova abstração/engine/agent.
+- **RED/GREEN:** teste RED reproduzido em baseline; 3 testes novos +
+  suite completa delia-api exit 0; audits Phase3+guardrails OK.
+- **REAL_EVAL:** ENV_BLOCKED (stack de eval down — só delia-api up);
+  residual registrado.
+- **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
