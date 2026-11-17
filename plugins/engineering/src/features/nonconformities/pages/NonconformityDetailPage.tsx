@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { TimelineItemModel } from "@delpi/plugin-ui/index";
 
 import { HomeApiError } from "../../../api/httpClient";
+import { useParticipantAvatarUrls } from "../../../hooks/useParticipantAvatarUrls";
 import {
   EngineeringActionButton,
   EngineeringDetailCard,
@@ -46,21 +47,47 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Identidade de pessoa — avatar oficial por iniciais + nome acessível.
- * Sem endpoint por-usuário de foto no MFE (Core expõe foto só via S2S
- * ou /me), iniciais são o fallback honesto e estável. */
-function NcUserIdentity({ name }: { name: string | null }) {
+/** Identidade de pessoa — foto canônica do Portal quando o user_id é
+ * conhecido (Core via BFF participants da engineering-api); campos que
+ * só guardam label livre (executado/liberado por) seguem em iniciais
+ * — fallback honesto, nunca foto errada. */
+function NcUserIdentity({
+  name,
+  src,
+}: {
+  name: string | null;
+  src?: string | null;
+}) {
   const label = name?.trim() || "—";
   if (label === "—") return <span className="engineering-nc-muted">—</span>;
   return (
     <span className="engineering-nc-user">
-      <EngineeringInitialsAvatar name={label} size="sm" />
+      <EngineeringInitialsAvatar name={label} src={src} size="sm" />
       <span>{label}</span>
     </span>
   );
 }
 
-function detailFields(record: Nonconformity) {
+function detailFields(
+  record: Nonconformity,
+  avatarByUserId?: ReadonlyMap<string, string>,
+  history?: readonly NcHistoryEvent[] | null,
+) {
+  /* user_id auditável dos campos de identidade: criador = evento
+   * «created»; atualizador = «updated» mais recente. Sem evento →
+   * iniciais (o registro só persiste o label livre). */
+  const byTime = (events: readonly NcHistoryEvent[]) =>
+    [...events].sort((a, b) =>
+      (b.created_at ?? "").localeCompare(a.created_at ?? ""),
+    );
+  const createdEvent = byTime(history ?? []).find(
+    (e) => e.event_type === "created",
+  );
+  const lastUpdatedEvent = byTime(history ?? []).find(
+    (e) => e.event_type === "updated",
+  );
+  const avatarFor = (userId?: string | null) =>
+    userId ? avatarByUserId?.get(userId) : undefined;
   return [
     { label: "OV", hint: NC_HELP.saleNumber, value: record.sale_number ?? "—" },
     { label: "LMP", hint: NC_HELP.lmpNumber, value: record.lmp_number ?? "—" },
@@ -102,18 +129,31 @@ function detailFields(record: Nonconformity) {
     {
       label: "Criado por",
       hint: NC_HELP.createdBy,
-      value: <NcUserIdentity name={record.created_by} />,
+      value: (
+        <NcUserIdentity
+          name={record.created_by}
+          src={avatarFor(createdEvent?.actor_user_id)}
+        />
+      ),
     },
     {
       label: "Atualizado por",
       hint: NC_HELP.updatedBy,
-      value: <NcUserIdentity name={record.updated_by} />,
+      value: (
+        <NcUserIdentity
+          name={record.updated_by}
+          src={avatarFor(lastUpdatedEvent?.actor_user_id)}
+        />
+      ),
     },
   ];
 }
 
 /** Evento de auditoria → item da Timeline oficial do kit. */
-function toTimelineItem(event: NcHistoryEvent): TimelineItemModel {
+function toTimelineItem(
+  event: NcHistoryEvent,
+  avatarByUserId?: ReadonlyMap<string, string>,
+): TimelineItemModel {
   const actorLabel = ncHistoryActorLabel(event);
   const changes = ncHistoryChangeLines(event);
   return {
@@ -128,7 +168,11 @@ function toTimelineItem(event: NcHistoryEvent): TimelineItemModel {
         className="engineering-nc-user"
         title={`${NC_HELP.historyActor} — ${actorLabel}`}
       >
-        <EngineeringInitialsAvatar name={actorLabel} size="sm" />
+        <EngineeringInitialsAvatar
+          name={actorLabel}
+          src={avatarByUserId?.get(event.actor_user_id)}
+          size="sm"
+        />
         <span>{actorLabel}</span>
       </span>
     ),
@@ -206,7 +250,15 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
     }
   };
 
-  const timelineItems = (history ?? []).map(toTimelineItem);
+  /* Fotos canônicas do Portal para os atores do histórico/identificação
+   * — BFF participants da engineering-api → Core; ausente → iniciais. */
+  const avatarByUserId = useParticipantAvatarUrls(
+    (history ?? []).map((e) => e.actor_user_id),
+  );
+
+  const timelineItems = (history ?? []).map((event) =>
+    toTimelineItem(event, avatarByUserId),
+  );
 
   return (
     <main className="engineering-nonconformities">
@@ -308,7 +360,9 @@ export function NonconformityDetailPage({ recordId }: { recordId: string }) {
       {record ? (
         <>
           <EngineeringDetailCard title="Identificação">
-            <EngineeringDetailFieldGrid fields={detailFields(record)} />
+            <EngineeringDetailFieldGrid
+              fields={detailFields(record, avatarByUserId, history)}
+            />
           </EngineeringDetailCard>
 
           <EngineeringSectionCard
