@@ -53,8 +53,8 @@
   "overlays": {
     "get_supplies_inventory_adjustments_tv_summary": {
       "label": "GR Diário · Divergência de estoque (ano e mês)",
-      "description": "Dois KPIs em reais de ajustes brutos do inventário: faltas + sobras, sem compensação. Consulte acumulado do ano e do mês.",
-      "whenToUse": "TV do GR Diário: cards Divergência acumulada no ano (year_divergence_brl) e Divergência do mês (month_divergence_brl). Use a mesma filial em todos os blocos.",
+      "description": "KPIs financeiros de ajustes de inventário: acumulado no ano, mês e período selecionado. Granularidade e filtros de datas disponíveis; faltas e sobras sem compensação.",
+      "whenToUse": "TV GR Diário: dois KPIs fixos (ano/mês), ou period_divergence_brl para trocar dinamicamente entre hoje, semana, mês e ano pelo seletor de período da TV.",
       "category": "supplies",
       "paramStrategy": "direct",
       "allowedDisplayModes": [
@@ -62,6 +62,10 @@
         "auto"
       ],
       "valueFields": [
+        "period_divergence_brl",
+        "period_shortage_value_brl",
+        "period_surplus_value_brl",
+        "period_net_value_brl",
         "year_divergence_brl",
         "month_divergence_brl",
         "year_shortage_value_brl",
@@ -72,6 +76,10 @@
         "month_net_value_brl"
       ],
       "valueFieldTypes": {
+        "period_divergence_brl": "number",
+        "period_shortage_value_brl": "number",
+        "period_surplus_value_brl": "number",
+        "period_net_value_brl": "number",
         "year_divergence_brl": "number",
         "month_divergence_brl": "number",
         "year_shortage_value_brl": "number",
@@ -82,6 +90,10 @@
         "month_net_value_brl": "number"
       },
       "valueFieldLabels": {
+        "period_divergence_brl": "Divergência do período (R$)",
+        "period_shortage_value_brl": "Faltas do período (R$)",
+        "period_surplus_value_brl": "Sobras do período (R$)",
+        "period_net_value_brl": "Saldo líquido do período (R$)",
         "year_divergence_brl": "Divergência acumulada no ano (R$)",
         "month_divergence_brl": "Divergência do mês (R$)",
         "year_shortage_value_brl": "Faltas no ano (R$)",
@@ -92,6 +104,33 @@
         "month_net_value_brl": "Saldo líquido do mês (R$)"
       },
       "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "label": "Granularidade",
+          "optional": true,
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Define qual período será usado no KPI 'Divergência do período' quando datas manuais não forem informadas: dia, semana (seg–hoje), mês (1º–hoje) ou ano (1º/01–hoje)."
+        },
+        "start_date": {
+          "type": "string",
+          "label": "Data inicial",
+          "format": "date",
+          "optional": true,
+          "description": "Pode ser preenchida manualmente ou com o filtro relativo de período do TV Dashboard."
+        },
+        "end_date": {
+          "type": "string",
+          "label": "Data final",
+          "format": "date",
+          "optional": true,
+          "description": "Inclui a data final. Em períodos futuros, dados são limitados ao dia de referência."
+        },
         "as_of": {
           "type": "string",
           "optional": true,
@@ -122,8 +161,8 @@
     },
     "get_supplies_inventory_adjustments_tv_monthly_series": {
       "label": "GR Diário · Evolução mensal das divergências",
-      "description": "Série mensal do ano corrente: faltas, sobras, divergência bruta e saldo líquido em reais, incluindo meses sem movimento.",
-      "whenToUse": "Gráfico de colunas agrupadas com período no eixo X e Faltas/Sobras em R$. Para comparar a evolução das perdas, use shortage_value_brl.",
+      "description": "Série temporal de ajustes em R$ agrupada por dia, semana, mês ou ano, com zeros nos intervalos sem movimentação.",
+      "whenToUse": "Colunas agrupadas com Faltas e Sobras por período; use a Granularidade e o filtro de Período para escolher a escala e o intervalo.",
       "category": "supplies",
       "paramStrategy": "direct",
       "allowedDisplayModes": [
@@ -155,6 +194,33 @@
         "net_value_brl": "Saldo líquido (R$)"
       },
       "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "label": "Granularidade",
+          "optional": true,
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Agrupa as barras/linhas por dia, semana iniciada na segunda-feira, mês ou ano."
+        },
+        "start_date": {
+          "type": "string",
+          "label": "Data inicial",
+          "format": "date",
+          "optional": true,
+          "description": "Pode ser preenchida manualmente ou com o filtro relativo de período do TV Dashboard."
+        },
+        "end_date": {
+          "type": "string",
+          "label": "Data final",
+          "format": "date",
+          "optional": true,
+          "description": "Inclui a data final. Em períodos futuros, dados são limitados ao dia de referência."
+        },
         "as_of": {
           "type": "string",
           "optional": true,
@@ -183,9 +249,9 @@
       }
     },
     "get_supplies_inventory_adjustments_tv_weekly_items": {
-      "label": "GR Diário · Itens com divergência na semana",
-      "description": "Ranking semanal por item, armazém, filial e natureza. Traz código, descrição, quantidade, valor em R$ e identifica falta/sobra.",
-      "whenToUse": "Tabela de itens com divergência da semana corrente (segunda a hoje). Para ranking horizontal, use produto como categoria e value_brl como valor. Totais não se compensam.",
+      "label": "GR Diário · Itens com divergência no período",
+      "description": "Ranking dos itens com divergência na janela selecionada: hoje, semana, mês, ano ou datas personalizadas; filtra sem alterar o grão produto/armazém/natureza.",
+      "whenToUse": "Tabela TOP 5/10 por produto, código, descrição, quantidade e R$. Selecione Granularidade = semana e Período = Esta semana (até hoje) para o painel do GR Diário.",
       "category": "supplies",
       "paramStrategy": "direct",
       "allowedDisplayModes": [
@@ -223,6 +289,33 @@
         "signed_value_brl": "Impacto com sinal (R$)"
       },
       "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "label": "Granularidade",
+          "optional": true,
+          "default": "week",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Define o período de consulta do ranking quando datas não forem informadas: dia, semana (seg–hoje), mês (1º–hoje) ou ano (1º/01–hoje). Não muda o grão por produto."
+        },
+        "start_date": {
+          "type": "string",
+          "label": "Data inicial",
+          "format": "date",
+          "optional": true,
+          "description": "Pode ser preenchida manualmente ou com o filtro relativo de período do TV Dashboard."
+        },
+        "end_date": {
+          "type": "string",
+          "label": "Data final",
+          "format": "date",
+          "optional": true,
+          "description": "Inclui a data final. Em períodos futuros, dados são limitados ao dia de referência."
+        },
         "as_of": {
           "type": "string",
           "optional": true,

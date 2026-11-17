@@ -32,7 +32,11 @@ from app.interface.http.period_query_params import (
     START_DATE_QUERY,
     resolve_period_dates,
 )
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    GRANULARITY_QUERY_MONTH,
+    GRANULARITY_QUERY_WEEK,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -204,6 +208,9 @@ def get_inventory_adjustments_tv_summary(
         default=None,
         description="Referência (YYYY-MM-DD, horário de São Paulo). Vazio = hoje.",
     ),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     warehouse: Optional[str] = Query(default=None),
 ):
@@ -213,6 +220,9 @@ def get_inventory_adjustments_tv_summary(
         action="summary",
         as_of=as_of,
         branch=branch,
+        granularity=granularity,
+        start_date=start_date,
+        end_date=end_date,
         warehouse=warehouse,
     )
 
@@ -226,6 +236,9 @@ def get_inventory_adjustments_tv_summary(
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_monthly_series(
     as_of: Optional[str] = Query(default=None, description="YYYY-MM-DD. Vazio = hoje."),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     warehouse: Optional[str] = Query(default=None),
 ):
@@ -235,6 +248,9 @@ def get_inventory_adjustments_tv_monthly_series(
         action="monthly_series",
         as_of=as_of,
         branch=branch,
+        granularity=granularity,
+        start_date=start_date,
+        end_date=end_date,
         warehouse=warehouse,
     )
 
@@ -248,6 +264,9 @@ def get_inventory_adjustments_tv_monthly_series(
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_weekly_items(
     as_of: Optional[str] = Query(default=None, description="YYYY-MM-DD. Vazio = hoje."),
+    granularity: str = GRANULARITY_QUERY_WEEK(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     warehouse: Optional[str] = Query(default=None),
     top_limit: int = TOP_LIMIT_QUERY(
@@ -261,6 +280,9 @@ def get_inventory_adjustments_tv_weekly_items(
         action="weekly_items",
         as_of=as_of,
         branch=branch,
+        granularity=granularity,
+        start_date=start_date,
+        end_date=end_date,
         warehouse=warehouse,
         top_limit=top_limit,
     )

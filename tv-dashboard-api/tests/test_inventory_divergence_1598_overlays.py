@@ -51,3 +51,40 @@ def test_all_three_operation_ids_exist_in_api_contract_and_router():
     ):
         assert op in contract_source
         assert op in router_source
+
+
+def test_all_three_sources_show_granularity_and_tv_relative_period_filter():
+    """A TV reconhece start_date/end_date para dateRangePreset dinâmico."""
+    expected = {
+        "get_supplies_inventory_adjustments_tv_summary": "month",
+        "get_supplies_inventory_adjustments_tv_monthly_series": "month",
+        "get_supplies_inventory_adjustments_tv_weekly_items": "week",
+    }
+    for opid, default in expected.items():
+        overlay = _overlay(opid)
+        schema = overlay["paramSchema"]
+        assert schema["granularity"]["enum"] == ["day", "week", "month", "year"]
+        assert schema["granularity"]["default"] == default
+        assert schema["granularity"]["label"] == "Granularidade"
+        assert schema["start_date"]["format"] == "date"
+        assert schema["end_date"]["format"] == "date"
+        assert schema["start_date"]["optional"] is True
+        assert schema["end_date"]["optional"] is True
+
+
+def test_summary_exposes_period_value_without_removing_year_or_month():
+    overlay = _overlay("get_supplies_inventory_adjustments_tv_summary")
+    for key in ("period_divergence_brl", "year_divergence_brl", "month_divergence_brl"):
+        assert key in overlay["valueFields"]
+        assert overlay["valueFieldTypes"][key] == "number"
+    assert "período" in overlay["valueFieldLabels"]["period_divergence_brl"].lower()
+
+
+def test_series_keeps_semantic_day_week_month_year_and_weekly_table_fields():
+    series = _overlay("get_supplies_inventory_adjustments_tv_monthly_series")
+    assert series["tableFields"] == "items"
+    assert "periodo" in series["valueFieldTypes"]
+    table = _overlay("get_supplies_inventory_adjustments_tv_weekly_items")
+    assert table["tableFields"] == "items"
+    assert table["paramSchema"]["top_limit"]["default"] == 10
+    assert "product_description" in table["valueFieldLabels"]
