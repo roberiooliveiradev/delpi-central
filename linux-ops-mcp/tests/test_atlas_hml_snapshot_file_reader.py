@@ -5,6 +5,7 @@ change system users/groups, create a listener, deploy or enable PREPARE/ACT.
 """
 from __future__ import annotations
 
+import errno
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -220,3 +221,75 @@ def test_fixed_entrypoint_rejects_missing_group_and_forces_root_owner(monkeypatc
 def test_no_producer_service_or_mcp_tool_in_snapshot_file_reader():
     for name in ("main", "create_mcp_server", "serve", "deploy", "write_snapshot"):
         assert not hasattr(reader, name)
+
+
+@pytest.mark.parametrize("target,attribute", [
+    ("directory", "system.posix_acl_access"),
+    ("directory", "system.posix_acl_default"),
+    ("file", "system.posix_acl_access"),
+])
+def test_extended_acl_on_snapshot_inode_is_denied(snapshot, monkeypatch, target, attribute):
+    directory, file_path, _ = snapshot
+    checked_path = directory if target == "directory" else file_path
+    checked_stat = os.stat(checked_path)
+    original = reader.os.getxattr
+
+    def extra_acl(fd, name):
+        stat_fd = os.fstat(fd)
+        if (
+            name == attribute and
+            (stat_fd.st_dev, stat_fd.st_ino) == (checked_stat.st_dev, checked_stat.st_ino)
+        ):
+            return b"extended-acl-synthetic-fixture"
+        return original(fd, name)
+
+    monkeypatch.setattr(reader.os, "getxattr", extra_acl)
+    code = (
+        "HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED"
+        if target == "directory"
+        else "HML_SNAPSHOT_FILE_ACL_UNTRUSTED"
+    )
+    denied(code, lambda: observe(snapshot))
+
+
+@pytest.mark.parametrize("os_error", [errno.EACCES, errno.EOPNOTSUPP, errno.EIO])
+def test_snapshot_reader_fails_closed_when_acl_cannot_be_inspected(
+    snapshot, monkeypatch, os_error,
+):
+    def uninspectable(_fd, _name):
+        raise OSError(os_error, "synthetic private xattr metadata")
+
+    monkeypatch.setattr(reader.os, "getxattr", uninspectable)
+    denied("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED", lambda: observe(snapshot))
+
+
+def test_snapshot_reader_refuses_missing_acl_inspection_api(snapshot, monkeypatch):
+    monkeypatch.delattr(reader.os, "getxattr", raising=True)
+    denied("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED", lambda: observe(snapshot))
+
+
+def test_acl_introduced_during_snapshot_read_is_rejected(snapshot, monkeypatch):
+    directory, file_path, _ = snapshot
+    file_stat = os.stat(file_path)
+    original_attr = reader.os.getxattr
+    original_read = reader._read_bounded
+    state = {"acl_changed": False}
+
+    def changed_mid_read(fd, size):
+        raw = original_read(fd, size)
+        state["acl_changed"] = True
+        return raw
+
+    def changed_acl(fd, name):
+        meta = os.fstat(fd)
+        if (
+            state["acl_changed"]
+            and name == "system.posix_acl_access"
+            and (meta.st_dev, meta.st_ino) == (file_stat.st_dev, file_stat.st_ino)
+        ):
+            return b"synthetic-acl-after-read"
+        return original_attr(fd, name)
+
+    monkeypatch.setattr(reader, "_read_bounded", changed_mid_read)
+    monkeypatch.setattr(reader.os, "getxattr", changed_acl)
+    denied("HML_SNAPSHOT_FILE_ACL_UNTRUSTED", lambda: observe(snapshot))
