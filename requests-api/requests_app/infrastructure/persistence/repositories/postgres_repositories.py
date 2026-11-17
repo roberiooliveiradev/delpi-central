@@ -33,6 +33,8 @@ _LIST_SORT_COLUMNS = {
     "status": "r.status",
     "type_code": "t.code",
     "branch": "r.branch_code",
+    "requester": "COALESCE(r.created_by_name, '')",
+    "completed_by": "COALESCE(r.completed_by_name, '')",
 }
 
 

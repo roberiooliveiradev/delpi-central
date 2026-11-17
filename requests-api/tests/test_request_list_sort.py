@@ -156,3 +156,50 @@ def test_list_work_queue_sort_branch_then_date():
     assert [r["request_number"] for r in rows["items"]] == [
         "REQ-3", "REQ-2", "REQ-1",  # filial 01 (data desc) antes de 02
     ]
+
+
+def _processor() -> object:
+    return _user(
+        user_id="u-process",
+        permissions=[
+            "my-requests.access",
+            "my-requests.invoice-issuance.process",
+            "my-requests.view.filial-01",
+        ],
+    )
+
+
+def test_list_work_queue_sort_requester_and_completed_by():
+    types, requests = _harness()
+    seed_data = [
+        ("REQ-1", "Zuleica", "Bruno"),
+        ("REQ-2", "Ana", None),
+        ("REQ-3", "Mario", "Ana"),
+    ]
+    for number, requester, completed_by in seed_data:
+        rid = uuid4()
+        requests._requests[str(rid)] = Request(
+            id=rid,
+            request_number=number,
+            request_type_id=rid,
+            type_code="invoice-issuance",
+            status="submitted",
+            created_by_user_id="u-create",
+            created_by_name=requester,
+            completed_by_name=completed_by,
+            branch_code="01",
+            created_at=_BASE,
+            updated_at=_BASE,
+        )
+
+    uc = ListWorkQueueRequestsUseCase(types, requests)
+
+    rows = uc.execute(user=_processor(), sort="requester:asc")
+    assert [r["request_number"] for r in rows["items"]] == [
+        "REQ-2", "REQ-3", "REQ-1",  # Ana < Mario < Zuleica
+    ]
+
+    rows = uc.execute(user=_processor(), sort="completed_by:desc")
+    assert [r["request_number"] for r in rows["items"]] == [
+        "REQ-1", "REQ-3", "REQ-2",  # Bruno > Ana > pendente ("" por último)
+    ]

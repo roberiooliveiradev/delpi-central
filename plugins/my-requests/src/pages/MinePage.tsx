@@ -381,11 +381,21 @@ export function MinePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, listEpoch, types]);
 
+  /** Destino de detalhe da linha — PRC vai para o caso, demais para a solicitação. */
+  const openRow = useCallback((row: UnifiedRequestRow) => {
+    navigateMyRequestsPath(
+      row.source === "engineering-prc"
+        ? row.destination
+        : myRequestsPath({ requestId: row.id }),
+    );
+  }, []);
+
   const columns = useMemo<DataTableColumn<UnifiedRequestRow>[]>(
     () => [
       {
         key: "number",
         header: "Número",
+        interactive: true,
         render: (row) => (
           <ActionButton
             type="button"
@@ -395,13 +405,7 @@ export function MinePage() {
                 : `Abrir ${row.displayNumber}`
             }
             variant="link"
-            onClick={() =>
-              navigateMyRequestsPath(
-                row.source === "engineering-prc"
-                  ? row.destination
-                  : myRequestsPath({ requestId: row.id }),
-              )
-            }
+            onClick={() => openRow(row)}
           >
             {row.displayNumber}
           </ActionButton>
@@ -441,7 +445,7 @@ export function MinePage() {
             : "—",
       },
     ],
-    [],
+    [openRow],
   );
 
   /* Coluna → campo do contrato efetivo (header-sort). */
@@ -493,15 +497,11 @@ export function MinePage() {
         ariaLabel={`Abrir ${row.displayNumber}`}
         onNavigate={(event: { preventDefault(): void }) => {
           event.preventDefault();
-          navigateMyRequestsPath(
-            row.source === "engineering-prc"
-              ? row.destination
-              : myRequestsPath({ requestId: row.id }),
-          );
+          openRow(row);
         }}
       />
     ),
-    [],
+    [openRow],
   );
 
   const listError = [error, prcError].filter(Boolean).join(" · ") || null;
@@ -533,6 +533,7 @@ export function MinePage() {
         rows={rows}
         columns={columns}
         rowKey={(row) => `${row.source}-${row.id}`}
+        onRowOpen={openRow}
         loading={loading}
         error={listError}
         emptyMessage={emptyMessage}

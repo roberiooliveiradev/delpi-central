@@ -27,6 +27,8 @@ export const REQUESTS_SORT_FIELDS: readonly DashboardSortFieldOption[] = [
   { value: "status", label: "Status" },
   { value: "type_code", label: "Tipo" },
   { value: "branch", label: "Filial" },
+  { value: "requester", label: "Solicitante" },
+  { value: "completed_by", label: "Concluída por" },
 ];
 
 /** Campos ordenáveis do contrato PRC (`sortBy`/`sortDir`, 1 nível).

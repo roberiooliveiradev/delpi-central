@@ -240,6 +240,46 @@ describe("MinePage — merge honesto e contratos multi-fonte", () => {
   });
 });
 
+describe("Row click — clique na linha abre o detalhe (padronizado)", () => {
+  it("shell encaminha onRowOpen ao onRowClick do kit (click + teclado)", () => {
+    expect(shell).toContain("onRowOpen?: (row: Row) => void");
+    expect(shell).toContain("onRowClick={onRowOpen}");
+    /* o kit provê tabIndex/Enter/Space — o MFE não reimplementa */
+    expect(kitSection).toContain("onRowClick={onRowClick}");
+  });
+
+  it("as duas páginas passam onRowOpen com o destino do detalhe", () => {
+    expect(mine).toContain("onRowOpen={openRow}");
+    expect(queue).toContain("onRowOpen={openRow}");
+    /* Mine resolve PRC vs requests-api; Fila vai sempre ao requestId */
+    expect(mine).toContain('row.source === "engineering-prc"');
+    expect(queue).toContain("myRequestsPath({ requestId: row.id })");
+  });
+
+  it("coluna Número é interactive — link próprio sem navegação dupla", () => {
+    for (const page of [mine, queue]) {
+      const numberCol = page.slice(page.indexOf('key: "number"'));
+      expect(numberCol.slice(0, 400)).toContain("interactive: true");
+    }
+  });
+});
+
+describe("Header-sort — cobertura por coluna", () => {
+  it("fila ordena Solicitante e Concluída por (campos persistidos)", () => {
+    expect(queue).toContain('requester: "requester"');
+    expect(queue).toContain('completed_by: "completed_by"');
+    expect(sortDomain).toContain('{ value: "requester", label: "Solicitante" }');
+    expect(sortDomain).toContain(
+      '{ value: "completed_by", label: "Concluída por" }',
+    );
+  });
+
+  it("Assunto fica fora do sort — título derivado por tipo, sem campo canônico", () => {
+    expect(queue).not.toMatch(/title:\s*"/);
+    expect(mine).not.toMatch(/title:\s*"/);
+  });
+});
+
 describe("WorkQueuePage — contrato de atendimento preservado", () => {
   it("mantém mineScope, completed_by e solicitante", () => {
     expect(queue).toContain("mineScope");

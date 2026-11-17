@@ -33,6 +33,8 @@ describe("requestListSort — fonte efetiva e catálogos", () => {
       "status",
       "type_code",
       "branch",
+      "requester",
+      "completed_by",
     ]);
   });
 
@@ -59,6 +61,8 @@ describe("requestListSort — fonte efetiva e catálogos", () => {
         "status",
         "type_code",
         "branch",
+        "requester",
+        "completed_by",
       ].sort(),
     );
   });

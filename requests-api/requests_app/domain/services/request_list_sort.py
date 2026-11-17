@@ -13,6 +13,8 @@ LIST_SORT_FIELDS = (
     "status",
     "type_code",
     "branch",
+    "requester",
+    "completed_by",
 )
 LIST_SORT_MAX_LEVELS = 3
 DEFAULT_SORT: tuple[str, str] = ("created_at", "desc")

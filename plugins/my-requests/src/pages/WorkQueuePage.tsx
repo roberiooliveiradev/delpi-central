@@ -58,13 +58,17 @@ const QUEUE_COLUMN_PREFS_KEY = "my-requests.work-queue.columns.v1";
 const QUEUE_VIEW_LAYOUT_KEY = "my-requests.work-queue.view-layout.v1";
 const QUEUE_SORT_MAX_LEVELS = 3;
 
-/** Coluna → campo ordenável do contrato requests-api (header-sort). */
+/** Coluna → campo ordenável do contrato requests-api (header-sort).
+ *  «Assunto» não ordena: o título é derivado por tipo no frontend e
+ *  não existe campo canônico no contrato. */
 const QUEUE_COLUMN_SORT_MAP: Record<string, string> = {
   number: "request_number",
   type: "type_code",
   status: "status",
   branch: "branch",
   date: "created_at",
+  requester: "requester",
+  completed_by: "completed_by",
 };
 
 function statusChips(
@@ -298,19 +302,23 @@ export function WorkQueuePage() {
     return map;
   }, [types]);
 
+  /** Destino de detalhe da linha — mesmo do link Número e do card. */
+  const openRow = useCallback((row: RequestSummary) => {
+    navigateMyRequestsPath(myRequestsPath({ requestId: row.id }));
+  }, []);
+
   const columns = useMemo<DataTableColumn<RequestSummary>[]>(
     () => [
       {
         key: "number",
         header: "Número",
+        interactive: true,
         render: (row) => (
           <ActionButton
             type="button"
             title={`Abrir ${row.request_number}`}
             variant="link"
-            onClick={() =>
-              navigateMyRequestsPath(myRequestsPath({ requestId: row.id }))
-            }
+            onClick={() => openRow(row)}
           >
             {row.request_number}
           </ActionButton>
@@ -361,7 +369,7 @@ export function WorkQueuePage() {
             : "—",
       },
     ],
-    [typeNameByCode],
+    [typeNameByCode, openRow],
   );
 
   const activeSortColumn = useMemo(() => {
@@ -415,11 +423,11 @@ export function WorkQueuePage() {
         ariaLabel={`Abrir ${row.request_number}`}
         onNavigate={(event: { preventDefault(): void }) => {
           event.preventDefault();
-          navigateMyRequestsPath(myRequestsPath({ requestId: row.id }));
+          openRow(row);
         }}
       />
     ),
-    [typeNameByCode],
+    [typeNameByCode, openRow],
   );
 
   const emptyMessage =
@@ -442,6 +450,7 @@ export function WorkQueuePage() {
         rows={items}
         columns={columns}
         rowKey={(row) => row.id}
+        onRowOpen={openRow}
         loading={loading}
         error={error}
         emptyMessage={emptyMessage}

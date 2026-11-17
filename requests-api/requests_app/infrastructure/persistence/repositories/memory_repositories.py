@@ -30,6 +30,8 @@ _LIST_SORT_KEYS = {
     "status": lambda item: str(item.status or ""),
     "type_code": lambda item: str(item.type_code or ""),
     "branch": lambda item: str(item.branch_code or ""),
+    "requester": lambda item: str(item.created_by_name or ""),
+    "completed_by": lambda item: str(item.completed_by_name or ""),
 }
 
 

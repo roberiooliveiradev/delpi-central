@@ -1336,6 +1336,8 @@ declare module "@delpi/plugin-ui/index" {
   };
   export type PrcTechnicalSheetViewProps = {
     draft: Record<string, unknown> | null | undefined;
+    /** Código oficial do caso — fallback quando o draft não traz o campo. */
+    officialCode?: string | null;
     requestType?: "create" | "update";
     changedPaths?: PrcSheetChange[];
     supplierLinkChanges?: PrcSheetLinkOp[] | null;

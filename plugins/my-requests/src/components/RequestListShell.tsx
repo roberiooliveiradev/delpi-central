@@ -88,6 +88,8 @@ export type RequestListShellProps<Row> = {
   rows: Row[];
   columns: DataTableColumn<Row>[];
   rowKey: (row: Row) => string;
+  /** Clique/Enter na linha abre o detalhe (células `interactive` mantêm ação própria). */
+  onRowOpen?: (row: Row) => void;
   loading?: boolean;
   error?: string | null;
   emptyMessage: string;
@@ -142,6 +144,7 @@ export function RequestListShell<Row extends object>({
   rows,
   columns,
   rowKey,
+  onRowOpen,
   loading = false,
   error,
   emptyMessage,
@@ -276,6 +279,7 @@ export function RequestListShell<Row extends object>({
         columns={sortableColumns}
         rows={rows}
         rowKey={rowKey}
+        onRowClick={onRowOpen}
         loading={loading}
         emptyMessage={emptyMessage}
         serverSearch={{ value: searchDraft, onChange: handleSearch }}
