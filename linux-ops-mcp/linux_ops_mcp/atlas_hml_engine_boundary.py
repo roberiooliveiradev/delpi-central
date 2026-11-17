@@ -83,7 +83,7 @@ class HMLDockerGETTransport(httpx.AsyncBaseTransport):
         response = await self._upstream.handle_async_request(request)
         try:
             if (
-                response.status_code == 101
+                response.status_code != 200
                 or response.headers.get("content-encoding", "identity").lower()
                 not in ("", "identity")
             ):
