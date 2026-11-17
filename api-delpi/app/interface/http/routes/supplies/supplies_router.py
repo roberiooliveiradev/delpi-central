@@ -26,7 +26,11 @@ from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
 from app.core.responses import error_response
 from app.core.exceptions import DatabaseConnectionError
 from app.application.services.supplies.freight_impact_service import compose_freight_impact
-from app.infrastructure.persistence.totvs.supplies_repositories.freight_impact_repository import FreightImpactRepository
+from app.application.dto.financial.purchase_freight_links_request import PurchaseFreightLinksRequest
+from app.composition.financial_composer import build_get_purchase_freight_links_use_case
+from app.application.use_cases.financial.get_purchase_freight_links_use_case import (
+    DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_sql import normalize_purchase_order_branches
 from app.interface.http.routes.supplies.purchase_orders_branch_access import branches_access_error
 from app.interface.http.query_param_enums import BRANCH_CODES_QUERY
@@ -479,8 +483,10 @@ def get_supplies_freight_impact(
     date_to: str = Query(...),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_25_100"),
+    situation: str = Query("all"),
+    date_mode: str = Query("issue"),
 ):
-    """Indicador GLPI #1567. Fonte fiscal somente leitura DLP02R01."""
+    """GLPI #1567: mesma leitura e rateio dos fretes do Portal Financeiro."""
     try:
         branches = normalize_purchase_order_branches(branches=branch)
         start, end = date.fromisoformat(date_from), date.fromisoformat(date_to)
@@ -492,19 +498,45 @@ def get_supplies_freight_impact(
     if auth_error:
         return auth_error
     try:
-        rows = FreightImpactRepository().list_invoices(
-            branches=branches, date_from=date_from, date_to=date_to
-        )
+        if situation not in {"all", "normal", "above_limit", "inconsistent"}:
+            raise ValueError("Situação inválida.")
+        if date_mode not in {"issue", "entry"}:
+            raise ValueError("Tipo de período inválido.")
+
+        # O fecho do rateio precisa de TODAS as NFs de um CT-e, inclusive
+        # aquelas fora do período; o use case financeiro já garante isso.
+        # Uma consulta por filial evita truncar o consolidado silenciosamente.
+        get_links = build_get_purchase_freight_links_use_case()
+        links = []
+        for code in branches:
+            invoice_dates = (
+                {"issue_start": date_from, "issue_end": date_to}
+                if date_mode == "issue"
+                else {"entry_start": date_from, "entry_end": date_to}
+            )
+            request = PurchaseFreightLinksRequest(branch=code, **invoice_dates)
+            payload = get_links.execute(
+                request, limit=DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT
+            )
+            pagination = payload.get("pagination") or {}
+            if not pagination.get("is_complete", False):
+                raise ValueError(
+                    "Muitas notas vinculadas para analisar com segurança. "
+                    "Reduza o período ou consulte uma filial."
+                )
+            links.extend(payload.get("items") or [])
+
         result = compose_freight_impact(
-            rows, branches=branches, date_from=date_from, date_to=date_to,
-            page=page, page_size=page_size,
+            links, branches=branches, date_from=date_from, date_to=date_to,
+            page=page, page_size=page_size, situation=situation,
+            date_mode=date_mode,
         )
         return api_delpi_success(
             result,
             operation_id="get_supplies_freight_impact",
             entity="supplies_freight_impact",
             shape="collection",
-            message="Impacto do frete nacional nas compras consultado.",
+            message="Rateio de frete das compras consultado.",
         )
     except ValueError as exc:
         return error_response(str(exc), status_code=422)
