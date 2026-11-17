@@ -20,7 +20,7 @@ import {
 const PRODUCT_WITH_ROUTING = "90264302";
 const DETAIL = (code: string) =>
   `/apps/engineering/products/${code}?tab=routing`;
-const SHOTS = "artifacts/routing-contract";
+const SHOTS = "e2e/artifacts/routing-contract";
 
 async function openRoutingTab(page: Page, code: string) {
   await page.goto(DETAIL(code));
@@ -270,6 +270,9 @@ test.describe("aba Roteiro V2 — evidência visual", () => {
     });
 
     await setTheme(page, "dark");
+    await page
+      .getByRole("heading", { name: "Análise visual" })
+      .scrollIntoViewIfNeeded();
     await shot(page, "v2-visual-dark");
 
     /* Superfície do gráfico deve herdar o tema — não o fundo claro
