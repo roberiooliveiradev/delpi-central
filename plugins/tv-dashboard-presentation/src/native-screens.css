@@ -1161,6 +1161,18 @@
   box-shadow: var(--tdp-table-frame-shadow, none);
 }
 
+/* GLPI #1606 — transparência de moldura/células na TV publicada e no editor. */
+.delpi-ui-config-table--transparent-background.tdp-configurable-table,
+.delpi-ui-config-table--transparent-background .tdp-table-title,
+.delpi-ui-config-table--transparent-background .tdp-table-header,
+.delpi-ui-config-table--transparent-background .tdp-table-header-cell,
+.delpi-ui-config-table--transparent-background .tdp-table-row,
+.delpi-ui-config-table--transparent-background .tdp-table-cell,
+.delpi-ui-config-table--transparent-background .tdp-data-table th,
+.delpi-ui-config-table--transparent-background .tdp-data-table td {
+  background: transparent !important;
+}
+
 .tdp-table-title {
   flex-shrink: 0;
   font-weight: 600;
