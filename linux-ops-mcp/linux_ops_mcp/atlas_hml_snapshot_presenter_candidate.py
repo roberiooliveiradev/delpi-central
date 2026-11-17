@@ -13,10 +13,8 @@ aliases, socket permissions or network access. No executable entrypoint.
 from __future__ import annotations
 
 import json
-import os
 import re
 import socket
-import stat
 import struct
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -79,7 +77,7 @@ def _check_listener(
     if (
         type(listener) is not socket.socket
         or listener.family != socket.AF_UNIX
-        or type(expected_path) is not Path
+        or not isinstance(expected_path, Path)
         or not expected_path.is_absolute()
         or type(owner_uid) is not int or owner_uid < 0
         or (socket_gid is not None and (type(socket_gid) is not int or socket_gid < 0))
