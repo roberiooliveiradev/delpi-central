@@ -82,7 +82,10 @@ def test_create_start_allowed_actions(harness):
     )
     assert started["status"] == "in_progress"
     actions = set(started["allowed_actions"])
-    assert {"view", "return", "complete", "issue", "cancel"} <= actions
+    # `complete` has actionAlias `issue` — the UI surface lists the alias
+    # only (dedup: never both "Concluir" and "Registrar emissão").
+    assert {"view", "return", "issue", "cancel"} <= actions
+    assert "complete" not in actions
 
 
 def test_idempotency_replay_does_not_duplicate(harness):
@@ -209,4 +212,6 @@ def test_work_queue_lists_for_processor(harness):
     assert detail["journey_progress"]["current_stage_id"] == "intake"
     assert detail["capabilities"]["can_comment"] is True
     assert detail["capabilities"]["can_upload_artifact"] is True
-    assert detail["capabilities"]["can_upload_attachment"] is True
+    # Attachment manage on the detail is owner + needs_information only;
+    # a processor uploads evidence via can_upload_artifact.
+    assert detail["capabilities"]["can_upload_attachment"] is False

@@ -23,8 +23,10 @@ describe("ProcessIssuePayloadPanel structural", () => {
   it("destaca o motivo e separa ferramenta/material informados do snapshot", () => {
     const src = read(PANEL);
     expect(src).toContain("view.issueLabel");
-    expect(src).toContain("Ferramenta informada pelo operador");
-    expect(src).toContain("Material informado pelo operador");
+    // label interpola o ator do reporte: «pelo operador» (P2) ou «pelo analista» (PCP)
+    expect(src).toContain("Ferramenta informada ${auxActor}");
+    expect(src).toContain("Material informado ${auxActor}");
+    expect(src).toContain('"pelo analista" : "pelo operador"');
     expect(src).toContain("Ferramenta vinculada na operação");
     // nunca mistura reportedToolCode com toolSnapshot no mesmo campo
     expect(src).toContain("view.reportedToolCode");
@@ -74,7 +76,9 @@ describe("ProcessIssuePayloadPanel structural", () => {
     const src = read(PANEL);
     expect(src).not.toContain("transitionRequest");
     expect(src).not.toContain("ActionBar");
-    expect(src).not.toMatch(/cockpit|operator-feedback/i);
+    // «cockpit» aparece só no comentário de origem do reporte — o
+    // proibido é implementar feedback/fluxo ao operador aqui.
+    expect(src).not.toMatch(/operator-feedback|operatorFeedback/i);
   });
 });
 

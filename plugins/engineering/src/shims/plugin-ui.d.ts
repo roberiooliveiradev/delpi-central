@@ -1963,6 +1963,11 @@ declare module "@delpi/plugin-ui/index" {
       body: string,
       opts?: { idempotencyKey?: string },
     ): Promise<ConversationComment>;
+    createCommentWithAttachments(
+      requestId: string,
+      input: { body: string; files: ConversationAttachmentFile[] },
+      opts?: { idempotencyKey?: string },
+    ): Promise<ConversationCreateResult>;
     updateComment(
       requestId: string,
       commentId: string,
@@ -1990,6 +1995,18 @@ declare module "@delpi/plugin-ui/index" {
       commentId: string,
       attachmentId: string,
     ): Promise<void>;
+  };
+
+  export type ConversationAttachmentFile = {
+    file: File;
+    clientRef?: string | null;
+  };
+
+  export type ConversationCreateResult = {
+    comment: ConversationComment;
+    attachments: (ConversationAttachment & {
+      clientRef?: string | null;
+    })[];
   };
 
   export type ConversationPanelProps = {
@@ -3247,6 +3264,8 @@ declare module "@delpi/plugin-ui/index" {
   };
   export type PrcTechnicalSheetViewProps = {
     draft: Record<string, unknown> | null | undefined;
+    /** Código oficial do caso — fallback quando o draft não traz o campo. */
+    officialCode?: string | null;
     requestType?: "create" | "update";
     changedPaths?: PrcSheetChange[];
     supplierLinkChanges?: PrcSheetLinkOp[] | null;
@@ -3440,6 +3459,8 @@ declare module "@delpi/plugin-ui/index" {
   }): JSX.Element;
   /* UI-FIX-03 — rótulos/formatadores de timeline compartilhados */
   export const PRC_EVENT_LABELS: Record<string, string>;
+  export const PRC_CHANNEL_LABELS: Record<string, string>;
+  export function prcChannelLabel(channel: string | null | undefined): string;
   export function prcPersonLabel(
     subject: string | null | undefined,
     displayName?: string | null,

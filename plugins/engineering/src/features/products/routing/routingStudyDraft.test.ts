@@ -16,7 +16,6 @@ import {
   removeDraft,
   saveDraft,
   STUDY_SCHEMA_VERSION,
-  type RoutingStudyDraft,
   type StudyDraftContext,
 } from "./routingStudyDraft";
 import type { RoutingStageView } from "./routingGrouping";
