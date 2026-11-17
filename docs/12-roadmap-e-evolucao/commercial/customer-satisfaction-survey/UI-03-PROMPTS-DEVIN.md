@@ -529,3 +529,11 @@ Questionário fictício neutro (ex.: avaliação de um treinamento interno), 2 e
 | E7 | Verificador independente aprovado | Veredito sem edição |
 
 **Publicação:** se o stage ou o `main` local estiverem com mudanças de outro trabalho, usar o worktree temporário do §6.8 item 4.
+
+### 10.8 Ajustes da revisão da declaração (17/11/2026)
+
+1. **Texto que faltou:** incluir `reviewDescription` (orientação da revisão, UI-03 §3.6 — “Confira antes de enviar…”). O progresso da revisão pode reutilizar `progressLabel(done, total)`.
+2. **Foco também no resultado e na nova tentativa:** ao entrar em `result`, foco no título do `FormResultPanel`; em `retry`, foco no `FormNotice` com a mensagem (o leitor de tela precisa ouvir o erro).
+3. **Modo edição:** vindo da revisão, a etapa mostra só o primário “Voltar à revisão” (com validação) — **sem** botão Voltar para outras etapas.
+4. **Rolagem:** sem animação suave (`scrollIntoView()` padrão), respeitando quem usa movimento reduzido.
+5. **Aviso da nova tentativa:** usar o `FormNotice` existente (tom `warning`); não criar tom novo neste pacote.
