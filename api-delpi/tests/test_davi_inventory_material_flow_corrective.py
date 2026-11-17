@@ -458,7 +458,7 @@ def test_authz01_routes_keep_api_delpi_access():
         _API_ROOT
         / "app/interface/http/routes/supplies/inventory_adjustments_router.py"
     ).read_text(encoding="utf-8")
-    assert source.count("require_permission(API_DELPI_ACCESS)") == 2
+    assert source.count("require_permission(API_DELPI_ACCESS)") == 5
 
 
 def test_sql01_generic_sql_not_promoted():
