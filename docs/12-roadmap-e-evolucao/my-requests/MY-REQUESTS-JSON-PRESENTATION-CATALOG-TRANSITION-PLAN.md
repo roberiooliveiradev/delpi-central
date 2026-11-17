@@ -90,3 +90,50 @@ Risco principal: confundir JSON de UI com source of truth de autorização/tipo.
 ## 9. Execução e evidências
 
 Task proposta: `MY-REQUESTS-JSON-PRESENTATION-CATALOG-TRANSITION-01`. Executor deve produzir BASE_HEAD, IMPLEMENTATION_SHA, FINAL_MAIN_SHA, diff, testes, HML digest, screenshot, riscos, dados de disponibilidade e prova de ausência de alterações em backend/migrations/RBAC. Estado inicial: PLANNED / TEST_NOT_RUN.
+
+---
+
+## 10. Execução — `MY-REQUESTS-JSON-PRESENTATION-CATALOG-TRANSITION-01`
+
+**Artefatos implementados:**
+
+- `plugins/my-requests/src/content/requestTypeCatalog.json` —
+  catálogo versionado `{ version: 1, types: [{ code, title, description, order }] }`.
+- `plugins/my-requests/src/content/requestTypeCatalog.ts` —
+  `parseRequestTypeCatalog` (valida versão, código único, título/
+  descrição não vazios, ordenação sem ambiguidade — falha em
+  build/teste), `getRequestTypePresentation(code)`,
+  `sortRequestTypesByPresentation` e `resolveRequestTypeCardCopy`
+  (JSON primeiro; `name`/`description` da API como fallback).
+- `requestTypeLabel` passa a preferir o título do catálogo, mantendo
+  `typeName` da API e `TYPE_NAME_FALLBACKS` para códigos não
+  catalogados — coerência em Minhas solicitações, Fila, Admin e
+  banners.
+- `NewRequestPage`: cards ordenados pela `order` do JSON, copy via
+  `resolveRequestTypeCardCopy`, texto do herói atualizado; filtro por
+  `canCreateRequestType`, deep links e formulários intactos.
+- `AdminTypesPage` (somente leitura): coluna Nome exibe o título
+  amigável do catálogo quando existe. Edição segue no arquivo
+  versionado — sem botões inoperantes.
+
+**Como alterar títulos/descrições:** editar `requestTypeCatalog.json`
+no campo `title`/`description` da entrada e abrir PR/commit —
+validação roda em build/teste (`requestTypeCatalog.test.ts`).
+
+**Como adicionar uma entrada:** incluir objeto `{ code, title,
+description, order }` com `code` real do tipo operacional e `order`
+única. ATENÇÃO: uma entrada JSON não cria tipo operacional — sem
+correspondente autorizado na API ela nunca aparece como card (o
+catálogo não concede acesso nem habilita formulário).
+
+**Como remover/reordenar:** remover o objeto ou ajustar `order`;
+reordenação não afeta permissões nem workflows.
+
+**Associação com tipos operacionais:** o cruzamento é por `code`
+estável; a lista renderizada continua sendo `listRequestTypes()` +
+`canCreateRequestType` + backend AuthZ. Tipos da API sem entrada JSON
+recebem fallback dos textos da API (não são ocultados).
+
+**Limitações da fase:** copy centralizada apenas para tipos
+catalogados; CRUD administrativo, edição in-app, ícones e ajuda curta
+ficam para a fase futura do catálogo administrativo governado.

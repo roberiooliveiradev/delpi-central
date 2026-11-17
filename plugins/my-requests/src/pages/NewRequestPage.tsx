@@ -4,6 +4,11 @@ import { ActionButton } from "@delpi/plugin-ui/index";
 import { listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { requestTypeLabel } from "../content/presentationLabels";
+import {
+  resolveRequestTypeCardCopy,
+  sortRequestTypesByPresentation,
+} from "../content/requestTypeCatalog";
 import { iconForRequestType } from "../content/requestTypeIcons";
 import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
 import { PrcRequestPage } from "../features/product-registration/PrcRequestPage";
@@ -42,8 +47,10 @@ export function NewRequestPage() {
 
   const creatableTypes = useMemo(
     () =>
-      types.filter((type) =>
-        canCreateRequestType(access, type.permission_prefix, type.code),
+      sortRequestTypesByPresentation(
+        types.filter((type) =>
+          canCreateRequestType(access, type.permission_prefix, type.code),
+        ),
       ),
     [access, types],
   );
@@ -120,10 +127,11 @@ export function NewRequestPage() {
     }
     if (openMode === "specialized") {
       return (
-        <AppShell title={activeType.name}>
+        <AppShell title={requestTypeLabel(activeType.code, activeType.name)}>
           <MyRequestsSectionCard title="Formulário indisponível">
             <MyRequestsStateBanner variant="error">
-              Este tipo («{activeType.name}») ainda não tem formulário disponível
+              Este tipo («{requestTypeLabel(activeType.code, activeType.name)}»)
+              ainda não tem formulário disponível
               nesta versão. Escolha outro tipo ou fale com o administrador.
             </MyRequestsStateBanner>
             <MyRequestsFormActions>
@@ -143,7 +151,7 @@ export function NewRequestPage() {
       <MyRequestsPageHero
         eyebrow="Início / Minhas solicitações"
         title="Nova solicitação"
-        description="Escolha o tipo de solicitação para abrir o formulário guiado."
+        description="O que você precisa solicitar? Escolha uma das opções abaixo para começar."
         badge={
           creatableTypes.length
             ? `${creatableTypes.length} ${creatableTypes.length === 1 ? "tipo" : "tipos"}`
@@ -163,17 +171,17 @@ export function NewRequestPage() {
             <div className="my-requests-type-grid" role="list">
               {creatableTypes.map((type) => {
                 const Icon = iconForRequestType(type.code);
+                const copy = resolveRequestTypeCardCopy(type);
                 return (
                   <MyRequestsNavigationCard
                     key={type.code}
-                    title={type.name}
+                    title={copy.title}
                     description={
-                      type.description?.trim() ||
-                      MY_REQUESTS_HELP_TOOLTIPS.new.type
+                      copy.description || MY_REQUESTS_HELP_TOOLTIPS.new.type
                     }
                     icon={<Icon size={22} aria-hidden />}
                     onClick={() => openType(type)}
-                    aria-label={`Abrir ${type.name}`}
+                    aria-label={`Abrir ${copy.title}`}
                   />
                 );
               })}

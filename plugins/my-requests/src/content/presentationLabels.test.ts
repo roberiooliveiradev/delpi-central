@@ -95,7 +95,8 @@ describe("presentationLabels", () => {
     expect(presentationModeLabel("schema_driven")).toBe("Formulário configurável");
     expect(artifactKindLabel("invoice_pdf")).toBe("Nota fiscal — PDF");
     expect(artifactKindLabel("generic")).toBe("Outro documento");
-    expect(requestTypeLabel("invoice-issuance")).toBe("Emissão de Notas Fiscais");
+    // JSON catalog wins over technical API name; API fallback intact.
+    expect(requestTypeLabel("invoice-issuance")).toBe("Emissão de notas fiscais");
     expect(requestTypeLabel("x", "Nome da API")).toBe("Nome da API");
   });
 

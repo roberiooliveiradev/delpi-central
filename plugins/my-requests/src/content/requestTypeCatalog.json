@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "code": "raw-material-creation",
+      "title": "Criação e alteração de matéria-prima",
+      "description": "Solicite o cadastro de uma nova matéria-prima ou a atualização dos dados de uma já existente.",
+      "order": 10
+    },
+    {
+      "code": "invoice-issuance",
+      "title": "Emissão de notas fiscais",
+      "description": "Solicite a emissão de uma nota fiscal e acompanhe o andamento do pedido.",
+      "order": 20
+    }
+  ]
+}

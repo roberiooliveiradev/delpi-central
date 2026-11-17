@@ -2,6 +2,7 @@
  * Camada única de apresentação PT-BR (E20).
  * Códigos técnicos permanecem nas chamadas à API; só labels/formatters aqui.
  */
+import { getRequestTypePresentation } from "./requestTypeCatalog";
 
 const STATUS_LABELS: Record<string, string> = {
   submitted: "Enviada",
@@ -243,9 +244,11 @@ export function requestTypeLabel(
   typeCode: string | null | undefined,
   typeName?: string | null,
 ): string {
+  const code = (typeCode || "").trim();
+  const catalogTitle = getRequestTypePresentation(code)?.title;
+  if (catalogTitle) return catalogTitle;
   const name = (typeName || "").trim();
   if (name) return name;
-  const code = (typeCode || "").trim();
   return TYPE_NAME_FALLBACKS[code] || humanizeCode(code);
 }
 

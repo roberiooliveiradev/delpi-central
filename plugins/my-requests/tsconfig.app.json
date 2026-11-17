@@ -17,6 +17,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@delpi/plugin-ui": ["./src/shims/plugin-ui.d.ts"],

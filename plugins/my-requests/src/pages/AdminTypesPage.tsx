@@ -7,6 +7,7 @@ import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   branchScopeLabel,
   presentationModeLabel,
+  requestTypeLabel,
 } from "../content/presentationLabels";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
@@ -46,7 +47,11 @@ export function AdminTypesPage() {
   const columns = useMemo<DataTableColumn<RequestTypeSummary>[]>(
     () => [
       { key: "code", header: "Código", render: (row) => row.code },
-      { key: "name", header: "Nome", render: (row) => row.name },
+      {
+        key: "name",
+        header: "Nome",
+        render: (row) => requestTypeLabel(row.code, row.name),
+      },
       {
         key: "active",
         header: "Ativo",

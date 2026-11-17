@@ -1998,4 +1998,98 @@ declare module "@delpi/plugin-ui/index" {
     DataTable: <T>(props: DataTableProps<T>) => ReactElement;
     DataTableSection: <T>(props: DashboardDataTableSectionProps<T>) => ReactElement;
   };
+
+  /* — ConversationPanel (PRC-CONVERSATION FIX-03; stub de tipos do
+   * remote real — sincronizado com plugin-ui ConversationPanel.tsx) — */
+  export type ConversationComment = {
+    id: string;
+    requestId: string;
+    authorId: string | null;
+    authorName: string;
+    body: string;
+    version: number | null;
+    isMine: boolean;
+    createdAt: string;
+    updatedAt: string | null;
+    edited: boolean;
+  };
+
+  export type ConversationAttachment = {
+    id: string;
+    fileName: string;
+    mediaType: string | null;
+    sizeBytes: number | null;
+    state?: string | null;
+  };
+
+  export type ConversationAttachmentFile = {
+    file: File;
+    clientRef?: string | null;
+  };
+
+  export type ConversationCreateResult = {
+    comment: ConversationComment;
+    attachments: (ConversationAttachment & { clientRef?: string | null })[];
+  };
+
+  export type ConversationApi = {
+    listComments(
+      requestId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<ConversationComment[]>;
+    createComment(
+      requestId: string,
+      body: string,
+      opts?: { idempotencyKey?: string },
+    ): Promise<ConversationComment>;
+    createCommentWithAttachments(
+      requestId: string,
+      input: { body: string; files: ConversationAttachmentFile[] },
+      opts?: { idempotencyKey?: string },
+    ): Promise<ConversationCreateResult>;
+    updateComment(
+      requestId: string,
+      commentId: string,
+      body: string,
+      opts?: { expectedVersion?: number | null },
+    ): Promise<ConversationComment>;
+    listAttachments(
+      requestId: string,
+      commentId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<ConversationAttachment[]>;
+    uploadAttachment(
+      requestId: string,
+      commentId: string,
+      file: File,
+    ): Promise<ConversationAttachment>;
+    downloadAttachment(
+      requestId: string,
+      commentId: string,
+      attachmentId: string,
+      opts?: { signal?: AbortSignal },
+    ): Promise<Blob>;
+    deleteAttachment(
+      requestId: string,
+      commentId: string,
+      attachmentId: string,
+    ): Promise<void>;
+  };
+
+  export type ConversationPanelProps = {
+    requestId: string;
+    api: ConversationApi;
+    canComment?: boolean;
+    conversationFrozen?: boolean;
+    refreshKey?: number;
+    loadAvatar?: (userId: string, signal: AbortSignal) => Promise<Blob | null>;
+    portalScopeClassName?: string;
+    sectionTitle?: string;
+    sectionHint?: string;
+    fileAccept?: string;
+    maxFileBytes?: number;
+  };
+
+  export const ConversationPanel: ComponentType<ConversationPanelProps>;
+
 }
