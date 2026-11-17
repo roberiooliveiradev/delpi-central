@@ -195,6 +195,7 @@ def test_bad_clock_and_os_claims_are_refused_before_any_inspector():
 def test_dedicated_unix_socket_path_is_required_and_raw_alias_denied(tmp_path,monkeypatch):
     folder=tmp_path/"atlas-hml-readonly"
     folder.mkdir()
+    os.chmod(folder,0o750)
     path=folder/"inspect.sock"
     monkeypatch.setattr(probe,"_PROXY_SOCKET",path)
     with pytest.raises(probe.HMLProbeError,match="HML_PROXY_UNAVAILABLE"):
@@ -222,7 +223,7 @@ def test_proxy_symlink_world_writable_parent_and_node_denied(tmp_path,monkeypatc
         os.chmod(folder,0o777)
         with pytest.raises(probe.HMLProbeError,match="HML_PROXY_PATH_UNSAFE"):
             probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
-        os.chmod(folder,0o700)
+        os.chmod(folder,0o750)
         os.chmod(path,0o777)
         with pytest.raises(probe.HMLProbeError,match="HML_PROXY_PATH_UNSAFE"):
             probe._stat_fixed_proxy(_test_owner_uid=os.getuid(),_test_socket_gid=os.getgid())
