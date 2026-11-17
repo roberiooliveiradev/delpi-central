@@ -27,7 +27,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | D1 | `si.department.create` | `POST /admin/departments` | direct mutation | READY_FOR_IMPLEMENTATION |
 | D2 | `si.department.update` | `PUT /admin/departments/{department_id}` | direct mutation (full-replace body; `new_department_id` permite rename de PK) | READY_FOR_IMPLEMENTATION |
 | D3 | `si.department.activate` | `POST /admin/departments/{id}/activate` | activation | READY_FOR_IMPLEMENTATION |
-| D4 | `si.department.deactivate` | `POST /admin/departments/{id}/deactivate` | deactivation | NEEDS_SECURITY_DECISION (efeito em cadeia sobre indicators/metas do departamento — confirmar cascata esperada no portal) |
+| D4 | `si.department.deactivate` | `POST /admin/departments/{id}/deactivate` | deactivation | RESOLVIDO §9 → `D4_APPROVABLE` |
 | D5 | `si.department.delete` | `DELETE /admin/departments/{id}` | destructive | **W015 — BLOCKED** (não implementar nesta wave) |
 | — | reorder/hierarquia/peso | sem rota dedicada — via D2 (`display_order`, `weight_pct`) | — | coberto por D2; sem endpoint separado no owner |
 
@@ -61,7 +61,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 
 | # | Capability proposta | Owner route | Tipo | Classe |
 |---|---|---|---|---|
-| S1 | `si.settings.update` | `PUT /settings` | direct mutation (full-replace de `parameters.items` + `governance.items`) | NEEDS_SECURITY_DECISION |
+| S1 | `si.settings.update` | `PUT /settings` | direct mutation (full-replace de `parameters.items` + `governance.items`) | RESOLVIDO §9 → `S1_CONTRACT_GAP` |
 | — | weights/goals por seção | **não editáveis** via `/settings` — pesos vivem em D2/I2; metas em W012 `si.goal.*` | — | coberto por outros contratos |
 
 **Body S1** (`UpdateStrategicIndicatorsSettingsBodySchema`): `parameters.items[] {key,label,value}` + `governance.items[] {key,label,value,observation}` — replace total, não merge parcial.
@@ -99,7 +99,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | Classe | Operações |
 |---|---|
 | READY_FOR_IMPLEMENTATION (contrato completo no owner) | D1, D2, D3, I1, I2, I3, I4, C1, C2, C3 |
-| NEEDS_SECURITY_DECISION | D4 (cascata de deactivation), S1 (full-replace settings) |
+| RESOLVIDO (§9) | D4 → `D4_APPROVABLE` (flag-only, sem cascata — implementação aguarda Coordination); S1 → `S1_CONTRACT_GAP` (owner sem OCC em module_settings — pedido de contrato dedicado) |
 | NEEDS_OWNER_CONTRACT | indicator re-association; CR approve/reject/cancel/update |
 | BLOCKED (outra wave) | D5, I5 (W015); batch/import/jobs/cache (W014) |
 
@@ -136,7 +136,7 @@ Decisão: **`D4_APPROVABLE`** — contrato owner completo e paridade total com o
 
 | Dimensão | Evidência |
 |---|---|
-| Owner route | `PUT /admin/settings` com `settings.manage` |
+| Owner route | `PUT /settings` (prefixo `/strategic-indicators`) com `settings.manage` |
 | Semântica | **Full-replace** de `parameters.global` + `governance.notes` (jsonb overwrite por `setting_key`) + atualização de weights/goals de departamentos |
 | Transação/audit | Atomicidade existe: tudo em `with self.db()` + `settings_audit` por setting_key |
 | Lacuna crítica | **Sem OCC**: `module_settings` não expõe `xmin` nem versão; update é `WHERE setting_key=%s` sem precondition — check→write race para dois administradores (portal + DAVI) |
