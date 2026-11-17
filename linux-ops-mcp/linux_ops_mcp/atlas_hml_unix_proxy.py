@@ -272,7 +272,23 @@ def serve_one_prebound(
         raise HMLUnixProxyError("HML_PROXY_UNAVAILABLE") from None
     finally:
         if client is not None:
+            # Fail-closed rejected requests can still have unread input.
+            # A bounded local drain after SHUT_WR avoids Linux resetting the
+            # connection before the sanitized refusal can reach the client.
+            # This never forwards data upstream and has a strict 16 KiB cap.
             try:
-                client.close()
+                client.shutdown(socket.SHUT_WR)
+                client.settimeout(0.05)
+                for _ in range(4):
+                    try:
+                        if not client.recv(4096):
+                            break
+                    except (OSError, TimeoutError):
+                        break
             except OSError:
                 pass
+            finally:
+                try:
+                    client.close()
+                except OSError:
+                    pass
