@@ -75,8 +75,11 @@ test.describe("aba Roteiro V2 — evidência visual", () => {
     const pageErrors = trackPageErrors(page);
     await openRoutingTab(page, PRODUCT_WITH_ROUTING);
 
-    /* V2: sem navegação interna — todas as seções no scroll. */
-    await expect(page.getByRole("tab")).toHaveCount(0);
+    /* V2: navegação interna da aba removida (Operações|Balanceamento|
+     * Análise visual). As tabs da ficha do produto são preservadas. */
+    for (const legacy of ["Operações", "Balanceamento", "Análise visual"]) {
+      await expect(page.getByRole("tab", { name: legacy })).toHaveCount(0);
+    }
     await expect(
       page.getByRole("heading", { name: "Operações do estágio" }),
     ).toBeVisible();
@@ -134,7 +137,9 @@ test.describe("aba Roteiro V2 — evidência visual", () => {
 
     /* Novo cenário preserva o anterior — A e B identificáveis. */
     await page.getByRole("button", { name: "Novo cenário" }).click();
-    await expect(page.getByText("Cenário B")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Cenário B" }),
+    ).toBeVisible();
     await page.locator("#routing-demand").fill("700");
     await page
       .getByRole("button", { name: "Calcular análise rápida" })
@@ -168,7 +173,9 @@ test.describe("aba Roteiro V2 — evidência visual", () => {
     await page
       .getByRole("button", { name: "Configurar postos" })
       .click();
-    await expect(page.getByText(/DRAFT_LOCAL/)).toBeVisible();
+    await expect(
+      page.getByText(/Configuração hipotética — DRAFT_LOCAL\/SIMULATION/),
+    ).toBeVisible();
     await shot(page, "v2-posts-dark-empty");
 
     await page.getByRole("button", { name: "Adicionar posto" }).click();
