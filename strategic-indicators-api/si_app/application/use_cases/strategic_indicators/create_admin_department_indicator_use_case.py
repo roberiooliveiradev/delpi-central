@@ -39,6 +39,8 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         department_id: str,
         body: dict,
         actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if not department_id.strip():
             raise ValueError("department_id é obrigatório.")
@@ -92,4 +94,6 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             branch_value_aggregation=branch_value_aggregation,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

@@ -21,4 +21,5 @@ class AddStrategicIndicatorsChangeRequestCommentUseCase:
             change_request_id=request.change_request_id,
             comment_text=request.comment_text.strip(),
             actor_user_id=request.actor_user_id,
+            idempotency_key=request.idempotency_key,
         )

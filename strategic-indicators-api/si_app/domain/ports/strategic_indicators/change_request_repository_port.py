@@ -5,6 +5,14 @@ from abc import ABC, abstractmethod
 
 class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
     @abstractmethod
+    def get_change_request(
+        self,
+        *,
+        change_request_id: str,
+    ) -> dict | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_change_requests(
         self,
         *,
@@ -22,6 +30,7 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         target_block: str,
         proposed_payload: dict,
         actor_user_id: str | None,
+        idempotency_key: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -32,6 +41,7 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         change_request_id: str,
         comment_text: str,
         actor_user_id: str | None,
+        idempotency_key: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -41,5 +51,6 @@ class StrategicIndicatorsChangeRequestRepositoryPort(ABC):
         *,
         change_request_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
     ) -> dict:
         raise NotImplementedError

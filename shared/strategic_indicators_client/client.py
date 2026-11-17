@@ -679,10 +679,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        idempotency_key: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/change-requests",
+            params={
+                "idempotency_key": idempotency_key,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -693,10 +701,18 @@ class StrategicIndicatorsApiClient:
         authorization: str,
         change_request_id: str,
         body: Mapping[str, Any],
+        idempotency_key: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/change-requests/{change_request_id}/comments",
+            params={
+                "idempotency_key": idempotency_key,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -706,10 +722,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         change_request_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/change-requests/{change_request_id}/submit",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -718,10 +742,16 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             "/strategic-indicators/admin/departments",
+            params={
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -732,10 +762,16 @@ class StrategicIndicatorsApiClient:
         authorization: str,
         department_id: str,
         body: Mapping[str, Any],
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "PUT",
             f"/strategic-indicators/admin/departments/{department_id}",
+            params={
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -745,10 +781,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         department_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/admin/departments/{department_id}/activate",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -757,10 +801,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         department_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/admin/departments/{department_id}/deactivate",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -782,10 +834,16 @@ class StrategicIndicatorsApiClient:
         authorization: str,
         department_id: str,
         body: Mapping[str, Any],
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/admin/departments/{department_id}/indicators",
+            params={
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -796,10 +854,16 @@ class StrategicIndicatorsApiClient:
         authorization: str,
         indicator_id: str,
         body: Mapping[str, Any],
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "PUT",
             f"/strategic-indicators/admin/indicators/{indicator_id}",
+            params={
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             json_body=dict(body),
             authorization=authorization,
         )
@@ -809,10 +873,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         indicator_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/admin/indicators/{indicator_id}/activate",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -821,10 +893,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         indicator_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "POST",
             f"/strategic-indicators/admin/indicators/{indicator_id}/deactivate",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 

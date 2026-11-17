@@ -56,6 +56,9 @@ from si_app.application.use_cases.strategic_indicators.update_settings_use_case 
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
+from si_app.application.services.strategic_indicators.admin_write_conflict_error import (
+    StrategicIndicatorsAdminConflictError,
+)
 from si_app.application.services.strategic_indicators.indicator_goal_conflict_error import (
     StrategicIndicatorsGoalConflictError,
 )
@@ -447,7 +450,11 @@ def list_change_requests(
 
 @router.post("/change-requests")
 @require_permission("strategic-indicators.settings.manage")
-def create_change_request(body: CreateChangeRequestBody, request: Request):
+def create_change_request(
+    body: CreateChangeRequestBody,
+    request: Request,
+    idempotency_key: str | None = Query(None, max_length=120),
+):
     try:
         actor_user_id = _extract_actor(request)
 
@@ -459,19 +466,26 @@ def create_change_request(body: CreateChangeRequestBody, request: Request):
                 target_block=body.target_block,
                 proposed_payload=body.proposed_payload,
                 actor_user_id=actor_user_id,
-    
+                idempotency_key=idempotency_key,
             )
         )
         return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/change-requests/{change_request_id}/comments")
 @require_permission("strategic-indicators.settings.manage")
-def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
+def add_comment(
+    change_request_id: str,
+    body: AddCommentBody,
+    request: Request,
+    idempotency_key: str | None = Query(None, max_length=120),
+):
     try:
         actor_user_id = _extract_actor(request)
 
@@ -481,25 +495,39 @@ def add_comment(change_request_id: str, body: AddCommentBody, request: Request):
                 change_request_id=change_request_id,
                 comment_text=body.comment_text,
                 actor_user_id=actor_user_id,
-    
+                idempotency_key=idempotency_key,
             )
         )
         return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/change-requests/{change_request_id}/submit")
 @require_permission("strategic-indicators.settings.manage")
-def submit_change_request(change_request_id: str, request: Request):
+def submit_change_request(
+    change_request_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
 
         use_case = build_submit_strategic_indicators_change_request_use_case()
-        result = use_case.execute(change_request_id, actor_user_id)
+        result = use_case.execute(
+            change_request_id,
+            actor_user_id,
+            expected_xmin=expected_xmin,
+        )
         return result
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -519,17 +547,29 @@ def list_admin_departments():
 
 @router.post("/admin/departments")
 @require_permission("strategic-indicators.settings.manage")
-def create_admin_department(body: CreateDepartmentBodySchema, request: Request):
+def create_admin_department(
+    body: CreateDepartmentBodySchema,
+    request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_create_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -545,18 +585,28 @@ def update_admin_department(
     department_id: str,
     body: UpdateDepartmentBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_update_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
+                expected_row_xmin=body.expected_row_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -568,17 +618,31 @@ def update_admin_department(
 
 @router.post("/admin/departments/{department_id}/deactivate")
 @require_permission("strategic-indicators.settings.manage")
-def deactivate_admin_department(department_id: str, request: Request):
+def deactivate_admin_department(
+    department_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_deactivate_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
+                expected_xmin=expected_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -629,18 +693,27 @@ def create_admin_department_indicator(
     department_id: str,
     body: CreateDepartmentIndicatorBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_create_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -656,18 +729,28 @@ def update_admin_department_indicator(
     indicator_id: str,
     body: UpdateDepartmentIndicatorBodySchema,
     request: Request,
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_update_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 body=body.model_dump(),
                 actor_user_id=actor_user_id,
+                expected_row_xmin=body.expected_row_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -679,17 +762,30 @@ def update_admin_department_indicator(
 
 @router.post("/admin/indicators/{indicator_id}/activate")
 @require_permission("strategic-indicators.settings.manage")
-def activate_admin_department_indicator(indicator_id: str, request: Request):
+def activate_admin_department_indicator(
+    indicator_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_activate_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-    
+                expected_xmin=expected_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -701,17 +797,30 @@ def activate_admin_department_indicator(indicator_id: str, request: Request):
 
 @router.post("/admin/indicators/{indicator_id}/deactivate")
 @require_permission("strategic-indicators.settings.manage")
-def deactivate_admin_department_indicator(indicator_id: str, request: Request):
+def deactivate_admin_department_indicator(
+    indicator_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_deactivate_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-    
+                expected_xmin=expected_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -1633,17 +1742,31 @@ def get_strategic_indicators_trends(
 
 @router.post("/admin/departments/{department_id}/activate")
 @require_permission("strategic-indicators.settings.manage")
-def activate_admin_department(department_id: str, request: Request):
+def activate_admin_department(
+    department_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_activate_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
+                expected_xmin=expected_xmin,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
     
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:

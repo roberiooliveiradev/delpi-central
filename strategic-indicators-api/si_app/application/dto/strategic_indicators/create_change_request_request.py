@@ -9,3 +9,4 @@ class CreateStrategicIndicatorsChangeRequestRequest:
     target_block: str
     proposed_payload: dict[str, Any]
     actor_user_id: str | None = None
+    idempotency_key: str | None = None

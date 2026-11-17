@@ -37,4 +37,5 @@ class CreateStrategicIndicatorsChangeRequestUseCase:
             target_block=request.target_block,
             proposed_payload=request.proposed_payload,
             actor_user_id=request.actor_user_id,
+            idempotency_key=request.idempotency_key,
         )

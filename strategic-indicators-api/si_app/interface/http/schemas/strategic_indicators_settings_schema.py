@@ -87,6 +87,10 @@ class UpdateDepartmentBodySchema(BaseModel):
     aggregation_mode: str
     is_active: bool = True
     display_order: int = 0
+    # Optional optimistic-concurrency precondition: ``row_xmin`` captured
+    # from a department list read. When sent and the row changed since,
+    # the update is refused with 409.
+    expected_row_xmin: Optional[str] = None
 
 
 # =========================================================
@@ -138,6 +142,10 @@ class UpdateDepartmentIndicatorBodySchema(BaseModel):
     value_decimals: int = Field(default=2, ge=0, le=6)
     is_active: bool = True
     display_order: int = 0
+    # Optional optimistic-concurrency precondition: ``row_xmin`` captured
+    # from an indicator list read. When sent and the row changed since,
+    # the update is refused with 409.
+    expected_row_xmin: Optional[str] = None
 
 
 # =========================================================

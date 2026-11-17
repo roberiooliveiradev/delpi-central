@@ -17,6 +17,9 @@ class ActivateStrategicIndicatorsAdminDepartmentUseCase:
         *,
         department_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if not department_id.strip():
             raise ValueError("department_id é obrigatório.")
@@ -24,4 +27,7 @@ class ActivateStrategicIndicatorsAdminDepartmentUseCase:
         return self._repository.activate_department(
             department_id=department_id.strip(),
             actor_user_id=actor_user_id,
+            expected_xmin=expected_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

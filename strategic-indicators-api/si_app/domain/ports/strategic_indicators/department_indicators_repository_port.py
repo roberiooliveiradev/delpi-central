@@ -31,6 +31,8 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         branch_value_aggregation: str = "auto",
         display_order: int,
         actor_user_id: str | None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -53,6 +55,9 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         is_active: bool,
         display_order: int,
         actor_user_id: str | None,
+        expected_row_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -62,6 +67,9 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 
@@ -71,6 +79,9 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 

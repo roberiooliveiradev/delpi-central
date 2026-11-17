@@ -39,6 +39,9 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         indicator_id: str,
         body: dict,
         actor_user_id: str | None,
+        expected_row_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if not indicator_id.strip():
             raise ValueError("indicator_id é obrigatório.")
@@ -92,4 +95,7 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             is_active=is_active,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,
+            expected_row_xmin=expected_row_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )
