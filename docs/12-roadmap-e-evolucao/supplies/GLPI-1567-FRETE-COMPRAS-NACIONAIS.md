@@ -30,4 +30,14 @@ Solicitação de Joici Motta: percentual geral dos fretes nacionais sobre todas 
 
 ## Situação
 
-Código proposto em branch isolada; requer CI, QA fiscal, homologação com Joici e deploy deliberado. **Não marcar o chamado como solucionado antes de validação.**
+Código da PR #225 integrado à `main` em 17/11/2026. A publicação em produção e a homologação dos resultados ainda precisam ser confirmadas. **Não marcar o chamado como solucionado antes da validação fiscal e funcional com Joici.**
+
+## Ajuda para o usuário (17/11/2026)
+
+- Novo tópico **Frete sobre compras** em **Portal Suprimentos → Ajuda**, incluído no índice do manual, com atalho clicável para o indicador e entrada em "Quero… → vá em…" e no mapa das áreas.
+- Conteúdo em linguagem de negócio: caminho de acesso, filtros de unidade e emissão, período máximo, origem dos valores, definição do percentual geral, cálculo individual e evolução mensal, com exemplo de R$ 100.000 em compras e R$ 2.000 de frete = **2%**.
+- Explicações de casos que geram dúvidas: notas sem frete vinculado não significam transporte gratuito; notas sem base válida são exibidas, mas não entram na média consolidada; leitura do período e diferença entre custo no Protheus e total impresso da NF.
+- Perguntas frequentes específicas, incluindo acesso, resultados vazios e números divergentes.
+- Teste estrutural incluído em `plugins/supplies/src/features/help/userManual.structural.test.ts` para proteger a presença do guia, da fórmula, do exemplo e do link.
+- **Escopo da alteração:** documentação/ajuda do microfrontend `supplies`, sem mudanças de cálculo, API ou banco de dados.
+- **Pendente:** execução de `npm run ci` em `plugins/supplies`, revisão da PR de ajuda, publicação do microfrontend e validação com a solicitante.
