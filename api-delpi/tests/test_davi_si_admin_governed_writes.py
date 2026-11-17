@@ -97,6 +97,32 @@ class FakeSiClient:
         self.idem: dict[str, dict] = {}
         self.writes: list[str] = []
         self._xmin = 200
+        self.goals = [
+            {
+                "goal_id": "g-1",
+                "indicator_id": "ind-1",
+                "department_id": "fin",
+                "goal_year": 2026,
+                "is_active": True,
+            }
+        ]
+        self.settings = {
+            "parameters": {
+                "items": [
+                    {"key": "p1", "label": "P1", "value": "10"},
+                    {"key": "p2", "label": "P2", "value": "20"},
+                ]
+            },
+            "governance": {
+                "items": [
+                    {"key": "g1", "label": "G1", "value": "v", "observation": "o"},
+                ]
+            },
+            "versions": {
+                "parameters.global": "300",
+                "governance.notes": "301",
+            },
+        }
 
     def _check(self, authorization: str) -> None:
         if authorization == AUTH_DENIED:
@@ -169,6 +195,66 @@ class FakeSiClient:
             raise StrategicIndicatorsApiError("conflict", status_code=409)
         row["is_active"] = True
         return dict(self._bump(row))
+
+    def deactivate_user_admin_department(
+        self, *, authorization, department_id, expected_xmin=None, **kw
+    ):
+        self._check(authorization)
+        self.writes.append("dept.deactivate")
+        row = self.depts.get(department_id)
+        if row is None or row["row_xmin"] != expected_xmin:
+            raise StrategicIndicatorsApiError("conflict", status_code=409)
+        row["is_active"] = False
+        return dict(self._bump(row))
+
+    # settings
+    def get_user_settings(self, *, authorization: str):
+        self._check(authorization)
+        return {
+            "parameters": {"items": [dict(i) for i in self.settings["parameters"]["items"]]},
+            "governance": {"items": [dict(i) for i in self.settings["governance"]["items"]]},
+            "meta": {"versions": dict(self.settings["versions"])},
+        }
+
+    def update_user_settings(
+        self,
+        *,
+        authorization,
+        body,
+        expected_parameters_xmin=None,
+        expected_governance_xmin=None,
+    ):
+        self._check(authorization)
+        self.writes.append("settings.update")
+        if (
+            self.settings["versions"]["parameters.global"] != expected_parameters_xmin
+            or self.settings["versions"]["governance.notes"] != expected_governance_xmin
+        ):
+            raise StrategicIndicatorsApiError("conflict", status_code=409)
+        self.settings["parameters"] = {"items": [dict(i) for i in body["parameters"]["items"]]}
+        self.settings["governance"] = {"items": [dict(i) for i in body["governance"]["items"]]}
+        self.settings["versions"]["parameters.global"] = str(self._xmin + 1)
+        self.settings["versions"]["governance.notes"] = str(self._xmin + 2)
+        self._xmin += 2
+        return {"message": "ok"}
+
+    def list_user_indicator_goals(
+        self,
+        *,
+        authorization: str,
+        indicator_id=None,
+        goal_year=None,
+        department_id=None,
+        active_only=None,
+    ):
+        self._check(authorization)
+        items = [
+            dict(g)
+            for g in self.goals
+            if (department_id is None or g["department_id"] == department_id)
+            and (active_only is not True or g.get("is_active", True))
+        ]
+        return {"items": items}
 
     # indicator writes
     def create_user_admin_department_indicator(
@@ -309,18 +395,18 @@ def _act(orch, cap, prep, auth=AUTH_OK, confirm=True):
 
 # --------------------------------------------------------------- gate
 def test_capability_set():
-    assert len(SI_ADMIN_WRITE_CAPABILITIES) == 10
-    assert "si.department.deactivate" not in SI_ADMIN_WRITE_CAPABILITIES
-    assert "si.settings.update" not in SI_ADMIN_WRITE_CAPABILITIES
+    assert len(SI_ADMIN_WRITE_CAPABILITIES) == 12
+    assert "si.department.delete" not in SI_ADMIN_WRITE_CAPABILITIES
+    assert "si.indicator.delete" not in SI_ADMIN_WRITE_CAPABILITIES
 
 
 def test_unapproved_capability_rejected(orch):
     o, _c = orch
     with pytest.raises(GovernedWriteError) as ei:
-        _prepare(o, "si.settings.update", {})
+        _prepare(o, "si.department.delete", {"department_id": "fin"})
     assert ei.value.code == CAPABILITY_NOT_ALLOWED
     with pytest.raises(GovernedWriteError) as ei:
-        _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+        _prepare(o, "si.config.import", {})
     assert ei.value.code == CAPABILITY_NOT_ALLOWED
 
 
@@ -562,3 +648,166 @@ def test_cr_comment_stale_state(orch):
     c.crs["cr-1"]["status"] = "submitted"  # concurrent submit
     with pytest.raises(GovernedWriteError):
         _act(o, "si.change_request.submit", prep)
+
+
+# ----------------------------------------------------------- D4
+def test_dept_deactivate_full_cycle(orch):
+    o, c = orch
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    assert c.writes == []  # PREPARE non-mutating
+    impact = prep["consequential_impact"]
+    assert impact["reversible"] is True
+    assert impact["active_indicators"] == ["ind-1"]
+    assert impact["current_goal_count"] == 1
+    res = _act(o, "si.department.deactivate", prep)
+    assert res["data"]["department"]["is_active"] is False
+
+
+def test_dept_deactivate_already_inactive(orch):
+    o, c = orch
+    c.depts["fin"]["is_active"] = False
+    with pytest.raises(GovernedWriteError) as ei:
+        _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    assert ei.value.status_code == 409
+
+
+def test_dept_deactivate_no_dependents(orch):
+    o, c = orch
+    c.inds["ind-1"]["is_active"] = False
+    c.goals.clear()
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    impact = prep["consequential_impact"]
+    assert impact["active_indicators"] == []
+    assert impact["current_goals"] == []
+    res = _act(o, "si.department.deactivate", prep)
+    assert res["data"]["department"]["is_active"] is False
+
+
+def test_dept_deactivate_no_cascade(orch):
+    o, c = orch
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    _act(o, "si.department.deactivate", prep)
+    assert c.inds["ind-1"]["is_active"] is True  # flag unchanged
+    assert c.goals[0]["is_active"] is True
+
+
+def test_dept_deactivate_stale_occ(orch):
+    o, c = orch
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    c.depts["fin"]["row_xmin"] = "999"
+    with pytest.raises(GovernedWriteError):
+        _act(o, "si.department.deactivate", prep)
+
+
+def test_dept_deactivate_no_confirm_rejected(orch):
+    o, _c = orch
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    with pytest.raises(GovernedWriteError) as ei:
+        _act(o, "si.department.deactivate", prep, confirm=False)
+    assert ei.value.code == CONFIRMATION_REQUIRED
+
+
+def test_dept_deactivate_reactivate_symmetry(orch):
+    o, c = orch
+    prep = _prepare(o, "si.department.deactivate", {"department_id": "fin"})
+    _act(o, "si.department.deactivate", prep)
+    prep2 = _prepare(o, "si.department.activate", {"department_id": "fin"})
+    res = _act(o, "si.department.activate", prep2)
+    assert res["data"]["department"]["is_active"] is True
+
+
+# ----------------------------------------------------------- S1
+def _settings_args():
+    return {
+        "parameters": {
+            "items": [
+                {"key": "p1", "label": "P1", "value": "10"},
+                {"key": "p3", "label": "P3", "value": "30"},
+            ]
+        },
+        "governance": {
+            "items": [
+                {"key": "g1", "label": "G1", "value": "v2", "observation": "o"},
+            ]
+        },
+    }
+
+
+def test_settings_update_full_cycle_and_diff(orch):
+    o, c = orch
+    prep = _prepare(o, "si.settings.update", _settings_args())
+    assert c.writes == []
+    impact = prep["consequential_impact"]
+    assert impact["parameters"]["preserved"] == ["p1"]
+    assert impact["parameters"]["added"] == ["p3"]
+    assert impact["parameters"]["removed"] == ["p2"]  # implicit removal
+    assert impact["governance"]["modified"] == ["g1"]
+    assert impact["implicit_removals"] == ["p2"]
+    res = _act(o, "si.settings.update", prep)
+    keys = {i["key"] for i in c.settings["parameters"]["items"]}
+    assert keys == {"p1", "p3"}
+    assert res["data"]["settings"]["parameters"]["items"] == \
+        _settings_args()["parameters"]["items"]
+
+
+def test_settings_update_stale_version_rejected(orch):
+    o, c = orch
+    prep = _prepare(o, "si.settings.update", _settings_args())
+    c.settings["versions"]["parameters.global"] = "999"  # concurrent write
+    with pytest.raises(GovernedWriteError):
+        _act(o, "si.settings.update", prep)
+
+
+def test_settings_update_concurrent_item_change_rejected(orch):
+    o, c = orch
+    prep = _prepare(o, "si.settings.update", _settings_args())
+    # Simulate portal write between PREPARE and ACT: payload changes AND
+    # version bumps — fingerprint + xmin both detect it.
+    c.settings["governance"]["items"].append(
+        {"key": "g9", "label": "G9", "value": "x", "observation": "o"}
+    )
+    with pytest.raises(GovernedWriteError):
+        _act(o, "si.settings.update", prep)
+
+
+def test_settings_update_requires_complete_blocks(orch):
+    o, _c = orch
+    with pytest.raises(GovernedWriteError) as ei:
+        _prepare(o, "si.settings.update", {"parameters": {"items": []}})
+    assert ei.value.code == VALIDATION
+    with pytest.raises(GovernedWriteError):
+        _prepare(o, "si.settings.update",
+                 {"parameters": {"items": [{"label": "x"}]},
+                  "governance": {"items": []}})
+
+
+def test_settings_update_missing_versions_fail_closed(orch):
+    o, c = orch
+    c.settings["versions"] = {}
+    with pytest.raises(GovernedWriteError) as ei:
+        _prepare(o, "si.settings.update", _settings_args())
+    assert ei.value.status_code == 502
+
+
+def test_settings_update_no_confirm_rejected(orch):
+    o, _c = orch
+    prep = _prepare(o, "si.settings.update", _settings_args())
+    with pytest.raises(GovernedWriteError) as ei:
+        _act(o, "si.settings.update", prep, confirm=False)
+    assert ei.value.code == CONFIRMATION_REQUIRED
+
+
+def test_settings_update_auth_denied(orch):
+    o, _c = orch
+    with pytest.raises(GovernedWriteError) as ei:
+        _prepare(o, "si.settings.update", _settings_args(), auth=AUTH_DENIED)
+    assert ei.value.code == FORBIDDEN
+
+
+def test_settings_update_single_use(orch):
+    o, c = orch
+    prep = _prepare(o, "si.settings.update", _settings_args())
+    _act(o, "si.settings.update", prep)
+    with pytest.raises(GovernedWriteError):
+        _act(o, "si.settings.update", prep)
+    assert c.writes.count("settings.update") == 1

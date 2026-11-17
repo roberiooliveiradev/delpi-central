@@ -117,6 +117,56 @@ WRITE_CAPABILITY_ARG_SCHEMAS: dict[str, dict[str, Any]] = {
     "si.department.activate": _schema(
         {"department_id": _STR}, ["department_id"]
     ),
+    "si.department.deactivate": _schema(
+        {"department_id": _STR}, ["department_id"]
+    ),
+    # ---- W013-ACT settings (full-replace) -----------------------------
+    "si.settings.update": _schema(
+        {
+            "parameters": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["items"],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["key", "label", "value"],
+                            "properties": {
+                                "key": _STR,
+                                "label": _STR,
+                                "value": _STR,
+                            },
+                        },
+                    }
+                },
+            },
+            "governance": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["items"],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["key", "label", "value"],
+                            "properties": {
+                                "key": _STR,
+                                "label": _STR,
+                                "value": _STR,
+                                "observation": _STR,
+                            },
+                        },
+                    }
+                },
+            },
+        },
+        ["parameters", "governance"],
+    ),
     # ---- W013-ACT indicators ------------------------------------------
     "si.indicator.create": _schema(
         {"department_id": _STR, "indicator_id": _STR, **_IND_FIELDS},
@@ -179,6 +229,8 @@ WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
         ("si.department.create", "department", "Create a department."),
         ("si.department.update", "department", "Update an existing department."),
         ("si.department.activate", "department", "Activate a department."),
+        ("si.department.deactivate", "department", "Deactivate a department (excludes it from IGD/tree aggregates; reversible)."),
+        ("si.settings.update", "module_settings", "Full-replace of parameters.global + governance.notes; omitted items are removed."),
         ("si.indicator.create", "department_indicator", "Create an indicator in a department."),
         ("si.indicator.update", "department_indicator", "Update an existing indicator."),
         ("si.indicator.activate", "department_indicator", "Activate an indicator."),

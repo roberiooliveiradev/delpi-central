@@ -577,6 +577,7 @@ def create_mcp_server() -> MCPServer:
             "capabilities: si.goal.create, si.goal.update, "
             "si.goal.activate, si.goal.deactivate, si.department.create, "
             "si.department.update, si.department.activate, "
+            "si.department.deactivate, si.settings.update, "
             "si.indicator.create, si.indicator.update, "
             "si.indicator.activate, si.indicator.deactivate, "
             "si.change_request.create, si.change_request.comment, "

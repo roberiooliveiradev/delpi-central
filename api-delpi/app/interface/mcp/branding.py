@@ -36,7 +36,7 @@ DAVI_MCP_INSTRUCTIONS = (
     "All DELPI READ needs use get_context to select a capability, then "
     "read/analyze for data or knowledge for governed documentation. "
     "Approved write requests (si.goal.*/si.department.*/si.indicator.*/"
-    "si.change_request.* only) go through execute: run "
+    "si.change_request.*/si.settings.update only) go through execute: run "
     "PREPARE, present the exact diff and impacts, and ACT only after the "
     "user explicitly confirms THAT proposal in a later message — the "
     "initial write request is never itself confirmation and "

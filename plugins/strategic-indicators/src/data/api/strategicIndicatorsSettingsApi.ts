@@ -45,8 +45,20 @@ export async function fetchStrategicIndicatorsSettings(
 export async function updateStrategicIndicatorsSettings(
   payload: StrategicIndicatorsSettingsUpdateRequest,
   getAccessToken?: GetToken,
+  expectedVersions?: Record<string, string>,
 ): Promise<{ message: string }> {
-  const response = await fetch(`${BASE_URL}/settings`, {
+  const query = new URLSearchParams();
+  const parametersXmin = expectedVersions?.["parameters.global"];
+  const governanceXmin = expectedVersions?.["governance.notes"];
+  if (parametersXmin) {
+    query.set("expected_parameters_xmin", parametersXmin);
+  }
+  if (governanceXmin) {
+    query.set("expected_governance_xmin", governanceXmin);
+  }
+  const qs = query.toString();
+  const suffix = qs ? `?${qs}` : "";
+  const response = await fetch(`${BASE_URL}/settings${suffix}`, {
     method: "PUT",
     headers: buildHeaders(getAccessToken),
     body: JSON.stringify(payload),

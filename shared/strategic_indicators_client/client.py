@@ -666,10 +666,16 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         body: Mapping[str, Any],
+        expected_parameters_xmin: str | None = None,
+        expected_governance_xmin: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "PUT",
             "/strategic-indicators/settings",
+            params={
+                "expected_parameters_xmin": expected_parameters_xmin,
+                "expected_governance_xmin": expected_governance_xmin,
+            },
             json_body=dict(body),
             authorization=authorization,
         )

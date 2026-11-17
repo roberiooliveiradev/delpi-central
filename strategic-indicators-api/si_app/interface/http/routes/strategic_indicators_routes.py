@@ -368,6 +368,7 @@ def get_strategic_indicators_settings():
                 "source": result.meta.source,
                 "updated_at": result.meta.updated_at,
                 "updated_by_email": result.meta.updated_by_email,
+                "versions": result.meta.versions or {},
             },
         }
     except Exception as exc:
@@ -382,15 +383,26 @@ def get_strategic_indicators_settings():
 async def update_strategic_indicators_settings(
     body: UpdateStrategicIndicatorsSettingsBodySchema,
     request: Request,
+    expected_parameters_xmin: str | None = Query(None),
+    expected_governance_xmin: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+
+        expected_versions = {
+            key: value
+            for key, value in (
+                ("parameters.global", expected_parameters_xmin),
+                ("governance.notes", expected_governance_xmin),
+            )
+            if value
+        }
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
             parameters=body.parameters.model_dump(),
             governance=body.governance.model_dump(),
             actor_user_id=actor_user_id,
-
+            expected_versions=expected_versions or None,
         )
 
         use_case = build_update_strategic_indicators_settings_use_case()
@@ -398,6 +410,8 @@ async def update_strategic_indicators_settings(
 
         return _invalidate_read_cache_after_mutation(result)
 
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except StrategicIndicatorsSettingsValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:

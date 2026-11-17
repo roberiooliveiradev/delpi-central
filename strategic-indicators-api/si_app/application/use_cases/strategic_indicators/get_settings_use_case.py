@@ -26,5 +26,6 @@ class GetStrategicIndicatorsSettingsUseCase:
                 source=meta.get("source", "postgres-plugins"),
                 updated_at=meta.get("updated_at"),
                 updated_by_email=meta.get("updated_by_email"),
+                versions=meta.get("versions"),
             ),
         )

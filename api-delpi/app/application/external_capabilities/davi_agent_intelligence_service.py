@@ -109,9 +109,9 @@ class DaviAgentIntelligenceService:
             "version": cls.version(),
             "read_only": False,
             "write_surface": (
-                "BOUNDED_GOVERNED — writes only via execute for approved "
+                "BOUNDED_GOVERNED — execute only approved "
                 "capabilities (si.goal.*/si.department.*/si.indicator.*/"
-                "si.change_request.* — PREPARE/ACT+confirm, owner "
+                "si.change_request.*/si.settings.update — PREPARE/ACT+confirm, owner "
                 "AuthZ + OCC). Rest NOT_EXPOSED."
             ),
             "authority": (

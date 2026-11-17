@@ -5,6 +5,9 @@ import json
 from si_app.domain.ports.strategic_indicators.settings_repository_port import (
     StrategicIndicatorsSettingsRepositoryPort,
 )
+from si_app.application.services.strategic_indicators.admin_write_conflict_error import (
+    StrategicIndicatorsAdminConflictError,
+)
 from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
@@ -79,17 +82,22 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 "source": "postgres-plugins",
                 "updated_at": latest_updated_at.isoformat() if latest_updated_at else None,
                 "updated_by_email": latest_updated_by_email,
+                "versions": {
+                    row["setting_key"]: row.get("row_xmin")
+                    for row in settings_map["_meta_rows"]
+                },
             },
         }
 
     def update_settings(
         self,
         *,
-        weights: dict,
-        goals: dict,
+        weights: dict | None = None,
+        goals: dict | None = None,
         parameters: dict,
         governance: dict,
         actor_user_id: str | None,
+        expected_versions: dict[str, str] | None = None,
     ) -> dict:
         from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
             PostgresStrategicIndicatorsSettingsAuditRepository,
@@ -112,17 +120,30 @@ class PostgresStrategicIndicatorsSettingsRepository(
             WHERE setting_key = %s
         """
 
+        update_settings_occ_query = """
+            UPDATE strategic_indicators.module_settings
+            SET
+                payload_json = %s::jsonb,
+                updated_by_user_id = %s,
+                updated_by_email = %s,
+                updated_at = NOW()
+            WHERE setting_key = %s
+              AND xmin::text = %s
+            RETURNING setting_key
+        """
+
         try:
             with self.db():
                 audit_repository = PostgresStrategicIndicatorsSettingsAuditRepository(
                     self.connection
                 )
-                self._update_departments_weights_and_goals(
-                    weights=weights,
-                    goals=goals,
-                    actor_user_id=actor_user_id,
-                    audit_repository=audit_repository,
-                )
+                if weights is not None or goals is not None:
+                    self._update_departments_weights_and_goals(
+                        weights=weights or {},
+                        goals=goals or {},
+                        actor_user_id=actor_user_id,
+                        audit_repository=audit_repository,
+                    )
 
                 for setting_key, payload_after in [
                     ("parameters.global", parameters),
@@ -131,15 +152,43 @@ class PostgresStrategicIndicatorsSettingsRepository(
                     row_before = self.fetch_one(select_settings_query, (setting_key,))
                     payload_before = row_before["payload_json"] if row_before else None
 
-                    self.execute(
-                        update_settings_query,
-                        (
-                            json.dumps(payload_after, ensure_ascii=False),
-                            actor_user_id,
-                            None,
-                            setting_key,
-                        ),
-                    )
+                    if expected_versions is not None:
+                        # Guarded write: the expected xmin precondition must
+                        # exist for every setting_key being replaced — a
+                        # guarded call may not silently downgrade to
+                        # unguarded per-key updates.
+                        expected_xmin = expected_versions.get(setting_key)
+                        if not expected_xmin:
+                            raise StrategicIndicatorsAdminConflictError(
+                                "Versão esperada ausente para "
+                                f"'{setting_key}' (expected_versions incompleto)."
+                            )
+                        updated_row = self.execute_returning_one(
+                            update_settings_occ_query,
+                            (
+                                json.dumps(payload_after, ensure_ascii=False),
+                                actor_user_id,
+                                None,
+                                setting_key,
+                                str(expected_xmin),
+                            ),
+                        )
+                        if updated_row is None:
+                            raise StrategicIndicatorsAdminConflictError(
+                                "Configuração alterada por outro processo "
+                                f"desde a leitura ('{setting_key}'). "
+                                "Recarregue e tente novamente."
+                            )
+                    else:
+                        self.execute(
+                            update_settings_query,
+                            (
+                                json.dumps(payload_after, ensure_ascii=False),
+                                actor_user_id,
+                                None,
+                                setting_key,
+                            ),
+                        )
 
                     audit_repository.insert_audit_event(
                         entity_key=setting_key,
@@ -163,7 +212,8 @@ class PostgresStrategicIndicatorsSettingsRepository(
                 setting_key,
                 payload_json,
                 updated_at,
-                updated_by_email
+                updated_by_email,
+                xmin::text AS row_xmin
             FROM strategic_indicators.module_settings
             WHERE is_active = TRUE
               AND setting_key IN ('parameters.global', 'governance.notes')

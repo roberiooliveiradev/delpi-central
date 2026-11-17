@@ -59,6 +59,8 @@ logger = logging.getLogger(__name__)
 CAP_DEPT_CREATE = "si.department.create"
 CAP_DEPT_UPDATE = "si.department.update"
 CAP_DEPT_ACTIVATE = "si.department.activate"
+CAP_DEPT_DEACTIVATE = "si.department.deactivate"
+CAP_SETTINGS_UPDATE = "si.settings.update"
 CAP_IND_CREATE = "si.indicator.create"
 CAP_IND_UPDATE = "si.indicator.update"
 CAP_IND_ACTIVATE = "si.indicator.activate"
@@ -72,6 +74,8 @@ SI_ADMIN_WRITE_CAPABILITIES = frozenset(
         CAP_DEPT_CREATE,
         CAP_DEPT_UPDATE,
         CAP_DEPT_ACTIVATE,
+        CAP_DEPT_DEACTIVATE,
+        CAP_SETTINGS_UPDATE,
         CAP_IND_CREATE,
         CAP_IND_UPDATE,
         CAP_IND_ACTIVATE,
@@ -134,6 +138,7 @@ _DEPT_UPDATE_ARGS = frozenset(
     }
 )
 _DEPT_REF_ARGS = frozenset({"department_id"})
+_SETTINGS_UPDATE_ARGS = frozenset({"parameters", "governance"})
 _IND_CREATE_ARGS = frozenset(
     {
         "department_id",
@@ -409,6 +414,20 @@ class SiAdminWriteStack:
         )
         return fingerprint({"change_requests": rows})
 
+    def _settings_fingerprint(self, authorization: str) -> str:
+        current = self._client.get_user_settings(authorization=authorization)
+        versions = (current.get("meta") or {}).get("versions") or {}
+        return fingerprint(
+            {
+                "parameters": current.get("parameters"),
+                "governance": current.get("governance"),
+                "versions": {
+                    key: versions.get(key)
+                    for key in ("parameters.global", "governance.notes")
+                },
+            }
+        )
+
     # ------------------------------------------------------------ PREPARE
 
     def prepare(self, authorization: str, capability: str, args: dict) -> dict:
@@ -419,6 +438,10 @@ class SiAdminWriteStack:
             return self._prepare_dept_update(authorization, args)
         if capability == CAP_DEPT_ACTIVATE:
             return self._prepare_dept_activate(authorization, args)
+        if capability == CAP_DEPT_DEACTIVATE:
+            return self._prepare_dept_deactivate(authorization, args)
+        if capability == CAP_SETTINGS_UPDATE:
+            return self._prepare_settings_update(authorization, args)
         if capability == CAP_IND_CREATE:
             return self._prepare_ind_create(authorization, args)
         if capability == CAP_IND_UPDATE:
@@ -676,6 +699,192 @@ class SiAdminWriteStack:
             "expected_postcondition": {
                 "department_id": department_id,
                 "is_active": True,
+            },
+        }
+
+    def _prepare_dept_deactivate(self, authorization: str, args: dict) -> dict:
+        _reject_unknown_args(CAP_DEPT_DEACTIVATE, args, _DEPT_REF_ARGS)
+        department_id = _require_id(args, "department_id")
+        current = self._find_department(authorization, department_id)
+
+        row_xmin = current.get("row_xmin")
+        if not row_xmin:
+            raise _err(
+                "Owner read contract did not expose the OCC token "
+                "(row_xmin); cannot seal a guarded state change.",
+                code=INTERNAL,
+                status_code=502,
+            )
+        if current.get("is_active") is not True:
+            raise _err(
+                f"Department '{department_id}' is already inactive.",
+                code=VALIDATION,
+                status_code=409,
+            )
+
+        indicators = self._list_indicators(authorization, department_id)
+        active_indicators = [
+            str(row.get("indicator_id"))
+            for row in indicators
+            if row.get("is_active") is True
+        ]
+        current_goals = self._list_active_goals(authorization, department_id)
+
+        return {
+            "resource_type": "si_department",
+            "resource_id": department_id,
+            "current_state_fingerprint": fingerprint(_dept_snapshot(current)),
+            "exact_change": {
+                "department_id": department_id,
+                "expected_xmin": row_xmin,
+            },
+            "validation_result": {"ready": True, "checks": ["args", "row_state"]},
+            "consequential_impact": {
+                "persisted_effect": (
+                    "Only departments.is_active is set to FALSE; indicator "
+                    "and goal rows keep their own is_active flags unchanged."
+                ),
+                "indirect_effect": (
+                    "The department stops counting in the IGD aggregate, "
+                    "the departments tree and dashboards until reactivated."
+                ),
+                "active_indicators": active_indicators,
+                "active_indicator_count": len(active_indicators),
+                "current_goals": current_goals,
+                "current_goal_count": len(current_goals),
+                "reversible": True,
+                "reversed_by": "si.department.activate",
+            },
+            "confirmation_requirement": {
+                "kind": "confirm_before_act",
+                "summary": {
+                    "action": "deactivate_department",
+                    "department_id": department_id,
+                    "department_name": current.get("department_name"),
+                    "active_indicator_count": len(active_indicators),
+                    "current_goal_count": len(current_goals),
+                    "reversible": True,
+                },
+            },
+            "expected_postcondition": {
+                "department_id": department_id,
+                "is_active": False,
+            },
+        }
+
+    def _list_active_goals(
+        self, authorization: str, department_id: str
+    ) -> list[dict]:
+        payload = self._client.list_user_indicator_goals(
+            authorization=authorization,
+            department_id=department_id,
+            active_only=True,
+        )
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items, list):
+            return []
+        return [
+            {
+                "goal_id": row.get("goal_id") or row.get("id"),
+                "indicator_id": row.get("indicator_id"),
+                "goal_year": row.get("goal_year"),
+            }
+            for row in items
+        ]
+
+    def _prepare_settings_update(self, authorization: str, args: dict) -> dict:
+        _reject_unknown_args(CAP_SETTINGS_UPDATE, args, _SETTINGS_UPDATE_ARGS)
+        parameters = args.get("parameters")
+        governance = args.get("governance")
+        for name, block in (("parameters", parameters), ("governance", governance)):
+            if not isinstance(block, dict) or not isinstance(block.get("items"), list):
+                raise _err(
+                    f"'{name}' must be the complete block {{'items': [...]}} "
+                    "(full-replace semantics; omited items are removed).",
+                    code=VALIDATION,
+                )
+            for item in block["items"]:
+                if not isinstance(item, dict) or not str(item.get("key") or "").strip():
+                    raise _err(
+                        f"Every '{name}.items[]' entry must have a non-empty key.",
+                        code=VALIDATION,
+                    )
+
+        current = self._client.get_user_settings(authorization=authorization)
+        versions = (current.get("meta") or {}).get("versions") or {}
+        expected_versions = {
+            key: versions.get(key)
+            for key in ("parameters.global", "governance.notes")
+        }
+        if not all(expected_versions.values()):
+            raise _err(
+                "Owner read contract did not expose the OCC tokens "
+                "(meta.versions); cannot seal a guarded full-replace.",
+                code=INTERNAL,
+                status_code=502,
+            )
+
+        cur_parameters = current.get("parameters") or {"items": []}
+        cur_governance = current.get("governance") or {"items": []}
+        param_diff = _diff_items(cur_parameters.get("items"), parameters["items"])
+        gov_diff = _diff_items(cur_governance.get("items"), governance["items"])
+
+        return {
+            "resource_type": "si_module_settings",
+            "resource_id": "strategic_indicators.module_settings",
+            "current_state_fingerprint": fingerprint(
+                {
+                    "parameters": cur_parameters,
+                    "governance": cur_governance,
+                    "versions": expected_versions,
+                }
+            ),
+            "exact_change": {
+                "parameters": parameters,
+                "governance": governance,
+                "expected_versions": expected_versions,
+            },
+            "validation_result": {
+                "ready": True,
+                "checks": ["args", "state_versions"],
+            },
+            "consequential_impact": {
+                "replace_semantics": (
+                    "Full-replace: every setting_key payload is overwritten; "
+                    "items absent from the desired state are REMOVED."
+                ),
+                "parameters": param_diff,
+                "governance": gov_diff,
+                "total_items_before": (
+                    len(cur_parameters.get("items") or [])
+                    + len(cur_governance.get("items") or [])
+                ),
+                "total_items_after": (
+                    len(parameters["items"]) + len(governance["items"])
+                ),
+                "implicit_removals": (
+                    param_diff["removed"] + gov_diff["removed"]
+                ),
+                "note": (
+                    "Department weights/goals shown in GET settings are not "
+                    "changed by this capability (department admin routes own "
+                    "those fields)."
+                ),
+            },
+            "confirmation_requirement": {
+                "kind": "confirm_before_act",
+                "summary": {
+                    "action": "update_settings",
+                    "parameters": param_diff,
+                    "governance": gov_diff,
+                    "implicit_removals": (
+                        param_diff["removed"] + gov_diff["removed"]
+                    ),
+                },
+            },
+            "expected_postcondition": {
+                "parameters": parameters,
+                "governance": governance,
             },
         }
 
@@ -1116,11 +1325,13 @@ class SiAdminWriteStack:
     ) -> str:
         if capability == CAP_DEPT_CREATE:
             return self._depts_fingerprint(authorization)
-        if capability in (CAP_DEPT_UPDATE, CAP_DEPT_ACTIVATE):
+        if capability in (CAP_DEPT_UPDATE, CAP_DEPT_ACTIVATE, CAP_DEPT_DEACTIVATE):
             row = self._find_department(
                 authorization, str(exact_change["department_id"])
             )
             return fingerprint(_dept_snapshot(row))
+        if capability == CAP_SETTINGS_UPDATE:
+            return self._settings_fingerprint(authorization)
         if capability == CAP_IND_CREATE:
             return self._indicators_fingerprint(
                 authorization, str(exact_change["department_id"])
@@ -1182,6 +1393,30 @@ class SiAdminWriteStack:
                     exact_change.get("expected_xmin"), capability
                 ),
                 **audit_kwargs,
+            )
+        if capability == CAP_DEPT_DEACTIVATE:
+            return self._client.deactivate_user_admin_department(
+                authorization=authorization,
+                department_id=str(exact_change["department_id"]),
+                expected_xmin=_require_occ_token(
+                    exact_change.get("expected_xmin"), capability
+                ),
+                **audit_kwargs,
+            )
+        if capability == CAP_SETTINGS_UPDATE:
+            versions = exact_change.get("expected_versions") or {}
+            return self._client.update_user_settings(
+                authorization=authorization,
+                body={
+                    "parameters": exact_change["parameters"],
+                    "governance": exact_change["governance"],
+                },
+                expected_parameters_xmin=_require_occ_token(
+                    versions.get("parameters.global"), capability
+                ),
+                expected_governance_xmin=_require_occ_token(
+                    versions.get("governance.notes"), capability
+                ),
             )
         if capability == CAP_IND_CREATE:
             return self._client.create_user_admin_department_indicator(
@@ -1283,6 +1518,37 @@ class SiAdminWriteStack:
                     status_code=409,
                 )
             return {"department": _dept_snapshot(row)}
+
+        if capability == CAP_DEPT_DEACTIVATE:
+            row = self._find_department(
+                authorization, str(expected_postcondition["department_id"])
+            )
+            if row.get("is_active") is not False:
+                raise GovernedWriteError(
+                    "Postcondition failed: department is still active.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            return {"department": _dept_snapshot(row)}
+
+        if capability == CAP_SETTINGS_UPDATE:
+            current = self._client.get_user_settings(authorization=authorization)
+            self._assert_settings_block(
+                current.get("parameters"),
+                expected_postcondition.get("parameters"),
+                "parameters",
+            )
+            self._assert_settings_block(
+                current.get("governance"),
+                expected_postcondition.get("governance"),
+                "governance",
+            )
+            return {
+                "settings": {
+                    "parameters": current.get("parameters"),
+                    "governance": current.get("governance"),
+                }
+            }
 
         if capability == CAP_IND_CREATE:
             row = self._find_indicator_in_dept(
@@ -1392,6 +1658,24 @@ class SiAdminWriteStack:
             status_code=409,
         )
 
+    def _assert_settings_block(
+        self, actual: dict | None, expected: dict | None, name: str
+    ) -> None:
+        actual_items = (actual or {}).get("items")
+        expected_items = (expected or {}).get("items")
+        if actual_items != expected_items:
+            raise GovernedWriteError(
+                f"Postcondition failed: settings block '{name}' differs "
+                "after write.",
+                code=OUTCOME_VERIFICATION_FAILED,
+                status_code=409,
+                data={
+                    "block": name,
+                    "actual_count": len(actual_items or []),
+                    "expected_count": len(expected_items or []),
+                },
+            )
+
     def _assert_fields(self, row: dict, fields: dict) -> None:
         mismatches: list[str] = []
         for key, expected in fields.items():
@@ -1409,6 +1693,35 @@ class SiAdminWriteStack:
                 status_code=409,
                 data={"mismatched_fields": sorted(mismatches)},
             )
+
+
+def _diff_items(
+    current_items: list | None, desired_items: list | None
+) -> dict[str, Any]:
+    """Keyed item diff for full-replace settings blocks: preserved /
+    modified / added / removed (implicit removals included)."""
+    current = {
+        str(item.get("key")): item
+        for item in (current_items or [])
+        if isinstance(item, dict) and item.get("key")
+    }
+    desired = {
+        str(item.get("key")): item
+        for item in (desired_items or [])
+        if isinstance(item, dict) and item.get("key")
+    }
+    preserved, modified = [], []
+    for key, item in desired.items():
+        before = current.get(key)
+        if before is None:
+            continue
+        (preserved if before == item else modified).append(key)
+    return {
+        "preserved": sorted(preserved),
+        "modified": sorted(modified),
+        "added": sorted(k for k in desired if k not in current),
+        "removed": sorted(k for k in current if k not in desired),
+    }
 
 
 def _diff_dept_fields(

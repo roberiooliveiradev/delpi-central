@@ -7,6 +7,7 @@ class SettingsMetaResponse:
     source: str
     updated_at: str | None
     updated_by_email: str | None
+    versions: dict[str, str] | None = None
 
 
 @dataclass
