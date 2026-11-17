@@ -313,3 +313,43 @@ placeholders, proibida nova cirurgia KC). Não declarado PASS.
 **Issue #207:** `gh` sem auth nesta sessão — evidência versionada aqui.
 
 **NEXT_ACTION:** aceite visual do PO em HML.
+
+## 11. P3-FIX-02 executado — cronologia e contraste das bolhas (commit `75af77037a`)
+
+**Executor:** Devin · **TASK_ID:** `EVA-PRC-CONVERSATION-P3-CHRONOLOGY-BUBBLE-CONTRAST-HML-02`
+**Base:** `911ff0f7da` (origin/main revalidado; rebase sobre 62 commits concorrentes, WIP preservado).
+
+**Causas-raiz confirmadas no código:**
+- Ordem invertida: `threadItems` fazia `[...items].reverse()` herdado
+  do `CommentsPanel` (cuja requests-api retorna DESC). A Engineering
+  API retorna `ORDER BY created_at ASC, id ASC` — o reverse produzia
+  DESC, recentes no topo. Corrigido: ordenação explícita única por
+  `createdAt`/`id` ASC no painel; nunca por autor/isMine.
+- "Grupos separados": efeito combinado da ordem invertida (mensagens
+  por autor caíam juntas por coincidência temporal dos smokes) +
+  bolha recebida invisível — não havia `space-between` nem
+  distribuição de altura no CSS (verificado).
+- Contraste: bolha recebida usava `color-mix(text 7%, surface)`
+  sobre container `--delpi-ui-surface-muted` (≈ text 8%) — quase
+  idênticos. Corrigido: superfície canônica + borda
+  `var(--delpi-ui-border)`; própria mantém accent 18%. CSS canônico
+  do kit — melhora também o `CommentsPanel` legado (mesmo container
+  muted), sem divergência de identidade visual.
+- Scroll já era correto: `stickToBottom` inicial true + tracking
+  onScroll (AC-05 herdado).
+
+**Testes:** +1 cronologia (entrada DESC/intercalada → DOM ASC por
+id, lados alternando); contrato CSS atualizado (borda 1px, sem
+7%). 30/30 nos módulos tocados. Build vite OK.
+
+**HML:** push → pull em `operador@srv-api` → `hml-compose.sh up
+--scenario plugin-ui` (único componente afetado; MFEs consomem via
+federação). Healthy; CSS servido com a regra nova. Digests:
+plugin-ui `cf413fa75564`, my-requests `22a4c093b77f`,
+engineering `b7f6b83fe4d4` (ambos inalterados — correto).
+
+**E2E autenticado:** `TEST_NOT_RUN` — bloqueio de identidade
+persiste. **Verificador:** INCONCLUSIVE (engine sem login).
+**Issue #207:** `gh` sem auth — evidência versionada aqui.
+
+**NEXT_ACTION:** aceite visual do PO em HML.
