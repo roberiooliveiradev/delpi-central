@@ -1551,6 +1551,28 @@ Renderiza `ActionButton` **sem alterá-lo**. As regras de visual são seletores 
 
 `tone: "success" | "info" | "warning" | "error"`, `title`, `message`, `hint?`, `action?`, `logo?`. Centralizada sobre `FormCard`. `success` mostra o círculo 72 px `--delpi-ui-success` com `Check` em `--delpi-ui-on-accent` (único tom com círculo). `role="status"` em success/info/warning e `role="alert"` em error.
 
+## Formulário guiado (P5)
+
+### `GuidedQuestionnaire`
+
+Fluxo completo **abertura → etapas → revisão → envio → resultado** por definição declarativa, compondo apenas componentes P1–P4. Respostas só em memória React — nunca em `localStorage`/`sessionStorage`/cookie/URL. Toda a microcopy chega por `texts` (não há texto fixo).
+
+| Prop | Conteúdo |
+|---|---|
+| `logo` | `{ src, alt }` → `FormLogo` |
+| `intro` | `eyebrow?`, `title`, `context?`, `description?`, `items?`, `startLabel`, `footnote?` → `FormIntroCard` (banda `tall`) |
+| `header` | `title`, `subtitle?`, `meta?` → `FormHeaderCard` nas etapas e na revisão (banda `compact`) |
+| `steps` | `QuestionnaireStep[]` — `{ id, title, reviewTitle?, questions[] }`; cada pergunta `{ key, kind: "scale" \| "text", number?, eyebrow?, prompt, required, scale?: {...} , text?: {...} }` |
+| `texts` | Ver `GuidedQuestionnaireTexts`: voltar/avançar/revisar/voltar-à-revisão/enviar/enviando, rótulos de obrigatória e opcional, 3 mensagens de erro, `stepFooterPending(n)`, `stepLabel(i,total,title)`, `progressLabel`/`progressAriaLabel`, `reviewTitle`, `reviewDescription`, `reviewNotice`, `reviewNaValue`, `reviewEmptyValue`, `submitError`, `editLabel`, `editAriaLabel(t)`, `themeToggleAriaLabel` |
+| `onSubmit(answers)` | `Promise<{ type: "result"; result: FormResultPanelProps } \| { type: "retry"; message }>` — exceção → retry com `submitError`. Texto vazio é omitido e strings fazem `trim` |
+| `colorScheme` / `showThemeToggle` / `warnOnUnsaved` | `"auto"` / `true` / `true` |
+
+Comportamento: validação por etapa com `error` no `QuestionCard` + escala `invalid` + contagem no rodapé + **foco na primeira pendência**; progresso = obrigatórias respondidas ÷ total; troca de etapa rola ao topo e foca o título; modo edição vindo da revisão mostra só "Voltar à revisão" (com validação); revisão = `FormReviewSection` por etapa + aviso de imutabilidade; envio único (cliques repetidos ignorados); `result` foca o título do painel e `retry` foca o `FormNotice` (tom `warning`); `beforeunload` ativo só com respostas não enviadas; `scrollIntoView` sem animação.
+
+Arquivos auxiliares exportados: `guidedQuestionnaireState.ts` (lógica pura — `isQuestionAnswered`, `missingInStep`, `questionnaireProgress`, `hasAnyAnswer`, `buildSubmitAnswers`, transições `startFlow/goNext/goBack/startEdit`) e `useUnsavedChangesWarning(active)`.
+
+**Contrato de scroll (P6):** o rodapé `FormStepFooter` usa `position: sticky` — nenhum ancestral até o scrollport pode ter `overflow` diferente de `visible`.
+
 ---
 
 ## Família `charts` — matriz impacto × esforço

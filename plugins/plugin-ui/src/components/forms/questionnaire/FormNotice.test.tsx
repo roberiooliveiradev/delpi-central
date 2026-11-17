@@ -22,3 +22,13 @@ describe("FormNotice", () => {
     );
   });
 });
+
+describe("FormNotice (R12)", () => {
+  it("o tom warning usa o papel real do componente: role=note (não status)", () => {
+    const { getByRole, queryByRole } = render(
+      <FormNotice tone="warning">Aviso de nova tentativa.</FormNotice>,
+    );
+    expect(getByRole("note")).toBeTruthy();
+    expect(queryByRole("status")).toBeNull();
+  });
+});

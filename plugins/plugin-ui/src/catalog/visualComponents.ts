@@ -530,6 +530,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Painel de resultado centrado: círculo success 72 px com check, role status/alert por tom, título/mensagem/hint/ação por props.",
   }),
+  vc("forms", "GuidedQuestionnaire", {
+    addedAt: "2026-11-17",
+    description:
+      "Formulário guiado completo (camada 2): abertura → etapas → revisão → envio → resultado por definição declarativa; só componentes P1–P4, respostas só em memória.",
+  }),
   // export
   vc("export", "TabularExportButtons"),
   vc("export", "DocumentExportActions"),

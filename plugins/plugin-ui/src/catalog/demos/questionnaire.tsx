@@ -8,6 +8,7 @@ import {
   FormHeaderCard,
   FormIntroCard,
   FormButton,
+  GuidedQuestionnaire,
   FormLogo,
   FormNotice,
   FormPageLayout,
@@ -23,6 +24,9 @@ import {
   QuestionnaireThemeScope,
   RatingScale,
   type RatingScaleValue,
+  type GuidedQuestionnaireTexts,
+  type QuestionnaireStep,
+  type QuestionnaireSubmitOutcome,
 } from "../../components/forms/questionnaire";
 import type { CatalogEntryDraft } from "../types";
 
@@ -1036,4 +1040,271 @@ export const questionnaireCatalogEntries: CatalogEntryDraft[] = [
       },
     ],
   },
+  {
+    id: "forms.GuidedQuestionnaire",
+    family: "forms",
+    exportName: "GuidedQuestionnaire",
+    title: "GuidedQuestionnaire",
+    description:
+      "Formulário guiado completo (P5): abertura → etapas → revisão → envio → resultado por definição declarativa. Respostas só em memória; microcopy via texts; demo fictícia com seletor de resultado fora do componente.",
+    docAnchor: "formulario-guiado-p5",
+    propsSummary: [
+      "logo",
+      "intro",
+      "header",
+      "steps",
+      "texts",
+      "colorScheme",
+      "showThemeToggle",
+      "onSubmit",
+      "warnOnUnsaved",
+      "prefix",
+    ],
+    demos: [
+      {
+        id: "flow",
+        label: "fluxo completo · sucesso / retry / erro",
+        render: () => (
+          <ThemedPair>
+            {() => <GuidedDemo />}
+          </ThemedPair>
+        ),
+      },
+    ],
+  },
 ];
+
+/* --- GuidedQuestionnaire (P5): questionário fictício neutro ---------------- */
+
+const GUIDED_TEXTS: GuidedQuestionnaireTexts = {
+  back: "Voltar",
+  next: "Avançar",
+  review: "Revisar respostas",
+  backToReview: "Voltar à revisão",
+  submit: "Enviar respostas",
+  submitting: "Enviando…",
+  requiredLabel: "obrigatória",
+  optionalLabel: "(opcional)",
+  scaleError: "Selecione uma nota para continuar.",
+  scaleErrorWithNa: "Selecione uma nota ou “Não se aplica”.",
+  textError: "Escreva uma resposta para continuar.",
+  stepFooterPending: (n) =>
+    n === 1
+      ? "Responda 1 pergunta para continuar."
+      : `Responda ${n} perguntas para continuar.`,
+  stepLabel: (i, total, title) => `Etapa ${i} de ${total} · ${title}`,
+  progressLabel: (done, total) => `${done} de ${total}`,
+  progressAriaLabel: (done, total) => `Progresso: ${done} de ${total} respondidas`,
+  reviewTitle: "Revisão final",
+  reviewDescription: "Confira suas respostas antes de enviar.",
+  reviewNotice:
+    "Após o envio, não será possível alterar as respostas desta avaliação.",
+  reviewNaValue: "Não se aplica",
+  reviewEmptyValue: "Sem resposta",
+  submitError: "Não foi possível enviar agora. Tente novamente.",
+  editLabel: "Editar",
+  editAriaLabel: (t) => `Editar respostas de ${t}`,
+  themeToggleAriaLabel: "Alternar entre tema claro e escuro",
+};
+
+const GUIDED_STEPS: QuestionnaireStep[] = [
+  {
+    id: "conteudo",
+    title: "Conteúdo do treinamento",
+    questions: [
+      {
+        kind: "scale",
+        key: "didatica",
+        eyebrow: "Didática",
+        number: 1,
+        prompt: "Como você avalia a didática do instrutor?",
+        required: true,
+        scale: {
+          min: 1,
+          max: 5,
+          optionLabel: (n) => `Didática: nota ${n}`,
+          endLabels: { min: "1 · Muito ruim", max: "5 · Muito boa" },
+          selectionCaption: (n) => `Sua nota: ${n}`,
+          notApplicable: { label: "Não se aplica" },
+          reviewValue: (n) => `${n} de 5`,
+        },
+      },
+      {
+        kind: "scale",
+        key: "material",
+        eyebrow: "Material",
+        number: 2,
+        prompt: "O material de apoio atendeu às necessidades?",
+        required: true,
+        scale: {
+          min: 1,
+          max: 5,
+          optionLabel: (n) => `Material: nota ${n}`,
+          endLabels: { min: "1 · Insuficiente", max: "5 · Excelente" },
+          selectionCaption: (n) => `Sua nota: ${n}`,
+          notApplicable: { label: "Não se aplica" },
+          reviewValue: (n) => `${n} de 5`,
+        },
+      },
+      {
+        kind: "scale",
+        key: "duracao",
+        eyebrow: "Duração",
+        number: 3,
+        prompt: "A duração do treinamento foi adequada?",
+        required: true,
+        scale: {
+          min: 1,
+          max: 5,
+          optionLabel: (n) => `Duração: nota ${n}`,
+          endLabels: { min: "1 · Muito curta", max: "5 · Muito longa" },
+          selectionCaption: (n) => `Sua nota: ${n}`,
+          notApplicable: { label: "Não se aplica" },
+          reviewValue: (n) => `${n} de 5`,
+        },
+      },
+      {
+        kind: "scale",
+        key: "recomendacao",
+        number: 4,
+        prompt: "Qual a probabilidade de recomendar este treinamento?",
+        required: true,
+        scale: {
+          min: 0,
+          max: 10,
+          optionLabel: (n) => `Recomendação: nota ${n}`,
+          endLabels: {
+            min: "0 · Nada provável",
+            max: "10 · Extremamente provável",
+          },
+          endLabelsPosition: "above",
+          narrowColumns: 6,
+          selectionCaption: (n) => `Sua nota: ${n}`,
+        },
+      },
+    ],
+  },
+  {
+    id: "comentarios",
+    title: "Comentários",
+    reviewTitle: "Comentários finais",
+    questions: [
+      {
+        kind: "scale",
+        key: "geral",
+        number: 5,
+        prompt: "Qual sua avaliação geral do treinamento?",
+        required: true,
+        scale: {
+          min: 1,
+          max: 5,
+          optionLabel: (n) => `Avaliação geral: nota ${n}`,
+          endLabels: { min: "1 · Ruim", max: "5 · Excelente" },
+          selectionCaption: (n) => `Sua nota: ${n}`,
+          reviewValue: (n) => `${n} de 5`,
+        },
+      },
+      {
+        kind: "text",
+        key: "melhoria",
+        number: 6,
+        prompt: "O que poderia ser melhorado nas próximas edições?",
+        required: false,
+        text: {
+          label: "Sugestão de melhoria",
+          placeholder: "Escreva aqui (opcional)",
+          maxLength: 300,
+        },
+      },
+      {
+        kind: "text",
+        key: "destaque",
+        number: 7,
+        prompt: "Há algum ponto que merece destaque?",
+        required: false,
+        text: {
+          label: "Destaque",
+          placeholder: "Escreva aqui (opcional)",
+          maxLength: 300,
+        },
+      },
+    ],
+  },
+];
+
+type GuidedOutcome = "success" | "retry" | "error";
+
+/** Harness da demo: a escolha do resultado fica FORA do componente. */
+function GuidedDemo() {
+  const [outcome, setOutcome] = useState<GuidedOutcome>("success");
+  const [runId, setRunId] = useState(0);
+
+  const onSubmit = async (): Promise<QuestionnaireSubmitOutcome> => {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    if (outcome === "retry") {
+      return {
+        type: "retry",
+        message: "Não foi possível registrar agora. Tente enviar de novo.",
+      };
+    }
+    if (outcome === "error") {
+      throw new Error("demo error");
+    }
+    return {
+      type: "result",
+      result: {
+        tone: "success",
+        title: "Avaliação enviada",
+        message: "Obrigado por avaliar o treinamento.",
+        hint: "Você já pode fechar esta página.",
+      },
+    };
+  };
+
+  return (
+    <div>
+      <div className="puc-guided-controls">
+        {(["success", "retry", "error"] as const).map((o) => (
+          <ActionButton
+            key={o}
+            variant={outcome === o ? "primary" : "default"}
+            onClick={() => setOutcome(o)}
+          >
+            {o === "success" ? "Sucesso" : o === "retry" ? "Tentar de novo" : "Erro"}
+          </ActionButton>
+        ))}
+        <ActionButton onClick={() => setRunId((v) => v + 1)}>
+          Reiniciar
+        </ActionButton>
+      </div>
+      <div className="puc-form-footer-scroll">
+        <GuidedQuestionnaire
+          key={runId}
+          prefix={P}
+          logo={{ src: DEMO_LOGO, alt: "Marca" }}
+          intro={{
+            eyebrow: "Treinamento interno",
+            title: "Avaliação do treinamento",
+            context: { label: "Turma", value: "Operações · edição 12" },
+            description:
+              "Suas respostas ajudam a melhorar os próximos treinamentos. Leva poucos minutos.",
+            items: [
+              { icon: "📝", content: "Perguntas rápidas em 2 etapas" },
+              { icon: "🔎", content: "Revisão antes do envio" },
+            ],
+            startLabel: "Começar",
+            footnote: "Nenhum dado pessoal é solicitado.",
+          }}
+          header={{
+            title: "Avaliação do treinamento",
+            subtitle: "Responda às perguntas de cada etapa",
+            meta: "Demo",
+          }}
+          steps={GUIDED_STEPS}
+          texts={GUIDED_TEXTS}
+          onSubmit={onSubmit}
+        />
+      </div>
+    </div>
+  );
+}
