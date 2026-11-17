@@ -292,14 +292,72 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
             enclosures = enclosures[:300]
     except cv2.error:
         enclosures = []
+    # E1/VAL-01 B3 — medidas visuais genéricas por região candidata:
+    # cobertura de saturação, matiz dominante e razão de aspecto no
+    # decode em cor já realizado acima. São observações geométrico-
+    # cromáticas (barra alongada saturada × região compacta × mista),
+    # não classificação semântica — a leitura de "o que a região
+    # representa" e a distinção cor-de-material × cor-de-anotação são
+    # decididas a jusante com proveniência. Ausente quando o decode em
+    # cor falha (região permanece mensurável só por geometria).
+    region_observations: list[dict] = []
+    rects_out = sorted(
+        rects, key=lambda r: (r[3] - r[1]) * (r[2] - r[0]),
+        reverse=True)[:80]
+    try:
+        cimg = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if cimg is not None:
+            hsv_img = cv2.cvtColor(cimg, cv2.COLOR_BGR2HSV)
+            sat_ch = hsv_img[:, :, 1]
+            hue_ch = hsv_img[:, :, 0]
+            boxes = (
+                list(rects_out)
+                + [e["bounding_box_px"] for e in enclosures]
+                + [c["bounding_box_px"] for c in circles]
+            )
+            for bx in boxes:
+                x1, y1, x2, y2 = (
+                    max(0, int(bx[0])), max(0, int(bx[1])),
+                    min(hw, int(bx[2])), min(hh, int(bx[3])),
+                )
+                if x2 - x1 < 2 or y2 - y1 < 2:
+                    continue
+                roi_sat = sat_ch[y1:y2, x1:x2]
+                mask = roi_sat > 60
+                n_sat = int(mask.sum())
+                entry = {
+                    "box_px": [x1, y1, x2, y2],
+                    "aspect_ratio": round(
+                        max(x2 - x1, y2 - y1)
+                        / max(1.0, min(x2 - x1, y2 - y1)), 2),
+                    "sat_coverage": round(
+                        n_sat / float(mask.size), 3),
+                    "dominant_hue": None,
+                    "dominant_hue_fraction": 0.0,
+                    "saturated_px": n_sat,
+                }
+                if n_sat:
+                    hist = np.bincount(
+                        hue_ch[y1:y2, x1:x2][mask].ravel(),
+                        minlength=180,
+                    )
+                    dom = int(hist.argmax())
+                    entry["dominant_hue"] = dom
+                    entry["dominant_hue_fraction"] = round(
+                        float(hist[dom]) / n_sat, 2)
+                region_observations.append(entry)
+    except cv2.error:
+        region_observations = []
     return {
         "h_lines": h_lines[:400],
         "v_lines": v_lines[:400],
-        "rects": sorted(rects, key=lambda r: (r[3]-r[1])*(r[2]-r[0]), reverse=True)[:80],
+        "rects": rects_out,
         "circles": circles,
         "enclosures": enclosures,
+        "region_observations": region_observations,
         "count": {
             "h": len(h_lines), "v": len(v_lines), "rects": len(rects),
             "circles": len(circles), "enclosures": len(enclosures),
+            "region_observations": len(region_observations),
         },
     }

@@ -2160,13 +2160,23 @@ def _target_regions(
     graphic_primitives: dict | None,
     page_size: tuple[float, float],
     exclude_box: list[float],
-) -> list[tuple[list[float], str]]:
+) -> list[tuple[list[float], str, dict | None]]:
     """Regiões candidatas a destino: rects/enclosures/circles abaixo
-    de _TARGET_MAX_AREA_FRAC da página (moldura não é componente)."""
+    de _TARGET_MAX_AREA_FRAC da página (moldura não é componente).
+
+    B3: devolve também a ``observation`` medida pelo adapter
+    (``region_observations`` — saturação/matiz/razão de aspecto),
+    casada por caixa; ``None`` quando não medida (decode sem cor).
+    """
     gp = graphic_primitives or {}
     w, h = page_size
     max_area = w * h * _TARGET_MAX_AREA_FRAC
-    out: list[tuple[list[float], str]] = []
+    obs_by_box = {
+        tuple(int(v) for v in (o.get("box_px") or [])[:4]): o
+        for o in (gp.get("region_observations") or [])
+        if len(o.get("box_px") or []) >= 4
+    }
+    out: list[tuple[list[float], str, dict | None]] = []
     for key in ("rects", "enclosures", "circles"):
         for p in gp.get(key) or []:
             box = (
@@ -2180,7 +2190,11 @@ def _target_regions(
                 continue
             if xy == list(exclude_box):
                 continue
-            out.append((xy, key[:-1] if key != "rects" else "rect"))
+            out.append((
+                xy,
+                key[:-1] if key != "rects" else "rect",
+                obs_by_box.get(tuple(int(v) for v in xy)),
+            ))
     return out
 
 
@@ -2215,7 +2229,9 @@ def _detect_leader_lines(
             "target_state": None,
             "target_region_id": None,
             "target_region_px": None,
+            "target_observation": None,
             "alternative_target_regions_px": [],
+            "alternative_targets": [],
             "identification_method": (
                 "segment_boundary_attachment_chain"
             ),
@@ -2304,14 +2320,14 @@ def _detect_leader_lines(
                     round(cur[0], 0), round(cur[1], 0)
                 ]
                 hits = [
-                    (r, kind)
-                    for r, kind in regions
+                    (r, kind, obs)
+                    for r, kind, obs in regions
                     if _pt_in_expanded_box(
                         cur[0], cur[1], r, _LEADER_TARGET_NEAR_PX
                     )
                 ]
                 if len(hits) == 1:
-                    r, kind = hits[0]
+                    r, kind, obs = hits[0]
                     key = tuple(round(v) for v in r)
                     gid = region_index.get(key)
                     if gid is None:
@@ -2324,10 +2340,12 @@ def _detect_leader_lines(
                             "box_px": r,
                             "page": page,
                             "state": "candidate",
+                            "observation": obs,
                         })
                     info["target_state"] = "SINGLE_REGION"
                     info["target_region_id"] = gid
                     info["target_region_px"] = r
+                    info["target_observation"] = obs
                     info["uncertainty_reason"] = (
                         "caminho e destino são evidência geométrica "
                         "candidata — não verificam o balão"
@@ -2335,7 +2353,15 @@ def _detect_leader_lines(
                 elif hits:
                     info["target_state"] = "AMBIGUOUS_REGIONS"
                     info["alternative_target_regions_px"] = [
-                        r for r, _k in hits
+                        r for r, _k, _o in hits
+                    ]
+                    info["alternative_targets"] = [
+                        {
+                            "region_px": r,
+                            "region_source": kind,
+                            "observation": obs,
+                        }
+                        for r, kind, obs in hits
                     ]
                     info["uncertainty_reason"] = (
                         f"{len(hits)} regiões na extremidade — "

@@ -825,3 +825,76 @@ def test_b2_leader_line_echoed_in_validation():
     assert ll["state"] == "CANDIDATE"
     assert v["balloons"][0]["leader_target_verified"] is False
     assert v["leader_lines_verified"] is False
+
+
+# ---------- RQ-B3-02 — observações de região propagadas (adapter→B3) ---
+
+
+def _b2_u_with_obs(obs_by_box):
+    """1 balão A1 + líder vertical + rect de destino + region_observations."""
+    tokens = [_tok("A1", 105, 110, 155, 150)]
+    prims = {
+        "circles": [_circle(*_B2_BALLOON)],
+        "enclosures": [],
+        "rects": [[80, 210, 400, 240]],
+        "h_lines": [],
+        "v_lines": [[130, 161, 130, 220]],
+        "region_observations": obs_by_box,
+    }
+    return build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2000, 1400), graphic_primitives=prims,
+    )
+
+
+def test_b3_target_observation_propagates_to_leader():
+    """Observação do adapter casada por caixa → target_observation do
+    líder e observation da geometry_region."""
+    obs = {
+        "box_px": [80, 210, 400, 240], "aspect_ratio": 16.0,
+        "sat_coverage": 0.91, "dominant_hue": 60,
+        "dominant_hue_fraction": 0.9, "inner_primitive_count": 0,
+        "fill_semantics": None,
+    }
+    u = _b2_u_with_obs([obs])
+    b = u["balloon_candidates"][0]
+    assert b["leader_line"]["target_observation"] == obs
+    assert u["geometry_regions"][0]["observation"] == obs
+
+
+def test_b3_missing_observation_is_none_not_fabricated():
+    """Sem medida (decode sem cor) → observation None, sem fabricar."""
+    u = _b2_u_with_obs([])
+    b = u["balloon_candidates"][0]
+    assert b["leader_line"]["target_observation"] is None
+    assert u["geometry_regions"][0]["observation"] is None
+
+
+def test_b3_alternative_targets_carry_observations():
+    """Ambiguidade B2: alternativas levam observação sem escolher alvo."""
+    tokens = [_tok("A1", 105, 110, 155, 150)]
+    prims = {
+        "circles": [_circle(*_B2_BALLOON)],
+        "enclosures": [],
+        "rects": [[80, 210, 400, 240], [80, 218, 400, 244]],
+        "h_lines": [],
+        "v_lines": [[130, 161, 130, 220]],
+        "region_observations": [
+            {"box_px": [80, 210, 400, 240], "aspect_ratio": 16.0,
+             "sat_coverage": 0.9, "dominant_hue": 60},
+            {"box_px": [80, 218, 400, 244], "aspect_ratio": 15.4,
+             "sat_coverage": 0.85, "dominant_hue": 62},
+        ],
+    }
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2000, 1400), graphic_primitives=prims,
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["target_state"] == "AMBIGUOUS_REGIONS"
+    assert ll["target_observation"] is None
+    alts = ll["alternative_targets"]
+    assert len(alts) == 2
+    assert all(a["observation"] is not None for a in alts)
+    assert {a["observation"]["aspect_ratio"] for a in alts} == {
+        16.0, 15.4}

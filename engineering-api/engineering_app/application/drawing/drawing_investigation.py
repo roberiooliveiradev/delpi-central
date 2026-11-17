@@ -13,6 +13,7 @@ UNMATCHED_DRAWING_CANDIDATE.
 from __future__ import annotations
 
 import math
+import re
 from typing import Any
 
 from engineering_app.application.drawing.bom_structure_comparator import (
@@ -593,6 +594,378 @@ def _row_item_label(row: dict) -> tuple[str | None, str]:
     return None, "untyped"
 
 
+# ---------- E1/VAL-01 B3 — coerência visual balão × componente --------
+# RQ-B3-01..06: compara atributos DECLARADOS na tabela (descrição das
+# células da linha) com atributos OBSERVADOS na região de destino
+# sustentada pelo B2 (medidas genéricas emitidas pelo adapter).
+# Estados propostos pelo plano funcional: COMPATIBLE_CANDIDATE /
+# CONFLICT_CANDIDATE / AMBIGUOUS / INCONCLUSIVE / NOT_COMPARABLE /
+# NOT_CHECKED. Nunca aprovação nem NC — evidência candidata revisável.
+
+# Famílias visuais distinguíveis só pela geometria/saturação medida:
+# uma barra muito alongada e saturada é evidência de corpo de cabo; uma
+# região compacta é consistente com a família terminal/luva/protetor
+# sem distinguir qual delas; região mista não decide. Preenchimento
+# esquemático de desenho NÃO é convenção governada de cor de material —
+# por isso a comparação de cor só ocorre quando a observação declara
+# explicitamente fill_semantics="material" (hoje nenhum emissor).
+_B3_ELONGATED_MIN_AR = 5.0
+_B3_ELONGATED_MIN_SAT = 0.5
+_B3_COMPACT_MAX_AR = 3.0
+
+# Vocabulário declarado: primeiro token da descrição do componente —
+# as mesmas famílias do plano (cabo/terminal/luva/protetor/
+# intermediário), lidas do texto declarado, nunca inferidas da imagem.
+_B3_DECLARED_CATEGORY = (
+    ("CABO", "cable"),
+    ("TERM", "terminal"),
+    ("TERMINAL", "terminal"),
+    ("LUVA", "luva"),
+    ("PROTETOR", "protector"),
+    ("ISOLADOR", "isolator"),
+    ("INSERTO", "insert"),
+    ("CONECTOR", "connector"),
+)
+_B3_COMPACT_FAMILY = {
+    "terminal", "luva", "protector", "isolator", "insert", "connector",
+}
+_B3_COLOR_TOKEN_RE = re.compile(
+    r"\b(PT|BN|AZ|VD|VM|AM|LR|CZ|RS|BR|AL|VDAR|VDAZ|VDVM|VMVD)\b"
+)
+# Mapa candidato token→faixa de matiz — NÃO governado; usado apenas
+# quando a observação declara fill_semantics="material" (caminho
+# exercitado hoje só por fixtures controladas).
+_B3_TOKEN_HUE = {
+    "VM": ((0, 10), (170, 180)),
+    "VD": ((50, 75),),
+    "AZ": ((95, 115),),
+    "AM": ((20, 35),),
+    "LR": ((5, 20),),
+    "RS": ((160, 175),),
+    "VDAR": ((20, 75),),
+    "VDAZ": ((50, 115),),
+    "VDVM": ((0, 10), (50, 75), (170, 180)),
+    "VMVD": ((0, 10), (50, 75), (170, 180)),
+}
+_B3_ACHROMATIC = {"PT", "BR", "CZ", "BN", "AL"}
+
+
+def _b3_component_description(row: dict) -> tuple[str | None, str | None]:
+    """Texto declarado do componente com proveniência.
+
+    A descrição real ocupa as células à direita da coluna tipada de
+    código (evidência real nos três PDFs); o campo tipado
+    ``description`` pode ser apenas um fragmento. Fallback para o
+    campo tipado quando a linha não traz ``cells``."""
+    cells = row.get("cells") or []
+    code_col = None
+    for c in cells:
+        if (c.get("col_type") or "") == "component_code":
+            code_col = c.get("col")
+            break
+    if code_col is None:
+        for c in cells:
+            raw = str(c.get("text") or "").strip()
+            if raw and raw == str(
+                _row_field(row, "component_code") or ""
+            ):
+                code_col = c.get("col")
+                break
+    if code_col is not None:
+        parts = [
+            str(c.get("text") or "").strip()
+            for c in cells
+            if isinstance(c.get("col"), int)
+            and c["col"] > code_col
+            and str(c.get("text") or "").strip()
+        ]
+        if parts:
+            return " ".join(parts), "row_cells_right_of_component_code"
+    typed = _row_field(row, "description")
+    if typed:
+        return typed, "typed_description_field"
+    return None, None
+
+
+def _b3_declared_attributes(row: dict) -> dict[str, Any]:
+    """RQ-B3-01 — atributos declarados na linha, com proveniência.
+
+    Categoria pelo primeiro token da descrição declarada; cor pelos
+    tokens de abreviação presentes no texto; avaliação normativa
+    governada anexada quando aplicável (fail-closed do G24)."""
+    desc, desc_src = _b3_component_description(row)
+    declared: dict[str, Any] = {
+        "description": desc,
+        "description_source": desc_src,
+        "category_token": None,
+        "category_class": None,
+        "color_tokens": [],
+        "norm_applied": None,
+        "norm_status": None,
+    }
+    up = (desc or "").upper()
+    first = up.split()[0].rstrip(".") if up.split() else ""
+    for token, klass in _B3_DECLARED_CATEGORY:
+        if first == token or first.startswith(token):
+            declared["category_token"] = first
+            declared["category_class"] = klass
+            break
+    declared["color_tokens"] = _B3_COLOR_TOKEN_RE.findall(up)
+    code = _row_field(row, "component_code")
+    if desc:
+        try:
+            from engineering_app.application.drawing.normative_description import (
+                evaluate_description,
+            )
+            ev = evaluate_description(
+                product_code=str(code or ""),
+                product_type="MP",
+                description_raw=desc,
+                description_source="DRAWING",
+            )
+            declared["norm_applied"] = ev.get("applied_ruleset")
+            declared["norm_status"] = ev.get("overall_status")
+        except Exception:
+            declared["norm_status"] = "EVAL_ERROR"
+    return declared
+
+
+def _b3_shape_class(obs: dict | None) -> str:
+    """RQ-B3-02 — classe visual da região a partir das medidas do
+    adapter. Não é reconhecimento de componente: é geometria+cor
+    observável, classificada sem consultar a expectativa declarada."""
+    if not obs:
+        return "unknown"
+    ar = float(obs.get("aspect_ratio") or 0)
+    sat = float(obs.get("sat_coverage") or 0)
+    if ar >= _B3_ELONGATED_MIN_AR and sat >= _B3_ELONGATED_MIN_SAT:
+        return "elongated_fill"
+    if ar < _B3_COMPACT_MAX_AR:
+        return "compact_or_outline"
+    return "mixed"
+
+
+def _b3_category_result(category_class: str | None, shape: str) -> dict:
+    """RQ-B3-04 — matriz declarado × observado.
+
+    CONFLICT_CANDIDATE apenas quando a forma observada contradiz a
+    família esperada por evidência própria (barra alongada × família
+    compacta, ou inverso). Região compacta não distingue terminal de
+    luva/protetor → INCONCLUSIVE, nunca confirmação implícita."""
+    if not category_class or shape == "unknown":
+        return {
+            "state": "INCONCLUSIVE",
+            "reason": (
+                "categoria declarada ou observação ausente — "
+                "nada a comparar"
+            ),
+        }
+    if category_class == "cable":
+        if shape == "elongated_fill":
+            return {
+                "state": "COMPATIBLE_CANDIDATE",
+                "reason": (
+                    "região apontada é barra alongada saturada — "
+                    "consistente com corpo de cabo"
+                ),
+            }
+        if shape == "compact_or_outline":
+            return {
+                "state": "CONFLICT_CANDIDATE",
+                "reason": (
+                    "balão declarado como cabo aponta região "
+                    "compacta — forma incompatível com corpo de cabo"
+                ),
+            }
+        return {
+            "state": "INCONCLUSIVE",
+            "reason": (
+                "região apontada é composta/mista — não decide entre "
+                "corpo de cabo e componentes internos"
+            ),
+        }
+    if shape == "elongated_fill":
+        return {
+            "state": "CONFLICT_CANDIDATE",
+            "reason": (
+                f"balão declarado como {category_class} aponta barra "
+                "alongada saturada — forma incompatível com "
+                "componente compacto"
+            ),
+        }
+    return {
+        "state": "INCONCLUSIVE",
+        "reason": (
+            "região compacta/mista não distingue "
+            "terminal/luva/protetor entre si — consistente, mas não "
+            "probante"
+        ),
+    }
+
+
+def _b3_hue_in_ranges(hue: int | None, ranges: tuple) -> bool:
+    if hue is None:
+        return False
+    return any(lo <= hue <= hi for lo, hi in ranges)
+
+
+def _b3_color_result(tokens: list[str], obs: dict | None) -> dict:
+    """RQ-B3-03 — cor declarada × matiz dominante observado.
+
+    Só compara quando a observação declara fill_semantics="material":
+    cor de contorno/anotação/preenchimento esquemático não é cor do
+    componente e nunca deve gerar compatível nem conflito."""
+    if not tokens:
+        return {
+            "state": "NOT_COMPARABLE",
+            "reason": "nenhuma cor declarada na descrição",
+        }
+    if obs is None or obs.get("dominant_hue") is None:
+        return {
+            "state": "NOT_COMPARABLE",
+            "reason": "nenhum matiz observável na região de destino",
+        }
+    if obs.get("fill_semantics") != "material":
+        return {
+            "state": "NOT_COMPARABLE",
+            "reason": (
+                "cor de preenchimento esquemático/anotação não é "
+                "convenção governada de cor de material — matiz "
+                "registrado apenas como observação"
+            ),
+        }
+    if set(tokens) <= _B3_ACHROMATIC:
+        return {
+            "state": "INCONCLUSIVE",
+            "reason": "cor declarada acromática — matiz não decide",
+        }
+    frac = float(obs.get("dominant_hue_fraction") or 0)
+    if frac < 0.3:
+        return {
+            "state": "INCONCLUSIVE",
+            "reason": "matiz dominante de baixa confiança na região",
+        }
+    hue = obs.get("dominant_hue")
+    if any(
+        _b3_hue_in_ranges(hue, _B3_TOKEN_HUE.get(t, ()))
+        for t in tokens
+    ):
+        return {
+            "state": "COMPATIBLE_CANDIDATE",
+            "reason": "matiz dominante na faixa da cor declarada",
+        }
+    return {
+        "state": "CONFLICT_CANDIDATE",
+        "reason": (
+            "matiz dominante fora da faixa de qualquer cor declarada"
+        ),
+    }
+
+
+def _b3_evaluate_row(row: dict, target: dict | None) -> dict:
+    """Compara uma linha declarada × região observada sustentada."""
+    declared = _b3_declared_attributes(row)
+    obs = (target or {}).get("observation")
+    shape = _b3_shape_class(obs)
+    cat = _b3_category_result(declared["category_class"], shape)
+    col = _b3_color_result(declared["color_tokens"], obs)
+    states = {cat["state"], col["state"]}
+    if "CONFLICT_CANDIDATE" in states:
+        overall = "CONFLICT_CANDIDATE"
+    elif "COMPATIBLE_CANDIDATE" in states:
+        overall = "COMPATIBLE_CANDIDATE"
+    elif "INCONCLUSIVE" in states:
+        overall = "INCONCLUSIVE"
+    else:
+        overall = "NOT_COMPARABLE"
+    return {
+        "row_index": row.get("row_index", row.get("row")),
+        "component_code_candidate": _row_field(row, "component_code"),
+        "declared": declared,
+        "observed": {
+            "region_id": (target or {}).get("id"),
+            "region_source": (target or {}).get("region_source"),
+            "box_px": (target or {}).get("box_px"),
+            "shape_class": shape,
+            "sat_coverage": (obs or {}).get("sat_coverage"),
+            "dominant_hue": (obs or {}).get("dominant_hue"),
+            "dominant_hue_fraction": (obs or {}).get(
+                "dominant_hue_fraction"),
+            "aspect_ratio": (obs or {}).get("aspect_ratio"),
+            "fill_semantics": (obs or {}).get(
+                "fill_semantics", "schematic_or_unknown"),
+        },
+        "comparison": {"category": cat, "color": col},
+        "state": overall,
+        "review_required": True,
+    }
+
+
+def _b3_component_consistency(entry: dict, balloon: dict,
+                              rows: list[dict]) -> dict:
+    """RQ-B3-05/06 — bloco de coerência por ocorrência de balão.
+
+    Só avalia quando o B2 sustenta UMA região de destino
+    (``SINGLE_REGION``); destinos ambíguos, líder ausente ou item sem
+    rótulo na tabela abstêm-se com razão registrada — nunca resolvem
+    silenciosamente. Linhas ambíguas da tabela são avaliadas uma a uma
+    sem escolha."""
+    ll = balloon.get("leader_line") or {}
+    base = {
+        "state": "INCONCLUSIVE",
+        "evaluated": False,
+        "evaluations": [],
+        "leader_evidence": ll.get("target_state") or ll.get("state"),
+        "reason": None,
+        "review_required": True,
+    }
+    if entry.get("state") in ("NOT_COMPARABLE", "NOT_LOCATED"):
+        base["state"] = "NOT_COMPARABLE"
+        base["reason"] = (
+            "sem item declarado associado — nada a comparar")
+        return base
+    if ll.get("target_state") == "AMBIGUOUS_REGIONS":
+        base["reason"] = (
+            "destino geométrico ambíguo — alternativas registradas "
+            "com observações, sem comparação")
+        base["alternatives"] = [
+            {
+                "region_px": a.get("region_px"),
+                "region_source": a.get("region_source"),
+                "shape_class": _b3_shape_class(a.get("observation")),
+                "observation": a.get("observation"),
+            }
+            for a in (ll.get("alternative_targets") or [])
+        ]
+        return base
+    if ll.get("target_state") != "SINGLE_REGION":
+        base["reason"] = (
+            "sem destino geométrico sustentado pelo B2 — "
+            "comparação não executada")
+        return base
+    target = {
+        "id": ll.get("target_region_id"),
+        "box_px": ll.get("target_region_px"),
+        "observation": ll.get("target_observation"),
+    }
+    evals = [_b3_evaluate_row(r, target) for r in rows]
+    base["evaluated"] = bool(evals)
+    base["evaluations"] = evals
+    states = {e["state"] for e in evals}
+    if "CONFLICT_CANDIDATE" in states:
+        base["state"] = "CONFLICT_CANDIDATE"
+    elif len(states) == 1:
+        base["state"] = evals[0]["state"]
+    elif "COMPATIBLE_CANDIDATE" in states:
+        base["state"] = "AMBIGUOUS"
+    else:
+        base["state"] = "INCONCLUSIVE"
+    base["reason"] = (
+        "comparação candidata por evidência geométrico-visual — "
+        "sujeita a revisão; não aprova nem declara NC")
+    return base
+
+
 def build_balloon_table_validation(u: dict) -> dict:
     """E1/VAL-01 B1 — associação candidata balão × item da tabela.
 
@@ -722,6 +1095,22 @@ def build_balloon_table_validation(u: dict) -> dict:
                     ),
                 )
                 counts["ambiguous"] += 1
+        # E1/VAL-01 B3 — coerência visual: compara atributos
+        # declarados na(s) linha(s) associada(s) com as medidas da
+        # região de destino sustentada pelo B2. Só avalia
+        # SINGLE_REGION; ambiguidade geométrica/documental abstém-se.
+        linked_rows: list[dict] = []
+        if entry.get("table_item"):
+            ri = entry["table_item"].get("row_index")
+            if isinstance(ri, int) and 0 <= ri < len(rows):
+                linked_rows.append(rows[ri])
+        for ti in entry.get("table_items") or []:
+            ri = ti.get("row_index")
+            if isinstance(ri, int) and 0 <= ri < len(rows):
+                linked_rows.append(rows[ri])
+        entry["component_consistency"] = _b3_component_consistency(
+            entry, b, linked_rows,
+        )
         balloon_entries.append(entry)
 
     from collections import Counter
@@ -767,6 +1156,28 @@ def build_balloon_table_validation(u: dict) -> dict:
             "ocorrência; verificação do destino permanece NOT_CHECKED"
         ),
         "summary": counts,
+        "component_consistency_summary": {
+            "compatible_candidates": sum(
+                1 for e in balloon_entries
+                if (e.get("component_consistency") or {}).get("state")
+                == "COMPATIBLE_CANDIDATE"),
+            "conflict_candidates": sum(
+                1 for e in balloon_entries
+                if (e.get("component_consistency") or {}).get("state")
+                == "CONFLICT_CANDIDATE"),
+            "ambiguous": sum(
+                1 for e in balloon_entries
+                if (e.get("component_consistency") or {}).get("state")
+                == "AMBIGUOUS"),
+            "inconclusive": sum(
+                1 for e in balloon_entries
+                if (e.get("component_consistency") or {}).get("state")
+                == "INCONCLUSIVE"),
+            "not_comparable": sum(
+                1 for e in balloon_entries
+                if (e.get("component_consistency") or {}).get("state")
+                == "NOT_COMPARABLE"),
+        },
         "limitations": [
             "OCR/primitiva não localizar balão ≠ balão ausente no desenho",
             "igualdade de rótulo é associação de referência candidata — "
@@ -776,6 +1187,15 @@ def build_balloon_table_validation(u: dict) -> dict:
             "ausência de balão num item não comprova falta de indicação",
             "rótulo de item por forma de célula (cell_item_shape) é "
             "evidência mais fraca que coluna tipada — exige revisão",
+            "B3: coerência visual só avalia destino SINGLE_REGION — "
+            "destinos ambíguos preservam alternativas sem veredito",
+            "B3: classe visual da região é geométrico-cromática "
+            "(barra alongada × compacta × mista), não reconhecimento "
+            "de componente; cor de preenchimento esquemático não é "
+            "cor de material — comparação de cor abstém-se sem "
+            "convenção governada (fill_semantics=material)",
+            "B3: COMPATIBLE_CANDIDATE/CONFLICT_CANDIDATE são "
+            "candidatos de revisão — não aprovam nem declaram NC",
         ],
         "review_required": True,
         "automatic_approval": False,
