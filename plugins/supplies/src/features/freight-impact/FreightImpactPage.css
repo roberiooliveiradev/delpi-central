@@ -1,20 +1,206 @@
-.sp-freight-impact__filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));align-items:end;gap:12px}
-.sp-freight-impact__filters label {display:grid;gap:7px;font-size:.82rem;font-weight:600}
-.sp-freight-impact__filters input,.sp-freight-impact__filters select {border:1px solid var(--delpi-border,#cbd5e1);border-radius:8px;padding:10px;background:var(--delpi-surface,#fff);color:inherit;min-height:40px}
-.sp-freight-impact__actions {display:flex;gap:8px;flex-wrap:wrap}
-.sp-freight-impact__metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.sp-freight-impact__metric {border:1px solid var(--delpi-border,#dce3eb);border-radius:12px;padding:18px}
-.sp-freight-impact__metric span {display:block;font-size:.8rem;opacity:.76}
-.sp-freight-impact__metric strong {display:block;margin-top:9px;font-size:clamp(1.1rem,2vw,1.7rem);font-variant-numeric:tabular-nums}
-.sp-freight-impact__chart {display:grid;grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:12px;align-items:stretch;padding:22px 5px 8px}
-.sp-freight-impact__month {display:grid;grid-template-rows:1fr auto auto;text-align:center;gap:8px}
-.sp-freight-impact__month-graphic {height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--delpi-border,#e2e8f0)}
-.sp-freight-impact__bar {width:min(40px,75%);border-radius:6px 6px 0 0;background:var(--delpi-primary,#087ab0);min-height:2px}
-.sp-freight-impact__month strong {font-size:.83rem}.sp-freight-impact__month span {font-size:.76rem;opacity:.8}
-.sp-freight-impact__table-wrap {width:100%;overflow-x:auto}
-.sp-freight-impact__table {border-collapse:collapse;width:100%;min-width:900px;font-variant-numeric:tabular-nums}
-.sp-freight-impact__table th,.sp-freight-impact__table td {padding:12px;border-bottom:1px solid var(--delpi-border,#e2e8f0)}
-.sp-freight-impact__table th {text-align:left;font-size:.77rem;white-space:nowrap}
-.sp-freight-impact__table td {font-size:.86rem}.sp-freight-impact__table td:nth-child(n+5),.sp-freight-impact__table th:nth-child(n+5) {text-align:right}
-.sp-freight-impact__pager {display:flex;gap:12px;align-items:center;justify-content:flex-end;padding-top:12px}
-.sp-freight-impact__help {line-height:1.65;font-size:.86rem;opacity:.84}
+.sp-freight-impact__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.sp-freight-impact__filters label {
+  display: grid;
+  gap: 7px;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.sp-freight-impact__filters input,
+.sp-freight-impact__filters select {
+  min-height: 40px;
+  border: 1px solid var(--delpi-border, #cbd5e1);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--delpi-surface, #fff);
+  color: inherit;
+}
+.sp-freight-impact__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sp-freight-impact__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 16px;
+  padding: 12px 16px;
+  background: var(--delpi-surface, #f8fafc);
+  border: 1px solid var(--delpi-border, #dce3eb);
+  border-radius: 10px;
+  font-size: .84rem;
+}
+.sp-freight-impact__meta span {
+  padding: 5px 10px;
+  border: 1px solid var(--delpi-border, #dce3eb);
+  border-radius: 999px;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.sp-freight-impact__meta small { opacity: .8; }
+.sp-freight-impact__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.sp-freight-impact__metric {
+  min-width: 0;
+  border: 1px solid var(--delpi-border, #dce3eb);
+  border-radius: 12px;
+  padding: 18px;
+}
+.sp-freight-impact__metric span { display: block; font-size: .8rem; opacity: .76; }
+.sp-freight-impact__metric strong {
+  display: block;
+  margin-top: 9px;
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.sp-freight-impact__metric--alert { border-color: #dc2626; }
+.sp-freight-impact__metric--alert strong { color: #b91c1c; }
+.sp-freight-impact__scope { margin: 0; font-size: .83rem; opacity: .84; line-height: 1.55; }
+.sp-freight-impact__chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  padding: 22px 5px 8px;
+}
+.sp-freight-impact__month {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 8px;
+  text-align: center;
+}
+.sp-freight-impact__month-graphic {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 150px;
+  border-bottom: 1px solid var(--delpi-border, #e2e8f0);
+}
+.sp-freight-impact__bar {
+  width: min(40px, 75%);
+  border-radius: 6px 6px 0 0;
+  background: var(--delpi-primary, #087ab0);
+  min-height: 2px;
+}
+.sp-freight-impact__month strong { font-size: .83rem; }
+.sp-freight-impact__month span { font-size: .76rem; opacity: .8; }
+.sp-freight-impact__table-wrap { width: 100%; overflow-x: auto; }
+.sp-freight-impact__table,
+.sp-freight-impact__allocation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.sp-freight-impact__table { min-width: 1170px; }
+.sp-freight-impact__allocation-table { min-width: 850px; }
+.sp-freight-impact__table th,
+.sp-freight-impact__table td,
+.sp-freight-impact__allocation-table th,
+.sp-freight-impact__allocation-table td {
+  padding: 11px;
+  border-bottom: 1px solid var(--delpi-border, #e2e8f0);
+  text-align: left;
+  vertical-align: middle;
+}
+.sp-freight-impact__table th,
+.sp-freight-impact__allocation-table th {
+  font-size: .74rem;
+  white-space: nowrap;
+  opacity: .8;
+}
+.sp-freight-impact__table td,
+.sp-freight-impact__allocation-table td { font-size: .83rem; }
+.sp-freight-impact__numeric { text-align: right !important; white-space: nowrap; }
+.sp-freight-impact__row--above_limit { background: rgba(220, 38, 38, .065); }
+.sp-freight-impact__row--inconsistent { background: rgba(217, 119, 6, .07); }
+.sp-freight-impact__over-limit { color: #b91c1c; font-weight: 800; }
+.sp-freight-impact__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+.sp-freight-impact__status--normal { background: #e8f7ef; color: #166534; }
+.sp-freight-impact__status--above_limit { background: #fee2e2; color: #991b1b; }
+.sp-freight-impact__status--inconsistent { background: #fef3c7; color: #92400e; }
+.sp-freight-impact__detail-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--delpi-primary, #075985);
+  font: inherit;
+  font-weight: 650;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.sp-freight-impact__detail-toggle:hover { text-decoration: underline; }
+.sp-freight-impact__detail-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.sp-freight-impact__detail-row td { padding: 0; }
+.sp-freight-impact__detail {
+  padding: 18px;
+  background: var(--delpi-surface, #f8fafc);
+  border: 1px solid var(--delpi-border, #dce3eb);
+  border-radius: 8px;
+}
+.sp-freight-impact__detail-heading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 14px;
+}
+.sp-freight-impact__detail-heading span { opacity: .8; }
+.sp-freight-impact__detail-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 22px;
+  font-size: .82rem;
+  margin-bottom: 15px;
+}
+.sp-freight-impact__detail-facts span { display: inline-flex; gap: 5px; }
+.sp-freight-impact__allocation-table td small {
+  display: block;
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .7;
+  font-size: .7rem;
+}
+.sp-freight-impact__issues {
+  padding: 12px;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 8px;
+  font-size: .82rem;
+}
+.sp-freight-impact__allocation-note { margin: 12px 0 0; font-size: .8rem; opacity: .78; }
+.sp-freight-impact__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 12px;
+  font-size: .84rem;
+}
+.sp-freight-impact__help { line-height: 1.65; font-size: .86rem; }
+@media (max-width: 720px) {
+  .sp-freight-impact__detail { padding: 12px; }
+  .sp-freight-impact__pager { justify-content: flex-start; }
+  .sp-freight-impact__meta small { flex-basis: 100%; }
+}
