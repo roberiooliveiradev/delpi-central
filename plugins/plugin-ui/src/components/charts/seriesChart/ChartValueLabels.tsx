@@ -391,7 +391,8 @@ export function ChartValueLabels({
     chartType === "waterfall"
   ) {
     const count = Math.max(1, seriesCount);
-    const baseline = margin.top + plotH;
+    const zeroAligned = chartType === "bar" || chartType === "horizontal_bar";
+    const baseline = zeroAligned ? toY(0) : margin.top + plotH;
     const categoryCount = Math.max(points.length, 1);
     const horizontal = layout.orientation === "horizontal" && layout.toValueX;
 
@@ -414,26 +415,33 @@ export function ChartValueLabels({
           });
           if (horizontal) {
             const xEnd = layout.toValueX!(clamped);
-            let x = xEnd + 6;
-            if (position === "center") x = (margin.left + xEnd) / 2;
-            if (position === "insideEnd") x = xEnd - 8;
+            const xZero = zeroAligned ? layout.toValueX!(0) : margin.left;
+            const negative = zeroAligned && clamped < 0;
+            let x = xEnd + (negative ? -6 : 6);
+            if (position === "center") x = (xZero + xEnd) / 2;
+            if (position === "insideEnd") x = xEnd + (negative ? 8 : -8);
             return (
               <DataLabelText
                 key={`hbar-label-${seriesIndex}-${point.sourceIndex}`}
                 x={x}
                 y={slot.centerY}
                 text={text}
-                textAnchor={position === "insideEnd" ? "end" : "start"}
+                textAnchor={
+                  position === "center" ? "middle"
+                    : position === "insideEnd" ? (negative ? "start" : "end")
+                    : negative ? "end" : "start"
+                }
                 dominantBaseline="middle"
                 pointIndex={point.sourceIndex}
                 {...labelShared}
               />
             );
           }
-          const yTop = toY(clamped);
-          let y = yTop - 6;
-          if (position === "center") y = (yTop + baseline) / 2;
-          if (position === "insideEnd") y = yTop + 12;
+          const yEnd = toY(clamped);
+          const negative = zeroAligned && clamped < 0;
+          let y = yEnd + (negative ? 12 : -6);
+          if (position === "center") y = (yEnd + baseline) / 2;
+          if (position === "insideEnd") y = yEnd + (negative ? -12 : 12);
           return (
             <DataLabelText
               key={`bar-label-${seriesIndex}-${point.sourceIndex}`}
