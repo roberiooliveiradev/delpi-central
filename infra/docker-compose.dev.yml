@@ -1674,6 +1674,7 @@ services:
       STRATEGIC_INDICATORS_API_TIMEOUT: ${STRATEGIC_INDICATORS_API_TIMEOUT:-8}
       BPMN_MODELER_API_BASE_URL: ${BPMN_MODELER_API_BASE_URL:-http://bpmn-modeler-api:8000}
       BPMN_MODELER_API_TIMEOUT: ${BPMN_MODELER_API_TIMEOUT:-8}
+      HELPDESK_API_TIMEOUT_SECONDS: ${HELPDESK_API_TIMEOUT_SECONDS:-15}
 
       # Geração de atas via Kimi (OpenAI-compatible) — opcional; sem chave a rota retorna 502 claro
       KIMI_API_KEY: ${KIMI_API_KEY:-}

@@ -635,3 +635,85 @@ def test_mcp_surface_declares_attachment_action():
     )
 
     assert "attachment" in HELPDESK_READ_ACTIONS
+
+
+# --------------------------------------------------------------------------
+# Dedicated BFF timeout — TEO-HELPDESK-TIMEOUT-ERROR-MAPPING-FIX-01
+# --------------------------------------------------------------------------
+
+
+def test_gateway_uses_dedicated_helpdesk_timeout(monkeypatch):
+    """The BFF call must carry HELPDESK_API_TIMEOUT_SECONDS — never the
+    RBAC/workspace hint budget that caused the prod 502 incident."""
+    import tm_app.infrastructure.gateways.helpdesk_bff_gateway as mod
+
+    captured: dict[str, Any] = {}
+
+    class _Client:
+        def __init__(self, **kw: Any) -> None:
+            captured.update(kw)
+
+        def __enter__(self) -> "_Client":
+            return self
+
+        def __exit__(self, *a: Any) -> None:
+            return None
+
+        def get(self, url: str, params=None, headers=None) -> Any:
+            return _Resp(200, {"items": []})
+
+    monkeypatch.setattr(mod.httpx, "Client", _Client)
+    monkeypatch.setattr(mod, "HELPDESK_API_TIMEOUT_SECONDS", 12.5)
+    HelpdeskBffGateway().tickets("Bearer t", {})
+    timeout = captured["timeout"]
+    assert isinstance(timeout, httpx.Timeout)
+    assert timeout.connect == 12.5
+    assert timeout.read == 12.5
+    assert timeout.connect != 2.5
+
+
+def test_gateway_read_timeout_maps_upstream_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Incident sibling: ReadTimeout (BFF slow, not unreachable) must map
+    to the same upstream_unavailable envelope as ConnectError."""
+
+    class _TimeoutClient:
+        def __init__(self, **_: Any) -> None:
+            pass
+
+        def __enter__(self) -> "_TimeoutClient":
+            return self
+
+        def __exit__(self, *a: Any) -> None:
+            return None
+
+        def get(self, *a: Any, **k: Any) -> Any:
+            raise httpx.ReadTimeout("timed out")
+
+    import tm_app.infrastructure.gateways.helpdesk_bff_gateway as mod
+
+    monkeypatch.setattr(mod.httpx, "Client", _TimeoutClient)
+    with pytest.raises(GptActionsError) as exc:
+        HelpdeskBffGateway().tickets("Bearer t", {})
+    assert exc.value.status_code == 502
+    assert exc.value.data["error_kind"] == "upstream_unavailable"
+
+
+def test_helpdesk_timeout_env_override(monkeypatch):
+    """HELPDESK_API_TIMEOUT_SECONDS is honored; default is a valid,
+    predictable 15s when unset."""
+    import importlib
+
+    import tm_app.infrastructure.gateways.helpdesk_bff_gateway as mod
+
+    monkeypatch.setenv("HELPDESK_API_TIMEOUT_SECONDS", "7.5")
+    try:
+        importlib.reload(mod)
+        assert mod.HELPDESK_API_TIMEOUT_SECONDS == 7.5
+        monkeypatch.delenv("HELPDESK_API_TIMEOUT_SECONDS")
+        importlib.reload(mod)
+        assert mod.HELPDESK_API_TIMEOUT_SECONDS == 15.0
+    finally:
+        monkeypatch.delenv("HELPDESK_API_TIMEOUT_SECONDS", raising=False)
+        importlib.reload(mod)

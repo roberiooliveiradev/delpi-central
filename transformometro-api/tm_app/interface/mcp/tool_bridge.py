@@ -240,11 +240,18 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
             error_code=exc.code,
         )
     if isinstance(exc, GptActionsError):
-        code = kind_for_http_status(exc.status_code, server_error="validation")
+        data = dict(exc.data or {})
+        # Producer-declared kind is the canonical wire code: an upstream
+        # timeout/unavailability (>=500) must never surface as
+        # ARGUMENT_VALIDATION — kindless server errors fall back to
+        # "internal", not "validation".
+        code = str(data.get("error_kind") or "") or kind_for_http_status(
+            exc.status_code, server_error="internal"
+        )
         return _error_result(
             exc.message,
             status_code=exc.status_code,
-            data=dict(exc.data or {}) or {"error_kind": "client"},
+            data=data or {"error_kind": "client"},
             error_code=code,
         )
     if isinstance(exc, (ValueError, LookupError)) and not isinstance(exc, KeyError):

@@ -27,9 +27,6 @@ from tm_app.domain.services.interaction_room_access_service import (
     LINK_STATE_UNAVAILABLE,
     LINK_STATE_VISIBLE,
 )
-from tm_app.infrastructure.gateways.core_workspace_context_gateway import (
-    WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +34,13 @@ HELPDESK_API_URL = (
     os.getenv("HELPDESK_API_URL")
     or os.getenv("HELPDESK_BFF_URL")
     or "http://helpdesk-api:8000"
+)
+
+# Dedicated BFF budget — never the RBAC/workspace hint timeout. The BFF
+# performs real GLPI upstream work (OAuth, ticket search, per-user
+# enrichment) whose healthy latency is seconds, not milliseconds.
+HELPDESK_API_TIMEOUT_SECONDS = float(
+    os.getenv("HELPDESK_API_TIMEOUT_SECONDS", "15")
 )
 
 CATALOG_PATHS: dict[str, str] = {
@@ -89,8 +93,8 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             )
         url = f"{HELPDESK_API_URL.rstrip('/')}{path}"
         timeout = httpx.Timeout(
-            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
-            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            HELPDESK_API_TIMEOUT_SECONDS,
+            connect=HELPDESK_API_TIMEOUT_SECONDS,
         )
         try:
             with httpx.Client(timeout=timeout) as client:
@@ -127,8 +131,8 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             )
         url = f"{HELPDESK_API_URL.rstrip('/')}{path}"
         timeout = httpx.Timeout(
-            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
-            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            HELPDESK_API_TIMEOUT_SECONDS,
+            connect=HELPDESK_API_TIMEOUT_SECONDS,
         )
         headers = {
             "Authorization": authorization,
@@ -237,8 +241,8 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             )
         url = f"{HELPDESK_API_URL.rstrip('/')}{path}"
         timeout = httpx.Timeout(
-            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
-            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            HELPDESK_API_TIMEOUT_SECONDS,
+            connect=HELPDESK_API_TIMEOUT_SECONDS,
         )
         try:
             with httpx.Client(timeout=timeout) as client:
@@ -623,8 +627,8 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             f"/tickets/{int(ticket_id)}/attachments"
         )
         timeout = httpx.Timeout(
-            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
-            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            HELPDESK_API_TIMEOUT_SECONDS,
+            connect=HELPDESK_API_TIMEOUT_SECONDS,
         )
         headers = {
             "Authorization": authorization,

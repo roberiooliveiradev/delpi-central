@@ -267,3 +267,95 @@ class TestMcpPreparePersistedFailClosed:
             )
         finally:
             self._reset(user_token, auth_token)
+
+
+class TestGptActionsErrorWireMapping:
+    """Incident regression — TEO-HELPDESK-GLPI-PROD-502-ROOT-CAUSE-01.
+
+    A transport timeout TÉO→BFF was flattened into
+    ``code=ARGUMENT_VALIDATION`` + ``recoverable=true`` because every
+    ``GptActionsError`` >=500 was mapped to ``"validation"``. The
+    producer-declared ``error_kind`` is the canonical wire code; only
+    genuine argument rejections may render ARGUMENT_VALIDATION.
+    """
+
+    def _payload(self, exc: Exception) -> dict:
+        from tm_app.interface.mcp import tool_bridge as bridge
+
+        result = bridge.handle_tool_error(exc)
+        assert result.is_error is True
+        return dict(result.structured_content or {})
+
+    def test_upstream_timeout_is_not_argument_validation(self):
+        from tm_app.application.gpt_actions.errors import GptActionsError
+
+        payload = self._payload(
+            GptActionsError(
+                "Helpdesk indisponível.",
+                502,
+                {"error_kind": "upstream_unavailable"},
+            )
+        )
+        assert payload["success"] is False
+        assert payload["status_code"] == 502
+        assert payload["data"]["error_kind"] == "upstream_unavailable"
+        assert payload["data"]["error_code"] == "upstream_unavailable"
+        assert payload.get("code") != "ARGUMENT_VALIDATION"
+        assert "recoverable" not in payload
+
+    def test_real_argument_error_keeps_validation_code(self):
+        from tm_app.application.gpt_actions.errors import GptActionsError
+
+        payload = self._payload(
+            GptActionsError(
+                "action deve ser 'tickets'.",
+                400,
+                {"error_kind": "validation", "error_code": "INVALID_ACTION"},
+            )
+        )
+        assert payload["code"] == "ARGUMENT_VALIDATION"
+        assert payload["recoverable"] is True
+        assert payload["data"]["error_code"] == "INVALID_ACTION"
+
+    def test_kindless_server_error_is_internal_not_validation(self):
+        from tm_app.application.gpt_actions.errors import GptActionsError
+
+        payload = self._payload(GptActionsError("boom", 500))
+        assert payload["status_code"] == 500
+        assert payload["data"]["error_code"] == "internal"
+        assert payload.get("code") != "ARGUMENT_VALIDATION"
+        assert "recoverable" not in payload
+
+    def test_typed_non_validation_kinds_are_preserved(self):
+        from tm_app.application.gpt_actions.errors import GptActionsError
+
+        payload = self._payload(
+            GptActionsError(
+                "off",
+                503,
+                {"error_kind": "feature_disabled"},
+            )
+        )
+        assert payload["data"]["error_code"] == "feature_disabled"
+        assert payload.get("code") != "ARGUMENT_VALIDATION"
+
+        payload = self._payload(
+            GptActionsError(
+                "gone",
+                404,
+                {"error_kind": "not_found", "error_code": "ticket_missing"},
+            )
+        )
+        assert payload["data"]["error_kind"] == "not_found"
+        assert payload["data"]["error_code"] == "ticket_missing"
+
+    def test_authn_error_keeps_401_challenge(self):
+        from tm_app.application.gpt_actions.errors import GptActionsError
+
+        payload = self._payload(
+            GptActionsError(
+                "Usuário não autenticado.", 401, {"error_kind": "authn"}
+            )
+        )
+        assert payload["status_code"] == 401
+        assert payload.get("code") != "ARGUMENT_VALIDATION"
