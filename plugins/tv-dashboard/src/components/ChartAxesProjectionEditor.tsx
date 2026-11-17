@@ -143,6 +143,9 @@ export function ChartAxesProjectionEditor({
           : !isGauge
             ? ` Até ${maxSeries} séries.`
             : ""}
+        {!isGauge && maxSeries > 1 && atSeriesLimit
+          ? " Limite atingido: marcar uma nova série substitui a última selecionada."
+          : ""}
       </p>
       {!isGauge ? (
         <FormSelectControl
@@ -215,7 +218,8 @@ export function ChartAxesProjectionEditor({
                     id={`${idPrefix}-series-${option.field}`}
                     className="td-deck-inspector__checkbox"
                     checked={checked}
-                    disabled={!checked && atSeriesLimit && maxSeries > 1}
+                    // O handler já substitui a última série quando o limite foi atingido.
+                    // Não bloquear o checkbox: isso deixava fontes antigas presas (GLPI #1598).
                     aria-label={`Incluir ${rowLabel}`}
                     onChange={(nextChecked) => {
                       if (nextChecked) {
