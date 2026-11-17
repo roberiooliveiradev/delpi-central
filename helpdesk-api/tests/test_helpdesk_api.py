@@ -1,4 +1,5 @@
 from tests.conftest import auth_headers, build_client, link
+from helpdesk_app.domain.models import TicketSummary
 
 
 def test_missing_permission_does_not_call_glpi():
@@ -188,6 +189,70 @@ def test_list_filters_by_requester_id():
     assert mine_wins.status_code == 200
     assert glpi.last_list_query.requester_id == 12
     assert glpi.last_list_query.requester_mine is True
+
+
+def test_list_filters_assignee_mine():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 15
+    mine = client.get("/tickets", params={"assignee_mine": "true"}, headers=auth_headers())
+    assert mine.status_code == 200
+    assert [row["id"] for row in mine.json()["items"]] == [7]
+    assert glpi.last_list_query.assignee_id == 15
+    assert glpi.last_list_query.assignee_mine is True
+
+
+def test_list_assignee_mine_wins_over_client_assignee_id():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 15
+    response = client.get(
+        "/tickets",
+        params={"assignee_mine": "true", "assignee_id": 99},
+        headers=auth_headers(),
+    )
+    assert response.status_code == 200
+    assert glpi.last_list_query.assignee_id == 15
+
+
+def test_list_assignee_mine_unresolved_is_fail_closed():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = None
+    response = client.get(
+        "/tickets", params={"assignee_mine": "true"}, headers=auth_headers()
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["items"] == []
+    assert body["has_more"] is False
+    assert body["unresolved_identity"] is True
+
+
+def test_list_filters_by_priority_id():
+    client, glpi = build_client()
+    link(client)
+    hit = client.get("/tickets", params={"priority_id": 4}, headers=auth_headers())
+    assert hit.status_code == 200
+    assert glpi.last_list_query.priority_id == 4
+    bad = client.get("/tickets", params={"priority_id": 9}, headers=auth_headers())
+    assert bad.status_code == 422
+
+
+def test_list_items_expose_priority():
+    client, glpi = build_client()
+    link(client)
+    glpi.tickets[0] = TicketSummary(
+        7, "Impressora", "Novo", "Hardware", "Média",
+        "2026-09-21T12:00:00Z",
+        requester_id=12, status_id=1, assigned_user_id=15,
+        priority_id=4, priority="Alta",
+    )
+    listed = client.get("/tickets", headers=auth_headers())
+    assert listed.status_code == 200
+    row = listed.json()["items"][0]
+    assert row["priority_id"] == 4
+    assert row["priority"] == "Alta"
 
 
 def test_create_ticket_and_followup_are_idempotent():

@@ -306,6 +306,21 @@ def tool_read(
                 )
             fn = getattr(_b, fn_name)
             kwargs = _sig_kwargs(fn, body)
+            if entity_norm == "helpdesk":
+                # Closed vocabulary: silently dropping an unsupported filter
+                # would widen a scoped query (e.g. "my tickets") into a
+                # global listing. Reject unknown keys with a typed error.
+                unknown = sorted(
+                    set(body)
+                    - set(inspect.signature(fn).parameters)
+                    - {"action"}
+                )
+                if unknown:
+                    return _b._error_result(
+                        f"Unsupported helpdesk params: {unknown}.",
+                        status_code=400,
+                        error_code="validation",
+                    )
             if "action" in inspect.signature(fn).parameters:
                 kwargs["action"] = action_norm
             return fn(**kwargs)

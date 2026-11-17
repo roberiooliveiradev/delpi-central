@@ -308,14 +308,22 @@ def build_ticket_list_query(
     assignee_id: int | None = None,
     requester_id: int | None = None,
     requester_mine: bool = False,
+    assignee_mine: bool = False,
+    priority_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = _DEFAULT_PAGE_SIZE,
 ) -> TicketListQuery:
+    # ``*_mine`` is session-owned: it always wins over a client *_id —
+    # deterministic conflict resolution, same rule as requester_mine.
+    if assignee_mine:
+        assignee_id = None
     if assignee_id is not None and int(assignee_id) < 1:
         raise GlpiValidation("assignee_id inválido.")
     if requester_id is not None and int(requester_id) < 1:
         raise GlpiValidation("requester_id inválido.")
+    if priority_id is not None and int(priority_id) not in _PRIORITY_NAMES:
+        raise GlpiValidation("priority_id inválido.")
     clauses: list[str] = ["is_deleted==false"]
     term = _search_term(q)
     if term:
@@ -338,6 +346,8 @@ def build_ticket_list_query(
         if urgency_id not in _URGENCY_NAMES:
             raise GlpiValidation("urgency_id inválido.")
         clauses.append(f"urgency=={urgency_id}")
+    if priority_id is not None:
+        clauses.append(f"priority=={int(priority_id)}")
     if category_id is not None:
         if category_id < 1:
             raise GlpiValidation("category_id inválido.")
@@ -380,6 +390,8 @@ def build_ticket_list_query(
         assignee_id=int(assignee_id) if assignee_id is not None else None,
         requester_id=int(requester_id) if requester_id is not None else None,
         requester_mine=bool(requester_mine),
+        assignee_mine=bool(assignee_mine),
+        priority_id=int(priority_id) if priority_id is not None else None,
         client_sort=client_sort,
         q=term,
         status=(status or "").strip(),
@@ -869,6 +881,8 @@ def _summary(row: dict) -> TicketSummary:
         sla_tto=_named(row.get("sla_tto")),
         assigned_user_id=_team_user_id(row, "assigned"),
         requester_id=_requester_id(row),
+        priority_id=_int_field(row.get("priority")),
+        priority=_PRIORITY_NAMES.get(_int_field(row.get("priority")) or -1, ""),
         entity=_named(row.get("entity")),
         last_editor=_person_name(row.get("user_editor"))
         if isinstance(row.get("user_editor"), dict)

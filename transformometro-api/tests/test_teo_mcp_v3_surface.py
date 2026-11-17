@@ -194,6 +194,37 @@ def test_read_unknown_entity_and_action_fail_typed() -> None:
         _cleanup(tokens)
 
 
+def test_read_helpdesk_rejects_unknown_params() -> None:
+    """Fail-closed: a dropped filter must never widen a scoped query."""
+    tokens = _auth_context()
+    try:
+        with patch(
+            "tm_app.interface.mcp.tool_bridge._helpdesk.read_helpdesk",
+            return_value={"tickets": []},
+        ) as hd:
+            result = v3.tool_read(
+                "helpdesk", "tickets", {"assignee_mine_typo": True}
+            )
+            assert result.is_error is True
+            assert (
+                result.structured_content["data"]["error_kind"]
+                == "validation"
+            )
+            hd.assert_not_called()
+
+            # Canonical filters still route through untouched.
+            result = v3.tool_read(
+                "helpdesk",
+                "tickets",
+                {"assignee_mine": True, "status": "open", "page": 1},
+            )
+            assert result.is_error is False
+            assert hd.call_args.kwargs["assignee_mine"] is True
+            assert hd.call_args.kwargs["status"] == "open"
+    finally:
+        _cleanup(tokens)
+
+
 def test_read_meeting_minute_search_and_get_use_record_read() -> None:
     """Hybrid entity: catalog search/get must not be swallowed by specialized."""
     tokens = _auth_context()

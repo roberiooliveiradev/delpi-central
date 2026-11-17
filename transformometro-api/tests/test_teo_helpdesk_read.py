@@ -118,6 +118,32 @@ def test_tickets_action_forwards_filters():
     assert call[2]["page"] == 2
 
 
+def test_tickets_action_forwards_mine_and_extended_filters():
+    svc, gw = _svc()
+    svc.read_helpdesk(
+        "Bearer t",
+        action="tickets",
+        assignee_mine=True,
+        requester_mine=True,
+        requester_id=12,
+        priority_id=4,
+        solved_from="2026-11-01",
+        solved_to="2026-11-30",
+        closed_from="2026-11-01",
+        closed_to="2026-11-30",
+    )
+    call = gw.calls[0]
+    assert call[0] == "tickets"
+    assert call[2]["assignee_mine"] is True
+    assert call[2]["requester_mine"] is True
+    assert call[2]["requester_id"] == 12
+    assert call[2]["priority_id"] == 4
+    assert call[2]["solved_from"] == "2026-11-01"
+    assert call[2]["solved_to"] == "2026-11-30"
+    assert call[2]["closed_from"] == "2026-11-01"
+    assert call[2]["closed_to"] == "2026-11-30"
+
+
 def test_ticket_action():
     svc, gw = _svc()
     out = svc.read_helpdesk("Bearer t", action="ticket", ticket_id=152)

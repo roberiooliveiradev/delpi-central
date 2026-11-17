@@ -406,6 +406,8 @@ def list_tickets(
     assignee_id: int | None = None,
     requester_id: int | None = None,
     requester_mine: bool = False,
+    assignee_mine: bool = False,
+    priority_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = 20,
@@ -425,22 +427,34 @@ def list_tickets(
             solved_to=solved_to,
             closed_from=closed_from,
             closed_to=closed_to,
-            assignee_id=assignee_id,
+            assignee_id=None if assignee_mine else assignee_id,
             requester_id=None if requester_mine else requester_id,
             requester_mine=requester_mine,
+            assignee_mine=assignee_mine,
+            priority_id=priority_id,
             sort=sort,
             page=page,
             page_size=page_size,
         )
         service = _tickets(request)
-        if query.requester_mine:
+        if query.requester_mine or query.assignee_mine:
             query = service.resolve_requester_mine(actor.subject, query)
-            if query.requester_id is None:
+            query = service.resolve_assignee_mine(actor.subject, query)
+            unresolved = (
+                query.requester_mine and query.requester_id is None
+            ) or (
+                query.assignee_mine and query.assignee_id is None
+            )
+            if unresolved:
+                # Fail-closed: "mine" with no resolvable GLPI identity
+                # never widens into a global listing — typed flag lets the
+                # caller distinguish it from a genuine empty result.
                 return {
                     "items": [],
                     "page": query.page,
                     "page_size": query.page_size,
                     "has_more": False,
+                    "unresolved_identity": True,
                 }
         decision = dashboard_reader_gate.classify_ticket_list(request)
         if decision == "denied":
@@ -477,6 +491,8 @@ def list_tickets(
                 "requester_id": row.requester_id,
                 "requester_directory_user_id": getattr(row, "requester_directory_user_id", "") or "",
                 "requester_has_photo": bool(getattr(row, "requester_has_photo", False)),
+                "priority_id": getattr(row, "priority_id", None),
+                "priority": getattr(row, "priority", "") or "",
                 "entity": row.entity,
                 "last_editor": row.last_editor,
             }

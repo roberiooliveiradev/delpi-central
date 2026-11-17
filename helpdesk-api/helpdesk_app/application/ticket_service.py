@@ -338,6 +338,21 @@ class TicketService:
             return replace(query, requester_id=None, requester_mine=True)
         return replace(query, requester_id=int(user_id), requester_mine=True)
 
+    def resolve_assignee_mine(self, subject: str, query: TicketListQuery) -> TicketListQuery:
+        """Bind ``assignee_mine`` to the actor's GLPI user id (backend-first).
+
+        Always overwrites any client ``assignee_id`` — mine is session-owned.
+        """
+        from dataclasses import replace
+
+        if not query.assignee_mine:
+            return query
+        token = self._token(subject)
+        user_id = self._glpi.session_user_id(token)
+        if user_id is None or int(user_id) < 1:
+            return replace(query, assignee_id=None, assignee_mine=True)
+        return replace(query, assignee_id=int(user_id), assignee_mine=True)
+
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
         token = self._token(subject)
         page = self._glpi.list_tickets(token, query)

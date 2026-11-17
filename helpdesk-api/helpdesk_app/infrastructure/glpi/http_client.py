@@ -432,6 +432,7 @@ class HttpxGlpiClient:
             closed_to=query.closed_to,
             assignee_id=query.assignee_id,
             requester_id=query.requester_id,
+            priority_id=query.priority_id,
             sort=query.client_sort,
             page=query.page,
             page_size=query.page_size,
@@ -493,6 +494,14 @@ class HttpxGlpiClient:
                 for row in ordered
                 if getattr(row, "assigned_user_id", None) is not None
                 and int(row.assigned_user_id) == wanted_assignee
+            )
+        if query.priority_id is not None:
+            wanted_priority = int(query.priority_id)
+            ordered = tuple(
+                row
+                for row in ordered
+                if getattr(row, "priority_id", None) is not None
+                and int(row.priority_id) == wanted_priority
             )
         return TicketListPage(
             items=ordered,
@@ -2039,6 +2048,8 @@ class HttpxGlpiClient:
             "assignee_id": query.assignee_id is not None,
             "requester_id": query.requester_id is not None,
             "requester_mine": bool(query.requester_mine),
+            "assignee_mine": bool(query.assignee_mine),
+            "priority_id": query.priority_id is not None,
             "sort": str(query.client_sort or "updated_at:desc").strip()
             != "updated_at:desc",
         }

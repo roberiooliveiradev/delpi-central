@@ -34,6 +34,7 @@ _FIELD_CONTENT = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_CONTENT_FIELD", "21") 
 _FIELD_STATUS = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_STATUS_FIELD", "12") or "12")
 _FIELD_CATEGORY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_CATEGORY_FIELD", "7") or "7")
 _FIELD_URGENCY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_URGENCY_FIELD", "10") or "10")
+_FIELD_PRIORITY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_PRIORITY_FIELD", "3") or "3")
 _FIELD_REQUESTER = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_REQUESTER_FIELD", "4") or "4")
 _FIELD_ASSIGN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ASSIGN_FIELD", "5") or "5")
 _FIELD_DATE_OPEN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_OPEN_FIELD", "15") or "15")
@@ -69,7 +70,7 @@ def ticket_list_needs_legacy_actor_search(query: TicketListQuery) -> bool:
     """
     if str(query.q or "").strip():
         return True
-    if query.assignee_id is not None:
+    if query.assignee_id is not None or query.assignee_mine:
         return True
     if query.requester_id is not None or query.requester_mine:
         return True
@@ -94,6 +95,7 @@ def build_legacy_ticket_search_paths_from_parts(
     closed_to: str = "",
     assignee_id: int | None = None,
     requester_id: int | None = None,
+    priority_id: int | None = None,
     sort: str = "updated_at:desc",
     page: int = 1,
     page_size: int = 20,
@@ -143,6 +145,11 @@ def build_legacy_ticket_search_paths_from_parts(
             if int(requester_id) < 1:
                 raise GlpiValidation("requester_id inválido.")
             add(_FIELD_REQUESTER, "equals", int(requester_id))
+
+        if priority_id is not None:
+            if int(priority_id) < 1 or int(priority_id) > 6:
+                raise GlpiValidation("priority_id inválido.")
+            add(_FIELD_PRIORITY, "equals", int(priority_id))
 
         status_ids = _status_ids(status)
         if len(status_ids) == 1:

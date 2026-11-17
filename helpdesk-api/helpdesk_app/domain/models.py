@@ -85,6 +85,9 @@ class TicketSummary:
     """Minha DELPI directory user_id (Keycloak) when linked — avatar photo."""
     requester_directory_user_id: str = ""
     requester_has_photo: bool = False
+    priority_id: int | None = None
+    """GLPI priority id (1-6) — derived by the GLPI urgency×impact matrix."""
+    priority: str = ""
     entity: str = ""
     last_editor: str = ""
 
@@ -102,12 +105,15 @@ class TicketListQuery:
     requester_id: int | None = None
     """True when the list must be scoped to the session actor as requester."""
     requester_mine: bool = False
+    """True when the list must be scoped to the session actor as assignee."""
+    assignee_mine: bool = False
     """Original sort token from the API (`updated_at:desc`, `assigned:asc`, …)."""
     client_sort: str = "updated_at:desc"
     q: str = ""
     status: str = ""
     urgency_id: int | None = None
     category_id: int | None = None
+    priority_id: int | None = None
     updated_from: str = ""
     updated_to: str = ""
     created_from: str = ""

@@ -43,6 +43,41 @@ def test_needs_legacy_when_assignee_or_assigned_sort():
     ) is True
 
 
+def test_needs_legacy_when_assignee_mine():
+    assert ticket_list_needs_legacy_actor_search(
+        build_ticket_list_query(assignee_mine=True)
+    ) is True
+
+
+def test_build_legacy_search_path_includes_priority_field():
+    # GLPI canonical search option: 3 = Priority
+    # (CommonITILObject::getSearchOptionsMain).
+    (path,) = build_legacy_ticket_search_paths_from_parts(
+        assignee_id=22, priority_id=4, page=1, page_size=20
+    )
+    encoded = _encoded(path)
+    assert "criteria[1][field]=3" in encoded
+    assert "criteria[1][searchtype]=equals" in encoded
+    assert "criteria[1][value]=4" in encoded
+
+
+def test_build_legacy_search_rejects_invalid_priority():
+    with pytest.raises(GlpiValidation):
+        build_legacy_ticket_search_paths_from_parts(priority_id=9)
+
+
+def test_build_ticket_list_query_priority_rsql_and_mine_wins():
+    query = build_ticket_list_query(priority_id=4)
+    assert "priority==4" in query.filter
+    assert query.priority_id == 4
+    with pytest.raises(GlpiValidation):
+        build_ticket_list_query(priority_id=0)
+    # ``*_mine`` is session-owned: deterministic win over a client *_id.
+    query = build_ticket_list_query(assignee_mine=True, assignee_id=99)
+    assert query.assignee_id is None
+    assert query.assignee_mine is True
+
+
 def test_build_legacy_search_path_includes_assign_field():
     # GLPI canonical search option: 5 = Technician (assigned),
     # glpi_tickets_users join type=ASSIGN (CommonITILObject::getSearchOptionsActors).
