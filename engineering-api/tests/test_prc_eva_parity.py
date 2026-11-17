@@ -546,3 +546,380 @@ class TestConversationParity:
             _ctx(), _entry("comment_list"), {"request_id": rid},
         )
         assert '"success": true' in ok.content[0].text
+
+
+# =============================================================================
+# EVA-ENGINEERING-API-PRC-FULL-SEMANTIC-PARITY-01 — paridade E2E via tools.
+#
+# Diferente dos testes acima (handler-level), estes passam pelo caminho
+# completo: _resolve (gate status=proven) → _READ/_EXECUTE_DISPATCH →
+# prc_semantic → service — exigindo contexto MCP humano autenticado.
+# =============================================================================
+
+import asyncio
+
+from delpi_auth.request_context import (
+    clear_current_user,
+    clear_request_authorization,
+    set_current_user,
+    set_request_authorization,
+)
+from engineering_app.interface.mcp import semantic_bridge as sem
+from tests.test_prc_record_flags import _create_flag, _v1, _v2
+
+
+def _eva_ctx(user_id="analyst-1", permissions=None):
+    user = SimpleNamespace(
+        id=user_id, email="analyst@delpi.test", name="Analyst",
+        permissions=list(permissions if permissions is not None else ANALYST),
+        is_superadmin=False, principal_type="user",
+        access_token="eva-token",
+    )
+    set_current_user(user)
+    set_request_authorization("Bearer eva-token")
+
+
+@pytest.fixture(autouse=True)
+def _clear_mcp_ctx():
+    clear_current_user()
+    clear_request_authorization()
+    yield
+    clear_current_user()
+    clear_request_authorization()
+
+
+def _read(action, **kw):
+    return asyncio.run(
+        sem.tool_read(entity="product_registration", action=action, **kw)
+    )
+
+
+def _execute(action, **kw):
+    return asyncio.run(
+        sem.tool_execute(entity="product_registration", action=action, **kw)
+    )
+
+
+class TestReadParityEndToEnd:
+    """RQ-02/RQ-03/RQ-04/RQ-05/RQ-06 — leituras no caminho MCP completo."""
+
+    def test_list_matches_rest(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac
+        ).json()["data"]["requestId"]
+        rest = _get(
+            client, "/v1/product-registration/requests",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        _eva_ctx()
+        res = _read("list")
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data["total"] == rest["total"]
+        assert {i["id"] for i in data["items"]} == {
+            i["id"] for i in rest["items"]
+        }
+        assert rid in {i["id"] for i in data["items"]}
+
+    def test_list_view_pending_excludes_terminal(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        pending_rid = _submit_create(
+            client, jwks_env, core_rbac
+        ).json()["data"]["requestId"]
+        # Segundo caso completado até o fim → terminal, fora do pending.
+        done, _ = _v2_done = __import__(
+            "tests.test_prc_snapshot_versioning", fromlist=["_complete_update"]
+        )._complete_update(
+            client, jwks_env, core_rbac, eva_service,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "r"}],
+        )
+        assert done.status_code == 200, done.text
+        _eva_ctx()
+        res = _read("list", filters={"view": "pending"})
+        assert not res.is_error, res.structured_content
+        items = res.structured_content["data"]["items"]
+        ids = {i["id"] for i in items}
+        assert pending_rid in ids
+        assert len(ids) == 1
+        # status explícito prevalece sobre o preset
+        res2 = _read("list", filters={
+            "view": "pending", "status": "completed"})
+        assert not res2.is_error
+        assert res2.structured_content["data"]["total"] == 1
+
+    def test_list_pagination(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        _submit_create(client, jwks_env, core_rbac)
+        _eva_ctx()
+        res = _read("list", pagination={"page": 1, "page_size": 1})
+        assert not res.is_error
+        data = res.structured_content["data"]
+        assert len(data["items"]) == 1
+        assert data["total"] == 1
+
+    def test_timeline_matches_rest(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac
+        ).json()["data"]["requestId"]
+        rest = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}/timeline",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        _eva_ctx()
+        res = _read("timeline", ref=rid)
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data["total"] == rest["total"]
+        assert {e["event_type"] for e in data["items"]} == {
+            e["event_type"] for e in rest["items"]
+        }
+
+    def test_verifications_matches_rest(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        done, rid = __import__(
+            "tests.test_prc_snapshot_versioning",
+            fromlist=["_complete_update"],
+        )._complete_update(
+            client, jwks_env, core_rbac, eva_service,
+            changes=[{"path": "unit", "proposedValue": "UN",
+                      "reason": "r"}],
+        )
+        assert done.status_code == 200, done.text
+        _eva_ctx()
+        res = _read("verifications", ref=rid)
+        assert not res.is_error, res.structured_content
+        assert res.structured_content["success"] is True
+
+    def test_reference_data(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        _eva_ctx()
+        res = _read("reference_data")
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data.get("fields") or data.get("fieldCatalog")
+
+    def test_outbound_result(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac
+        ).json()["data"]["requestId"]
+        _eva_ctx()
+        res = _read("outbound_result", ref=rid)
+        assert not res.is_error, res.structured_content
+
+    def test_records_list_matches_rest(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rec = _v1(client, jwks_env, core_rbac, eva_service)
+        rest = _get(
+            client, "/v1/product-registration/technical-records",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        _eva_ctx()
+        res = _read("records_list")
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data["total"] == rest["total"]
+        assert rec["id"] in {i["recordId"] for i in data["items"]}
+        # filtro flagState
+        res_f = _read("records_list", filters={"flagState": "open"})
+        assert not res_f.is_error, res_f.structured_content
+
+    def test_record_revisions_compare(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rec = _v1(client, jwks_env, core_rbac, eva_service)
+        _v2(client, jwks_env, core_rbac, eva_service)
+        _eva_ctx()
+        record = _read("record", ref=rec["id"])
+        assert not record.is_error, record.structured_content
+        revisions = _read("revisions", ref=rec["id"])
+        assert not revisions.is_error, revisions.structured_content
+        assert revisions.structured_content["data"]["total"] == 2
+        rev1 = _read(
+            "revision", ref=rec["id"],
+            filters={"revision_number": 1},
+        )
+        assert not rev1.is_error, rev1.structured_content
+        cmp_res = _read(
+            "revision_compare", ref=rec["id"],
+            filters={"from_revision": 1, "to_revision": 2},
+        )
+        assert not cmp_res.is_error, cmp_res.structured_content
+        # mesmo resultado do endpoint REST de comparação
+        rest = _get(
+            client,
+            f"/v1/product-registration/technical-records/{rec['id']}"
+            "/comparison?from=1&to=2",
+            _token(jwks_env, "analyst-1"),
+        )
+        assert rest.status_code == 200, rest.text
+        assert (
+            cmp_res.structured_content["data"]
+            == rest.json()["data"]
+        )
+
+    def test_record_flag_list(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rec = _v1(client, jwks_env, core_rbac, eva_service)
+        created = _create_flag(
+            client, jwks_env, core_rbac, rec["id"]
+        )
+        assert created.status_code == 201, created.text
+        _eva_ctx()
+        res = _read("record_flag_list", ref=rec["id"])
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data["total"] == 1
+        assert data["openCount"] == 1
+        assert data["items"][0]["targetKey"] == "FIELD:description"
+
+    def test_forbidden_without_permission(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        _submit_create(client, jwks_env, core_rbac)
+        _eva_ctx(permissions=[])
+        res = _read("list")
+        assert res.is_error
+
+    def test_not_implemented_for_unknown(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        _eva_ctx()
+        res = _read("fly")
+        assert res.is_error
+        assert (
+            res.structured_content["error_code"] == "not_implemented"
+        )
+
+
+class TestExecuteParityEndToEnd:
+    """RQ-07 — executes flippados (submit/update_draft/submit_review)
+    provados no caminho MCP completo com ACT habilitado."""
+
+    @pytest.fixture(autouse=True)
+    def _act_on(self, monkeypatch):
+        monkeypatch.setenv("ENG_EVA_ACT_ENABLED", "true")
+
+    def test_submit_creates_request(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        _eva_ctx()
+        res = _execute(
+            "submit", phase="act",
+            payload=_create_body(externalRequestId="eva-ext-1"),
+            idempotency_key="eva-submit-1",
+        )
+        assert not res.is_error, res.structured_content
+        rid = res.structured_content["data"]["requestId"]
+        rest = _get(
+            client, f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        )
+        assert rest.status_code == 200, rest.text
+        assert rest.json()["data"]["source"] == "eva"
+
+    def test_update_draft_via_eva(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        detail = _get(
+            client, f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        version = detail["caseVersion"]
+        _eva_ctx()
+        res = _execute(
+            "update_draft", phase="act", target_ref=rid,
+            changes={"changes": [
+                {"path": "unit", "proposedValue": "KG",
+                 "reason": "EVA"}
+            ]},
+            expected_version=str(version),
+            idempotency_key="eva-draft-1",
+        )
+        assert not res.is_error, res.structured_content
+        rest = _get(
+            client, f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        tech = rest.get("technicalDraft") or {}
+        assert tech.get("unit") == "KG"
+
+    def test_submit_review_via_eva(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        rid = _submit_create(
+            client, jwks_env, core_rbac
+        ).json()["data"]["requestId"]
+        version = _advance_to_attendance(
+            client, jwks_env, core_rbac, rid
+        )
+        _eva_ctx()
+        res = _execute(
+            "submit_review", phase="act", target_ref=rid,
+            expected_version=str(version),
+            idempotency_key="eva-review-1",
+        )
+        assert not res.is_error, res.structured_content
+        rest = _get(
+            client, f"/v1/product-registration/requests/{rid}",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        assert rest["status"] == "under_review"
+
+    def test_execute_blocked_when_act_disabled(
+        self, client, jwks_env, core_rbac, eva_service, monkeypatch
+    ):
+        monkeypatch.delenv("ENG_EVA_ACT_ENABLED", raising=False)
+        _eva_ctx()
+        res = _execute(
+            "submit", phase="act",
+            payload=_create_body(externalRequestId="eva-ext-2"),
+        )
+        assert res.is_error
+
+    def test_attachment_list_metadata(
+        self, client, jwks_env, core_rbac, eva_service
+    ):
+        """RQ-08 — paridade de metadados de anexos (binário fora do
+        contrato MCP, classificação explícita)."""
+        rid = _submit_create(
+            client, jwks_env, core_rbac, sub="analyst-1"
+        ).json()["data"]["requestId"]
+        eva_service["repo"].create_attachment(attachment={
+            "id": "att-1", "request_id": rid,
+            "original_file_name": "spec.pdf",
+            "media_type": "application/pdf", "size_bytes": 128,
+            "sha256": "a" * 64, "state": "AVAILABLE",
+            "storage_key": "k/1",
+            "uploaded_by_subject": "analyst-1",
+            "uploaded_by_display_name": "Analyst",
+            "created_at": "2026-11-17T00:00:00Z",
+        })
+        rest = _get(
+            client,
+            f"/v1/product-registration/requests/{rid}/attachments",
+            _token(jwks_env, "analyst-1"),
+        ).json()["data"]
+        _eva_ctx()
+        res = _read("attachment_list", ref=rid)
+        assert not res.is_error, res.structured_content
+        data = res.structured_content["data"]
+        assert data["attachments"] == rest["attachments"]
+        # metadados apenas — sem storage_key/path físico
+        assert "storage_key" not in str(data["attachments"])

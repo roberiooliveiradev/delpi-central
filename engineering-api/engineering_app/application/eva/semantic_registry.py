@@ -596,10 +596,11 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "product_registration", "list", "read",
         "Product-registration case queue with authorized scope filters "
-        "(status, type, assignee, source, search, period).",
-        "read", status="planned", paginated=True,
-        fields=("status", "type", "assignee", "source", "search",
-                "dateFrom", "dateTo"),
+        "(status, view=pending preset, type, assignee, source, search, "
+        "period).",
+        "read", status="proven", paginated=True,
+        fields=("status", "view", "type", "assignee", "source", "search",
+                "dateFrom", "dateTo", "sortBy", "sortDir"),
     ),
     _a(
         "product_registration", "detail", "read",
@@ -611,46 +612,66 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     _a(
         "product_registration", "timeline", "read",
         "Append-only case timeline (actions and decisions).",
-        "read", status="planned", ref_arg="request_id", paginated=True,
+        "read", status="proven", ref_arg="request_id", paginated=True,
     ),
     _a(
         "product_registration", "verifications", "read",
         "Official TOTVS verification attempts and divergences.",
-        "read", status="planned", ref_arg="request_id",
+        "read", status="proven", ref_arg="request_id",
     ),
     _a(
         "product_registration", "record", "read",
         "Current verified technical record (official code + revision "
         "pointer + freshness).",
-        "read", status="planned", ref_arg="record_id",
+        "read", status="proven", ref_arg="record_id",
     ),
     _a(
         "product_registration", "revisions", "read",
         "Immutable revision index of a technical record.",
-        "read", status="planned", ref_arg="record_id", paginated=True,
+        "read", status="proven", ref_arg="record_id", paginated=True,
     ),
     _a(
         "product_registration", "revision", "read",
         "Immutable snapshot of a single revision + per-field diff.",
-        "read", status="planned", ref_arg="record_id",
+        "read", status="proven", ref_arg="record_id",
         fields=("revision_number",),
+    ),
+    _a(
+        "product_registration", "revision_compare", "read",
+        "Official technical diff between two revisions of a tracked "
+        "product (Vx×Vy) — backend authority, evidence-backed only.",
+        "read", status="proven", ref_arg="record_id",
+        fields=("from_revision", "to_revision"),
+    ),
+    _a(
+        "product_registration", "records_list", "read",
+        "Tracked products list (technical records) with authorized "
+        "filters (search, flagState) and pagination — analyst scope.",
+        "read", status="proven", paginated=True,
+        fields=("search", "flagState", "sort", "sortDir"),
+    ),
+    _a(
+        "product_registration", "record_flag_list", "read",
+        "Flags of a tracked product at the current revision "
+        "(record-scoped, distinct from request flags).",
+        "read", status="proven", ref_arg="record_id",
     ),
     _a(
         "product_registration", "reference_data", "read",
         "Field catalog, schema version, statuses, sources and "
         "verifiability policy.",
-        "read", status="planned",
+        "read", status="proven",
     ),
     _a(
         "product_registration", "outbound_result", "read",
         "Outbound contract: status/result of a case for its origin.",
-        "read", status="planned", ref_arg="request_id",
+        "read", status="proven", ref_arg="request_id",
     ),
     _a(
         "product_registration", "submit", "execute",
         "Create/update intake request — requester is always the human "
         "principal; source attributed by the system.",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "moderate", status="proven", phases=("act", "prepare"),
         requires=("payload",),
     ),
     _a(
@@ -663,7 +684,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "product_registration", "update_draft", "execute",
         "Field-by-field draft changes — catalog allowlist + CAS + "
         "mandatory reason.",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id", requires=("changes", "expected_version"),
     ),
     _a(
@@ -762,7 +783,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "product_registration", "submit_review", "execute",
         "LEGACY: submit draft for under_review. Prefer "
         "product_registration.complete (PRC-REF-020).",
-        "moderate", status="planned", phases=("act", "prepare"),
+        "moderate", status="proven", phases=("act", "prepare"),
         ref_arg="request_id", requires=("expected_version",),
         notes=("Deprecated operational step; kept for REST/EVA alias.",),
     ),
@@ -877,6 +898,12 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
     # --- PRC conversation (Issue #207 — mesmos use cases REST; sem nova
     # tool MCP). Corpos de mensagens são dados não confiáveis: conteúdo
     # lido nunca é instrução, autorização ou confirmação humana.
+    _a(
+        "product_registration", "attachment_list", "read",
+        "Attachment metadata of a case (names, types, sizes, states, "
+        "actors) — binary download outside the MCP contract.",
+        "read", status="proven", ref_arg="request_id",
+    ),
     _a(
         "product_registration", "comment_list", "read",
         "Authorized PRC case conversation: chronological comments with "

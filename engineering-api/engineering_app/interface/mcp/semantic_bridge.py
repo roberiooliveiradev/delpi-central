@@ -518,6 +518,15 @@ _READ_DISPATCH = {
     ("product_registration", "revision"): (
         lambda a: _prc_read("revision", a)
     ),
+    ("product_registration", "revision_compare"): (
+        lambda a: _prc_read("revision_compare", a)
+    ),
+    ("product_registration", "records_list"): (
+        lambda a: _prc_read("records_list", a)
+    ),
+    ("product_registration", "record_flag_list"): (
+        lambda a: _prc_read("record_flag_list", a)
+    ),
     ("product_registration", "reference_data"): (
         lambda a: _prc_read("reference_data", a)
     ),
@@ -532,6 +541,9 @@ _READ_DISPATCH = {
     ),
     ("product_registration", "comment_list"): (
         lambda a: _prc_read("comment_list", a)
+    ),
+    ("product_registration", "attachment_list"): (
+        lambda a: _prc_read("attachment_list", a)
     ),
     ("product_registration", "information_round_list"): (
         lambda a: _prc_read("information_round_list", a)

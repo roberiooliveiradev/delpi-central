@@ -28,6 +28,9 @@ from engineering_app.application.use_cases.product_registration.actor import (
     prc_actor_from_principal,
 )
 from engineering_app.composition.prc_composer import build_prc_service
+from engineering_app.domain.product_registration.models import (
+    PRC_ACTIONABLE_STATUSES,
+)
 
 
 def _actor(context):
@@ -86,8 +89,20 @@ async def read_action(context, entry, args: dict):
     actor = _actor(context)
     try:
         if entry.action == "list":
+            filters = dict(args)
+            # Preset governado idêntico ao da rota REST: view=pending →
+            # statuses acionáveis; `status` explícito prevalece.
+            if (
+                str(filters.get("view") or "").strip().lower()
+                == "pending"
+                and not filters.get("status")
+            ):
+                filters["statuses"] = list(PRC_ACTIONABLE_STATUSES)
+            filters.pop("view", None)
+            if "page_size" in filters:
+                filters["pageSize"] = filters.pop("page_size")
             return _ok(
-                svc.list_requests(actor=actor, filters=args),
+                svc.list_requests(actor=actor, filters=filters),
                 "Fila de solicitações carregada.",
             )
         ref = args.get("request_id") or args.get("record_id") or ""
@@ -128,6 +143,56 @@ async def read_action(context, entry, args: dict):
                     actor=actor,
                 ),
                 "Revisão carregada.",
+            )
+        if entry.action == "revision_compare":
+            if not ref:
+                return _err(
+                    "record_id é obrigatório.", code="validation"
+                )
+            try:
+                from_n = int(args.get("from_revision"))
+                to_n = int(args.get("to_revision"))
+            except (TypeError, ValueError):
+                return _err(
+                    "from_revision e to_revision são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.compare_revisions(
+                    ref, from_n, to_n, actor=actor
+                ),
+                "Comparação de revisões carregada.",
+            )
+        if entry.action == "records_list":
+            return _ok(
+                svc.list_records(
+                    actor=actor,
+                    search=args.get("search"),
+                    page=int(args.get("page", 1)),
+                    page_size=int(
+                        args.get("page_size")
+                        or args.get("pageSize")
+                        or 25
+                    ),
+                    sort=args.get("sort"),
+                    flag_state=(
+                        args.get("flag_state")
+                        or args.get("flagState")
+                    ),
+                    sort_dir=(
+                        args.get("sort_dir") or args.get("sortDir")
+                    ),
+                ),
+                "Produtos acompanhados carregados.",
+            )
+        if entry.action == "record_flag_list":
+            if not ref:
+                return _err(
+                    "record_id é obrigatório.", code="validation"
+                )
+            return _ok(
+                svc.list_record_flags(ref, actor=actor),
+                "Bandeiras do produto carregadas.",
             )
         if entry.action == "reference_data":
             return _ok(
@@ -276,6 +341,16 @@ async def read_action(context, entry, args: dict):
                     ),
                 ),
                 "Conversa carregada.",
+            )
+        if entry.action == "attachment_list":
+            # Metadados apenas — transporte binário fora do contrato MCP.
+            if not ref:
+                return _err(
+                    "request_id é obrigatório.", code="validation"
+                )
+            return _ok(
+                svc.list_attachments(ref, actor=actor),
+                "Anexos da solicitação carregados.",
             )
         if entry.action == "information_round_list":
             if not ref:
