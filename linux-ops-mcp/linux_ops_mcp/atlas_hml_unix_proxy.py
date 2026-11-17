@@ -23,16 +23,15 @@ from pathlib import Path
 from typing import Protocol
 
 from .deploy_host_source import RuntimeContainer, RuntimeTarget
+from .atlas_hml_engine_boundary import HMLDockerInspectOnly, HML_TARGET
 from .atlas_hml_uds_policy import (
     HMLUDSPolicyError, atlas_collector_identity, verify_socket_metadata,
 )
 
 _HML_PATH = Path("/run/atlas-hml-readonly/inspect.sock")
 _DOCKER_RAW = (Path("/run/docker.sock"), Path("/var/run/docker.sock"))
-_TARGET = RuntimeTarget(
-    environment="hml", service_id="public-hub", host_id="srv-api-pilot",
-    compose_project="delpi-hml", container_name="delpi-hml-public-hub",
-)
+# Single owner of the HML target across the upstream guard and UDS proxy.
+_TARGET = HML_TARGET
 _ALLOWED_REQUEST = "GET /containers/delpi-hml-public-hub/json HTTP/1.1"
 _MAX_HEADERS = 2048
 _MAX_JSON = 2048
@@ -234,6 +233,11 @@ def serve_one_prebound(
             raise HMLUnixProxyError(exc.code) from None
         if allowed_collector_uid != collector_uid:
             raise HMLUnixProxyError("HML_PROXY_IDENTITY_UNAVAILABLE")
+        # The production UDS must not bypass the Engine GET-only guard by
+        # supplying an arbitrary inspect() implementation. Test fixtures with
+        # disposable non-production paths retain dependency injection.
+        if type(inspector) is not HMLDockerInspectOnly:
+            raise HMLUnixProxyError("HML_ENGINE_BOUNDARY_REQUIRED")
     _check_prebound_socket(
         listener, expected_path=expected_path, owner_uid=owner_uid,
         socket_gid=socket_gid,
