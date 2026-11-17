@@ -153,10 +153,7 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
                   ariaLabel="Fundo do gráfico"
                   value={isChartBackgroundTransparent(block) ? "transparent" : "normal"}
                   onChange={(value) =>
-                    updateSelected(
-                      chartBackgroundTransparencyPatch(block, value === "transparent")
-                        as Partial<ComunicadoBlock>,
-                    )
+                    updateSelected(chartBackgroundTransparencyPatch(block, value === "transparent"))
                   }
                   options={[
                     { value: "normal", label: "Normal (fundo padrão)" },
