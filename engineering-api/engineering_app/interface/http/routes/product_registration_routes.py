@@ -2349,10 +2349,17 @@ async def prc_comment_create(
                     }
                 )
             body_field = form.get("body")
+            if body_field is not None and not isinstance(body_field, str):
+                return fail(
+                    "Campo 'body' deve ser texto.",
+                    422,
+                    data={"code": "invalid_body"},
+                    operation_id=op,
+                )
             data = build_prc_service().create_comment_with_attachments(
                 rid,
                 actor=_actor(user),
-                body=str(body_field) if body_field is not None else None,
+                body=body_field,
                 files=files,
                 idempotency_key=idempotency_key,
                 correlation_id=get_request_id(),
@@ -2367,10 +2374,20 @@ async def prc_comment_create(
                     data={"code": "invalid_body"},
                     operation_id=op,
                 )
+            body_value = (
+                payload.get("body") if isinstance(payload, dict) else None
+            )
+            if body_value is not None and not isinstance(body_value, str):
+                return fail(
+                    "Campo 'body' deve ser texto.",
+                    422,
+                    data={"code": "invalid_body"},
+                    operation_id=op,
+                )
             data = build_prc_service().create_comment(
                 rid,
                 actor=_actor(user),
-                body=payload.get("body") if isinstance(payload, dict) else None,
+                body=body_value,
                 idempotency_key=idempotency_key,
             )
     except Exception as exc:
