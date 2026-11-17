@@ -20,6 +20,12 @@ import type { DelpiChartType } from "./chartCatalogTypes";
 
 export type ChartTypeSegmentToggleProps = {
   family: ChartDataFamily;
+  /**
+   * Lista explícita de tipos permitidos (ex.: `["stacked_bar","bar"]`
+   * para gráficos que combinam famílias). Quando omitida, os tipos são
+   * derivados de `family` + `categoryCount`.
+   */
+  allowedTypes?: readonly PersistedChartType[];
   value: PersistedChartType;
   onChange: (value: PersistedChartType) => void;
   idPrefix?: string;
@@ -39,6 +45,7 @@ export type ChartTypeSegmentToggleProps = {
  */
 export function ChartTypeSegmentToggle({
   family,
+  allowedTypes,
   value,
   onChange,
   idPrefix = "chart-type",
@@ -50,7 +57,13 @@ export function ChartTypeSegmentToggle({
   panelTitle = "Tipo de gráfico",
   portalScopeClassName,
 }: ChartTypeSegmentToggleProps) {
-  const types = chartTypesForFamily(family, { categoryCount });
+  const types = useMemo(
+    () =>
+      allowedTypes && allowedTypes.length
+        ? [...allowedTypes]
+        : chartTypesForFamily(family, { categoryCount }),
+    [allowedTypes, family, categoryCount],
+  );
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);

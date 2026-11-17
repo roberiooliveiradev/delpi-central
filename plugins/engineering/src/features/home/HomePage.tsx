@@ -15,11 +15,13 @@ import {
   ClipboardList,
   ClipboardX,
   Compass,
+  Gauge,
   House,
   LifeBuoy,
   Package,
   PackagePlus,
   RefreshCw,
+  Workflow,
 
 } from "lucide-react";
 
@@ -63,6 +65,7 @@ import { useHomeData } from "./useHomeData";
 const SECTION_ICONS: Record<string, ReactNode> = {
   work: <Briefcase size={20} aria-hidden="true" />,
   insights: <Compass size={20} aria-hidden="true" />,
+  processes: <Workflow size={20} aria-hidden="true" />,
   support: <LifeBuoy size={20} aria-hidden="true" />,
 };
 
@@ -76,6 +79,8 @@ const ROUTE_ICONS: Record<string, ReactNode> = {
   dashboard: <ChartNoAxesCombined size={16} aria-hidden="true" />,
   home: <House size={16} aria-hidden="true" />,
   help: <BookOpen size={16} aria-hidden="true" />,
+  processes: <Workflow size={16} aria-hidden="true" />,
+  "line-balancing": <Gauge size={16} aria-hidden="true" />,
 
 };
 

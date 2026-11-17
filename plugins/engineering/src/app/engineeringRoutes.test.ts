@@ -22,6 +22,16 @@ describe("resolveEngineeringRoute", () => {
     );
   });
 
+  it("processes e sub-paths → view processes", () => {
+    expect(resolveEngineeringRoute("/apps/engineering/processes").view).toBe(
+      "processes",
+    );
+    expect(
+      resolveEngineeringRoute("/apps/engineering/processes/line-balancing")
+        .view,
+    ).toBe("processes");
+  });
+
   it("sub-path desconhecido → not_found", () => {
     expect(
       resolveEngineeringRoute("/apps/engineering/qualquer-coisa").view,

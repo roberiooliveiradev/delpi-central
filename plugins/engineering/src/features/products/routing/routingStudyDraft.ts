@@ -74,11 +74,12 @@ export type RoutingStudyDraft = {
 export function buildStorageKey(
   identity: string | null,
   context: StudyDraftContext,
+  prefix: string = STUDY_STORAGE_PREFIX,
 ): string {
   const who = identity?.trim() || "anonymous";
   const branch = context.branch.trim() || "all";
   return [
-    STUDY_STORAGE_PREFIX,
+    prefix,
     `v${STUDY_SCHEMA_VERSION}`,
     who,
     context.productCode,

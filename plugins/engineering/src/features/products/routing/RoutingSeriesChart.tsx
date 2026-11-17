@@ -26,6 +26,7 @@ import {
   usePersistedChartPreferences,
   type ChartOverlayOption,
   type MultiTypeSeriesSpec,
+  type PersistedChartType,
   type TableExportPayload,
 } from "@delpi/plugin-ui/index";
 
@@ -51,6 +52,13 @@ type RoutingSeriesChartProps = {
   autoUnit: ChartTimeUnit;
   /** dataKey com fill por categoria (ex.: acima do takt). */
   categoryFillKey?: string;
+  /** Família do catálogo de tipos (default "categorical"). */
+  family?: "categorical" | "composition";
+  /** Tipos permitidos quando o gráfico combina famílias (ex.:
+   * Yamazumi empilhado + colunas agrupadas). */
+  allowedChartTypes?: readonly PersistedChartType[];
+  /** Tipo inicial quando não há preferência persistida. */
+  defaultChartType?: PersistedChartType;
   /** Payload de exportação montado com a unidade efetiva. */
   buildExportPayload: (unit: ChartTimeUnit) => TableExportPayload;
   emptyMessage: string;
@@ -76,14 +84,17 @@ export function RoutingSeriesChart({
   series: baseSeries,
   autoUnit,
   categoryFillKey,
+  family = "categorical",
+  allowedChartTypes,
+  defaultChartType = "bar",
   buildExportPayload,
   emptyMessage,
 }: RoutingSeriesChartProps) {
   const { preferences, setPreferences, setChartType } =
     usePersistedChartPreferences({
       storageKey,
-      defaults: { chartType: "bar", displayUnit: "auto" },
-      allowedChartTypes: CATEGORICAL_TYPES,
+      defaults: { chartType: defaultChartType, displayUnit: "auto" },
+      allowedChartTypes: allowedChartTypes ?? CATEGORICAL_TYPES,
     });
   const chartType = preferences.chartType ?? "bar";
   const unitMode = (preferences.displayUnit ?? "auto") as RoutingChartUnitMode;
@@ -165,7 +176,8 @@ export function RoutingSeriesChart({
       }
       typeToggle={
         <ChartTypeSegmentToggle
-          family="categorical"
+          family={family}
+          allowedTypes={allowedChartTypes ? [...allowedChartTypes] : undefined}
           value={chartType}
           onChange={setChartType}
           idPrefix={`${idPrefix}-type`}

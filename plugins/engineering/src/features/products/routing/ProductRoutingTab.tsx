@@ -88,6 +88,12 @@ import {
   type RoutingStageView,
 } from "./routingGrouping";
 import { inputsFingerprint, type StudyInputs } from "./routingStudyDraft";
+import { BalanceResultsSection, stageKeyOf } from "./BalanceResultsSection";
+import {
+  numberOrUndefined,
+  validateStudyInputs,
+  SAVE_STATUS_LABEL,
+} from "./studyInputs";
 import {
   useRoutingStudyDraft,
   type BalanceRunParams,
@@ -124,13 +130,6 @@ function RoutingSourceError({ error }: { error: unknown }) {
         : "Fonte oficial de roteiro indisponível."}
     </EngineeringStateBanner>
   );
-}
-
-function stageKeyOf(stage: {
-  product_code: string;
-  bom_level: number;
-}): string {
-  return `${stage.product_code}#${stage.bom_level}`;
 }
 
 /* --- Operações ------------------------------------------------------- */
@@ -386,91 +385,6 @@ function OperationsSection({
 
 /* --- Estudo de balanceamento ------------------------------------------- */
 
-function numberOrUndefined(text: string): number | undefined {
-  const trimmed = text.trim();
-  if (!trimmed) return undefined;
-  const n = Number(trimmed.replace(",", "."));
-  return Number.isFinite(n) ? n : undefined;
-}
-
-type StudyValidation = {
-  errors: string[];
-  params: BalanceRunParams | null;
-  taktPreview: number | null;
-};
-
-/** Validação dos inputs PROVIDed — mesmas regras do domínio (demanda e
- * disponível > 0, pausas < turno, opcionais positivos quando presentes). */
-function validateStudyInputs(
-  inputs: StudyInputs,
-  branch: string,
-): StudyValidation {
-  const demandN = numberOrUndefined(inputs.demand);
-  const shiftN = numberOrUndefined(inputs.shiftMinutes);
-  const breakParsed = numberOrUndefined(inputs.breakMinutes);
-  const breakN = breakParsed ?? 0;
-  const stationsN = numberOrUndefined(inputs.numStations);
-  const batchN = numberOrUndefined(inputs.batchSize);
-
-  const errors: string[] = [];
-  if (inputs.demand.trim() && !(demandN !== undefined && demandN > 0)) {
-    errors.push("Demanda deve ser um número maior que zero.");
-  }
-  if (inputs.shiftMinutes.trim() && !(shiftN !== undefined && shiftN > 0)) {
-    errors.push("Duração do turno deve ser maior que zero.");
-  }
-  if (
-    inputs.breakMinutes.trim() &&
-    (breakParsed === undefined || breakParsed < 0)
-  ) {
-    errors.push("Pausas devem ser um número não negativo.");
-  }
-  if (
-    shiftN !== undefined &&
-    shiftN > 0 &&
-    inputs.breakMinutes.trim() &&
-    breakN >= shiftN
-  ) {
-    errors.push("Pausas devem ser menores que a duração do turno.");
-  }
-  if (
-    inputs.numStations.trim() &&
-    !(stationsN !== undefined && stationsN > 0)
-  ) {
-    errors.push("Número de postos deve ser positivo.");
-  }
-  if (inputs.batchSize.trim() && !(batchN !== undefined && batchN > 0)) {
-    errors.push("Tamanho do lote deve ser positivo.");
-  }
-  const available = shiftN !== undefined ? shiftN - breakN : undefined;
-  const valid =
-    demandN !== undefined &&
-    demandN > 0 &&
-    available !== undefined &&
-    available > 0 &&
-    errors.length === 0;
-  const params = valid
-    ? {
-        demand: demandN!,
-        available_minutes: available!,
-        ...(stationsN ? { num_stations: stationsN } : {}),
-        ...(batchN ? { batch_size: batchN } : {}),
-        ...(branch ? { branch } : {}),
-      }
-    : null;
-  const taktPreview =
-    params && demandN ? params.available_minutes / demandN : null;
-  return { errors, params, taktPreview };
-}
-
-const SAVE_STATUS_LABEL: Record<string, string> = {
-  saving: "Salvando…",
-  saved: "Salvo nesta aba",
-  save_error: "Não foi possível salvar o rascunho",
-  storage_unavailable:
-    "Rascunho não persistido — armazenamento de sessão indisponível",
-};
-
 function StudySection({
   study,
   stage,
@@ -720,250 +634,6 @@ function StudySection({
         </p>
       ) : null}
     </EngineeringSectionCard>
-  );
-}
-
-/* --- Resultados e cenários ---------------------------------------------- */
-
-function BalanceStageFields({ stage }: { stage: LineBalanceStage }) {
-  return (
-    <EngineeringDetailFieldGrid
-      fields={[
-        {
-          label: "Takt",
-          value: formatMinutes(stage.takt_minutes),
-          hint: "Tempo produtivo ÷ demanda — CALCULATED.",
-        },
-        {
-          label: "Conteúdo de trabalho",
-          value: formatMinutes(stage.work_content_minutes),
-          hint: "Soma dos tempos por peça das operações com tempo oficial.",
-        },
-        {
-          label: "Mínimo teórico de postos",
-          value:
-            stage.theoretical_min_stations != null
-              ? String(stage.theoretical_min_stations)
-              : "—",
-          hint: "Limite inferior matemático — não é dimensionamento aprovado.",
-        },
-        {
-          label: "Gargalo candidato",
-          value: stage.bottleneck_candidate
-            ? `${stage.bottleneck_candidate.operation_code} · ${formatMinutes(stage.bottleneck_candidate.minutes_piece)}`
-            : "—",
-        },
-        {
-          label: "Operações acima do takt",
-          value: String(stage.over_takt_operations.length),
-        },
-        {
-          label: "Setup amortizado por peça",
-          value: stage.setup_minutes_piece_amortized
-            ? formatMinutes(stage.setup_minutes_piece_amortized)
-            : "—",
-          hint: "Só calculado quando o lote é informado.",
-        },
-      ]}
-    />
-  );
-}
-
-const SCENARIO_COLUMNS: DataTableColumn<{
-  scenario: ScenarioState;
-  stage: LineBalanceStage | null;
-}>[] = [
-  {
-    key: "id",
-    header: "Cenário",
-    render: (r) => `Cenário ${r.scenario.label}`,
-  },
-  {
-    key: "branch",
-    header: "Filial",
-    render: (r) => r.scenario.computed?.params.branch ?? "—",
-  },
-  {
-    key: "demand",
-    header: "Demanda",
-    align: "right",
-    render: (r) => String(r.scenario.computed?.params.demand ?? "—"),
-  },
-  {
-    key: "available",
-    header: "Tempo produtivo",
-    align: "right",
-    render: (r) =>
-      r.scenario.computed
-        ? formatMinutes(r.scenario.computed.params.available_minutes)
-        : "—",
-  },
-  {
-    key: "stations",
-    header: "Postos",
-    align: "right",
-    render: (r) => String(r.scenario.computed?.params.num_stations ?? "—"),
-  },
-  {
-    key: "batch",
-    header: "Lote",
-    align: "right",
-    render: (r) => String(r.scenario.computed?.params.batch_size ?? "—"),
-  },
-  {
-    key: "takt",
-    header: "Takt",
-    align: "right",
-    render: (r) => (r.stage ? formatMinutes(r.stage.takt_minutes) : "—"),
-  },
-  {
-    key: "content",
-    header: "Conteúdo",
-    align: "right",
-    render: (r) =>
-      r.stage ? formatMinutes(r.stage.work_content_minutes) : "—",
-  },
-  {
-    key: "min",
-    header: "Mín. teórico",
-    align: "right",
-    render: (r) =>
-      r.stage?.theoretical_min_stations != null
-        ? String(r.stage.theoretical_min_stations)
-        : "—",
-  },
-  {
-    key: "over",
-    header: "Acima do takt",
-    align: "right",
-    render: (r) =>
-      r.stage ? String(r.stage.over_takt_operations.length) : "—",
-  },
-];
-
-function ResultsSection({
-  scenarios,
-  stage,
-  branch,
-  active,
-}: {
-  scenarios: ScenarioState[];
-  stage: RoutingStageView;
-  branch: string;
-  active: ScenarioState | null;
-}) {
-  const stageResults = (s: ScenarioState) =>
-    s.computed?.result.stages.find(
-      (st) => stageKeyOf(st) === stageKeyOf(stage),
-    ) ?? null;
-
-  const withResult = scenarios.filter((s) => s.computed);
-  const activeStage = active ? stageResults(active) : null;
-  const currentFingerprint = active
-    ? inputsFingerprint(
-        validateStudyInputs(active.inputs, branch).params ?? {},
-      )
-    : null;
-  const activeStale = Boolean(
-    active?.computed && active.computed.fingerprint !== currentFingerprint,
-  );
-
-  if (!withResult.length) return null;
-
-  return (
-    <EngineeringDetailCard
-      title="Resultados e cenários"
-      titleHint="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED e parâmetros PROVIDED — nunca dimensionamento aprovado."
-      headerActions={
-        <>
-          {active ? (
-            <EngineeringStatusBadge
-              label={`Cenário ${active.label}`}
-              variant="neutral"
-            />
-          ) : null}
-          {activeStale ? (
-            <EngineeringStatusBadge label="STALE" variant="warning" />
-          ) : null}
-          {active?.computed ? (
-            <EngineeringStatusBadge
-              label={active.computed.result.data_class || "—"}
-              variant={
-                active.computed.result.data_class === "CALCULATED"
-                  ? "success"
-                  : active.computed.result.data_class === "PARTIAL"
-                    ? "warning"
-                    : "neutral"
-              }
-            />
-          ) : null}
-        </>
-      }
-    >
-      {activeStale ? (
-        <EngineeringStateBanner variant="default">
-          Os parâmetros mudaram após este cálculo — o resultado abaixo é
-          STALE até nova execução do balanceamento.
-        </EngineeringStateBanner>
-      ) : null}
-      {active?.computed && activeStage ? (
-        <>
-          <BalanceStageFields stage={activeStage} />
-          {activeStage.station_check ? (
-            <EngineeringStateBanner
-              variant={
-                activeStage.station_check.feasible === false
-                  ? "error"
-                  : "default"
-              }
-            >
-              {`Viabilidade com ${activeStage.station_check.num_stations} posto(s): ciclo requerido ${formatMinutes(activeStage.station_check.required_cycle_minutes)}${
-                activeStage.station_check.theoretical_efficiency != null
-                  ? ` · eficiência teórica ${formatRatio(activeStage.station_check.theoretical_efficiency)}`
-                  : ""
-              }${
-                activeStage.station_check.feasible === false
-                  ? " — abaixo do mínimo teórico, configuração inviável para o takt."
-                  : ""
-              }`}
-            </EngineeringStateBanner>
-          ) : null}
-          {activeStage.limitations.length ? (
-            <ul className="engineering-routing__limitations">
-              {activeStage.limitations.map((l, i) => (
-                <li key={i}>{l}</li>
-              ))}
-            </ul>
-          ) : null}
-          {activeStage.balance_scenario ? (
-            <EngineeringStateBanner variant="default">
-              {`Cenário SIMULATION (${activeStage.balance_scenario.type}): ${activeStage.balance_scenario.stations_used} posto(s) hipotéticos, ociosidade ${formatMinutes(activeStage.balance_scenario.idle_minutes_total)} — alocação por capacidade de takt, sem precedência; exige revisão da Engenharia.`}
-            </EngineeringStateBanner>
-          ) : null}
-        </>
-      ) : active?.computed && !activeStage ? (
-        <EngineeringStateBanner variant="default">
-          O cenário ativo não retornou o estágio selecionado — verifique
-          filial e nível da BOM.
-        </EngineeringStateBanner>
-      ) : (
-        <EngineeringEmptyState message="Cenário ativo sem cálculo — execute a análise rápida para comparar." />
-      )}
-
-      {withResult.length > 1 ? (
-        <DataTable
-          columns={SCENARIO_COLUMNS}
-          rows={withResult.map((s) => ({
-            scenario: s,
-            stage: stageResults(s),
-          }))}
-          rowKey={(r) => r.scenario.clientId}
-          layout="embedded"
-          compact
-          emptyMessage="Sem cenários para comparar."
-        />
-      ) : null}
-    </EngineeringDetailCard>
   );
 }
 
@@ -1379,7 +1049,7 @@ export function ProductRoutingTab({ code }: { code: string }) {
               />
             ) : null}
 
-            <ResultsSection
+            <BalanceResultsSection
               scenarios={study.scenarios}
               stage={stage}
               branch={branch}

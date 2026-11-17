@@ -21,6 +21,7 @@ import { NonconformitiesFeature } from "./features/nonconformities/Nonconformiti
 import { ProductsFeature } from "./features/products/ProductsFeature";
 import { ProductRegistrationFeature } from "./features/product-registration/ProductRegistrationFeature";
 import { OverviewPage } from "./features/overview/OverviewPage";
+import { ProcessesFeature } from "./features/processes/ProcessesFeature";
 import {
   EngineeringActionButton,
   EngineeringEmptyState,
@@ -116,6 +117,13 @@ export default function App({
             getAccessToken={getAccessToken}
           />
         </EngineeringRealtimeProvider>
+      ) : null}
+      {resolved.view === "processes" ? (
+        <ProcessesFeature
+          relativePath={resolved.relativePath}
+          basePath={basePath}
+          getAccessToken={getAccessToken}
+        />
       ) : null}
       {resolved.view === "help" ? <HelpPage basePath={basePath} /> : null}
     </EngineeringPluginShell>

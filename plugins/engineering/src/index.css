@@ -1008,3 +1008,87 @@
   display: inline-flex;
   gap: 4px;
 }
+
+/* --- Processos · Balanceamento de Linha (Yamazumi) ---------------------
+ * Composição da ferramenta — grids/gaps com tokens do design system;
+ * nenhum componente do kit é replicado. */
+
+.engineering-processes__lookup {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: minmax(200px, 2fr) auto repeat(2, minmax(160px, 1fr));
+  align-items: end;
+}
+
+.engineering-processes__method-list {
+  display: grid;
+  gap: var(--en-grid-gap);
+  margin-top: var(--en-grid-gap);
+}
+
+.engineering-processes__method-item {
+  border-top: 1px solid var(--en-border, var(--delpi-ui-border, #e2e8f0));
+  padding-top: 8px;
+}
+
+.engineering-processes__method-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.engineering-processes__yamazumi-grid {
+  display: grid;
+  gap: var(--en-grid-gap);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.engineering-processes__yamazumi-posts,
+.engineering-processes__yamazumi-chart {
+  display: grid;
+  gap: var(--en-grid-gap);
+  min-width: 0;
+}
+
+.engineering-processes__yamazumi-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.engineering-processes__unassigned {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.engineering-processes__unassigned-item {
+  display: grid;
+  gap: 6px;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 200px);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1024px) {
+  .engineering-processes__lookup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .engineering-processes__yamazumi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .engineering-processes__lookup {
+    grid-template-columns: 1fr;
+  }
+  .engineering-processes__unassigned-item {
+    grid-template-columns: 1fr;
+  }
+}

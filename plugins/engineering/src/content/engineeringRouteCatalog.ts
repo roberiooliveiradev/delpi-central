@@ -117,6 +117,42 @@ export const ENGINEERING_CATALOG: readonly CatalogSection[] = [
     ],
   },
   {
+    id: "processes",
+    title: "Processos",
+    description:
+      "Ferramentas de mapeamento, análise, melhoria e otimização de processos produtivos.",
+    routes: [
+      {
+        id: "processes",
+        label: "Engenharia de Processos",
+        description:
+          "Ferramentas para análise, melhoria e otimização dos processos de fabricação",
+        target: { kind: "internal", view: "processes" },
+        requiredPermission: "engineering.access",
+        keywords: ["processos", "engenharia de processos", "ferramentas"],
+      },
+      {
+        id: "line-balancing",
+        label: "Balanceamento de Linha",
+        description:
+          "Analise o roteiro de fabricação, dimensione a carga de trabalho e construa cenários de organização da linha",
+        target: {
+          kind: "external",
+          href: "/apps/engineering/processes/line-balancing",
+        },
+        requiredPermission: "engineering.access",
+        keywords: [
+          "balanceamento",
+          "linha",
+          "yamazumi",
+          "takt",
+          "postos",
+          "roteiro",
+        ],
+      },
+    ],
+  },
+  {
     id: "support",
     title: "Suporte",
     description: "Orientação de uso e capacidades futuras.",

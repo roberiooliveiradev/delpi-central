@@ -14,6 +14,11 @@ const chartExport = readFileSync(join(here, "routingChartExport.ts"), "utf8");
 const posts = readFileSync(join(here, "PostConfigurator.tsx"), "utf8");
 const draft = readFileSync(join(here, "routingStudyDraft.ts"), "utf8");
 const hook = readFileSync(join(here, "useRoutingStudyDraft.ts"), "utf8");
+const results = readFileSync(
+  join(here, "BalanceResultsSection.tsx"),
+  "utf8",
+);
+const inputs = readFileSync(join(here, "studyInputs.ts"), "utf8");
 const page = readFileSync(
   join(here, "../pages/ProductDetailPage.tsx"),
   "utf8",
@@ -27,7 +32,7 @@ const api = readFileSync(
   "utf8",
 );
 const css = readFileSync(join(here, "../../../index.css"), "utf8");
-const all = `${src}\n${posts}\n${draft}\n${hook}`;
+const all = `${src}\n${posts}\n${draft}\n${hook}\n${results}\n${inputs}`;
 
 describe("aba Roteiro V2 — wiring", () => {
   it("registra a aba routing na navegação da ficha", () => {
@@ -61,7 +66,7 @@ describe("aba Roteiro V2 — página única scrollável", () => {
       "<StageKpis",
       "<OperationsSection",
       "<StudySection",
-      "<ResultsSection",
+      "<BalanceResultsSection",
       "<VisualSection",
     ];
     let last = -1;
@@ -102,7 +107,7 @@ describe("aba Roteiro V2 — estudo e domínio", () => {
     expect(draft).toContain('["A", "B", "C", "D"]');
     expect(src).toContain("Novo cenário");
     expect(src).toContain("Cenário ${");
-    expect(src).toContain("Resultados e cenários");
+    expect(results).toContain("Resultados e cenários");
   });
 
   it("postos hipotéticos declaram limitação do motor — sem falsa viabilidade", () => {
@@ -148,7 +153,7 @@ describe("aba Roteiro V2 — rascunho de sessão", () => {
     /* saveDraft serializa só o RoutingStudyDraft (inputs+postos+modo)
      * — `computed` vive em estado separado e nunca entra no payload. */
     expect(hook).toMatch(/saveDraft\(store, storageKey, \{\s*\.\.\.draft,[\s\S]*?savedAt/);
-    expect(src).toContain("STALE");
+    expect(results).toContain("STALE");
     expect(draft).toContain("inputsFingerprint");
   });
 
@@ -161,8 +166,8 @@ describe("aba Roteiro V2 — rascunho de sessão", () => {
   });
 
   it("estados de persistência são honestos", () => {
-    expect(src).toContain("Salvo nesta aba");
-    expect(src).toContain("Não foi possível salvar");
+    expect(inputs).toContain("Salvo nesta aba");
+    expect(inputs).toContain("Não foi possível salvar");
     expect(src).toContain("Rascunho recuperado nesta aba");
     expect(draft).toContain("QuotaExceededError");
   });
@@ -247,7 +252,7 @@ describe("aba Roteiro V2 — Plugin UI como fonte de apresentação", () => {
 
   it("operações são cards expansíveis — DataTable só onde é tabular", () => {
     expect(src).not.toContain("OPERATION_COLUMNS");
-    expect(src).toContain("SCENARIO_COLUMNS");
+    expect(results).toContain("SCENARIO_COLUMNS");
     expect(src).toContain("ariaExpanded");
     expect(src).not.toContain("expandedRowKey");
   });

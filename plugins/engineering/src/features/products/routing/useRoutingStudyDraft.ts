@@ -96,11 +96,16 @@ export function useRoutingStudyDraft({
   productCode,
   branch,
   stage,
+  storagePrefix,
 }: {
   identity: string | null;
   productCode: string;
   branch: string;
   stage: RoutingStageView | null;
+  /** Namespace do rascunho — default STUDY_STORAGE_PREFIX (Ficha do
+   * Produto). A ferramenta Processos usa prefixo próprio para isolar
+   * rascunhos entre hosts (contrato de sessão). */
+  storagePrefix?: string;
 }) {
   const context = useMemo<StudyDraftContext | null>(
     () =>
@@ -129,8 +134,9 @@ export function useRoutingStudyDraft({
   const [notice, setNotice] = useState<DraftRestoreNotice>(null);
 
   const storageKey = useMemo(
-    () => (context ? buildStorageKey(identity, context) : null),
-    [identity, context],
+    () =>
+      context ? buildStorageKey(identity, context, storagePrefix) : null,
+    [identity, context, storagePrefix],
   );
 
   /* Restauração — só quando a chave do contexto muda (produto/filial/
