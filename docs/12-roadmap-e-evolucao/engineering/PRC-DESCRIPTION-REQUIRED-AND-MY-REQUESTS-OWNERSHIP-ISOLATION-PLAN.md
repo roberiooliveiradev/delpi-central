@@ -122,3 +122,82 @@ mudança de RBAC/Keycloak, `TOTVS_WRITES=0` — rollback = retag +
   ao agente; sem dados artificiais em produção).
 - Verificador independente: `INCONCLUSIVE` (rodada 1 — motor 'devin'
   sem login; bloqueio persistente, não contornado).
+
+## 10. FIX-02 — Obrigatoriedade visual nos frontends
+
+Task: `PRC-DESCRIPTION-REQUIRED-FRONTENDS-FIX-02`
+Implementação: `815f7a3094`
+
+### Causa-raiz
+
+`SelectField` (path antigo de selects) renderizava ` *` no próprio
+label via `classNames.required`. Campos nativos
+(`NativeTextField`/`NativeSelectField`/`NativeTextAreaField` via
+`createDashboardNativeFormFields`) propagavam `required` apenas ao
+controle HTML — `FormFieldShell`/`FieldLabel` não aceitavam a prop e
+não renderizavam o marcador. Resultado: **Descrição** (kind=text)
+sem ` *` enquanto selects mostravam. A validação de avanço/envio já
+bloqueava vazio e o backend já rejeitava (contrato
+`requiredCreateIntake=true, allowBlank=false, maxLength=200` intacto)
+— o defeito era exclusivamente de indicação visual + `aria-required`.
+
+### Arquivos modificados
+
+- `plugins/plugin-ui/src/components/help/FieldLabel.tsx` —
+  prop `required` + marcador compartilhado.
+- `plugins/plugin-ui/src/components/forms/FormFieldShell.tsx` —
+  prop `required` repassada ao `FieldLabel`.
+- `plugins/plugin-ui/src/components/forms/NativeFormFields.tsx` —
+  os três campos nativos propagam `required` ao shell e recebem
+  `aria-required` (nativo `required` já existia).
+- `plugins/plugin-ui/src/components/prc/PrcRequestForm.descriptionRequired.test.tsx` —
+  novo teste: `Descrição *` + `required` + `aria-required` em CREATE.
+
+`PrcRequestForm.tsx`, consumers (`PrcRequestPage`, `PrcCreatePage`) e
+Engineering API: **inalterados** — `required` já derivava de
+`requestType === "create" && spec.requiredCreateIntake`. Sem lógica
+duplicada por portal; fonte de verdade permanece no contrato backend.
+
+### Contrato oficial (verificado)
+
+`{"path":"description","kind":"text","requiredCreateIntake":true,"allowBlank":false,"maxLength":200}`
+
+### Testes
+
+- plugin-ui: **315/315 PASS** (59 arquivos), incluindo novo caso e
+  regressão `PrcRequestForm.editCase` (UPDATE preservado — indicador
+  só em `requestType==="create"`).
+- Typecheck do escopo: `tsc-scope-clean` (erros pré-existentes em
+  charts/realtime fora do escopo, inalterados).
+- Backend: sem alteração — validação de avanço/envio e rejeição de
+  vazio já vigentes desde `6116a5231a`.
+
+### HML
+
+- SHA: `815f7a3094` · plugin-ui digest `e8edeba604739`.
+- `aria-required` presente no bundle publicado
+  (`__federation_expose_Index-*.js`); container healthy.
+- `HML_VISUAL_*`/`HML_EMPTY_FIELD_TEST`: `TEST_NOT_RUN` — sem sessão
+  autenticada legítima; validação visual pendente do PO.
+
+### PRD
+
+- plugin-ui digest `faa8c9dc46af` → `43952b6a7986`.
+- `aria-required` verificado no bundle ativo; nginx servindo
+  `remoteEntry.js`; 0 erros no log pós-start.
+- my-requests/engineering MFEs não republicados — consomem o remote
+  de Module Federation (artefato novo servido automaticamente).
+- `PRD_VISUAL_SMOKE`: `TEST_NOT_RUN` — aceite visual pelo PO.
+
+### Rollback
+
+Retag plugin-ui PRD para `faa8c9dc46af` + `up-prod-sequential.sh`.
+Sem migrations/RBAC/Keycloak/MCP/TOTVS.
+
+### Limitações residuais
+
+- Screenshots autenticadas pendentes (PO).
+- Marcador ` *` agora uniforme em todos os campos nativos required
+  (benefício transversal; sem regressão detectada nos 315 testes).
+- Verificador independente: `INCONCLUSIVE` (rodada 1 — motor 'devin'
+  sem login, mesmo bloqueio persistente já registrado).
