@@ -18,6 +18,7 @@ const API = readFileSync(
   resolve(__dirname, "../api/productRegistrationApi.ts"),
   "utf8",
 );
+const CSS = readFileSync(resolve(__dirname, "../prc.css"), "utf8");
 const SPECS = readFileSync(
   resolve(__dirname, "../components/prcActionSpecs.ts"),
   "utf8",
@@ -98,6 +99,14 @@ describe("runAction — recibo de conclusão não substitui o detalhe", () => {
     expect(API).toMatch(/PrcCompletionReceipt/);
     expect(API).toMatch(
       /Envelope<PrcRequestDetail \| PrcCompletionReceipt>/,
+    );
+  });
+});
+
+describe("hero — posicionamento das ações", () => {
+  it("ações do hero alinhadas à direita no desktop", () => {
+    expect(CSS).toMatch(
+      /\.engineering-prc__hero-actions \.engineering-prc__actions\s*\{[^}]*justify-content:\s*flex-end/,
     );
   });
 });

@@ -535,6 +535,12 @@
   margin-top: var(--en-grid-gap);
 }
 
+/* UX — ações do hero alinhadas à direita (desktop). Mobile mantém
+ * coluna/largura total via media query abaixo. */
+.engineering-prc__hero-actions .engineering-prc__actions {
+  justify-content: flex-end;
+}
+
 .engineering-prc__lookup {
   position: relative;
 }
