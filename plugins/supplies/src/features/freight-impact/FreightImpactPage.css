@@ -1,0 +1,20 @@
+.sp-freight-impact__filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));align-items:end;gap:12px}
+.sp-freight-impact__filters label {display:grid;gap:7px;font-size:.82rem;font-weight:600}
+.sp-freight-impact__filters input,.sp-freight-impact__filters select {border:1px solid var(--delpi-border,#cbd5e1);border-radius:8px;padding:10px;background:var(--delpi-surface,#fff);color:inherit;min-height:40px}
+.sp-freight-impact__actions {display:flex;gap:8px;flex-wrap:wrap}
+.sp-freight-impact__metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.sp-freight-impact__metric {border:1px solid var(--delpi-border,#dce3eb);border-radius:12px;padding:18px}
+.sp-freight-impact__metric span {display:block;font-size:.8rem;opacity:.76}
+.sp-freight-impact__metric strong {display:block;margin-top:9px;font-size:clamp(1.1rem,2vw,1.7rem);font-variant-numeric:tabular-nums}
+.sp-freight-impact__chart {display:grid;grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:12px;align-items:stretch;padding:22px 5px 8px}
+.sp-freight-impact__month {display:grid;grid-template-rows:1fr auto auto;text-align:center;gap:8px}
+.sp-freight-impact__month-graphic {height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--delpi-border,#e2e8f0)}
+.sp-freight-impact__bar {width:min(40px,75%);border-radius:6px 6px 0 0;background:var(--delpi-primary,#087ab0);min-height:2px}
+.sp-freight-impact__month strong {font-size:.83rem}.sp-freight-impact__month span {font-size:.76rem;opacity:.8}
+.sp-freight-impact__table-wrap {width:100%;overflow-x:auto}
+.sp-freight-impact__table {border-collapse:collapse;width:100%;min-width:900px;font-variant-numeric:tabular-nums}
+.sp-freight-impact__table th,.sp-freight-impact__table td {padding:12px;border-bottom:1px solid var(--delpi-border,#e2e8f0)}
+.sp-freight-impact__table th {text-align:left;font-size:.77rem;white-space:nowrap}
+.sp-freight-impact__table td {font-size:.86rem}.sp-freight-impact__table td:nth-child(n+5),.sp-freight-impact__table th:nth-child(n+5) {text-align:right}
+.sp-freight-impact__pager {display:flex;gap:12px;align-items:center;justify-content:flex-end;padding-top:12px}
+.sp-freight-impact__help {line-height:1.65;font-size:.86rem;opacity:.84}
