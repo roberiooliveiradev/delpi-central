@@ -945,6 +945,154 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
             "explicit; ambiguous targets are rejected without writes.",
         ),
     ),
+    # --- EVA-PRC-COMPLETE-FLOW-SEMANTIC-PARITY-02 — cobertura integral
+    # dos fluxos restantes do PRC (leituras auxiliares, bandeiras de
+    # produto acompanhado, respostas de esclarecimento e encaminha-
+    # mento de divergência). Mesmos use cases das rotas REST; nenhuma
+    # regra de negócio duplicada no MCP.
+    _a(
+        "product_registration", "correction_return_list", "read",
+        "Correction-return rounds of a case (returned fields, round "
+        "metadata) — request-scoped.",
+        "read", status="proven", ref_arg="request_id",
+    ),
+    _a(
+        "product_registration", "correction_return_get", "read",
+        "Single correction-return detail (returned fields and "
+        "corrected values).",
+        "read", status="proven", ref_arg="request_id",
+        fields=("return_id",),
+    ),
+    _a(
+        "product_registration", "edit_context", "read",
+        "Official edit context for a product alteration request: "
+        "current SB1 values + complete SA5 links via the delegated "
+        "official reader (human Bearer forwarded to api-delpi).",
+        "read", status="proven",
+        requires=("official_code",),
+        fields=("official_code",),
+        notes=(
+            "Requires a live delegated access token; data source "
+            "remains the official TOTVS reader (read-only)."
+        ),
+    ),
+    _a(
+        "product_registration", "catalog_items", "read",
+        "Auxiliary catalog items for PRC forms (delegated official "
+        "catalogs: units, families and other intake reference sets).",
+        "read", status="proven",
+        requires=("catalog",),
+        fields=("catalog", "query", "limit"),
+    ),
+    _a(
+        "product_registration", "supplier_search", "read",
+        "Official supplier search for product/supplier linking — "
+        "delegated to the official api-delpi reader.",
+        "read", status="proven", paginated=True,
+        fields=("query", "page", "page_size"),
+    ),
+    _a(
+        "product_registration", "outbound_list", "read",
+        "Outbound results queue: status/result of PRC cases toward "
+        "their originating system (requester sees own cases; analyst "
+        "sees all).",
+        "read", status="proven", paginated=True,
+        fields=("source", "page", "page_size"),
+    ),
+    _a(
+        "product_registration", "comment_attachment_list", "read",
+        "Attachment metadata of a single conversation message "
+        "(names, types, sizes — never bytes or storage keys).",
+        "read", status="proven", ref_arg="request_id",
+        fields=("comment_id",),
+    ),
+    _a(
+        "product_registration", "flag_list_cross", "read",
+        "Cross-case attendance flag queue with authorized filters "
+        "(status, subject, product, request, assignee, supplier, "
+        "date range) — analyst sees all; requester scoped to own "
+        "cases.",
+        "read", status="proven", paginated=True,
+        fields=("status", "subject", "target_path",
+                "target_attribute", "product_code", "request_id",
+                "request_type", "request_status", "assignee",
+                "supplier_code", "store", "created_from",
+                "created_to", "page", "page_size"),
+    ),
+    _a(
+        "product_registration", "flag_summary", "read",
+        "Cross-case flag aggregates grouped by request/subject — "
+        "official counts for the authorized scope.",
+        "read", status="proven", paginated=True,
+        fields=("group_by", "status", "subject", "target_path",
+                "target_attribute", "product_code", "request_status",
+                "page", "page_size"),
+    ),
+    _a(
+        "product_registration", "record_flag_events", "read",
+        "Audit event history of a tracked-product flag "
+        "(record-scoped).",
+        "read", status="proven", ref_arg="record_id",
+        fields=("flag_id",),
+    ),
+    _a(
+        "product_registration", "record_flag_create", "execute",
+        "Create a flag on a tracked product's current revision "
+        "(title/description/subject) — does not mutate SB1/SA5.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="record_id",
+        requires=("title", "description"),
+        fields=("subject", "target_path", "supplier_key",
+                "target_attribute"),
+    ),
+    _a(
+        "product_registration", "record_flag_update", "execute",
+        "Update tracked-product flag title/description with CAS "
+        "expected_version — target is immutable; only OPEN flags "
+        "are editable.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="record_id",
+        requires=("flag_id", "expected_version"),
+        fields=("title", "description"),
+    ),
+    _a(
+        "product_registration", "record_flag_resolve", "execute",
+        "Mark tracked-product flag RESOLVED (CAS; terminal).",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="record_id",
+        requires=("flag_id", "expected_version"),
+        fields=("note",),
+    ),
+    _a(
+        "product_registration", "record_flag_remove", "execute",
+        "Mark tracked-product flag REMOVED (terminal; history "
+        "retained) — sealed proposal + verifiable human "
+        "confirmation.",
+        "destructive", status="proven", phases=("prepare", "commit"),
+        ref_arg="record_id",
+        requires=("flag_id", "expected_version"),
+        fields=("note",),
+        notes=(
+            "confirmed=true from the model is NOT authorization — "
+            "proposal_ref + human elicitation required on commit."
+        ),
+    ),
+    _a(
+        "product_registration", "information_draft_answers", "execute",
+        "Save draft answers to an information round — only the "
+        "case requester; CAS on expected_version (round version).",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("round_id", "expected_version", "answers"),
+    ),
+    _a(
+        "product_registration", "information_submit_answers", "execute",
+        "Submit answers to an information round — all questions "
+        "require non-empty text; CAS on expected_version.",
+        "moderate", status="proven", phases=("act", "prepare"),
+        ref_arg="request_id",
+        requires=("round_id", "expected_version", "answers"),
+    ),
 )
 
 _ACTION_INDEX: dict[tuple[str, str], SemanticAction] = {

@@ -551,6 +551,36 @@ _READ_DISPATCH = {
     ("product_registration", "information_round_get"): (
         lambda a: _prc_read("information_round_get", a)
     ),
+    ("product_registration", "correction_return_list"): (
+        lambda a: _prc_read("correction_return_list", a)
+    ),
+    ("product_registration", "correction_return_get"): (
+        lambda a: _prc_read("correction_return_get", a)
+    ),
+    ("product_registration", "edit_context"): (
+        lambda a: _prc_read("edit_context", a)
+    ),
+    ("product_registration", "catalog_items"): (
+        lambda a: _prc_read("catalog_items", a)
+    ),
+    ("product_registration", "supplier_search"): (
+        lambda a: _prc_read("supplier_search", a)
+    ),
+    ("product_registration", "outbound_list"): (
+        lambda a: _prc_read("outbound_list", a)
+    ),
+    ("product_registration", "comment_attachment_list"): (
+        lambda a: _prc_read("comment_attachment_list", a)
+    ),
+    ("product_registration", "record_flag_events"): (
+        lambda a: _prc_read("record_flag_events", a)
+    ),
+    ("product_registration", "flag_list_cross"): (
+        lambda a: _prc_read("flag_list_cross", a)
+    ),
+    ("product_registration", "flag_summary"): (
+        lambda a: _prc_read("flag_summary", a)
+    ),
 }
 
 
@@ -2866,6 +2896,24 @@ _EXECUTE_DISPATCH = {
         prc_semantic.execute_action
     ),
     ("product_registration", "information_follow_up"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "information_draft_answers"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "information_submit_answers"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "record_flag_create"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "record_flag_update"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "record_flag_resolve"): (
+        prc_semantic.execute_action
+    ),
+    ("product_registration", "record_flag_remove"): (
         prc_semantic.execute_action
     ),
 }

@@ -194,6 +194,143 @@ async def read_action(context, entry, args: dict):
                 svc.list_record_flags(ref, actor=actor),
                 "Bandeiras do produto carregadas.",
             )
+        if entry.action == "record_flag_events":
+            flag_id = str(
+                args.get("flag_id") or args.get("flagId") or ""
+            ).strip()
+            if not ref or not flag_id:
+                return _err(
+                    "record_id e flag_id são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.list_record_flag_events(
+                    ref, flag_id, actor=actor
+                ),
+                "Eventos da bandeira carregados.",
+            )
+        if entry.action == "correction_return_list":
+            if not ref:
+                return _err(
+                    "request_id é obrigatório.", code="validation"
+                )
+            return _ok(
+                svc.list_correction_returns(ref, actor=actor),
+                "Devoluções para correção carregadas.",
+            )
+        if entry.action == "correction_return_get":
+            return_id = str(
+                args.get("return_id") or args.get("returnId") or ""
+            ).strip()
+            if not ref or not return_id:
+                return _err(
+                    "request_id e return_id são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.get_correction_return(
+                    ref, return_id, actor=actor
+                ),
+                "Devolução carregada.",
+            )
+        if entry.action == "edit_context":
+            code = str(
+                args.get("official_code")
+                or args.get("officialCode") or ""
+            ).strip()
+            token = str(
+                getattr(context.user, "access_token", "") or ""
+            ).strip()
+            if not code:
+                return _err(
+                    "official_code é obrigatório.", code="validation"
+                )
+            if not token:
+                return _err(
+                    "Token de acesso indisponível para consulta "
+                    "oficial.",
+                    code="unauthorized", status=401,
+                )
+            return _ok(
+                await svc.edit_context(
+                    actor=actor,
+                    official_code=code,
+                    access_token=token,
+                    correlation_id=str(
+                        getattr(context, "correlation_id", "") or ""
+                    ),
+                ),
+                "Contexto oficial de edição carregado.",
+            )
+        if entry.action == "outbound_list":
+            return _ok(
+                svc.outbound_list(
+                    actor=actor,
+                    source=args.get("source"),
+                    page=int(args.get("page", 1)),
+                    page_size=int(
+                        args.get("page_size")
+                        or args.get("pageSize") or 25
+                    ),
+                ),
+                "Resultados outbound carregados.",
+            )
+        if entry.action == "comment_attachment_list":
+            comment_id = str(
+                args.get("comment_id")
+                or args.get("commentId") or ""
+            ).strip()
+            if not ref or not comment_id:
+                return _err(
+                    "request_id e comment_id são obrigatórios.",
+                    code="validation",
+                )
+            return _ok(
+                svc.list_comment_attachments(
+                    ref, comment_id, actor=actor
+                ),
+                "Anexos da mensagem carregados.",
+            )
+        if entry.action == "flag_list_cross":
+            return _ok(
+                svc.list_flags_cross_case(
+                    actor=actor,
+                    status=args.get("status"),
+                    subject=args.get("subject"),
+                    target_path=args.get("target_path"),
+                    target_attribute=args.get("target_attribute"),
+                    product_code=args.get("product_code"),
+                    request_id=args.get("request_id"),
+                    request_type=args.get("request_type"),
+                    request_status=args.get("request_status"),
+                    assignee=args.get("assignee"),
+                    supplier_code=args.get("supplier_code"),
+                    store=args.get("store"),
+                    created_from=args.get("created_from"),
+                    created_to=args.get("created_to"),
+                    page=int(args.get("page", 1)),
+                    page_size=int(args.get("page_size") or 25),
+                ),
+                "Fila de bandeiras carregada.",
+            )
+        if entry.action == "flag_summary":
+            return _ok(
+                svc.summarize_flags_cross_case(
+                    actor=actor,
+                    group_by=args.get("group_by") or "request",
+                    status=args.get("status"),
+                    subject=args.get("subject"),
+                    target_path=args.get("target_path"),
+                    target_attribute=args.get("target_attribute"),
+                    product_code=args.get("product_code"),
+                    request_status=args.get("request_status"),
+                    page=int(args.get("page", 1)),
+                    page_size=int(args.get("page_size") or 50),
+                ),
+                "Resumo de bandeiras carregado.",
+            )
+        if entry.action in ("catalog_items", "supplier_search"):
+            return await _delegated_get(context, entry, args)
         if entry.action == "reference_data":
             return _ok(
                 svc.reference_data(actor=actor),
@@ -397,6 +534,53 @@ def _payload_changes(payload: dict | None, changes: dict | None) -> list:
     return changes if isinstance(changes, list) else []
 
 
+async def _delegated_get(context, entry, args):
+    """Delega o Bearer humano à api-delpi — mesmo contrato das rotas
+    REST (catálogos auxiliares e busca de fornecedores)."""
+    from engineering_app.config import settings
+    from engineering_app.infrastructure.gateways.downstream_client import (
+        DownstreamClient,
+    )
+
+    token = str(getattr(context.user, "access_token", "") or "").strip()
+    if not token:
+        return _err(
+            "Token de acesso indisponível para consulta oficial.",
+            code="unauthorized", status=401,
+        )
+    if entry.action == "catalog_items":
+        catalog = str(args.get("catalog") or "").strip()
+        if not catalog:
+            return _err("catalog é obrigatório.", code="validation")
+        path = f"/engineering/product-registration/catalogs/{catalog}"
+        params = {
+            "query": args.get("query"),
+            "limit": int(args.get("limit") or 200),
+        }
+        message = "Catálogo carregado."
+    else:
+        path = "/engineering/product-registration/suppliers"
+        params = {
+            "query": args.get("query"),
+            "page": int(args.get("page", 1)),
+            "page_size": int(
+                args.get("page_size") or args.get("pageSize") or 20
+            ),
+        }
+        message = "Fornecedores carregados."
+    client = DownstreamClient(settings.DELPI_API_URL, timeout_seconds=15.0)
+    try:
+        data = await client.get(
+            path, params=params, access_token=token
+        )
+    except Exception:
+        return _err(
+            "Fonte oficial indisponível.",
+            code="unavailable", status=503,
+        )
+    return _ok(data, message)
+
+
 async def execute_action(
     context, entry, phase, *,
     target_ref=None, payload=None, changes=None,
@@ -489,6 +673,36 @@ async def execute_action(
 
         if action in ("information_question_accept", "information_follow_up"):
             return _information_execute(
+                svc, actor, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                idempotency_key=idempotency_key,
+            )
+
+        if action in (
+            "information_draft_answers", "information_submit_answers",
+        ):
+            return _information_answers_execute(
+                svc, actor, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                idempotency_key=idempotency_key,
+            )
+
+        if action == "record_flag_remove":
+            return await _record_flag_remove(
+                context, entry, phase, ref,
+                payload=payload or {},
+                expected_version=expected_version,
+                proposal_ref=proposal_ref, ctx=ctx,
+                idempotency_key=idempotency_key,
+            )
+
+        if action in (
+            "record_flag_create", "record_flag_update",
+            "record_flag_resolve",
+        ):
+            return _record_flag_execute(
                 svc, actor, entry, phase, ref,
                 payload=payload or {},
                 expected_version=expected_version,
@@ -635,6 +849,257 @@ def _information_execute(
         data = data["response"]
     return _ok({"entity": entry.entity, "action": action, **data},
                "Rodada de esclarecimento atualizada.")
+
+
+def _information_answers_execute(
+    svc, actor, entry, phase, ref, *,
+    payload, expected_version, idempotency_key,
+):
+    """PRC-REF-019 draft/submit de respostas — mesmo use case REST."""
+    action = entry.action
+    if not ref:
+        return _err("target_ref (request_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    round_id = str(
+        body.get("round_id") or body.get("roundId") or ""
+    ).strip()
+    if not round_id:
+        return _err("round_id é obrigatório.", code="validation")
+    version = _require_version(
+        {
+            "expected_version": (
+                body.get("expected_round_version")
+                or body.get("expectedRoundVersion")
+                or expected_version
+            )
+        }
+    )
+    answers = body.get("answers")
+    if action == "information_draft_answers" and not answers:
+        return _err("answers é obrigatório para rascunho.",
+                    code="validation")
+
+    if phase == "prepare":
+        return _ok(
+            {
+                "phase": "prepare",
+                "request_id": ref,
+                "action": action,
+                "round_id": round_id,
+                "expected_round_version": version,
+                "answers_count": len(answers or []),
+            },
+            "Pré-validação de respostas concluída — ACT persiste.",
+        )
+
+    fn = (
+        svc.draft_information_answers
+        if action == "information_draft_answers"
+        else svc.submit_information_answers
+    )
+    data = fn(
+        ref, round_id, actor=actor,
+        expected_round_version=version,
+        answers=answers,
+        idempotency_key=idempotency_key,
+    )
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok({"entity": entry.entity, "action": action, **data},
+               "Respostas registradas.")
+
+
+def _record_flag_execute(
+    svc, actor, entry, phase, ref, *,
+    payload, expected_version, idempotency_key,
+):
+    """Bandeiras de produto acompanhado — mesmos use cases REST."""
+    action = entry.action
+    if not ref:
+        return _err("target_ref (record_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    flag_id = str(body.get("flag_id") or "").strip()
+
+    if phase == "prepare":
+        preview = {
+            "phase": "prepare",
+            "record_id": ref,
+            "action": action,
+        }
+        if action != "record_flag_create":
+            preview["flag_id"] = flag_id
+            preview["expected_version"] = expected_version
+        else:
+            preview["title"] = body.get("title")
+        return _ok(preview, "Pré-validação de bandeira concluída.")
+
+    if action == "record_flag_create":
+        data = svc.create_record_flag(
+            ref, actor=actor,
+            title=body.get("title") or "",
+            description=body.get("description") or "",
+            subject=body.get("subject") or "FIELD",
+            target_path=(
+                body.get("target_path") or body.get("targetPath")
+            ),
+            supplier_key=(
+                body.get("supplier_key") or body.get("supplierKey")
+            ),
+            target_attribute=(
+                body.get("target_attribute") or body.get("targetAttribute")
+            ),
+            idempotency_key=idempotency_key,
+        )
+    elif action == "record_flag_update":
+        if not flag_id:
+            return _err("flag_id é obrigatório.", code="validation")
+        version = _require_version({"expected_version": expected_version})
+        data = svc.update_record_flag(
+            ref, flag_id, actor=actor, expected_version=version,
+            title=body.get("title"),
+            description=body.get("description"),
+            idempotency_key=idempotency_key,
+        )
+    elif action == "record_flag_resolve":
+        if not flag_id:
+            return _err("flag_id é obrigatório.", code="validation")
+        version = _require_version({"expected_version": expected_version})
+        data = svc.close_record_flag(
+            ref, flag_id, actor=actor, expected_version=version,
+            to_status="RESOLVED",
+            note=body.get("note"),
+            idempotency_key=idempotency_key,
+        )
+    else:
+        return _err(f"Ação '{entry.capability}' sem handler.",
+                    code="not_implemented", status=501)
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok({"entity": entry.entity, "action": action, **data},
+               "Bandeira do produto aplicada.")
+
+
+async def _record_flag_remove(
+    context, entry, phase, ref, *,
+    payload, expected_version, proposal_ref, ctx, idempotency_key,
+):
+    """Remoção de bandeira de produto — proposta selada + confirmação
+    humana verificável (mesmo padrão governado de flag_delete)."""
+    from engineering_app.interface.mcp.semantic_bridge import (
+        _require_human_confirmation,
+    )
+    from engineering_app.application.eva.proposal_store import (
+        EvaProposalError,
+    )
+
+    svc = build_prc_service()
+    actor = _actor(context)
+    if not ref:
+        return _err("target_ref (record_id) é obrigatório.",
+                    code="validation")
+    body = payload or {}
+    flag_id = str(body.get("flag_id") or "").strip()
+    if not flag_id:
+        return _err("flag_id é obrigatório.", code="validation")
+    version = _require_version({"expected_version": expected_version})
+
+    if phase == "prepare":
+        detail = {}
+        try:
+            flags = svc.list_record_flags(ref, actor=actor)
+            items = (
+                flags.get("flags") or flags.get("items")
+                or flags.get("records") or []
+            )
+            detail = next(
+                (f for f in items
+                 if str(f.get("id") or f.get("flagId") or "")
+                 == flag_id),
+                {},
+            )
+        except Exception:
+            detail = {}
+        proposal, handle = seal_proposal(
+            capability=entry.capability,
+            actor_id=str(getattr(context.user, "id", "") or ""),
+            target_ref=ref,
+            change={
+                "action": "record_flag_remove",
+                "flag_id": flag_id,
+                "expected_version": version,
+            },
+            impact={
+                "operation": "record_flag_remove",
+                "flagId": flag_id,
+                "title": detail.get("title"),
+                "effect": (
+                    "Remoção terminal da bandeira do produto — "
+                    "histórico preservado; não altera "
+                    "SB1/SA5/revisões."
+                ),
+            },
+            expected_postcondition={
+                "check": "record_flag_removed",
+                "flag_id": flag_id,
+            },
+        )
+        return _ok(
+            {"entity": entry.entity, "action": entry.action,
+             "phase": "prepare", "proposal_ref": handle,
+             "proposal": proposal.to_public_dict()},
+            "Proposta de remoção selada — confirme com o usuário.",
+        )
+
+    handle = (proposal_ref or "").strip()
+    if not handle:
+        raise EvaProposalError(
+            "proposal_ref é obrigatório para phase=commit.",
+            code="proposal_required", status_code=400,
+        )
+    proposal = load_valid_proposal(
+        proposal_handle=handle,
+        actor_id=str(getattr(context.user, "id", "") or ""),
+        expected_capability=entry.capability,
+        expected_target_ref=ref,
+    )
+    if fingerprint(
+        {"action": "record_flag_remove", "flag_id": flag_id,
+         "expected_version": version}
+    ) != proposal.change_fingerprint:
+        raise EvaProposalError(
+            "Parâmetros divergem da proposta selada — "
+            "prepare novamente.",
+            code="proposal_mismatch", status_code=409,
+        )
+    summary = (
+        f"Remover bandeira {flag_id} do produto {ref} "
+        "(terminal; histórico preservado)."
+    )
+    confirmation = await _require_human_confirmation(
+        ctx,
+        expected_echo=flag_id,
+        summary=summary,
+        proposal_id=proposal.proposal_id,
+    )
+    if confirmation is not None:
+        return confirmation
+    get_proposal_store().consume(proposal.proposal_id)
+    data = svc.close_record_flag(
+        ref, flag_id, actor=actor, expected_version=version,
+        to_status="REMOVED",
+        note=(payload or {}).get("note"),
+        idempotency_key=idempotency_key,
+    )
+    if isinstance(data, dict) and data.get("replayed"):
+        data = data["response"]
+    return _ok(
+        {"entity": entry.entity, "action": entry.action,
+         "phase": "commit", "proposal_id": proposal.proposal_id,
+         **data},
+        "Bandeira do produto removida.",
+    )
 
 
 def _comment_execute(

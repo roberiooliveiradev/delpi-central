@@ -129,3 +129,39 @@ completo (gate + AuthZ + service) neste SHA.
 | ACT | `ENG_EVA_ACT_ENABLED=true` — config PRD pré-existente, preservada (não alterada) |
 | MCP live (ChatGPT) | `TEST_NOT_RUN` — requer token com aud=URL-MCP + scope `mcp:tools`; validação final pelo PO na conexão produtiva |
 | Rollback | retag `082bd86a63cd` + `up-prod-sequential.sh --build engineering-api`; sem mudança de schema |
+
+## Ciclo EVA-PRC-COMPLETE-FLOW-SEMANTIC-PARITY-02 — fluxo completo
+
+Documento mestre: `EVA-PRC-COMPLETE-FLOW-FUNCTIONAL-PARITY-MASTER.md`
+(mesmo diretório). Inventário REST×Frontend×EVA integral: ~62 rotas,
+56 elegíveis mapeadas, 6 excluídas (5 transporte binário +
+`route_divergence` deprecated).
+
+### Capacidades adicionadas (40 → 56)
+
+Reads: `correction_return_list`, `correction_return_get`,
+`edit_context`, `catalog_items`, `supplier_search`, `outbound_list`,
+`comment_attachment_list`, `record_flag_events`, `flag_list_cross`,
+`flag_summary`.
+
+Executes: `record_flag_create`, `record_flag_update`,
+`record_flag_resolve`, `record_flag_remove` (proposta selada +
+confirmação humana), `information_draft_answers`,
+`information_submit_answers`.
+
+Excluídas: `route_divergence` (rota REST deprecated, omitida de
+`allowedActions`); upload/download/delete de anexos binários
+(transportes fora do contrato MCP — metadados já cobertos).
+
+### Métricas atualizadas
+
+- MCP tools: **6 → 6**
+- Capabilities PRC `proven`: **56**; `planned`: 0; sem dispatch: 0
+- `PARITY_ELIGIBLE_FUNCTIONAL_COVERAGE`: 56/56 operações elegíveis
+- `PARITY_CONTRACT_COVERAGE`: mesmos use cases REST nos handlers
+- `PARITY_AUTHZ_COVERAGE`: actor real + negações testadas
+- `PARITY_LIVE_RUNTIME_COVERAGE`: pendente HML/PRD
+- Testes: +17 (`test_prc_eva_parity_flow.py`); 183/183 suites PRC;
+  regressão EVA 407 PASS + 1 FAIL pré-existente em baseline
+  (`val01 structure_table_roundtrip` — fora do escopo, reproduzida
+  em HEAD sem o diff)
