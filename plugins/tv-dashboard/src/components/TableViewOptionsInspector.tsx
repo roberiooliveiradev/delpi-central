@@ -19,6 +19,10 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  isTableBackgroundTransparent,
+  tableBackgroundTransparencyPatch,
+} from "../utils/visualBackgroundTransparency";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { InspectorElementRow } from "./InspectorElementRow";
 import { TablePartInspector } from "./TablePartInspector";
@@ -141,6 +145,20 @@ export function TableViewOptionsInspector({
               title="Células"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableCells}
             >
+              <DeckField id="td-table-background-mode" label="Fundo da tabela">
+                <FormSelectControl
+                  id="td-table-background-mode"
+                  ariaLabel="Fundo da tabela"
+                  value={isTableBackgroundTransparent(block) ? "transparent" : "normal"}
+                  onChange={(value) =>
+                    updateSelected(tableBackgroundTransparencyPatch(block, value === "transparent"))
+                  }
+                  options={[
+                    { value: "normal", label: "Normal (fundo padrão)" },
+                    { value: "transparent", label: "Transparente (sem preenchimento)" },
+                  ]}
+                />
+              </DeckField>
               {!omitCellAlign ? (
                 <DeckField id="td-table-text-align" label="Alinhamento">
                   <FormSelectControl

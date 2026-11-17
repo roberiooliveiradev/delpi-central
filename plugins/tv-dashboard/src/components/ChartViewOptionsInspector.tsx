@@ -21,6 +21,10 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  chartBackgroundTransparencyPatch,
+  isChartBackgroundTransparent,
+} from "../utils/visualBackgroundTransparency";
 import { ChartPartInspector } from "./ChartPartInspector";
 import { InspectorElementRow } from "./InspectorElementRow";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -143,6 +147,24 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
               defaultOpen
             >
+              <DeckField id="td-chart-background-mode" label="Fundo do gráfico">
+                <FormSelectControl
+                  id="td-chart-background-mode"
+                  ariaLabel="Fundo do gráfico"
+                  value={isChartBackgroundTransparent(block) ? "transparent" : "normal"}
+                  onChange={(value) =>
+                    updateSelected(chartBackgroundTransparencyPatch(block, value === "transparent"))
+                  }
+                  options={[
+                    { value: "normal", label: "Normal (fundo padrão)" },
+                    { value: "transparent", label: "Transparente (sem preenchimento)" },
+                  ]}
+                />
+              </DeckField>
+              <p className="td-deck-inspector__hint">
+                Transparente remove o fundo externo e a área de plotagem, deixando
+                aparecer o template atrás do gráfico, inclusive na TV publicada.
+              </p>
               {isGauge ? (
                 <DeckField id="td-chart-gauge-accent" label="Cor de destaque">
                   <TvRibbonColorPicker

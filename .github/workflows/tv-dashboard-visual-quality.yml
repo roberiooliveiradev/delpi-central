@@ -1,0 +1,65 @@
+name: TV Dashboard - Qualidade Visual
+
+on:
+  pull_request:
+    paths:
+      - "plugins/tv-dashboard/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/plugin-ui/**"
+      - ".github/workflows/tv-dashboard-visual-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/tv-dashboard/**"
+      - "plugins/tv-dashboard-presentation/**"
+      - "plugins/plugin-ui/**"
+      - ".github/workflows/tv-dashboard-visual-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: TV Dashboard - lint, testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            plugins/plugin-ui/package-lock.json
+            plugins/tv-dashboard-presentation/package-lock.json
+            plugins/tv-dashboard/package-lock.json
+      - name: Instalar kit visual
+        run: npm ci --prefix plugins/plugin-ui
+      - name: Instalar renderizador da TV
+        run: npm ci --prefix plugins/tv-dashboard-presentation
+      - name: Instalar editor de TV
+        run: npm ci --prefix plugins/tv-dashboard
+      # O lint global atual tem centenas de violações pré-existentes em arquivos
+      # não modificados. Cobrir o escopo alterado sem ocultar a dívida técnica.
+      - name: Lint dos arquivos alterados no editor
+        working-directory: plugins/tv-dashboard
+        run: |
+          npx eslint \
+            src/components/ChartViewOptionsInspector.tsx \
+            src/components/ChartPartInspector.tsx \
+            src/components/formatRibbon/ChartRibbonShapeChrome.tsx \
+            src/components/KpiViewOptionsInspector.tsx \
+            src/components/KpiPartInspector.tsx \
+            src/components/TableViewOptionsInspector.tsx \
+            src/components/TablePartInspector.tsx \
+            src/utils/visualBackgroundTransparency.ts \
+            src/utils/visualBackgroundTransparency.test.ts
+      - name: Testes do editor TV Dashboard
+        run: npm test --prefix plugins/tv-dashboard -- src/utils/visualBackgroundTransparency.test.ts
+      - name: Build de produção do editor
+        run: npm run build --prefix plugins/tv-dashboard
+      - name: Regressão do kit de tabelas
+        run: npm test --prefix plugins/plugin-ui -- src/components/data/configurableTableParts.test.ts src/components/data/configurableTable/TableContainer.test.tsx
+      - name: Regressão da apresentação
+        run: npm test --prefix plugins/tv-dashboard-presentation -- src/GaugeChartView.test.tsx

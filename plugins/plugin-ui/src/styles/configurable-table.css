@@ -203,6 +203,26 @@
   box-shadow: none !important;
 }
 
+/*
+ * GLPI #1606: a moldura transparente libera o template inclusive atrás do
+ * cabeçalho, células e linhas alternadas. A regra não modifica os estilos
+ * salvos: ao voltar para "Normal", as cores anteriores reaparecem.
+ * Inclui as classes TV (tdp-*) e a tabela compartilhada (delpi-ui-*).
+ */
+.delpi-ui-config-table--transparent-background,
+.delpi-ui-config-table--transparent-background .delpi-ui-config-table__title,
+.delpi-ui-config-table--transparent-background .delpi-ui-config-table__header,
+.delpi-ui-config-table--transparent-background .delpi-ui-config-table__header-cell,
+.delpi-ui-config-table--transparent-background .delpi-ui-config-table__row,
+.delpi-ui-config-table--transparent-background .delpi-ui-config-table__cell,
+.delpi-ui-config-table--transparent-background .tdp-table-title,
+.delpi-ui-config-table--transparent-background .tdp-table-header,
+.delpi-ui-config-table--transparent-background .tdp-table-header-cell,
+.delpi-ui-config-table--transparent-background .tdp-table-row,
+.delpi-ui-config-table--transparent-background .tdp-table-cell {
+  background: transparent !important;
+}
+
 .delpi-ui-config-table--banded-cols .delpi-ui-config-table__header-cell:nth-child(even),
 .delpi-ui-config-table--banded-cols .delpi-ui-config-table__cell:nth-child(even) {
   background: color-mix(

@@ -49,6 +49,10 @@ import {
   resolveChartSeriesColorIndex,
 } from "../utils/chartSeriesAppearance";
 import { chartPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
+import {
+  chartBackgroundTransparencyPatch,
+  isChartBackgroundTransparent,
+} from "../utils/visualBackgroundTransparency";
 
 type Props = {
   pane?: boolean;
@@ -138,6 +142,11 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       fontSize?: number;
     };
   }) => {
+    // O botão "sem fundo" da moldura deve ocultar também a área de plotagem.
+    if (selectedChartPart.kind === "chartArea" && patch.style?.fill === "transparent") {
+      updateSelected(chartBackgroundTransparencyPatch(block, true) as Partial<typeof block>);
+      return;
+    }
     const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, patch);
     const nextOptions = mergeComunicadoChartOptions({
       ...block.chartOptions,
@@ -317,6 +326,16 @@ export function ChartPartInspector({ pane = false, block }: Props) {
 
       {selectedChartPart.kind === "chartArea" || selectedChartPart.kind === "plotArea" ? (
         <>
+          <DeckField id="td-chart-part-background-transparent" label="Fundo do gráfico">
+            <NativeCheckboxControl
+              id="td-chart-part-background-transparent"
+              checked={isChartBackgroundTransparent(block)}
+              label="Transparente (moldura e área do gráfico)"
+              onChange={(checked) =>
+                updateSelected(chartBackgroundTransparencyPatch(block, checked) as Partial<typeof block>)
+              }
+            />
+          </DeckField>
           <DeckField id="td-chart-part-area-fill" label="Preenchimento">
             <TvRibbonColorPicker
               inline
@@ -326,6 +345,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
                 selectedChartPart.kind === "chartArea" ? chartAreaStyle.fill : plotAreaStyle.fill
               }
               onChange={(color) => patchPart({ style: { fill: color } })}
+              showNoFill
+              onNoFill={() => patchPart({ style: { fill: "transparent" } })}
             />
           </DeckField>
           <DeckField id="td-chart-part-area-stroke" label="Cor da borda">

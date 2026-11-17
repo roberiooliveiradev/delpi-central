@@ -39,6 +39,7 @@ import {
   styleToStrokeFill,
 } from "../../utils/delpiFillAdapter";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { chartBackgroundTransparencyPatch } from "../../utils/visualBackgroundTransparency";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
 import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
@@ -141,6 +142,11 @@ export function ChartRibbonShapeChrome({
   };
 
   const patchPartStyle = (style: Record<string, unknown>) => {
+    // "Sem preenchimento" na moldura também deve limpar o fundo interno do gráfico.
+    if (effectiveChartPart.kind === "chartArea" && style.fill === "transparent") {
+      updateSelected(chartBackgroundTransparencyPatch(block, true) as Partial<ComunicadoBlock>);
+      return;
+    }
     const paintColor =
       typeof style.fill === "string"
         ? style.fill

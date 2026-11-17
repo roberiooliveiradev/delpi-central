@@ -32,6 +32,10 @@ export function TableContainer({
 }: TableContainerProps) {
   const cn = useConfigurableTableClasses();
   const frame = resolveTableFrameStyle(tableParts);
+  // A escolha explícita de "sem fundo" deve valer para toda a tabela.
+  // As cores de cada célula continuam salvas e reaparecem ao reativar o fundo.
+  const transparentBackground =
+    tableParts?.frame?.style?.fill?.trim().toLowerCase() === "transparent";
   const banded = resolveTableBandedRowFills(tableParts);
   const forceBanded = Boolean(banded.even || banded.odd);
   const classes = [
@@ -40,6 +44,7 @@ export function TableContainer({
     forceBanded ? cn.rootBanded : "",
     empty ? cn.rootEmpty : "",
     frame.visible === false ? `${cn.root}--frameless` : "",
+    transparentBackground ? "delpi-ui-config-table--transparent-background" : "",
     className,
   ]
     .filter(Boolean)
