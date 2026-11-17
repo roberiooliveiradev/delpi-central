@@ -46,6 +46,9 @@ RUN npx vite build
 FROM nginx:alpine AS development
 COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
 COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
+# D3: modo restritivo no clone não pode derrubar assets (logo 403) — a
+# imagem garante leitura do conteúdo servido, sem depender da origem.
+RUN chmod -R a+rX /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
@@ -62,6 +65,9 @@ FROM provenance-contract AS production
 
 COPY --from=builder /app/public-hub/dist /usr/share/nginx/html
 COPY public-hub/nginx.conf /etc/nginx/conf.d/default.conf
+# D3: modo restritivo no clone não pode derrubar assets (logo 403) — a
+# imagem garante leitura do conteúdo servido, sem depender da origem.
+RUN chmod -R a+rX /usr/share/nginx/html
 
 EXPOSE 80
 
