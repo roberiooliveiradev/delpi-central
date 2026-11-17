@@ -66,13 +66,17 @@ Constante de domínio (refugos): `THIRD_PARTY_PRODUCT_TPMAT = "2"` em `refugos_s
 ### O que fazer
 
 1. Em rota de valoração/perda de material alinhada ao painel scrap: `LTRIM(RTRIM(SB1.B1_TPMAT)) <> '2'` (ou constante).
-2. Documentar o exclusão na doc da rota e no help do MFE quando o usuário puder estranhar a ausência do item.
+2. Documentar a exclusão na doc da rota e no help do MFE quando o usuário puder estranhar a ausência do item.
+3. **Inventário/acuracidade (GLPI #1614): regra distinta.** Em `/supplies/inventory-accuracy/{summary,items}`, `/supplies/inventory-adjustments{,/summary}` e `/supplies/inventory-adjustments/tv/*`, **não filtrar** produto de terceiro. Manter contagens, movimentos, quantidades, classificação de furo/sobra e acuracidade física. Apenas os valores em R$ do movimento (`D3_CUSTO1`) devem ser **zero** quando `B1_TPMAT='2'`, antes de agregar resumo/séries/ranking; nunca gravar custo zero no Protheus.
+4. Usar `THIRD_PARTY_PRODUCT_TPMAT` de `app/domain/totvs/protheus_product_types.py` (Refugos reexporta); para o inventário, `InventoryAdjustmentClassification.MONETARY_VALUE_SQL_EXPRESSION` e lookup SB1 `inventory_adjustment_product_apply` (0..1 linha, filial priorizada, fallback global). Não usar SB6 como definição de produto de terceiro.
 
 ### O que NÃO fazer
 
 | Anti-padrão | Por quê |
 |-------------|---------|
 | Filtrar terceiro só no frontend | Totais e rankings ficam inconsistentes |
+| Excluir do inventário físico material de terceiro | Desaparecem contagens e ocorrências operacionais; a regra desse domínio é zerar R$, não filtrar linhas |
+| Fazer JOIN de SB1 com cardinalidade múltipla em ajustes | Multiplica movimentos, quantidades e valores; selecionar no máximo um cadastro por produto/filial |
 | Esquecer o filtro em uma das rotas do mesmo domínio (`resumo` vs `rankings` vs `registros`) | Divergência entre KPIs |
 
 ---
