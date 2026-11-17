@@ -140,7 +140,31 @@ _GAUGE_AWG_RANGE = re.compile(r"\b\d{1,2}\s*-\s*\d{1,2}\s*AWG\b")
 _COMP_MM = re.compile(r"\bCOMP\s+\d+[,.]?\d*\s*MM\b")
 _SCREW_M = re.compile(r"\bM\d+\b")
 _BARE_MM = re.compile(r"\b\d+[,.]\d+\s*MM\b")
-_TERM_CERT = re.compile(r"\b(ROHS|UL|IEC|ABNT|NBR|DIN\d*|CSA)\b")
+# Composite norm references documented in the norm (G25-L3 / G-03):
+# matched BEFORE bare vocabulary so the full identifier is preserved
+# and sub-tokens are never double-counted (NM 247-3 ≠ NM + 247).
+_REF_NM = re.compile(r"\bNM\s*\d{2,4}\s*-\s*\d{1,2}\b")
+_REF_NBR = re.compile(r"\bNBR\s*\d{4,6}\b")
+_REF_UL94 = re.compile(r"\bUL\s*94\s*V\d\b")
+_REF_DIN = re.compile(r"\bDIN\s*\d{4,6}\b")
+_REF_ULCSA = re.compile(r"\bUL\s*/\s*CSA\b")
+_TERM_CERT = re.compile(
+    r"\b(DIN\s*\d{4,6}|NBR\s*\d{4,6}|ROHS|UL|IEC|ABNT|NBR|DIN\d*|CSA)\b")
+
+
+def _cert_refs(up: str, composite_pats: tuple, vocab: set[str]) -> list[str]:
+    """Norm/certification references preserving the full identifier.
+    Composite references are consumed first so sub-tokens (UL inside
+    UL94 V2, NBR inside NBR13249) are not double-counted as bare
+    vocabulary. Recognition is lexical: PASS means the reference is a
+    documented nomenclature field, not proven product certification."""
+    rem = up
+    found: list[str] = []
+    for pat in composite_pats:
+        found += [m.group(0) for m in pat.finditer(rem)]
+        rem = pat.sub(" ", rem)
+    found += [c for c in vocab if re.search(rf"\b{c}\b", rem)]
+    return sorted(set(found))
 _SERIE = re.compile(r"\b\d[,.]\d\b")
 _WAYS = re.compile(r"\b\d+\s*(?:POLOS?|VIAS)\b")
 _INSERT_SERIE = re.compile(r"\bHAN\s+([A-Z0-9]+)\b")
@@ -243,8 +267,7 @@ def _eval_cable(desc: str) -> dict[str, Any]:
     mm2 = _MM2.search(up)
     color = _COLOR_ABBR.search(up)
     volt = _VOLT.search(up)
-    certs = sorted(c for c in _CABLE_CERTS if c in tokens or
-                   re.search(rf"\b{c}\b", up))
+    certs = _cert_refs(up, (_REF_NM, _REF_NBR), _CABLE_CERTS)
     attrs += [
         _attr("material", material, "vocab", "EXTRACTED" if material else "ABSENT"),
         _attr("temperature", temp.group(0) if temp else None, "regex", "EXTRACTED" if temp else "ABSENT"),
@@ -834,8 +857,8 @@ def _eval_isolator_1009(desc: str) -> dict[str, Any]:
               else "90" if "90°" in up or "90" in tokens else None)
     serie = _SERIE.search(up)
     color = _COLOR_ABBR.search(up)
-    certs = sorted(c for c in _ISOLATOR_CERTS
-                   if re.search(rf"\b{c}\b", up))
+    certs = _cert_refs(up, (_REF_UL94, _REF_DIN, _REF_NBR),
+                       _ISOLATOR_CERTS)
     attrs += [
         _attr("material", material, "vocab", "EXTRACTED" if material else "ABSENT"),
         _attr("orientation", orient, "vocab", "EXTRACTED" if orient else "ABSENT"),
@@ -883,8 +906,8 @@ def _eval_insert_1009(desc: str) -> dict[str, Any]:
     gauge = (_RANGE_MM2.search(up) or _GAUGE_AWG_RANGE.search(up)
              or _MM2.search(up) or _AWG.search(up))
     obs = next((o for o in _INSERT_OBS if re.search(rf"\b{o}\b", up)), None)
-    certs = sorted(c for c in _1009_CERTS
-                   if re.search(rf"\b{c}\b", up))
+    certs = _cert_refs(up, (_REF_ULCSA, _REF_UL94, _REF_DIN, _REF_NBR),
+                       _1009_CERTS)
     attrs += [
         _attr("insert_type", ttype, "vocab", "EXTRACTED" if ttype else "ABSENT"),
         _attr("ways", ways.group(0) if ways else None, "regex", "EXTRACTED" if ways else "ABSENT"),
@@ -931,8 +954,8 @@ def _eval_connector_1009(desc: str) -> dict[str, Any]:
     ways = _WAYS.search(up)
     color = _COLOR_ABBR.search(up)
     obs = next((o for o in _CONNECTOR_OBS if o in up), None)
-    certs = sorted(c for c in _1009_CERTS
-                   if re.search(rf"\b{c}\b", up))
+    certs = _cert_refs(up, (_REF_UL94, _REF_DIN, _REF_NBR),
+                       _1009_CERTS)
     attrs += [
         _attr("connector_type", ttype, "vocab", "EXTRACTED" if ttype else "ABSENT"),
         _attr("ways", ways.group(0) if ways else None, "regex", "EXTRACTED" if ways else "ABSENT"),

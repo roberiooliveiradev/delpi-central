@@ -1268,3 +1268,114 @@ def test_l1_comparator_integration_preserves_contract():
                  if c["comparison_type"] == "CROSS_SOURCE")
     assert cross["status"] == "INCONCLUSIVE"
     assert cross["checks"] == []
+
+
+# ---- G25-L3 — vocabulário de certificações/normas (G-03) ----
+def _cert(r):
+    return next(x for x in r["rule_results"]
+                if x["rule_id"].endswith("-CERT"))
+
+
+def _cert_attr(r):
+    return next(a for a in r["extracted_attributes"]
+                if a["name"] == "certifications")
+
+
+def test_l3_cable_nm_247_3_official_example():
+    r = ev("10010001", "MP",
+           "CABO PVC 70°C 0,75MM2 PT 450/750V BWF ESTANHADO NM 247-3")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert c["observed"] == ["NM 247-3"]
+    assert _cert_attr(r)["normalized_value"] == "NM 247-3"
+
+
+def test_l3_cable_nm_247_5_official_example():
+    r = ev("10030001", "MP",
+           "CABO PP CIRCULAR PVC/PVC 2X1,50MM2 PT MR/AL 70°C 500V NM 247-5")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert c["observed"] == ["NM 247-5"]
+    assert "NM 247-5" in c["observed"]
+    assert "NM 247-3" not in c["observed"]
+
+
+def test_l3_cable_nbr_numeric_both_preserved():
+    r = ev("10020001", "MP",
+           "CABO PP PLANO PVC/PVC C/ PLUG 180° 10A 3X0,75X300MM PT "
+           "PT/BN/VDAR 70°C NBR13249 NBR14136")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert "NBR13249" in c["observed"]
+    assert "NBR14136" in c["observed"]
+    assert "NBR" not in c["observed"]  # não reduz a token NBR
+
+
+def test_l3_isolator_ul94_v2_composite():
+    r = ev("10090100", "MP", "ISOLADOR NYLON RETO 6,3 PT UL94 V2")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert c["observed"] == ["UL94 V2"]
+    # sub-tokens não são contados separadamente
+    assert "UL" not in c["observed"]
+    assert "V2" not in c["observed"]
+    assert _cert_attr(r)["normalized_value"] == "UL94 V2"
+
+
+def test_l3_terminal_din46228_full_identifier():
+    r = ev("10080104", "MP",
+           "TERM. ILHOS 0,50-1,50MM2 COMP 12,00MM ESTANHADO "
+           "S/ISOLACAO GRANEL CURTO DIN46228")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert "DIN46228" in c["observed"]
+
+
+def test_l3_insert_ul_csa_composite():
+    r = ev("10091000", "MP",
+           "INSERTO FEMEA 10 POLOS HAN D 20-14AWG CRIMP UL/CSA")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert "UL/CSA" in c["observed"]
+    assert "UL" not in c["observed"]
+    assert "CSA" not in c["observed"]
+
+
+def test_l3_negative_nm_without_number():
+    r = ev("10010001", "MP",
+           "CABO PVC 70°C 0,75MM2 PT 450/750V BWF ESTANHADO NM")
+    c = _cert(r)
+    assert c["status"] == "INCONCLUSIVE"
+    assert c["observed"] == []
+
+
+def test_l3_negative_nm_out_of_scope_terminal():
+    # NM não é norma documentada para 1008 — não pode virar CERT ali
+    r = ev("10080130", "MP",
+           "TERM. BALA 2,50-6,00MM2 NU GRANEL CURTO NM 247-3")
+    c = _cert(r)
+    assert "NM 247-3" not in (c["observed"] or [])
+
+
+def test_l3_nbr_bare_token_still_documented():
+    # 'NBR' bare consta como exemplo documentado em cabos (linha 72)
+    r = ev("10010001", "MP",
+           "CABO PVC 70°C 0,75MM2 PT 450/750V BWF ESTANHADO NBR")
+    c = _cert(r)
+    assert c["status"] == "PASS"
+    assert "NBR" in c["observed"]
+
+
+def test_l3_nbr_arbitrary_sequence_not_counted():
+    # identificador fora do formato documentado não vira referência composta
+    r = ev("10010001", "MP",
+           "CABO PVC 70°C 0,75MM2 PT 450/750V BWF ESTANHADO NBR123")
+    c = _cert(r)
+    assert "NBR123" not in (c["observed"] or [])
+
+
+def test_l3_no_cert_optional_still_clean():
+    # ausência de cert em estrutura 1008 → NOT_APPLICABLE, nunca violação
+    r = ev("10080130", "MP", "TERM. BALA 2,50-6,00MM2 NU GRANEL CURTO")
+    c = _cert(r)
+    assert c["status"] == "NOT_APPLICABLE"
