@@ -2385,3 +2385,41 @@ Task `DELIA-C3-T2-COMPREHENSION-INVESTIGATION-SPLIT-EXPERIMENT-AUTHORIZATION-AND
 
 **TASK:** `DELIA-C3-T2-ENTITY-SUFFICIENCY-HTTP-MULTITURN-AND-VERIFIER-ACCEPTANCE-01` sobre `e38940c0c6`. **WS-1:** congruência de entidade na agregação de apresentação (fail-closed sem `entity=`); G2 live SATISFIED 109. **WS-2:** dois POSTs `/interaction/turns` com `context` canônico; turn-2 GROUNDED DAVI 90260921. **Verificador:** `ACCEPT_WITH_RESIDUAL` r1 (0 OC). Pacote: `evidence/c3-t2-entity-sufficiency-http-multiturn-verifier/`. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`. **NEXT=`COORDINATION_C3_T2_ENTITY_SUFFICIENCY_HTTP_MULTITURN_VERIFIER_INDEPENDENT_REVIEW`.**
 
+### 2026-11-17 — Direção de coordenação: evolução incremental por quatro camadas cognitivas (Doc 335)
+
+**NATUREZA:** decisão de produto/coordenação; DOCUMENTATION_ONLY. **FASE:** C3/T2, sem avanço. **FONTE:** direção PO de quatro especialistas do Doc 335, contratos do Doc 17, evidências/ledger. Preserva histórico e autoridades superiores. Não autoriza promoção two-agent, terceiro/quarto Agent ou deploy.
+
+**Arquitetura-alvo confirmada (quatro responsabilidades cognitivas/Agents internos):**
+1. **INT-2 Compreensão:** entende intenção, objetivo, escopo, entidades, identidades, filtros, ambiguidades, entrega e obrigações materiais; propõe plano tipado, não autoriza e não executa owner READ.
+2. **INT-1 Investigação:** recebe plano aceito, seleciona capabilities semanticamente, executa READ governada por toolsets MCP nativos, coleta evidências/proveniência e continua investigação; não redefine plano, AuthZ ou fatos.
+3. **INT-3 Suficiência:** identifica lacunas e recomenda CONTINUAR/ESCLARECER/PARCIAL/CONCLUIR, com Evidence/Application/Outcome mantendo o veredito determinístico e autoritativo; Agent cognitivo independente ainda futuro.
+4. **INT-4 Síntese:** organiza resposta empresarial fiel às evidências/outcome e limitações aceitas, sem inventar FACT ou elevar autorização; Agent independente ainda futuro.
+
+**INT-5 = aceite integrado, não quinto Agent.** Especialistas internos não são MCPs, perfis user-facing ou sub-agentes externos. Sub-agentes futuros continuam possíveis após necessidade, contratos, experimento e autorização; quatro camadas NÃO impõem quatro chamadas LLM por pedido.
+
+**Estado factual:** Investigação é o Agent físico baseline; Compreensão é um segundo Agent físico na variante experimental flag-gated (default OFF, produção bloqueada); INT-3/INT-4 cognitivos independentes não implementados/autorizados. O fluxo dois Agents é **SERIAL**, não paralelo: Compreensão → Application aceita SemanticInvestigationPlan e MaterialObligation → handoff de plano aceito/contexto mínimo e budget remanescente → Investigação → Evidence/Sufficiency/Outcome. A comprovação está no fluxo _run_comprehension_pass → deps.investigation_plan → run_sync do Investigador em pydantic_ai_investigation.py. Application é a única coordenadora, Core/Domain autoridades finais; Pydantic AI nativo permanece runtime. Não criar engine, registry, planner, workflow ou loops paralelos.
+
+**Localização da primeira fronteira divergente (não inferir causa pelo status final):**
+
+| Camada/fronteira | Sintoma e responsabilidade primária | Evidência necessária |
+|---|---|---|
+| INT-2 | pedido mal interpretado, filtro/entidade/obrigação ausente, ambiguidade | pedido × proposta × plano aceito |
+| Application handoff INT-2→INT-1 | plano não transportado, escopo alterado, clarificação residual, erro ou budget | plano aceito × deps × inputs efetivos do investigador |
+| INT-1 | escolha ruim de capability, args/schema, paginação sem progresso, repetição | sequência real MCP/args/cursor, filtro material, owner provenance |
+| INT-1↔INT-3 | persistência de gaps versus falta de continuação, decisão prematura | coverage/progress notes, obrigações e recomendações (sem ACT) |
+| INT-3 Evidence/Sufficiency | completude/âncora/identidade/owner não provados | _evaluate_material_obligations e _joint_collection_coverage |
+| INT-4 + finalizador | resposta ruim apesar de evidência correta, omissão de limitações | resposta publicada × Evidence/Outcome |
+| Core/Domain/Policy | autorização e regras empresariais | API autoritativa live, nunca output do Agent |
+
+**Problemas existentes, sem novo inventário geral:** R2-CONTINUITY-MULTIPAGE-GROUP-SPLIT e INT2-REQUIRED-SCOPE-OPAQUE-PARAMS remediados com testes e prova live no escopo observado; R5 multipágina PROVEN_IN_SAMPLE; R2-CONTINUITY-PAGINATION/convergência de loop e budget ainda OPEN_LOW; T2-B-COMPREHENSION-AGENT-ERROR aberto; demonstração de âncoras INT-3 parcial; R4 identidade AuthZ negativa PENDING e R6-N6/N7 dependentes; verificação oficial delpi-verifier pendente por auth/quota; VISTA carrier TO_INVENTORY. A avaliação real INT2 de dois Agents or-qwen14b-1557f58b9c15 mostra resultados positivos/insuficiências honestas, mas NÃO comprova superioridade causal sobre baseline único; contagem agregada 9/15 GROUNDED precisa ser reconciliada com as linhas nominais do corpus antes de virar KPI auditado.
+
+**Sequência de melhoria funcional:**
+1. **Compreensão + handoff:** comparar intenção, proposta, plano aceito e recebido, escopo/filtros, tratamento de clarificação/erro e budget; corrigir apenas divergência reproduzida.
+2. **Investigação:** comparar Agent único (A) versus dois sequenciais (B), com corpus/modelo/catálogo/identidade/config/budget comparáveis; recuperar escolha de capabilities, continuidade multipágina e progresso, sem novo loop/engine e sem mascarar escopo material.
+3. **Suficiência:** separar ausência de evidência de ausência de prova; reutilizar Evidence/Application e feedback nativo ModelRetry; Agent INT-3 independente sujeito a autorização futura.
+4. **Síntese:** classificar erros de redação/relevância/fidelidade sem transferir falhas anteriores; Agent INT-4 independente sujeito a autorização futura.
+5. **Aceite integrado:** generalização, safety, task outcome, latência/tokens/custo e verificação independente no SHA/config final.
+
+**Regra de execução:** não iniciar novos inventários de arquitetura ou limpeza genérica; partir dos bugs/evidências atuais, localizar a primeira fronteira, RED → menor diff legítimo → GREEN/regressão → eval real A/B → outcome/safety → delpi-verifier (AGENTS.md, até três rodadas) → coordenação. EXISTING_EQUIVALENT=YES para runtime Pydantic AI/toolsets e contratos já evidenciados; REUSE_DECISION=REUSE/EXTEND; NEW sem gate documental é NOT_AUTHORIZED. Não paralelizar Compreensão→Investigação por default: a Investigação depende do plano aceito. Execução condicional ou paralela em outras etapas futuras requer independência real, contrato, custo, AuthZ e aprovação.
+
+**NEXT_BOUNDED_STEP candidato para coordenação:** COORDINATION_C3_T2_TWO_AGENT_LAYERED_HANDOFF_AND_FUNCTIONAL_RECOVERY — INT-2→INT-1 + convergência de INT-1 e comparação A/B, sem Agent 3/4, sem deploy ou avanço. NEXT efetivo continua regido pelo ledger no HEAD. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.**
