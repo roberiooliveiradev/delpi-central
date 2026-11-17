@@ -471,7 +471,7 @@ def get_inventory_turnover(
             status_code=500,
         )
 
-@router.get("/freight-impact")
+@router.get("/freight-impact", operation_id="get_supplies_freight_impact")
 @require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
 def get_supplies_freight_impact(
     branch: list[str] = BRANCH_CODES_QUERY(),
