@@ -85,7 +85,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Dependências de teste
-        run: python -m pip install pytest
+        run: python -m pip install -r tv-dashboard-api/requirements.txt
       - name: Regressão de formatação e códigos Protheus
         working-directory: tv-dashboard-api
         run: PYTHONPATH=. python -m pytest -q tests/test_display_format_service.py
