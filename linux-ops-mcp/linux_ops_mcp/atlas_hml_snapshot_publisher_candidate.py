@@ -214,6 +214,20 @@ def _publish_in_review_directory(
         if stage_after.st_size != len(raw):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_UNSAFE")
 
+        staged_path = os.stat(
+            staged_name, dir_fd=directory_fd, follow_symlinks=False,
+        )
+        if (
+            not stat.S_ISREG(staged_path.st_mode)
+            or staged_path.st_dev != stage_after.st_dev
+            or staged_path.st_ino != stage_after.st_ino
+            or staged_path.st_size != stage_after.st_size
+            or staged_path.st_uid != owner_uid
+            or staged_path.st_gid != expected_gid
+            or stat.S_IMODE(staged_path.st_mode) != _FILE_MODE
+        ):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_CHANGED")
+
         # Check the existing name again; this is NOT an anti-root TOCTOU proof.
         _validate_destination(
             directory_fd, parent=parent, uid=owner_uid, gid=expected_gid,
