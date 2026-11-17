@@ -48,6 +48,10 @@ class FieldSpec:
     enum_values: tuple[str, ...] = ()
     max_length: int = 255
     note: str = ""
+    # ``kind="text"`` + required_create_intake normalmente exige texto
+    # não vazio. Campos cujo owner admite string vazia (ex.: customer
+    # Reference — B1_REFEREN opcional no ERP) optam por allow_blank.
+    allow_blank: bool = False
 
 
 # --- Catálogo canônico v1 (matéria-prima / raw_material) -------------------
@@ -150,6 +154,7 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
         max_length=60,
         note="B1_REFEREN — legado `ref_cliente`; string vazia aceita "
         "quando owner não exige referência.",
+        allow_blank=True,
     ),
     FieldSpec(
         path="suppliers",
@@ -318,12 +323,14 @@ def validate_create_payload(payload: Any) -> dict[str, Any]:
                     fields[spec.path] = "invalid"
             continue
         raw = payload.get(spec.path)
-        # Chave presente com "" é valor válido apenas para `text`
-        # (customerReference pode ser vazio — gate de owner no contrato).
+        # Chave presente com "" conta como ausente para qualquer campo
+        # que não admite branco — `text` obrigatório (description) só
+        # aceita vazio quando o spec opta por allow_blank
+        # (customerReference — gate de owner no contrato).
         missing = raw is None or (
-            spec.kind != "text"
-            and isinstance(raw, str)
+            isinstance(raw, str)
             and not raw.strip()
+            and (spec.kind != "text" or not spec.allow_blank)
         )
         if missing:
             if spec.required_create_intake:
@@ -392,9 +399,17 @@ def validate_draft_change(path: Any, proposed_value: Any) -> tuple[str, Any]:
             proposed_value, max_length=spec.max_length
         )
     if spec.kind == "text":
-        return spec.path, normalize_text(
-            proposed_value, max_length=spec.max_length
-        )
+        value = normalize_text(proposed_value, max_length=spec.max_length)
+        if (
+            spec.required_create_intake
+            and not spec.allow_blank
+            and not value
+        ):
+            raise PrcValidationError(
+                "Campo obrigatório não pode ficar vazio.",
+                fields={spec.path: "required"},
+            )
+        return spec.path, value
     if spec.kind == "enum":
         value = normalize_code(proposed_value, max_length=spec.max_length)
         if value not in spec.enum_values:

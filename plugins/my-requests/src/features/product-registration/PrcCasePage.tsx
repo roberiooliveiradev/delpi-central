@@ -129,7 +129,10 @@ export function PrcCasePage({ requestId, onBack }: Props) {
     const ac = new AbortController();
     setError("");
     Promise.all([
-      fetchPrcRequest(requestId, ac.signal),
+      /* Contexto pessoal: o backend responde not_found para caso de
+       * terceiro — a página de «Minhas solicitações» nunca abre a
+       * fila autorizada como bypass. */
+      fetchPrcRequest(requestId, ac.signal, "mine"),
       fetchPrcTimeline(requestId, ac.signal).catch(() => []),
       fetchPrcAttachments(requestId, ac.signal).catch(() => ({
         attachments: [],

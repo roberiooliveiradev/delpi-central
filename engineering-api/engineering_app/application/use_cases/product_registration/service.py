@@ -922,10 +922,19 @@ class ProductRegistrationService:
         return request
 
     def get_request_detail(
-        self, request_id: str, *, actor: PrcActor
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        own_scope: bool = False,
     ) -> dict[str, Any]:
         _require_actor_read(actor)
         request = self._get_scoped(request_id, actor)
+        if own_scope and request["requester_subject"] != actor.user_id:
+            # Contexto pessoal ("minhas solicitações"): caso de terceiro
+            # responde como inexistente — não vaza a existência do id
+            # nem abre bypass para a fila autorizada.
+            raise PrcNotFoundError("request", request_id)
         request["verifications"] = self._repo.list_verifications(request_id)
         return self._detail(request, actor, request_id=request_id)
 
@@ -2802,6 +2811,7 @@ class ProductRegistrationService:
                     "path": s.path,
                     "kind": s.kind,
                     "requiredCreateIntake": s.required_create_intake,
+                    "allowBlank": s.allow_blank,
                     "verifiable": s.verifiable,
                     "officialField": s.official_field,
                     "enumValues": list(s.enum_values) or None,

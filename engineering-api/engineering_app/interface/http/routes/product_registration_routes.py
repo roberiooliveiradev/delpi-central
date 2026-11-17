@@ -459,6 +459,15 @@ async def prc_list_requests(
         ),
     ),
     type: str | None = Query(default=None, pattern="^(create|update)$"),
+    scope: str | None = Query(
+        default=None,
+        pattern="^(mine|authorized)$",
+        description=(
+            "Escopo da listagem: `mine` = estritamente casos criados "
+            "pelo ator autenticado (sem exceção para analistas); "
+            "ausente/`authorized` = fila autorizada vigente."
+        ),
+    ),
     assignee: str | None = Query(default=None, max_length=200),
     source: str | None = Query(default=None, max_length=100),
     search: str | None = Query(default=None, max_length=200),
@@ -479,6 +488,7 @@ async def prc_list_requests(
     try:
         data = build_prc_service().list_requests(
             actor=_actor(user),
+            own_scope=scope == "mine",
             filters={
                 "status": status,
                 "statuses": (
@@ -508,7 +518,19 @@ async def prc_list_requests(
     summary="03 — Detalhe do caso (draft, versão, ações permitidas)",
 )
 @require_any_permission(_REQUESTER_READ_PERMS)
-async def prc_get_request(request_id: str = Path(...)):
+async def prc_get_request(
+    request_id: str = Path(...),
+    scope: str | None = Query(
+        default=None,
+        pattern="^(mine|authorized)$",
+        description=(
+            "Contexto de leitura: `mine` exige que o caso tenha sido "
+            "criado pelo ator (superfície pessoal — caso alheio "
+            "responde not_found); ausente/`authorized` mantém a "
+            "política operacional vigente."
+        ),
+    ),
+):
     op = "prc_get_request"
     user, denied = _user(op)
     if denied is not None:
@@ -517,7 +539,9 @@ async def prc_get_request(request_id: str = Path(...)):
     if bad is not None:
         return bad
     try:
-        data = build_prc_service().get_request_detail(rid, actor=_actor(user))
+        data = build_prc_service().get_request_detail(
+            rid, actor=_actor(user), own_scope=scope == "mine"
+        )
     except Exception as exc:
         return _err(exc, op)
     data = await _enrich_identity(user, data, "detail", enrich_request_identity)

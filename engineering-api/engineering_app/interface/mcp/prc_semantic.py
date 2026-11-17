@@ -90,6 +90,9 @@ async def read_action(context, entry, args: dict):
     try:
         if entry.action == "list":
             filters = dict(args)
+            # scope=mine = contexto pessoal (somente casos criados pelo
+            # ator); ausente/authorized = fila autorizada do domínio.
+            scope = str(filters.pop("scope", "") or "").strip().lower()
             # Preset governado idêntico ao da rota REST: view=pending →
             # statuses acionáveis; `status` explícito prevalece.
             if (
@@ -102,13 +105,24 @@ async def read_action(context, entry, args: dict):
             if "page_size" in filters:
                 filters["pageSize"] = filters.pop("page_size")
             return _ok(
-                svc.list_requests(actor=actor, filters=filters),
+                svc.list_requests(
+                    actor=actor,
+                    filters=filters,
+                    own_scope=scope == "mine",
+                ),
                 "Fila de solicitações carregada.",
             )
         ref = args.get("request_id") or args.get("record_id") or ""
         if entry.action == "detail":
+            detail_scope = (
+                str(args.get("scope") or "").strip().lower()
+            )
             return _ok(
-                svc.get_request_detail(ref, actor=actor),
+                svc.get_request_detail(
+                    ref,
+                    actor=actor,
+                    own_scope=detail_scope == "mine",
+                ),
                 "Solicitação carregada.",
             )
         if entry.action == "timeline":

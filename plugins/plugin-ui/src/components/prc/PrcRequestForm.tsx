@@ -534,7 +534,9 @@ export function PrcRequestForm({
           if (!spec.requiredCreateIntake) continue;
           if (spec.kind === "suppliers") continue;
           const v = (values[spec.path] || "").trim();
-          if (!v && spec.kind !== "text") {
+          /* Obrigatório não pode ser vazio — `allowBlank` (customer
+           * Reference) é a única exceção governada pelo catálogo. */
+          if (!v && !spec.allowBlank) {
             return `Preencha «${PRC_FIELD_LABELS[spec.path] || spec.path}».`;
           }
         }
@@ -546,6 +548,27 @@ export function PrcRequestForm({
           setFieldErrors((s) => ({ ...s, suppliers: msg }));
           setSupplierErrorsVisible(true);
           return msg;
+        }
+      }
+      /* Campo obrigatório não pode ser zerado por edição — UPDATE
+       * legítimo que não toca o campo permanece livre. */
+      if (requestType === "update" || editCase) {
+        for (const spec of refData?.fields || []) {
+          if (
+            !spec.requiredCreateIntake ||
+            spec.kind !== "text" ||
+            spec.allowBlank ||
+            !changedPaths.has(spec.path)
+          ) {
+            continue;
+          }
+          if (!(values[spec.path] || "").trim()) {
+            setFieldErrors((s) => ({
+              ...s,
+              [spec.path]: "required",
+            }));
+            return `Preencha «${PRC_FIELD_LABELS[spec.path] || spec.path}».`;
+          }
         }
       }
       if (
@@ -766,6 +789,13 @@ export function PrcRequestForm({
     setFieldErrors({});
     setUploadSummary("");
     try {
+      /* Envio não depende do botão Avançar — a etapa da ficha é
+       * revalidada aqui (descrição/obrigatórios/fornecedores). */
+      const sheetMsg = validateStep("sheet");
+      if (sheetMsg) {
+        setError(sheetMsg);
+        return;
+      }
       let rid: string;
       if (editCase) {
         /* FIX-08 — salva o mesmo caso via PATCH /draft (CAS +

@@ -600,7 +600,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "period).",
         "read", status="proven", paginated=True,
         fields=("status", "view", "type", "assignee", "source", "search",
-                "dateFrom", "dateTo", "sortBy", "sortDir"),
+                "dateFrom", "dateTo", "sortBy", "sortDir", "scope"),
     ),
     _a(
         "product_registration", "detail", "read",
@@ -608,6 +608,7 @@ SEMANTIC_ACTIONS: tuple[SemanticAction, ...] = (
         "allowedActions and verification summary.",
         "read", status="proven", ref_arg="request_id",
         ref_description="Request UUID.",
+        fields=("scope",),
     ),
     _a(
         "product_registration", "timeline", "read",

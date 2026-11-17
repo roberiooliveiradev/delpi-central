@@ -274,6 +274,10 @@ export function listMyPrcRequests(
   },
 ): Promise<PrcRequestList> {
   const params = new URLSearchParams();
+  /* «Minhas solicitações» = escopo pessoal estrito (requester) —
+   * sem exceção para analistas; o predicado é aplicado no backend
+   * antes de COUNT/LIMIT (nunca filtro de tela). */
+  params.set("scope", "mine");
   if (query?.page) params.set("page", String(query.page));
   params.set("pageSize", String(query?.pageSize ?? 50));
   if (query?.status) params.set("status", query.status);
@@ -290,9 +294,11 @@ export function listMyPrcRequests(
 export function fetchPrcRequest(
   requestId: string,
   signal?: AbortSignal,
+  scope?: "mine",
 ): Promise<PrcRequestDetail> {
+  const qs = scope ? `?scope=${scope}` : "";
   return httpGet<Envelope<PrcRequestDetail>>(
-    `${PRC_BASE}/requests/${encodeURIComponent(requestId)}`,
+    `${PRC_BASE}/requests/${encodeURIComponent(requestId)}${qs}`,
     { signal },
   ).then(unwrap);
 }

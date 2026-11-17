@@ -16,6 +16,9 @@ export type PrcFieldSpec = {
   path: string;
   kind: string;
   requiredCreateIntake: boolean;
+  /** Owner admite string vazia mesmo com intake obrigatório
+   * (ex.: customerReference — B1_REFEREN opcional no ERP). */
+  allowBlank?: boolean;
   verifiable: boolean;
   officialField?: string | null;
   enumValues?: string[] | null;
