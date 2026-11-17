@@ -262,7 +262,12 @@ def populate_from_understanding(
         identify_balloon_candidates,
     )
 
-    bal_sources = list(u.get("balloons") or [])
+    # E1/VAL-01 B1 — ``balloon_candidates`` é a seção tipada emitida
+    # pelo understanding real (primitivas circulares por página); os
+    # fallbacks legados servem fixtures e payloads declarativos.
+    bal_sources = list(u.get("balloon_candidates") or [])
+    if not bal_sources:
+        bal_sources = list(u.get("balloons") or [])
     if not bal_sources:
         bal_sources = identify_balloon_candidates(u)
     for i, b in enumerate(bal_sources):
@@ -300,8 +305,10 @@ def populate_from_understanding(
         label = it.attributes.get("item_label")
         if not label or it.attributes.get("ambiguities"):
             continue
+        label_norm = str(label).strip().upper()
         for bo, _bb in bal_objs:
-            if bo.attributes.get("item_label") == label:
+            bl = bo.attributes.get("item_label")
+            if bl and str(bl).strip().upper() == label_norm:
                 oset.add_relation(
                     DrawingRelation(
                         source_object_id=it.object_id,

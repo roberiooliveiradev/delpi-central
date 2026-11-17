@@ -1839,6 +1839,134 @@ def _is_dimension_candidate(
     return False, "number_without_dimension_context"
 
 
+# ---------- E1/VAL-01 B1 — balões (RQ-B1-01) ------------------------------
+# Balão: token alfanumérico curto contido em primitiva circular, apenas
+# na área gráfica (``drawing_area``). Rótulos na tabela/carimbo/
+# histórico, cotas e marcadores de zona da folha são excluídos com razão
+# registrada — exclusão auditável, nunca silenciosa. Contenção é
+# evidência candidata: não prova nem o destino da linha indicadora.
+_BALLOON_MARGIN_FRAC = 0.025
+
+
+def _xyxy_of(box: list[float] | None) -> list[float] | None:
+    """xyxy a partir de bbox quad (8 valores) ou xyxy (4 valores)."""
+    if not box or len(box) < 4:
+        return None
+    xs = [float(v) for v in box[0::2]]
+    ys = [float(v) for v in box[1::2]]
+    return [min(xs), min(ys), max(xs), max(ys)]
+
+
+def _circular_primitive_boxes(
+    graphic_primitives: dict | list | None,
+) -> list[list[float]]:
+    """Bboxes das primitivas circulares/elípticas — aceita o dict real
+    do adapter (``circles``/``ellipses``/``arcs``) e a forma legada de
+    lista tipada (``type: circle|ellipse|arc``)."""
+    out: list[list[float]] = []
+    prims: list = []
+    if isinstance(graphic_primitives, dict):
+        for key in ("circles", "ellipses", "arcs"):
+            prims.extend(graphic_primitives.get(key) or [])
+    elif isinstance(graphic_primitives, list):
+        prims = [
+            p for p in graphic_primitives
+            if (p.get("type") or "").lower() in {"circle", "ellipse", "arc"}
+        ]
+    for p in prims:
+        box = (
+            p.get("bounding_box_px") or p.get("box_px")
+            if isinstance(p, dict) else None
+        )
+        xy = _xyxy_of(box)
+        if xy:
+            out.append(xy)
+    return out
+
+
+def _detect_balloon_candidates(
+    annotated: list[dict],
+    graphic_primitives: dict | list | None,
+    *,
+    page: int,
+    page_size: tuple[float, float],
+    dimension_boxes: list[list[float] | None] | None = None,
+) -> tuple[list[dict], list[dict]]:
+    """Detecta candidatos a balão (RQ-B1-01) preservando ocorrências.
+
+    Retorna ``(candidates, excluded)`` — candidatos com item_label,
+    página, bbox do círculo e do token, método e incerteza; excluídos
+    com ``excluded_reason`` (duplicata, cota, zona de margem da folha).
+    Ausência de primitiva circular → lista vazia (nunca fabrica balão).
+    """
+    prims = _circular_primitive_boxes(graphic_primitives)
+    out: list[dict] = []
+    excluded: list[dict] = []
+    if not prims:
+        return out, excluded
+    w, h = page_size
+    dim_boxes = [
+        b for b in (_xyxy_of(d) for d in (dimension_boxes or [])) if b
+    ]
+    seen: set = set()
+    for a in annotated:
+        if a.get("region") != "drawing_area":
+            continue
+        raw = (a.get("text") or "").strip()
+        label = raw.upper()
+        if not (1 <= len(label) <= 3 and label.isalnum()):
+            continue
+        tb = _xyxy_of(a.get("bounding_box_px"))
+        if tb is None:
+            continue
+        for cb in prims:
+            if not (
+                cb[0] <= tb[0] and cb[2] >= tb[2]
+                and cb[1] <= tb[1] and cb[3] >= tb[3]
+            ):
+                continue
+            cand = {
+                "item_label": raw,
+                "normalized_label": label,
+                "page": page,
+                "bounding_box_px": cb,
+                "token_bounding_box_px": tb,
+                "coordinate_system": "pixels_pdfium_top_left",
+                "region": a.get("region"),
+                "identification_method": "primitive_containment",
+                "uncertainty_reason": (
+                    "contenção geométrica é candidata — exige "
+                    "verificação visual"
+                ),
+            }
+            key = (label, *cb)
+            reason = None
+            if key in seen:
+                reason = "duplicate_candidate"
+            elif any(
+                db[0] <= tb[0] and db[2] >= tb[2]
+                and db[1] <= tb[1] and db[3] >= tb[3]
+                for db in dim_boxes
+            ):
+                reason = "token_is_dimension_candidate"
+            else:
+                cx, cy = (cb[0] + cb[2]) / 2, (cb[1] + cb[3]) / 2
+                if (
+                    cx < w * _BALLOON_MARGIN_FRAC
+                    or cx > w * (1 - _BALLOON_MARGIN_FRAC)
+                    or cy < h * _BALLOON_MARGIN_FRAC
+                    or cy > h * (1 - _BALLOON_MARGIN_FRAC)
+                ):
+                    reason = "circle_in_page_margin_zone"
+            if reason:
+                excluded.append({**cand, "excluded_reason": reason})
+            else:
+                seen.add(key)
+                out.append(cand)
+            break
+    return out, excluded
+
+
 def build_understanding(
     tokens: list[dict],
     *,
@@ -2295,12 +2423,24 @@ def build_understanding(
                 ],
             }
 
+    balloon_candidates, balloon_excluded = _detect_balloon_candidates(
+        annotated,
+        graphic_primitives,
+        page=page,
+        page_size=(w, h),
+        dimension_boxes=[
+            d.get("bounding_box_px") for d in dimensions
+        ],
+    )
+
     out: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "document_hash_sha256": document_hash,
         "product_code": product_code,
         "page": page,
         "page_size_px": [round(w, 0), round(h, 0)],
+        "balloon_candidates": balloon_candidates,
+        "balloon_excluded": balloon_excluded,
         "regions": regions,
         "ownership_conflicts": ownership_conflicts,
         "regions_summary": dict(regions_seen),
@@ -2456,6 +2596,8 @@ def build_document_understanding(
     tb_fields_all: list[dict] = []
     revh_entries_all: list[dict] = []
     revh_embedded_any = False
+    balloons_all: list[dict] = []
+    bexcl_all: list[dict] = []
     rows_all: list[dict] = []
     tables_by_page: list[dict] = []
     page_results: list[dict] = []
@@ -2517,6 +2659,8 @@ def build_document_understanding(
         fields_all.extend(u.get("identifier_candidates") or [])
         dims_all.extend(u.get("dimension_candidates") or [])
         excluded_all.extend(u.get("dimension_excluded") or [])
+        balloons_all.extend(u.get("balloon_candidates") or [])
+        bexcl_all.extend(u.get("balloon_excluded") or [])
         revs_all.extend(u.get("revision_candidates") or [])
         ctx_all.extend(u.get("code_contexts") or [])
         regions_seen.update(u.get("regions_summary") or {})
@@ -2614,6 +2758,8 @@ def build_document_understanding(
             "carimbo) + embedded_in_title_block",
         },
         "revision_candidates": revs_all,
+        "balloon_candidates": balloons_all,
+        "balloon_excluded": bexcl_all,
         "document_identity": _build_document_identity(
             tb_fields_all,
             product_code=product_code,

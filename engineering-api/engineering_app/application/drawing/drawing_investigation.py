@@ -486,10 +486,22 @@ def _targeted_recheck(plan: dict, region_box, opts: dict,
 def identify_balloon_candidates(u: dict) -> list[dict]:
     """R13 — primeira capacidade genérica de balões: token alfanumérico
     curto contido em primitiva circular/elíptica. Nunca fabrica balões."""
-    prims = u.get("graphic_primitives") or []
+    raw_prims = u.get("graphic_primitives") or []
+    if isinstance(raw_prims, dict):
+        # Forma real do adapter — {circles, ellipses, arcs, ...}; a
+        # forma legada é uma lista tipada (``type: circle``).
+        prims = [
+            p
+            for key in ("circles", "ellipses", "arcs")
+            for p in (raw_prims.get(key) or [])
+        ]
+    else:
+        prims = raw_prims
     circles = [
         p for p in prims
-        if (p.get("type") or "").lower() in {"circle", "ellipse", "arc"}
+        if not isinstance(p, dict)
+        or (p.get("type") or "circle").lower()
+        in {"circle", "ellipse", "arc"}
     ]
     if not circles:
         return []
@@ -526,6 +538,191 @@ def identify_balloon_candidates(u: dict) -> list[dict]:
                     }
                 )
     return out
+
+
+BALLOON_TABLE_SCHEMA = "balloon_table_validation.v1"
+
+
+def _row_field(row: dict, name: str) -> str | None:
+    """Valor tipado de campo da linha (normalized → raw → chave plana)."""
+    f = (row.get("fields") or {}).get(name) or {}
+    v = f.get("normalized_value") or f.get("raw_text")
+    v = str(v).strip() if v is not None else ""
+    return v or row.get(name) or None
+
+
+def build_balloon_table_validation(u: dict) -> dict:
+    """E1/VAL-01 B1 — associação candidata balão × item da tabela.
+
+    Estados (RQ-B1-05): ``BALLOON_LABEL_IDENTIFIED``+``MATCH_CANDIDATE``
+    (rótulo único), ``AMBIGUOUS``, ``NOT_LOCATED``, ``NOT_COMPARABLE``.
+    Multiplicidade preservada (RQ-B1-04): um item com N balões é fato
+    registrado, não erro — correspondência rótulo↔quantidade depende da
+    convenção de representação do desenho. ``leader_target_verified``
+    permanece False: a ponta da linha indicadora pertence ao lote B2.
+    """
+    u = u or {}
+    ct = u.get("component_table") or {}
+    rows = list(ct.get("rows") or [])
+    balloons = list(u.get("balloon_candidates") or [])
+
+    labels_by_idx: list[tuple[int, str]] = []
+    for i, row in enumerate(rows):
+        label = _row_field(row, "item")
+        if label:
+            labels_by_idx.append((i, label))
+    by_label: dict[str, list[int]] = {}
+    for i, label in labels_by_idx:
+        by_label.setdefault(label.strip().upper(), []).append(i)
+
+    table_usable = bool(rows)
+    balloon_entries: list[dict] = []
+    counts = {
+        "match_candidates": 0, "ambiguous": 0,
+        "not_located": 0, "not_comparable": 0,
+    }
+    balloon_labels: list[str] = []
+    for idx, b in enumerate(balloons):
+        raw = str(b.get("item_label") or "").strip()
+        label = str(b.get("normalized_label") or raw).strip().upper()
+        balloon_labels.append(label)
+        entry = {
+            "balloon_index": idx,
+            "balloon_label": raw,
+            "normalized_label": label,
+            "page": b.get("page"),
+            "bounding_box_px": b.get("bounding_box_px"),
+            "token_bounding_box_px": b.get(
+                "token_bounding_box_px"),
+            "identification_method": b.get("identification_method"),
+            "leader_target_verified": False,
+            "review_required": True,
+        }
+        if not table_usable:
+            entry.update(
+                state="NOT_COMPARABLE",
+                association=None,
+                reason=(
+                    "tabela de materiais indisponível — associação "
+                    "não comparável"
+                ),
+            )
+            counts["not_comparable"] += 1
+        elif not label:
+            entry.update(
+                state="NOT_COMPARABLE",
+                association=None,
+                reason="rótulo de balão não identificado",
+            )
+            counts["not_comparable"] += 1
+        else:
+            idxs = by_label.get(label, [])
+            if not idxs:
+                entry.update(
+                    state="NOT_LOCATED",
+                    association=None,
+                    reason=(
+                        "nenhum item da tabela com este rótulo — não "
+                        "prova ausência no desenho"
+                    ),
+                )
+                counts["not_located"] += 1
+            elif len(idxs) == 1:
+                row = rows[idxs[0]]
+                entry.update(
+                    state="BALLOON_LABEL_IDENTIFIED",
+                    association="MATCH_CANDIDATE",
+                    table_item={
+                        "row_index": idxs[0],
+                        "row": row.get("row"),
+                        "page": row.get("page"),
+                        "item_label": _row_field(row, "item"),
+                        "component_code_candidate": _row_field(
+                            row, "component_code"),
+                        "assembly_quantity": _row_field(
+                            row, "quantity"),
+                        "description_candidate": _row_field(
+                            row, "description"),
+                    },
+                    reason=(
+                        "igualdade de rótulo — associação de referência "
+                        "candidata; não verifica a linha indicadora"
+                    ),
+                )
+                counts["match_candidates"] += 1
+            else:
+                entry.update(
+                    state="AMBIGUOUS",
+                    association="AMBIGUOUS",
+                    table_items=[
+                        {
+                            "row_index": ri,
+                            "row": rows[ri].get("row"),
+                            "page": rows[ri].get("page"),
+                            "item_label": _row_field(rows[ri], "item"),
+                            "component_code_candidate": _row_field(
+                                rows[ri], "component_code"),
+                        }
+                        for ri in idxs
+                    ],
+                    reason=(
+                        f"{len(idxs)} itens da tabela com o mesmo "
+                        "rótulo — ambiguidade preservada"
+                    ),
+                )
+                counts["ambiguous"] += 1
+        balloon_entries.append(entry)
+
+    from collections import Counter
+    occurrences = Counter(bl for bl in balloon_labels if bl)
+    table_entries: list[dict] = []
+    items_without_balloon: list[str] = []
+    for i, label in labels_by_idx:
+        n = occurrences.get(label.strip().upper(), 0)
+        row = rows[i]
+        table_entries.append({
+            "row_index": i,
+            "row": row.get("row"),
+            "page": row.get("page"),
+            "item_label": label,
+            "component_code_candidate": _row_field(
+                row, "component_code"),
+            "assembly_quantity": _row_field(row, "quantity"),
+            "description_candidate": _row_field(row, "description"),
+            "balloon_occurrences": n,
+            "state": "TABLE_ITEM_FOUND" if n else "NOT_LOCATED",
+            "review_required": True,
+        })
+        if not n:
+            items_without_balloon.append(label)
+
+    unmatched_labels = sorted(
+        {bl for bl, e in zip(balloon_labels, balloon_entries)
+         if e["state"] == "NOT_LOCATED"}
+    )
+    return {
+        "schema_version": BALLOON_TABLE_SCHEMA,
+        "status": "CANDIDATE",
+        "balloons_identified": len(balloons),
+        "table_items_with_label": len(table_entries),
+        "balloons": balloon_entries,
+        "table_items": table_entries,
+        "unassociated_balloon_labels": unmatched_labels,
+        "table_items_without_balloon": items_without_balloon,
+        "leader_lines_verified": False,
+        "leader_line_scope": "B2 — não avaliado neste lote",
+        "summary": counts,
+        "limitations": [
+            "OCR/primitiva não localizar balão ≠ balão ausente no desenho",
+            "igualdade de rótulo é associação de referência candidata — "
+            "não prova o destino da linha indicadora (B2)",
+            "multiplicidade de balões não é erro: a correspondência "
+            "com a quantidade do item depende da convenção do desenho",
+            "ausência de balão num item não comprova falta de indicação",
+        ],
+        "review_required": True,
+        "automatic_approval": False,
+    }
 
 
 def _acceptance_matrix(comparison_blocked: bool) -> dict:
@@ -1160,7 +1357,10 @@ def execute_investigations(
                 res["overall_state"] = "MATCH_CANDIDATE"
             elif ctx["result"] == "ROW_ASSOCIATION_CANDIDATE":
                 res["overall_state"] = "INCONCLUSIVE"
-        balloon_candidates = identify_balloon_candidates(u)
+        balloon_candidates = list(
+            (u or {}).get("balloon_candidates")
+            or identify_balloon_candidates(u or {})
+        )
 
     if not balloon_candidates:
         balloon_candidates = [
@@ -1259,6 +1459,9 @@ def execute_investigations(
         "unmatched_drawing_candidates": unmatched,
         "root_product_identifiers": root_identifiers,
         "balloon_candidates": balloon_candidates,
+        # E1/VAL-01 B1 — associação candidata balão × tabela (rótulo,
+        # multiplicidade, estados RQ-B1-05). Linha indicadora: B2.
+        "balloon_table_validation": build_balloon_table_validation(u),
         "summary": {
             **totals,
             "unmatched_drawing_candidates": len(unmatched),

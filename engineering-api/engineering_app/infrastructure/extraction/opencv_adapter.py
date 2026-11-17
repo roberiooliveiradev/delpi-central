@@ -206,9 +206,46 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
                 if y - start >= kv:
                     v_lines.append([x, start, x, y - 1])
                 start = None
+    # E1/VAL-01 B1 — primitivas circulares (balões de item): HoughCircles
+    # sobre a imagem original em tons de cinza. O opening morfológico
+    # acima usa kernels retos e descarta curvas; sem este canal a
+    # identificação de balões é no-op. Evidência candidata, não verdade.
+    circles: list[dict] = []
+    try:
+        blur = cv2.GaussianBlur(img, (5, 5), 1.2)
+        mindim = min(hw, hh)
+        det = cv2.HoughCircles(
+            blur,
+            cv2.HOUGH_GRADIENT,
+            dp=1.2,
+            minDist=max(10, mindim // 120),
+            param1=120,
+            param2=32,
+            minRadius=max(4, mindim // 300),
+            maxRadius=max(10, mindim // 28),
+        )
+        if det is not None:
+            for x, y, r in np.round(det[0]).astype(int)[:200]:
+                circles.append(
+                    {
+                        "type": "circle",
+                        "bounding_box_px": [
+                            int(x - r), int(y - r),
+                            int(x + r), int(y + r),
+                        ],
+                        "center_px": [int(x), int(y)],
+                        "radius_px": int(r),
+                    }
+                )
+    except cv2.error:
+        circles = []
     return {
         "h_lines": h_lines[:400],
         "v_lines": v_lines[:400],
         "rects": sorted(rects, key=lambda r: (r[3]-r[1])*(r[2]-r[0]), reverse=True)[:80],
-        "count": {"h": len(h_lines), "v": len(v_lines), "rects": len(rects)},
+        "circles": circles,
+        "count": {
+            "h": len(h_lines), "v": len(v_lines), "rects": len(rects),
+            "circles": len(circles),
+        },
     }
