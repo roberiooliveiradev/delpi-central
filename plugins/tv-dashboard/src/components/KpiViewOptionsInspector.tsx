@@ -5,11 +5,14 @@
 import {
   FormSelectControl,
   NativeTextControl,
+  DECK_KPI_DEFAULTS,
   type DelpiKpiCardTone,
   type DelpiKpiColorRule,
 } from "@delpi/plugin-ui/index";
 import {
   upsertKpiPartState,
+  mergeKpiPartsWithOptions,
+  mergeComunicadoKpiOptions,
   type ComunicadoKpiOptions,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -52,6 +55,18 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
     });
   };
 
+  const setBackgroundTransparency = (transparent: boolean) => {
+    const fill = transparent ? "transparent" : DECK_KPI_DEFAULTS.backgroundColor;
+    const nextOptions = mergeComunicadoKpiOptions({ ...options, backgroundColor: fill });
+    const nextParts = upsertKpiPartState(selected.kpiParts, { kind: "card" }, {
+      style: { fill },
+    });
+    updateSelected({
+      kpiOptions: nextOptions,
+      kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
+    });
+  };
+
   const setMetaMode = (mode: MetaMode) => {
     if (mode === "none") {
       patch({
@@ -86,6 +101,23 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
       hint={TV_DASHBOARD_HELP_TOOLTIPS.ribbon.kpiDynamicMeta}
       pane={pane}
     >
+      <DeckField id="kpi-background-mode" label="Fundo do KPI">
+        <FormSelectControl
+          id="kpi-background-mode"
+          ariaLabel="Fundo do KPI"
+          value={
+            selected.kpiParts?.card?.style?.fill === "transparent" ||
+            (!selected.kpiParts?.card?.style?.fill && options.backgroundColor === "transparent")
+              ? "transparent"
+              : "normal"
+          }
+          onChange={(value) => setBackgroundTransparency(value === "transparent")}
+          options={[
+            { value: "normal", label: "Normal (fundo padrão)" },
+            { value: "transparent", label: "Transparente (sem preenchimento)" },
+          ]}
+        />
+      </DeckField>
       <DeckField id="kpi-comparison-mode" label="Modo de comparação">
         <FormSelectControl
           id="kpi-comparison-mode"
