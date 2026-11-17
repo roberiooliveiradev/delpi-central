@@ -49,6 +49,35 @@ describe("userManual content", () => {
     expect(answers).toMatch(/digitação/i);
   });
 
+  it("explains freight impact with accessible calculations and practical questions", () => {
+    const guide = USER_MANUAL_CONTENT.sections.find((section) => section.id === "freight-impact");
+    expect(guide).toBeDefined();
+    expect(guide?.intro).toContain("Análises → Frete sobre compras");
+
+    const instructions = (guide?.bullets ?? []).join(" ");
+    expect(instructions).toMatch(/Aplicar filtros/);
+    expect(instructions).toMatch(/367 dias/);
+    expect(instructions).toContain("(total de fretes vinculados ÷ total das compras consideradas) × 100");
+    expect(instructions).toContain("R$ 100.000");
+    expect(instructions).toContain("R$ 2.000");
+    expect(instructions).toMatch(/não faz a média/);
+    expect(instructions).toMatch(/notas sem frete relacionado/i);
+    expect(instructions).toMatch(/não altera dados/);
+
+    const questions = (guide?.faqs ?? []).map((faq) => faq.q).join(" ");
+    const answers = (guide?.faqs ?? []).map((faq) => faq.a).join(" ");
+    expect(questions).toMatch(/frete zerado/i);
+    expect(questions).toMatch(/sem percentual/i);
+    expect(questions).toMatch(/não consigo acessar/i);
+    expect(answers).toMatch(/não encontrou um frete relacionado/i);
+
+    const directory = USER_MANUAL_CONTENT.sections.find((section) => section.id === "want");
+    expect(directory?.links?.some((entry) => entry.where === "Frete sobre compras")).toBe(true);
+
+    const parts = splitManualTextWithToolLinks("Confira Frete sobre compras no Portal");
+    expect(parts.some((part) => part.kind === "link" && part.viewId === "freight_impact")).toBe(true);
+  });
+
   it("exposes glossary terms and tool link targets", () => {
     const terms = GLOSSARY_CONTENT.map((entry) => entry.term);
     for (const required of [
