@@ -131,7 +131,7 @@ def _review_prebound_process_fixture(
         type(listener) is not socket.socket
         or type(expected_uid) is not int or expected_uid <= 0
         or type(expected_gid) is not int or expected_gid <= 0
-        or type(expected_path) is not Path or not expected_path.is_absolute()
+        or type(expected_path) is not type(Path("/")) or not expected_path.is_absolute()
         or os.name != "posix" or not hasattr(os, "getresuid")
         or not hasattr(os, "getresgid")
     ):
