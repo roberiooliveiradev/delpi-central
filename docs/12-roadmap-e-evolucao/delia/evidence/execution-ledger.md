@@ -7247,3 +7247,14 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   writes=0 false-satisfied=0. E melhorou vs baseline (tool-limit→GROUNDED).
 - **SHA avaliado:** f63de24491 (≡ b705e7e2dc em código).
 - **RESTRIÇÕES:** sem deploy, sem promoção, sem avanço de fase.
+
+## 2026-11-17 — COORDINATION_C3_T2_FOUR_LAYER_COGNITIVE_FUNCTIONAL_RECOVERY_DIRECTION
+
+- **NATURE:** DOCUMENTATION_ONLY / PO+COORDINATION direction; no code, config, tool, schema, DB, migration, or deployment changes in this decision.
+- **AUTHORITIES:** Doc 16 addendum 2026-11-17; Doc 335 addendum 2026-11-17; Doc 17 (crosswalk/ownership). Historical decisions retained unchanged; phase C3/T2, no advancement.
+- **TARGET:** four internal cognitive specialist responsibilities/Agents — INT-2 Comprehension, INT-1 Investigation, INT-3 Sufficiency, INT-4 Synthesis; INT-5 integrated acceptance is NOT an Agent; future sub-agents are not prohibited but need separate authorization and contracts.
+- **RUNTIME FACT:** Investigation native Pydantic AI Agent baseline; second Comprehension Agent experimental/flag-gated, OFF in production, executed SERIALLY before Investigator with Application-accepted typed plan and shared budget; independent INT-3/INT-4 Agents NOT_IMPLEMENTED/NOT_AUTHORIZED. Application/Core/Domain retain authoritative gates.
+- **PRIORITY:** stop repetitive architecture inventories; diagnose first divergent boundary across comprehension proposal → Application acceptance/handoff → investigator tool calls/pagination → Evidence/Sufficiency → published synthesis/outcome, then RED/GREEN/regression/real A-B/safety/independent verify.
+- **KNOWN ISSUES:** multipage group split + required-scope opaque remediated in verified scope; R5 multipage proven in sample. Open: INT-1 cognitive pagination convergence/no-progress and budget; T2-B comprehension error; partial INT-3 anchor demonstration; R4 restricted-identity AuthZ and dependent R6 negatives; VISTA carrier TO_INVENTORY; independent verifier BLOCKED pending external login/quota. Do not relabel these as solved by documentation. INT2 real eval 1557f58b9c15 positive but comparative superiority vs single-Agent NOT_PROVEN; reconcile 9/15 GROUNDED nominal rows discrepancy before reporting KPI.
+- **NEXT_BOUNDED_STEP_CANDIDATE:** COORDINATION_C3_T2_TWO_AGENT_LAYERED_HANDOFF_AND_FUNCTIONAL_RECOVERY — validate/correct INT-2→INT-1 interaction + INT-1 continuation, compare single-Agent A vs serial two-Agent B, with no new Agent/engine/registry and no INT-3/INT-4 implementation. NEXT remains subject to canonic ledger/phase and independent review.
+- **RESTRICTIONS:** PRODUCTION_DEPLOY=NOT_AUTHORIZED; TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO. DOCUMENTATION_ONLY does not imply test PASS or formal acceptance; VERIFIER=NOT_RUN_FOR_DOC_ONLY, previous independent verifier gap remains.
