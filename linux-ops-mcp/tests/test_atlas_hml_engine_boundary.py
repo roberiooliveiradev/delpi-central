@@ -83,7 +83,7 @@ def test_guard_denies_other_methods_paths_origins_headers_and_body(
         async with httpx.AsyncClient(
             transport=HMLDockerGETTransport(httpx.MockTransport(responder)),
             follow_redirects=False,
-            trust_env=False,
+            trust_env=False, timeout=3.0,
         ) as client:
             return await client.request(method, url, headers=headers, content=content)
 
@@ -135,7 +135,7 @@ def test_redirect_upgrade_compression_and_oversized_declared_size_fail_closed(re
     async def run():
         async with httpx.AsyncClient(
             transport=HMLDockerGETTransport(httpx.MockTransport(lambda _: response())),
-            trust_env=False, follow_redirects=False,
+            trust_env=False, follow_redirects=False, timeout=3.0,
         ) as client:
             return await client.get(_HML_URL)
     with pytest.raises((HostSourceError, httpx.HTTPError)):
