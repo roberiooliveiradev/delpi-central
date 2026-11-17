@@ -69,6 +69,7 @@ export function GuidedQuestionnaire({
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({});
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [retryMessage, setRetryMessage] = useState<ReactNode>(null);
   const [result, setResult] = useState<FormResultPanelProps | null>(null);
 
@@ -135,7 +136,8 @@ export function GuidedQuestionnaire({
   }, [answers, flow.stepIndex, steps]);
 
   const submit = useCallback(async () => {
-    if (submitting) return; // envio único — cliques repetidos ignorados
+    if (submittingRef.current) return; // envio único — cliques repetidos ignorados
+    submittingRef.current = true;
     setSubmitting(true);
     setRetryMessage(null);
     try {
@@ -150,9 +152,10 @@ export function GuidedQuestionnaire({
     } catch {
       setRetryMessage(texts.submitError);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [answers, onSubmit, submitting, texts.submitError]);
+  }, [answers, onSubmit, texts.submitError]);
 
   const questionError = (q: QuestionnaireQuestion): string | undefined => {
     if (!pending.has(q.key)) return undefined;

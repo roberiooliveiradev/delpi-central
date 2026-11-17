@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { GuidedQuestionnaire } from "./GuidedQuestionnaire";
@@ -241,6 +247,59 @@ describe("GuidedQuestionnaire — fluxo", () => {
     await waitFor(() => expect(props.onSubmit).toHaveBeenCalledTimes(1));
   });
 
+  it("dois cliques no mesmo ciclo disparam onSubmit uma única vez", async () => {
+    const props = baseProps();
+    const { getByRole, container } = render(<GuidedQuestionnaire {...props} />);
+    startFlow(getByRole);
+    fireEvent.click(getByRole("radio", { name: "Didática 4" }));
+    fireEvent.click(getByRole("radio", { name: "Recomendar 9" }));
+    fireEvent.click(getByRole("button", { name: "Avançar" }));
+    fireEvent.click(getByRole("radio", { name: "Geral 5" }));
+    fireEvent.change(
+      container.querySelector('[data-gq-question="s2q3"] textarea')!,
+      { target: { value: "ok" } },
+    );
+    fireEvent.click(getByRole("button", { name: "Revisar" }));
+    const send = getByRole("button", { name: "Enviar respostas" });
+    // dois cliques dentro do mesmo ciclo de renderização (antes do re-render)
+    act(() => {
+      fireEvent.click(send);
+      fireEvent.click(send);
+    });
+    await waitFor(() => expect(props.onSubmit).toHaveBeenCalledTimes(1));
+  });
+
+  it("após retry, novo clique envia de novo (trava liberada)", async () => {
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValueOnce({ type: "retry", message: "Tente de novo." })
+      .mockResolvedValue({
+        type: "result",
+        result: { tone: "success", title: "Enviado", message: "ok" },
+      });
+    const props = baseProps({ onSubmit });
+    const { getByRole, container } = render(<GuidedQuestionnaire {...props} />);
+    startFlow(getByRole);
+    fireEvent.click(getByRole("radio", { name: "Didática 4" }));
+    fireEvent.click(getByRole("radio", { name: "Recomendar 9" }));
+    fireEvent.click(getByRole("button", { name: "Avançar" }));
+    fireEvent.click(getByRole("radio", { name: "Geral 5" }));
+    fireEvent.change(
+      container.querySelector('[data-gq-question="s2q3"] textarea')!,
+      { target: { value: "ok" } },
+    );
+    fireEvent.click(getByRole("button", { name: "Revisar" }));
+    fireEvent.click(getByRole("button", { name: "Enviar respostas" }));
+    await waitFor(() =>
+      expect(container.textContent).toContain("Tente de novo."),
+    );
+    fireEvent.click(getByRole("button", { name: "Enviar respostas" }));
+    await waitFor(() =>
+      expect(getByRole("heading", { name: "Enviado" })).toBeTruthy(),
+    );
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+
   it("retry mantém respostas, mostra aviso com foco; exceção vira erro genérico", async () => {
     const onSubmit = vi
       .fn()
@@ -282,13 +341,24 @@ describe("GuidedQuestionnaire — fluxo", () => {
 
   it("não persiste nada no navegador durante o fluxo", async () => {
     const lsSet = vi.spyOn(Storage.prototype, "setItem");
+    const ssSet = vi.spyOn(window.sessionStorage, "setItem");
+    let cookieSet: ReturnType<typeof vi.spyOn> | undefined;
+    try {
+      cookieSet = vi.spyOn(document, "cookie", "set");
+    } catch {
+      cookieSet = undefined; // jsdom pode não expor setter espiável
+    }
     const props = baseProps();
     const { getByRole } = render(<GuidedQuestionnaire {...props} />);
     startFlow(getByRole);
     fireEvent.click(getByRole("radio", { name: "Didática 4" }));
     fireEvent.click(getByRole("radio", { name: "Recomendar 9" }));
     await waitFor(() => expect(lsSet).not.toHaveBeenCalled());
+    expect(ssSet).not.toHaveBeenCalled();
+    if (cookieSet) expect(cookieSet).not.toHaveBeenCalled();
     lsSet.mockRestore();
+    ssSet.mockRestore();
+    cookieSet?.mockRestore();
   });
 
   it("beforeunload registra após a 1ª resposta e remove no resultado", async () => {
