@@ -152,7 +152,38 @@ def _preflight() -> pwd.struct_passwd:
     return user
 
 
-def _drop_args(user: pwd.struct_passwd) -> dict:
+_ISOLATED_MODULES = (
+    "__init__.py",
+    "atlas_hml_snapshot_presenter_candidate.py",
+    "atlas_hml_snapshot_file_reader.py",
+    "atlas_hml_snapshot_candidate.py",
+    "atlas_hml_posix_acl_review.py",
+    "atlas_hml_uds_policy.py",
+)
+
+
+def _stage_readonly_test_modules(directory: Path, user: pwd.struct_passwd) -> None:
+    """Copy allowlisted source to root-owned /tmp with group read.
+
+    GitHub's /home/runner may be private to the CI login UID. Dropping to
+    nobody and then importing from its checkout would fail even with a valid
+    PYTHONPATH. Do not widen workspace permissions or run the child as root.
+    """
+    source = Path(__file__).resolve().parents[1] / "linux_ops_mcp"
+    library_root = directory / "isolated-python"
+    package = library_root / "linux_ops_mcp"
+    package.mkdir(parents=True, exist_ok=False)
+    for name in _ISOLATED_MODULES:
+        target = package / name
+        target.write_bytes((source / name).read_bytes())
+        os.chown(target, 0, user.pw_gid)
+        os.chmod(target, 0o640)
+    for folder in (library_root, package):
+        os.chown(folder, 0, user.pw_gid)
+        os.chmod(folder, 0o750)
+
+
+def _drop_args(user: pwd.struct_passwd, directory: Path) -> dict:
     """Use subprocess kernel UID/GID parameters, NEVER a shell or sudo."""
     return {
         "user": user.pw_uid,
@@ -160,10 +191,10 @@ def _drop_args(user: pwd.struct_passwd) -> dict:
         "extra_groups": [],
         "close_fds": True,
         "env": {
-            "PYTHONPATH": str(Path.cwd() / "linux-ops-mcp"),
+            "PYTHONPATH": str(directory / "isolated-python"),
             "PYTHONDONTWRITEBYTECODE": "1",
         },
-        "cwd": str(Path.cwd()),
+        "cwd": str(directory),
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "text": True,
@@ -181,6 +212,7 @@ def test_real_subprocess_privilege_boundary_only_in_ephemeral_ci(kind, expected_
         directory = Path(location)
         os.chown(directory, 0, user.pw_gid)
         os.chmod(directory, 0o750)
+        _stage_readonly_test_modules(directory, user)
 
         now = _NOW()
         snapshot = directory / "inspect-snapshot.json"
@@ -212,7 +244,7 @@ def test_real_subprocess_privilege_boundary_only_in_ephemeral_ci(kind, expected_
                 raw.connect(_DOCKER)
                 raw_inode = os.fstat(raw.fileno()).st_ino
 
-                params = _drop_args(user)
+                params = _drop_args(user, directory)
                 child = subprocess.Popen([
                     sys.executable, "-B", "-c", _PRESENTER_CHILD,
                     str(user.pw_uid), str(user.pw_gid),
@@ -258,6 +290,7 @@ def test_intentionally_passed_privileged_docker_fd_is_detected_before_serving():
         directory = Path(location)
         os.chown(directory, 0, user.pw_gid)
         os.chmod(directory, 0o750)
+        _stage_readonly_test_modules(directory, user)
 
         path = directory / "inspect.sock"
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
@@ -274,7 +307,7 @@ def test_intentionally_passed_privileged_docker_fd_is_detected_before_serving():
                     str(user.pw_uid), str(user.pw_gid),
                     str(listener.fileno()), str(root_socket_inode), str(directory),
                 ], pass_fds=(listener.fileno(), docker.fileno()),
-                   timeout=6, **_drop_args(user))
+                   timeout=6, **_drop_args(user, directory))
                 assert result.returncode == 47, (
                     "Raw Docker FD leaked into presenter without being rejected"
                 )
