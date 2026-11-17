@@ -56,6 +56,7 @@ jobs:
             tests/test_inventory_third_party_zero_value_1614.py \
             tests/test_supplies_inventory_accuracy.py \
             tests/test_tv_inventory_divergences_1598.py \
+            tests/test_tv_inventory_product_net_balance_1615.py \
             -q
 
       - name: Testes Fases 2–5 (observabilidade, contrato e alertas)
