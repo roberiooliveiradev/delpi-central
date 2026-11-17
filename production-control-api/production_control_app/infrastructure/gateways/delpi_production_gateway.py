@@ -102,6 +102,15 @@ class DelpiProductionGateway:
         apply_internal_service_headers(headers)
         return headers
 
+    def fetch_product_sales_analytics(
+        self, *, branch: str, product_code: str, months: int
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            f"/products/{quote(product_code, safe='')}/sales/analytics",
+            params={"branch": branch, "months": months},
+        )
+
     def fetch_pcp_orders_summary(self, *, branch: str) -> dict[str, Any]:
         return self._request(
             "GET",

@@ -35,6 +35,7 @@ from app.infrastructure.persistence.totvs.query_builder import (
     InvalidProtheusDateError,
 )
 from app.interface.http.routes import customer_routes, product_drawing_routes, product_routes
+from app.interface.http.routes import product_sales_analytics_routes
 from app.interface.http.routes import gpt_actions_routes
 from app.interface.http.routes import system_routes
 from app.interface.http.routes import data_routes
@@ -402,6 +403,7 @@ app.include_router(request_lookups_router.router)
 app.include_router(planejamento_orcamentario_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
+app.include_router(product_sales_analytics_routes.router)
 app.include_router(gpt_actions_routes.router)
 app.include_router(mcp_metadata_router)
 # Streamable HTTP MCP (external path: /apps/api-delpi/mcp). Auth via jwt_middleware.

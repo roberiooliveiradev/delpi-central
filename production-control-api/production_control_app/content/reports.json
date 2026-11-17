@@ -1,11 +1,21 @@
 {
   "warehouse": "01",
-  "productCodePrefixes": ["8", "9"],
+  "productCodePrefixes": [
+    "8",
+    "9"
+  ],
   "productCodePrefixesByBranch": {
-    "01": ["9"],
-    "02": ["8", "9"]
+    "01": [
+      "9"
+    ],
+    "02": [
+      "8",
+      "9"
+    ]
   },
-  "excludedProductCodePrefixes": ["9035"],
+  "excludedProductCodePrefixes": [
+    "9035"
+  ],
   "onlyPositive": true,
   "defaultSort": "product_code_asc",
   "defaultPageSize": 50,
@@ -28,6 +38,13 @@
       "description": "OPs em aberto (sem data real de fim), com emissão, início, entrega, quantidade, saldo e observações.",
       "icon": "clipboard-list",
       "eyebrow": "Produção"
+    },
+    {
+      "id": "product-sales",
+      "label": "Raio-X do produto",
+      "description": "Histórico de vendas, médias de consumo e clientes por produto acabado.",
+      "icon": "package",
+      "eyebrow": "Inteligência PCP"
     }
   ]
 }

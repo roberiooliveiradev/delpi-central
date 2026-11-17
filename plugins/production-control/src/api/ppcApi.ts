@@ -48,6 +48,7 @@ import type {
   Product3DModel,
   Product3DModelListPayload,
   ReportsCatalogPayload,
+  ProductSalesReportPayload,
   MachineLoadWorkCentersPayload,
   SequencingBindingListPayload,
   SequencingBindingResult,
@@ -119,6 +120,18 @@ export async function fetchReportsCatalog(params: {
     data: ReportsCatalogPayload;
   }>(ppcApiUrl(`/reports?${search.toString()}`), { signal: params.signal });
   return unwrapEnvelope(envelope, "Não foi possível carregar os relatórios.");
+}
+
+export async function fetchProductSalesReport(params: {
+  branch: string; productCode: string; months: 12 | 24 | 36; signal?: AbortSignal
+}): Promise<ProductSalesReportPayload> {
+  const qs = new URLSearchParams({
+    branch: params.branch, productCode: params.productCode, months: String(params.months),
+  });
+  const result = await httpGet<{success: boolean; message?: string; data: ProductSalesReportPayload}>(
+    ppcApiUrl("/reports/product-sales?" + qs.toString()), {signal: params.signal},
+  );
+  return unwrapEnvelope(result, "Não foi possível carregar o Raio-X do produto.");
 }
 
 export async function fetchStockBalancesReport(params: {

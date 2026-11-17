@@ -1130,6 +1130,19 @@ export type ReportsCatalogPayload = {
   reports: ReportsCatalogItem[];
 };
 
+export type ProductSalesReportPayload = {
+  branch: string; report_id: string;
+  product: { code: string; description: string; unit: string; product_type: string };
+  period: { months: number; from: string; to: string };
+  summary: { total_quantity: number; gross_quantity: number; returned_quantity: number;
+    weekly_average: number; monthly_average: number; yearly_average: number;
+    customer_count: number; active_month_count: number };
+  monthly: Array<{month: string; quantity: number; gross_quantity: number; returned_quantity: number}>;
+  customers: Array<{customer_code: string; customer_store: string; customer_name: string;
+    quantity: number; gross_quantity: number; returned_quantity: number}>;
+  source: string;
+};
+
 export type StockBalanceLine = {
   product_code: string;
   description: string;

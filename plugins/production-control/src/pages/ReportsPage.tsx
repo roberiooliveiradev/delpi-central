@@ -9,6 +9,7 @@ import { useCallback, useState } from "react";
 
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import { ProductionOrdersReportPanel } from "../components/ProductionOrdersReportPanel";
+import { ProductSalesReportPanel } from "../components/ProductSalesReportPanel";
 import { StockBalancesReportPanel } from "../components/StockBalancesReportPanel";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
@@ -18,7 +19,7 @@ import { buildPpcHref, navigatePpc } from "../utils/routeParser";
 
 const navCardClassNames = navigationCardBemClasses("ppc");
 
-const KNOWN_REPORTS = new Set(["stock-balances", "production-orders"]);
+const KNOWN_REPORTS = new Set(["stock-balances", "production-orders", "product-sales"]);
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -41,6 +42,7 @@ function reportTitle(reportId: string, cards: ReportsCatalogItem[]): string {
   if (fromCatalog) return fromCatalog;
   if (reportId === "stock-balances") return copy.reports.stockBalances.tab;
   if (reportId === "production-orders") return copy.reports.productionOrders.tab;
+  if (reportId === "product-sales") return "Raio-X do produto";
   return copy.reports.title;
 }
 
@@ -49,6 +51,7 @@ function reportSubtitle(reportId: string, cards: ReportsCatalogItem[]): string {
   if (fromCatalog) return fromCatalog;
   if (reportId === "stock-balances") return copy.reports.stockBalances.tableHint;
   if (reportId === "production-orders") return copy.reports.productionOrders.tableHint;
+  if (reportId === "product-sales") return "Histórico de vendas, médias e clientes por produto.";
   return copy.reports.subtitle;
 }
 
@@ -159,6 +162,10 @@ export function ReportsPage({ branch, reportId }: ReportsPageProps) {
 
       {activeId === "production-orders" ? (
         <ProductionOrdersReportPanel branch={branch} onRefreshReady={onRefreshReady} />
+      ) : null}
+
+      {activeId === "product-sales" ? (
+        <ProductSalesReportPanel branch={branch} onRefreshReady={onRefreshReady} />
       ) : null}
     </div>
   );

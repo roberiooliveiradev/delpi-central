@@ -204,7 +204,7 @@ function formatBytes(size: number | null | undefined): string | null {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function timeLabel(createdAt: string, updatedAt: string | null, edited: boolean): string {
+function timeLabel(createdAt: string, _updatedAt: string | null, edited: boolean): string {
   const base = new Date(createdAt);
   const label = Number.isNaN(base.getTime())
     ? ""
