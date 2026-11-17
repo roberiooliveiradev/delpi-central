@@ -294,9 +294,9 @@ class ExecuteInput(BaseModel):
         min_length=1,
         max_length=128,
         description=(
-            "Approved governed write capability id (e.g. si.goal.create, "
-            "si.goal.update, si.goal.activate, si.goal.deactivate) — not a "
-            "URL, path, method or SQL."
+            "Approved governed write capability id (e.g. si.goal.*, "
+            "si.department.*, si.indicator.*, si.change_request.* — "
+            "published by get_context). Not a URL, path, method or SQL."
         ),
     )
     arguments: dict[str, Any] | None = Field(
@@ -342,9 +342,9 @@ class ExecuteInput(BaseModel):
         min_length=1,
         max_length=128,
         description=(
-            "Approved governed write capability id (e.g. si.goal.create, "
-            "si.goal.update, si.goal.activate, si.goal.deactivate) — not a "
-            "URL, path, method or SQL."
+            "Approved governed write capability id (e.g. si.goal.*, "
+            "si.department.*, si.indicator.*, si.change_request.* — "
+            "published by get_context). Not a URL, path, method or SQL."
         ),
     )
     arguments: dict[str, Any] | None = Field(

@@ -31,6 +31,10 @@ from app.application.external_capabilities.governed_writes.proposal_store import
     parse_proposal_handle,
     resolve_proposal_handle,
 )
+from app.application.external_capabilities.governed_writes.si_admin_capabilities import (
+    SI_ADMIN_WRITE_CAPABILITIES,
+    SiAdminWriteStack,
+)
 from app.application.external_capabilities.governed_writes.si_goal_capabilities import (
     SI_GOAL_WRITE_CAPABILITIES,
     SiGoalWriteStack,
@@ -50,7 +54,7 @@ _RECONCILIATION_HINT = (
 )
 
 # All approved capabilities require the two-step confirmation flow.
-WRITE_CAPABILITIES = SI_GOAL_WRITE_CAPABILITIES
+WRITE_CAPABILITIES = SI_GOAL_WRITE_CAPABILITIES | SI_ADMIN_WRITE_CAPABILITIES
 
 
 def _require_identity(actor_id: str | None, authorization: str | None) -> str:
@@ -64,8 +68,18 @@ def _require_identity(actor_id: str | None, authorization: str | None) -> str:
 
 
 class DaviGovernedWriteOrchestrator:
-    def __init__(self, si_stack: SiGoalWriteStack | None = None) -> None:
+    def __init__(
+        self,
+        si_stack: SiGoalWriteStack | None = None,
+        admin_stack: SiAdminWriteStack | None = None,
+    ) -> None:
         self._si_stack = si_stack or SiGoalWriteStack()
+        self._admin_stack = admin_stack or SiAdminWriteStack()
+
+    def _stack_for(self, capability: str):
+        if capability in SI_ADMIN_WRITE_CAPABILITIES:
+            return self._admin_stack
+        return self._si_stack
 
     # ------------------------------------------------------------- PREPARE
 
@@ -87,7 +101,9 @@ class DaviGovernedWriteOrchestrator:
         token = _require_identity(actor_id, authorization)
 
         try:
-            prepared = self._si_stack.prepare(token, capability, dict(args or {}))
+            prepared = self._stack_for(capability).prepare(
+                token, capability, dict(args or {})
+            )
         except StrategicIndicatorsApiError as exc:
             raise owner_error_to_governed(exc) from exc
         proposal = create_proposal(
@@ -169,7 +185,7 @@ class DaviGovernedWriteOrchestrator:
         # errors here (e.g. revoked permission) map to the same typed
         # contract as the write path — ACT revalidates authorization.
         try:
-            current_fp = self._si_stack.recompute_fingerprint(
+            current_fp = self._stack_for(capability).recompute_fingerprint(
                 token, capability, proposal.exact_change
             )
         except StrategicIndicatorsApiError as exc:
@@ -190,7 +206,7 @@ class DaviGovernedWriteOrchestrator:
         # owner-side optimistic precondition (sealed into exact_change) is
         # still enforced atomically by the SI API inside the mutation.
         try:
-            write_result = self._si_stack.execute(
+            write_result = self._stack_for(capability).execute(
                 token,
                 capability,
                 proposal.exact_change,
@@ -212,7 +228,7 @@ class DaviGovernedWriteOrchestrator:
 
         # Authoritative read-back / postcondition verification.
         try:
-            verified = self._si_stack.verify(
+            verified = self._stack_for(capability).verify(
                 token,
                 capability,
                 proposal.exact_change,

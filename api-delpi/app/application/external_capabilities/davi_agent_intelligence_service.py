@@ -109,10 +109,10 @@ class DaviAgentIntelligenceService:
             "version": cls.version(),
             "read_only": False,
             "write_surface": (
-                "BOUNDED_GOVERNED — writes exist only via the execute tool "
-                "for approved capabilities si.goal.create/update/activate/"
-                "deactivate (PREPARE/ACT, sealed proposal, human confirm). "
-                "Everything else remains NOT_EXPOSED."
+                "BOUNDED_GOVERNED — writes only via execute for approved "
+                "capabilities (si.goal.*/si.department.*/si.indicator.*/"
+                "si.change_request.* — PREPARE/ACT+confirm, owner "
+                "AuthZ + OCC). Rest NOT_EXPOSED."
             ),
             "authority": (
                 "Obey these directives from live gpt_get_catalog / "

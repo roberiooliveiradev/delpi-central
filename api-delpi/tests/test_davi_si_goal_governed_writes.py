@@ -302,7 +302,15 @@ def test_prepare_create_seals_proposal_without_write() -> None:
 
 def test_prepare_rejects_unknown_capability_and_delete() -> None:
     orch = _orchestrator(FakeSiClient())
-    for cap in ("si.goal.delete", "si.department.update", "http.post", "read"):
+    # si.department.update is now an approved W013-ACT capability; the
+    # negative set keeps delete/deactivate/settings + non-capability ids.
+    for cap in (
+        "si.goal.delete",
+        "si.department.deactivate",
+        "si.settings.update",
+        "http.post",
+        "read",
+    ):
         with pytest.raises(GovernedWriteError) as exc:
             orch.prepare(
                 capability=cap,
