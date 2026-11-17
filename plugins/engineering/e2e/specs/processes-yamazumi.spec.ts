@@ -199,8 +199,12 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page
       .getByRole("button", { name: "Adicionar posto" })
       .click();
-    await expect(page.getByText("Posto 01")).toBeVisible();
-    await expect(page.getByText("Posto 02")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Posto 01" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Posto 02" }),
+    ).toBeVisible();
 
     /* Atribui operações não atribuídas ao Posto 01 (controle acessível). */
     const assignTriggers = page.getByRole("button", {
