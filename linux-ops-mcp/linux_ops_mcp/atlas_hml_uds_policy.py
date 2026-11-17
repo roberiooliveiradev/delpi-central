@@ -56,11 +56,11 @@ def verify_socket_metadata(
     descriptors use sockfs inode numbers distinct from pathname inode numbers.
     """
     if (
-        type(path) is not Path
+        not isinstance(path, Path)
         or not path.is_absolute()
         or type(owner_uid) is not int or owner_uid < 0
         or type(raw_sockets) is not tuple
-        or not all(type(raw) is Path and raw.is_absolute() for raw in raw_sockets)
+        or not all(isinstance(raw, Path) and raw.is_absolute() for raw in raw_sockets)
         or (socket_gid is not None and (type(socket_gid) is not int or socket_gid < 0))
     ):
         raise HMLUDSPolicyError("HML_PROXY_PATH_UNSAFE")
