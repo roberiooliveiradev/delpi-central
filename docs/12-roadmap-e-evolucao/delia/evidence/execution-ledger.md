@@ -7299,3 +7299,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **REAL_EVAL:** ENV_BLOCKED (stack de eval down — só delia-api up);
   residual registrado.
 - **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
+
+## COORDINATION_C3_T2_GAP_RECOVERY_REAL_MODEL_EVALUATION_AND_INDEPENDENT_ACCEPTANCE
+
+- **REAL_EVAL @917e5c764c:** paired B/G executed — arm B two-agent:
+  bounded correction FIRED (interrupted:1, único branch aplicável),
+  modelo buscou capabilities complementares; outcome final honesto
+  NON_GROUNDED (escopo view=summary/analysis não vinculável via read).
+  Arm A: B+G GROUNDED via read direto.
+- **NOVO RESIDUAL (proven):** obrigação aceita pela compreensão pode
+  ancorar required_scope em envelope de apresentação (view=summary +
+  operation=analysis) tornando a métrica irrealizável por capabilities
+  complementares legítimas. Fail-closed correto; correção de ancoragem
+  exige task própria (fronteira compreensão/plan-acceptor).
+- **SAFETY:** zero false SATISFIED/COMPLETE/writes/bypass na avaliação.
+- **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
