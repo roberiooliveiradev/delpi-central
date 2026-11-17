@@ -3610,10 +3610,14 @@ class ProductRegistrationService:
         response = record_flags.public_record_flag(
             created, at_status="OPEN"
         )
+        # O registro idempotente é request-scoped por FK
+        # (product_registration_idempotency.request_id → requests.id):
+        # flags de registro técnico não têm request — None evita
+        # violação de FK pós-commit (flag persistida + 500).
         self._idempotent_store(
             actor=actor, operation="record_flag_create",
             key=idempotency_key, fingerprint=fp,
-            request_id=record_id, status=201, payload=response,
+            request_id=None, status=201, payload=response,
         )
         return response
 
@@ -3689,7 +3693,7 @@ class ProductRegistrationService:
         self._idempotent_store(
             actor=actor, operation="record_flag_update",
             key=idempotency_key, fingerprint=fp,
-            request_id=record_id, status=200, payload=response,
+            request_id=None, status=200, payload=response,
         )
         return response
 
@@ -3755,7 +3759,7 @@ class ProductRegistrationService:
             actor=actor,
             operation=f"record_flag_{to_status.lower()}",
             key=idempotency_key, fingerprint=fp,
-            request_id=record_id, status=200, payload=response,
+            request_id=None, status=200, payload=response,
         )
         return response
 

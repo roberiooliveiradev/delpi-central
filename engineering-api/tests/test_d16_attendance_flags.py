@@ -311,7 +311,16 @@ class TestFlagRestCrud:
                     "thirdPartyProduct": "1",
                     "accountingAccount": "11401002",
                     "customerReference": "",
-                    "suppliers": [],
+                    # CORRECTION-10: intake CREATE exige ≥1 fornecedor.
+                    "suppliers": [
+                        {
+                            "supplierCode": "000002",
+                            "store": "01",
+                            "supplierName": "FORNECEDOR Y",
+                            "partNumber": "PN-2",
+                            "catalogNumber": None,
+                        }
+                    ],
                 },
             },
             headers={"Idempotency-Key": "intake-b"},

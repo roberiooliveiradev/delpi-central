@@ -490,3 +490,24 @@ class TestRevisionComparison:
         data = resp.json()["data"]
         types = {e["eventType"] for e in data["flagEvents"]}
         assert "flag.created" in types
+
+    def test_idempotency_row_is_not_request_scoped(
+        self, client, jwks_env, core_rbac, prc_service_repo
+    ):
+        """FIX record-flag idempotency FK — a coluna
+        product_registration_idempotency.request_id tem FK para
+        product_registration_requests; passar record_id violava a FK
+        pós-commit (flag persistida + 500). Deve persistir NULL."""
+        rec = _v1(client, jwks_env, core_rbac, prc_service_repo)
+        resp = _create_flag(
+            client, jwks_env, core_rbac, rec["id"], idem="fl-idem-fk"
+        )
+        assert resp.status_code == 201, resp.text
+        repo = prc_service_repo["repo"]
+        rows = [
+            row for row in repo._idempotency.values()
+            if row["operation"] == "record_flag_create"
+        ]
+        assert rows, "registro idempotente não persistido"
+        assert rows[-1]["request_id"] is None
+        assert rows[-1]["request_id"] != rec["id"]
