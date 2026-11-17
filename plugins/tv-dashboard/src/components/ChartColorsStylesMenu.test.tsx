@@ -1,8 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mergeComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
+
+// O setup do editor não executa cleanup automaticamente a cada teste Vitest.
+afterEach(() => cleanup());
 
 describe("GLPI #1610 · opção visível em Alterar cores", () => {
   it("apresenta preset de sinal em colunas e aplica modo by_sign", () => {
