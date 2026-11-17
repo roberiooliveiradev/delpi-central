@@ -5,6 +5,10 @@ Doc: api-delpi/docs/api/padroes-totvs/cadastro-produto.md
 
 from __future__ import annotations
 
+# SB1.B1_TPMAT (SX3 «Produto de Terceiro»): 1=Não, 2=Sim.
+# Identificador comum a Refugos, Comercial e Inventário; não confundir com SB6.
+THIRD_PARTY_PRODUCT_TPMAT = "2"
+
 # Matéria-prima (estoque de segurança, OTD de compras MP).
 PRODUCT_TYPE_RAW_MATERIAL = "MP"
 
