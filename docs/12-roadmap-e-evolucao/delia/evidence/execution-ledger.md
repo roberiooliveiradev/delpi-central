@@ -7282,7 +7282,7 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **HANDOFF:** íntegro — view=summary declared ecoou em view=summary
   invoked (arg top-level do analyze); nenhuma perda de escopo.
 - **REMEDIAÇÃO:** não aplicada — zero defeitos reproduzidos.
-- **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3.
+- **VERIFIER:** ACCEPT_WITH_RESIDUAL r2 (cursor/composer-2.5) — A1–A4 confirmadas, OC-1 resolvida; residuals: texto AC nominal ausente do pedido + suite pytest não reexecutada pelo verificador.
 - **RESIDUAL novo:** analyze summary view sem count — owner capability gap.
 
 ## COORDINATION_C3_T2_INVESTIGATION_SUFFICIENCY_GAP_RECOVERY
