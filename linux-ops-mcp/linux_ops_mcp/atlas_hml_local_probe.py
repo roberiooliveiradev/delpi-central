@@ -15,7 +15,6 @@ import asyncio
 import grp
 import json
 import os
-import stat
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +23,9 @@ from typing import Callable
 import httpx
 
 from .atlas_hml_git_head_peek import GitHeadMetadataPeek, GitHeadPeekError
+from .atlas_hml_uds_policy import (
+    HMLUDSPolicyError, verify_socket_metadata,
+)
 from .deploy_git_checkout_readonly import (
     GitCheckoutReadError, GitCheckoutReadOnlyObserver, _ROOT as _CHECKOUT,
 )
@@ -126,38 +128,27 @@ def account_blocks(identity: object) -> tuple[str, ...]:
     return tuple(blocks)
 
 
-def _stat_fixed_proxy() -> None:
-    """Inspect only fixed path and reject raw Docker socket aliases.
+def _stat_fixed_proxy(
+    *, _test_owner_uid: int | None = None,
+    _test_socket_gid: int | None = None,
+    _test_raw_sockets: tuple[Path, ...] | None = None,
+) -> None:
+    """Use the shared fail-closed policy before any Docker projection GET.
 
-    This cannot certify that a *different* proxy has a safe GET-only policy.
-    Such an independent proxy audit is a separate operation/approval.
+    Overrides are solely for disposable tests and are never accepted by the
+    CLI, MCP or HTTP. Real fixed-path verification requires root + atlas-hml.
     """
-    path = _PROXY_SOCKET
     try:
-        parent = path.parent.lstat()
-        node = path.lstat()
-        if (
-            path.parent.is_symlink()
-            or not stat.S_ISDIR(parent.st_mode)
-            or bool(parent.st_mode & stat.S_IWOTH)
-            or not stat.S_ISSOCK(node.st_mode)
-            or bool(node.st_mode & stat.S_IWOTH)
-        ):
-            raise HMLProbeError("HML_PROXY_PATH_UNSAFE")
-        for raw in _RAW_SOCKETS:
-            try:
-                docker_node = raw.stat()
-            except OSError:
-                continue
-            if (node.st_dev, node.st_ino) == (
-                docker_node.st_dev, docker_node.st_ino
-            ):
-                raise HMLProbeError("HML_RAW_DOCKER_SOCKET_DENIED")
-    except HMLProbeError:
-        raise
-    except OSError:
-        raise HMLProbeError("HML_PROXY_UNAVAILABLE") from None
-
+        options: dict[str, object] = {"path": _PROXY_SOCKET}
+        if _test_owner_uid is not None:
+            options["owner_uid"] = _test_owner_uid
+        if _test_socket_gid is not None:
+            options["socket_gid"] = _test_socket_gid
+        if _test_raw_sockets is not None:
+            options["raw_sockets"] = _test_raw_sockets
+        verify_socket_metadata(**options)
+    except HMLUDSPolicyError as exc:
+        raise HMLProbeError(exc.code) from None
 
 def fixed_proxy_inspector() -> DockerReadOnlyInspect:
     """Use only a separate, operator-provisioned UNIX socket, never TCP.

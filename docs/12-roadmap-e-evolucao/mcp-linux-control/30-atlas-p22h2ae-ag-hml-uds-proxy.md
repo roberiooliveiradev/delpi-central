@@ -43,3 +43,8 @@ Etapas futuras, somente com owner approval:
 - [ ] Aprovacao de ownership, isolamento, least privilege e teste HML antes de operar
 
 **Resultado:** modulo source-only testavel em socket UNIX efemero, NAO instalado em HML/PROD e NAO elegivel para deploy.
+
+
+## Complemento de hardening P2.2h.2ai-ak (PR Draft, 16/11/2026)
+
+A politica de owner/group/mode do socket e do diretorio foi centralizada para o proxy e o preflight; o listener deve estar em escuta, e o UID admitido pela conta nominal `atlas-hml`. O socket real exige owner root, group `atlas-hml` e modo exato 0660; o diretorio nao admite escrita por grupo nem acesso de outros e precisa permitir travessia pelo grupo. O projeto inclui deadline de upstream e testes negativos. Estes requisitos **nao** significam instalacao no host nem atestacao independente. Conferir [runbook atualizado](./32-atlas-hml-uds-policy-hardening.md) antes de qualquer proposta de ativacao.
