@@ -39,6 +39,10 @@ jobs:
         run: python -m compileall -q linux-ops-mcp/linux_ops_mcp
       - name: Unit tests and auth negatives
         run: PYTHONPATH=linux-ops-mcp:it-portal-api python -m pytest -q linux-ops-mcp/tests
+      - name: ATLAS HML local preflight smoke (always BLOCKED)
+        run: |
+          set -o pipefail
+          PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_local_probe | python -c 'import json,sys; x=json.load(sys.stdin); assert x["status"] == "blocked" and x["prepare_eligible"] is False and x["can_execute"] is False; print("HML local preflight remains blocked")'
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
