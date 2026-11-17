@@ -39,6 +39,7 @@ class GetInventoryAccuracySummaryUseCase:
 
         valid = totals["valid_count_total"]
         evaluable = totals["evaluable_count_total"]
+        accurate = totals["accurate_count"]
         # A contagem de eventos "corretos" continua diagnóstica, mas o KPI
         # passa a ser a média simples dos percentuais QUANTITATIVOS.
         scored = totals.get("scored_count", 0)
