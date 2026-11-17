@@ -100,3 +100,80 @@ describe("ChartSeriesBar overflow", () => {
     });
   });
 });
+
+
+describe("GLPI #1610 · colunas por sinal do valor", () => {
+  const points = [
+    { label: "Perda", value: -781891.44, sourceIndex: 0 },
+    { label: "Ganho", value: 1982.03, sourceIndex: 1 },
+    { label: "Neutro", value: 0, sourceIndex: 2 },
+    { label: "Ausente", value: null, sourceIndex: 3 },
+  ];
+  const layout = buildSeriesChartLayout({
+    points,
+    showXAxisLabels: true,
+    showXAxisTitle: false,
+    viewW: 540,
+    viewH: 280,
+    categoryScale: "band",
+  });
+  const signColors = {
+    mode: "by_sign" as const,
+    polarity: "high_is_good" as const,
+    paletteId: "sign-negative-positive",
+  };
+
+  it("pinta cada coluna com a cor do sinal independente da magnitude e não inventa ponto nulo", () => {
+    const { container } = render(
+      <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel="divergências">
+        <ChartSeriesBar
+          layout={layout}
+          points={points}
+          seriesColor="#089bdb"
+          categoryColors={["#089bdb", "#f97316"]}
+          colorScale={signColors}
+        />
+      </ChartFrame>,
+    );
+    const bars = Array.from(container.querySelectorAll("rect"));
+    expect(bars).toHaveLength(3);
+    expect(bars.map((bar) => bar.getAttribute("fill"))).toEqual([
+      "#dc2626", "#16a34a", "#94a3b8",
+    ]);
+    // Origin stays zero, even with large losses. No regression to #248.
+    const zeroY = layout.toY(0);
+    const negative = bars[0]!;
+    const positive = bars[1]!;
+    expect(Number(negative.getAttribute("y"))).toBeCloseTo(zeroY, 3);
+    expect(Number(positive.getAttribute("y")) +
+      Number(positive.getAttribute("height"))).toBeCloseTo(zeroY, 3);
+  });
+
+  it("funciona por coluna em série agrupada, sem usar paleta por índice", () => {
+    const { container } = render(
+      <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel="múltiplas séries">
+        <ChartSeriesBar
+          layout={layout}
+          points={points}
+          seriesColor="#334455"
+          seriesIndex={1}
+          layoutSeriesIndex={1}
+          seriesCount={2}
+          colorScale={signColors}
+        />
+      </ChartFrame>,
+    );
+    expect(Array.from(container.querySelectorAll("rect"), (bar) => bar.getAttribute("fill")))
+      .toEqual(["#dc2626", "#16a34a", "#94a3b8"]);
+  });
+
+  it("sem preset mantém a cor configurada na série", () => {
+    const { container } = render(
+      <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel="legado">
+        <ChartSeriesBar layout={layout} points={points} seriesColor="#3155aa" />
+      </ChartFrame>,
+    );
+    expect(Array.from(container.querySelectorAll("rect"), (bar) => bar.getAttribute("fill")))
+      .toEqual(["#3155aa", "#3155aa", "#3155aa"]);
+  });
+});
