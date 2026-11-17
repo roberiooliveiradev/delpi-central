@@ -41,6 +41,7 @@ _CHECKS = (
     ("checkout_write_denied", "COLLECTOR_CHECKOUT_WRITE_NOT_DENIED"),
     ("raw_socket_write_denied", "COLLECTOR_RAW_DOCKER_ACCESS_NOT_DENIED"),
     ("capabilities_zero", "COLLECTOR_LINUX_CAPABILITIES_NOT_ZERO"),
+    ("permitted_capabilities_zero", "COLLECTOR_PERMITTED_CAPABILITIES_NOT_ZERO"),
     ("ambient_capabilities_zero", "COLLECTOR_AMBIENT_CAPABILITIES_NOT_ZERO"),
     ("no_new_privileges", "COLLECTOR_NO_NEW_PRIVILEGES_NOT_ESTABLISHED"),
     ("seccomp_filter", "COLLECTOR_SECCOMP_FILTER_NOT_ESTABLISHED"),
@@ -59,6 +60,7 @@ class CollectorPostureFacts:
     checkout_write_denied: bool | None
     raw_socket_write_denied: bool | None
     capabilities_zero: bool | None
+    permitted_capabilities_zero: bool | None
     ambient_capabilities_zero: bool | None
     no_new_privileges: bool | None
     seccomp_filter: bool | None
@@ -95,39 +97,40 @@ def _proc_flags(path: Path = _PROC_STATUS) -> tuple[bool | None, ...]:
         with path.open("rb") as handle:
             data = handle.read(8193)
         if len(data) > 8192:
-            return (None, None, None, None)
+            return (None, None, None, None, None)
         text = data.decode("ascii")
         values = {}
         for line in text.splitlines():
             if ":" in line:
                 key, value = line.split(":", 1)
-                if key in ("CapEff", "CapAmb", "NoNewPrivs", "Seccomp"):
+                if key in ("CapEff", "CapPrm", "CapAmb", "NoNewPrivs", "Seccomp"):
                     values[key] = value.strip()
         def zero_cap(name: str) -> bool | None:
             value = values.get(name, "")
             return int(value, 16) == 0 if re.fullmatch(r"[0-9a-fA-F]{1,32}", value) else None
         cap_eff = zero_cap("CapEff")
+        cap_prm = zero_cap("CapPrm")
         cap_amb = zero_cap("CapAmb")
         nnp = values.get("NoNewPrivs")
         seccomp = values.get("Seccomp")
         return (
             cap_eff,
+            cap_prm,
             cap_amb,
             nnp == "1" if nnp in ("0", "1") else None,
             seccomp == "2" if seccomp in ("0", "1", "2") else None,
         )
     except (OSError, UnicodeError, ValueError):
-        return (None, None, None, None)
+        return (None, None, None, None, None)
 
 
-def _writable(path: Path, *, check_exists: bool = False) -> bool | None:
+def _writable(path: Path, *, absent_denied: bool = False) -> bool | None:
     """Observe DAC effective access without connecting/opening a Docker API."""
     try:
-        if check_exists:
-            try:
-                path.stat()
-            except FileNotFoundError:
-                return False
+        try:
+            path.stat()
+        except FileNotFoundError:
+            return False if absent_denied else None
         return os.access(path, os.W_OK, effective_ids=True)
     except (OSError, NotImplementedError, TypeError, ValueError):
         return None
@@ -135,7 +138,7 @@ def _writable(path: Path, *, check_exists: bool = False) -> bool | None:
 
 def _raw_socket_denied() -> bool | None:
     for path in _RAW_DOCKER_SOCKETS:
-        writable = _writable(path, check_exists=True)
+        writable = _writable(path, absent_denied=True)
         if writable is None:
             return None
         if writable:
@@ -166,7 +169,7 @@ def observe_current_process() -> CollectorPostureFacts:
         privileged_absent = not bool(names & _PRIVILEGED_GROUPS)
     except (OSError, KeyError, TypeError, ValueError):
         pass
-    cap_eff, cap_amb, nnp, seccomp = _proc_flags()
+    cap_eff, cap_prm, cap_amb, nnp, seccomp = _proc_flags()
     checkout_writable = _writable(_CHECKOUT)
     return CollectorPostureFacts(
         named_account_matches_process=named,
@@ -178,6 +181,7 @@ def observe_current_process() -> CollectorPostureFacts:
         ),
         raw_socket_write_denied=_raw_socket_denied(),
         capabilities_zero=cap_eff,
+        permitted_capabilities_zero=cap_prm,
         ambient_capabilities_zero=cap_amb,
         no_new_privileges=nnp,
         seccomp_filter=seccomp,
