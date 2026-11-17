@@ -15,6 +15,8 @@ import stat
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from .atlas_hml_posix_acl_review import has_no_extended_posix_acl
+
 from .atlas_hml_snapshot_candidate import (
     SnapshotContractError,
     SnapshotDiagnostic,
@@ -93,6 +95,8 @@ def _review_from_directory(
             or stat.S_IMODE(parent.st_mode) != _DIRECTORY_MODE
         ):
             raise HMLSnapshotFileError("HML_SNAPSHOT_DIRECTORY_UNSAFE")
+        if not has_no_extended_posix_acl(directory_fd, directory=True):
+            raise HMLSnapshotFileError("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED")
 
         file_fd = os.open(
             _FILENAME,
@@ -110,6 +114,8 @@ def _review_from_directory(
             or not 1 <= before.st_size <= _MAX_PAYLOAD
         ):
             raise HMLSnapshotFileError("HML_SNAPSHOT_FILE_UNSAFE")
+        if not has_no_extended_posix_acl(file_fd, directory=False):
+            raise HMLSnapshotFileError("HML_SNAPSHOT_FILE_ACL_UNTRUSTED")
 
         now_utc = now.astimezone(timezone.utc)
         observed_fs = datetime.fromtimestamp(before.st_mtime, timezone.utc)
@@ -127,6 +133,11 @@ def _review_from_directory(
             or _metadata_signature(parent) != _metadata_signature(parent_again)
         ):
             raise HMLSnapshotFileError("HML_SNAPSHOT_FILE_CHANGED")
+        # Repeat FD-based ACL checks after I/O; root compromise remains out of scope.
+        if not has_no_extended_posix_acl(directory_fd, directory=True):
+            raise HMLSnapshotFileError("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED")
+        if not has_no_extended_posix_acl(file_fd, directory=False):
+            raise HMLSnapshotFileError("HML_SNAPSHOT_FILE_ACL_UNTRUSTED")
 
         try:
             return review_untrusted_snapshot(raw, now=now)
