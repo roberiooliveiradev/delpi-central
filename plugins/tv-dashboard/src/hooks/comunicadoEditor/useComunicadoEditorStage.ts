@@ -388,12 +388,15 @@ export function useComunicadoEditorStage() {
     snapToGrid: prefs.snapToGrid,
     setSnapToGrid: (value: boolean | ((prev: boolean) => boolean)) => {
       const next = typeof value === "function" ? value(prefsRef.current.snapToGrid) : value;
+      // O ref usado pelo pointerup deve refletir o toggle imediatamente.
+      snapToGridRef.current = next;
       patchPrefs({ snapToGrid: next });
     },
     snapToGridRef,
     snapToObjects: prefs.snapToObjects,
     setSnapToObjects: (value: boolean | ((prev: boolean) => boolean)) => {
       const next = typeof value === "function" ? value(prefsRef.current.snapToObjects) : value;
+      snapToObjectsRef.current = next;
       patchPrefs({ snapToObjects: next });
     },
     snapToObjectsRef,

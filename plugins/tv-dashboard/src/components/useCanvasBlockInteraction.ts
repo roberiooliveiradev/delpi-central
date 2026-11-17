@@ -330,7 +330,10 @@ export function useCanvasBlockInteraction({
     applyDragMoveRef.current(event);
   };
 
-  pointerListenersRef.current.onPointerUp = () => {
+  pointerListenersRef.current.onPointerUp = (event: PointerEvent) => {
+    // O pointerup pode conter a última coordenada não recebida no pointermove.
+    // Aplicá-la ANTES do commit impede o bloco de recuar ao ser solto.
+    applyDragMoveRef.current(event);
     finishInteraction();
   };
 
