@@ -91,7 +91,7 @@ checklist_template (template_id UUID, code)          ← identidade do catálogo
 
 ### 5.2 Nova sequência (o "recomeçar em V1")
 
-Operação governada `start_checklist_sequence` (admin, `manage`, idempotente):
+Operação governada `start_checklist_sequence` (admin — **um único usuário com `controllership-finance.manage` efetivo**, D4 **DECIDED_BY_PO**: sem segundo aprovador/four-eyes; exige confirmação explícita da operação excepcional, `reason` obrigatório, inventário de dependências, OCC, idempotência, auditoria e read-back; sem novo permission code):
 
 1. **Pré-condição fail-closed:** todas as versões da série ativa eliminadas definitivamente (`delete_template_version` — já existe, com manifesto OCC) **ou** explicitamente encerradas; zero `monthly_competence` viva vinculada à série anterior (fail-closed se houver).
 2. Em uma transação: marca série anterior `CLOSED` (coluna `series_state` ou derivável), `series_no = max(series)+1`, insere nova versão `version=1` PUBLISHED com `effective_from_period` informado e `series_no` novo.
@@ -99,39 +99,65 @@ Operação governada `start_checklist_sequence` (admin, `manage`, idempotente):
 4. Eventos: `CHECKLIST_SEQUENCE_STARTED` (detail: `series_no`, `supersedes_series`, `effective_from`, `reason`, `actor`) + `DRAFT_CREATED`/`VERSION_PUBLISHED` da nova V1 (com `series` no detail).
 5. `list_template_events`: `COALESCE(v.version, detail->>'version')` passa a compor `(detail->>'series', version)` — sem ambiguidade.
 
-### 5.3 Revisões internas (edição contínua da V1 publicada)
+### 5.3 Revisões internas — Modelo A (cabeçalho + linhas de alteração)
 
-Nova tabela (migration V031+):
+**Alternativas avaliadas:** (B) evento único com `changes[]` JSONB — mais simples mas impede query por item e auditoria relacional; (C) snapshot completo por revisão — reconstrução trivial mas custo O(itens) por alteração e duplicidade com a própria tabela de itens. **Modelo A adotado** — espelha o padrão já vigente `document_requirement_operation` (cabeçalho) + steps do planner (filhos) e `closing_audit_event` (evento por item): auditável por item, replayável, consultável.
 
 ```sql
+-- Cabeçalho: uma linha por operação administrativa atômica
 checklist_version_revision (
   revision_id    UUID PK DEFAULT gen_random_uuid(),
   version_id     UUID NOT NULL REFERENCES checklist_template_version,
-  revision_seq   INT  NOT NULL,           -- == version.revision após aplicar
-  operation      VARCHAR(16) NOT NULL     -- ADD | UPDATE | RETIRE | REORDER | REACTIVATE
+  revision_seq   INT  NOT NULL,              -- == version.revision após aplicar
+  operation      VARCHAR(16) NOT NULL        -- ADD|UPDATE|RETIRE|REORDER|REACTIVATE|REVERT|BATCH
                  CHECK (operation IN (...)),
-  item_key       VARCHAR(32) NOT NULL,
-  before_json    JSONB,                   -- estado anterior do item (ou null p/ ADD)
-  after_json     JSONB,                   -- estado posterior (ou null p/ RETIRE)
-  reason         TEXT,
+  reason         TEXT,                       -- obrigatório em RETIRE/REVERT/migração
   actor_subject  UUID NOT NULL,
   idempotency_key VARCHAR(80) NOT NULL,
+  fingerprint    CHAR(64) NOT NULL,          -- sha256 da composição resultante (read-back)
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (version_id, revision_seq),
   UNIQUE (version_id, idempotency_key)
-)
+);
+
+-- Filhos: uma linha por item afetado (deltas completos por item)
+checklist_version_revision_change (
+  change_id      UUID PK DEFAULT gen_random_uuid(),
+  revision_id    UUID NOT NULL REFERENCES checklist_version_revision,
+  item_key       VARCHAR(32) NOT NULL,
+  item_id        UUID NOT NULL,              -- identidade estável
+  change_kind    VARCHAR(16) NOT NULL,       -- ADD|UPDATE|RETIRE|REORDER|REACTIVATE
+  before_json    JSONB,
+  after_json     JSONB,
+  UNIQUE (revision_id, item_key)
+);
 ```
 
-Semântica de `version.revision`: passa a ser **o contador de revisões aplicadas à versão** (hoje só conta updates de DRAFT — semântica compatível: continua monotônica e por versão). OCC nas operações de catálogo usa `expected_revision` + `expected_item_state`/`base_version` conforme a operação.
+`version.revision` = contador de revisões aplicadas à versão (semântica compatível com os draft-updates atuais — monotônica por versão). OCC: `expected_revision` no cabeçalho da operação.
 
-Operações (mesmo lock `FOR UPDATE` do template, mesma transação única):
-- `add_item(item, effective_from, effective_until?, expected_revision, reason, idempotency_key)`
-- `update_item(item_key, patch, expected_revision, reason, idempotency_key)` — regrava os campos admitidos; `item_key` nunca editável
-- `retire_item(item_key, effective_from?, expected_revision, reason, idempotency_key)` → `retired_at/retired_revision` no item (tombstone)
-- `reorder_items(ordering[], expected_revision, idempotency_key)` — `sort_order` em lote
-- `reactivate_item(item_key, …)` — desfaz tombstone do MESMO `item_id`
+**Operações** (mesmo lock `FOR UPDATE` do template, mesma transação única — uma revisão cobre N itens atomicamente):
 
-Cada operação: lock → replay idempotente → OCC → guards (ver §5.4) → mutação + `revision++` + `checklist_version_revision` + `closing_audit_event` (`CATALOG_ITEM_ADDED|UPDATED|RETIRED|REORDERED|REACTIVATED` com `series`,`version`,`revision_seq`) → gatilho de sincronização (Entregável 2) → ledger.
+| Operação | Entrada | Esperado | Resultado |
+|---|---|---|---|
+| `add_item` / `add_items` | item(s), `effective_from/until?`, `expected_revision`, reason?, idem-key | rev atual | N changes ADD, `revision++` |
+| `update_item` / `update_items` | `{item_key: patch}`, `expected_revision`, reason?, idem-key | rev + item ativo | N changes UPDATE (before/after por item); `item_key` nunca editável |
+| `retire_item` / `retire_items` | `{item_key}`, `expected_revision`, **reason**, idem-key | rev + item ativo | item `retired_at/retired_revision` (tombstone); N changes RETIRE |
+| `reorder_items` | `ordering[]`, `expected_revision`, idem-key | rev + conjunto íntegro | N changes REORDER (sort_order before/after) |
+| `reactivate_item` | `item_key`, `expected_revision`, idem-key | tombstone do mesmo `item_id` | change REACTIVATE, tombstone removido |
+| `revert_revision` | `revision_seq`, `expected_revision`, **reason**, idem-key | rev alvo existe | nova revisão REVERT com `after := before` da alvo (trilha preservada, nunca delete) |
+
+Cada operação: lock → replay por `idempotency_key` → OCC `expected_revision` → guards §5.4 → mutações + `revision++` → header + changes + `fingerprint` → `closing_audit_event` (`CATALOG_ITEM_ADDED|UPDATED|RETIRED|REORDERED|REACTIVATED|REVISION_REVERTED` com `series`,`version`,`revision_seq`) → gatilho de sync (doc 174) → read-back por fingerprint.
+
+**Reconstrução histórica (§7.4 do mandato):**
+
+- **V1 revisão N:** replay dos changes por `revision_seq` ≤ N sobre o conjunto base (seed da versão) — ou filtro `retired_at IS NULL OR retired_revision > N` se tombstones carregam `retired_revision`.
+- **Item em revisão N:** último `change` por `item_key` com `revision_seq ≤ N`.
+- **Composição em data D:** mesma consulta filtrando `created_at ≤ D`.
+- **Composição na abertura do fechamento X:** `competence_checklist_item` já é a cópia congelada — não depende de reconstrução (PROVEN, invariante preservado).
+- **V1 antiga × V1 nova:** `(series=1, version=1)` vs `(series=2, version=1)` — sem ambiguidade por construção.
+- **Fingerprint determinístico:** sha256 sobre o conjunto canônico `(item_id, item_key, campos vigentes, sort_order)` ordenado — verificável por read-back independente.
+
+**Identidades (§7.5):** `template` = catálogo; `series` = geração de numeração; `version` = número visível na série; `version_id` = identidade física; `revision`/`revision_seq` = passo de edição dentro da versão publicada; `revision_id` = operação administrativa; `item_id` = identidade estável do requisito; `item_key` = chave de negócio imutável na série. Sem sobrecarga de campos.
 
 ### 5.4 Guards preservados e revisados
 
@@ -142,16 +168,18 @@ Cada operação: lock → replay idempotente → OCC → guards (ver §5.4) → 
 | `stale_revision` (OCC) | mantido — âncora passa a ser `version.revision` |
 | `catalog_draft_conflict` | **mantido** — edição in-place só em PUBLISHED da série ativa; DRAFT/REVIEW coexistem pelo fluxo legado de baseline |
 | `retroactive_effective_period` | **mantido** para `effective_from` de itens (exceção: operação governada de migração, §8) |
-| `window_covers_open_competence` | **substituído pela sincronização automática** — a divergência deixa de ser proibida e passa a ser propagada; o guard permanece APENAS para itens cobertos por pacote SUBMITTED (item-locked, ver Entregável 2 §4) |
+| `window_covers_open_competence` | **substituído pela sincronização automática** — a divergência deixa de ser proibida e passa a ser propagada; elegibilidade pelo predicado `OPEN ∧ first_completed_at IS NULL ∧ PENDING` (doc 174 §2) — competência historicamente concluída nunca sincroniza |
 | `empty_resulting_checklist` | mantido — retirar o último item exige `allow_empty` explícito |
 | `WindowCoversOpenCompetence` no `publish_version`/`inactivate_version` legados | mantido — fluxo de nova versão numerada segue prospectivo |
 
 ### 5.5 Consulta de histórico e comparação
 
-- `GET /admin/checklist-templates/{id}/versions/{series}/{version}/revisions[?item_key=]` — lista `checklist_version_revision` + eventos correlatos.
-- `GET .../revisions/{seq}` — revisão puntual com before/after.
-- Diferença entre revisões derivada por composição de `before_json`/`after_json` (deltas já são completos por item — reconstrução sem snapshot auxiliar).
-- Reversão governada: `POST .../revisions/{seq}/revert` = nova revisão com `after_json := before_json` da alvo (nunca delete da trilha).
+- `GET /admin/checklist-templates/{id}/versions/{series}/{version}/revisions[?item_key=]` — revisões (headers) + changes por item + eventos correlatos.
+- `GET .../revisions/{seq}` — revisão puntual: header + `changes[]` + `fingerprint`.
+- Diferença entre revisões: composição de changes `> seqA AND <= seqB`; estado de item/data por replay (§5.3).
+- Reversão governada: `POST .../revisions/{seq}/revert` — nova revisão `REVERT` (motivo obrigatório); trilha nunca deletada.
+
+**Regra de `reason` (D7 resolvida por direção):** `RETIRE`, `REVERT` e operações de migração exigem motivo; `ADD`/`UPDATE`/`REORDER`/`REACTIVATE` registram autor+before/after com motivo opcional — sem regra vigente mais restritiva no contrato atual.
 
 ## 6. Matriz de impacto contratual
 
@@ -197,12 +225,16 @@ Ordem transacional proposta (operação governada única, dry-run obrigatório a
 - Rotas: série default/legado, 401/403, erros tipados.
 - Regressão: `test_pg_document_requirement.py`, `test_pg_closing_checklist.py`, `test_pg_checklist_version_delete.py` devem permanecer verdes (compat) ou ser ajustados conscientemente.
 
-## 10. DECISION_REQUIRED remanescentes
+## 10. DECISION_REQUIRED remanescentes (reconciliadas R3)
 
-1. **Unificação do `document_requirement`** — absorvê-lo na semântica de revisões por item (recomendado: uma fonte de verdade) ou manter os dois fluxos (divergência de fonte para a mesma regra). *Decisão arquitetural — GPT Arquiteto.*
-2. **Identidade pública de versão nos paths**: `/series/{s}/versions/{v}` explícito vs `{v}` resolvendo na série ativa (default legado). *Recomendo o segundo (compat total).*
-3. **Retroação de `effective_until`**: permitir `until` retroativo quando a competência afetada já está concluída (não altera snapshot dela) ou manter bloqueio total (recomendado — simplicidade e fail-closed).
-4. **Governança de `start_checklist_sequence`**: exigir `reason` + segundo aprovador (four-eyes) para a operação excepcional? *Recomendo sim — é a operação mais destrutiva-adjacente do domínio.*
+1. **D1 — Unificação do `document_requirement`** — direção: **um único caso de uso canônico** de alteração de exigências (o de revisões §5.3); o adapter legado `apply_document_requirement` delega a ele traduzindo os steps, preservando o contrato existente. Dois writers independentes são proibidos. *Decisão técnica — GPT Arquiteto.*
+2. **D2 — Paths de série** — direção: **série ativa por padrão** nas operações correntes; série explícita exigida apenas em consultas de histórico. Sem ambiguidade (só existe uma série `ACTIVE`). *Fechável tecnicamente.*
+3. **D3 — `effective_until` retroativo** — direção: **manter guard conservador** até existir política temporal comprovada. *Fechável tecnicamente.*
+4. **D4 — Four-eyes em `start_checklist_sequence`** — **DECIDED_BY_PO**: aprovação única com `manage` efetivo, sem duplo aprovador; confirmação explícita + `reason` + OCC + idempotência + auditoria + read-back (§5.2). A decisão de autorização não autoriza executar a migração agora.
+5. **D5 — Outbox vs síncrono** — resolvido por evidência: padrão outbox+poller durável já é canônico na BFF (doc 174 §4.1). *Fechado tecnicamente.*
+6. **D6 — Correção/pendência aberta em item retirado** — **DECIDED_BY_PO**: encerramento automático, restrito ao requisito retirado — correção `status='REJECTED'`+`review_reason='requirement_retired'`; pendência `RESOLVED`+`catalog_retire` (doc 174 §3). Reativação é simétrica na propagação, nunca na destruição do histórico (doc 174 §3.1).
+7. **D7 — `reason` obrigatório** — resolvido por direção (§5.5).
+8. **D8 — Validade da evidência na reativação** — `DECISION_REQUIRED` (PO): evidência pré-retirada conta para a exigência reativada? Default conservador até decisão: exigência volta `EXPECTED` e evidência fica visível no histórico (doc 174 §10).
 
 ## 11. Consequências
 
