@@ -1849,10 +1849,11 @@ _BALLOON_MARGIN_FRAC = 0.025
 # Fração mínima do círculo ocupada pelo glifo do rótulo — balões
 # preenchem quase todo o círculo; marcadores de zona/carimbo não.
 _BALLOON_GLYPH_FILL_MIN = 0.60
-# Dimensão mínima absoluta e relativa da primitiva — bowl de glifo
-# ('o', '0', 'e') e microcírculos não são balões de item.
+# Dimensão mínima absoluta da primitiva — bowl de glifo ('o', '0',
+# 'e') e microcírculos não são balões de item. Não há razão relativa
+# mínima: a caixa OCR do rótulo pode exceder o interior do contorno
+# (~1,3× medido em desenho real com padding de descender).
 _BALLOON_MIN_PRIM_PX = 24.0
-_BALLOON_PRIM_MIN_RATIO = 1.0
 
 
 def _xyxy_of(box: list[float] | None) -> list[float] | None:
@@ -1974,10 +1975,7 @@ def _detect_balloon_candidates(
             reason = None
             tw, th = tb[2] - tb[0], tb[3] - tb[1]
             cw, ch = cb[2] - cb[0], cb[3] - cb[1]
-            if (
-                min(cw, ch) < max(_BALLOON_MIN_PRIM_PX,
-                                  max(tw, th) * _BALLOON_PRIM_MIN_RATIO)
-            ):
+            if min(cw, ch) < _BALLOON_MIN_PRIM_PX:
                 # primitiva pequena demais para envolver o rótulo —
                 # bowl de glifo ('o'/'0') e microcírculos não são balão
                 reason = "circle_too_small_for_label"
