@@ -7258,3 +7258,18 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **KNOWN ISSUES:** multipage group split + required-scope opaque remediated in verified scope; R5 multipage proven in sample. Open: INT-1 cognitive pagination convergence/no-progress and budget; T2-B comprehension error; partial INT-3 anchor demonstration; R4 restricted-identity AuthZ and dependent R6 negatives; VISTA carrier TO_INVENTORY; independent verifier BLOCKED pending external login/quota. Do not relabel these as solved by documentation. INT2 real eval 1557f58b9c15 positive but comparative superiority vs single-Agent NOT_PROVEN; reconcile 9/15 GROUNDED nominal rows discrepancy before reporting KPI.
 - **NEXT_BOUNDED_STEP_CANDIDATE:** COORDINATION_C3_T2_TWO_AGENT_LAYERED_HANDOFF_AND_FUNCTIONAL_RECOVERY — validate/correct INT-2→INT-1 interaction + INT-1 continuation, compare single-Agent A vs serial two-Agent B, with no new Agent/engine/registry and no INT-3/INT-4 implementation. NEXT remains subject to canonic ledger/phase and independent review.
 - **RESTRICTIONS:** PRODUCTION_DEPLOY=NOT_AUTHORIZED; TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO. DOCUMENTATION_ONLY does not imply test PASS or formal acceptance; VERIFIER=NOT_RUN_FOR_DOC_ONLY, previous independent verifier gap remains.
+
+## COORDINATION_C3_T2_TWO_AGENT_LAYERED_HANDOFF_AND_FUNCTIONAL_RECOVERY
+
+- **A/B REAL:** A `or-qwen14b-1d86e34f0958` (single) vs B
+  `or-qwen14b-1557f58b9c15` (two-agent seq) — INT2×15, mesmo SHA/modelo.
+- **RESULTADO:** GROUNDED 8/15 vs 8/15 — paridade; divergências
+  bidirecionais (A venceu B/G; B venceu C2/R6mt) consistentes com
+  variância. BUSINESS_OUTCOME_SUPERIORITY=NOT_PROVEN.
+- **HANDOFF:** invariantes verificados em código (H1/H8 fail-closed);
+  T2-B não reproduzido (flake única).
+- **SAFETY:** writes=0, injection refused, drift=0 em ambos os braços.
+- **VERIFIER:** engines bloqueados → INCONCLUSIVE r0, 0/3 rodadas.
+- **RESTRIÇÕES:** sem deploy, sem promoção, sem novos Agents,
+  sem avanço de fase.
+- **PACOTE:** `evidence/c3-t2-two-agent-ab/`.
