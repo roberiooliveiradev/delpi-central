@@ -7350,3 +7350,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   sob aggregation limitada a fontes de apresentação por contrato).
 - **EVIDENCE:** docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-anchor-recovery/
   (traces autocontidos + manifest com SHAs/run ids).
+- **VERIFIER (delpi-verifier, motor cursor/Composer, 2 rodadas):**
+  r1 REWORK — OC-1 MEDIA scoreboard arm B (7/9→6/9, traces versionados
+  mandam); r2 **ACCEPT_WITH_RESIDUAL** (relatório integral preservado em
+  evidence/c3-t2-anchor-recovery/verification/). Residuais declarados:
+  suite pytest não reexecutada pelo motor (docker exec/flask), brief
+  RQ/AC nominal ausente, higiene git (commits task dobrados por rebase
+  concorrente — conteúdo byte-idêntico confirmado em HEAD).
+- **ESTADO:** entrega aceita com residual; DEPLOY=NOT_RUN;
+  TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.

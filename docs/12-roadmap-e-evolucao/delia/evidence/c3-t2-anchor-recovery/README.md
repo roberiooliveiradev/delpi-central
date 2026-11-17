@@ -55,7 +55,7 @@ delia-api exit 0. Audits: phase3 + guardrails + docs + cursor-rules = 0.
 
 ## Real-model eval @3f1d7ab46f (9 cenários × 2 arms)
 
-ARM B (two-agent) or-qwen14b-43891bfb1938: 7/9 GROUNDED
+ARM B (two-agent) or-qwen14b-43891bfb1938: 6/9 GROUNDED
 - INT2_B: NON_GROUNDED→GROUNDED/SATISFIED — declaração limpa 1ª passada
   (operation=read, required_args={action:search,params:{}}, sem view);
   teo.read → total autoritativo 109 → SATISFIED.
