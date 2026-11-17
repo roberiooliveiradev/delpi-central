@@ -6,6 +6,8 @@ on:
       - "plugins/tv-dashboard/**"
       - "plugins/tv-dashboard-presentation/**"
       - "plugins/plugin-ui/**"
+      - "tv-dashboard-api/tv_app/application/services/data/display_format_service.py"
+      - "tv-dashboard-api/tests/test_display_format_service.py"
       - ".github/workflows/tv-dashboard-visual-quality.yml"
   push:
     branches: [main]
@@ -13,6 +15,8 @@ on:
       - "plugins/tv-dashboard/**"
       - "plugins/tv-dashboard-presentation/**"
       - "plugins/plugin-ui/**"
+      - "tv-dashboard-api/tv_app/application/services/data/display_format_service.py"
+      - "tv-dashboard-api/tests/test_display_format_service.py"
       - ".github/workflows/tv-dashboard-visual-quality.yml"
 
 permissions:
@@ -61,9 +65,27 @@ jobs:
         run: npm run build --prefix plugins/tv-dashboard
       - name: Regressão de polaridade e origem zero dos gráficos
         run: npm test --prefix plugins/plugin-ui -- src/components/charts/seriesChart/zeroBasedBarGeometry.test.tsx src/components/charts/seriesChart/layout.test.ts src/components/charts/seriesChartNullAlignment.test.tsx
+      - name: Regressão do velocímetro (cor do valor e símbolo %)
+        run: npm test --prefix plugins/plugin-ui -- src/components/charts/SpeedometerGauge.test.tsx
       - name: Build do kit visual compartilhado
         run: npm run build --prefix plugins/plugin-ui
       - name: Regressão do kit de tabelas
         run: npm test --prefix plugins/plugin-ui -- src/components/data/configurableTableParts.test.ts src/components/data/configurableTable/TableContainer.test.tsx
       - name: Regressão da apresentação
         run: npm test --prefix plugins/tv-dashboard-presentation -- src/GaugeChartView.test.tsx
+
+  table-display-api:
+    name: TV Dashboard - códigos literais no backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dependências de teste
+        run: python -m pip install pytest
+      - name: Regressão de formatação e códigos Protheus
+        working-directory: tv-dashboard-api
+        run: PYTHONPATH=. python -m pytest -q tests/test_display_format_service.py
