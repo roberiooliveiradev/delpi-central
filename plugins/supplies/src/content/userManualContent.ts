@@ -59,6 +59,50 @@ export const USER_MANUAL_CONTENT = {
     "Sem permissão (403): você não tem uso normal deste módulo. Aliases antigos não abrem o app.",
   sections: [
     {
+      id: "freight-impact",
+      title: "Frete sobre compras",
+      intro:
+        "Quer entender quanto o transporte representa nas compras nacionais? Abra Análises → Frete sobre compras. Você verá o percentual geral, a evolução mês a mês e o detalhe de cada nota fiscal.",
+      bullets: [
+        "Como consultar: escolha a unidade (Matriz SC, Filial ES ou todas as unidades às quais você tem acesso), informe o período de emissão das notas e clique em Aplicar filtros. O período pode ter até 367 dias, a partir de 2023. Use Atualizar para refazer a consulta.",
+        "O que significa o percentual? Ele mostra quanto o frete registrado para essas compras representa do custo das mercadorias. A conta é: (total de fretes vinculados ÷ total das compras consideradas) × 100.",
+        "Exemplo fácil: se o custo das compras foi de R$ 100.000 e o frete associado foi de R$ 2.000, o indicador será de 2%. Isso significa R$ 2 de frete para cada R$ 100 em compras consideradas.",
+        "Como é feito o total geral: primeiro o Portal soma todos os fretes encontrados e todos os custos das compras do período; depois divide um pelo outro. Ele não faz a média dos percentuais de cada nota, pois notas de valores diferentes têm pesos diferentes.",
+        "Frete por nota fiscal: a tabela mostra o custo dos produtos daquela nota, o frete encontrado para ela e a porcentagem correspondente. Também mostra quantos documentos de transporte estão relacionados à nota. Use Anterior e Próxima para consultar outras notas; os totais continuam considerando todo o período filtrado.",
+        "Evolução mensal: repete a mesma conta para as compras emitidas em cada mês. A data usada é a emissão da nota de compra, não a data em que o frete foi lançado.",
+        "Quais compras entram: notas normais de entrada de fornecedores com estado brasileiro informado no cadastro. As notas sem frete relacionado também entram no total das compras, para que o percentual geral não fique artificialmente maior.",
+        "De onde vêm os valores: o Portal consulta os custos registrados no Protheus, que podem ser diferentes do valor total impresso na nota fiscal. A consulta apenas apresenta informações; não altera dados no sistema.",
+        "Atenção à interpretação: frete de R$ 0 significa que não foi encontrado frete relacionado àquela nota na consulta. Isso não confirma que o transporte foi gratuito. Notas sem custo positivo dos produtos, ou com frete negativo, aparecem sem percentual e ficam fora do cálculo geral.",
+        "Se os números não parecerem corretos, confira primeiro a unidade, as datas, o cadastro do fornecedor e o vínculo do frete com a nota. A seleção de compras nacionais usa o estado do fornecedor no cadastro e ainda precisa ser validada com a área Fiscal antes de ser tomada como classificação definitiva.",
+      ],
+      faqs: [
+        {
+          q: "O que quer dizer um resultado de 2%?",
+          a: "Quer dizer que, para cada R$ 100 de custo de compras consideradas, foram encontrados R$ 2 de frete relacionado a elas. É uma proporção do período selecionado, não uma taxa cobrada por todos os fornecedores.",
+        },
+        {
+          q: "Por que uma nota mostra frete zerado?",
+          a: "Porque o Portal não encontrou um frete relacionado a essa nota nos registros consultados. O transporte pode ter ocorrido sem que o vínculo esteja disponível. A nota continua entrando no total de compras.",
+        },
+        {
+          q: "Por que o total de compras é diferente do valor das notas?",
+          a: "O indicador usa o custo dos produtos registrado no Protheus, não necessariamente o valor total mostrado no documento. Dependendo do lançamento, impostos e outros valores podem ser tratados de forma diferente.",
+        },
+        {
+          q: "Por que algumas notas aparecem sem percentual?",
+          a: "Quando o custo dos produtos está zerado ou negativo, ou o frete registrado é negativo, não há uma comparação válida. O Portal mostra a nota para conferência, mas não a inclui no percentual geral.",
+        },
+        {
+          q: "O percentual geral é a média das porcentagens das notas?",
+          a: "Não. O cálculo usa a soma de todos os fretes dividida pela soma de todas as compras consideradas. Assim, uma nota de R$ 50.000 pesa mais do que uma de R$ 500.",
+        },
+        {
+          q: "Não aparecem resultados ou não consigo acessar. O que faço?",
+          a: "Confira a unidade e o período, lembrando que a consulta usa a emissão da nota. Se o período tiver muitas notas, tente um intervalo menor. Se não tiver acesso à funcionalidade ou à unidade, solicite a liberação ao responsável pelo Portal.",
+        },
+      ],
+    },
+    {
       id: "supplier-performance",
       title: "IDF dos fornecedores",
       intro: "Em Análises → IDF dos fornecedores, acompanhe o Índice de Desempenho do Fornecedor por período e filial.",
@@ -85,6 +129,11 @@ export const USER_MANUAL_CONTENT = {
           want: "Ver indicadores do período",
           where: "Visão geral",
           how: "Filtros Hoje/Esta semana/Este mês… e Unidade (MultiSelect SC/ES); KPIs com Meta parcial ≠ Meta mês quando o SI distingue; Nota IDD do SI",
+        },
+        {
+          want: "Entender quanto o frete pesa nas compras",
+          where: "Frete sobre compras",
+          how: "Em Análises, escolha a unidade e as datas de emissão; consulte o percentual total, a evolução por mês e o detalhamento por nota fiscal",
         },
         {
           want: "Ver OTD com velocímetro",
@@ -195,6 +244,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — saudação com o primeiro nome da sessão, busca, favoritos, últimos acessos e caminhos por capability. O Início abre rápido: pendências operacionais ficam nas faixas Atenção das próprias listas e na Visão geral.",
         "Visão geral — indicadores consolidados do período e das unidades selecionadas; itens operacionais em Solicitações e Operações.",
         "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
+        "Frete sobre compras: percentual de frete vinculado às compras nacionais, comparação por mês e detalhamento por nota fiscal. Filtre por unidade e data de emissão da compra.",
         "Pedidos de compra — itens com saldo pendente de recebimento no recorte; hero com linhas/valor/atrasadas; Atenção Todos(N)/Atrasados(N) do resumo do servidor; filtros automáticos, Atualizar; Unidade como Santa Catarina / Espírito Santo; clique no PC para a ficha. Distinto do OTD de pontualidade e de Entregas / Atrasos.",
         "Entregas / Atrasos — recebimentos de matéria-prima (MP) já digitados, classificados em Em atraso ou No prazo. Período = data de digitação/entrada. Sem clique no pedido (histórico ≠ PC aberto).",
         "Estoque — posição física atual por produto, unidade e armazém, incluindo saldos positivos, zerados e negativos. Não calcula saldo disponível e não é estoque de segurança.",
