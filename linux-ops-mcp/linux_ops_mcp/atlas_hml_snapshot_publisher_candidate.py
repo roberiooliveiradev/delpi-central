@@ -18,6 +18,7 @@ import stat
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .atlas_hml_posix_acl_review import has_no_extended_posix_acl
 from .atlas_hml_snapshot_candidate import (
     SnapshotContractError,
     review_untrusted_snapshot,
@@ -119,6 +120,29 @@ def _validate_destination(
         or current.st_nlink != 1
     ):
         raise HMLSnapshotPublishError("HML_SNAPSHOT_DESTINATION_UNSAFE")
+    # Validate the existing regular destination via FD, not a racy pathname
+    # xattr lookup. os.stat above prevents opening FIFOs or symlinks.
+    existing_fd = -1
+    try:
+        existing_fd = os.open(
+            _FILENAME, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+            dir_fd=dir_fd,
+        )
+        opened = os.fstat(existing_fd)
+        if (
+            opened.st_dev != current.st_dev
+            or opened.st_ino != current.st_ino
+            or opened.st_uid != current.st_uid
+            or opened.st_gid != current.st_gid
+            or opened.st_mode != current.st_mode
+            or opened.st_ctime_ns != current.st_ctime_ns
+        ):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_DESTINATION_UNSAFE")
+        if not has_no_extended_posix_acl(existing_fd, directory=False):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_DESTINATION_ACL_UNTRUSTED")
+    finally:
+        if existing_fd >= 0:
+            os.close(existing_fd)
 
 
 def _publish_in_review_directory(
@@ -171,6 +195,8 @@ def _publish_in_review_directory(
             or stat.S_IMODE(parent.st_mode) != _DIRECTORY_MODE
         ):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_DIRECTORY_UNSAFE")
+        if not has_no_extended_posix_acl(directory_fd, directory=True):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED")
 
         _validate_destination(
             directory_fd, parent=parent, uid=owner_uid, gid=expected_gid,
@@ -201,6 +227,8 @@ def _publish_in_review_directory(
             or stage.st_nlink != 1
         ):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_UNSAFE")
+        if not has_no_extended_posix_acl(staged_fd, directory=False):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_ACL_UNTRUSTED")
 
         offset = 0
         while offset < len(raw):
@@ -213,6 +241,8 @@ def _publish_in_review_directory(
         stage_after = os.fstat(staged_fd)
         if stage_after.st_size != len(raw):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_UNSAFE")
+        if not has_no_extended_posix_acl(staged_fd, directory=False):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_ACL_UNTRUSTED")
 
         staged_path = os.stat(
             staged_name, dir_fd=directory_fd, follow_symlinks=False,
@@ -227,6 +257,8 @@ def _publish_in_review_directory(
             or stat.S_IMODE(staged_path.st_mode) != _FILE_MODE
         ):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_STAGE_CHANGED")
+        if not has_no_extended_posix_acl(directory_fd, directory=True):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED")
 
         # Check the existing name again; this is NOT an anti-root TOCTOU proof.
         _validate_destination(
@@ -254,6 +286,10 @@ def _publish_in_review_directory(
             or _dir_identity(path_parent) != _dir_identity(parent)
         ):
             raise HMLSnapshotPublishError("HML_SNAPSHOT_PUBLISHED_STATE_UNVERIFIED")
+        if not has_no_extended_posix_acl(directory_fd, directory=True):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_DIRECTORY_ACL_UNTRUSTED")
+        if not has_no_extended_posix_acl(staged_fd, directory=False):
+            raise HMLSnapshotPublishError("HML_SNAPSHOT_PUBLISHED_ACL_UNTRUSTED")
 
     except HMLSnapshotPublishError:
         raise
