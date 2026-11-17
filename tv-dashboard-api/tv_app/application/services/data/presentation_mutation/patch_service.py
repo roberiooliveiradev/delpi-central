@@ -96,6 +96,16 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
 
 _PATCH_NATIVE_KEYS = patch_native_keys()
 
+# Um frame fornecido explicitamente pelo usuário/cliente é autoridade de posição.
+# A auditoria pode sinalizar margem/overflow/overlap, mas a correção automática
+# não deve mover o elemento sem uma operação explícita de revisão de layout.
+_EXPLICIT_FRAME_GEOMETRY_ISSUES = frozenset({
+    "safe_area_violation",
+    "block_frame_overflow",
+    "block_frame_non_positive",
+    "block_overlap",
+})
+
 _VISUAL_PROJECTION_DEFAULTS = {
     "kpi_view": "kpiProjection",
     "chart_view": "chartProjection",
@@ -1418,7 +1428,11 @@ class PresentationPatchService:
                 )
                 safe_fixes.extend(
                     self._apply_safe_layout_corrections(
-                        ctx, cfg, slide_id=str(sid), fix_all=fix_all
+                        ctx,
+                        cfg,
+                        slide_id=str(sid),
+                        fix_all=fix_all,
+                        authored_frame_ids=informed_frame_ids,
                     )
                 )
                 cleaned = sanitize_and_hydrate_comunicado_config(cfg, catalog=self._catalog)
@@ -1561,6 +1575,7 @@ class PresentationPatchService:
         *,
         slide_id: str,
         fix_all: bool,
+        authored_frame_ids: set[str],
     ) -> list[dict[str, Any]]:
         """Owner-side deterministic safe corrections on the candidate.
 
@@ -1571,6 +1586,10 @@ class PresentationPatchService:
         safeAutoFix issue is corrected. Issues with no provably-safe fix
         (e.g. low contrast on an unknown background) are left untouched and
         stay visible in the audit/outcome — the owner never guesses.
+
+        Frames explicitly authored by upsert/create are never automatically
+        repositioned by geometry issues in the default quality loop. An
+        explicit ``apply_safe_layout_fixes`` can still repair their geometry.
 
         Mutates ``cfg`` in place; the caller sanitizes/validates afterwards
         so the corrected candidate is the object that gets fingerprinted,
@@ -1605,6 +1624,14 @@ class PresentationPatchService:
                 if isinstance(issue, dict)
                 and _issue_identity_key(str(issue.get("id") or ""))
                 not in before_keys
+                and not (
+                    str(issue.get("id") or "").split(":", 1)[0]
+                    in _EXPLICIT_FRAME_GEOMETRY_ISSUES
+                    and any(
+                        str(block_id) in authored_frame_ids
+                        for block_id in (issue.get("blockIds") or [])
+                    )
+                )
             }
             if not issue_ids:
                 return []
