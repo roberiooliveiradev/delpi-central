@@ -418,25 +418,26 @@ def test_settings_update_partial_versions_rejected() -> None:
         )
 
 
-def test_settings_update_unguarded_legacy_path_still_works() -> None:
+def test_settings_update_without_versions_rejected() -> None:
     conn = _FakeConnection()
     conn.fetch_override = _queued_fetch([
         {"setting_key": "parameters.global", "payload_json": {"items": []}},
         {"setting_key": "governance.notes", "payload_json": {"items": []}},
     ])
     repo = _settings_repo(conn)
-    result = repo.update_settings(
-        parameters={"items": []},
-        governance={"items": []},
-        actor_user_id="u-1",
-    )
-    assert "message" in result
+    with pytest.raises(StrategicIndicatorsAdminConflictError):
+        repo.update_settings(
+            parameters={"items": []},
+            governance={"items": []},
+            actor_user_id="u-1",
+            expected_versions=None,
+        )
     unguarded = [
         s for s, _ in conn.statements
         if "UPDATE strategic_indicators.module_settings" in s
         and "xmin::text" not in s
     ]
-    assert len(unguarded) == 2
+    assert unguarded == []
 
 
 def test_get_settings_exposes_versions() -> None:

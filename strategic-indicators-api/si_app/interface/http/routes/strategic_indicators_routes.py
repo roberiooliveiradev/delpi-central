@@ -383,26 +383,22 @@ def get_strategic_indicators_settings():
 async def update_strategic_indicators_settings(
     body: UpdateStrategicIndicatorsSettingsBodySchema,
     request: Request,
-    expected_parameters_xmin: str | None = Query(None),
-    expected_governance_xmin: str | None = Query(None),
+    expected_parameters_xmin: str = Query(...),
+    expected_governance_xmin: str = Query(...),
 ):
     try:
         actor_user_id = _extract_actor(request)
 
         expected_versions = {
-            key: value
-            for key, value in (
-                ("parameters.global", expected_parameters_xmin),
-                ("governance.notes", expected_governance_xmin),
-            )
-            if value
+            "parameters.global": expected_parameters_xmin,
+            "governance.notes": expected_governance_xmin,
         }
 
         dto = UpdateStrategicIndicatorsSettingsRequest(
             parameters=body.parameters.model_dump(),
             governance=body.governance.model_dump(),
             actor_user_id=actor_user_id,
-            expected_versions=expected_versions or None,
+            expected_versions=expected_versions,
         )
 
         use_case = build_update_strategic_indicators_settings_use_case()

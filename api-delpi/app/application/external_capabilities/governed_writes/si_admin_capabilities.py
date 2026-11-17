@@ -9,6 +9,8 @@ Capability surface (closed set — nothing else is executable):
   si.department.create        PREPARE+ACT — create department
   si.department.update        PREPARE+ACT — update (incl. rename)
   si.department.activate      PREPARE+ACT — activate department
+  si.department.deactivate    PREPARE+ACT — deactivate department
+  si.settings.update          PREPARE+ACT — full-replace settings (OCC)
   si.indicator.create         PREPARE+ACT — create structural indicator
   si.indicator.update         PREPARE+ACT — update (incl. rename)
   si.indicator.activate       PREPARE+ACT — activate indicator

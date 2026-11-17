@@ -15,6 +15,6 @@ class StrategicIndicatorsSettingsRepositoryPort(ABC):
         parameters: dict,
         governance: dict,
         actor_user_id: str | None,
-        expected_versions: dict[str, str] | None = None,
+        expected_versions: dict[str, str],
     ) -> dict:
         raise NotImplementedError
