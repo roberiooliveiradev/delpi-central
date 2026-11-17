@@ -29,11 +29,11 @@ def atlas_collector_identity() -> tuple[int, int]:
     try:
         account = pwd.getpwnam("atlas-hml")
         group = grp.getgrnam("atlas-hml")
-    except KeyError:
+    except (KeyError, OSError):
         raise HMLUDSPolicyError("HML_PROXY_IDENTITY_UNAVAILABLE") from None
     if (
-        account.pw_uid <= 0
-        or group.gr_gid <= 0
+        type(account.pw_uid) is not int or account.pw_uid <= 0
+        or type(group.gr_gid) is not int or group.gr_gid <= 0
         or account.pw_gid != group.gr_gid
         or account.pw_shell not in ("/usr/sbin/nologin", "/sbin/nologin")
     ):
