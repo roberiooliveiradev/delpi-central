@@ -12,8 +12,8 @@
 | **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f75d2385fe`, deploy PROD e HML em 17/11/2026; R8 obrigatório no P4 (ver §7) |
 | **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
 | **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f124b28a9d`, deploy PROD e HML em 17/11/2026 (ver §11) |
-| **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§12) |
-| P6 | 7 | Página pública nova da Pesquisa no `public-hub` | **Somente HML** | A gerar |
+| **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
+| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **PRONTO PARA EXECUÇÃO** (§14) — aguarda confirmação da D1 |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -578,3 +578,108 @@ Questionário fictício neutro (ex.: avaliação de um treinamento interno), 2 e
 | F5 | Suite, build, auditorias, verificador; deploy PROD e HML do `plugin-ui` | Saídas |
 
 **Publicação:** worktree temporário do §6.8 item 4 se o stage ou o `main` local estiverem sujos.
+
+---
+
+## 13. Revisão do P5.1 (17/11/2026)
+
+**Veredito do coordenador:** `ACCEPT`. Conferido: commit `98cc79573a` em `main`, exatamente os 3 arquivos do §12.1; trava `submittingRef` marcada antes do `await` e liberada no `finally`. O teste F1 falhou no código do P5 (2 chamadas) e passa no P5.1. A checagem de exports acusa a ausência de `GuidedQuestionnaire`. Persistência coberta em `localStorage`, `sessionStorage` e cookie. Verificador: `ACCEPT_WITH_RESIDUAL` (só instabilidade pré-existente de testes não relacionados, sob carga). R14–R16 fechados; condição para o P6 satisfeita.
+
+## 14. Pacote P6 — Página pública nova da Pesquisa (public-hub) — SOMENTE HML
+
+**Fase do plano:** 7. **Pré-requisitos:** P1–P5.1 aceitos; **D1 confirmada pelo solicitante.**
+
+### 14.1 Objetivo
+
+Substituir a implementação antiga do formulário público por uma **página nova e dedicada** que monta a Pesquisa com o `GuidedQuestionnaire` do PluginUI, corrigir o logo 403 (D3) e homologar em **HML**. Nenhuma mudança no backend.
+
+### 14.2 Decisões que este pacote aplica
+
+- **D1 (recomendação, aguardando confirmação):** manter o endereço `/p/commercial/form/{token}` (página `commercial.form` do registro do `public-hub`) apontando para a página nova — o link gerado pela `commercial-api` não muda. Se o solicitante decidir outro endereço, **parar**: exige mudança no backend e novo pacote.
+- **D2 (privacidade):** sem texto de privacidade até o responsável LGPD fornecer; a abertura mostra só “Não pedimos seus dados pessoais”.
+- **D3 (logo 403):** corrigir no Dockerfile do `public-hub`, de forma que não dependa das permissões do clone no servidor.
+
+### 14.3 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/public-hub/src/apps/commercial/satisfaction-survey/` (nova pasta) | `SatisfactionSurveyPage.tsx` (adaptador), `surveyDefinition.ts` (perguntas da API → definição do kit), `surveyTexts.ts` (textos da UI-03 §3.6), `surveyPayload.ts` (respostas do kit → `SurveyAnswerPayload`), `surveyResults.ts` (desfechos da API → tela) + testes |
+| `plugins/public-hub/src/apps/commercial/pages.tsx` | Página `form` aponta para a nova; título do documento “Pesquisa de Satisfação de Clientes” |
+| `plugins/public-hub/src/apps/commercial/` (antigos) | **Remover** `FormPage.tsx`, `FormPage.test.tsx`, `SurveyStateView.tsx`, `form.css`; **manter** `api.ts`, `api.test.ts`, `testFixtures.ts`; `surveyForm.ts` mantido **só** se reaproveitado pela nova pasta (senão remover junto com seu teste) |
+| `plugins/public-hub/src/shell/types.ts`, `PublicShell.tsx` (+ teste) | Nova opção de `chrome` **sem decoração** (ex.: `"bare"`): sem `pub-stage`, sem `ThemeToggle`, sem logo do shell; padrão das demais apps inalterado |
+| `plugins/public-hub/src/test/pluginUiStub.tsx` | Só se o stub precisar expor os novos exports para os testes |
+| `plugins/public-hub/Dockerfile` | D3: permissões de leitura garantidas no estágio final (ex.: `COPY --chmod` ou `chmod -R a+rX` no diretório servido) |
+
+Fora do escopo: `commercial-api`, `plugin-ui` (salvo defeito bloqueante — parar e reportar), Portal Comercial interno, outras apps públicas.
+
+### 14.4 Entregáveis
+
+**a) Definição (`surveyDefinition.ts`)** — a partir de `SurveyQuestionnaire` da API:
+- 3 etapas de 5 perguntas, na ordem do catálogo: etapa 1 = dimensões 1–5; etapa 2 = dimensões 6–10; etapa 3 = satisfação geral (11), recomendação (12) e abertas (13–15). Título das etapas: “Avaliação dos serviços — parte 1”, “— parte 2”, “Visão geral e comentários”.
+- Dimensões (1–10): escala 1–5 obrigatória com N/A; `optionLabel(n)` = “n — significado”; `endLabels` “1 · Muito insatisfeito” / “5 · Muito satisfeito” abaixo; `selectionCaption` “Sua nota: n · significado”; `reviewValue` “n · significado”; `eyebrow` = título da dimensão vindo da API.
+- Satisfação geral (11): igual, **sem** N/A.
+- Recomendação (12): 0–10 obrigatória, sem N/A, legenda **acima** “0 · Nada provável” / “10 · Extremamente provável”, `narrowColumns: 6`, “Sua nota: n”.
+- Abertas (13–15): texto opcional, rótulo “Sua resposta”, exemplo “Escreva sua resposta”, `maxLength` do limite atual (`OPEN_TEXT_MAX_LENGTH`).
+- Enunciados **literais** da API; nenhuma pergunta inventada; falhar fechado (tela de indisponível) se o questionário vier incompleto.
+
+**b) Payload (`surveyPayload.ts`)** — respostas do kit → `SurveyAnswerPayload`: N/A → `null` em `dimensions`; abertas vazias → `null`; notas como número; testes cobrindo todos os campos.
+
+**c) Desfechos (`surveyResults.ts`)** — `submitted` → resultado de sucesso (“Obrigado por participar!” + mensagem da UI-03 §3.5 + “Você já pode fechar esta página.”); `already_submitted`, `not_open`, `closed`, `invalid` → resultado terminal com os textos atuais; `rejected` e `temporary_error` → **nova tentativa** na revisão com a mensagem. Estados do carregamento (`not_open`, `closed`, `already_submitted`, `invalid`, `temporary_error`) também com `FormResultPanel` dentro de `QuestionnaireThemeScope` + `FormPageLayout` (tema automático), **sem** nome interno da campanha; período como “Período da pesquisa: dd/mm/aaaa a dd/mm/aaaa” quando houver; “Tentar novamente” só em indisponibilidade temporária (recarrega).
+
+**d) Página (`SatisfactionSurveyPage.tsx`)** — `GuidedQuestionnaire` com logo `/p/logoMinhaDelpi.svg`, abertura conforme UI-03 §3.5 (título fixo, empresa omitida se `companyName` nulo, itens “15 perguntas em 3 etapas, com revisão antes de enviar”, “Responda até dd/mm/aaaa” em America/Sao_Paulo sem hora, “Não pedimos seus dados pessoais”), cabeçalho com “Respondendo por **empresa**” e prazo no `meta`, textos de `surveyTexts.ts`, tema `auto` com botão.
+
+**e) Shell** — página com `chrome` sem decoração; nenhum ancestral do formulário com `overflow` diferente de `visible` (**obrigatório**: rodapé fixo no celular, ver §9).
+
+**f) D3** — imagem do `public-hub` servindo `/p/logoMinhaDelpi.svg` com **200** mesmo quando o arquivo no clone estiver com modo restritivo.
+
+### 14.5 Invariantes
+
+- Nenhuma alteração em `commercial-api`, contratos de rede, migrações ou permissões.
+- Nenhum CSS de componente no `public-hub` (a página usa só o kit); nenhum override de classes `.delpi-ui-form-*`.
+- Sem persistência no navegador; sem envio fora do botão “Enviar respostas”.
+- Demais apps públicas sem mudança visual ou de rota.
+- **PROD proibido** para o `public-hub` com esta página (exceção do `AGENTS.md`).
+
+### 14.6 Testes mínimos
+
+1. Definição: 15 perguntas literais, divisão 5/5/5, N/A só nas 10 dimensões, 0–10 com legenda acima e 6 colunas, abertas opcionais; questionário incompleto → indisponível.
+2. Payload: N/A → `null`, abertas vazias → `null`, notas preservadas (inclui `0`).
+3. Desfechos: cada `SubmitOutcome` → tela ou nova tentativa corretas; sucesso só com `submitted`.
+4. Estados do carregamento renderizados sem o nome da campanha.
+5. Fluxo com a API simulada: carregar → responder → revisar → enviar → agradecimento; `submitPublicSurvey` chamado uma vez.
+6. Shell: `chrome` sem decoração não renderiza `ThemeToggle` nem logo do shell; demais `chrome` inalterados.
+7. `npm run ci --prefix plugins/public-hub` verde.
+
+### 14.7 Homologação em HML (obrigatória neste pacote)
+
+Deploy: `~/projetos-teste/delpi-central` → `git pull --ff-only` → `./infra/scripts/up-hml-sequential.sh --build public-hub`. Roteiro com links reais de HML (sem enviar resposta, exceto em **um** participante de teste combinado com o solicitante):
+
+| # | Cenário | Esperado |
+|---|---|---|
+| H1 | `/p/logoMinhaDelpi.svg` | 200 |
+| H2 | Link de empresa pendente em 375 px e 1280 px, tema claro e escuro (aparelho) | Abertura, etapas, revisão conforme referência; sem palavra quebrada; rodapé fixo no celular |
+| H3 | Botão de tema; reabrir a página | Troca na visita; reabrir volta ao tema do aparelho; nada em `localStorage` |
+| H4 | Tentar avançar sem responder | Pendências marcadas, foco na primeira, contagem no rodapé |
+| H5 | Revisão → Editar → Voltar à revisão | Respostas preservadas |
+| H6 | Link de empresa que já respondeu | “Resposta já registrada”, sem nome da campanha |
+| H7 | Token inválido | “Link inválido ou indisponível” |
+| H8 | Envio em participante de teste combinado | Agradecimento; participante passa a “Respondida” no Portal |
+| H9 | Outras páginas públicas (ex.: `/sign`, Customer Experience) | Sem mudança |
+
+Capturas de H2–H8 no relatório.
+
+### 14.8 Exposição em produção (verificação somente leitura)
+
+Antes de concluir, **sem alterar nada em PROD**: informar se o `public-hub` de PROD já contém a página antiga da Pesquisa, qual o estado do controle de exposição da Pesquisa na `commercial-api` de PROD (gate desligado?) e se um deploy de PROD do `public-hub` por outra frente passaria a servir a página nova. Se a exposição não puder ser garantida como fechada, **reportar o risco** (regra do `AGENTS.md`).
+
+### 14.9 Critérios de aceite
+
+| # | Critério | Evidência |
+|---|---|---|
+| G1 | Página nova montada só com o kit; arquivos antigos removidos | Diff |
+| G2 | 15 perguntas literais, regras da UI-03 §4 e textos da §3.6 | Testes + capturas |
+| G3 | Roteiro H1–H9 aprovado em HML | Tabela + capturas |
+| G4 | D3 resolvido na imagem | H1 |
+| G5 | Nenhum CSS de componente no `public-hub`; auditorias limpas | Saídas |
+| G6 | `npm run ci` do `public-hub`, verificador independente | Saídas + veredito |
+| G7 | Nenhum deploy em PROD; relatório de exposição do §14.8 | Relatório |
