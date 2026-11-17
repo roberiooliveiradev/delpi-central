@@ -6,10 +6,10 @@ netting para determinar a divergência; o líquido é medida adicional.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.application.dto.supplies.inventory_adjustments_request import (
     InventoryAdjustmentsRequest,
@@ -22,7 +22,11 @@ from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjust
 )
 
 _CENT = Decimal("0.01")
-_BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")
+try:
+    _BRAZIL_TZ = ZoneInfo("America/Sao_Paulo")
+except ZoneInfoNotFoundError:
+    # Imagens slim sem base IANA: em 2026 o Brasil usa UTC-03, sem DST.
+    _BRAZIL_TZ = timezone(timedelta(hours=-3))
 _MINIMUM_DATE = date(2023, 1, 1)
 _MEASURE_KEYS = (
     "gross_value",
