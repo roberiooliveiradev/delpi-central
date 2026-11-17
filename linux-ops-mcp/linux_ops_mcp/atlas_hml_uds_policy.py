@@ -76,7 +76,9 @@ def verify_socket_metadata(
             path.parent.is_symlink()
             or not stat.S_ISDIR(parent.st_mode)
             or parent.st_uid != owner_uid
-            or bool(parent.st_mode & (stat.S_IWGRP | stat.S_IWOTH))
+            or parent.st_gid != socket_gid
+            or not bool(parent.st_mode & stat.S_IXGRP)
+            or bool(parent.st_mode & (stat.S_IWGRP | stat.S_IWOTH | 0o007))
             or not stat.S_ISSOCK(entry.st_mode)
             or entry.st_uid != owner_uid
             or entry.st_gid != socket_gid
