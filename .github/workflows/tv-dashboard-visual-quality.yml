@@ -55,7 +55,6 @@ jobs:
             src/components/ChartColorsStylesMenu.tsx \
             src/components/ChartColorsStylesMenu.test.tsx \
             src/components/ChartSelectionFloatToolbar.tsx \
-            src/components/selectionSections/ChartDesignSections.tsx \
             src/content/chartStyleRecipes.ts \
             src/content/chartStyleRecipes.test.ts \
             src/components/formatRibbon/ChartRibbonShapeChrome.tsx \
