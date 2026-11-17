@@ -58,6 +58,9 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_host_review_bundle.py"
       - "linux-ops-mcp/tests/test_atlas_hml_host_review_bundle.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_candidate.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_preactivation_evidence.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_preactivation_evidence.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/48-atlas-hml-b-preativacao-evidencias-rollback.md"
       - "linux-ops-mcp/tests/test_atlas_hml_snapshot_candidate.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_posix_acl_review.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_file_reader.py"
@@ -138,6 +141,9 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_host_review_bundle.py"
       - "linux-ops-mcp/tests/test_atlas_hml_host_review_bundle.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_candidate.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_preactivation_evidence.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_preactivation_evidence.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/48-atlas-hml-b-preativacao-evidencias-rollback.md"
       - "linux-ops-mcp/tests/test_atlas_hml_snapshot_candidate.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_posix_acl_review.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_snapshot_file_reader.py"
@@ -268,6 +274,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_collector_isolation.py \
             linux-ops-mcp/tests/test_atlas_hml_host_review_bundle.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_candidate.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_preactivation_evidence.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_file_reader.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_presenter_candidate.py \
             linux-ops-mcp/tests/test_atlas_hml_snapshot_publisher_candidate.py \
