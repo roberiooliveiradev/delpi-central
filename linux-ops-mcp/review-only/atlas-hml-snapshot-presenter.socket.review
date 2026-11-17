@@ -1,0 +1,16 @@
+# ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD SOCKET.
+# SocketGroup sets socket inode ownership, NOT parent directory ownership.
+# Parent root:atlas-hml 0750 must exist and be checked independently.
+[Unit]
+Description=ATLAS HML SNAPSHOT PRESENTER SOCKET REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Socket]
+ListenStream=/run/atlas-hml-readonly/inspect.sock
+SocketUser=root
+SocketGroup=atlas-hml
+SocketMode=0660
+DirectoryMode=0750
+Accept=no
+Service=atlas-hml-snapshot-presenter.service
