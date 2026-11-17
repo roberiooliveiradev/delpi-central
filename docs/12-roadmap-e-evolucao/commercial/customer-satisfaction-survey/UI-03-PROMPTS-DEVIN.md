@@ -312,3 +312,10 @@ Os do P1/P2, mais: nenhuma lógica de obrigatoriedade, progresso ou envio (isso 
 | C7 | Zero texto fixo e zero referência à Pesquisa | `grep` |
 | C8 | Auditorias, build e `verify-host-exports` ok; deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Saídas |
 | C9 | Verificador independente aprovado | Veredito sem edição |
+
+### 6.8 Ajustes da revisão da declaração (17/11/2026)
+
+1. **Estado inválido:** aceita a borda `--delpi-ui-danger` nos botões + `aria-invalid` nos `input`, somada ao `tone="invalid"` do cartão.
+2. **Campo de texto:** aceito o envoltório com `role="group"` + `aria-describedby`, sem alterar o `TextAreaField`. Novo resíduo **R7**: o `TextAreaField` não repassa `aria-*` ao `<textarea>`; como as perguntas abertas são opcionais, o impacto é baixo; mudança no componente compartilhado fica para decisão própria.
+3. **`addedAt`:** usar a data real da inclusão (`2026-11-17`), não a do P1.
+4. **Publicação com `main` divergente:** a cópia local do executor tinha um commit de outro trabalho ainda não publicado (`ee7a961633`, correção de engineering). **Proibido publicar esse commit junto com o P3** (`AGENTS.md`, Regra 9: não misturar tarefas). Caminho autorizado pelo solicitante para este pacote: criar um **worktree temporário** a partir de `origin/main`, aplicar nele só o commit do P3, publicar a partir dele e removê-lo em seguida, sem alterar o worktree principal nem o commit do outro trabalho; registrar no relatório.
