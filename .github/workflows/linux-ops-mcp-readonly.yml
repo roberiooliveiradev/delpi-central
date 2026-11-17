@@ -51,6 +51,9 @@ jobs:
         run: |
           set -o pipefail
           PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_host_review_bundle | python -c 'import json,sys; r=json.load(sys.stdin); assert r["status"] == "blocked" and r["prepare_eligible"] is False and r["can_execute"] is False; print("HML preactivation dossier remains BLOCKED")'
+      - name: ATLAS HML supervisor blueprint remains review-only (BLOCKED)
+        run: |
+          PYTHONPATH=linux-ops-mcp python -c 'from linux_ops_mcp.atlas_hml_supervisor_blueprint_review import load_repository_blueprint_sources,review_blueprint_sources; v=review_blueprint_sources(load_repository_blueprint_sources()); assert v.status == "blocked" and v.prepare_eligible is False and v.can_execute is False and v.architecture_approved is False; print("ATLAS HML supervisor review stays BLOCKED")'
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
