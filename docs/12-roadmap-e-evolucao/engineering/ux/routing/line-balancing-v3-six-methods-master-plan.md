@@ -1,24 +1,73 @@
 # EVA / Portal Engenharia — Plano Mestre V3: seis métodos de balanceamento de linha
 
+> **DECISÃO DE PRODUTO POSTERIOR — 2026-11-17 / NOVO HOST DE PROCESSOS:** O catálogo de **seis métodos (M1–M6) permanece integralmente válido** e o **Yamazumi (M5) continua sendo o primeiro a detalhar/implementar**. O destino de novas implementações deixa de ser a aba `Ficha do Produto → Roteiro` e passa a ser **Portal Engenharia → card/seção `Processos` → página própria `Processos` → ferramenta `Balanceamento de linha`**. A aba Roteiro existente permanece funcional, sem novos desenvolvimentos de métodos, sem remoção, regressão ou migração automática nesta decisão. A V2 da página de produto é referência histórica/reuso técnico, **não o novo host de UI**. **Status:** `TARGET / ARCHITECTURE_DECISION_REQUIRED` para formalizar entrada no catálogo/rota, contratos e autorização; nenhuma implementação nesta atualização.
+
 **Data da decisão de produto:** 2026-11-17  
 **Estado:** `TARGET / PLAN_APPROVED_BY_PRODUCT_DIRECTION / IMPLEMENTATION_NOT_AUTHORIZED_BY_THIS_DOCUMENT`  
 **Sequência dirigida pelo Product Owner:** primeiro **Método 5 — Yamazumi interativo**, depois os demais métodos de forma incremental, mantendo todos registrados desde agora. A numeração 1–6 identifica o catálogo funcional, **não a ordem de execução**.  
 **Owner UX/workflows:** Portal Engenharia. **Owner algoritmos/cálculos e contratos:** domínio Engenharia/EVA, com aprovação de Engineering owners. **Fonte canônica:** API-DELPI/roteiro oficial. **Plugin UI:** owner de gráfico, componentes e design system. **Identidade/autorização:** Keycloak/Core. **Status de execução:** `TEST_NOT_RUN`.  
-**Propósito desta entrega documental:** preservar o contexto completo dos seis métodos e definir um primeiro detalhamento de Yamazumi no MESMO documento mestre; não alterar frontend, API, MCP, solver, autenticação ou deploy.
+**Propósito desta entrega documental:** preservar o contexto completo dos seis métodos e definir um primeiro detalhamento de Yamazumi no MESMO documento mestre; o host alvo atual é **Processos** (não a aba Roteiro da ficha). Não alterar frontend, API, MCP, solver, autenticação ou deploy.
 
 ## 0. Referências, precedência e evidência
 
-- [Routing Study Workspace V2 — Visual Contract](./routing-study-workspace-v2-visual-contract.md): **uma página scrollável**; nenhuma terceira barra de navegação.
+- [Routing Study Workspace V2 — Visual Contract](./routing-study-workspace-v2-visual-contract.md): **referência legada da Ficha do Produto** para densidade, cards e estado de estudo. **Não usar como autoridade para hospedar novas ferramentas dentro da aba Roteiro**; o host novo é Processos.
 - [Routing Study Session State](./routing-study-session-state-contract.md): estudos locais isolados e recuperáveis via `sessionStorage`; limpar/nova análise com confirmação.
 - [Routing Study V2 Acceptance](./routing-study-v2-acceptance.md): experiência, auth, testes e deployment.
 - Domínio existente: `engineering-api/engineering_app/domain/routing/line_balance.py`; consumidores atuais `POST /v1/products/{code}/line-balance` e `analyze(routing.line_balance)`.
 - Guia de domínio: `engineering-api/engineering_app/content/eva_engineering_knowledge.json`, `routing.balance_guide` / `routing.guided_analysis`.
-- UI atual: `plugins/engineering/src/features/products/routing/ProductRoutingTab.tsx`, `PostConfigurator.tsx` (confirmar existência, imports e HEAD antes de implementar).
+- UI existente/histórica, que deve permanecer sem alteração nesta fase: `plugins/engineering/src/features/products/routing/ProductRoutingTab.tsx`, `PostConfigurator.tsx` (confirmar HEAD). Reutilizar apenas contratos/serviços estáveis via boundary, sem dependência de componente interno da página de Produto.
+- **Catálogo de cards PROVEN:** `plugins/engineering/src/content/engineeringRouteCatalog.ts` define `ENGINEERING_CATALOG` com seções `work/Trabalho`, `insights/Análises` e `support/Suporte`. Novo `processes/Processos` é **TARGET**, com registro de destino e permissão sujeito a inventário do roteador e Core RBAC, não autorização criada por este documento.
 - Gráficos corporativos: `@delpi/plugin-ui` `ChartViewShell` + `MultiTypeSeriesChart`, integrados na Engenharia para a V2, com referência Comercial `AnalyticsRolSeriesChart.tsx`.
 
 **Fatos verificados no domínio, não promessa de método avançado:** agrupamento de linhas repetidas por componente em operações únicas; estágio separado `(product_code,bom_level)`; takt = tempo disponível/demanda; conteúdo de trabalho de tempos oficiais; setup por LOTE somente com `batch_size`; mínimo teórico `ceil(work_content/takt)`; gargalo candidato; teste teórico `num_stations`; cenário `first_fit_decreasing` sem precedências, trabalhadores ou recursos verificados. Uma operação individual acima do takt pode ser colocada num posto pelo FFD; isso **não comprova viabilidade**. A saída FFD é `SIMULATION`, não roteiro executável.
 
 **Classificações:** `OBSERVED` (roteiro autorizado), `PROVIDED` (inputs usuário), `CALCULATED` (saída determinística contratada), `SIMULATION / DRAFT_LOCAL` (hipóteses), `UNKNOWN` (não comprovado). Progresso: `PROVEN / TO_INVENTORY / PLANNED / TARGET`. Execução: `PASS / FAIL / PENDING / INCONCLUSIVE / TEST_NOT_RUN / STALE_EVIDENCE`.
+
+## 0A. Decisão de produto — Portal Engenharia / Processos como host
+
+**Visão:** concentrar ferramentas de **Engenharia de Processos** em uma área autônoma do Portal Engenharia. Não limitar mapeamento, melhoria e balanceamento à ficha de um único produto. O usuário entra pelo **quarto card de seção `Processos`**, ao lado dos existentes **Trabalho, Análises e Suporte**. Um mesmo espaço crescerá com novas ferramentas, sem adicionar abas internas à Ficha do Produto.
+
+**Proposta de navegação/UX (TARGET):**
+```text
+PORTAL ENGENHARIA / INÍCIO
+[Trabalho]  [Análises]  [Suporte]  [Processos]  <-- novo card de seção
+                                        |
+                                        v
+PORTAL ENGENHARIA / PROCESSOS  (página própria)
+"Engenharia de Processos — Ferramentas"
+[Balanceamento de linha]              <-- PRIMEIRA FERRAMENTA, ativa quando entregue
+[Mapeamento de processos]             <-- FUTURO / sem ação fingida
+[Melhoria de processos]               <-- FUTURO / sem ação fingida
+[Outras ferramentas de processos]     <-- FUTURO conforme owner e roadmap
+                                        |
+                                        v
+PROCESSOS / BALANCEAMENTO DE LINHA (workspace própria, scrollável)
+[Código do produto: __________] [Buscar roteiro] [Filial] [Estágio]
+[Estado da consulta autorizado / operação ausente / erro]
+[Operações oficiais, CTs, recursos, tempos, limitações de fonte]
+[Dados produtivos: demanda, turno, pausas, lote]
+[Métodos M1–M6: catálogo sem prometer os não implementados]
+[YAMAZUMI: postos hipotéticos + gráfico carga×takt + cenários]
+[Resultados, comparação e exportação / provenance]
+[Rascunho nesta aba] [Novo cenário] [Limpar estudo]
+```
+
+**Entrada desacoplada do produto:** o usuário pode abrir a ferramenta **sem product code prévio**; informar código, acionar consulta autorizada ao roteiro oficial, selecionar filial e estágio, e iniciar estudo. Estados: sem produto, digitando, carregando, código inválido, produto não encontrado, acesso negado, roteiro vazio, roteiro disponível, seleção de estágio, estudo em edição, resultado/limitações. Não inferir filial/estágio ou executar cálculo sem contexto válido.
+
+**Separação de responsabilidades:**
+- Página `Processos` é hub/catálogo de ferramentas, não bounded context ou source of truth novo por si só.
+- Ferramenta `Balanceamento de linha` é consumer legítimo do contrato existente de roteiros e motor determinístico, via BFF/domain API e live AuthZ; nunca acesso direto a banco de outros sistemas.
+- **Não criar dependência runtime da página `ProductRoutingTab`**. Se houver lógica compartilhável, extrair componente/serviço neutro com owner, contrato, testes e Abstraction Gate; não importar internals da ficha.
+- Integrar rota/catálogo ao Portal/Core conforme contratos atuais. `ENGINEERING_CATALOG` é **apresentação, nunca autorização**. Não inventar path, permission string, manifest ou app novo antes do inventário; se novo owner/boundary/authority for necessário, `ARCHITECTURE_DECISION_REQUIRED` à Coordination.
+- Manter a aba Roteiro da Ficha do Produto **inalterada** nesta iniciativa, preservando seus recursos atuais. Não removê-la nem fazer redirect involuntário.
+- O `sessionStorage` da nova ferramenta deve incluir **namespace/contexto de Processos** além de principal/produto/filial/estágio, para evitar colisões ou recuperação cruzada com a ficha do produto. Isolamento e revalidação de fonte/AuthZ continuam obrigatórios.
+- A primeira release pode trazer o hub com o cartão `Balanceamento de linha` ativo, enquanto as outras famílias aparecem apenas como planejadas (ou não aparecem até existir design); não criar links ou botões inertes.
+
+**Organização futura de ferramentas (TARGET, não escopo aprovado de implementação):** mapeamento de processos, documentação e fluxos, análise e melhoria, estudos de tempos e métodos, capacidade fabril, balanceamento, comparação de cenários, padronização de trabalho e ferramentas adicionais definidas pelos owners. A ideia de Processos como área não transfere ownership de Transformômetro/TÉO ou sistemas corporativos; interoperar por contratos oficiais.
+
+**Checklist visual do hub:** novo card nativo `SectionRouteCard`/padrão real do Plugin UI, mesmo espaçamento, grid e light/dark dos cards atuais; página Processos com título, descrição e cards de ferramentas; workspace do Balanceamento em área própria com filtros/roteiro e Yamazumi sem navegação extra; desktop/tablet/390/320 e teclado. Referência do grid existente: `docs/12-roadmap-e-evolucao/engineering/24-home-r1-features-grid.md` (`auto-fit`), inspecionar o kit real antes de codificar.
+
+**Critérios iniciais de aceite da migração de foco (PLANNED):** `PROC-01` card Processos em Início com permissão legítima; `PROC-02` página própria de ferramentas; `PROC-03` Balanceamento acessível sem abrir produto; `PROC-04` campo código + consulta oficial com loading/erro/forbidden; `PROC-05` seleção explícita filial/estágio e dedup; `PROC-06` todos seis métodos presentes no plano, primeiro Yamazumi; `PROC-07` V2 produto sem mudanças/regressões; `PROC-08` isolamento de drafts da ficha vs Processos; `PROC-09` cálculos no domínio e read-only; `PROC-10` HML e PROD somente após gates técnicos e Verify.
 
 ## 1. Catálogo completo dos seis métodos — visão executiva
 
@@ -84,32 +133,29 @@
 - Eficiência/ociosidade por operador só quando houver contrato para tratar simultaneidade, quantidade de operadores e tempos manuais/automáticos; caso contrário `UNKNOWN`.
 - Se alguma atividade não tiver tempo, não usar zero silencioso, não declarar otimização.
 
-**Wireframe estrutural (TARGET, desktop):**
+**Wireframe estrutural (TARGET, desktop) — NOVO HOST PROCESSOS:** consultar `§0A` para entrada por card, hub, busca de produto e estados. Abaixo está a **ferramenta Balanceamento dentro de Processos**, não a aba Roteiro da ficha:
 
 ```text
-Ficha do Produto > Roteiro [única página scrollável existente]
-Roteiro oficial + KPIs + operações oficiais [seções V2 preservadas]
---------------------------------------------------------------
+PORTAL ENGENHARIA > PROCESSOS > BALANCEAMENTO DE LINHA
+[Produto/código __________] [Buscar roteiro] [Filial v] [Estágio v]
+[Resumo oficial de operações / CTs / recursos / tempos após consulta]
+------------------------------------------------------------------
 ESTUDO DE BALANCEAMENTO [Salvo nesta aba | Recuperado]
-  [Demanda] [Turno] [Pausas] [Lote se aplicável] [Takt prévia]
-  Objetivo: [Capacidade | Balancear por carga | RPW | KW | YAMAZUMI | Recursos]
-  Selecionado: YAMAZUMI — Estudo visual / DRAFT_LOCAL
-  [Cenário A v] [Novo cenário] [Limpar estudo]
---------------------------------------------------------------
+[Demanda] [Turno] [Pausas] [Lote] [Takt prévia]
+Métodos M1–M6 (catálogo contextual); M5 YAMAZUMI primeiro
+[Cenário A v] [Novo cenário] [Limpar estudo]
+------------------------------------------------------------------
 ORGANIZAÇÃO DOS POSTOS             YAMAZUMI — CARGA × TAKT
 +------------------------------+   +-------------------------------------+
-| [01] Posto 01 [editar ↑ ↓ ×] |   |  min/peça                           |
-| [operações oficiais +]       |   |    ─ ─ ─ Takt alvo (linha)           |
-| [CT/recursos vinculados]     |   |  ████ ███ ██   barras por posto       |
-| [operadores? paralelos?]     |   |  P01  P02  P03                       |
-| [02] Posto 02 ...            |   |  legenda categorias observadas       |
-| [+ Adicionar posto]          |   |  [Tipo] [Unidade] [Séries] [Exportar]|
-+------------------------------+   +-------------------------------------+
-[Operações sem posto] [Carga acima do takt] [Restrições não verificadas]
-[Calcular diagnóstico suportado]   [Comparar A/B]
---------------------------------------------------------------
-Resultados oficiais M1 + classificação de cenário + advertências
-Análise visual complementar (sem duplicar gráfico ou terceira tab)
+| [01] Posto 01 [editar ↑ ↓ ×] |   | tempo/peça [s|min]                  |
+| [operações oficiais +]       |   |   ─ ─ ─ takt alvo                   |
+| [CT/recursos vinculados]     |   | ████  ███  ██  por posto           |
+| [operadores? paralelos?]     |   | [Tipo] [Unidade] [Séries] [Exportar]|
+| [02] Posto 02 ...            |   | legendas honestas e limites        |
+| [+ Adicionar posto]          |   +-------------------------------------+
++------------------------------+
+[Operações sem posto] [Acima do takt] [Restrições não verificadas]
+[Diagnóstico suportado] [Comparar cenários] [Limitações e provenance]
 ```
 
 **Mobile 390/320:** painel de postos em coluna; Yamazumi abaixo com viewport responsivo/scroll gráfico permitido quando necessário; toolbar do Plugin UI compacta; nunca scroll horizontal da página inteira. Sem duplicar barra de topo.
@@ -160,12 +206,12 @@ A ordem após Yamazumi é proposta de roadmap, não compromisso automático de e
 
 ## 5. Wireframe de navegação dos métodos (visão alvo, sem seis tabs)
 
-No próprio card `Estudo de balanceamento`, um **seletor de objetivo/método** contextual — não criar terceira top bar. Exibir os seis itens no catálogo com descrição, inputs necessários e estado:
+Na **ferramenta Balanceamento de linha dentro da página Processos**, usar um **seletor de objetivo/método** contextual no workspace scrollável — sem terceira top bar e **fora da Ficha do Produto**. Exibir os seis itens no catálogo com descrição, inputs necessários e estado:
 - `Disponível` apenas quando suporte comprovado (M1/FFD limitado).
 - `Em planejamento` para RPW, Kilbridge–Wester, recursos e outros não implementados.
 - `Em desenvolvimento` para Yamazumi **somente quando execução iniciar e houver evidência**; documentação isolada não autoriza alegar implementação.
 - Ao selecionar método não suportado, mostrar explicação e requisitos, sem CTA de cálculo inerte que pareça funcional.
-- Ao selecionar Yamazumi implementado, revelar área de postos + gráfico empilhado na **mesma página**, preservando operações e resultados M1 existentes.
+- Ao selecionar Yamazumi implementado, revelar área de postos + gráfico empilhado na **mesma página própria de Balanceamento em Processos**, após buscar o roteiro oficial por código. Preservar os resultados M1 no novo consumer e não alterar a aba Roteiro da ficha.
 - Evitar seis formulários simultâneos e não esconder contexto de produção ao mudar método.
 
 ## 6. Contratos e decisões antes do Yamazumi
@@ -178,8 +224,8 @@ No próprio card `Estudo de balanceamento`, um **seletor de objetivo/método** c
 
 ## 7. Próximo passo permitido e status
 
-**Próxima task sugerida:** `EVA-ROUTING-YAMAZUMI-V3-CONTRACT-AND-WIREFRAME-01` — aprofundar, em documentação ou protótipo aprovado, interações de operações/postos, categorias de tempo, casos de múltiplos CTs e estados de erro antes do prompt de implementação.
+**Próxima task sugerida:** `EVA-PROCESSES-HUB-YAMAZUMI-V3-CONTRACT-AND-WIREFRAME-01` — detalhar o quarto card `Processos`, catálogo/rota legítimos, nova página própria, busca de roteiro por produto, e a experiência de Yamazumi com postos/tempos/estados antes da implementação. **Não desenvolver novas features na aba Roteiro da Ficha do Produto.**
 
-**Este commit é somente PLANO:** nenhum dos métodos M3–M6 foi implementado aqui; Yamazumi ainda é `TARGET`. A V2 pode permanecer em produção sem alteração por esta entrega.
+**Este commit é somente PLANO:** nenhum dos métodos M3–M6 foi implementado aqui; Yamazumi ainda é `TARGET`. A V2 da Ficha do Produto **deve permanecer em produção sem alteração por esta entrega**; o trabalho futuro será na nova área `Processos`.
 
 **Regras de atualização deste documento:** preservar as seis entradas, seus IDs e a decisão `Yamazumi first`. Cada entrega futura acrescenta link para contrato/evidência/sha/teste e atualiza somente o status verificado da respectiva capacidade.
