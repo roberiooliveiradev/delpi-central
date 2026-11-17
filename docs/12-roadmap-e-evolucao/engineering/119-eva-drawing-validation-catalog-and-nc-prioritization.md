@@ -6516,3 +6516,47 @@ Perdas secundárias comprovadas: cap `circles[:200]` (1263 círculos brutos Houg
 - **DEPLOY_BLOCKED / OWNER_ACCEPTANCE_PENDING** mantido: sem GT/thresholds ratificados; imagem de produção inalterada; zero escrita/NC.
 - Residuais: bowl de glifo grande (>24 px) dentro de primitiva própria não é distinguível por tamanho — coberto parcialmente pelo guard de preenchimento; enclosure exige contorno colorido — balão em traço preto não saturado segue dependendo do Hough (canal `circles`); cap 200 `circles` mantido.
 - Próximo bounded step: **B2** — ponta da linha indicadora e região de destino (`POINTS_TO`); dataset de anotações GT para holdout.
+
+### 94.42.8 B2 — Linhas Indicadoras e Região de Destino dos Balões
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B2-LEADER-LINE-TARGET-ASSOCIATION-01`
+**MODO:** `BOUNDED_IMPLEMENTATION / READ_ONLY / EXISTING_FRAMEWORKS / REAL_DRAWING_EVIDENCE / INDEPENDENT_VERIFICATION / NO_DEPLOY`. Commits `55e51a8fb2` (feature) + `34d232a5ea` (correção OC-1) — 4 arquivos (`understanding.py`, `understanding_object_mapper.py`, `drawing_investigation.py`, `test_balloon_b1.py`).
+
+#### Inventário e primeiro ponto de perda
+
+O adapter já emite `h_lines`/`v_lines` (corridas morfológicas), `rects`, `circles` e `enclosures` por página, mas o payload de percepção não consumia nenhum segmento para balões: `geometry_regions` saía vazio e `POINTS_TO` só existia por contenção espacial ou alvo declarado (inexistente). **Primeiro ponto de perda = ausência de consumo dos segmentos do adapter pelo detector de balões.** Diagnóstico real nos 3 PDFs: cada balão tem um segmento eixo-alinhado que parte da borda do anel (~1–3 px) e se estende para fora — distinguível dos traços do próprio contorno (duas pontas dentro do balão).
+
+Defeito de multiplicidade encontrado e corrigido no mapper: o vínculo `POINTS_TO` casava fontes por `item_label` — `A3×2`/`A4×2`/`B×2` misturariam o alvo da última ocorrência. Corrigido para casamento **por índice de ocorrência** (`zip`), preservando identidade por ocorrência (RQ-B2-05).
+
+#### Implementação (evidência geométrica, sem inventar vínculo)
+
+- **RQ-B2-01 anexo:** segmento candidato = exatamente uma ponta na faixa de fronteira do balão (caixa expandida `_LEADER_ATTACH_PX=18` menos caixa estrita) e a outra fora; traços do anel (duas pontas dentro) rejeitados; runs paralelos da mesma linha fundem por eixo (`_LEADER_CLUSTER_PX=8`); segmento sobrepondo caixa de cota não é líder; múltiplos líderes → `AMBIGUOUS`.
+- **RQ-B2-02 caminho:** encadeamento **somente por proximidade de ponta** (≤18 px, `_LEADER_MAX_SEGMENTS=4`); cruzamento no meio do traço nunca conecta; sem continuação → extremidade registrada honestamente (`INCONCLUSIVE`-equivalente, nunca destino fabricado).
+- **RQ-B2-03 destino:** regiões = `rects`/`enclosures`/`circles` com área <60 % da página (`_TARGET_MAX_AREA_FRAC`, exclui moldura) contendo a extremidade (±`_LEADER_TARGET_NEAR_PX=22`), exceto a própria caixa do balão. 1 região → `SINGLE_REGION` + `target_region(id)` + `geometry_regions`; >1 → `AMBIGUOUS_REGIONS` com `alternative_targets` e **sem vínculo**; 0 → `NOT_IDENTIFIED`. Sem classificação de tipo físico (B3).
+- **RQ-B2-04 contrato:** `drawing_understanding.v1` aditivo — campo `leader_line` por ocorrência `{state, segments_px, endpoint_px, target_region, alternative_targets, uncertainty_reason}`, `geometry_regions`, `leader_target_verified=False`, `leader_lines_verified=False`; `POINTS_TO` permanece **`NOT_CHECKED`** (vínculo declarado e contenção — nada promovido por mais coordenadas).
+
+#### Prova real (SHA `55e51a8fb2`, container efêmero, modelos prod `/opt/ocr-models` read-only)
+
+- **90261723** (`f721e4d9aa6f5d11…`): 4 líderes `CANDIDATE` — `1` e `A` → barra do cabo `SINGLE_REGION` (2 `POINTS_TO NOT_CHECKED`); `B`×2 → `AMBIGUOUS_REGIONS` na junção cabo/terminal (abstenção honesta, alternativas registradas). Tabela inalterada: 3 MATCH + `1` NOT_LOCATED.
+- **90261731** (`0470d37ffce57f61…`): idem; `B` esquerdo com 3 regiões candidatas (geometria extra do carimbo).
+- **90264311** (`d6a2bf2250b5ee11…`): 6 líderes `CANDIDATE` — `A3` superior → cabo superior `SINGLE_REGION`, `A3` inferior → cabo inferior `SINGLE_REGION` (2 `POINTS_TO NOT_CHECKED`); `A4` inferior → região por contenção (`NOT_CHECKED`); `A1`/`A2`/`A4` superior → `AMBIGUOUS_REGIONS` na junção luva/protetor/terminal. Zero conexões inventadas.
+- Overlays de revisão humana gerados: `/tmp/b1out/b2_overlay_90261723.png`, `/tmp/b1out/b2_overlay_90264311.png` (balão, caminho candidato, destino, alternativas).
+
+#### Testes
+
+- `tests/test_balloon_b1.py`: **49 testes** (34 B1/R1 + 15 B2: líder vertical→rect único, traço de contorno rejeitado, runs paralelos fundidos, dois líderes→`AMBIGUOUS`, cruzamento não conecta, dobra encadeada por ponta, desconectado, espaço vazio, moldura de página excluída, cota rejeitada, multi-região→`AMBIGUOUS_REGIONS`, `POINTS_TO` por índice não por rótulo, `A3×2` com destinos distintos).
+- Conjunto desenho: **315 PASS** no SHA final. Table perception/DEC/G5: **61 PASS** (escopo que revelou a OC-1).
+
+#### Verificação independente
+
+- r1 (cursor/Composer, `aec664708e..55e51a8fb2`): **REWORK** — OC-1 crítica: o blob commitado havia truncado `apply_native_table_observations` (3 linhas finais `table_perception`/`limitations`/`return updated` perdidas na truncagem da cauda corrompida do working tree), retornando `None` → 8 falhas table-perception + risco de crash no `semantic_bridge`.
+- **Correção OC-1:** `34d232a5ea` restaura as 3 linhas; 61/61 no escopo afetado. Publicado sobre `98cc79573a` por plumbing; merge `56188a32d0` sincronizou o duplicado convergente `1256d70bbe` (mesmo conteúdo).
+- r2 (cursor/Composer, `aec664708e..34d232a5ea`): **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção — AC-01..12 PASS, OC-1 confirmada corrigida por AST+runtime+testes. Residuais: provas PDF reais `NAO_VERIFICAVEL` (contrato do verificador); `POINTS_TO` por proximidade/contenção segue `NOT_CHECKED` como projetado; "não atravessa componente" coberto indiretamente pelo teste de cruzamento (confiança <80 do verificador, não OC).
+- `GENERALIZATION_ACCEPTANCE=INCONCLUSIVE` — sem GT aprovado nem holdout; líderes diagonais fora do escopo (só eixo-alinhados h/v).
+
+#### Release, residuais e handoff
+
+- **`B2_IMPLEMENTED_VERIFIED_DEPLOY_BLOCKED`**: deploy não autorizado (B1 também sem GT/thresholds); imagem de produção inalterada; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+- Residuais: líderes diagonais/inclinados não detectados (canal `segments` arbitrário aceito pelo parser, sem emissor no adapter); junções cabo/terminal geram `AMBIGUOUS_REGIONS` legítimas que exigirão critério B3 ou GT para desempate; overlay e candidatos são evidência de revisão, não homologação.
+- Próximo bounded step: **B3** — coerência entre componente apontado, descrição na tabela e características visuais (somente com nova solicitação bounded + GT/thresholds da Engenharia).
+- Issue #131: update manual pendente (`gh` sem auth no ambiente).
