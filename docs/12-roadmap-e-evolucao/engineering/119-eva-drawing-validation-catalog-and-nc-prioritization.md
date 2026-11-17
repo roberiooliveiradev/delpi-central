@@ -6255,3 +6255,43 @@ Dispatcher `_eval_1008` por marcador `TERM. <TIPO>` (espelha o padrão do dispat
 - `G-02` fechado funcionalmente (8/8 estruturas com avaliador ou fallback documentado); produção ainda roda o avaliador FASTON único para todo 1008 até o deploy.
 - Verificação independente efetiva pendente de `devin auth` — owner: infra/tooling.
 - Próximos lotes: G-03 (vocabulário de certificações) e seguintes conforme §94.34.9.
+
+---
+
+## §94.38 — G25-L2-R1: Verificação Independente e Deploy Produtivo MP 1008
+
+**Data:** 2026-11-17 | **TASK_ID:** `EVA-E1-VAL01-G25-L2-R1-ALTERNATIVE-INDEPENDENT-VERIFICATION-AND-PRODUCTION-DEPLOY-01`
+
+### 94.38.1 Verificação independente (Etapa B — engine alternativa)
+
+- Engine primária `devin` permanece `Not logged in` (10 rodadas acumuladas).
+- Alternativa autorizada pelo próprio kit (`DEFAULT_ENGINE_ORDER=[devin,cursor]`, `verify.py --engine cursor`): **cursor-agent autenticado (`inovacao@delpi.com.br`), modelo Composer** — vendor/modelo distintos do executor (Devin SWE-2 High). Independência registrada no relatório como `independencia: OK`.
+- Veredito r2 sobre `c1d904b8cc..aa398570a9`: **`ACCEPT_WITH_RESIDUAL`** — relatório `.git/delpi-verifier/reports/20261116-173628-r2-cursor.md`. Sem ordens de correção.
+- Resíduos registrados pelo verificador: suíte apresenta 5 falhas pré-existentes (3 alegadas + `test_pi_with_children_flattened_as_parent_block` + `test_normalize_box_json_safe`, já documentadas em §94 e fora do diff L2); faixa git contém commits alheios; ausência de assert dedicado ao fixture FASTON oficial.
+- Evidências do verificador: 79/79 focados confirmados; 12/12 fixtures oficiais PASS; NU posicional, bitola simples só em PINO, zero writes/NC — todos `CONFIRMADA`.
+
+### 94.38.2 Deploy produtivo
+
+- Delta engineering-api no release: **somente `aa398570a9`** (zero commits eng-api entre `f63de24491` e `origin/main 911ff0f7da` — árvore implantada = SHA verificado).
+- Imagem antes: `sha256:ef28e52604f9` → depois: `sha256:8058c06d1449` (`infra-engineering-api:latest`, build 2026-11-17T10:58Z). Rollback: imagem anterior retida.
+- Container healthy; `_eval_1008` + avaliadores confirmados dentro do container.
+- Autorização: Issue #131 c6927823838 (condicional — satisfeita com verificação PASS-equivalente + gates) + deploy canônico AGENTS.md.
+
+### 94.38.3 Smoke produtivo (somente leitura, container produtivo)
+
+| Estrutura | Resultado |
+|---|---|
+| PINO / FORQUILHA / ILHOS / TUBULAR / LINGUETA | `PASS` |
+| FASTON / OLHAL / ANZOL / GENÉRICO(BALA) / LUVA / EMENDA | `PASS` |
+| 1009 INSERTO (regressão L1) / PI 50xx | `PASS` |
+| `TERM.` sem subtipo | `INCONCLUSIVE` |
+
+`no_business_write=True`, `contract_version=normative_description.v1`, zero NC automática.
+
+### 94.38.4 Residual e handoff
+
+- `G-02` **fechado em produção**: 8/8 estruturas com avaliador normativo próprio ou fallback documentado.
+- Falhas pré-existentes fora do escopo: PRC #207 (2), D16 (1), `test_pi_with_children_flattened_as_parent_block`, `test_normalize_box_json_safe` — owners das respectivas frentes.
+- Aceite E2E visual (ChatGPT MCP) exige documento oficial com terminal 1008; caso indisponível → `LIVE_DOCUMENT_HOLDOUT_NOT_AVAILABLE`. Owner: Coordination.
+- Engine `devin` do verificador segue bloqueada por auth — owner: infra/tooling (não bloqueia mais este release).
+- Próximo lote: G-03 (vocabulário de certificações NM/NBR-num/UL94/DIN46228).
