@@ -100,6 +100,7 @@ def test_weekly_uses_iso_monday_to_reference_and_bounded_top_n():
     )
     assert payload["week_start"] == "2025-11-17"
     assert payload["week_end"] == "2025-11-19"
+    assert payload["item_grain"] == "branch_product"
     assert payload["total_groups"] == 26
     assert payload["truncated"] is True
     assert weekly.args == {
@@ -133,11 +134,11 @@ class FakeSqlRepository(InventoryAdjustmentsTvRepository):
     def execute_query(self, sql, params):
         self.sql, self.params = sql, params
         return [{
-            "branch": "02", "product_code": "P001", "warehouse": "01",
+            "branch": "02", "product_code": "P001",
             "product_description": "Cabo", "unit": "M",
-            "nature": "shortage", "movement_count": 2,
-            "quantity": "5.500000", "signed_quantity": "-5.500000",
-            "gross_value": "14.335000", "signed_value": "-14.335000",
+            "movement_count": 2, "warehouse_count": 2,
+            "shortage_count": 1, "surplus_count": 1,
+            "signed_quantity": "-5.500000", "signed_value": "-14.335000",
             "unpriced_movements": 0, "total_groups": 18,
         }]
 
@@ -154,12 +155,18 @@ def test_weekly_sql_aggregates_all_movements_before_top_ranking():
     assert "SD3.D3_ESTORNO" in sql
     assert "SD3.D3_CUSTO1" in sql
     assert "COUNT(*) OVER () AS total_groups" in sql
-    assert "GROUP BY" in sql and "SD3.D3_LOCAL" in sql
+    assert "GROUP BY RTRIM(SD3.D3_FILIAL), RTRIM(SD3.D3_COD)" in sql
+    assert "GROUP BY SD3.D3_FILIAL, SD3.D3_COD, SD3.D3_LOCAL" not in sql
+    assert "COUNT(DISTINCT RTRIM(SD3.D3_LOCAL))" in sql
     assert "S.B1_COD = A.product_code" in sql
     assert "RE0" in sql and "DE0" in sql
     assert sql.index("WITH AGG") < sql.index("SELECT TOP (?)")
+    assert "ORDER BY ABS(A.signed_value) DESC" in sql
     assert subject.params[-1] == 10
     assert data["items"][0]["quantity"] == 5.5
+    assert data["items"][0]["warehouse_count"] == 2
+    assert data["items"][0]["warehouse"] == "01"
+    assert data["items"][0]["nature_label"] == "Falta"
     assert data["items"][0]["signed_quantity"] == -5.5
     assert data["items"][0]["value_brl"] == 14.34
     assert data["items"][0]["signed_value_brl"] == -14.34
