@@ -682,8 +682,10 @@ def test_domain_nature_sql_matches_proven_cf_semantics() -> None:
     assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_QUANT" in signed_qty
     assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_QUANT" in signed_qty
     signed_val = InventoryAdjustmentClassification.SIGNED_VALUE_SQL_EXPRESSION
-    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_CUSTO1" in signed_val
-    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_CUSTO1" in signed_val
+    value = InventoryAdjustmentClassification.MONETARY_VALUE_SQL_EXPRESSION
+    assert f"WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN {value}" in signed_val
+    assert f"WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -{value}" in signed_val
+    assert "B1_TPMAT" in value
 
 
 # ---------------------------------------------------------------------------
