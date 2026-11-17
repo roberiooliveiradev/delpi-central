@@ -13,8 +13,10 @@ no new tools, no RAG.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -26,9 +28,18 @@ _PI_TOPIC = "pi_intermediate_codes"
 
 @pytest.fixture()
 def published_corpus(tmp_path):
+    """Stage V1+V2 evidence; drifted docs staged at pinned ``source_git_sha``.
+
+    Documents that drifted from their pinned hash (e.g. the MP norm after
+    the V3 revision) are staged from the pinned ``source_git_sha`` blob so
+    each version is served at its own published content. Mirrors the
+    canonical staging in ``test_davi_live_governed_knowledge_v2.py``.
+    """
     root = Path(__file__).resolve().parents[1]
+    repo_root = root.parent
     evidence = root / _EVIDENCE
     paths: set[str] = set()
+    pinned: dict[tuple[str, str], str] = {}
     for version in (1, 2):
         manifest = json.loads(
             (evidence / f"davi-governed-knowledge-manifest-v{version}.json").read_text()
@@ -36,16 +47,42 @@ def published_corpus(tmp_path):
         index = json.loads(
             (evidence / f"davi-governed-knowledge-topics-v{version}.json").read_text()
         )
-        paths.update(entry["path"] for entry in manifest["documents"])
+        for entry in manifest["documents"]:
+            paths.add(entry["path"])
+            pinned.setdefault(
+                (entry["path"], manifest["source_git_sha"]),
+                entry["sha256"],
+            )
         paths.update(entry["source_path"] for entry in index["deferred_sources"])
         paths.add(manifest["freeze_artifact"])
         paths.add(f"api-delpi/{_EVIDENCE}/davi-governed-knowledge-manifest-v{version}.json")
         paths.add(f"api-delpi/{_EVIDENCE}/davi-governed-knowledge-topics-v{version}.json")
+    drifted = {
+        path
+        for (path, _sha), pinned_sha in pinned.items()
+        if hashlib.sha256(
+            (root / path.removeprefix("api-delpi/")).read_bytes()
+        ).hexdigest()
+        != pinned_sha
+    }
     for source in paths:
         relative = source.removeprefix("api-delpi/")
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(root / relative, target)
+        if source in drifted:
+            git_sha = next(
+                sha for (path, sha), pinned_sha in pinned.items() if path == source
+            )
+            target.write_bytes(
+                subprocess.run(
+                    ["git", "show", f"{git_sha}:{source}"],
+                    cwd=repo_root,
+                    capture_output=True,
+                    check=True,
+                ).stdout
+            )
+        else:
+            shutil.copyfile(root / relative, target)
     return tmp_path
 
 
