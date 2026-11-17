@@ -70,9 +70,10 @@ export type SeriesChartMarkerMode = "all" | "last";
  * `off` = cor por índice de categoria/série (padrão).
  * `by_value` = rampa min→max.
  * `by_goal` = faixas vs `goalLineValue` (atingiu / perto / abaixo).
+ * `by_sign` = cada barra/coluna pela polaridade real do valor (não pela ordem).
  */
 export type SeriesChartColorScale = {
-  mode: "off" | "by_value" | "by_goal";
+  mode: "off" | "by_value" | "by_goal" | "by_sign";
   /** high = pior (refugo, NC) | high = melhor (eficiência, OEE / meta). */
   polarity: "high_is_bad" | "high_is_good";
   /** Id da paleta semântica cujos `colors` definem a rampa (`by_value`). */
@@ -88,6 +89,19 @@ export const GOAL_SCALE_COLORS = {
   warn: "#f97316",
   bad: "#be123c",
 } as const;
+
+/** Preset GLPI #1610: valores <0 vermelho, >0 verde, 0 cinza neutro. */
+export const SIGN_SCALE_COLORS = {
+  negative: "#dc2626",
+  zero: "#94a3b8",
+  positive: "#16a34a",
+} as const;
+
+export function resolveSignScaleColor(value: number): string {
+  if (value < 0) return SIGN_SCALE_COLORS.negative;
+  if (value > 0) return SIGN_SCALE_COLORS.positive;
+  return SIGN_SCALE_COLORS.zero;
+}
 
 /** @deprecated Preferir import de `@delpi/plugin-ui` theme / DECK_COLOR_*. */
 export {
