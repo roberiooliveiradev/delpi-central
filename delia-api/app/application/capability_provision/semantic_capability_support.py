@@ -2431,18 +2431,6 @@ def _normalize_obligation_tuple(
             # reject the plan for bounded feedback rather than let a
             # silently dropped requirement fake coverage (RC5).
             return None
-        if isinstance(item, Mapping) and _presentation_scope_arg_keys(
-            item.get("required_args")
-        ):
-            # A top-level presentation selector (view/format/...)
-            # declared as required scope is a strategy/presentation
-            # anchor, not a material business constraint — it makes
-            # the obligation unechoable by any consultation-class
-            # invocation that lacks that rendering argument (INT2_B).
-            # Reject so the model re-declares the presentation demand
-            # via evidence_source/description — never silently drop a
-            # declared requirement.
-            return None
         obligation = _obligation_item(item)
         if not obligation.description or len(obligation.description) > 200:
             continue
@@ -2934,43 +2922,6 @@ _CONSULTATION_OPERATIONS = frozenset(
         SpecialistOperationClass.DISCOVERY.value.casefold(),
     }
 )
-# Top-level ``required_args`` keys that name a presentation/viewport
-# selector, never a business-set filter (INT2_B residual). Declaring
-# them as required scope freezes the model's chosen rendering of ONE
-# capability into a material restriction no other consultation-class
-# invocation can echo — a demanded presentation belongs in
-# ``evidence_source``/``description``, not in ``required_args``.
-# Deliberately narrower than ``_PRESENTATION_EVIDENCE_SOURCES``:
-# names like ``summary``/``metric`` may legitimately be owner
-# argument fields, while these keys only ever select how the answer
-# is rendered.
-_PRESENTATION_SCOPE_ARG_KEYS = frozenset(
-    {
-        "view",
-        "format",
-        "display",
-        "display_format",
-        "layout",
-        "presentation",
-    }
-)
-
-
-def _presentation_scope_arg_keys(required_args: object) -> tuple[str, ...]:
-    """Top-level ``required_args`` keys that are presentation
-    selectors — non-material as declared business scope."""
-    if not isinstance(required_args, Mapping):
-        return ()
-    return tuple(
-        sorted(
-            {
-                str(key).strip().casefold()
-                for key in required_args
-                if str(key).strip().casefold()
-                in _PRESENTATION_SCOPE_ARG_KEYS
-            }
-        )
-    )
 # Argument containers that owners treat as equivalent carriers for the
 # same leaf filter/identity keys (TEO ``params.code`` ↔ DAVI
 # ``arguments.code``). Never conflate with nested business keys.

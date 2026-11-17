@@ -73,7 +73,6 @@ from app.application.capability_provision.semantic_capability_support import (
     _PAGINATION_ARG_KEYS,
     _LAST_CATALOG_FAILURES,
     _OBLIGATION_OPERATIONS,
-    _presentation_scope_arg_keys,
     OBLIGATION_SATISFIED,
     _attempt_identifier_roots,
     _emit_activity,
@@ -799,13 +798,9 @@ def _comprehension_catalog_block(
             "id; dotted surface ids are rejected. operation takes "
             "one operation_classes value only (entity actions like "
             "search/get belong in required_args, never in "
-            "operation — omit operation unless the objective itself "
-            "demands that class). required_args declares only the "
-            "material business scope the user asked for (filters, "
-            "identities, units, periods) using the field vocabulary "
-            "the owner publishes — never presentation selectors like "
-            "view/format (rejected as non-material) and never a "
-            "mirror of the call you intend to make. goal_class and "
+            "operation). required_args mirrors the real invocation "
+            "arguments the obligation needs, using the field "
+            "vocabulary the owner publishes. goal_class and "
             "expected_delivery take ONLY values from the "
             "goal_classes and expected_delivery lists."
         ),
@@ -2265,22 +2260,15 @@ class PydanticAiInvestigationOrchestrator:
             ``get_product_structure`` or ``process``); ``operation``
             requires a specific operation class (read, analysis,
             prepare, act, discovery) and is a restriction only, never
-            a pertinence proof. ``required_args`` declares the material
-            business scope the USER asked for — filters, identities,
-            units or periods under the published argument carrier, e.g.
+            a pertinence proof. ``required_args`` declares the business
+            scope the user asked for, as a nested argument object
+            mirroring the invocation args you intend to pass — e.g.
             ``{"params": {"status": "ativo"}}`` for "processos ativos"
-            or ``{"params": {}}`` only when the objective requires the
-            explicitly unfiltered set: a query carrying a contradictory
-            filter, missing the declared one, or adding an extra
-            business argument inside the declared container cannot
-            demonstrate the obligation. It is NOT a mirror of the call
-            you plan to make: never declare presentation/viewport
-            selectors (``view``, ``format``, ``display``, ``layout``) —
-            they freeze a capability's rendering into a restriction no
-            other governed capability can echo and are rejected; a
-            demanded presentation belongs in ``evidence_source`` or the
-            description. Declare only the filters the user's request
-            actually requires.
+            or ``{"params": {}}`` for an unfiltered listing: a query
+            carrying a contradictory filter, missing the declared one,
+            or adding an extra business argument inside the declared
+            container cannot demonstrate the obligation. Declare only
+            the filters the user's request actually requires.
             ``evidence_source`` is the owner-vocabulary VALUE you pass
             as the invocation selector in that same call's args — the
             ``entity``/``capability``/``action`` token such as
@@ -2290,12 +2278,8 @@ class PydanticAiInvestigationOrchestrator:
             guidance naming the selector values you already declared.
             ``operation`` takes only an operation CLASS (read,
             analysis, prepare, act, discovery) — entity actions like
-            ``search``/``get`` belong to the invocation args; omit
-            ``operation`` unless the OBJECTIVE itself demands that
-            operation kind (e.g. "analise…" → analysis): it restricts
-            which capability classes may demonstrate the obligation,
-            so a class you merely preferred as strategy silently
-            disqualifies other capable capabilities. Anchored
+            ``search``/``get`` belong to the invocation args; when no
+            class restriction is needed, omit ``operation``. Anchored
             obligations are verified mechanically against
             owner-declared evidence metadata; unanchored text binds
             evidence but never proves pertinence. A declaration is a
@@ -2419,45 +2403,15 @@ class PydanticAiInvestigationOrchestrator:
                         "(read, analysis, prepare, act, discovery) — "
                         "entity actions like 'search'/'get' belong to "
                         "the invocation args, not this field; omit "
-                        "operation unless the objective itself demands "
-                        "that class."
+                        "operation when no class restriction is needed."
                     )
-                presentation_scope_keys = sorted(
-                    {
-                        key
-                        for item in needed
-                        if isinstance(item, dict)
-                        for key in _presentation_scope_arg_keys(
-                            item.get("required_args")
-                        )
-                    }
-                )
-                if (
-                    any(
-                        isinstance(item, dict)
-                        and "required_args" in item
-                        and not isinstance(item.get("required_args"), dict)
-                        for item in needed
-                    )
-                    or presentation_scope_keys
+                if any(
+                    isinstance(item, dict)
+                    and "required_args" in item
+                    and not isinstance(item.get("required_args"), dict)
+                    for item in needed
                 ):
                     rejected["invalid_required_args"] = True
-                    if presentation_scope_keys:
-                        rejected["presentation_scope_keys"] = (
-                            presentation_scope_keys[:8]
-                        )
-                        rejected["required_args_guidance"] = (
-                            "required_args declares only the material "
-                            "business scope the user asked for (filters, "
-                            "identities, units, periods under the "
-                            "published carrier) — a presentation/"
-                            "viewport selector like 'view' is not "
-                            "business scope: it freezes your chosen "
-                            "rendering into a restriction no other "
-                            "capability can echo. Declare a demanded "
-                            "presentation via evidence_source or the "
-                            "obligation description instead."
-                        )
                 # Legitimate anchor candidates already in the model's
                 # own proposal: the selector values it declared in
                 # ``required_args`` are exactly the owner-vocabulary
