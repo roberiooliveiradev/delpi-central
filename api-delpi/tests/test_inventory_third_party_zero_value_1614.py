@@ -102,7 +102,9 @@ def test_all_inventory_adjustment_summary_brl_aggregates_use_zeroed_value():
     # Quantidades e quantidade de ajustes permanecem físicas.
     assert "SD3.D3_QUANT" in sql
     assert "COUNT(*) AS adjustment_count" in sql
-    assert "B1_TPMAT" not in sql.split("WHERE", 1)[0].split("FROM SD3010", 1)[0]
+    # SB1 sinaliza somente o custo; os movimentos físicos não são filtrados.
+    assert "B1_TPMAT" in sql
+    assert "D3_QUANT" in sql
 
 
 def test_paginated_items_keep_third_party_in_list_with_zero_monetary_value():
