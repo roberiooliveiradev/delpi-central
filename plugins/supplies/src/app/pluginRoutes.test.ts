@@ -19,6 +19,8 @@ describe("pluginRoutes", () => {
   it("resolves canonical english paths", () => {
     expect(resolvePluginRoute("/apps/supplies/purchase-requests").view).toBe("purchase_requests");
     expect(resolvePluginRoute("/apps/supplies/analytics/otd").view).toBe("analytics_otd");
+    expect(resolvePluginRoute("/apps/supplies/analytics/freight-impact").view).toBe("freight_impact");
+    expect(buildPluginPath("freight_impact")).toBe("/apps/supplies/analytics/freight-impact");
     const detail = resolvePluginRoute("/apps/supplies/purchase-orders/01/000123");
     expect(detail.view).toBe("purchase_order_detail");
     expect(detail.branch).toBe("01");

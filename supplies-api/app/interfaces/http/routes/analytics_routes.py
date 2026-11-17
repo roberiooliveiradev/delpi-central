@@ -7,7 +7,9 @@ from app.application.services.overview_composition_service import (
     normalize_overview_branches,
 )
 from app.application.security.supplies_permissions import can_use_analytics
-from app.interfaces.http.auth_decorators import require_policy
+from app.interfaces.http.auth_decorators import require_policy, require_units
+from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGateway, DelpiApiGatewayError
+from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 
 analytics_bp = Blueprint("analytics", __name__)
 
@@ -80,3 +82,37 @@ def get_analytics_otd():
             end_date=end_date,
         )
     ), 200
+
+
+@analytics_bp.get("/analytics/freight-impact")
+@require_policy(can_use_analytics)
+@require_units("branch")
+def get_portal_freight_impact():
+    """GLPI #1567 — authorized user/branch scope at BFF, trusted S2S on api-delpi."""
+    params = {
+        "branch": request.args.getlist("branch"),
+        "date_from": (request.args.get("date_from") or "").strip(),
+        "date_to": (request.args.get("date_to") or "").strip(),
+        "page": (request.args.get("page") or "1").strip(),
+        "page_size": (request.args.get("page_size") or "25").strip(),
+    }
+    try:
+        raw = DelpiApiGateway().get(
+            "/supplies/freight-impact",
+            access_token=g.current_user.access_token or "",
+            params=params,
+        )
+    except DelpiApiGatewayError as exc:
+        status = exc.status_code or 502
+        if status in (401, 403):
+            return jsonify({"detail": "Acesso negado ao indicador.", "code": "forbidden"}), status
+        if status == 422:
+            return jsonify({
+                "detail": exc.upstream_message or "Verifique as filiais e o período.",
+                "code": "unprocessable",
+            }), 422
+        return jsonify({"detail": "Dados de frete indisponíveis.", "code": "bad_gateway"}), 502
+    data = unwrap_delpi_envelope(raw)
+    if not isinstance(data, dict) or not isinstance(data.get("summary"), dict):
+        return jsonify({"detail": "Resposta de frete inválida.", "code": "bad_gateway"}), 502
+    return jsonify(data), 200

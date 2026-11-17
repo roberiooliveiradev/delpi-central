@@ -11,6 +11,7 @@ export type ManualToolTarget = {
 };
 
 export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
+  { label: "Frete sobre compras", viewId: "freight_impact" },
   { label: "IDF dos fornecedores", viewId: "supplier_performance" },
   { label: "Estoque de segurança", viewId: "safety_stock" },
   { label: "Solicitações de compras", viewId: "purchase_requests" },

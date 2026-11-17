@@ -66,6 +66,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         keywords: ["otd", "pontualidade", "velocimetro"],
       },
       {
+        id: "freight_impact",
+        label: "Frete sobre compras",
+        viewId: "freight_impact",
+        requiredCap: "analytics",
+        keywords: ["frete", "compras", "cte", "nf", "logistica", "1567"],
+      },
+      {
         id: "supplier_performance",
         label: "IDF dos fornecedores",
         viewId: "supplier_performance",

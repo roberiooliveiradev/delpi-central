@@ -18,6 +18,7 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { SupplierPerformancePage } from "./features/supplier-performance/SupplierPerformancePage";
 import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
+import { FreightImpactPage } from "./features/freight-impact/FreightImpactPage";
 import { DeliveriesPage } from "./features/deliveries/DeliveriesPage";
 import { InventoryPage } from "./features/inventory/InventoryPage";
 import { MarketIntelligencePage } from "./features/market-intelligence/MarketIntelligencePage";
@@ -144,6 +145,8 @@ function AppRoutes({
     content = <SupplierPerformancePage basePath={basePath} />;
   } else if (view === "analytics_otd") {
     content = <OtdAnalyticsPage basePath={basePath} />;
+  } else if (view === "freight_impact") {
+    content = <FreightImpactPage basePath={basePath} />;
   } else if (view === "help") {
     content = <UserManualPage basePath={basePath} />;
   } else if (view === "purchase_requests") {

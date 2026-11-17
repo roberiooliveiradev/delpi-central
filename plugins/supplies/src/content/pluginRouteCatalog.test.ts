@@ -28,6 +28,7 @@ describe("routeCatalog", () => {
     expect(ids).toContain("home");
     expect(ids).toContain("help");
     expect(ids).not.toContain("overview");
+    expect(ids).not.toContain("freight_impact");
     expect(ids).not.toContain("purchase_requests");
   });
 
@@ -54,6 +55,7 @@ describe("routeCatalog", () => {
     expect(items).toEqual(["home", "my_tasks", "help"]);
     const full = resolveShellNavItems(ALL_CAPS).map((item) => item.id);
     expect(full).toContain("overview");
+    expect(HUB_SECTIONS.flatMap(section => section.routes.map(route => route.id))).toContain("freight_impact");
     expect(full).toContain("purchase_requests");
   });
 

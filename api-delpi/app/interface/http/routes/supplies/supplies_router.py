@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from app.interface.http.pagination_query import (
     DETAILS_LIMIT_QUERY,
@@ -22,6 +24,12 @@ from app.interface.http.supplies_bff_service_access import (
 
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
 from app.core.responses import error_response
+from app.core.exceptions import DatabaseConnectionError
+from app.application.services.supplies.freight_impact_service import compose_freight_impact
+from app.infrastructure.persistence.totvs.supplies_repositories.freight_impact_repository import FreightImpactRepository
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_sql import normalize_purchase_order_branches
+from app.interface.http.routes.supplies.purchase_orders_branch_access import branches_access_error
+from app.interface.http.query_param_enums import BRANCH_CODES_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -462,3 +470,46 @@ def get_inventory_turnover(
             "Erro interno ao buscar giro de estoque.",
             status_code=500,
         )
+
+@router.get("/freight-impact", operation_id="get_supplies_freight_impact")
+@require_any_permission_or_supplies_bff(KPI_SUPPLIES_ACCESS)
+def get_supplies_freight_impact(
+    branch: list[str] = BRANCH_CODES_QUERY(),
+    date_from: str = Query(...),
+    date_to: str = Query(...),
+    page: int = Query(1, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_25_100"),
+):
+    """Indicador GLPI #1567. Fonte fiscal somente leitura DLP02R01."""
+    try:
+        branches = normalize_purchase_order_branches(branches=branch)
+        start, end = date.fromisoformat(date_from), date.fromisoformat(date_to)
+        if start > end or start < date(2023, 1, 1) or (end - start).days > 366:
+            raise ValueError("Informe período válido a partir de 2023, com até 367 dias.")
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+    auth_error = branches_access_error(branches)
+    if auth_error:
+        return auth_error
+    try:
+        rows = FreightImpactRepository().list_invoices(
+            branches=branches, date_from=date_from, date_to=date_to
+        )
+        result = compose_freight_impact(
+            rows, branches=branches, date_from=date_from, date_to=date_to,
+            page=page, page_size=page_size,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_freight_impact",
+            entity="supplies_freight_impact",
+            shape="collection",
+            message="Impacto do frete nacional nas compras consultado.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError:
+        return error_response("Protheus indisponível para o indicador de frete.", status_code=503)
+    except Exception:
+        log_error("Erro ao consultar impacto do frete nacional.")
+        return error_response("Falha interna ao consultar impacto do frete.", status_code=500)
