@@ -220,6 +220,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_supplies_inventory_adjustments": RouteContract(
         "supplies_inventory_adjustment", "paged_list"
     ),
+    "get_supplies_inventory_adjustments_tv_summary": RouteContract(
+        "supplies_inventory_divergence_tv_summary", "scalar"
+    ),
+    "get_supplies_inventory_adjustments_tv_monthly_series": RouteContract(
+        "supplies_inventory_divergence_tv_month", "list"
+    ),
+    "get_supplies_inventory_adjustments_tv_weekly_items": RouteContract(
+        "supplies_inventory_divergence_tv_weekly_item", "paged_list"
+    ),
     "list_supplies_purchase_orders": RouteContract(
         "supplies_purchase_order_line", "paged_list"
     ),

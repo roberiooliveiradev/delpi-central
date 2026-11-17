@@ -440,7 +440,8 @@ def test_routes_use_api_delpi_access_and_contract_builder() -> None:
         _API_ROOT
         / "app/interface/http/routes/supplies/inventory_adjustments_router.py"
     ).read_text(encoding="utf-8")
-    assert source.count("@require_permission(API_DELPI_ACCESS)") == 2
+    # As duas rotas legadas e as três novas fontes TV preservam o gate.
+    assert source.count("@require_permission(API_DELPI_ACCESS)") >= 5
     assert "get_supplies_inventory_adjustments_summary" in source
     assert "list_supplies_inventory_adjustments" in source
     assert 'PAGE_SIZE_QUERY("page_50_500")' in source
@@ -463,6 +464,13 @@ def test_operations_present_in_live_openapi() -> None:
     listing = paths["/supplies/inventory-adjustments"]["get"]
     assert summary["operationId"] == "get_supplies_inventory_adjustments_summary"
     assert listing["operationId"] == "list_supplies_inventory_adjustments"
+    for route, operation_id in (
+        ("/tv/summary", "get_supplies_inventory_adjustments_tv_summary"),
+        ("/tv/monthly-series", "get_supplies_inventory_adjustments_tv_monthly_series"),
+        ("/tv/weekly-items", "get_supplies_inventory_adjustments_tv_weekly_items"),
+    ):
+        source = paths["/supplies/inventory-adjustments" + route]["get"]
+        assert source["operationId"] == operation_id
 
 
 # ---------------------------------------------------------------------------

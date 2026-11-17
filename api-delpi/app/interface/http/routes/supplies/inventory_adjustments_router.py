@@ -12,6 +12,9 @@ from app.application.dto.supplies.inventory_adjustments_request import (
     InventoryAdjustmentsRequest,
 )
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
+from app.application.services.supplies.inventory_adjustments_tv_service import (
+    InventoryAdjustmentsTvService,
+)
 from app.composition.supplies_composer import (
     build_get_inventory_adjustments_summary_use_case,
     build_list_inventory_adjustments_use_case,
@@ -21,7 +24,7 @@ from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import (
     OpenApiAgentMetadataBuilder,
 )
-from app.interface.http.pagination_query import PAGE_SIZE_QUERY
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY, TOP_LIMIT_QUERY
 from app.interface.http.period_query_params import (
     END_DATE_QUERY,
     LEGACY_DATE_END_QUERY,
@@ -159,3 +162,105 @@ def list_inventory_adjustments(
             "Erro interno ao carregar ajustes de inventário.",
             status_code=500,
         )
+
+
+# ── GLPI #1598 | fontes próprias para o TV Dashboard ──────────────────────
+# MESMA permissão das rotas de inventário existentes: api-delpi.access.
+# Os dados são consultados sob demanda; nenhuma tela/playlist é criada aqui.
+
+
+def _tv_response(*, operation_id: str, action: str, **filters):
+    try:
+        service = InventoryAdjustmentsTvService()
+        payload = getattr(service, action)(**filters)
+        return api_delpi_success(
+            payload,
+            operation_id=operation_id,
+            message="Dados de divergência de inventário para TV carregados.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except DatabaseConnectionError:
+        log_error("Banco indisponível ao buscar divergências para TV.")
+        return error_response(
+            "Não foi possível consultar os ajustes no Protheus.", status_code=503
+        )
+    except Exception:
+        log_error("Erro ao consultar divergências de inventário para a TV.")
+        return error_response(
+            "Falha interna na consulta do painel de inventário.", status_code=500
+        )
+
+
+@router.get(
+    "/tv/summary",
+    operation_id="get_supplies_inventory_adjustments_tv_summary",
+    summary="Indicadores anuais e mensais de divergência de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
+)
+@require_permission(API_DELPI_ACCESS)
+def get_inventory_adjustments_tv_summary(
+    as_of: Optional[str] = Query(
+        default=None,
+        description="Referência (YYYY-MM-DD, horário de São Paulo). Vazio = hoje.",
+    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    warehouse: Optional[str] = Query(default=None),
+):
+    """KPIs: divergência bruta acumulada no ano e no mês, faltas, sobras e líquido."""
+    return _tv_response(
+        operation_id="get_supplies_inventory_adjustments_tv_summary",
+        action="summary",
+        as_of=as_of,
+        branch=branch,
+        warehouse=warehouse,
+    )
+
+
+@router.get(
+    "/tv/monthly-series",
+    operation_id="get_supplies_inventory_adjustments_tv_monthly_series",
+    summary="Série mensal de faltas e sobras de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
+)
+@require_permission(API_DELPI_ACCESS)
+def get_inventory_adjustments_tv_monthly_series(
+    as_of: Optional[str] = Query(default=None, description="YYYY-MM-DD. Vazio = hoje."),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    warehouse: Optional[str] = Query(default=None),
+):
+    """Pontos mensais (jan–mês atual) com valores brutos, faltas, sobras e líquido."""
+    return _tv_response(
+        operation_id="get_supplies_inventory_adjustments_tv_monthly_series",
+        action="monthly_series",
+        as_of=as_of,
+        branch=branch,
+        warehouse=warehouse,
+    )
+
+
+@router.get(
+    "/tv/weekly-items",
+    operation_id="get_supplies_inventory_adjustments_tv_weekly_items",
+    summary="Ranking semanal de produtos com ajustes de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
+)
+@require_permission(API_DELPI_ACCESS)
+def get_inventory_adjustments_tv_weekly_items(
+    as_of: Optional[str] = Query(default=None, description="YYYY-MM-DD. Vazio = hoje."),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    warehouse: Optional[str] = Query(default=None),
+    top_limit: int = TOP_LIMIT_QUERY(
+        "top_limit_10_50",
+        description="Quantidade de linhas do ranking (1 a 50; padrão 10).",
+    ),
+):
+    """Ranking da semana corrente, grão filial × produto × armazém × natureza."""
+    return _tv_response(
+        operation_id="get_supplies_inventory_adjustments_tv_weekly_items",
+        action="weekly_items",
+        as_of=as_of,
+        branch=branch,
+        warehouse=warehouse,
+        top_limit=top_limit,
+    )
