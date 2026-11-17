@@ -43,6 +43,6 @@ jobs:
       - name: Lint, testes e build do TV Dashboard
         run: npm run ci --prefix plugins/tv-dashboard
       - name: Regressão do kit de tabelas
-        run: npm test --prefix plugins/plugin-ui -- src/components/data/configurableTableParts.test.ts
+        run: npm test --prefix plugins/plugin-ui -- src/components/data/configurableTableParts.test.ts src/components/data/configurableTable/TableContainer.test.tsx
       - name: Regressão da apresentação
         run: npm test --prefix plugins/tv-dashboard-presentation -- src/GaugeChartView.test.tsx
