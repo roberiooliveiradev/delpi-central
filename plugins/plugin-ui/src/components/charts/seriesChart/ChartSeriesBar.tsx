@@ -6,6 +6,7 @@ import {
   resolveSeriesCategoryColor,
   resolveValueScaleColor,
   resolveGoalThresholdColor,
+  resolveSignScaleColor,
   seriesValueExtent,
   type SeriesChartColorScale,
   type SeriesChartPoint,
@@ -42,7 +43,9 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
 /**
  * Colunas (vertical) ou barras (horizontal) cartesianas.
  * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped).
- * Com `colorScale.mode === "by_value"` / `"by_goal"` (ou `categoryColors` na série única), cada barra tem cor própria.
+ * Com `colorScale.mode === "by_sign"`, cada barra/coluna recebe cor
+ * pelo valor (inclusive em gráficos com múltiplas séries). Demais escalas
+ * mantêm a regra legada para uma única série.
  */
 export function ChartSeriesBar({
   layout,
@@ -67,14 +70,19 @@ export function ChartSeriesBar({
   const extent = seriesValueExtent(points.map((p) => p.value));
   const goalOk = goalValue != null && Number.isFinite(Number(goalValue));
   const usePerBarColor =
-    seriesCount <= 1 &&
-    (colorScale?.mode === "by_value" ||
-      (colorScale?.mode === "by_goal" && goalOk) ||
-      Boolean(categoryColors && categoryColors.length > 0));
+    colorScale?.mode === "by_sign" ||
+    (seriesCount <= 1 &&
+      (colorScale?.mode === "by_value" ||
+        (colorScale?.mode === "by_goal" && goalOk) ||
+        Boolean(categoryColors && categoryColors.length > 0)));
   const pointSelectable = Boolean(pointSelection?.onPointSelect);
   const selectedKey = pointSelection?.selectedPointKey ?? null;
 
   const resolveFill = (point: (typeof points)[number], index: number): string => {
+    if (!isSeriesChartFiniteValue(point.value)) return seriesColor;
+    if (colorScale?.mode === "by_sign") {
+      return resolveSignScaleColor(Number(point.value));
+    }
     if (!usePerBarColor) return seriesColor;
     const slotIndex =
       typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
