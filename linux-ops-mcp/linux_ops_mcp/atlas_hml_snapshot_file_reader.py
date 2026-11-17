@@ -68,7 +68,7 @@ def _review_from_directory(
     injecting a path or expected ownership.
     """
     if (
-        type(directory) is not Path
+        not isinstance(directory, Path)
         or not directory.is_absolute()
         or type(owner_uid) is not int or owner_uid < 0
         or type(expected_gid) is not int or expected_gid < 0
