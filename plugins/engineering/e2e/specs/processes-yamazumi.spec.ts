@@ -36,6 +36,24 @@ async function shot(page: Page, name: string) {
   });
 }
 
+/** FilterSelect do kit: trigger button + listbox em portal (não é
+ * <select> nativo). Escolhe a opção pelo texto visível. */
+async function chooseOption(
+  page: Page,
+  triggerLabel: string,
+  optionName: RegExp,
+  triggerIndex = 0,
+) {
+  await page
+    .getByRole("button", { name: triggerLabel, exact: true })
+    .nth(triggerIndex)
+    .click();
+  const listbox = page.getByRole("listbox");
+  await expect(listbox).toBeVisible({ timeout: 10_000 });
+  await listbox.getByRole("button", { name: optionName }).first().click();
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+}
+
 /** Abre a ferramenta, carrega o roteiro oficial e seleciona o
  * primeiro estágio disponível (contexto sempre explícito). */
 async function openToolAndLoadRouting(page: Page) {
@@ -48,13 +66,7 @@ async function openToolAndLoadRouting(page: Page) {
   await expect(
     page.getByText(/Selecione a filial e o estágio produtivo/),
   ).toBeVisible({ timeout: 45_000 });
-  const stageSelect = page.locator("select").last();
-  const options = await stageSelect.locator("option").allTextContents();
-  await stageSelect.selectOption({
-    label: options
-      .find((o) => o.trim() && !o.startsWith("Selecionar"))!
-      .trim(),
-  });
+  await chooseOption(page, "Estágio produtivo", /^Estágio /);
   await expect(
     page.getByRole("heading", { name: "Operações oficiais do roteiro" }),
   ).toBeVisible({ timeout: 15_000 });
@@ -129,12 +141,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await expect(
       page.getByText(/Selecione a filial e o estágio produtivo/),
     ).toBeVisible({ timeout: 45_000 });
-    const stageSelect = page.locator("select").last();
-    const options = await stageSelect.locator("option").allTextContents();
-    const target = options.find(
-      (o) => o.trim() && !o.startsWith("Selecionar"),
-    );
-    await stageSelect.selectOption({ label: target!.trim() });
+    await chooseOption(page, "Estágio produtivo", /^Estágio /);
     await expect(
       page.getByRole("heading", { name: "Operações oficiais do roteiro" }),
     ).toBeVisible({ timeout: 15_000 });
@@ -175,7 +182,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page.locator("#lb-demand").fill("500");
     await page.locator("#lb-shift").fill("480");
     await page.locator("#lb-break").fill("60");
-    await page.getByLabel("Método").selectOption({ value: "m1" });
+    await chooseOption(page, "Método", /^M1\b/);
     await page
       .getByRole("button", { name: "Calcular análise rápida" })
       .click();
@@ -185,7 +192,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await shot(page, "lb-m1-result");
 
     /* Yamazumi — postos e atribuição de operações oficiais. */
-    await page.getByLabel("Método").selectOption({ value: "m5" });
+    await chooseOption(page, "Método", /^M5\b/);
     await page
       .getByRole("button", { name: "Adicionar posto" })
       .click();
@@ -196,12 +203,13 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await expect(page.getByText("Posto 02")).toBeVisible();
 
     /* Atribui operações não atribuídas ao Posto 01 (controle acessível). */
-    const assignSelects = page.getByLabel("Atribuir a");
-    const count = await assignSelects.count();
+    const assignTriggers = page.getByRole("button", {
+      name: "Atribuir a",
+      exact: true,
+    });
+    const count = await assignTriggers.count();
     for (let i = 0; i < Math.min(count, 3); i += 1) {
-      await assignSelects
-        .nth(0)
-        .selectOption({ index: 1 });
+      await chooseOption(page, "Atribuir a", /^Posto/, 0);
       await page.waitForTimeout(200);
     }
     await shot(page, "lb-yamazumi-assigned");
@@ -232,15 +240,10 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page.reload();
     await page.locator("#lb-product-code").fill(PRODUCT_WITH_ROUTING);
     await page.getByRole("button", { name: "Buscar roteiro" }).click();
-    const stageSelectAfter = page.locator("select").last();
-    const optsAfter = await stageSelectAfter
-      .locator("option")
-      .allTextContents();
-    await stageSelectAfter.selectOption({
-      label: optsAfter
-        .find((o) => o.trim() && !o.startsWith("Selecionar"))!
-        .trim(),
-    });
+    await expect(
+      page.getByText(/Selecione a filial e o estágio produtivo/),
+    ).toBeVisible({ timeout: 45_000 });
+    await chooseOption(page, "Estágio produtivo", /^Estágio /);
     await expect(
       page.getByRole("button", { name: "Cenário B" }),
     ).toBeVisible({ timeout: 30_000 });
@@ -270,9 +273,12 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await openToolAndLoadRouting(page);
 
     await page.getByRole("button", { name: "Adicionar posto" }).click();
-    const assignSelects = page.getByLabel("Atribuir a");
-    if ((await assignSelects.count()) > 0) {
-      await assignSelects.nth(0).selectOption({ index: 1 });
+    const assignTriggers = page.getByRole("button", {
+      name: "Atribuir a",
+      exact: true,
+    });
+    if ((await assignTriggers.count()) > 0) {
+      await chooseOption(page, "Atribuir a", /^Posto/, 0);
     }
     await expect(
       page.locator(".delpi-ui-multi-type-series-chart").first(),
