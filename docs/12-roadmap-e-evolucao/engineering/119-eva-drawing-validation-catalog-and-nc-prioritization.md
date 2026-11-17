@@ -6295,3 +6295,52 @@ Dispatcher `_eval_1008` por marcador `TERM. <TIPO>` (espelha o padrão do dispat
 - Aceite E2E visual (ChatGPT MCP) exige documento oficial com terminal 1008; caso indisponível → `LIVE_DOCUMENT_HOLDOUT_NOT_AVAILABLE`. Owner: Coordination.
 - Engine `devin` do verificador segue bloqueada por auth — owner: infra/tooling (não bloqueia mais este release).
 - Próximo lote: G-03 (vocabulário de certificações NM/NBR-num/UL94/DIN46228).
+
+## §94.39 — G25-L2-A: Flexibilidade Normativa de Bitola AWG e Embalagem CARRETEL
+
+**TASK_ID:** `EVA-E1-VAL01-G25-L2-A-MP1008-GAUGE-AND-PACKAGING-FLEXIBILITY-01`
+
+### 94.39.1 Problema e causa raiz
+
+- Caso real do aceite EVA/ChatGPT — produto `90264302`, componente `10080106`, descrição `TERM. MAG MATE 18-22AWG ESTANHADO CARRETEL UL - ROHS` (job `aj-d104e44c8cf8469e`, PDF sha256 `f33447b271a3…`). O avaliador genérico MP 1008 retornava `MP-1008G-GAUGE = INCONCLUSIVE observed=null` e `MP-1008G-PACK = INCONCLUSIVE observed=null`: evidência **visível na descrição** era perdida por restrição lexical.
+- Root cause gauge: parser de faixa só reconhecia padrão `MM2`; `18-22AWG` caía em observação residual ou `null`.
+- Root cause embalagem: `_TERMINAL_PACK` cobria `GRANEL/FITADO/BLISTER`; `CARRETEL` não era reconhecido nem como evidência.
+
+### 94.39.2 Decisão normativa (léxico ≠ conformidade)
+
+- AWG é documentado na norma canônica em cabos (área `mm2` ou `AWG`) e em MP 1009 INSERTO (`20-14AWG`), mas **não ratificado como requisito das estruturas MP 1008** → evidência reconhecida com `unit="AWG"`, regra permanece `INCONCLUSIVE` com razão de ratificação pendente do owner normativo. **Zero conversão AWG→mm2.**
+- `CARRETEL` é observado no TOTVS, mas não ratificado na estrutura 1008 → reconhecido lexicalmente em `_TERMINAL_PACK_RECOGNIZED` (vocabulário ratificado `_TERMINAL_PACK` inalterado); regra PACK `INCONCLUSIVE` com `observed="CARRETEL"` e razão owner-pending.
+- GRANEL/FITADO/BLISTER e MM2 preservam `PASS`. Nenhuma exceção por produto/PDF. Issue #233 (configuração governada de vocabulário) permanece `PLANNED` — não implementada neste hotfix.
+
+### 94.39.3 Implementação (menor diff)
+
+- Commits: `ee7a961633` (implementação inicial) + `c4655790cf` (correção OC-1 do verificador: `_ring_1008` — FORQUILHA/OLHAL/ANZOL — expõe `gauge.raw/unit=AWG` no atributo, não só na regra); pushed como `5b6475f770` (rebase sobre `a3557b1e2d`).
+- `_GAUGE_AWG_RANGE` (`\d{1,2}\s*-\s*\d{1,2}\s*AWG`, boundary) consumido em `_t_gauge`/`_t_obs` (AWG não vaza para observações); atributo `gauge` preserva `raw`, `unit="AWG"`, `state=EXTRACTED`.
+- Contrato `normative_description.v1` inalterado; `no_business_write=True`; `automatic_nc=false`; proveniência `norm_ref → rule_id → attribute → evidence → result` preservada.
+
+### 94.39.4 Testes e verificação independente
+
+- Focados: **88/88** em `test_g24_normative_description.py` (casos L2-A: real 10080106, `18-22 AWG` com espaço, `20-14AWG`, MM2 regressão, CARRETEL vs GRANEL/FITADO/BLISTER, atributo AWG em `_ring_1008`, 1009 INSERTO AWG ratificado → PASS).
+- Suíte completa (imagem produtiva): `1509 pass / 1 fail / 21 skip` — único fail = D16 pré-existente (`test_isolation_between_requests`, `requestId` KeyError), fora do diff. Verificador reproduziu `1518/3` no `.venv` local (divergência ambiental — os 2 extras, eva_val01 + visual_perception_r7, **não reproduzem na imagem produtiva**: 105/105 passam); classificados como não atribuíveis ao hotfix.
+- Verificação independente r1 (cursor/Composer): **REWORK — OC-1** (atributo gauge ring sem AWG) → corrigida.
+- Verificação independente r2 sobre `854800aebf..c4655790cf`: **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção — relatório `.git/delpi-verifier/reports/*r2*`. Resíduos: contagem da suíte divergente da alegada (refutada: 1518/3 vs 1509/1 — ambiental, fora do diff); `_ring_dims` não ancora DINT/DEXT com AWG (limite estrutural pré-existente); teste OC-1 cobre FORQUILHA (OLHAL provado manualmente no mesmo avaliador).
+
+### 94.39.5 Deploy produtivo e smoke
+
+- Autorização condicional do pacote satisfeita (verificação efetiva + gates); deploy canônico `srv-api` → `up-prod-sequential.sh --build engineering-api`.
+- Imagem antes: `sha256:8058c06d1449` → depois: `sha256:b6db540e9bcf` (`infra-engineering-api:latest`). Container healthy; rollback = imagem `8058c06d1449` retida.
+- Smoke produtivo (read-only, `evaluate_description` no container):
+  - `REAL-10080106`: `INCONCLUSIVE` — `gauge=EXTRACTED 18-22AWG/AWG`, `packaging=EXTRACTED CARRETEL`, regras GAUGE/PACK `INCONCLUSIVE` com observed; TYPE/BATH/OBS/CERT `PASS`. **Sem falsa violação e sem falso PASS.**
+  - AWG `18-22 AWG` (espaço) e `20-14AWG` → `INCONCLUSIVE` observed preenchido; MM2+CARRETEL → GAUGE `PASS`, PACK `INCONCLUSIVE`.
+  - GRANEL/FITADO/BLISTER → overall `PASS` (vocabulário ratificado intacto).
+  - FORQUILHA/OLHAL com AWG → `gauge.unit=AWG`, regra `INCONCLUSIVE` (OC-1 verificada em prod).
+  - PINO/ILHOS/LINGUETA/FASTON → dispatch e regras MM2 preservados; `TERM.` sem tipo → genérico; 1009 INSERTO `20-14AWG` → GAUGE `PASS` (AWG ratificado ali); 1009 ISOLADOR inalterado.
+- `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+
+### 94.39.6 Residual e handoff
+
+- **Pendência do owner normativo:** ratificação de AWG como unidade aceita nas estruturas 1008 e de CARRETEL no vocabulário de embalagem → ao ratificar, promover regras de `INCONCLUSIVE` para `PASS` sem novo parse. Fonte da decisão: Engenharia DELPI (não o cadastro TOTVS).
+- `_ring_dims` com AWG não ancora DINT/DEXT (resíduo verificador, confiança ~60) — `DISCOVERED_REQUIREMENT` para lote futuro.
+- Falhas pré-existentes inalteradas: D16, PRC #207, e outras fora do escopo eng-drawing.
+- Issue #131 não atualizada (gh sem auth) — pendência manual. Issue #233 preservada como decisão arquitetural.
+- Próximo bounded step: ratificação owner AWG/CARRETEL → promoção para `PASS`; lote G-03 (certificações) segue na fila.
