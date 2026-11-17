@@ -150,6 +150,122 @@ def _audit_issue_ids(cfg: dict[str, Any]) -> set[str]:
     }
 
 
+
+# ---------------------------------------------------------------------------
+# GLPI #1612 — editor deve manter o frame explicitamente informado
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "frame,expected_issue",
+    [
+        (
+            {"x": 0.25, "y": 0.45, "w": 24.0, "h": 12.0},
+            "safe_area_violation:txt-editor",
+        ),
+        (
+            {"x": -2.4, "y": 4.0, "w": 24.0, "h": 12.0},
+            "block_frame_overflow:txt-editor",
+        ),
+    ],
+)
+def test_editor_upsert_preserves_authored_frame_near_or_outside_slide(
+    _light_sanitize, frame, expected_issue
+):
+    """A auditoria reporta o aviso, mas o ACK não move um bloco arrastado."""
+    initial = _text_block("txt-editor", "#0f172a")
+    repo = _FakeRepo(_native([initial]))
+    result = _service(repo).preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-editor",
+                        "type": "text",
+                        "frame": dict(frame),
+                    },
+                }
+            ],
+        },
+        user={"id": "u1"},
+        include_fingerprint=False,
+    )
+    saved = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-editor")
+    assert saved["frame"] == frame
+    assert expected_issue in _audit_issue_ids(result["nativeConfig"])
+    fixes = (result.get("sideEffects") or {}).get("safeFixesApplied") or []
+    assert not any(f.get("blockId") == "txt-editor" for f in fixes)
+
+
+def test_editor_upsert_does_not_auto_distribute_intentional_overlap(_light_sanitize):
+    """Arrastar um KPI sobre outro não aciona relayout invisível."""
+    first = {
+        "id": "kpi-1",
+        "type": "kpi_view",
+        "frame": {"x": 10.0, "y": 10.0, "w": 25.0, "h": 15.0},
+    }
+    second = {
+        "id": "kpi-2",
+        "type": "kpi_view",
+        "frame": {"x": 45.0, "y": 10.0, "w": 25.0, "h": 15.0},
+    }
+    repo = _FakeRepo(_native([first, second]))
+    result = _service(repo).preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "kpi-2",
+                        "type": "kpi_view",
+                        "frame": dict(first["frame"]),
+                    },
+                }
+            ],
+        },
+        user={"id": "u1"},
+        include_fingerprint=False,
+    )
+    blocks = {b["id"]: b for b in result["nativeConfig"]["blocks"]}
+    assert blocks["kpi-1"]["frame"] == first["frame"]
+    assert blocks["kpi-2"]["frame"] == first["frame"]
+    assert any(
+        issue.startswith("block_overlap:kpi-1~kpi-2")
+        for issue in _audit_issue_ids(result["nativeConfig"])
+    )
+
+
+def test_explicit_layout_fix_can_still_reposition_authored_frame(_light_sanitize):
+    """A correção solicitada explicitamente mantém autoridade sobre a margem."""
+    repo = _FakeRepo(_native([_text_block("txt-editor", "#0f172a")]))
+    result = _service(repo).preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {
+                        "id": "txt-editor",
+                        "type": "text",
+                        "frame": {"x": 0.25, "y": 0.45, "w": 24, "h": 12},
+                    },
+                },
+                {"op": "apply_safe_layout_fixes"},
+            ],
+        },
+        user={"id": "u1"},
+        include_fingerprint=False,
+    )
+    block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-editor")
+    assert block["frame"]["x"] >= 3
+    assert block["frame"]["y"] >= 3
+    fixes = (result.get("sideEffects") or {}).get("safeFixesApplied") or []
+    assert any(f.get("blockId") == "txt-editor" for f in fixes)
+
+
 # ---------------------------------------------------------------------------
 # safe_contrast_color — context-aware owner decision
 # ---------------------------------------------------------------------------

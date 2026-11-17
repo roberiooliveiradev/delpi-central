@@ -34,3 +34,35 @@ bash ./infra/scripts/up-prod-sequential.sh --build tv-dashboard
 ```
 
 Sem alterações de API ou migração neste escopo. Após publicar, testar no editor arraste de um bloco e de grupo com ambos os encaixes desligados e depois religados; comparar posição ao soltar e após atualizar a página.
+
+
+## Investigação complementar após deploy da PR #255 (17/11/2026)
+
+**Sintoma confirmado pelo solicitante:** o elemento continua recuando para dentro do slide após o deploy da correção frontend. O registro inicial acima permanece como histórico, mas **não solucionou o incidente**.
+
+### Causa de backend identificada
+
+O fluxo `PresentationPatchService` aplica o quality loop após `upsert_block`, mesmo quando o editor enviou a posição final do elemento. Se o movimento introduz `safe_area_violation` (`safeMargin=3%`) ou `block_frame_overflow`, `SafeAutoFixService._clamp_patch` recalcula as coordenadas (`x/y` no mínimo `3%`) e pode reduzir `w/h`. Esse estado modificado retorna no ACK e substitui a posição escolhida no editor. Para colisões, `block_overlap` também poderia produzir um relayout involuntário.
+
+### Correção complementar
+
+No quality loop de `tv-dashboard-api/tv_app/application/services/data/presentation_mutation/patch_service.py`:
+
+- Os identificadores com `frame` explicitamente informado em `upsert_block`/`create_block` passam a ser protegidos contra *autocorreções de geometria* geradas pelo próprio movimento: `safe_area_violation`, `block_frame_overflow`, `block_frame_non_positive`, `block_overlap`.
+- A auditoria e seus avisos continuam sendo calculados e exibidos, sem apagar a evidência de possíveis problemas de layout.
+- As correções automáticas não geométricas (ex.: contraste em conteúdo novo) permanecem ativas.
+- A operação `apply_safe_layout_fixes` continua permitindo ajuste de margem e reposicionamento **quando explicitamente solicitada**.
+- Não é alterada a normalização canônica de coordenadas/tamanhos nem o comportamento dos ímãs no frontend.
+
+**Testes integrados:** `tv-dashboard-api/tests/test_safe_layout_quality_loop.py` cobre posição fracionária junto às bordas, posicionamento fora do slide (pasteboard), sobreposição intencional e correção solicitada explicitamente.
+
+**Publicação:** essa etapa altera **somente a API**, não apenas o plugin frontend. Após merge da PR complementar, no `srv-api`:
+
+```bash
+cd /home/operador/projetos/delpi-central
+git pull --ff-only origin main
+bash ./infra/scripts/up-prod-sequential.sh --build tv-dashboard-api
+```
+
+**Validação operacional obrigatória:** desligar encaixes Na grade e Objetos, arrastar um bloco até x<3% e y<3%, soltar, esperar o ACK e atualizar a página. Posição e dimensão devem ser preservadas. Repetir com blocos parcialmente fora do slide, grupos e encaixes religados. O chamado permanece aberto até aprovação do usuário em produção.
+
