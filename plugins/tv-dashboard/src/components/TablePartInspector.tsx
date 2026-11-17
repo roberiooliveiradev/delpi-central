@@ -142,6 +142,8 @@ export function TablePartInspector({ pane = false, block }: Props) {
               label="Fundo da moldura"
               value={partState?.style?.fill ?? frame.fill ?? DECK_COLOR_SURFACE}
               onChange={(color) => persistPart({ style: { fill: color } })}
+              showNoFill
+              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
             />
           </DeckField>
           <DeckField id="td-table-part-frame-stroke" label="Contorno do bloco">
@@ -190,6 +192,8 @@ export function TablePartInspector({ pane = false, block }: Props) {
               label="Fundo"
               value={partState?.style?.fill ?? defaultFill}
               onChange={(color) => persistPart({ style: { fill: color } })}
+              showNoFill
+              onNoFill={() => persistPart({ style: { fill: "transparent" } })}
             />
           </DeckField>
           <DeckField id="td-table-part-color" label="Texto">
