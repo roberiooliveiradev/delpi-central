@@ -41,6 +41,7 @@ export type StrategicIndicatorsSettingsResponse = {
     source: string;
     updated_at: string | null;
     updated_by_email: string | null;
+    versions?: Record<string, string>;
   };
 };
 

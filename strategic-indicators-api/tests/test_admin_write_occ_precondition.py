@@ -345,3 +345,135 @@ def test_cr_create_replay_returns_existing() -> None:
         if "INSERT INTO strategic_indicators.settings_change_requests" in s
     ]
     assert inserts == []
+
+
+# ----------------------------------------------------------------- settings
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_repository import (
+    PostgresStrategicIndicatorsSettingsRepository,
+)
+
+
+def _settings_repo(conn):
+    return PostgresStrategicIndicatorsSettingsRepository(connection=conn)
+
+
+def test_settings_update_guarded_per_key_xmin() -> None:
+    conn = _FakeConnection()
+    # select row_before (x2) then RETURNING per key (x2)
+    conn.fetch_override = _queued_fetch([
+        {"setting_key": "parameters.global", "payload_json": {"items": []}},
+        {"setting_key": "parameters.global"},
+        {"setting_key": "governance.notes", "payload_json": {"items": []}},
+        {"setting_key": "governance.notes"},
+    ])
+    repo = _settings_repo(conn)
+    repo.update_settings(
+        parameters={"items": [{"key": "a", "label": "A", "value": "1"}]},
+        governance={"items": []},
+        actor_user_id="u-1",
+        expected_versions={
+            "parameters.global": "10",
+            "governance.notes": "11",
+        },
+    )
+    guarded = [s for s, _ in conn.statements if "xmin::text = %s" in s]
+    assert len(guarded) == 2  # both setting_keys guarded atomically
+    assert all("RETURNING setting_key" in s for s in guarded)
+
+
+def test_settings_update_stale_xmin_raises_conflict() -> None:
+    conn = _FakeConnection()
+    conn.fetch_override = _queued_fetch([
+        {"setting_key": "parameters.global", "payload_json": {"items": []}},
+        None,  # precondition failed — no row returned
+    ])
+    repo = _settings_repo(conn)
+    with pytest.raises(StrategicIndicatorsAdminConflictError):
+        repo.update_settings(
+            parameters={"items": []},
+            governance={"items": []},
+            actor_user_id="u-1",
+            expected_versions={
+                "parameters.global": "STALE",
+                "governance.notes": "11",
+            },
+        )
+    assert conn.rollbacks >= 1
+
+
+def test_settings_update_partial_versions_rejected() -> None:
+    conn = _FakeConnection()
+    conn.fetch_override = _queued_fetch([
+        {"setting_key": "parameters.global", "payload_json": {"items": []}},
+        {"setting_key": "parameters.global"},
+        {"setting_key": "governance.notes", "payload_json": {"items": []}},
+    ])
+    repo = _settings_repo(conn)
+    with pytest.raises(StrategicIndicatorsAdminConflictError):
+        repo.update_settings(
+            parameters={"items": []},
+            governance={"items": []},
+            actor_user_id="u-1",
+            expected_versions={"parameters.global": "10"},  # governance missing
+        )
+
+
+def test_settings_update_unguarded_legacy_path_still_works() -> None:
+    conn = _FakeConnection()
+    conn.fetch_override = _queued_fetch([
+        {"setting_key": "parameters.global", "payload_json": {"items": []}},
+        {"setting_key": "governance.notes", "payload_json": {"items": []}},
+    ])
+    repo = _settings_repo(conn)
+    result = repo.update_settings(
+        parameters={"items": []},
+        governance={"items": []},
+        actor_user_id="u-1",
+    )
+    assert "message" in result
+    unguarded = [
+        s for s, _ in conn.statements
+        if "UPDATE strategic_indicators.module_settings" in s
+        and "xmin::text" not in s
+    ]
+    assert len(unguarded) == 2
+
+
+def test_get_settings_exposes_versions() -> None:
+    conn = _FakeConnection()
+    conn.next_rows = [
+        {
+            "setting_key": "parameters.global",
+            "payload_json": {"items": []},
+            "updated_at": None,
+            "updated_by_email": None,
+            "row_xmin": "42",
+        },
+        {
+            "setting_key": "governance.notes",
+            "payload_json": {"items": []},
+            "updated_at": None,
+            "updated_by_email": None,
+            "row_xmin": "43",
+        },
+    ]
+    # second fetch_all (departments) returns empty
+    call_count = {"n": 0}
+    orig = conn.next_rows
+
+    class _Seq:
+        def __call__(self):
+            call_count["n"] += 1
+            return orig if call_count["n"] == 1 else []
+
+    repo = _settings_repo(conn)
+    # fetch_all is used twice: _load_global_settings_blocks + departments
+    import si_app.infrastructure.persistence.plugins.plugin_base_repository as base
+    real_fetch_all = base.PluginBaseRepository.fetch_all
+    seq = iter([orig, []])
+    repo.fetch_all = lambda *a, **kw: next(seq)
+    result = repo.get_settings()
+    assert result["meta"]["versions"] == {
+        "parameters.global": "42",
+        "governance.notes": "43",
+    }

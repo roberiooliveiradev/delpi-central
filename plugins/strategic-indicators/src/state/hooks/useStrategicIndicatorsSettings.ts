@@ -33,10 +33,15 @@ export function useStrategicIndicatorsSettings({
   const requestIdRef = useRef(0);
   const hasLoadedOnceRef = useRef(false);
   const getAccessTokenRef = useRef(getAccessToken);
+  const dataRef = useRef<StrategicIndicatorsSettingsResponse | null>(null);
 
   useEffect(() => {
     getAccessTokenRef.current = getAccessToken;
   }, [getAccessToken]);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const loadRef = useRef<() => Promise<void>>(async () => {});
 
@@ -111,6 +116,7 @@ export function useStrategicIndicatorsSettings({
         const response = await updateStrategicIndicatorsSettings(
           payload,
           getAccessTokenRef.current,
+          dataRef.current?.meta?.versions,
         );
         setSuccessMessage(response.message);
         await loadRef.current();
