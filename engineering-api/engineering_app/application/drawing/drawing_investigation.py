@@ -18,6 +18,9 @@ from typing import Any
 from engineering_app.application.drawing.bom_structure_comparator import (
     _token_code_set,
 )
+from engineering_app.application.drawing.understanding import (
+    _ITEM_IDENT_RE,
+)
 from engineering_app.domain.drawing.object_profiles import (
     ObjectType,
     is_component_code,
@@ -551,6 +554,45 @@ def _row_field(row: dict, name: str) -> str | None:
     return v or row.get(name) or None
 
 
+def _row_item_label(row: dict) -> tuple[str | None, str]:
+    """Rótulo de item da linha com proveniência.
+
+    Fonte primária: campo tipado ``item`` (SLANet/col_types). Fallback
+    contido para tabelas curtas sem evidência suficiente para tipificar
+    a coluna: única célula item-shaped (``_ITEM_IDENT_RE`` canônico,
+    mesmo regex da tipificação) situada à esquerda da coluna de código
+    do componente. Ambiguidade → ``None`` (abstenção honesta); a fonte
+    é registrada para revisão — nunca fabrica rótulo.
+    """
+    label = _row_field(row, "item")
+    if label:
+        return label, "typed_field"
+    cells = list(row.get("cells") or [])
+    if not cells:
+        return None, "untyped"
+    code_col = next(
+        (
+            c.get("col")
+            for c in cells
+            if c.get("col_type") == "component_code"
+            and isinstance(c.get("col"), int)
+        ),
+        None,
+    )
+    shaped = {
+        str(c.get("text") or "").strip()
+        for c in cells
+        if c.get("col_type") in (None, "item")
+        and isinstance(c.get("col"), int)
+        and (code_col is None or c["col"] < code_col)
+        and _ITEM_IDENT_RE.fullmatch(str(c.get("text") or "").strip())
+    }
+    shaped.discard("")
+    if len(shaped) == 1:
+        return shaped.pop(), "cell_item_shape"
+    return None, "untyped"
+
+
 def build_balloon_table_validation(u: dict) -> dict:
     """E1/VAL-01 B1 — associação candidata balão × item da tabela.
 
@@ -566,14 +608,18 @@ def build_balloon_table_validation(u: dict) -> dict:
     rows = list(ct.get("rows") or [])
     balloons = list(u.get("balloon_candidates") or [])
 
-    labels_by_idx: list[tuple[int, str]] = []
+    labels_by_idx: list[tuple[int, str, str]] = []
     for i, row in enumerate(rows):
-        label = _row_field(row, "item")
+        label, src = _row_item_label(row)
         if label:
-            labels_by_idx.append((i, label))
+            labels_by_idx.append((i, label, src))
     by_label: dict[str, list[int]] = {}
-    for i, label in labels_by_idx:
+    item_src_by_idx: dict[int, str] = {}
+    item_label_by_idx: dict[int, str] = {}
+    for i, label, src in labels_by_idx:
         by_label.setdefault(label.strip().upper(), []).append(i)
+        item_src_by_idx[i] = src
+        item_label_by_idx[i] = label
 
     table_usable = bool(rows)
     balloon_entries: list[dict] = []
@@ -636,7 +682,9 @@ def build_balloon_table_validation(u: dict) -> dict:
                         "row_index": idxs[0],
                         "row": row.get("row"),
                         "page": row.get("page"),
-                        "item_label": _row_field(row, "item"),
+                        "item_label": item_label_by_idx.get(idxs[0]),
+                        "item_label_source": item_src_by_idx.get(
+                            idxs[0]),
                         "component_code_candidate": _row_field(
                             row, "component_code"),
                         "assembly_quantity": _row_field(
@@ -659,7 +707,9 @@ def build_balloon_table_validation(u: dict) -> dict:
                             "row_index": ri,
                             "row": rows[ri].get("row"),
                             "page": rows[ri].get("page"),
-                            "item_label": _row_field(rows[ri], "item"),
+                            "item_label": item_label_by_idx.get(ri),
+                            "item_label_source": item_src_by_idx.get(
+                                ri),
                             "component_code_candidate": _row_field(
                                 rows[ri], "component_code"),
                         }
@@ -677,7 +727,7 @@ def build_balloon_table_validation(u: dict) -> dict:
     occurrences = Counter(bl for bl in balloon_labels if bl)
     table_entries: list[dict] = []
     items_without_balloon: list[str] = []
-    for i, label in labels_by_idx:
+    for i, label, src in labels_by_idx:
         n = occurrences.get(label.strip().upper(), 0)
         row = rows[i]
         table_entries.append({
@@ -685,6 +735,7 @@ def build_balloon_table_validation(u: dict) -> dict:
             "row": row.get("row"),
             "page": row.get("page"),
             "item_label": label,
+            "item_label_source": src,
             "component_code_candidate": _row_field(
                 row, "component_code"),
             "assembly_quantity": _row_field(row, "quantity"),
@@ -719,6 +770,8 @@ def build_balloon_table_validation(u: dict) -> dict:
             "multiplicidade de balões não é erro: a correspondência "
             "com a quantidade do item depende da convenção do desenho",
             "ausência de balão num item não comprova falta de indicação",
+            "rótulo de item por forma de célula (cell_item_shape) é "
+            "evidência mais fraca que coluna tipada — exige revisão",
         ],
         "review_required": True,
         "automatic_approval": False,

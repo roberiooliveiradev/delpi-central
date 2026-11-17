@@ -1898,6 +1898,11 @@ def _detect_balloon_candidates(
     página, bbox do círculo e do token, método e incerteza; excluídos
     com ``excluded_reason`` (duplicata, cota, zona de margem da folha).
     Ausência de primitiva circular → lista vazia (nunca fabrica balão).
+    Regiões estruturadas (tabela, carimbo, revisões) nunca emitem
+    candidato; ``notes`` é faixa heurística sobre a área gráfica e
+    permanece elegível, com a região registrada no candidato. Rótulos
+    exigem ASCII alfanumérico — glifos circulados (ex.: ``①``) não são
+    identificadores de balão.
     """
     prims = _circular_primitive_boxes(graphic_primitives)
     out: list[dict] = []
@@ -1910,11 +1915,15 @@ def _detect_balloon_candidates(
     ]
     seen: set = set()
     for a in annotated:
-        if a.get("region") != "drawing_area":
+        if a.get("region") not in {"drawing_area", "notes"}:
             continue
         raw = (a.get("text") or "").strip()
         label = raw.upper()
-        if not (1 <= len(label) <= 3 and label.isalnum()):
+        if not (
+            1 <= len(label) <= 3
+            and label.isascii()
+            and label.isalnum()
+        ):
             continue
         tb = _xyxy_of(a.get("bounding_box_px"))
         if tb is None:

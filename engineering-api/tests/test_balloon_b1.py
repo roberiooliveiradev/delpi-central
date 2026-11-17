@@ -426,3 +426,86 @@ def test_b1_understanding_candidates_feed_mapper():
     )
     assert out["objects_by_type"].get("balloon") == 1
     assert out["relations_by_type"].get("REFERENCED_BY") == 1
+
+
+def test_b1_circled_glyph_not_balloon():
+    """Glifo circulado não-ASCII (①) não é identificador de balão — caso
+    real: OCR lê o item da tabela como ① e um círculo o contém."""
+    tokens = [_tok("①", 605, 405, 625, 425)]
+    prims = {"circles": [_circle(595, 395, 635, 435)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+    assert u["balloon_excluded"] == []
+
+
+def test_b1_notes_region_circled_token_is_candidate():
+    """Balão na faixa heurística 'notes' (topo-esquerda sobre a área
+    gráfica) permanece elegível — o 'B' esquerdo real do 90261723 cai
+    nessa região. Região fica registrada no candidato."""
+    tokens = [_tok("B", 100, 80, 120, 100)]
+    prims = {"circles": [_circle(90, 70, 130, 110)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert len(u["balloon_candidates"]) == 1
+    b = u["balloon_candidates"][0]
+    assert b["normalized_label"] == "B"
+    assert b["region"] == "notes"
+
+
+def test_b1_validation_item_label_cell_shape_fallback():
+    """Tabela curta sem coluna 'item' tipada: única célula item-shaped à
+    esquerda do código resolve o rótulo com fonte registrada — caso real
+    90261723 (rows A/B com col_types sem 'item')."""
+    row = {
+        "row": 0, "page": 1,
+        "fields": {"component_code": {"normalized_value": "10420256"}},
+        "association_status": "FIELD_IDENTIFIED",
+        "cells": [
+            {"text": "ca18vdar-00786", "col": 0, "col_type": None},
+            {"text": "a", "col": 1, "col_type": None},
+            {"text": "10420256", "col": 3,
+             "col_type": "component_code"},
+            {"text": "cabo", "col": 4, "col_type": "cable"},
+            {"text": "ul", "col": 10, "col_type": None},
+        ],
+    }
+    u = {
+        "balloon_candidates": [_balloon("A")],
+        "component_table": {"rows": [row]},
+    }
+    v = build_balloon_table_validation(u)
+    b = v["balloons"][0]
+    assert b["state"] == "BALLOON_LABEL_IDENTIFIED"
+    assert b["association"] == "MATCH_CANDIDATE"
+    assert b["table_item"]["item_label"] == "a"
+    assert b["table_item"]["item_label_source"] == "cell_item_shape"
+    # 'ul' (col 10) é item-shaped, mas fica à direita do código → não conta
+
+
+def test_b1_validation_cell_shape_ambiguous_abstains():
+    """Duas células item-shaped à esquerda do código → rótulo não
+    resolvido → NOT_LOCATED (abstenção, nunca chute)."""
+    row = {
+        "row": 0, "page": 1,
+        "fields": {"component_code": {"normalized_value": "10420256"}},
+        "association_status": "FIELD_IDENTIFIED",
+        "cells": [
+            {"text": "a1", "col": 0, "col_type": None},
+            {"text": "b", "col": 1, "col_type": None},
+            {"text": "10420256", "col": 3,
+             "col_type": "component_code"},
+        ],
+    }
+    u = {
+        "balloon_candidates": [_balloon("B")],
+        "component_table": {"rows": [row]},
+    }
+    v = build_balloon_table_validation(u)
+    b = v["balloons"][0]
+    assert b["state"] == "NOT_LOCATED"
+    assert v["table_items_with_label"] == 0
