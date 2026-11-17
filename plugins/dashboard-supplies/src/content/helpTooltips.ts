@@ -64,7 +64,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     blockedStockValue:
       "Valor financeiro de materiais bloqueados (B1_MSBLQL) mantidos no universo, exibidos separadamente.",
     inventoryAccuracy:
-      "Percentual de contagens oficiais do inventário avaliadas como corretas pelo processamento Protheus (MATA270) no mês fechado de referência.",
+      "Média aritmética simples da acuracidade de cada contagem processada: 100% − (diferença absoluta entre contado e esperado ÷ quantidade esperada × 100), com mínimo de 0%. Por exemplo, 100 esperados e 10 contados = 10%; 100 esperados e 110 contados = 90%. Contagens com saldo teórico zero ou negativo não participam da média. O período segue os filtros selecionados.",
     accuracyAccurate:
       "Contagens processadas sem ajuste de inventário — veredito oficial de não-divergência.",
     accuracyDivergent:
