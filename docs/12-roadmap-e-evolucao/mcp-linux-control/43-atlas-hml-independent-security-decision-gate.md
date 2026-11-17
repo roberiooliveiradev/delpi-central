@@ -1,11 +1,13 @@
 # ATLAS HML | Gate de decisão da arquitetura e revisão independente (#232)
 
 **Data:** 17/11/2026 (BRT)  
-**Estado:** DECISION_REQUIRED / SOURCE-ONLY / NÃO APROVADO  
+**Estado atualizado (17/11/2026):** arquitetura B escolhida para DESENVOLVIMENTO; decisão OPERACIONAL e SEC-01..10 continuam PENDENTES / SOURCE-ONLY  
 **Escopo:** apenas `delpi-hml-public-hub` no Compose `delpi-hml`, serviço `public-hub`  
 **Referências:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232), [PR #240](https://github.com/roberiooliveiradev/delpi-central/pull/240), [runbook 38](./38-atlas-hml-supervisor-architecture-proposal.md), [runbook 42](./42-atlas-hml-supervisor-blueprint-review.md)
 
 > Este dossiê é um **pedido de decisão de segurança** e uma matriz de evidências. Não é aprovação, atestado, protocolo instalável, execução de `delpi-verifier`, ordem de serviço, permissão de deploy ou de PREPARE/ACT. **Nenhuma instalação, operação Docker, mudança no host, Keycloak ou banco está autorizada por este documento.**
+
+> **Atualização de governança (17/11/2026):** o owner aprovou a opção **B somente como direção de desenvolvimento** na [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232#issuecomment-6956046761). As PRs #251 e #253 foram integradas após revisão de código por modelo independente; isso não substitui parecer **humano** de Segurança nem altera o risco host-equivalente do produtor com Docker bruto. Este documento conserva a análise histórica A/B/C, mas a decisão que falta é exclusivamente **autorizar ou rejeitar uma operação HML futura**, após SEC-01..10 e rollback. Consultar o [runbook 48](./48-atlas-hml-b-preativacao-evidencias-rollback.md) para os controles e para a diferença entre um índice de evidências não confiáveis e atestação real. Não instalar nem converter blueprints `.review`.
 
 ## 1. Decisão que precisa ser tomada agora
 
