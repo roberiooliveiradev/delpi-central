@@ -9,9 +9,12 @@ from __future__ import annotations
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
+from app.domain.totvs.protheus_product_types import THIRD_PARTY_PRODUCT_TPMAT
 from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
     InventoryAdjustmentsRepository,
     _NATURE,
+    _PRODUCT_APPLY,
+    _VALUE,
     _RECOGNIZED_NATURE_PREDICATE,
     _SHORTAGE_PREDICATE,
     _SURPLUS_PREDICATE,
@@ -122,7 +125,7 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
                 COUNT(*) AS movement_count,
                 SUM(ABS(CAST(SD3.D3_QUANT AS DECIMAL(28, 6))))
                     AS quantity,
-                SUM(ABS(CAST(SD3.D3_CUSTO1 AS DECIMAL(28, 6))))
+                SUM(ABS(CAST({_VALUE} AS DECIMAL(28, 6))))
                     AS gross_value,
                 SUM(CASE WHEN {_SHORTAGE_PREDICATE}
                          THEN -ABS(CAST(SD3.D3_QUANT AS DECIMAL(28, 6)))
@@ -130,13 +133,16 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
                          THEN ABS(CAST(SD3.D3_QUANT AS DECIMAL(28, 6)))
                          ELSE 0 END) AS signed_quantity,
                 SUM(CASE WHEN {_SHORTAGE_PREDICATE}
-                         THEN -ABS(CAST(SD3.D3_CUSTO1 AS DECIMAL(28, 6)))
+                         THEN -ABS(CAST({_VALUE} AS DECIMAL(28, 6)))
                          WHEN {_SURPLUS_PREDICATE}
-                         THEN ABS(CAST(SD3.D3_CUSTO1 AS DECIMAL(28, 6)))
+                         THEN ABS(CAST({_VALUE} AS DECIMAL(28, 6)))
                          ELSE 0 END) AS signed_value,
-                SUM(CASE WHEN SD3.D3_CUSTO1 IS NULL THEN 1 ELSE 0 END)
+                SUM(CASE WHEN SD3.D3_CUSTO1 IS NULL
+                         AND LTRIM(RTRIM(ISNULL(SB1V.B1_TPMAT, ''))) <> '{THIRD_PARTY_PRODUCT_TPMAT}'
+                         THEN 1 ELSE 0 END)
                     AS unpriced_movements
             FROM SD3010 SD3 WITH (NOLOCK)
+            {_PRODUCT_APPLY}
             WHERE {where}
               AND {_RECOGNIZED_NATURE_PREDICATE}
             GROUP BY
