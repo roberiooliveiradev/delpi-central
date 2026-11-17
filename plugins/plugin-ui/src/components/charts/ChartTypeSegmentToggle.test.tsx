@@ -29,8 +29,8 @@ describe("ChartTypeSegmentToggle", () => {
   it("não renderiza com um único tipo", () => {
     const { container } = render(
       <ChartTypeSegmentToggle
-        family="categorical"
-        value="bar"
+        family="composition"
+        value="stacked_bar"
         onChange={() => undefined}
       />,
     );

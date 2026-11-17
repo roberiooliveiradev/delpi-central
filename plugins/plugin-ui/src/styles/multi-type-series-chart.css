@@ -1,0 +1,48 @@
+/* Chrome do MultiTypeSeriesChart (renderer Recharts) — tokens
+ * `--delpi-ui-*` para que cada host (Comercial, Engenharia, …) receba
+ * tema claro/escuro consistente sem CSS de Recharts no MFE. */
+
+.delpi-ui-multi-type-series-chart .recharts-cartesian-axis-tick text {
+  fill: var(--delpi-ui-text-muted, #64748b);
+}
+
+.delpi-ui-multi-type-series-chart .recharts-cartesian-axis-line {
+  stroke: var(--delpi-ui-border, #e2e8f0);
+}
+
+.delpi-ui-multi-type-series-chart .recharts-cartesian-grid line {
+  stroke: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, #64748b) 30%,
+    transparent
+  );
+}
+
+.delpi-ui-multi-type-series-chart .recharts-default-tooltip {
+  background: var(--delpi-ui-surface, #ffffff) !important;
+  border: 1px solid var(--delpi-ui-border, #e2e8f0) !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.12);
+}
+
+.delpi-ui-multi-type-series-chart .recharts-tooltip-label {
+  color: var(--delpi-ui-title, var(--delpi-ui-text, #0f172a)) !important;
+}
+
+.delpi-ui-multi-type-series-chart .recharts-tooltip-item,
+.delpi-ui-multi-type-series-chart .recharts-tooltip-item-list {
+  color: var(--delpi-ui-text, #1e293b);
+}
+
+.delpi-ui-multi-type-series-chart .recharts-legend-item-text {
+  color: var(--delpi-ui-text-muted, #64748b) !important;
+}
+
+/* Highlight de categoria ao passar o mouse — discreto nos dois temas. */
+.delpi-ui-multi-type-series-chart .recharts-tooltip-cursor {
+  fill: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, #64748b) 10%,
+    transparent
+  );
+}

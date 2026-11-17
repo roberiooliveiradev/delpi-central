@@ -287,6 +287,52 @@ test.describe("aba Roteiro V2 — evidência visual", () => {
       contentType: "text/plain",
     });
 
+    /* Chrome corporativo — tipo de gráfico, opções, séries/cores e
+     * exportação CSV · Excel · PDF no padrão ChartViewShell. */
+    await expect(
+      page.locator(".delpi-ui-chart-view-shell").first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Tipo de gráfico" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Opções do gráfico" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /séries e cores/i }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "CSV" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Excel" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "PDF" }).first(),
+    ).toBeVisible();
+
+    /* Troca de tipo via catálogo corporativo — Colunas → Barras. */
+    await page
+      .getByRole("button", { name: "Tipo de gráfico" })
+      .first()
+      .click();
+    await shot(page, "v2-visual-chart-type-catalog");
+    await page.getByTitle("Barras").first().click();
+    await shot(page, "v2-visual-dark-horizontal");
+    await page
+      .getByRole("button", { name: "Tipo de gráfico" })
+      .first()
+      .click();
+    await page.getByTitle("Colunas").first().click();
+
+    /* Popover de séries/cores abre o painel de configuração. */
+    await page
+      .getByRole("button", { name: /séries e cores/i })
+      .first()
+      .click();
+    await shot(page, "v2-visual-series-config");
+    await page.keyboard.press("Escape");
+
     await setTheme(page, "light");
     await shot(page, "v2-visual-light");
 

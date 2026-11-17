@@ -39,6 +39,13 @@ export type PersistedChartPreferences = {
   seriesTrend?: Record<string, boolean>;
   /** Optional trend stroke/dash/width overrides keyed by `dataKey`. */
   seriesTrendStyles?: Record<string, SeriesTrendStyle>;
+  /**
+   * Host-defined presentation unit (ex.: "auto" | "s" | "min"). The shared
+   * hook only persists/merges the value — the host interprets it.
+   */
+  displayUnit?: string;
+  /** Show per-point value labels when the renderer supports them. */
+  showValueLabels?: boolean;
 };
 
 export type UsePersistedChartPreferencesOptions = {

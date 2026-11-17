@@ -54,7 +54,7 @@ import {
   EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
-import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
+import type { MultiTypeSeriesSpec } from "@delpi/plugin-ui/index";
 import {
   fetchProductRouting,
   postProductLineBalance,
@@ -70,6 +70,13 @@ import {
   toChartValue,
   type ChartTimeUnit,
 } from "./chartUnits";
+import { RoutingSeriesChart } from "./RoutingSeriesChart";
+import {
+  buildOpsTimeExportPayload,
+  buildOpsVsTaktExportPayload,
+  buildSimDistributionExportPayload,
+  type RoutingChartContext,
+} from "./routingChartExport";
 import { PostConfigurator } from "./PostConfigurator";
 import {
   formatHours,
@@ -86,7 +93,7 @@ import {
   type BalanceRunParams,
   type ScenarioState,
 } from "./useRoutingStudyDraft";
-import { usePortalTheme } from "./usePortalTheme";
+
 
 type RoutingData = ProductRoutingResult & { truncated?: boolean };
 
@@ -962,85 +969,16 @@ function ResultsSection({
 
 /* --- Análise visual ---------------------------------------------------- */
 
-function ThemedSeriesChart({
-  title,
-  unit,
-  points,
-  taktValue,
-  colorByGoal,
-  taktAsBar,
-  emptyMessage,
-}: {
-  title: string;
-  unit: ChartTimeUnit;
-  points: { label: string; value: number | null }[];
-  taktValue?: number | null;
-  colorByGoal?: boolean;
-  /** Referência aprovada: takt como barra própria com legenda, não linha. */
-  taktAsBar?: boolean;
-  emptyMessage: string;
-}) {
-  const portalTheme = usePortalTheme();
-  const takt = toChartValue(taktValue ?? null, unit);
-  const taktSeries =
-    taktAsBar && takt != null
-      ? {
-          name: `Takt (${unit.unit})`,
-          points: points.map((p) => ({ ...p, value: takt })),
-        }
-      : null;
-  return (
-    <ConfigurableSeriesChart
-      chartType="bar"
-      points={points}
-      {...(taktSeries
-        ? {
-            seriesList: [
-              { name: `Tempo por peça (${unit.unit})`, points },
-              taktSeries,
-            ],
-          }
-        : {})}
-      chartParts={{
-        chartArea: {
-          visible: true,
-          style: {
-            fill: portalTheme.surface,
-            stroke: "transparent",
-            strokeWidth: 0,
-            borderRadius: 0,
-          },
-        },
-        plotArea: {
-          visible: true,
-          style: { fill: portalTheme.surface, strokeWidth: 0, borderRadius: 0 },
-        },
-      }}
-      options={{
-        title,
-        seriesName: `Tempo por peça (${unit.unit})`,
-        yAxisTitle: unit.unit,
-        theme: portalTheme.mode,
-        backgroundColor: portalTheme.surface,
-        valueFormat: "number",
-        decimalPlaces: unit.decimalPlaces,
-        showGoalLine: takt != null && !taktSeries,
-        goalLineValue: takt ?? undefined,
-        ...(colorByGoal && takt != null
-          ? { colorScale: { mode: "by_goal", polarity: "high_is_bad" } }
-          : {}),
-      }}
-      emptyMessage={emptyMessage}
-    />
-  );
-}
-
 function VisualSection({
   stage,
   scenarios,
+  code,
+  branch,
 }: {
   stage: RoutingStageView;
   scenarios: ScenarioState[];
+  code: string;
+  branch: string;
 }) {
   const active = scenarios.find((s) => s.computed) ?? null;
   const activeStage: LineBalanceStage | null = active?.computed
@@ -1052,21 +990,73 @@ function VisualSection({
     (o) => o.time_minutes_piece != null,
   );
   const missingCount = stage.operations.length - timedOps.length;
-  const unit = useMemo(
+  const autoUnit = useMemo(
     () =>
       resolveChartTimeUnit(
         timedOps.map((o) => o.time_minutes_piece ?? 0),
       ),
     [timedOps],
   );
-  const points = timedOps.map((o) => ({
-    label: o.operation_code || "—",
-    value: toChartValue(o.time_minutes_piece, unit),
-  }));
   const takt = activeStage?.takt_minutes ?? null;
   const sim = activeStage?.balance_scenario ?? null;
-  const unitHint = unit.unit === "s" ? ` ${unit.note}` : "";
+  const unitHint = ` ${autoUnit.note}`;
   const hasComputedCharts = takt != null || sim != null;
+
+  const exportContext = (unit: ChartTimeUnit): RoutingChartContext => ({
+    productCode: code,
+    branch,
+    stageLabel: stageLabel(stage),
+    scenarioLabel: active ? `Cenário ${active.label}` : null,
+    unit: unit.unit,
+  });
+
+  /* Linhas categóricas em MINUTOS — a conversão de exibição s/min fica na
+   * camada de apresentação (RoutingSeriesChart). */
+  const opsData = timedOps.map((o) => ({
+    categoria: o.operation_code || "—",
+    tempo: o.time_minutes_piece,
+    ...(takt != null && o.time_minutes_piece != null && o.time_minutes_piece > takt
+      ? { fill: "var(--delpi-ui-danger, #dc2626)" }
+      : {}),
+  }));
+  const timeSeries: MultiTypeSeriesSpec[] = [
+    {
+      dataKey: "tempo",
+      name: "Tempo por peça",
+      fill: "var(--delpi-ui-accent, #2563eb)",
+    },
+  ];
+  const timeVsTaktSeries: MultiTypeSeriesSpec[] = [
+    ...timeSeries,
+    {
+      dataKey: "takt",
+      name: "Takt",
+      fill: "var(--delpi-ui-warning, #d97706)",
+      plotAs: "line",
+    },
+  ];
+  const simData = (sim?.stations ?? []).map((st, i) => ({
+    categoria: `Posto ${i + 1}`,
+    carga: st.load_minutes,
+    ...(takt != null ? { takt } : {}),
+  }));
+  const simSeries: MultiTypeSeriesSpec[] = [
+    {
+      dataKey: "carga",
+      name: "Carga por posto",
+      fill: "var(--delpi-ui-accent, #2563eb)",
+    },
+    ...(takt != null
+      ? [
+          {
+            dataKey: "takt",
+            name: "Takt",
+            fill: "var(--delpi-ui-warning, #d97706)",
+            plotAs: "line",
+          } as MultiTypeSeriesSpec,
+        ]
+      : []),
+  ];
 
   return (
     <EngineeringSectionCard
@@ -1083,10 +1073,24 @@ function VisualSection({
               : undefined
           }
         >
-          <ThemedSeriesChart
-            title={`Tempo por peça (${unit.unit})`}
-            unit={unit}
-            points={points}
+          <RoutingSeriesChart
+            storageKey={`engineering:routing:${code}:ops-time`}
+            idPrefix="en-routing-ops-time"
+            data={opsData.map(({ fill, ...row }) => row)}
+            series={timeSeries}
+            autoUnit={autoUnit}
+            buildExportPayload={(unit) =>
+              buildOpsTimeExportPayload(
+                exportContext(unit),
+                timedOps.map((o) => ({
+                  operation: o.operation_code || "—",
+                  workCenter: o.work_center ?? "—",
+                  description: o.operation_description,
+                  time: toChartValue(o.time_minutes_piece, unit),
+                })),
+                unit.decimalPlaces,
+              )
+            }
             emptyMessage="Nenhuma operação com tempo oficial neste estágio."
           />
         </EngineeringChartCard>
@@ -1096,13 +1100,30 @@ function VisualSection({
             title="Tempo × takt"
             titleHint={`Comparação dos tempos por peça ao takt CALCULATED do cenário ativo — operações acima são candidatas a gargalo.${unitHint}`}
           >
-            <ThemedSeriesChart
-              title={`Tempo × takt (${unit.unit})`}
-              unit={unit}
-              points={points}
-              taktValue={takt}
-              colorByGoal
-              taktAsBar
+            <RoutingSeriesChart
+              storageKey={`engineering:routing:${code}:ops-vs-takt`}
+              idPrefix="en-routing-ops-takt"
+              data={opsData.map((row) => ({ ...row, takt }))}
+              series={timeVsTaktSeries}
+              autoUnit={autoUnit}
+              categoryFillKey="fill"
+              buildExportPayload={(unit) =>
+                buildOpsVsTaktExportPayload(
+                  exportContext(unit),
+                  timedOps.map((o) => ({
+                    operation: o.operation_code || "—",
+                    workCenter: o.work_center ?? "—",
+                    description: o.operation_description,
+                    time: toChartValue(o.time_minutes_piece, unit),
+                    overTakt:
+                      o.time_minutes_piece != null
+                        ? o.time_minutes_piece > takt
+                        : null,
+                  })),
+                  toChartValue(takt, unit),
+                  unit.decimalPlaces,
+                )
+              }
               emptyMessage="Nenhuma operação com tempo oficial neste estágio."
             />
           </EngineeringChartCard>
@@ -1117,14 +1138,23 @@ function VisualSection({
               label="SIMULATION"
               variant="warning"
             />
-            <ThemedSeriesChart
-              title={`Carga por posto (${unit.unit})`}
-              unit={unit}
-              points={sim.stations.map((st, i) => ({
-                label: `Posto ${i + 1}`,
-                value: toChartValue(st.load_minutes, unit),
-              }))}
-              taktValue={takt}
+            <RoutingSeriesChart
+              storageKey={`engineering:routing:${code}:sim-distribution`}
+              idPrefix="en-routing-sim-dist"
+              data={simData}
+              series={simSeries}
+              autoUnit={autoUnit}
+              buildExportPayload={(unit) =>
+                buildSimDistributionExportPayload(
+                  exportContext(unit),
+                  (sim?.stations ?? []).map((st, i) => ({
+                    station: `Posto ${i + 1}`,
+                    load: toChartValue(st.load_minutes, unit),
+                    operations: st.operations.join(", "),
+                  })),
+                  unit.decimalPlaces,
+                )
+              }
               emptyMessage="Cenário sem postos."
             />
           </EngineeringChartCard>
@@ -1356,7 +1386,12 @@ export function ProductRoutingTab({ code }: { code: string }) {
               active={study.active}
             />
 
-            <VisualSection stage={stage} scenarios={study.scenarios} />
+            <VisualSection
+              stage={stage}
+              scenarios={study.scenarios}
+              code={code}
+              branch={branch}
+            />
 
             <p className="engineering-routing__muted engineering-routing__provenance">
               Dados OBSERVED do roteiro oficial · métricas CALCULATED do

@@ -14,7 +14,7 @@ export const TIME_MULTI_SERIES_TYPES = ["column", "line", "area"] as const satis
 export const PERIOD_COMPARE_TYPES = ["column", "line", "area"] as const satisfies readonly PersistedChartType[];
 export const RANKING_TYPES = ["horizontal_bar", "bar", "pie"] as const satisfies readonly PersistedChartType[];
 export const COMPOSITION_TYPES = ["stacked_bar"] as const satisfies readonly PersistedChartType[];
-export const CATEGORICAL_TYPES = ["bar"] as const satisfies readonly PersistedChartType[];
+export const CATEGORICAL_TYPES = ["bar", "horizontal_bar"] as const satisfies readonly PersistedChartType[];
 
 const FAMILY_TYPES: Record<ChartDataFamily, readonly PersistedChartType[]> = {
   time_multi_series: TIME_MULTI_SERIES_TYPES,

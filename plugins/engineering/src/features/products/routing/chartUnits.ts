@@ -17,14 +17,14 @@ export type ChartTimeUnit = {
   note: string;
 };
 
-const MINUTE: ChartTimeUnit = {
+export const MINUTE: ChartTimeUnit = {
   factor: 1,
   unit: "min",
   decimalPlaces: 4,
   note: "Valores exibidos em minutos, conforme a fonte oficial.",
 };
 
-const SECOND: ChartTimeUnit = {
+export const SECOND: ChartTimeUnit = {
   factor: 60,
   unit: "s",
   decimalPlaces: 2,

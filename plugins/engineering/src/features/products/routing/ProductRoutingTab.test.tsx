@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "ProductRoutingTab.tsx"), "utf8");
+const chart = readFileSync(join(here, "RoutingSeriesChart.tsx"), "utf8");
+const chartExport = readFileSync(join(here, "routingChartExport.ts"), "utf8");
 const posts = readFileSync(join(here, "PostConfigurator.tsx"), "utf8");
 const draft = readFileSync(join(here, "routingStudyDraft.ts"), "utf8");
 const hook = readFileSync(join(here, "useRoutingStudyDraft.ts"), "utf8");
@@ -204,11 +206,36 @@ describe("aba Roteiro V2 — Plugin UI como fonte de apresentação", () => {
     expect(src).toContain("EngineeringConfirmDialog");
   });
 
-  it("gráficos contextuais usam o componente oficial do kit", () => {
-    expect(src).toContain("ConfigurableSeriesChart");
-    expect(src).toContain("usePortalTheme");
-    expect(src).toContain("resolveChartTimeUnit");
-    expect(src).toContain("decimalPlaces");
+  it("gráficos usam a composição corporativa do kit — sem renderer paralelo", () => {
+    expect(src).toContain("RoutingSeriesChart");
+    expect(src).not.toContain("ConfigurableSeriesChart");
+    expect(src).not.toContain("recharts");
+    expect(chart).toContain("ChartViewShell");
+    expect(chart).toContain("MultiTypeSeriesChart");
+    expect(chart).toContain("ChartTypeSegmentToggle");
+    expect(chart).toContain("ChartOverlayOptionsPopover");
+    expect(chart).toContain("ChartSeriesColorsPopover");
+    expect(chart).toContain("usePersistedChartPreferences");
+    expect(chart).toContain("TabularExportButtons");
+    expect(chart).toContain("runTabularExport");
+    expect(chart).not.toContain('from "recharts"');
+    expect(chart).not.toContain("ConfigurableSeriesChart");
+  });
+
+  it("preferências de gráfico usam namespace próprio da Engenharia", () => {
+    expect(src).toContain("engineering:routing:");
+    expect(src).not.toContain("commercial:");
+    expect(chart).not.toContain("localStorage");
+  });
+
+  it("exportação CSV/Excel/PDF via API compartilhada com contexto", () => {
+    expect(src).toContain("buildOpsTimeExportPayload");
+    expect(src).toContain("buildOpsVsTaktExportPayload");
+    expect(src).toContain("buildSimDistributionExportPayload");
+    expect(chartExport).toContain("OBSERVED");
+    expect(chartExport).toContain("CALCULATED");
+    expect(chartExport).toContain("SIMULATION");
+    expect(chartExport).toContain("TableExportPayload");
   });
 
   it("marca proveniência e simulação visualmente", () => {
