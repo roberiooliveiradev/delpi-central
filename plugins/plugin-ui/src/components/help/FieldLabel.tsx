@@ -9,10 +9,14 @@ export type FieldLabelProps = {
   htmlFor?: string;
   className?: string;
   icon?: ReactNode;
+  /** Marca visual de obrigatório (« *») dentro do label — preserva a
+   * associação label↔controle e o padrão `field__required` do kit. */
+  required?: boolean;
+  requiredClassName?: string;
 };
 
 /** Rótulo de formulário com ajuda no próprio texto (sem ícone ? separado). */
-export function FieldLabel({ label, hint, htmlFor, className, icon }: FieldLabelProps) {
+export function FieldLabel({ label, hint, htmlFor, className, icon, required, requiredClassName }: FieldLabelProps) {
   const rootClass = ensureDelpiUiClass(className, "delpi-ui-field-label");
   const labelText =
     hint != null && hint !== "" ? (
@@ -32,6 +36,15 @@ export function FieldLabel({ label, hint, htmlFor, className, icon }: FieldLabel
         </span>
       ) : null}
       {labelText}
+      {required ? (
+        <span
+          className={requiredClassName ?? "delpi-ui-field__required"}
+          aria-hidden="true"
+        >
+          {" "}
+          *
+        </span>
+      ) : null}
     </>
   );
 

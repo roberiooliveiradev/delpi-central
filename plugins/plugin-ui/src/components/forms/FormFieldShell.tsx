@@ -1,11 +1,15 @@
 import type { ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type FormFieldShellClassNames = {
   root: string;
   spanWideModifier: string;
   fieldLabel: string;
+  /** Classe do marcador « *» quando `required` — mesmo padrão do
+   * SelectField (`{prefix}-field__required`). */
+  required?: string;
   /** Opcional — linha label + aside; fallback `fieldLabel` quando ausente. */
   labelRow?: string;
   labelAside?: string;
@@ -17,6 +21,9 @@ export type FormFieldShellProps = {
   hint?: string;
   span?: boolean;
   className?: string;
+  /** Marca visual de obrigatório no label (espelha o `required` do
+   * controle nativo, que já era propagado ao input/select/textarea). */
+  required?: boolean;
   /** Conteúdo na linha do label, à direita (ex.: switch Valor/Expressão). */
   labelAside?: ReactNode;
   /** Conteúdo antes do controle (ex.: ícone à esquerda). */
@@ -34,6 +41,7 @@ export function formFieldShellBemClasses(prefix: string): FormFieldShellClassNam
     root: `${prefix}-field`,
     spanWideModifier: `${prefix}-span-2`,
     fieldLabel: `${prefix}-field__label`,
+    required: delpiUiClass(`${prefix}-field__required`, "delpi-ui-field__required"),
     labelRow: `${prefix}-field__label-row`,
     labelAside: `${prefix}-field__label-aside`,
   };
@@ -48,6 +56,7 @@ export function FormFieldShell({
   hint,
   span = false,
   className,
+  required = false,
   labelAside,
   beforeControl,
   controlWrapperClassName,
@@ -72,7 +81,14 @@ export function FormFieldShell({
   );
 
   const labelNode = (
-    <FieldLabel label={label} htmlFor={id} hint={hint} className={classNames.fieldLabel} />
+    <FieldLabel
+      label={label}
+      htmlFor={id}
+      hint={hint}
+      className={classNames.fieldLabel}
+      required={required}
+      requiredClassName={classNames.required}
+    />
   );
 
   return (

@@ -75,6 +75,7 @@ export function NativeTextField({
       hint={hint}
       span={span}
       className={className}
+      required={required}
       beforeControl={beforeControl}
       controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
@@ -85,6 +86,7 @@ export function NativeTextField({
         className={mergeClassNames(NATIVE_CONTROL_CLASS, controlClassName)}
         type={type}
         required={required}
+        aria-required={required || undefined}
         disabled={disabled}
         readOnly={readOnly}
         value={value}
@@ -144,6 +146,7 @@ export function NativeSelectField({
       controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
       classNames={classNames}
+      required={required}
     >
       <select
         id={id}
@@ -153,6 +156,7 @@ export function NativeSelectField({
           controlClassName,
         )}
         required={required}
+        aria-required={required || undefined}
         disabled={disabled}
         value={value}
         onBlur={onBlur}
@@ -211,6 +215,7 @@ export function NativeTextAreaField({
       controlWrapperClassName={controlWrapperClassName}
       afterControl={afterControl}
       classNames={classNames}
+      required={required}
     >
       <textarea
         id={id}
@@ -221,6 +226,7 @@ export function NativeTextAreaField({
         )}
         rows={rows}
         required={required}
+        aria-required={required || undefined}
         disabled={disabled}
         readOnly={readOnly}
         value={value}

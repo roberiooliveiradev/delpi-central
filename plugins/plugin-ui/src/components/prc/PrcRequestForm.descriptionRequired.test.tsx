@@ -98,6 +98,38 @@ function renderEditCase(dp: ReturnType<typeof provider>) {
 }
 
 describe("PrcRequestForm — descrição obrigatória", () => {
+  it("CREATE: exibe «Descrição *» e marca o input required/aria-required", async () => {
+    const dp = provider();
+    render(
+      <PrcRequestForm
+        source="my-requests"
+        dataProvider={dp as never}
+        onCancel={() => undefined}
+        onCompleted={() => undefined}
+      />,
+    );
+    await waitFor(() => screen.getAllByText("O que precisa ser feito?"));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Avançar" })[0],
+    );
+    await waitFor(() =>
+      expect(
+        document.getElementById("prc-new-description"),
+      ).toBeTruthy(),
+    );
+    const label = document.querySelector(
+      'label[for="prc-new-description"]',
+    );
+    expect(label).toBeTruthy();
+    expect(label!.textContent).toContain("Descrição");
+    expect(label!.textContent).toContain("*");
+    const input = document.getElementById(
+      "prc-new-description",
+    ) as HTMLInputElement;
+    expect(input.required).toBe(true);
+    expect(input.getAttribute("aria-required")).toBe("true");
+  });
+
   it("CREATE: bloqueia Avançar com descrição vazia (allowBlank poupa referência)", async () => {
     const dp = provider();
     render(
