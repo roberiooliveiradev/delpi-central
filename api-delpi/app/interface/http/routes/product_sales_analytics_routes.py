@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Path, Query
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.supplies_bff_service_access import require_any_permission_or_trusted_caller
 
 from app.application.security.api_delpi_permissions import KPI_PRODUCTION_ACCESS
 from app.core.exceptions import DatabaseConnectionError
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 
 @router.get("/{code}/sales/analytics")
-@require_any_permission(KPI_PRODUCTION_ACCESS)
+@require_any_permission_or_trusted_caller(KPI_PRODUCTION_ACCESS, caller="production-control-api")
 def get_product_sales_analytics(
     code: str = Path(..., min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$"),
     branch: str = Query(..., pattern=r"^(01|02)$"),

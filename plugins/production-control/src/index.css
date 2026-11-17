@@ -9561,7 +9561,7 @@
 .dashboard-production-control .ppc-product-ray button:disabled { opacity: .55; cursor: not-allowed; }
 .dashboard-production-control .ppc-product-ray__empty {
   padding: 62px 20px; text-align: center; border: 1px dashed var(--ppc-border);
-  border-radius: 16px; color: var(--ppc-muted);
+  border-radius: 16px; color: var(--ppc-text-muted);
 }
 .dashboard-production-control .ppc-product-ray__empty h2 { color: var(--ppc-title); margin: 12px 0 4px; font-size: 1.16rem; }
 .dashboard-production-control .ppc-product-ray__empty p { margin: 0; }
@@ -9580,7 +9580,7 @@
   font-weight: 500; margin-left: 8px; opacity: .78;
 }
 .dashboard-production-control .ppc-product-ray__headline p {
-  color: var(--ppc-muted); font-size: .84rem; margin: 0;
+  color: var(--ppc-text-muted); font-size: .84rem; margin: 0;
 }
 .dashboard-production-control .ppc-product-ray__kpis { grid-template-columns: repeat(3, minmax(0,1fr)); }
 .dashboard-production-control .ppc-product-ray__charts {
@@ -9596,7 +9596,7 @@
 }
 .dashboard-production-control .ppc-product-ray__table-heading h3 { margin: 0; font-size: 1rem; color: var(--ppc-title); }
 .dashboard-production-control .ppc-product-ray__table-heading p,
-.dashboard-production-control .ppc-product-ray__source { color: var(--ppc-muted); font-size: .79rem; }
+.dashboard-production-control .ppc-product-ray__source { color: var(--ppc-text-muted); font-size: .79rem; }
 .dashboard-production-control .ppc-product-ray__table-scroll { max-width: 100%; overflow-x: auto; }
 .dashboard-production-control .ppc-product-ray__table-scroll table {
   width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .82rem;
@@ -9605,11 +9605,11 @@
   padding: 13px 11px; text-align: left; border-bottom: 1px solid var(--ppc-border);
 }
 .dashboard-production-control .ppc-product-ray__table-scroll th {
-  color: var(--ppc-muted); font-weight: 650; white-space: nowrap;
+  color: var(--ppc-text-muted); font-weight: 650; white-space: nowrap;
 }
 .dashboard-production-control .ppc-product-ray__numeric { text-align: right !important; font-variant-numeric: tabular-nums; }
 .dashboard-production-control .ppc-product-ray__strong { color: var(--ppc-title); font-weight: 750; }
-.dashboard-production-control .ppc-product-ray__no-results { padding: 22px 0; color: var(--ppc-muted); }
+.dashboard-production-control .ppc-product-ray__no-results { padding: 22px 0; color: var(--ppc-text-muted); }
 @media (max-width: 1000px) {
   .dashboard-production-control .ppc-product-ray__charts { grid-template-columns: 1fr; }
   .dashboard-production-control .ppc-product-ray__kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
