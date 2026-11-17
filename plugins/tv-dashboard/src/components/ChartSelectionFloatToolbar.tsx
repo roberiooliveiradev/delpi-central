@@ -112,6 +112,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
       )}
       renderStyle={(close) => (
         <ChartColorsStylesMenu
+          chartKind={chartKind}
           options={options}
           onApplyOptions={(next) => {
             persistOptions(next);
