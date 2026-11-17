@@ -478,7 +478,7 @@ def get_supplies_freight_impact(
     date_from: str = Query(...),
     date_to: str = Query(...),
     page: int = Query(1, ge=1),
-    page_size: int = Query(25, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_25_100"),
 ):
     """Indicador GLPI #1567. Fonte fiscal somente leitura DLP02R01."""
     try:
