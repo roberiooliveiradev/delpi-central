@@ -116,3 +116,16 @@ completo (gate + AuthZ + service) neste SHA.
 - `PARITY_AUTHZ_COVERAGE`: mesmo actor/AuthZ do service (testes
   forbidden + scope)
 - `PARITY_RUNTIME_VERIFIED`: HML — ver seção de deploy da task
+
+## Deploy PRD — 2026-11-17 (EVA-PRC-SEMANTIC-PARITY-CONTROLLED-PRD-RELEASE-01)
+
+| Item | Valor |
+|---|---|
+| SHA publicado | `74992dafd7` (checkout PRD `9e3445a53a` — zero diffs em `engineering-api/` após o SHA aprovado → artefato equivalente) |
+| Digest anterior | `sha256:082bd86a63cd…` (retido p/ rollback) |
+| Digest publicado | `sha256:380919358b64…` |
+| Health | `delpi-engineering-api` healthy; `/health` 200; `/apps/.../.well-known/oauth-protected-resource` 200 com tráfego real |
+| Runtime PRD | 40 caps PRC `proven`, 0 planned, 0 sem dispatch; 6 tools MCP |
+| ACT | `ENG_EVA_ACT_ENABLED=true` — config PRD pré-existente, preservada (não alterada) |
+| MCP live (ChatGPT) | `TEST_NOT_RUN` — requer token com aud=URL-MCP + scope `mcp:tools`; validação final pelo PO na conexão produtiva |
+| Rollback | retag `082bd86a63cd` + `up-prod-sequential.sh --build engineering-api`; sem mudança de schema |
