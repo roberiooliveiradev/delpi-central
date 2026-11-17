@@ -16,6 +16,27 @@ export function devCredentials(): { user: string; pass: string } {
 
 /** Login real: portal /login → "Entrar com DELPI SSO" → Keycloak →
  * redirect autenticado (mesmo fluxo canônico do harness bpmn-modeler). */
+/** Modal LGPD de primeiro acesso (HML/novos usuários): rolar a política
+ * até o fim habilita «Prosseguir»; depois «Aceitar e continuar». */
+export async function acceptConsentIfPresent(page: Page): Promise<void> {
+  const modal = page.locator(".consent-modal, [class*='consent']").first();
+  const proceed = page.getByRole("button", { name: /Prosseguir/ });
+  if (!(await proceed.isVisible().catch(() => false))) return;
+  await page.evaluate(() => {
+    const body = document.querySelector<HTMLElement>(".consent-policy");
+    if (body) {
+      body.scrollTop = body.scrollHeight;
+      body.dispatchEvent(new Event("scroll", { bubbles: true }));
+    }
+  });
+  await expect(proceed).toBeEnabled({ timeout: 5_000 });
+  await proceed.click();
+  const accept = page.getByRole("button", { name: /Aceitar e continuar/ });
+  await expect(accept).toBeVisible({ timeout: 5_000 });
+  await accept.click();
+  await expect(accept).toBeHidden({ timeout: 10_000 }).catch(() => undefined);
+}
+
 export async function loginAsDev(page: Page): Promise<void> {
   const creds = devCredentials();
   await page.goto("/");
@@ -56,6 +77,7 @@ export async function loginAsDev(page: Page): Promise<void> {
       "loginAsDev: portal devolveu /login — sessão SSO não estabelecida.",
     );
   }
+  await acceptConsentIfPresent(page);
 }
 
 /** Guard de boundary: nenhuma chamada do MFE pode ir direto à api-delpi
