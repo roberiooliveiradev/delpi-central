@@ -6434,3 +6434,43 @@ Vocabulários de certificação do motor operavam por token exato simples (`_CAB
 - Falhas de suíte pré-existentes/ambientais inalteradas (D16, LMP mount, `prc_eva_parity`/`eva_val01`/`visual_perception` conforme ambiente) — fora do diff G25.
 - Issue #131 sem update automático (`gh` sem auth) — pendência manual. Issue #233 preservada como `PLANNED` (vocabulários configuráveis futuros).
 - Próximo bounded step: fila G25-L4/G25-L5 conforme §94.34.9, mediante nova autorização da Coordination. VAL-01 permanece aberto.
+
+## §94.42 — E1/VAL-01 — B1: Identificação de Balões e Associação com Tabela
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B1-DETECTION-TABLE-ASSOCIATION-AND-VALIDATION-01`
+**PLANO:** Doc 116, adendo de 17/11/2026 (integridade de balões, linhas indicadoras e itens). **MODO:** `BOUNDED_IMPLEMENTATION / READ_ONLY / EXISTING_FRAMEWORKS / TEST / INDEPENDENT_VERIFICATION / CONDITIONAL_RELEASE`. Contrato `drawing_understanding.v1` — **estritamente aditivo** (`balloon_candidates`, `balloon_excluded`; schema_version inalterado).
+
+### 94.42.1 Causa-raiz e primeiro ponto de perda
+
+Cadeia de perda em três níveis, medida antes do código: **(L1)** `opencv_adapter.detect_graphic_primitives` só emitia `h_lines/v_lines/rects` — nenhuma primitiva circular era produzida (morphological opening com kernels retos descarta curvas); **(L2)** `graphic_primitives`/tokens eram consumidos dentro de `build_understanding` mas nunca persistidos no payload; **(L3)** `identify_balloon_candidates` (R13) lia `u["graphic_primitives"]`/`u["tokens"]` — chaves ausentes no payload real → no-op garantido em produção, só funcionava em fixtures.
+
+### 94.42.2 Implementação (commits `a301e16b81`, `72263ca132`, `26f9ba1250` — 5 arquivos)
+
+- `opencv_adapter.py`: detecção aditiva de círculos via `cv2.HoughCircles` → `circles` no dict de primitivas (elipses/arcos aceitos via dict/lista tipada, não emitidos pelo adapter).
+- `understanding.py` `_detect_balloon_candidates(annotated, graphic_primitives)`: token ASCII alfanumérico 1–3 chars contido em primitiva circular; regiões estruturadas (`component_table`, `title_block`, `revision_history`) nunca emitem; `notes` é elegível (faixa heurística sobre a área gráfica — o `B` esquerdo real do 90261723/731 cai nela). Guards com razão registrada em `balloon_excluded`: `duplicate_candidate`, `token_is_dimension_candidate`, `circle_in_page_margin_zone`, `circle_oversized_for_label` (`_BALLOON_GLYPH_FILL_MIN=0.60` — medido no corpus real: balões ≥0,72×0,88; carimbos/zonas ≤0,58×0,44). Não-ASCII (`①`) rejeitado. Merge multipágina preserva página de origem.
+- `drawing_investigation.py` `build_balloon_table_validation(u)` → seção aditiva `balloon_table_validation.v1` (`status: CANDIDATE`, `review_required`, `automatic_approval=False`): estados `BALLOON_LABEL_IDENTIFIED`+`MATCH_CANDIDATE`, `AMBIGUOUS`, `NOT_LOCATED`, `NOT_COMPARABLE`; `leader_target_verified=False` sempre (B2). `_row_item_label`: item tipado → fallback contido à única célula `_ITEM_IDENT_RE` (regex canônico) à esquerda da coluna de código → `item_label_source='cell_item_shape'`; ambiguidade → abstenção. Mapper → objetos `BALLOON` + `REFERENCED_BY` `NOT_CHECKED`; `POINTS_TO` não promovido.
+- Zero frameworks novos; zero escrita de negócio; zero NC automática.
+
+### 94.42.3 Prova real (SHA `26f9ba1250`, container efêmero, modelos prod `/opt/ocr-models` read-only, `--network none`)
+
+- **90261723** (`f721e4d9aa6f5d11…`): 69 tokens, 4 candidatos `{B(notes, esq), 1, A, B(dir)}` — exatamente os documentados; `①` da coluna item eliminado pelo guard ASCII. Validação: `A`→linha `10420256` (cabo) e `B`×2→linha `10080110` (terminal) = 3 `MATCH_CANDIDATE` via `cell_item_shape`; `1` (intermediário `50222487`, sem linha na tabela) → `NOT_LOCATED` correto.
+- **90261731** (`0470d37ffce57f61…`): idem + carimbo circulado `01`/`00` excluídos `circle_oversized_for_label`.
+- **90264311** (`d6a2bf2250b5ee11…`): 0 candidatos — marcadores de zona `A`/`10`/`10` excluídos; tabela tipada com itens `a1–a4` (repetidos por subconjunto) reportados honestamente em `table_items_without_balloon`. Balões A1–A4 não detectados neste documento → limitação de recall registrada (ausência OCR ≠ ausência visual).
+
+### 94.42.4 Testes
+
+- `tests/test_balloon_b1.py`: **29 testes** — positivos (rótulos `1`/`A`/`B`/`A1`, multipágina, multiplicidade `B`×2, família a1–a4), negativos (tabela/carimbo/revh nunca balão, token fora de círculo, rótulo longo, `①`, oversized, margem), associação (match, casefold, ambiguidade, not_located, not_comparable, fallback cell_shape, abstenção ambígua), integração (mapper `REFERENCED_BY`, seção em investigations).
+- Conjunto desenho: **324 PASS** (analysis r2/r4/r51, investigation r12, object_profiles r11/r11.1, perception r9, titleblock, understanding jobs/ocr/r8, visual_collab, comparator val027-029, mcp/pdf, benchmark, ops_admission). Zero regressões novas no SHA final.
+
+### 94.42.5 Verificação independente
+
+- r1 (cursor/Composer, escopo `0b97f017a2..26f9ba1250`): **`ACCEPT_WITH_RESIDUAL`**, zero ordens de correção, sem escalonamento — pedido `.git/delpi-verifier/requests/eva-b1-balloon-table-association-r1.md`.
+- Resíduos (não materiais): fallback legado `identify_balloon_candidates` sem guards reabre candidatos se understanding sintético carregar primitives+tokens — **inerte** no pipeline canônico (payload não persiste essas chaves); guards `duplicate`/`dimension` sem teste dedicado; adapter emite só `circles`; provas PDF reais `NAO_VERIFICAVEL` pelo verificador (proibido tocar container/modelos — apenas fixtures sintéticas reproduzíveis); falha `test_pi_with_children_flattened_as_parent_block` pré-existente (blame `be614649b7`, fora do B1).
+- Ground truth: **não aprovado por Engenharia** → detecção/associação reportadas sem precisão/recall homologados; métricas M0–M4 permanecem indisponíveis (não estimadas).
+
+### 94.42.6 Release, residuais e handoff
+
+- **DEPLOY_BLOCKED / OWNER_ACCEPTANCE_PENDING**: funcionalidade visual nova sem GT/thresholds ratificados pela Engenharia — autorização normativa anterior não se estende. Artefatos candidatos publicáveis apenas para avaliação.
+- Residuais: recall de balões no layout 90264311 não medido; `cell_item_shape` é evidência mais fraca que coluna tipada (registrado no payload); 200 círculos/desenho (cap do adapter) não degradou os casos avaliados.
+- Próximo bounded step: **B2** — verificação da ponta da linha indicadora e região de destino (`POINTS_TO`), e dataset de anotações para GT de balões (formato §12 da task) — mediante decisão da Coordination.
+- Issue #131 sem update automático (`gh` sem auth) — pendência manual. Issue #233 e adendo do Doc 116 preservados.
