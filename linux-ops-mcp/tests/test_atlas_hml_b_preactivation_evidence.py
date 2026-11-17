@@ -23,7 +23,8 @@ def sample(*, status="PENDENTE") -> dict:
             "claimed_result": status,
             "origin": (
                 "not_provided" if status == "PENDENTE"
-                else sorted(gate._ORIGINS[key])[0]
+                else "human_independent_claim" if key == "SEC-01"
+                else next(iter(gate._ORIGINS[key]))
             ),
             "evidence_ref": None if status == "PENDENTE" else f"EVID-TEST{i:04d}AB",
             "sha256": None if status == "PENDENTE" else chr(97 + i) * 64,
