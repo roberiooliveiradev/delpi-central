@@ -178,7 +178,7 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 
 - Ponto de quebra único em 600 px. Testar em 360, 375, 390, 768 e 1280 px de largura; **nenhuma palavra pode quebrar no meio** e não pode haver rolagem horizontal.
 - Alvos de toque ≥ 44 × 44 px (exceto “Editar”, 36 px, com área clicável ampliada por padding).
-- Teclado: Tab percorre as opções na ordem; Espaço/Enter seleciona; Enter **nunca** envia o formulário; foco vai para a primeira pendência ao tentar avançar.
+- Teclado (decisão de 17/11/2026, P3): cada pergunta de escala é **um grupo de opções nativo** (`radio`), com o “Não se aplica” no mesmo grupo — **Tab** entra e sai do grupo, **setas** movem e escolhem, **Espaço** escolhe; Enter **nunca** envia o formulário; foco vai para a primeira pendência ao tentar avançar.
 - Leitor de tela: grupos com `legend`, opções com nome completo (“4 — Satisfeito”), progresso anunciado, mensagens de erro ligadas ao grupo (`aria-describedby`), estados terminais com `role="status"`/`"alert"`.
 - Zoom de 200% sem perda de conteúdo.
 - **Os dois temas** testados em todas as telas e estados (normal, selecionado, foco, erro, enviando), com os contrastes de §3.2; troca de tema não apaga respostas; reabrir a página volta ao tema do aparelho mesmo depois de usar o botão.

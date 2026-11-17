@@ -8,8 +8,8 @@
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
 | **P1** | 0 + 1 | Inventário, tokens claro/escuro, controle de tema, layout da página, demos no catálogo | PluginUI: DEV → **PROD** (componentes genéricos) | **ACEITO COM RESÍDUOS** — commit `7abe0b338b`, deploy PROD e HML em 16/11/2026 (ver §3) |
-| **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§4) |
-| P3 | 3 | Escala de notas, “Não se aplica”, texto aberto | PluginUI → PROD | A gerar |
+| **P2** | 2 | Cartão base, abertura, cabeçalho, progresso, logo, botão de tema, quadro da pergunta + resíduos R1/R2 do P1 | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `78f11fbd03`, deploy PROD e HML em 16–17/11/2026 (ver §5) |
+| **P3** | 3 | Escala de notas (1–5 e 0–10), “Não se aplica”, texto aberto | PluginUI → PROD | **PRONTO PARA EXECUÇÃO** (§6) |
 | P4 | 4 | Rodapé de ações, revisão, tela de resultado | PluginUI → PROD | A gerar |
 | P5 | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | A gerar |
 | P6 | 7 | Página pública nova da Pesquisa no `public-hub` | **Somente HML** | A gerar |
@@ -221,3 +221,94 @@ Mesmos do P1 (§2.5), mais: os componentes não importam nada da Pesquisa nem do
 4. **Alterações concorrentes:** o working tree tem mudanças de outra tarefa em `src/index.ts` e `src/styles.css` do plugin-ui. O P2 **não** altera esses arquivos; o commit inclui só os arquivos do §4.2 (conferir com `git diff --cached --stat` antes do commit).
 
 **Deploy em HML:** enquanto o resíduo R3 existir, é aceito o mesmo procedimento do P1 (compose direto com os parâmetros do script), registrado no relatório.
+
+---
+
+## 5. Revisão do P2 (17/11/2026)
+
+**Veredito do coordenador:** `ACCEPT_WITH_RESIDUAL`. Conferido no código (`78f11fbd03`, ancestral de `main`): os sete componentes sem texto fixo e sem referência à Pesquisa; `legend` visível como primeiro filho com tema + número + enunciado; asterisco oculto ao leitor de tela com texto acessível por propriedade; erro ligado por `aria-describedby`; botão de tema some com esquema fixo (`canToggle`); progresso com `aria-valuenow` limitado a 0–100; R1 com `min(760px, 100% - 32px)`; commit só com os arquivos do pacote. Verificador: `ACCEPT_WITH_RESIDUAL` na 3ª rodada, depois de duas ordens de correção resolvidas em código. Deploy PROD e HML confirmados; o script de HML voltou a funcionar (R3 resolvido por correção de outra frente, `b5f42ed1ee`).
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| R3 | Script de deploy HML | **Resolvido** (upstream) |
+| R4 | Permissões nos clones do servidor (inclui logo 403, D3) e ajustes locais de modo de arquivo feitos durante o deploy | Pacote de infraestrutura antes do P6 |
+| R5 | 2 erros de `tsc` pré-existentes | Fora do escopo |
+| R6 | Dentro do `fieldset`, o espaço entre vários filhos da área de resposta (escala, legenda, “Sua nota…”, N/A, erro) não está garantido — o próprio CSS registra que o espaçamento do cartão só separa título ↔ conteúdo | **Tratar no P3** (pilha própria da área de resposta) |
+
+## 6. Pacote P3 — Respostas: escala de notas, “Não se aplica” e texto aberto
+
+**Fase do plano:** 3. **Pré-requisito:** P2 aceito.
+
+### 6.1 Objetivo
+
+Criar os controles de resposta do kit — escala numérica genérica (serve 1–5 e 0–10), opção “Não se aplica” exclusiva com as notas e campo de texto aberto —, nos dois temas, prontos para entrar no `QuestionCard`, e tratar o resíduo R6.
+
+### 6.2 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/plugin-ui/src/components/forms/questionnaire/` | Novos: `RatingScale.tsx` (+ subcomponentes internos ou exportados: opção, legenda das pontas, linha da nota escolhida), `NotApplicableOption.tsx`, `QuestionTextAnswer.tsx`, `QuestionAnswerStack.tsx` (R6) + testes; `index.ts` |
+| `plugins/plugin-ui/src/styles/questionnaire.css` e `questionnaireCssContract.test.ts` | Estilos e contrato |
+| `plugins/plugin-ui/src/components/forms/index.ts` | Exports |
+| `plugins/plugin-ui/src/catalog/visualComponents.ts`, `src/catalog/demos/questionnaire.tsx`, `src/app/catalog.css` | Inventário e demos |
+| `plugins/plugin-ui/docs/component-catalog.md` | Documentação |
+
+**Não alterar** `TextAreaField`, `FormFieldShell`, `src/index.ts`, `src/styles.css` nem componentes existentes. Se o campo de texto do kit não atingir o visual só com tokens, **parar e reportar** (`DECISION_REQUIRED`).
+
+### 6.3 Decisão de interação (registrada na UI-03 §3.7)
+
+As notas e o “Não se aplica” formam **um único grupo de opções exclusivas com `input type="radio"` nativo** (mesmo `name`), visualmente substituído pelos botões da especificação. Consequências:
+
+- teclado padrão de grupo de opções: **Tab** entra e sai do grupo; **setas** movem e escolhem; **Espaço** escolhe; **Enter nunca envia** formulário;
+- a exclusividade nota × N/A é garantida pelo próprio grupo;
+- o nome acessível de cada opção vem por propriedade (ex.: “4 — Satisfeito”, “Não se aplica”);
+- **nenhuma opção marcada** no início (`value` nulo).
+
+### 6.4 Entregáveis
+
+Medidas e estados: [UI-03 §3.4](./UI-03-FORMULARIO-PUBLICO.md#34-componentes-do-formulário) e a [referência visual](./UI-03-REFERENCIA-VISUAL.html). Nenhum texto fixo.
+
+**a) `RatingScale`** — props: `name`, `min`, `max`, `value: number | "na" | null`, `onChange(value)`, `optionLabel(n) → string` (nome acessível de cada nota), `endLabels: { min, max }` (textos das pontas), `endLabelsPosition: "below" | "above"`, `narrowColumns?` (colunas em tela estreita; padrão = quantidade de notas; 0–10 usa 6), `selectionCaption?(n) → ReactNode` (linha após escolher, ex.: “Sua nota: 4 · Satisfeito”), `notApplicable?: { label: string }` (renderiza `NotApplicableOption` no mesmo grupo), `invalid?`, `describedBy?` (id do erro do cartão), `disabled?`.
+- Estreito (< 600 px): grade de colunas iguais, espaço 8 px, altura 48 px (46 px quando `max - min ≥ 10`); ≥ 600 px: botões 64 × 52 px, espaço 10 px, numa linha (0–10 numa linha só).
+- Normal: superfície, borda `--delpi-ui-control-border`, raio 8 px, número 17–18 px peso 600. Selecionado: fundo e borda `--delpi-ui-accent`, número `--delpi-ui-on-accent`. Foco visível com `--delpi-ui-focus-ring`. Inválido: borda `--delpi-ui-danger` nos botões **ou** só no cartão — escolher um e justificar.
+- Legenda das pontas: 12–13 px, `--delpi-ui-muted`, extremos à esquerda e à direita, acima ou abaixo conforme a prop.
+- Linha da nota escolhida: 13–14 px, 600, `--delpi-ui-form-accent-text`.
+- Sem palavras quebradas e sem rolagem horizontal em 360 px; alvos ≥ 44 px.
+
+**b) `NotApplicableOption`** — pílula 44 px de altura (52 px ≥ 600 px), raio total, padding 16 px, borda de controle, indicador redondo 18 px (anel de 6 px em `--delpi-ui-accent` quando escolhida); escolhida: borda primária, fundo `--delpi-ui-form-tint`, texto `--delpi-ui-form-accent-text` peso 600. Posição: abaixo da linha da nota no estreito; à direita da escala após divisor vertical de 1 px a partir de 600 px. Faz parte do grupo do `RatingScale` (não é controle independente).
+
+**c) `QuestionTextAnswer`** — campo de texto aberto sobre o `TextAreaField` existente: rótulo visível (por prop), texto de exemplo (por prop), altura mínima 96 px, padding 12 px, fundo `--delpi-ui-form-input-bg`, borda de controle, raio 8 px, 15 px, redimensionável na vertical, `maxLength?`, `describedBy?`. Aparência obtida **só por tokens/classes no escopo `.delpi-ui-form-root`**.
+
+**d) `QuestionAnswerStack` (R6)** — pilha da área de resposta dentro do `QuestionCard` com espaço 12 px (estreito) / 14 px (≥ 600 px) entre escala, legenda, linha da nota, N/A e campo, garantindo o mesmo ritmo da referência. Ajustar o `QuestionCard` só se indispensável para o erro ficar logo após a pilha.
+
+**e) Demos no catálogo** — dentro de `QuestionCard`, nos dois temas: escala 1–5 sem escolha, com nota escolhida, com N/A escolhido e com erro; escala 0–10 com legenda acima (sem N/A); campo aberto vazio e preenchido. Textos de exemplo neutros (sem a Pesquisa).
+
+### 6.5 Invariantes
+
+Os do P1/P2, mais: nenhuma lógica de obrigatoriedade, progresso ou envio (isso é do P5); nenhuma cor por faixa na escala 0–10; `0` é valor válido.
+
+### 6.6 Testes mínimos
+
+1. Grupo nativo: todos os `radio` com o mesmo `name`; nenhum marcado no início; escolher nota chama `onChange(n)`; escolher N/A chama `onChange("na")` e desmarca a nota (e vice-versa).
+2. Teclado: setas movem/escolhem dentro do grupo; Enter não dispara `submit` de um `<form>` ao redor.
+3. Nomes acessíveis vindos de `optionLabel` e de `notApplicable.label`.
+4. `0` escolhível e exibido; escala 0–10 com 11 opções e legenda acima.
+5. `selectionCaption` só aparece com nota escolhida (não com N/A).
+6. `describedBy` repassado ao grupo; estado inválido aplicado.
+7. `QuestionTextAnswer`: rótulo, `onChange`, `maxLength`, `describedBy`.
+8. Contrato do CSS estendido às novas classes.
+9. `componentRegistry.test.ts` verde.
+
+### 6.7 Critérios de aceite
+
+| # | Critério | Evidência esperada |
+|---|---|---|
+| C1 | Componentes exportados, documentados e no catálogo com `addedAt` | Diff + catálogo |
+| C2 | Visual conforme UI-03 §3.4 em 360, 375, ~700 e 1280 px, nos dois temas, sem palavra quebrada nem rolagem horizontal | Capturas |
+| C3 | Grupo nativo com exclusividade nota × N/A e teclado padrão | Testes 1–2 |
+| C4 | Contrastes: borda de controle ≥ 3:1 e texto sobre a primária conforme UI-03 §3.2 | Medição no relatório |
+| C5 | R6 resolvido: ritmo de espaçamento igual à referência dentro do cartão | Captura comparada |
+| C6 | `TextAreaField` intacto; aparência do campo só por tokens no escopo | Diff |
+| C7 | Zero texto fixo e zero referência à Pesquisa | `grep` |
+| C8 | Auditorias, build e `verify-host-exports` ok; deploy PROD e HML com catálogo 200 e MFE de referência sem regressão | Saídas |
+| C9 | Verificador independente aprovado | Veredito sem edição |
