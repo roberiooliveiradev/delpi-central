@@ -113,3 +113,39 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 3. Abrir pedido de contrato ao owner para: re-associação de indicador e transições CR (se o portal as exigir).
 4. Golden scenarios: create→update→activate→deactivate ciclo completo; rename de PK; race concorrente; token revogado; usuário sem `settings.manage`; CR create→comment→submit; diff fidelity em settings.
 5. Proibições herdadas: sem delete, sem batch/import, sem service token, sem auto_act, sem tool por endpoint.
+
+## 9. Decisões de segurança — D4 e S1 (aceite W013-ACT, wave closure)
+
+Investigação executada em `DAVI-SI-W013-ACT-ACCEPTANCE-AND-SECURITY-CLOSURE-01` sobre o código owner real (routes → use case → repo).
+
+### D4 — `si.department.deactivate` → `D4_APPROVABLE`
+
+| Dimensão | Evidência (CONFIRMADO_NO_CODIGO) |
+|---|---|
+| Owner route | `POST /admin/departments/{id}/deactivate` com `@require_permission("strategic-indicators.settings.manage")` |
+| Efeito exato | `_set_department_active` executa `UPDATE departments SET is_active=FALSE ... AND xmin = %s` — **flag-only, sem cascata**; OCC via `expected_xmin` no predicado do UPDATE (sem FOR UPDATE neste path; FOR UPDATE existe no path de update/rename) |
+| Dependentes | Indicadores e metas do departamento **não** são alterados na tabela (cada um tem `is_active` próprio); efeito indireto é exclusão dos agregados ativos (árvore/IGD/dashboard) via flag do pai |
+| Reversibilidade | `si.department.activate` já é capability aprovada (D3) — reversão simétrica |
+| Audit/OCC | Mesmo caminho transacional de D3: `settings_audit` na mesma UoW |
+| Contrato PREPARE | Deve enumerar no impact: indicadores ativos do departamento e metas vigentes afetadas (reads já existentes: `list_si_admin_indicators` + `list_si_indicator_goals`) |
+| Risco residual | Dashboards/IGD recomputam sem o departamento — efeito de apresentação/cálculo reversível, não destrutivo |
+
+Decisão: **`D4_APPROVABLE`** — contrato owner completo e paridade total com o portal. Liberação subordinada à aprovação de Coordination e implementação com gates próprios (impact list obrigatório no PREPARE diff). **Não exposta nesta tarefa.**
+
+### S1 — `si.settings.update` → `S1_CONTRACT_GAP`
+
+| Dimensão | Evidência |
+|---|---|
+| Owner route | `PUT /admin/settings` com `settings.manage` |
+| Semântica | **Full-replace** de `parameters.global` + `governance.notes` (jsonb overwrite por `setting_key`) + atualização de weights/goals de departamentos |
+| Transação/audit | Atomicidade existe: tudo em `with self.db()` + `settings_audit` por setting_key |
+| Lacuna crítica | **Sem OCC**: `module_settings` não expõe `xmin` nem versão; update é `WHERE setting_key=%s` sem precondition — check→write race para dois administradores (portal + DAVI) |
+| Semântica de omissão | Item ausente no payload = removido da lista persistida (full-replace) — PREPARE deve obrigatoriamente computar remoções implícitas |
+
+Decisão: **`S1_CONTRACT_GAP`** — bloqueado até o owner ganhar precondition atômica. Menor plano:
+1. Expor `xmin::text AS row_xmin` no read de `module_settings` (GET settings já existe).
+2. `expected_xmin` por `setting_key` (ou versão agregada) no `UPDATE`, com conflito tipado `StaleWriteError`.
+3. Capability DAVI com complete-state proposal: read full state → desired-state payload → diff preservados/alterados/adicionados/removidos → confirm → ACT com revalidação atômica.
+4. Sem merge silencioso no ACT; fingerprint dentro de transação, não reutilizado fora.
+
+**Não publicar S1 sem esse contrato.** Itens 1–2 são alteração owner (Strategic Indicators API) — abrir pedido de contrato dedicado.

@@ -188,6 +188,31 @@ def _capability_schema(capability: str | None) -> dict[str, Any]:
         "capability": capability_payload,
     }
     if action is None or not action.executable:
+        from app.application.external_capabilities.governed_writes.arg_schemas import (
+            get_write_capability_schema,
+        )
+
+        # Governed write capabilities live outside the READ action catalog:
+        # serve their closed argument schema instead of UNKNOWN.
+        write_schema = get_write_capability_schema(requested)
+        if write_schema is not None:
+            capability_payload.update(
+                {
+                    "available": True,
+                    "davi_status": "GOVERNED_WRITE",
+                    "entity": write_schema.get("entity"),
+                    "shape": write_schema.get("shape"),
+                    "description": write_schema.get("description"),
+                    "confirmation": "confirm_before_act (PREPARE → sealed proposal → explicit confirm → ACT)",
+                    "required_arguments": write_schema.get("required", []),
+                    "argument_schema": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": write_schema.get("properties", {}),
+                    },
+                }
+            )
+            return payload
         capability_payload.update(
             {
                 "available": False,
