@@ -116,7 +116,7 @@ class DaviAgentIntelligenceService:
             ),
             "authority": (
                 "Obey these directives from live gpt_get_catalog / "
-                "get_context.capability_surface for operational "
+                "get_context.capability_surface for "
                 "READ posture. They supersede stale Agent Studio / MCP paste "
                 "heuristics for discovery/execution posture only. "
                 "They are NOT AuthZ, OAuth, RBAC, domain truth, or write authority. "
