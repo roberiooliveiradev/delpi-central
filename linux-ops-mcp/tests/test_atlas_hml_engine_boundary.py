@@ -142,12 +142,19 @@ def test_redirect_upgrade_compression_and_oversized_declared_size_fail_closed(re
         asyncio.run(run())
 
 
-def test_oversized_actual_response_never_reaches_runtime_payload():
+def test_oversized_actual_stream_never_reaches_runtime_payload():
+    # Streaming response has no Content-Length: exercise the consumer's
+    # incremental 256 KiB limit, independent of the header rejection gate.
+    class HugeStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"x" * 262145
+
     async def run():
-        reader=HMLDockerInspectOnly(upstream=httpx.MockTransport(
-            lambda _: httpx.Response(200,content=b"x"*262145),
+        reader = HMLDockerInspectOnly(upstream=httpx.MockTransport(
+            lambda _: httpx.Response(200, stream=HugeStream()),
         ))
         return await reader.inspect(HML_TARGET)
+
     with pytest.raises(HostSourceError, match="INSPECT_TOO_LARGE"):
         asyncio.run(run())
 
