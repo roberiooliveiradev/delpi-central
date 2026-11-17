@@ -56,20 +56,20 @@ describe("userManual content", () => {
 
     const instructions = (guide?.bullets ?? []).join(" ");
     expect(instructions).toMatch(/Aplicar filtros/);
-    expect(instructions).toMatch(/367 dias/);
-    expect(instructions).toContain("(total de fretes vinculados ÷ total das compras consideradas) × 100");
+    expect(instructions).toMatch(/emissão ou digitação/);
+    expect(instructions).toMatch(/frete rateado.*valor das mercadorias/);
     expect(instructions).toContain("R$ 100.000");
     expect(instructions).toContain("R$ 2.000");
-    expect(instructions).toMatch(/não faz a média/);
-    expect(instructions).toMatch(/notas sem frete relacionado/i);
-    expect(instructions).toMatch(/não altera dados/);
+    expect(instructions).toMatch(/não é uma média/i);
+    expect(instructions).toMatch(/Notas sem vínculo não participam/i);
+    expect(instructions).toMatch(/não modifica nenhum lançamento/);
 
     const questions = (guide?.faqs ?? []).map((faq) => faq.q).join(" ");
     const answers = (guide?.faqs ?? []).map((faq) => faq.a).join(" ");
-    expect(questions).toMatch(/frete zerado/i);
-    expect(questions).toMatch(/sem percentual/i);
+    expect(questions).toMatch(/nota não aparece/i);
+    expect(questions).toMatch(/Inconsistente/i);
     expect(questions).toMatch(/não consigo acessar/i);
-    expect(answers).toMatch(/não encontrou um frete relacionado/i);
+    expect(answers).toMatch(/distribui o valor bruto/i);
 
     const directory = USER_MANUAL_CONTENT.sections.find((section) => section.id === "want");
     expect(directory?.links?.some((entry) => entry.where === "Frete sobre compras")).toBe(true);
