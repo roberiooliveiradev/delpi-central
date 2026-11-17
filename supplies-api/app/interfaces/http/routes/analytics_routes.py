@@ -95,6 +95,8 @@ def get_portal_freight_impact():
         "date_to": (request.args.get("date_to") or "").strip(),
         "page": (request.args.get("page") or "1").strip(),
         "page_size": (request.args.get("page_size") or "25").strip(),
+        "situation": (request.args.get("situation") or "all").strip(),
+        "date_mode": (request.args.get("date_mode") or "issue").strip(),
     }
     try:
         raw = DelpiApiGateway().get(
