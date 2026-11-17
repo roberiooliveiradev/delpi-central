@@ -447,7 +447,13 @@ export function ConversationPanel({
   );
 
   const threadItems = useMemo((): MessageThreadItem[] => {
-    const chronological = [...items].reverse();
+    /* P3-FIX-02 — contrato oficial: `created_at ASC, id ASC`. A
+     * normalização é explícita e única aqui (o adapter passa a ordem
+     * do backend); nunca agrupar por autor/isMine. */
+    const chronological = [...items].sort((a, b) => {
+      const byTime = String(a.createdAt).localeCompare(String(b.createdAt));
+      return byTime !== 0 ? byTime : String(a.id).localeCompare(String(b.id));
+    });
     return chronological.map((item) => {
       const authorId = (item.authorId || "").trim();
       const attachments = attachmentsByCommentId.get(item.id) || [];

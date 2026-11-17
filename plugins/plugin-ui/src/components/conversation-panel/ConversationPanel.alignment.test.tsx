@@ -144,4 +144,61 @@ describe("ConversationPanel — alinhamento e bolhas (P3-FIX)", () => {
     // O lado depende só de isMine — não do autor nem da ordem.
     expect(firstMineId).not.toBe(secondMineId);
   });
+
+  it("RQ-01 — ordem cronológica ASC independente da ordem da entrada e do autor", async () => {
+    const { container } = render(
+      <ConversationPanel
+        requestId="req-1"
+        api={apiOf([
+          // Entrada deliberadamente fora de ordem (DESC + intercalado).
+          comment({
+            id: "c-5",
+            authorName: "Beto",
+            isMine: true,
+            createdAt: "2026-11-20T10:04:00Z",
+          }),
+          comment({
+            id: "c-3",
+            authorName: "Ana",
+            createdAt: "2026-11-20T10:02:00Z",
+          }),
+          comment({
+            id: "c-4",
+            authorName: "Beto",
+            isMine: true,
+            createdAt: "2026-11-20T10:03:00Z",
+          }),
+          comment({
+            id: "c-1",
+            authorName: "Ana",
+            createdAt: "2026-11-20T10:00:00Z",
+          }),
+          comment({
+            id: "c-2",
+            authorName: "Beto",
+            isMine: true,
+            createdAt: "2026-11-20T10:01:00Z",
+          }),
+        ])}
+        canComment
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        container.querySelectorAll(".delpi-ui-message-thread__item").length,
+      ).toBe(5),
+    );
+
+    const domIds = [...container.querySelectorAll("[data-message-id]")].map(
+      (el) => el.getAttribute("data-message-id"),
+    );
+    expect(domIds).toEqual(["c-1", "c-2", "c-3", "c-4", "c-5"]);
+
+    // Lados alternam conforme autoria — nunca agrupados por isMine.
+    const mineFlags = [...container.querySelectorAll("[data-message-id]")].map(
+      (el) => el.classList.contains("delpi-ui-message-thread__item--mine"),
+    );
+    expect(mineFlags).toEqual([false, true, false, true, true]);
+  });
 });

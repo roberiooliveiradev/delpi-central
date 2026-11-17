@@ -699,8 +699,11 @@ describe("message-thread.css host scroll", () => {
     expect(bubble).toMatch(/width:\s*100%;/);
     expect(bubble).toMatch(/max-width:\s*none;/);
     expect(bubble).not.toMatch(/min\(75%/);
-    expect(bubble).toMatch(/border:\s*none;/);
-    expect(bubble).not.toMatch(/border:\s*1px/);
+    // P3-FIX-02 — bolha recebida contrasta com o container muted:
+    // superfície canônica + borda visível (nunca text 7% ≈ fundo).
+    expect(bubble).toMatch(/border:\s*1px solid/);
+    expect(bubble).not.toMatch(/border:\s*none;/);
+    expect(bubble).not.toMatch(/7%/);
     const mine = css.match(/\.delpi-ui-message-thread__bubble--mine \{[^}]+\}/)?.[0] ?? "";
     expect(mine).toMatch(/18%/);
     const actions = css.match(/\.delpi-ui-message-thread__actions \{[^}]+\}/)?.[0] ?? "";
