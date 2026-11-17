@@ -267,7 +267,6 @@ def test_unsafe_listener_permissions_symlink_or_raw_socket_alias_refused(
             )
         return
     elif unsafe=="raw-alias":
-        from linux_ops_mcp import atlas_hml_uds_policy as policy
         original_check = proxy.verify_socket_metadata
         monkeypatch.setattr(proxy,"verify_socket_metadata",
             lambda **kw: original_check(**kw,raw_sockets=(path,)))
@@ -377,3 +376,27 @@ def test_upstream_inspector_deadline_does_not_authorize(endpoint,monkeypatch):
     assert payload=={"error":"HML_INSPECT_UNAVAILABLE"}
     got=wait_for(thread,result,error)
     assert got.status=="blocked" and not got.can_execute
+
+
+def test_fixed_hml_path_enforces_named_collector_uid_before_accept(
+    endpoint,monkeypatch,
+):
+    path,listener=endpoint
+    monkeypatch.setattr(proxy,"atlas_collector_identity",lambda:(995,985))
+    with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_IDENTITY_UNAVAILABLE"):
+        proxy.serve_one_prebound(
+            listener=listener,allowed_collector_uid=2000,inspector=Source(),
+            expected_path=proxy._HML_PATH,
+        )
+
+
+def test_named_collector_identity_lookup_failure_is_denied(endpoint,monkeypatch):
+    path,listener=endpoint
+    def unavailable():
+        raise proxy.HMLUDSPolicyError("HML_PROXY_IDENTITY_UNAVAILABLE")
+    monkeypatch.setattr(proxy,"atlas_collector_identity",unavailable)
+    with pytest.raises(proxy.HMLUnixProxyError,match="HML_PROXY_IDENTITY_UNAVAILABLE"):
+        proxy.serve_one_prebound(
+            listener=listener,allowed_collector_uid=995,inspector=Source(),
+            expected_path=proxy._HML_PATH,
+        )
