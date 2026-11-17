@@ -25,15 +25,35 @@ _CENT = Decimal("0.01")
 _QTY = Decimal("0.000001")
 
 
+def _net_nature(*, quantity: float, value: float) -> tuple[str, str, str, str]:
+    """Natureza do saldo final, distinguindo efeito físico e financeiro.
+
+    Materiais de terceiros podem ter quantidade divergente e R$ zero.
+    Em itens próprios com custos heterogêneos, os sinais de quantidade
+    e valor também podem divergir; o rótulo não pode ocultar esse conflito.
+    """
+    qty_label = "Sobra" if quantity > 0 else "Falta" if quantity < 0 else "Compensado"
+    brl_label = "Sobra" if value > 0 else "Falta" if value < 0 else "Compensado"
+    sign = value if value != 0 else quantity
+    nature = "surplus" if sign > 0 else "shortage" if sign < 0 else "balanced"
+    if value == 0 and quantity != 0:
+        label = f"{qty_label} (qtd.; R$ 0)"
+    elif value != 0 and quantity != 0 and (value > 0) != (quantity > 0):
+        label = f"{brl_label} (R$) / {qty_label} (qtd.)"
+    else:
+        label = brl_label if value != 0 else qty_label
+    return nature, label, qty_label, brl_label
+
+
 def _rounded(value: Any, quantum: Decimal) -> float:
     return float(Decimal(str(value or 0)).quantize(quantum, rounding=ROUND_HALF_UP))
 
 
 class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
-    """TOP-N divergências da semana, no grão filial+produto+armazém+natureza.
+    """Leituras temporais e ranking líquido por filial/produto para o GR Diário.
 
-    Nunca mistura furo e sobra de um mesmo produto: compensar ajustes
-    contrários apagaria justamente os desvios que o GR Diário quer visualizar.
+    O resumo e a série mantêm indicadores BRUTOS por natureza; somente a
+    rota de itens consolida saldos entre armazéns/naturezas (GLPI #1615).
     """
 
     def fetch_granular_series(
@@ -102,6 +122,14 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
         warehouse: str | None,
         top_limit: int,
     ) -> dict[str, Any]:
+        """GR Diário: uma linha por filial e produto, com saldo líquido do período.
+
+        Faltas e sobras de TODOS os armazéns selecionados se compensam em
+        quantidade e valor. O TOP-N acontece DEPOIS da consolidação SQL; não
+        se deve compensar uma página de movimentos nem o TOP por armazém.
+        Os campos legados value_brl/quantity passam a representar o módulo
+        do SALDO líquido (nunca soma bruta das divergências).
+        """
         if top_limit < 1 or top_limit > 50:
             raise ValueError("top_limit deve estar entre 1 e 50.")
         where, params = self._filter_sql(
@@ -113,20 +141,20 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
             nature=None,
         )
 
-        # Pré-agregação evita que o join de descrição do produto multiplique
-        # o valor do movimento. SUM em Decimal antes do arredondamento.
+        # O domínio canônico determina a natureza RE0/DE0 e a valoração
+        # do material de terceiro (GLPI #1614). Nunca multiplicar D3_CUSTO1
+        # pela quantidade; zero R$ para B1_TPMAT = 2, sem excluir as linhas.
         sql = f"""
         WITH AGG AS (
             SELECT
                 RTRIM(SD3.D3_FILIAL) AS branch,
                 RTRIM(SD3.D3_COD) AS product_code,
-                RTRIM(SD3.D3_LOCAL) AS warehouse,
-                {_NATURE} AS nature,
                 COUNT(*) AS movement_count,
-                SUM(ABS(CAST(SD3.D3_QUANT AS DECIMAL(28, 6))))
-                    AS quantity,
-                SUM(ABS(CAST({_VALUE} AS DECIMAL(28, 6))))
-                    AS gross_value,
+                COUNT(DISTINCT RTRIM(SD3.D3_LOCAL)) AS warehouse_count,
+                SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN 1 ELSE 0 END)
+                    AS shortage_count,
+                SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN 1 ELSE 0 END)
+                    AS surplus_count,
                 SUM(CASE WHEN {_SHORTAGE_PREDICATE}
                          THEN -ABS(CAST(SD3.D3_QUANT AS DECIMAL(28, 6)))
                          WHEN {_SURPLUS_PREDICATE}
@@ -145,46 +173,60 @@ class InventoryAdjustmentsTvRepository(InventoryAdjustmentsRepository):
             {_PRODUCT_APPLY}
             WHERE {where}
               AND {_RECOGNIZED_NATURE_PREDICATE}
-            GROUP BY
-                SD3.D3_FILIAL, SD3.D3_COD, SD3.D3_LOCAL, {_NATURE}
+            GROUP BY RTRIM(SD3.D3_FILIAL), RTRIM(SD3.D3_COD)
         )
         SELECT TOP (?)
-            A.branch, A.product_code, A.warehouse, A.nature,
+            A.branch, A.product_code,
             ISNULL(B1.B1_DESC, '') AS product_description,
             ISNULL(B1.B1_UM, '') AS unit,
-            A.movement_count, A.quantity, A.gross_value,
+            A.movement_count, A.warehouse_count,
+            A.shortage_count, A.surplus_count,
             A.signed_quantity, A.signed_value, A.unpriced_movements,
             COUNT(*) OVER () AS total_groups
         FROM AGG A
         OUTER APPLY (
             SELECT TOP (1) S.B1_DESC, S.B1_UM
             FROM SB1010 S WITH (NOLOCK)
-            WHERE S.B1_COD = A.product_code AND S.D_E_L_E_T_ = ''
+            WHERE S.B1_COD = A.product_code
+              AND S.D_E_L_E_T_ = ''
+              AND (S.B1_FILIAL = A.branch OR S.B1_FILIAL = '' OR S.B1_FILIAL IS NULL)
             ORDER BY CASE WHEN RTRIM(S.B1_FILIAL) = A.branch THEN 0 ELSE 1 END,
                      S.R_E_C_N_O_ DESC
         ) B1
-        ORDER BY A.gross_value DESC, A.product_code, A.branch, A.warehouse, A.nature
+        ORDER BY ABS(A.signed_value) DESC, ABS(A.signed_quantity) DESC,
+                 A.product_code, A.branch
         """
         with self as repository:
             rows = repository.execute_query(sql, (*params, top_limit))
 
         items = []
         for row in rows:
-            nature = str(row.get("nature") or "").strip()
+            quantity = _rounded(row.get("signed_quantity"), _QTY)
+            value = _rounded(row.get("signed_value"), _CENT)
+            nature, nature_label, quantity_label, financial_label = (
+                _net_nature(quantity=quantity, value=value)
+            )
             items.append(
                 {
                     "branch": str(row.get("branch") or "").strip(),
                     "product_code": str(row.get("product_code") or "").strip(),
                     "product_description": str(row.get("product_description") or "").strip(),
                     "unit": str(row.get("unit") or "").strip(),
-                    "warehouse": str(row.get("warehouse") or "").strip(),
+                    # Compatibilidade: filtro explícito ou indicação de todos os locais,
+                    # nunca afirmar que a linha consolidada é de um único armazém.
+                    "warehouse": warehouse or "Todos",
+                    "warehouse_count": int(row.get("warehouse_count") or 0),
                     "nature": nature,
-                    "nature_label": "Falta" if nature == "shortage" else "Sobra",
+                    "nature_label": nature_label,
+                    "quantity_nature_label": quantity_label,
+                    "financial_nature_label": financial_label,
                     "movement_count": int(row.get("movement_count") or 0),
-                    "quantity": _rounded(row.get("quantity"), _QTY),
-                    "signed_quantity": _rounded(row.get("signed_quantity"), _QTY),
-                    "value_brl": _rounded(row.get("gross_value"), _CENT),
-                    "signed_value_brl": _rounded(row.get("signed_value"), _CENT),
+                    "shortage_count": int(row.get("shortage_count") or 0),
+                    "surplus_count": int(row.get("surplus_count") or 0),
+                    "quantity": abs(quantity),
+                    "signed_quantity": quantity,
+                    "value_brl": abs(value),
+                    "signed_value_brl": value,
                     "unpriced_movements": int(row.get("unpriced_movements") or 0),
                 }
             )
