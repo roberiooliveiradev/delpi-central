@@ -266,6 +266,7 @@ export async function postFormData<T>(
   path: string,
   form: FormData,
   signal?: AbortSignal,
+  headers?: Record<string, string>,
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -275,7 +276,7 @@ export async function postFormData<T>(
   try {
     response = await fetch(path, {
       method: "POST",
-      headers: authHeaders(),
+      headers: { ...authHeaders(), ...(headers || {}) },
       credentials: "same-origin",
       body: form,
       signal: controller.signal,

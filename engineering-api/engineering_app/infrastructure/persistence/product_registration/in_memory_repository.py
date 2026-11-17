@@ -2064,6 +2064,19 @@ class InMemoryProductRegistrationRepository:
         row["updated_at"] = datetime.now(timezone.utc).isoformat()
         return dict(row)
 
+    def delete_comment(self, *, request_id: str, comment_id: str) -> None:
+        """Compensação física da criação composta (FIX-03) — sem rota."""
+        row = self._comments.get(comment_id)
+        if row and row.get("request_id") == request_id:
+            del self._comments[comment_id]
+        for att_id in [
+            k
+            for k, r in self._comment_attachments.items()
+            if r.get("comment_id") == comment_id
+            and r.get("request_id") == request_id
+        ]:
+            del self._comment_attachments[att_id]
+
     def create_comment_attachment(
         self, *, attachment: dict[str, Any]
     ) -> dict[str, Any]:

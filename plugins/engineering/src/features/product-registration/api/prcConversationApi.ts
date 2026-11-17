@@ -102,6 +102,37 @@ export const prcConversationApi: ConversationApi = {
     return (env.data.attachments || []).map(mapAttachment);
   },
 
+  async createCommentWithAttachments(requestId, input, opts) {
+    /* FIX-03 — criação composta numa só chamada multipart:
+     * body + file + client_ref paralelo por índice. */
+    const form = new FormData();
+    form.append("body", input.body || "");
+    for (const item of input.files) {
+      form.append("file", item.file);
+      form.append("client_ref", item.clientRef || "");
+    }
+    const env = await postFormData<{
+      data: {
+        comment: ApiComment;
+        attachments?: (ApiAttachment & { clientRef?: string | null })[];
+      };
+    }>(
+      commentsPath(requestId),
+      form,
+      undefined,
+      opts?.idempotencyKey
+        ? { "Idempotency-Key": opts.idempotencyKey }
+        : undefined,
+    );
+    return {
+      comment: mapComment(env.data.comment),
+      attachments: (env.data.attachments || []).map((row) => ({
+        ...mapAttachment(row),
+        clientRef: row.clientRef || null,
+      })),
+    };
+  },
+
   async uploadAttachment(requestId, commentId, file) {
     const form = new FormData();
     form.append("file", file);

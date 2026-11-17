@@ -4408,6 +4408,151 @@ class ProductRegistrationService:
         )
         return payload
 
+    def create_comment_with_attachments(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        body: str | None,
+        files: list[dict[str, Any]],
+        idempotency_key: str | None = None,
+        correlation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """FIX-03 — criação composta: texto, anexos ou ambos numa só
+        operação de aplicação. Invariante ``texto OU >=1 anexo válido``
+        garantida antes do primeiro write — falha de upload compensa
+        blob, linha de anexo e comentário (sem órfãos nem mensagem
+        vazia definitiva)."""
+        request = self._get_scoped(request_id, actor)
+        self._assert_conversation_open(request)
+        storage = self._require_attachment_storage()
+        try:
+            text = conversation.validate_comment_body_optional(body)
+        except ValueError as exc:
+            raise PrcValidationError(
+                str(exc), fields={"body": str(exc)}
+            ) from exc
+        files = list(files or [])
+        if not text and not files:
+            raise PrcValidationError(
+                "comment_required", fields={"body": "comment_required"}
+            )
+        metas: list[dict[str, Any]] = []
+        try:
+            for idx, item in enumerate(files):
+                metas.append(
+                    attachments_mod.validate_attachment(
+                        filename=item.get("filename"),
+                        content=item.get("content") or b"",
+                        current_count=idx,
+                    )
+                )
+        except ValueError as exc:
+            code = str(exc)
+            raise PrcValidationError(
+                attachments_mod.attachment_error(code),
+                fields={"file": code},
+            ) from exc
+        fingerprint = _fingerprint(
+            {
+                "body": text,
+                "requestId": request_id,
+                "files": [m["sha256"] for m in metas],
+            }
+        )
+        replay = self._idempotent_replay(
+            actor=actor,
+            operation="prc_comment_create_with_attachments",
+            key=idempotency_key,
+            fingerprint=fingerprint,
+        )
+        if replay is not None:
+            return replay
+        comment_id = _uuid()
+        now = _now()
+        saved_keys: list[str] = []
+        rows: list[dict[str, Any]] = []
+        try:
+            row = self._repo.create_comment(
+                comment={
+                    "id": comment_id,
+                    "request_id": request_id,
+                    "author_subject": actor.user_id,
+                    "author_display_name": actor.label,
+                    "body": text,
+                    "row_version": 1,
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
+            for item, meta in zip(files, metas):
+                attachment_id = _uuid()
+                storage_key = (
+                    f"{request_id}/comments/{comment_id}/"
+                    f"{attachment_id}{meta['extension']}"
+                )
+                storage.save(storage_key, item["content"])
+                saved_keys.append(storage_key)
+                rows.append(
+                    self._repo.create_comment_attachment(
+                        attachment={
+                            "id": attachment_id,
+                            "request_id": request_id,
+                            "comment_id": comment_id,
+                            "original_file_name": meta["original_file_name"],
+                            "media_type": meta["media_type"],
+                            "size_bytes": meta["size_bytes"],
+                            "sha256": meta["sha256"],
+                            "storage_key": storage_key,
+                            "state": "AVAILABLE",
+                            "uploaded_by_subject": actor.user_id,
+                            "uploaded_by_display_name": actor.label,
+                            "uploaded_by_email": actor.email,
+                            "correlation_id": correlation_id,
+                            "created_at": now,
+                        }
+                    )
+                )
+        except Exception:
+            for key in saved_keys:
+                try:
+                    storage.delete(key)
+                except Exception:
+                    pass
+            try:
+                self._repo.delete_comment(
+                    request_id=request_id, comment_id=comment_id
+                )
+            except Exception:
+                pass
+            raise
+        client_refs = [item.get("client_ref") for item in files]
+        payload = {
+            "comment": conversation.comment_to_api(
+                row, actor_user_id=actor.user_id
+            ),
+            "attachments": [
+                {
+                    **conversation.comment_attachment_to_api(att),
+                    "clientRef": ref or None,
+                }
+                for att, ref in zip(rows, client_refs)
+            ],
+        }
+        self._idempotent_store(
+            actor=actor,
+            operation="prc_comment_create_with_attachments",
+            key=idempotency_key,
+            fingerprint=fingerprint,
+            request_id=request_id,
+            status=201,
+            payload=payload,
+        )
+        self._emit_change(
+            request_id, reason="comment_created", actor=actor
+        )
+        return payload
+
     def update_comment(
         self,
         request_id: str,
@@ -4431,9 +4576,20 @@ class ProductRegistrationService:
         try:
             text = conversation.validate_comment_body(body)
         except ValueError as exc:
-            raise PrcValidationError(
-                str(exc), fields={"body": str(exc)}
-            ) from exc
+            if str(exc) != "comment_required":
+                raise PrcValidationError(
+                    str(exc), fields={"body": str(exc)}
+                ) from exc
+            # FIX-03 — corpo vazio só é aceitável quando a mensagem
+            # retém ao menos um anexo não deletado.
+            remaining = self._repo.list_comment_attachments(
+                comment_id=comment["id"]
+            )
+            if not remaining:
+                raise PrcValidationError(
+                    str(exc), fields={"body": str(exc)}
+                ) from exc
+            text = ""
         row = self._repo.update_comment_body(
             request_id=request_id,
             comment_id=comment_id,
@@ -4619,6 +4775,17 @@ class ProductRegistrationService:
             raise PrcForbiddenError(
                 "Somente o autor ou a Engenharia podem remover o anexo."
             )
+        # FIX-03 — remover o último anexo de uma mensagem sem texto
+        # deixaria um comentário definitivamente vazio: bloquear.
+        if not (comment.get("body") or "").strip():
+            remaining = self._repo.list_comment_attachments(
+                comment_id=comment["id"]
+            )
+            if len(remaining) <= 1:
+                raise PrcValidationError(
+                    "A mensagem precisa de texto ou ao menos um anexo.",
+                    fields={"file": "comment_requires_content"},
+                )
         updated = self._repo.update_comment_attachment_state(
             request_id=request_id,
             comment_id=comment_id,

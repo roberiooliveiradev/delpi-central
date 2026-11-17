@@ -65,6 +65,49 @@ describe("prcConversationApi (My Requests)", () => {
     expect(created.id).toBe("c1");
   });
 
+  it("createCommentWithAttachments envia multipart body+file+client_ref (FIX-03)", async () => {
+    const spy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        ok(
+          {
+            comment: { ...COMMENT, body: "" },
+            attachments: [
+              {
+                attachmentId: "a1",
+                originalFileName: "print.png",
+                mediaType: "image/png",
+                sizeBytes: 4,
+                state: "AVAILABLE",
+                clientRef: "pending:p1",
+              },
+            ],
+          },
+          201,
+        ),
+      );
+    const file = new File([new Uint8Array([1, 2, 3])], "print.png", {
+      type: "image/png",
+    });
+    const result = await prcConversationApi.createCommentWithAttachments(
+      "r1",
+      { body: "", files: [{ file, clientRef: "pending:p1" }] },
+      { idempotencyKey: "k2" },
+    );
+    const [, init] = spy.mock.calls[0];
+    expect(init?.method).toBe("POST");
+    const form = init?.body as FormData;
+    expect(form.get("body")).toBe(""); // canônico — nunca " "
+    expect(form.get("file")).toBeInstanceOf(File);
+    expect(form.get("client_ref")).toBe("pending:p1");
+    expect(init?.headers).toMatchObject({ "Idempotency-Key": "k2" });
+    expect(result.comment.id).toBe("c1");
+    expect(result.attachments[0]).toMatchObject({
+      id: "a1",
+      clientRef: "pending:p1",
+    });
+  });
+
   it("updateComment envia expectedVersion (CAS)", async () => {
     const spy = vi
       .spyOn(globalThis, "fetch")

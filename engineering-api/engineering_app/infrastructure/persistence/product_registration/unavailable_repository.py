@@ -66,6 +66,7 @@ class UnavailableProductRegistrationRepository:
     list_comments = staticmethod(_unavailable)
     get_comment = staticmethod(_unavailable)
     update_comment_body = staticmethod(_unavailable)
+    delete_comment = staticmethod(_unavailable)
     create_comment_attachment = staticmethod(_unavailable)
     list_comment_attachments = staticmethod(_unavailable)
     get_comment_attachment = staticmethod(_unavailable)

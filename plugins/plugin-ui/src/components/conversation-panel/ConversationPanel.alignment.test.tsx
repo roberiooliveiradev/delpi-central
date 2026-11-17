@@ -36,6 +36,10 @@ function apiOf(items: ConversationComment[]): ConversationApi {
   return {
     listComments: async () => items,
     createComment: async () => comment({ id: "created" }),
+    createCommentWithAttachments: async () => ({
+      comment: comment({ id: "created" }),
+      attachments: [],
+    }),
     updateComment: async () => comment({ id: "updated" }),
     listAttachments: async () => [],
     uploadAttachment: async () => ({

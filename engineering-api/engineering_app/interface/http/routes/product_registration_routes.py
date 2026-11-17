@@ -10,8 +10,18 @@ nunca vem do payload. Idempotency-Key em POST mutável; expectedVersion
 (CAS) em mudanças de estado/draft.
 """
 
-from fastapi import APIRouter, Body, File, Header, Path, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    Body,
+    File,
+    Header,
+    Path,
+    Query,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import FileResponse, StreamingResponse
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
@@ -2283,12 +2293,15 @@ async def prc_comments_list(
 @router.post(
     "/v1/product-registration/requests/{request_id}/comments",
     operation_id="prc_comment_create",
-    summary="CONV — Postar mensagem (autor = principal autenticado)",
+    summary=(
+        "CONV — Postar mensagem (autor = principal autenticado; "
+        "JSON {body} ou multipart body+file+client_ref)"
+    ),
 )
 @require_any_permission(_REQUESTER_WRITE_PERMS)
 async def prc_comment_create(
     request_id: str = Path(...),
-    body: CommentBody = Body(...),
+    request: Request = ...,
     idempotency_key: str | None = Header(
         default=None, alias="Idempotency-Key"
     ),
@@ -2300,13 +2313,66 @@ async def prc_comment_create(
     rid, bad = _uuid_or_fail(request_id, op)
     if bad is not None:
         return bad
+    content_type = (request.headers.get("content-type") or "").lower()
+    is_form = content_type.startswith(
+        ("multipart/form-data", "application/x-www-form-urlencoded")
+    )
     try:
-        data = build_prc_service().create_comment(
-            rid,
-            actor=_actor(user),
-            body=body.body,
-            idempotency_key=idempotency_key,
-        )
+        if is_form:
+            # FIX-03 — criação composta: texto, anexos ou ambos numa
+            # só operação; invariante aplicada no use case.
+            form = await request.form()
+            client_refs = [
+                str(v) for v in form.getlist("client_ref") if v is not None
+            ]
+            files: list[dict[str, object]] = []
+            for idx, item in enumerate(form.getlist("file")):
+                if not isinstance(item, StarletteUploadFile):
+                    continue
+                content = await item.read(_ATT_MAX_BYTES + 1)
+                if len(content) > _ATT_MAX_BYTES:
+                    return fail(
+                        "Arquivo excede o limite de 10 MB por anexo.",
+                        413,
+                        data={"code": "attachment_too_large"},
+                        operation_id=op,
+                    )
+                files.append(
+                    {
+                        "filename": item.filename,
+                        "content": content,
+                        "client_ref": (
+                            client_refs[idx]
+                            if idx < len(client_refs)
+                            else None
+                        ),
+                    }
+                )
+            body_field = form.get("body")
+            data = build_prc_service().create_comment_with_attachments(
+                rid,
+                actor=_actor(user),
+                body=str(body_field) if body_field is not None else None,
+                files=files,
+                idempotency_key=idempotency_key,
+                correlation_id=get_request_id(),
+            )
+        else:
+            try:
+                payload = await request.json()
+            except Exception:
+                return fail(
+                    "Corpo da requisição inválido.",
+                    422,
+                    data={"code": "invalid_body"},
+                    operation_id=op,
+                )
+            data = build_prc_service().create_comment(
+                rid,
+                actor=_actor(user),
+                body=payload.get("body") if isinstance(payload, dict) else None,
+                idempotency_key=idempotency_key,
+            )
     except Exception as exc:
         return _err(exc, op)
     if data.get("replayed"):

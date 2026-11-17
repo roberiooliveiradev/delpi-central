@@ -36,6 +36,24 @@ def validate_comment_body(body: str | None) -> str:
     return text
 
 
+def validate_comment_body_optional(body: str | None) -> str:
+    """FIX-03 — corpo opcional para a criação composta: a mensagem
+    pode viver só de anexos. Retorna ``""`` canônico quando não há
+    texto; limites e política de mídia valem quando há texto."""
+    text = (body or "").strip()
+    if not text:
+        return ""
+    if len(text) > COMMENT_BODY_MAX_CHARS:
+        raise ValueError("comment_too_large")
+    for match in _IMAGE_HREF_RE.finditer(text):
+        href = (match.group(1) or "").strip().lower()
+        if href.startswith("attachment:"):
+            continue
+        if href.startswith(("http://", "https://", "data:")):
+            raise ValueError("comment_media_forbidden")
+    return text
+
+
 def assert_conversation_open(status: str | None) -> None:
     """Conversa congelada em caso terminal — política derivada do
     próprio lifecycle PRC (``TERMINAL_STATUSES``), não copiada do

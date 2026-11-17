@@ -24,7 +24,7 @@ from tests.test_product_registration import (
 # Ator «solicitante» real: só my-requests.prc.create — sem engineering.access,
 # portanto não-analista e sujeito ao escopo por objeto.
 REQUESTER_PERMS = [MR_PRC_CREATE]
-from tests.test_prc_ref023_attachments import PNG, _create
+from tests.test_prc_ref023_attachments import PDF, PNG, _create
 
 REQUESTER_SUB = "user-1"
 ANALYST_SUB = "analyst-1"
@@ -353,3 +353,240 @@ class TestCommentAttachments:
         r = self._upload(client, tok, rid, cid)
         assert r.status_code == 201
         assert r.json()["data"]["deduplicated"] is True
+
+
+class TestCompositeCreate:
+    """FIX-03 — POST multipart body+file+client_ref: texto, anexos ou
+    ambos numa só operação (Issue #207)."""
+
+    def _composite(self, client, tok, rid, body=None, files=None,
+                   headers=None):
+        data = {}
+        if body is not None:
+            data["body"] = body
+        form_files = [
+            ("file", (item[0], io.BytesIO(item[1]), item[2]))
+            for item in (files or [])
+        ]
+        refs = [
+            (item[3] if len(item) > 3 else "") for item in (files or [])
+        ]
+        if refs:
+            data["client_ref"] = refs
+        return client.post(
+            f"{_base(rid)}/comments",
+            headers={"Authorization": f"Bearer {tok}", **(headers or {})},
+            data=data, files=form_files or None,
+        )
+
+    def _comments(self, client, tok, rid):
+        return client.get(
+            f"{_base(rid)}/comments",
+            headers={"Authorization": f"Bearer {tok}"},
+        ).json()["data"]["items"]
+
+    def test_image_only(self, client, jwks_env, core_rbac,
+                        prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(client, tok, rid, body="",
+                            files=[("print.png", PNG, "image/png")])
+        assert r.status_code == 201, r.text
+        data = r.json()["data"]
+        assert data["comment"]["body"] == ""  # canônico, nunca " "
+        assert len(data["attachments"]) == 1
+        assert data["attachments"][0]["mediaType"] == "image/png"
+        items = self._comments(client, tok, rid)
+        assert len(items) == 1 and items[0]["body"] == ""
+        atts = client.get(
+            f"{_base(rid)}/comments/{items[0]['commentId']}/attachments",
+            headers={"Authorization": f"Bearer {tok}"},
+        ).json()["data"]["attachments"]
+        assert len(atts) == 1
+
+    def test_pdf_only(self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(client, tok, rid,
+                            files=[("spec.pdf", PDF, "application/pdf")])
+        assert r.status_code == 201, r.text
+        assert r.json()["data"]["attachments"][0]["mediaType"] == \
+            "application/pdf"
+
+    def test_text_plus_file(self, client, jwks_env, core_rbac,
+                            prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(client, tok, rid, body="segue o print",
+                            files=[("a.png", PNG, "image/png")])
+        assert r.status_code == 201, r.text
+        data = r.json()["data"]
+        assert data["comment"]["body"] == "segue o print"
+        assert len(data["attachments"]) == 1
+
+    def test_inline_client_ref_echoed(self, client, jwks_env, core_rbac,
+                                      prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(
+            client, tok, rid, body="![x](pending:p1)",
+            files=[("pasted.png", PNG, "image/png", "pending:p1")])
+        assert r.status_code == 201, r.text
+        att = r.json()["data"]["attachments"][0]
+        assert att["clientRef"] == "pending:p1"
+
+    def test_empty_multipart_rejected_no_comment(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(client, tok, rid, body="")
+        assert r.status_code == 422
+        r = self._composite(client, tok, rid, body="   ")
+        assert r.status_code == 422
+        assert self._comments(client, tok, rid) == []
+
+    def test_invalid_file_no_orphan_comment(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(client, tok, rid, body="",
+                            files=[("evil.png", b"MZ" + b"\x00" * 32,
+                                    "image/png")])
+        assert r.status_code == 422
+        assert self._comments(client, tok, rid) == []
+        # texto + arquivo inválido: também sem comentário órfão
+        r = self._composite(client, tok, rid, body="olá",
+                            files=[("evil.png", b"MZ" + b"\x00" * 32,
+                                    "image/png")])
+        assert r.status_code == 422
+        assert self._comments(client, tok, rid) == []
+
+    def test_oversized_file_rejected(self, client, jwks_env, core_rbac,
+                                     prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = self._composite(
+            client, tok, rid,
+            files=[("big.png", b"\x89PNG" + b"\x00" * (10 * 1024 * 1024),
+                    "image/png")])
+        assert r.status_code in (413, 422)
+        assert self._comments(client, tok, rid) == []
+
+    def test_composite_idempotent_replay(self, client, jwks_env,
+                                         core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        h = {"Idempotency-Key": "comp-k1"}
+        files = [("a.png", PNG, "image/png")]
+        r1 = self._composite(client, tok, rid, files=files, headers=h)
+        r2 = self._composite(client, tok, rid, files=files, headers=h)
+        assert r1.status_code == 201 and r2.status_code == 200
+        assert len(self._comments(client, tok, rid)) == 1
+        cid = r1.json()["data"]["comment"]["commentId"]
+        atts = client.get(
+            f"{_base(rid)}/comments/{cid}/attachments",
+            headers={"Authorization": f"Bearer {tok}"},
+        ).json()["data"]["attachments"]
+        assert len(atts) == 1  # replay não duplica anexo
+
+    def test_terminal_freeze_blocks_composite(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, ANALYST_SUB)
+        r = _post(client, f"{_base(rid)}/actions/reject", tok,
+                  json={"expectedVersion": 1, "reason": "fim"})
+        assert r.status_code == 200, r.text
+        r = self._composite(client, tok, rid,
+                            files=[("a.png", PNG, "image/png")])
+        assert r.status_code == 409
+
+    def test_out_of_scope_composite_403(self, client, jwks_env,
+                                        core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, OTHER_SUB, REQUESTER_PERMS)
+        r = self._composite(client, tok, rid,
+                            files=[("a.png", PNG, "image/png")])
+        assert r.status_code == 403
+
+
+class TestEmptyBodyInvariants:
+    """FIX-03 — edição/remoção nunca deixa comentário vazio sem anexo."""
+
+    def _composite_comment(self, client, tok, rid, body="",
+                           files=None):
+        data = {"body": body}
+        form_files = [
+            ("file", (name, io.BytesIO(content), mime))
+            for name, content, mime in (files or [])
+        ]
+        r = client.post(
+            f"{_base(rid)}/comments",
+            headers={"Authorization": f"Bearer {tok}"},
+            data=data, files=form_files or None,
+        )
+        assert r.status_code == 201, r.text
+        return r.json()["data"]
+
+    def test_edit_to_empty_allowed_when_attachments_remain(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        data = self._composite_comment(
+            client, tok, rid, body="legenda",
+            files=[("a.png", PNG, "image/png")])
+        cid = data["comment"]["commentId"]
+        r = client.patch(
+            f"{_base(rid)}/comments/{cid}",
+            json={"body": "", "expectedVersion": 1},
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["comment"]["body"] == ""
+
+    def test_edit_to_empty_rejected_without_attachments(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        c = _post_comment_ok(client, jwks_env, core_rbac, rid)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        r = client.patch(
+            f"{_base(rid)}/comments/{c['commentId']}",
+            json={"body": "", "expectedVersion": 1},
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert r.status_code == 422
+
+    def test_delete_last_attachment_of_empty_comment_rejected(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        data = self._composite_comment(
+            client, tok, rid, files=[("a.png", PNG, "image/png")])
+        cid = data["comment"]["commentId"]
+        aid = data["attachments"][0]["attachmentId"]
+        r = client.delete(
+            f"{_base(rid)}/comments/{cid}/attachments/{aid}",
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert r.status_code == 422  # deixaria a mensagem vazia
+        # anexo continua associado
+        atts = client.get(
+            f"{_base(rid)}/comments/{cid}/attachments",
+            headers={"Authorization": f"Bearer {tok}"},
+        ).json()["data"]["attachments"]
+        assert len(atts) == 1
+
+    def test_delete_one_of_two_attachments_allowed(
+            self, client, jwks_env, core_rbac, prc_service_repo):
+        rid = _create(client, jwks_env, core_rbac)
+        tok = _as(jwks_env, core_rbac, REQUESTER_SUB)
+        data = self._composite_comment(
+            client, tok, rid,
+            files=[("a.png", PNG, "image/png"),
+                   ("b.pdf", PDF, "application/pdf")])
+        cid = data["comment"]["commentId"]
+        aid = data["attachments"][0]["attachmentId"]
+        r = client.delete(
+            f"{_base(rid)}/comments/{cid}/attachments/{aid}",
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert r.status_code == 200

@@ -11,7 +11,9 @@ const SRC = readFileSync(
 
 describe("PrcDetailPage — conversa PRC (estrutural)", () => {
   it("monta ConversationPanel do kit com adapter PRC na aba history", () => {
-    expect(SRC).toMatch(/import \{ ConversationPanel \} from "@delpi\/plugin-ui\/index"/);
+    expect(SRC).toMatch(
+      /import \{[^}]*ConversationPanel[^}]*\} from "@delpi\/plugin-ui\/index"/,
+    );
     expect(SRC).toMatch(/prcConversationApi/);
     const history = SRC.indexOf('tab === "history"');
     const panel = SRC.indexOf("<ConversationPanel");

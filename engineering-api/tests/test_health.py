@@ -100,6 +100,12 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/product-registration/requests/{request_id}/correction-returns/{return_id}",
         "/v1/product-registration/requests/{request_id}/attachments",
         "/v1/product-registration/requests/{request_id}/attachments/{attachment_id}/download",
+        # CONV — conversa do caso (Issue #207; FIX-03 inclui POST
+        # multipart body+file no mesmo path de comments).
+        "/v1/product-registration/requests/{request_id}/comments",
+        "/v1/product-registration/requests/{request_id}/comments/{comment_id}",
+        "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments",
+        "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}",
         "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
         "/v1/product-registration/requests/{request_id}/verifications",
         "/v1/product-registration/technical-records",

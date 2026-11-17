@@ -78,6 +78,20 @@ export type ConversationAttachment = {
   state?: string | null;
 };
 
+export type ConversationAttachmentFile = {
+  file: File;
+  /** Referência do lado do cliente (ex.: `pending:{id}` inline)
+   * — ecoada no resultado para mapear o id persistido. */
+  clientRef?: string | null;
+};
+
+export type ConversationCreateResult = {
+  comment: ConversationComment;
+  attachments: (ConversationAttachment & {
+    clientRef?: string | null;
+  })[];
+};
+
 export type ConversationApi = {
   listComments(
     requestId: string,
@@ -88,6 +102,14 @@ export type ConversationApi = {
     body: string,
     opts?: { idempotencyKey?: string },
   ): Promise<ConversationComment>;
+  /** FIX-03 — criação composta numa só operação: texto, anexos ou
+   * ambos. O backend valida tudo antes de persistir (sem corpo
+   * artificial nem comentário órfão). */
+  createCommentWithAttachments(
+    requestId: string,
+    input: { body: string; files: ConversationAttachmentFile[] },
+    opts?: { idempotencyKey?: string },
+  ): Promise<ConversationCreateResult>;
   updateComment(
     requestId: string,
     commentId: string,
@@ -714,15 +736,54 @@ export function ConversationPanel({
         });
         cancelEdit();
       } else {
-        const created = await api.createComment(requestId, text || " ", {
-          idempotencyKey: crypto.randomUUID(),
-        });
-        const beforeUpload = text || " ";
-        const bodyText = await applyUploadsAndBody(created.id, beforeUpload);
-        if (bodyText !== beforeUpload) {
-          await api.updateComment(requestId, created.id, bodyText, {
-            expectedVersion: created.version,
+        // FIX-03 — criação composta: texto, anexos ou ambos numa só
+        // chamada. Nunca corpo artificial (" ") — o backend aplica a
+        // invariante texto OU >=1 anexo válido.
+        const inlinePendingIds = listInlinePendingIdsFromMarkdown(text);
+        if (
+          inlinePendingIds.some((id) => !inlineFilesRef.current[id])
+        ) {
+          throw new Error(
+            "Uma imagem colada não pôde ser enviada. Remova-a e cole novamente.",
+          );
+        }
+        const files: ConversationAttachmentFile[] = [
+          ...pending
+            .filter((item): item is PendingLocal => item.kind === "clip")
+            .map((item) => ({ file: item.file })),
+          ...inlinePendingIds.map((pendingId) => ({
+            file: inlineFilesRef.current[pendingId] as File,
+            clientRef: pendingId,
+          })),
+        ];
+        if (files.length === 0) {
+          await api.createComment(requestId, text, {
+            idempotencyKey: crypto.randomUUID(),
           });
+        } else {
+          const created = await api.createCommentWithAttachments(
+            requestId,
+            { body: text, files },
+            { idempotencyKey: crypto.randomUUID() },
+          );
+          const refToUuid: Record<string, string> = {};
+          for (const att of created.attachments || []) {
+            if (att.clientRef) refToUuid[att.clientRef] = att.id;
+          }
+          if (Object.keys(refToUuid).length) {
+            const rewritten = rewriteInlinePendingInMarkdown(
+              text,
+              refToUuid,
+            );
+            if (rewritten !== text) {
+              await api.updateComment(
+                requestId,
+                created.comment.id,
+                rewritten,
+                { expectedVersion: created.comment.version },
+              );
+            }
+          }
         }
         setDraft("");
         setPending([]);

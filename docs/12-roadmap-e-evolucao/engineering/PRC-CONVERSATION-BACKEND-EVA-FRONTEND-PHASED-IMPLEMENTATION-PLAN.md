@@ -353,3 +353,80 @@ persiste. **Verificador:** INCONCLUSIVE (engine sem login).
 **Issue #207:** `gh` sem auth — evidência versionada aqui.
 
 **NEXT_ACTION:** aceite visual do PO em HML.
+
+## 12. P3-FIX-03 — envio de mensagem só-anexo (Issue #207)
+
+**Executor:** Devin · **TASK_ID:**
+`EVA-PRC-CONVERSATION-ATTACHMENT-ONLY-SEND-FIX-01`
+
+**Causa-raiz (3 camadas, confirmada em código):**
+1. `ConversationPanel` chamava `createComment(requestId, text || " ")`
+   — espaço artificial.
+2. Domínio `validate_comment_body` aplicava `.strip()` → `" "` virava
+   `""` → `comment_required` (422) — a criação falhava antes de
+   qualquer upload.
+3. V026 impunha `CHECK (length(btrim(body)) > 0)` — mesmo um `""`
+   canônico seria rejeitado no banco.
+
+**Contrato decidido (menor mecanismo correto):** criação **composta**
+numa só operação de aplicação. `POST …/comments` aceita agora dois
+content-types: `application/json {body}` (legado, texto obrigatório)
+e `multipart/form-data` com `body` + `file`*N + `client_ref`*N
+(opcional, ecoado no resultado para mapear pendentes inline).
+Invariante `texto não vazio OU ≥1 anexo válido` validada **antes do
+primeiro write**: todos os arquivos passam por `validate_attachment`
+(magic bytes, tipo, 10 MB, máx. 10) antes de qualquer INSERT.
+Corpo canônico só-anexo = `""` exato — nunca espaço artificial.
+Falha após INSERT compensa blobs + linhas de anexo + comentário
+(`repo.delete_comment` — uso interno, sem rota).
+
+**Migração:** `V028__prc_comment_body_attachment_only.sql` — CHECK
+passa a `body = '' OR length(btrim(body)) > 0` (vazio canônico
+permitido; whitespace-only continua rejeitado). V026/V027 intactas.
+Provada no PG dev: `''` OK, `'   '` viola CHECK, `'x'` OK.
+
+**Invariantes de ciclo de vida:**
+- `update_comment` para corpo vazio só passa quando a mensagem retém
+  ≥1 anexo não deletado (caso contrário `comment_required`, 422).
+- `delete_comment_attachment` rejeita remover o **último** anexo de
+  mensagem sem texto (`comment_requires_content`, 422) — impedindo
+  comentário vazio definitivo.
+- Idempotência: operação `prc_comment_create_with_attachments` com
+  fingerprint `body + requestId + sha256 dos arquivos`; replay não
+  duplica comentário nem anexo (teste prova 1 comentário + 1 anexo
+  após retry com a mesma key).
+- EVA: `comment_create` semântico segue no use case textual estrito —
+  zero capacidade binária falsa, zero novas tools. `comment_list`
+  devolve `body:""` com segurança.
+
+**Plugin UI:** `ConversationPanel` envia via novo método do contrato
+`ConversationApi.createCommentWithAttachments` (multipart) sempre que
+há ≥1 pendente (clipe ou inline `pending:*`); texto puro continua no
+`createComment` JSON. Adapters implementados nos dois MFEs
+(my-requests via fetch multipart; engineering via `postFormData` com
+headers opcionais — idempotency-key). Mesmo painel compartilhado,
+mesma ordem cronológica e bolhas da FIX-02.
+
+**Testes executados:**
+- Backend (harness real FastAPI + repo/storage in-memory): 31/31 em
+  `test_prc_conversation.py` (+14 novos: imagem-only, PDF-only,
+  texto+arquivo, client_ref echo, vazio/whitespace rejeitado sem
+  órfão, arquivo inválido sem órfão, oversize, replay idempotente,
+  freeze terminal, escopo 403, invariantes de edição/remoção).
+  Suíte tocada: 74/74 (conversa + EVA parity + REF-023).
+  `test_health`/`test_auth_middleware`: ALLOWED_BUSINESS_PATHS
+  completado com as 4 rotas de conversação (drift de contrato
+  corrigido — lista não acompanhava rotas já autorizadas).
+  Full suite: 1510 pass / 3 fail pré-existentes em domínios não
+  tocados (d16 attendance flags, eva_val01 roundtrip,
+  visual_perception_r7).
+- Plugin UI: 9/9 conversation-panel (+6 novos de envio só-anexo
+  provando `body:""` canônico e ausência de `" "`); collaboration +
+  conversation-panel: 200/200.
+- My Requests PRC: 19/19; adapter multipart: 6/6. Engenharia PRC:
+  255/255 (regex estrutural de import multi-símbolo corrigida).
+- PG dev: V028 aplicada e CHECK exercido nos 3 casos.
+
+**Riscos residuais:** E2E autenticado em HML depende de identidade
+legítima (bloqueio persistente); scanner antivírus segue fora do
+escopo (`inspection: structural`, honesto no DTO).

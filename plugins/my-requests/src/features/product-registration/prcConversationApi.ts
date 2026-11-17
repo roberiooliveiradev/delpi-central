@@ -116,6 +116,48 @@ export const prcConversationApi: ConversationApi = {
     return mapComment(data.comment);
   },
 
+  async createCommentWithAttachments(requestId, input, opts) {
+    /* FIX-03 — uma só chamada multipart: body + file + client_ref
+     * paralelo por índice; backend valida tudo antes de persistir. */
+    const form = new FormData();
+    form.append("body", input.body || "");
+    for (const item of input.files) {
+      form.append("file", item.file);
+      form.append("client_ref", item.clientRef || "");
+    }
+    const response = await fetch(commentsPath(requestId), {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        ...(opts?.idempotencyKey
+          ? { "Idempotency-Key": opts.idempotencyKey }
+          : {}),
+      },
+      body: form,
+    });
+    if (!response.ok) {
+      let message = `Falha ao publicar (${response.status}).`;
+      try {
+        const parsed = await response.json();
+        message = parsed?.message || parsed?.detail || message;
+      } catch {
+        /* resposta não-JSON */
+      }
+      throw new ApiClientError(response.status, message);
+    }
+    const parsed = (await response.json()) as Envelope<{
+      comment: ApiComment;
+      attachments?: (ApiAttachment & { clientRef?: string | null })[];
+    }>;
+    return {
+      comment: mapComment(parsed.data.comment),
+      attachments: (parsed.data.attachments || []).map((row) => ({
+        ...mapAttachment(row),
+        clientRef: row.clientRef || null,
+      })),
+    };
+  },
+
   async updateComment(requestId, commentId, body, opts) {
     const data = await request<{ comment: ApiComment }>(
       "PATCH",

@@ -3042,6 +3042,23 @@ class PostgresProductRegistrationRepository:
                 ).fetchone()
         return self._comment_row(row) if row else None
 
+    def delete_comment(
+        self, *, request_id: str, comment_id: str
+    ) -> None:
+        """Compensação física — uso exclusivo do fluxo de criação
+        composta quando o upload falha após o INSERT (FIX-03). Não
+        expor em rotas."""
+        with self._conn() as conn:
+            conn.execute(
+                f"DELETE FROM {_T_CMT_ATT}"
+                " WHERE comment_id=%s AND request_id=%s",
+                (comment_id, request_id),
+            )
+            conn.execute(
+                f"DELETE FROM {_T_CMT} WHERE id=%s AND request_id=%s",
+                (comment_id, request_id),
+            )
+
     def _comment_attachment_row(self, row: dict) -> dict[str, Any]:
         out = self._attachment_row(row)
         out["comment_id"] = str(out["comment_id"])
