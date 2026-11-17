@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -27,6 +27,7 @@ function installMatchMedia(initialDark: boolean) {
 }
 
 afterEach(() => {
+  cleanup();
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     writable: true,
@@ -35,10 +36,11 @@ afterEach(() => {
 });
 
 function SchemeProbe() {
-  const { scheme, toggle, userChosen } = useQuestionnaireColorScheme();
+  const { scheme, toggle, userChosen, canToggle } =
+    useQuestionnaireColorScheme();
   return (
     <button type="button" data-testid="probe" onClick={toggle}>
-      {scheme}:{String(userChosen)}
+      {scheme}:{String(userChosen)}:{String(canToggle)}
     </button>
   );
 }
@@ -83,13 +85,29 @@ describe("QuestionnaireThemeScope", () => {
       </QuestionnaireThemeScope>,
     );
     const probe = screen.getByTestId("probe");
-    expect(probe.textContent).toBe("light:false");
+    expect(probe.textContent).toBe("light:false:true");
 
     fireEvent.click(probe);
 
-    expect(probe.textContent).toBe("dark:true");
+    expect(probe.textContent).toBe("dark:true:true");
     expect(container.firstElementChild!.getAttribute("data-color-scheme")).toBe(
       "dark",
     );
+  });
+
+  it("canToggle=false com esquema fixo e toggle() não faz nada", () => {
+    installMatchMedia(false);
+    render(
+      <QuestionnaireThemeScope colorScheme="dark">
+        <SchemeProbe />
+      </QuestionnaireThemeScope>,
+    );
+    const probe = screen.getByTestId("probe");
+    expect(probe.textContent).toBe("dark:false:false");
+
+    fireEvent.click(probe);
+
+    // esquema fixo permanece dark; toggle é no-op
+    expect(probe.textContent).toBe("dark:false:false");
   });
 });

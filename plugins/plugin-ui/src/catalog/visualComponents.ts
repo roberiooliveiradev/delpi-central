@@ -450,6 +450,41 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Página do kit de formulário: faixa da marca (compact/tall) + coluna sobreposta (16 px / máx. 760 px), quebra em 600 px.",
   }),
+  vc("forms", "FormCard", {
+    addedAt: "2026-11-16",
+    description:
+      "Cartão base do kit de formulário (.delpi-ui-form-card): superfície, borda, raio 12, sombra, tone invalid, as div/section/fieldset.",
+  }),
+  vc("forms", "FormLogo", {
+    addedAt: "2026-11-16",
+    description:
+      "Logo do formulário (34/40/44 px) com selo branco no tema escuro (--delpi-ui-form-logo-bg).",
+  }),
+  vc("forms", "FormThemeToggle", {
+    addedAt: "2026-11-16",
+    description:
+      "Botão redondo 44×44 de alternar tema (lua/sol); some quando o escopo tem esquema fixo (canToggle=false).",
+  }),
+  vc("forms", "FormProgress", {
+    addedAt: "2026-11-16",
+    description:
+      "Barra de progresso 6 px com role=progressbar e aria-valuenow calculado; rótulo opcional não duplicado no cabeçalho.",
+  }),
+  vc("forms", "FormIntroCard", {
+    addedAt: "2026-11-16",
+    description:
+      "Cartão de abertura: logo + ação, eyebrow, título, bloco de contexto (tint), descrição, itens com ícone, ação e nota.",
+  }),
+  vc("forms", "FormHeaderCard", {
+    addedAt: "2026-11-16",
+    description:
+      "Cabeçalho das etapas: logo + meta/ação, título, subtítulo, divisor, linha da etapa e FormProgress.",
+  }),
+  vc("forms", "QuestionCard", {
+    addedAt: "2026-11-16",
+    description:
+      "Quadro da pergunta (fieldset+legend): eyebrow, número, enunciado, obrigatória/opcional, erro com aria-describedby e tone invalid.",
+  }),
   // export
   vc("export", "TabularExportButtons"),
   vc("export", "DocumentExportActions"),

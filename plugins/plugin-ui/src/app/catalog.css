@@ -984,34 +984,29 @@
   min-height: 0;
 }
 
-.dashboard-plugin-ui .puc-questionnaire-card {
+/* Superfície temática das demos de cartão (sem a página inteira) */
+.dashboard-plugin-ui .puc-questionnaire-surface {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   padding: 20px;
-  background: var(--delpi-ui-surface);
-  border: 1px solid var(--delpi-ui-border);
+  background: var(--delpi-ui-form-page-bg);
+  border: 1px solid var(--puc-border);
   border-radius: 12px;
-  box-shadow: var(--delpi-ui-form-card-shadow);
 }
 
-.dashboard-plugin-ui .puc-questionnaire-card p {
-  margin: 0;
+.dashboard-plugin-ui .puc-questionnaire-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+/* Marcador neutro da área de resposta (escala/campo — pacotes seguintes) */
+.dashboard-plugin-ui .puc-questionnaire-answer-placeholder {
+  padding: 14px;
+  border: 1px dashed var(--delpi-ui-form-border-soft);
+  border-radius: 10px;
   color: var(--delpi-ui-muted);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.dashboard-plugin-ui .puc-questionnaire-theme-btn {
-  align-self: flex-start;
-  height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--delpi-ui-form-border-soft);
-  border-radius: 8px;
-  background: var(--delpi-ui-surface);
-  color: var(--delpi-ui-text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
 }

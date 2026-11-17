@@ -94,4 +94,41 @@ describe("questionnaire.css — contrato de tokens e escopo", () => {
   it("não redeclara o chrome de form-actions (namespace reservado do kit)", () => {
     expect(css).not.toMatch(/form-actions/);
   });
+
+  it("classes novas usam só var(--delpi-ui-*) para cor/sombra/borda", () => {
+    // Declarações cor-de-fundo/borda/sombra/fill/stroke/caret fora dos blocos
+    // de token devem referenciar tokens — literais só nos valores permitidos.
+    const COLORISH =
+      /^(color|background|background-color|box-shadow|fill|stroke|caret-color|outline|outline-color|border|border-color|border-top-color|border-right-color|border-bottom-color|border-left-color)$/;
+    const ALLOWED_LITERAL =
+      /^(none|transparent|currentcolor|inherit|initial|unset|0|auto)$/i;
+
+    // Remove os blocos de tokens (raiz claro/escuro) — lá os literais são válidos.
+    const withoutTokenBlocks = css
+      .replace(/\.delpi-ui-form-root\s*\{[^}]*\}/, "")
+      .replace(
+        /\.delpi-ui-form-root\[data-color-scheme="dark"\]\s*\{[^}]*\}/,
+        "",
+      );
+
+    const rulePattern = /([^{}]+)\{([^}]*)\}/g;
+    const violations: string[] = [];
+    let rule: RegExpExecArray | null;
+    while ((rule = rulePattern.exec(withoutTokenBlocks)) !== null) {
+      const selector = rule[1].trim();
+      if (selector.startsWith("@")) continue;
+      for (const decl of rule[2].split(";")) {
+        const [prop, ...rest] = decl.split(":");
+        if (!rest.length) continue;
+        const property = prop.trim();
+        const value = rest.join(":").trim();
+        if (property.startsWith("--")) continue;
+        if (!COLORISH.test(property)) continue;
+        if (/var\(/.test(value)) continue;
+        if (ALLOWED_LITERAL.test(value)) continue;
+        violations.push(`${selector} { ${property}: ${value} }`);
+      }
+    }
+    expect(violations).toEqual([]);
+  });
 });

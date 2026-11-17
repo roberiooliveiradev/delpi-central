@@ -1320,6 +1320,13 @@ Fundação visual genérica para páginas de formulário (questionários e convi
 import {
   QuestionnaireThemeScope,
   FormPageLayout,
+  FormCard,
+  FormLogo,
+  FormThemeToggle,
+  FormProgress,
+  FormIntroCard,
+  FormHeaderCard,
+  QuestionCard,
   useQuestionnaireColorScheme,
   useSessionColorScheme,
 } from "@delpi/plugin-ui";
@@ -1337,7 +1344,7 @@ Renderiza `<div class="{prefix}-form-root delpi-ui-form-root" data-color-scheme=
 
 ### `useQuestionnaireColorScheme()`
 
-Hook dentro do escopo: `{ scheme, toggle(), userChosen }`. `toggle()` alterna para a visita corrente e ignora mudanças do aparelho a partir de então; nada é persistido — remontar volta ao `prefers-color-scheme` do dispositivo. Fora do escopo lança erro. `useSessionColorScheme()` é o hook de estado bruto (sem contexto), para quem compõe a própria raiz.
+Hook dentro do escopo: `{ scheme, toggle(), userChosen, canToggle }`. `toggle()` alterna para a visita corrente e ignora mudanças do aparelho a partir de então; nada é persistido — remontar volta ao `prefers-color-scheme` do dispositivo. `canToggle` é `true` apenas com `colorScheme="auto"` — com esquema fixo, `toggle()` é no-op e `FormThemeToggle` não renderiza. Fora do escopo lança erro. `useSessionColorScheme()` é o hook de estado bruto (sem contexto), para quem compõe a própria raiz.
 
 ### `FormPageLayout`
 
@@ -1356,6 +1363,96 @@ Ocupa a altura da janela (`100dvh`), pinta `--delpi-ui-form-page-bg` e renderiza
   </FormPageLayout>
 </QuestionnaireThemeScope>
 ```
+
+---
+
+## Cartões do kit de formulário
+
+Estrutura de conteúdo dos questionários — todos com classes dual `{prefix}-form-*` + `delpi-ui-form-*`, cores apenas via tokens `var(--delpi-ui-*)` e textos 100% por prop (sem microcopy interna).
+
+### `FormCard`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `as` | `"div" \| "section" \| "fieldset"` | `"div"` | Elemento raiz (fieldset no QuestionCard) |
+| `tone` | `"default" \| "invalid"` | `"default"` | `invalid` pinta a borda em `--delpi-ui-danger` |
+| `prefix` / `className` | `string` | — | BEM dual / classes extras |
+
+Demais props (incl. `aria-*`) são repassadas ao elemento. Padding 20 px (<600) → 28×32 px, gap interno 12 px em todas as larguras, raio 12, sombra `--delpi-ui-form-card-shadow`; borda sempre presente (inclusive no escuro).
+
+### `FormLogo`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `src` / `alt` | `string` | — | Imagem do logo e texto alternativo |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Altura 34 / 40 / 44 px |
+| `prefix` / `className` | `string` | — | BEM dual / classes extras |
+
+Selo com `--delpi-ui-form-logo-bg` (no escuro: badge claro 6×10 px, raio 8) para logos pensados para fundo claro.
+
+### `FormThemeToggle`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `ariaLabel` | `string` | Rótulo acessível do botão |
+| `prefix` / `className` | `string` | BEM dual / classes extras |
+
+Consome `useQuestionnaireColorScheme()`: botão redondo 44×44 px com `Moon`/`Sun`, `aria-pressed` reflete escuro. **Não renderiza** quando `canToggle` é `false` (esquema fixo).
+
+### `FormProgress`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `done` / `total` | `number` | — | `aria-valuenow = round(100·done/total)`; `total ≤ 0` → 0 |
+| `ariaLabel` | `string` | — | Nome acessível da barra |
+| `label` | `ReactNode` | — | Texto opcional acima da barra (omitir no header — o `step` já o mostra) |
+
+Trilho 6 px/raio 3 com fill em `--delpi-ui-accent`, `role="progressbar"`, `aria-valuemin=0`/`max=100`.
+
+### `FormIntroCard`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `logo` | `ReactNode` | `FormLogo` pronto |
+| `headerAction` | `ReactNode` | Ação à direita do logo (ex.: `FormThemeToggle`) |
+| `eyebrow` | `ReactNode` | Rótulo pequeno em maiúsculas acima do título |
+| `title` | `ReactNode` | Título da abertura (26 px) |
+| `context` | `{ label, value }` | Bloco tint com rótulo + valor (ex.: unidade respondida) |
+| `description` | `ReactNode` | Parágrafo descritivo |
+| `items` | `{ icon, content }[]` | Lista com ícone 18 px em `--delpi-ui-accent` (aria-hidden) |
+| `action` | `ReactNode` | CTA pronto (ex.: `ActionButton`) |
+| `footnote` | `ReactNode` | Nota de rodapé do cartão |
+
+Blocos opcionais ausentes não renderizam nada. Padding de abertura 28×24 px.
+
+### `FormHeaderCard`
+
+| Prop | Tipo | Descrição |
+|---|---|---|
+| `logo` | `ReactNode` | `FormLogo` pronto |
+| `meta` | `ReactNode` | Metadado à direita (ex.: prazo) — visível só ≥ 600 px |
+| `headerAction` | `ReactNode` | Ação à direita (ex.: `FormThemeToggle`) |
+| `title` | `ReactNode` | Título (20 → 28 px ≥ 600) |
+| `subtitle` | `ReactNode` | Subtítulo/contexto |
+| `step` | `{ label, progressLabel }` | Linha da etapa; o texto do progresso aparece **só aqui** |
+| `progress` | `{ done, total, ariaLabel }` | `FormProgress` sem `label` (não duplica o texto) |
+
+Divisor em `--delpi-ui-form-track` aparece quando há `step` ou `progress`.
+
+### `QuestionCard`
+
+| Prop | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `eyebrow` | `ReactNode` | — | Tema em maiúsculas dentro do `legend` |
+| `number` | `ReactNode` | — | Renderizado como `"{n}. "` antes do enunciado |
+| `prompt` | `ReactNode` | — | Enunciado (16 → 17 px, peso 600) |
+| `required` | `boolean` | `false` | Asterisco `aria-hidden` em danger |
+| `requiredLabel` | `string` | — | Texto sr-only da obrigatoriedade (`.delpi-ui-form-question__sr-only`) |
+| `optionalLabel` | `ReactNode` | — | Marca de opcional (ignorado se `required`) |
+| `error` | `ReactNode` | — | Mensagem → `tone="invalid"` + `aria-describedby` no fieldset |
+| `children` | `ReactNode` | — | Área de resposta (escala/campo) |
+
+`FormCard as="fieldset"` com `legend` visível como primeiro filho (sem `display: contents`, `float` ou `padding`): eyebrow + número + enunciado + marca formam o nome acessível do grupo.
 
 ---
 

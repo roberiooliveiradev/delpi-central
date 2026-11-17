@@ -9,14 +9,25 @@ import {
 
 export type QuestionnaireColorScheme = "auto" | SessionColorScheme;
 
+export type QuestionnaireColorSchemeState = SessionColorSchemeState & {
+  /**
+   * `true` só quando `colorScheme="auto"`: com esquema fixo (`light`/`dark`)
+   * `toggle()` é no-op e o `FormThemeToggle` não deve ser exibido.
+   */
+  canToggle: boolean;
+};
+
 const QuestionnaireColorSchemeContext =
-  createContext<SessionColorSchemeState | null>(null);
+  createContext<QuestionnaireColorSchemeState | null>(null);
+
+const noopToggle = () => {};
 
 /**
- * Estado de tema do escopo de questionário mais próximo (ex.: futuro botão
- * de tema no cabeçalho). Exige `QuestionnaireThemeScope` como ancestral.
+ * Estado de tema do escopo de questionário mais próximo (ex.: botão
+ * `FormThemeToggle` no cabeçalho). Exige `QuestionnaireThemeScope` como
+ * ancestral.
  */
-export function useQuestionnaireColorScheme(): SessionColorSchemeState {
+export function useQuestionnaireColorScheme(): QuestionnaireColorSchemeState {
   const context = useContext(QuestionnaireColorSchemeContext);
   if (!context) {
     throw new Error(
@@ -29,8 +40,8 @@ export function useQuestionnaireColorScheme(): SessionColorSchemeState {
 export type QuestionnaireThemeScopeProps = {
   /**
    * `auto` (padrão): segue `prefers-color-scheme` e permite `toggle()` em
-   * memória. `"light"`/`"dark"` fixam o esquema — nesse caso `toggle()`
-   * apenas atualiza o estado exposto no contexto, sem alterar a raiz.
+   * memória. `"light"`/`"dark"` fixam o esquema — `canToggle` vira `false`
+   * e `toggle()` não faz nada.
    */
   colorScheme?: QuestionnaireColorScheme;
   /** Prefixo BEM do consumidor (dual-class com `delpi-ui-form-root`). */
@@ -53,14 +64,16 @@ export function QuestionnaireThemeScope({
   const session = useSessionColorScheme();
   const resolved: SessionColorScheme =
     colorScheme === "auto" ? session.scheme : colorScheme;
+  const canToggle = colorScheme === "auto";
 
-  const contextValue = useMemo<SessionColorSchemeState>(
+  const contextValue = useMemo<QuestionnaireColorSchemeState>(
     () => ({
       scheme: resolved,
-      toggle: session.toggle,
+      toggle: canToggle ? session.toggle : noopToggle,
       userChosen: session.userChosen,
+      canToggle,
     }),
-    [resolved, session.toggle, session.userChosen],
+    [resolved, canToggle, session.toggle, session.userChosen],
   );
 
   const rootClass = [
