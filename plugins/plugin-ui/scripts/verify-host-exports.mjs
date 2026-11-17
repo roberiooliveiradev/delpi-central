@@ -115,6 +115,15 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardDistributionDonut",
   "ResolutionStatusCell",
   "createDashboardResolutionStatusCell",
+  "GuidedQuestionnaire",
+  "QuestionnaireThemeScope",
+  "FormPageLayout",
+  "FormResultPanel",
+  "FormLogo",
+  "FormButton",
+  "FormNotice",
+  "useSessionColorScheme",
+  "useQuestionnaireColorScheme",
 ];
 
 function findIndexExpose(dir) {
