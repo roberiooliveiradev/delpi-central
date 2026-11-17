@@ -430,3 +430,33 @@ mesma ordem cronológica e bolhas da FIX-02.
 **Riscos residuais:** E2E autenticado em HML depende de identidade
 legítima (bloqueio persistente); scanner antivírus segue fora do
 escopo (`inspection: structural`, honesto no DTO).
+
+---
+
+## 13. RELEASE PRD controlada — `EVA-PRC-CONVERSATION-CONTROLLED-PRODUCTION-RELEASE-01` (2026-11-17)
+
+Release em produção da conversação PRC completa (P1+P2+P3+FIX-01+FIX-02+FIX-03)
+no SHA `372b69d118` (contém `9378195baa`).
+
+- **G0 preflight:** HEAD == `origin/main`; estado misto detectado —
+  `plugin-ui`/`engineering` já no release, `engineering-api`/
+  `my-requests` defasados; V026/V027/V028 já aplicadas em PRD
+  (`engineering.schema_migrations`, CHECK vivo verificado).
+- **G1 autenticado:** smoke HML com `hml-tester` (identidade legítima)
+  **21/21 PASS** — imagem-only, PDF-only, texto+anexo, JSON legado,
+  422 vazio/inválido, idempotência, IDOR 404, invariantes de edição/
+  delete, freeze terminal 409.
+- **G3 deploy:** rebuild apenas dos defasados —
+  `engineering-api 8058c06d1449→1e66b99c8ce7` (healthy),
+  `my-requests 830882f7f285→5d5f350e0eaa`; `api-delpi`,
+  `plugin-ui`, `engineering` inalterados (já no release).
+  Gateway 200 em todas as rotas verificadas; 401 sem token.
+- **G4 smoke PRD:** `TEST_NOT_RUN` — smoke canônico de produção exige
+  login humano no Portal (token exchange); `password grant` proibido
+  em PRD; credenciais eval em cofre indisponível ao agente. Nenhuma
+  mutação em dados produtivos reais.
+- **EVA:** 6 tools públicas inalteradas; zero tools novas; zero
+  capacidade binária; zero writes TOTVS.
+- **Rollback:** imagens anteriores retidas no host; schema forward-fix
+  apenas (V028 não é revertida cegamente).
+- Evidência completa: `130-prc-conversation-controlled-production-release-evidence.md`.
