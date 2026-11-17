@@ -200,7 +200,8 @@ def test_bundle_is_fixed_scope_with_no_process_or_mcp_entrypoint():
     assert not hasattr(dossier, "deploy")
     assert not hasattr(dossier, "serve")
     assert not hasattr(dossier, "create_mcp_server")
-    assert set(asdict(dossier.assemble_bundle(
+    bundle = dossier.assemble_bundle(
         facts=SAFE, git=META, proxy_state="metadata_only_untrusted",
         now=NOW,
-    )))["checks"]) == set(CollectorPostureFacts.__dataclass_fields__)
+    )
+    assert set(asdict(bundle)["checks"]) == set(CollectorPostureFacts.__dataclass_fields__)
