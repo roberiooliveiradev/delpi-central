@@ -497,8 +497,11 @@ def test_repository_uses_domain_sql_expressions_not_adhoc() -> None:
 
 def test_summary_sql_enforces_gross_and_net_value_identities() -> None:
     sql = _summary_select("")
-    assert "ABS(SD3.D3_CUSTO1)" in sql
-    assert "-ABS(SD3.D3_CUSTO1)" in sql
+    monetary = InventoryAdjustmentClassification.MONETARY_VALUE_SQL_EXPRESSION
+    assert monetary in sql
+    assert f"ABS({monetary})" in sql
+    assert f"-ABS({monetary})" in sql
+    assert "B1_TPMAT" in sql and "OUTER APPLY" in sql
     assert "AS gross_adjustment_value" in sql
     assert "AS net_adjustment_value" in sql
     # The generated SQL contains the canonical domain classifier, not an
