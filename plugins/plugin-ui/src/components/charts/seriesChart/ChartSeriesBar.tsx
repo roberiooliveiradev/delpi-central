@@ -21,6 +21,7 @@ import {
 } from "../seriesChartPointSelection";
 import { resolveSeriesChartCategoryBarSlot } from "./layout";
 import type { SeriesChartSharedProps } from "./types";
+import { ensureSelectableBarSpan, resolveZeroBasedValueSpan } from "./zeroBasedBarGeometry";
 
 export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
   interaction?: SeriesChartInteraction | null;
@@ -57,12 +58,10 @@ export function ChartSeriesBar({
   pointSelection = null,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotH, toY, axisMin, axisMax, orientation, toValueX } = layout;
+  const { toY, axisMin, axisMax, orientation, toValueX } = layout;
   const ref = { kind: "series" as const, seriesIndex };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const baselineY = margin.top + plotH;
-  const baselineX = margin.left;
   const categoryCount = Math.max(points.length, 1);
   const horizontal = orientation === "horizontal";
   const extent = seriesValueExtent(points.map((p) => p.value));
@@ -178,25 +177,29 @@ export function ChartSeriesBar({
 
         const rectProps = horizontal && toValueX
           ? (() => {
-              const x0 = toValueX(Math.min(axisMin, 0));
-              const x1 = toValueX(value);
-              const x = Math.min(x0, x1);
-              const width = Math.max(pointSelectable ? 4 : 0, Math.abs(x1 - x0));
+              const span = resolveZeroBasedValueSpan(toValueX, value);
+              const { start, size } = ensureSelectableBarSpan(
+                span, value, pointSelectable ? 4 : 0, true,
+              );
               return {
-                x: x || baselineX,
+                x: start,
                 y: slot.y,
-                width,
+                width: size,
                 height: slot.height,
               };
             })()
           : (() => {
-              const y = toY(value);
-              const height = Math.max(pointSelectable ? 4 : 0, baselineY - y);
+              // Negativos descem do zero e positivos sobem do zero.
+              // A borda inferior do plot NÃO é a origem em escalas com negativos.
+              const span = resolveZeroBasedValueSpan(toY, value);
+              const { start, size } = ensureSelectableBarSpan(
+                span, value, pointSelectable ? 4 : 0,
+              );
               return {
                 x: slot.x,
-                y: pointSelectable && height <= 4 ? baselineY - 4 : y,
+                y: start,
                 width: slot.width,
-                height,
+                height: size,
               };
             })();
 
