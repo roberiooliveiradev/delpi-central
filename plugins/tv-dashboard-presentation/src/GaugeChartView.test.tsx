@@ -208,3 +208,55 @@ describe("GaugeChartView chartArea / plotArea", () => {
     expect(container.querySelector(".tdp-speedometer-gauge__legend")).toBeTruthy();
   });
 });
+
+
+describe("GLPI #1609 · título e rótulo do velocímetro", () => {
+  const label = "Relatório operacional — Resumo de acuracidade do inventário físico";
+  const model = {
+    value: 45.48, goal: null, min: 0, max: 100, label, unit: "%",
+    showTitle: false, title: label,
+  };
+
+  it("não mostra o nome da rota quando título e rótulo estão ocultos", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{ showTitle: false, showGaugeLabel: false }}
+        chartParts={{ title: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-series-chart__title")).toBeNull();
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__label")).toBeNull();
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__value")?.textContent).toContain("45");
+  });
+
+  it("respeita o toggle de rótulo sem estado de parte materializado", () => {
+    const { container } = render(
+      <GaugeChartView model={model} options={{ showGaugeLabel: false }} />,
+    );
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__label")).toBeNull();
+  });
+
+  it("permite ligar explicitamente o rótulo sem religar o título", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={model}
+        options={{ showTitle: false, showGaugeLabel: false }}
+        chartParts={{ gaugeLabel: { visible: true }, title: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-speedometer-gauge__label")?.textContent).toBe(label);
+    expect(container.querySelector(".delpi-ui-series-chart__title")).toBeNull();
+  });
+
+  it("oculta o título também quando chartParts.title.visible é false", () => {
+    const { container } = render(
+      <GaugeChartView
+        model={{ ...model, showTitle: true }}
+        options={{ showTitle: true }}
+        chartParts={{ title: { visible: false } }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-series-chart__title")).toBeNull();
+  });
+});
