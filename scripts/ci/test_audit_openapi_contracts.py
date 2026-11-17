@@ -184,6 +184,49 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
         findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {7})
         self.assertEqual(findings, [])
 
+    def test_fastapi_starred_local_agent_route_constant_is_allowed(self):
+        source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\nMETA = agent_route(\n    summary="List items",\n    operation_id="list_items",\n)\n\n@router.get("/items", **META)\nasync def list_items():\n    return []\n'''
+        findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {10})
+        self.assertEqual(findings, [])
+
+    def test_fastapi_starred_local_dict_constant_is_allowed(self):
+        source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\nMETA = {"summary": "List items", "operation_id": "list_items"}\n\n@router.get("/items", **META)\nasync def list_items():\n    return []\n'''
+        findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {7})
+        self.assertEqual(findings, [])
+
+    def test_fastapi_starred_imported_constant_is_allowed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            meta_dir = root / "orders-api" / "app" / "interface" / "http"
+            meta_dir.mkdir(parents=True)
+            (meta_dir / "openapi_agent_metadata.py").write_text(
+                'SI_ITEMS = agent_route(\n'
+                '    summary="List items",\n'
+                '    operation_id="list_items",\n'
+                ')\n',
+                encoding="utf-8",
+            )
+            source = '''\nfrom fastapi import APIRouter\nfrom app.interface.http.openapi_agent_metadata import SI_ITEMS\nrouter = APIRouter()\n\n@router.get("/items", **SI_ITEMS)\nasync def list_items():\n    return []\n'''
+            with patch.object(mod, "ROOT", root):
+                findings = mod.scan_changed_fastapi_file(
+                    "orders-api/app/routes.py", source, {6}
+                )
+        self.assertEqual(findings, [])
+
+    def test_fastapi_starred_unresolvable_name_still_requires_operation_id(self):
+        source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\n@router.get("/items", **DYNAMIC_META)\nasync def list_items():\n    return []\n'''
+        findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {5})
+        self.assertEqual(
+            [item.rule for item in findings], ["FASTAPI_OPERATION_ID_REQUIRED"]
+        )
+
+    def test_fastapi_starred_dynamic_call_metadata_still_requires_operation_id(self):
+        source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\nMETA = build_metadata()\n\n@router.get("/items", **META)\nasync def list_items():\n    return []\n'''
+        findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {7})
+        self.assertEqual(
+            [item.rule for item in findings], ["FASTAPI_OPERATION_ID_REQUIRED"]
+        )
+
     def test_fastapi_duplicate_operation_id_in_same_api_is_blocked_when_new_route_touched(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -457,9 +457,107 @@ def _flask_route_receivers(tree: ast.Module) -> set[str]:
     return receivers
 
 
-def fastapi_routes_from_source(source: str) -> list[FastApiRoute]:
+def _constant_operation_ids(tree: ast.Module) -> dict[str, str]:
+    """Module-level ``NAME -> operation_id`` for constants that carry one.
+
+    Handles ``NAME = {"operation_id": "x", ...}`` dict literals and factory
+    calls like ``NAME = agent_route(operation_id="x")`` — the canonical
+    ``**META`` decorator pattern (api-delpi-openapi-route-standards rule 9).
+    """
+    out: dict[str, str] = {}
+    for node in tree.body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        value = node.value
+        operation_id: str | None = None
+        if isinstance(value, ast.Dict):
+            for key_node, value_node in zip(value.keys, value.values):
+                if _literal_string(key_node) == "operation_id":
+                    operation_id = _literal_string(value_node)
+                    break
+        elif isinstance(value, ast.Call):
+            for keyword in value.keywords:
+                if keyword.arg == "operation_id":
+                    operation_id = _literal_string(keyword.value)
+                    break
+        if not operation_id:
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        for target in targets:
+            if isinstance(target, ast.Name):
+                out[target.id] = operation_id
+    return out
+
+
+def _import_bindings(tree: ast.Module) -> dict[str, str]:
+    """Local name -> dotted ``module.symbol`` (or ``module``) for imports."""
+    out: dict[str, str] = {}
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.module:
+            for alias in node.names:
+                out[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                out[alias.asname or alias.name] = alias.name
+    return out
+
+
+def _resolve_star_operation_id(
+    starred: ast.AST,
+    *,
+    local_constants: dict[str, str],
+    imports: dict[str, str],
+    source_path: str | None,
+    cache: dict[str, dict[str, str]],
+) -> str | None:
+    """Resolve ``**EXPR`` in a route decorator to an operation_id.
+
+    Bounded resolution: ``**CONST`` (module-level constant in this file or an
+    imported module under the same API root) and ``**module.CONST``. Anything
+    else stays unresolved -> fail-closed (the literal check still flags it).
+    """
+    target: str | None = None
+    if isinstance(starred, ast.Name):
+        if starred.id in local_constants:
+            return local_constants[starred.id]
+        target = starred.id
+    elif isinstance(starred, ast.Attribute) and isinstance(
+        starred.value, ast.Name
+    ):
+        module = imports.get(starred.value.id)
+        if module:
+            target = f"{module}.{starred.attr}"
+    if not target:
+        return None
+    dotted = imports.get(target, target)
+    api_root = api_root_for_path(source_path or "")
+    if not api_root or not dotted.startswith("app."):
+        return None
+    resolved = ROOT / api_root / (dotted.rpartition(".")[0].replace(".", "/") + ".py")
+    if not resolved.is_file():
+        return None
+    cache_key = str(resolved)
+    if cache_key not in cache:
+        try:
+            cache[cache_key] = _constant_operation_ids(
+                ast.parse(resolved.read_text(encoding="utf-8"))
+            )
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            cache[cache_key] = {}
+    return cache[cache_key].get(dotted.rpartition(".")[2])
+
+
+def fastapi_routes_from_source(
+    source: str,
+    *,
+    source_path: str | None = None,
+    cache: dict[str, dict[str, str]] | None = None,
+) -> list[FastApiRoute]:
     tree = ast.parse(source)
     flask_receivers = _flask_route_receivers(tree)
+    local_constants = _constant_operation_ids(tree)
+    imports = _import_bindings(tree)
+    resolution_cache: dict[str, dict[str, str]] = cache if cache is not None else {}
     routes: list[FastApiRoute] = []
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -480,10 +578,24 @@ def fastapi_routes_from_source(source: str) -> list[FastApiRoute]:
             if route_path is None or (route_path != "" and not route_path.startswith("/")):
                 continue
             operation_id: str | None = None
+            starred_values: list[ast.AST] = []
             for keyword in decorator.keywords:
                 if keyword.arg == "operation_id":
                     operation_id = _literal_string(keyword.value)
                     break
+                if keyword.arg is None:
+                    starred_values.append(keyword.value)
+            if operation_id is None:
+                for starred in starred_values:
+                    operation_id = _resolve_star_operation_id(
+                        starred,
+                        local_constants=local_constants,
+                        imports=imports,
+                        source_path=source_path,
+                        cache=resolution_cache,
+                    )
+                    if operation_id is not None:
+                        break
             routes.append(
                 FastApiRoute(
                     path=route_path,
@@ -518,7 +630,7 @@ def scan_changed_fastapi_file(path: str, source: str, changed_line_numbers: set[
         return []
     findings: list[Violation] = []
     try:
-        routes = fastapi_routes_from_source(source)
+        routes = fastapi_routes_from_source(source, source_path=path)
     except SyntaxError as exc:
         return [Violation("FASTAPI_ROUTE_PARSE_ERROR", path, exc.lineno or 0, str(exc))]
 
@@ -556,6 +668,7 @@ def scan_fastapi_duplicates(changed_line_map: dict[str, set[int]]) -> list[Viola
     for root in sorted(roots):
         occurrences: dict[str, list[tuple[str, FastApiRoute, bool]]] = {}
         root_path = ROOT / root
+        resolution_cache: dict[str, dict[str, str]] = {}
         if not root_path.exists():
             continue
         for source_path in root_path.rglob("*.py"):
@@ -563,7 +676,11 @@ def scan_fastapi_duplicates(changed_line_map: dict[str, set[int]]) -> list[Viola
             if not is_production_api_source(rel):
                 continue
             try:
-                routes = fastapi_routes_from_source(source_path.read_text(encoding="utf-8"))
+                routes = fastapi_routes_from_source(
+                    source_path.read_text(encoding="utf-8"),
+                    source_path=rel,
+                    cache=resolution_cache,
+                )
             except (OSError, UnicodeDecodeError, SyntaxError):
                 continue
             changed_lines_for_file = changed_line_map.get(rel, set())

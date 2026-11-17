@@ -7,7 +7,7 @@
  "coverageDecision": {
   "taskId": "DAVI-SI-READ-USER-PARITY-001",
   "decision": "BOUNDED_SI_USER_PARITY_READ",
-  "reason": "Coordination-approved vertical slice: 5 governed READ ops proxied to strategic-indicators-api user-facing routes with caller-JWT-only transport (no internal service token). SI permissions remain effective at both boundaries (strategic-indicators.view for operational reads; strategic-indicators.settings.manage for goal list/history). No writes, no job dispatch, no generic endpoint access. Dashboard-BFF routes intentionally NOT reused (different permission domain).",
+  "reason": "Coordination-approved user-parity READ surface: 21 governed READ ops proxied to strategic-indicators-api user-facing routes with caller-JWT-only transport (no internal service token). SI permissions remain effective at both boundaries (strategic-indicators.view for operational reads; strategic-indicators.trends.view for trend series; strategic-indicators.settings.manage for goal list/history, settings, audit, change-requests and bounded admin metadata). No writes, no job dispatch, no generic endpoint access. Dashboard-BFF routes intentionally NOT reused (different permission domain).",
   "previousDecision": {
    "taskId": "DAVI-INTELLIGENCE-002",
    "decision": "EVOLVE_SPECIALIST_INTELLIGENCE_AND_CONTEXT_DELIVERY",
@@ -6797,7 +6797,7 @@
   },
   {
    "operationId": "export_si_admin_config",
-   "reason": "DAVI-SI-PORTAL-PARITY-W014: user-parity BFF over SI GET /strategic-indicators/admin/config/export exposed at api-delpi GET /strategic-indicators/admin/config/bundle (JSON bundle, not a binary stream — /export paths are gated STREAM_BINARY_OUT_OF_SCOPE) (administrative config bundle export). AuthZ strategic-indicators.settings.manage. BFF-side optional `include` = export scope/section selection (W014 governed export scope; omit for the full owner bundle). restrictedPathRead=BOUNDED_METADATA_READ opt-in: bounded metadata READ on an /admin path, reviewed scope — owner enforces strategic-indicators.settings.manage with the caller's own JWT at both api-delpi and SI boundaries.",
+   "reason": "DAVI-SI-PORTAL-PARITY-W013: user-parity BFF over SI GET /strategic-indicators/admin/config/export exposed at api-delpi GET /strategic-indicators/admin/config/bundle (JSON bundle, not a binary stream — /export paths are gated STREAM_BINARY_OUT_OF_SCOPE) (administrative config bundle export). AuthZ strategic-indicators.settings.manage. BFF-side optional `include` = section projection of the returned bundle (owner route is parameterless; omit for the full owner bundle). restrictedPathRead=BOUNDED_METADATA_READ opt-in: bounded metadata READ on an /admin path, reviewed scope — owner enforces strategic-indicators.settings.manage with the caller's own JWT at both api-delpi and SI boundaries.",
    "executionMode": "catalog_action",
    "approvedInputFields": [
     "include"
