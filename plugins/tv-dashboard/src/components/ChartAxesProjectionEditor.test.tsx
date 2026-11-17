@@ -75,6 +75,67 @@ describe("ChartAxesProjectionEditor", () => {
     ]);
   });
 
+  it("permite selecionar Faltas e Sobras com seis séries Y antigas já ocupando o limite", () => {
+    const onChange = vi.fn();
+    const stale = [
+      "year_divergence_brl",
+      "month_divergence_brl",
+      "year_shortage_value_brl",
+      "month_shortage_value_brl",
+      "year_surplus_value_brl",
+      "month_surplus_value_brl",
+    ];
+    const options = [
+      { field: "periodo", label: "Mês", fieldType: "string" as const },
+      ...stale.map((field) => ({ field, label: field, fieldType: "number" as const })),
+      { field: "shortage_value_brl", label: "Faltas (R$)", fieldType: "number" as const },
+      { field: "surplus_value_brl", label: "Sobras (R$)", fieldType: "number" as const },
+    ];
+    const initial = {
+      categoryField: "periodo",
+      series: stale.map((field) => ({ field, aggregation: "first" as const })),
+    };
+    const { rerender } = render(
+      <ChartAxesProjectionEditor
+        idPrefix="inventory"
+        chartType="line"
+        options={options}
+        chartProjection={initial}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByText(/Limite atingido: marcar uma nova série substitui a última selecionada/)).toBeTruthy();
+    const shortageCheckbox = screen.getByRole("checkbox", { name: /Incluir Séries \(Y\) · Faltas \(R\$\)/ });
+    expect((shortageCheckbox as HTMLInputElement).disabled).toBe(false);
+    fireEvent.click(shortageCheckbox);
+    const afterShortage = onChange.mock.calls.at(-1)?.[0];
+    expect(afterShortage.series).toHaveLength(6);
+    expect(afterShortage.categoryField).toBe("periodo");
+    expect(afterShortage.series.map((item: { field: string }) => item.field)).toEqual([
+      ...stale.slice(0, 5),
+      "shortage_value_brl",
+    ]);
+    rerender(
+      <ChartAxesProjectionEditor
+        idPrefix="inventory"
+        chartType="line"
+        options={options}
+        chartProjection={afterShortage}
+        onChange={onChange}
+      />,
+    );
+    const surplusCheckbox = screen.getByRole("checkbox", { name: /Incluir Séries \(Y\) · Sobras \(R\$\)/ });
+    expect((surplusCheckbox as HTMLInputElement).disabled).toBe(false);
+    fireEvent.click(surplusCheckbox);
+    const afterSurplus = onChange.mock.calls.at(-1)?.[0];
+    expect(afterSurplus.series).toHaveLength(6);
+    expect(afterSurplus.series.map((item: { field: string }) => item.field)).toEqual([
+      ...stale.slice(0, 4),
+      "shortage_value_brl",
+      "surplus_value_brl",
+    ]);
+  });
+
   it("rosca: ao trocar série numérica usa Soma (não Contagem de linhas)", () => {
     const onChange = vi.fn();
 
