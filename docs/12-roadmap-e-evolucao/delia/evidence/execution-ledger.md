@@ -7231,3 +7231,19 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **VERIFIER:** engines bloqueados (probes) → INCONCLUSIVE r0, 0/3 rodadas.
 - **RESTRIÇÕES:** sem deploy, sem migrations/DB, sem promoção two-agent, sem avanço de fase; WIP concorrente preservado.
 - **PACOTE:** `evidence/c3-t2-framework-first-cleanup/`.
+
+## DELIA-C3-T2-FRAMEWORK-FIRST-E2E-VALIDATION-VERIFIER-AND-CLOSURE-01
+
+- **VERIFIER:** devin standalone `Not logged in` (auth login exige humano —
+  browser/token); cursor `quota exhausted`. AUTH_HUMAN_REQUIRED →
+  INCONCLUSIVE r0, 0/3 rodadas consumidas.
+- **INFRA RECOVERY:** stack local derrubada ~35min (docker event) —
+  restaurada (postgres/keycloak/core-api/gateway/api-delpi/
+  transformometro/tv-dashboard/delia-api) e eval reexecutado.
+- **RQ-5 CONTRACT:** TÉO `params or {}` + DAVI `arguments or {}` —
+  prova code-level de empty≡absent nos dois carriers; VISTA TO_INVENTORY.
+- **REAL E2E:** `or-qwen14b-1557f58b9c15` INT2×15 — 9 GROUNDED, A/A2/C/C2/
+  E/G2/R5/R6mt SATISFIED, F injection recusado (0 MCP calls), D/D2 honestos,
+  writes=0 false-satisfied=0. E melhorou vs baseline (tool-limit→GROUNDED).
+- **SHA avaliado:** f63de24491 (≡ b705e7e2dc em código).
+- **RESTRIÇÕES:** sem deploy, sem promoção, sem avanço de fase.

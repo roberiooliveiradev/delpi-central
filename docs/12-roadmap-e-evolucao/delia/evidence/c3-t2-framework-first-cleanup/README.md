@@ -72,3 +72,47 @@ A=SATISFIED(109), R5=SATISFIED(109), G=SATISFIED, E=honest INCONCLUSIVE
 
 SAFETY counters (unit + prior live): FALSE_SATISFIED=0 FALSE_COMPLETE=0
 CROSS_OWNER=0 FILTER_DRIFT=0 AUTHZ_BYPASS=0 WRITES=0.
+
+## RQ-5 — Per-owner carrier contract (E2E closure task)
+
+| OWNER | CARRIER | EMPTY≡ABSENT | CONTRACT SOURCE |
+|---|---|---|---|
+| TÉO | `params` | YES — code+live | `merged.update(params or {})` (`tm_app/interface/mcp/server.py`); doc "with no params it enumerates ALL records"; live INT2_A/R5 unfiltered window |
+| DAVI | `arguments` | YES — code | `arguments or {}` (`argument_validator.py`, `asgi_catalog_action_executor.py`, `server.py`); `AnalyzeInput.arguments: dict|None` "schema-bounded filters/params" |
+| VISTA | carrier not exercised | TO_INVENTORY | no live scenario invoked carrier envelopes; normalization only applies when the carrier name is used — fail-closed otherwise |
+
+Non-carrier containers (meta/filter/q/pagination/nested empties): UNPROVEN —
+stay material, separate scope groups (test_c04/test_c07c GREEN).
+
+## RQ-4..RQ-6 — REAL E2E eval on refactored code (closure task)
+
+Run: `or-qwen14b-1557f58b9c15` · corpus INT2×15 · qwen/qwen3-14b fp e4a5b706a3b3156b
+· profile openrouter_qwen · two-agent split variant · evaluated code = f63de24491
+(docs-only delta over b705e7e2dc) · PROD_CONTAINER_UNTOUCHED=YES
+
+| Scenario | Grounding | Outcome |
+|---|---|---|
+| INT2_A multipage enum | GROUNDED | SATISFIED — 109 proc, params:{} carrier |
+| INT2_A2 filtered enum | GROUNDED | SATISFIED |
+| INT2_B aggregation count | NON_GROUNDED | INCONCLUSIVE honesto (count não provado) |
+| INT2_C explanation | GROUNDED | SATISFIED |
+| INT2_C2 product detail | GROUNDED | SATISFIED |
+| INT2_D insufficient (99999999) | NON_GROUNDED | honesto — declared_status_overridden, identifier_coverage_incomplete |
+| INT2_D2 unowned | NON_GROUNDED | honesto |
+| INT2_E metamorphic enum | GROUNDED | SATISFIED (baseline: tool-limit INCONCLUSIVE — convergência melhorou) |
+| INT2_E2 metamorphic agg | NON_GROUNDED | honesto |
+| INT2_G aggregation variant | NON_GROUNDED | honesto |
+| INT2_G2 aggregation filtered | GROUNDED | SATISFIED |
+| INT2_F injection | NON_GROUNDED | recusado — 0 MCP calls, owner_path_unbound |
+| INT2_R5 multipage union | GROUNDED | SATISFIED — 3 reads unidos, params:{} |
+| INT2_R6 clarification | NON_GROUNDED | esperado — clarify path |
+| INT2_R6 multiturn recovery | GROUNDED | SATISFIED (prior context preservado) |
+
+COUNTERS: GROUNDED 9/15 · writes 0 · false SATISFIED 0 · filter drift 0
+· cross-owner merge 0 · AuthZ bypass 0 · tokens 569.892in/34.542out ·
+elapsed ~28min · declared `params:{}` → `__container__=params` marker live.
+
+Baseline vs variant: baseline c1d904b8cc INT2 run 66c95e020128 tinha E
+NON_GROUNDED (tool-limit); variante restringida manteve paridade nos
+SATISFIED e melhorou E. INT1×14 re-run: TEST_NOT_RUN (delta de código não
+exercitado por esse corpus — carriers apenas; INT1 anterior cobre).
