@@ -155,7 +155,7 @@ def test_complete_chain_returns_only_allowlisted_runtime_metadata(listener_pair)
     assert "/private/test" not in repr(runtime)
 
 
-@pytest.mark.parametrize("method,request", [
+@pytest.mark.parametrize("method,request_bytes", [
     ("POST", GOOD_GET.replace(b"GET ", b"POST ", 1)),
     ("DELETE", GOOD_GET.replace(b"GET ", b"DELETE ", 1)),
     ("OTHER_CONTAINER", GOOD_GET.replace(
@@ -167,11 +167,11 @@ def test_complete_chain_returns_only_allowlisted_runtime_metadata(listener_pair)
     )),
     ("AUTHORIZATION", GOOD_GET[:-2] + b"Authorization: Bearer synthetic\r\n\r\n"),
 ])
-def test_request_denied_before_any_upstream_access(listener_pair, method, request):
+def test_request_denied_before_any_upstream_access(listener_pair, method, request_bytes):
     path, _ = listener_pair
     seen = []
     thread, results, errors = start_one(listener_pair, guarded_inspector(seen))
-    code, body = exchange(path, request)
+    code, body = exchange(path, request_bytes)
     outcome = completed(thread, results, errors)
     assert code in (400, 404, 405), method
     assert body == {"error": "HML_REQUEST_DENIED"}
