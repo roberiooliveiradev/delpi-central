@@ -47,6 +47,10 @@ jobs:
         run: |
           set -o pipefail
           PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_collector_isolation | python -c 'import json,sys; r=json.load(sys.stdin); assert r["status"] == "blocked" and r["prepare_eligible"] is False and r["can_execute"] is False; print("HML collector isolation remains blocked")'
+      - name: ATLAS HML pre-activation bundle smoke (always BLOCKED)
+        run: |
+          set -o pipefail
+          PYTHONPATH=linux-ops-mcp python -B -m linux_ops_mcp.atlas_hml_host_review_bundle | python -c 'import json,sys; r=json.load(sys.stdin); assert r["status"] == "blocked" and r["prepare_eligible"] is False and r["can_execute"] is False; print("HML preactivation dossier remains BLOCKED")'
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
