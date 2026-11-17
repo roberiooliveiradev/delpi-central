@@ -13,7 +13,7 @@
 | **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
 | **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f124b28a9d`, deploy PROD e HML em 17/11/2026 (ver §11) |
 | **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
-| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **PRONTO PARA EXECUÇÃO** (§14) — aguarda confirmação da D1 |
+| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **EM EXECUÇÃO** (§14, ajustes §14.10) — D1 confirmada: manter o endereço |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -683,3 +683,11 @@ Antes de concluir, **sem alterar nada em PROD**: informar se o `public-hub` de P
 | G5 | Nenhum CSS de componente no `public-hub`; auditorias limpas | Saídas |
 | G6 | `npm run ci` do `public-hub`, verificador independente | Saídas + veredito |
 | G7 | Nenhum deploy em PROD; relatório de exposição do §14.8 | Relatório |
+
+### 14.10 Ajustes da revisão da declaração (17/11/2026)
+
+1. **D1 confirmada:** manter `/p/commercial/form/{token}` (página `commercial.form`).
+2. **H8 (envio real):** fica com o **solicitante**, na homologação dele. O executor faz H1–H7 e H9 sem enviar resposta e entrega no relatório o link de um participante **pendente** de HML para o solicitante testar. Não enviar resposta em nenhum participante.
+3. **Tipos reais do kit:** o `public-hub` resolve `@delpi/plugin-ui/index` para o código-fonte do PluginUI (`tsconfig.app.json`, `paths`). A definição, os textos e os desfechos devem usar os **tipos exportados pelo kit** (`QuestionnaireStep`, `GuidedQuestionnaireTexts`, `QuestionnaireSubmitOutcome`, `FormResultPanelProps`…), sem `any` nem conversões forçadas, e o `typecheck` precisa passar.
+4. **Teste de integração com o kit real:** além do teste com o falso do kit, incluir **um** teste que renderiza o `GuidedQuestionnaire` real (importado pelo caminho do código-fonte do PluginUI) com a definição da Pesquisa, responde às 12 obrigatórias, revisa e envia, verificando o payload entregue ao `submitPublicSurvey`. Se a configuração de testes do `public-hub` impedir, reportar no relatório em vez de contornar.
+5. **Reuso de `surveyForm.ts`:** aceito; o formatador de período **sem hora** fica na pasta nova.
