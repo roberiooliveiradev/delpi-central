@@ -27,7 +27,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | D1 | `si.department.create` | `POST /admin/departments` | direct mutation | READY_FOR_IMPLEMENTATION |
 | D2 | `si.department.update` | `PUT /admin/departments/{department_id}` | direct mutation (full-replace body; `new_department_id` permite rename de PK) | READY_FOR_IMPLEMENTATION |
 | D3 | `si.department.activate` | `POST /admin/departments/{id}/activate` | activation | READY_FOR_IMPLEMENTATION |
-| D4 | `si.department.deactivate` | `POST /admin/departments/{id}/deactivate` | deactivation | RESOLVIDO §9 → `D4_APPROVABLE` |
+| D4 | `si.department.deactivate` | `POST /admin/departments/{id}/deactivate` | deactivation | RESOLVIDO §9 → `D4_IMPLEMENTED` |
 | D5 | `si.department.delete` | `DELETE /admin/departments/{id}` | destructive | **W015 — BLOCKED** (não implementar nesta wave) |
 | — | reorder/hierarquia/peso | sem rota dedicada — via D2 (`display_order`, `weight_pct`) | — | coberto por D2; sem endpoint separado no owner |
 
@@ -39,7 +39,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 **Idempotência:** create é natural key (`department_id` → 400 duplicado tipado); activate/deactivate/update são idempotentes por natureza de estado; retry-safe.
 **Erros:** `ValueError → 400` tipado; `500` genérico — mapear para `VALIDATION_ERROR`/`OWNER_ERROR` no orchestrator.
 **Postcondition:** read-back via `GET /admin/departments` (op W013 `list_si_admin_departments`) + verificação de `updated_by`/campos aplicados.
-**Classificação pendente:** D4 — decisão se deactivation exige aviso de impacto no DIFF (indicators filhos visíveis).
+**Classificação pendente:** nenhuma — D4 resolvido em §9 (impact list obrigatório no PREPARE diff, implementado).
 
 ## 3. Operações inventariadas — Indicadores (`/admin/**indicators*`)
 
@@ -61,7 +61,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 
 | # | Capability proposta | Owner route | Tipo | Classe |
 |---|---|---|---|---|
-| S1 | `si.settings.update` | `PUT /settings` | direct mutation (full-replace de `parameters.items` + `governance.items`) | RESOLVIDO §9 → `S1_CONTRACT_GAP` |
+| S1 | `si.settings.update` | `PUT /settings` | direct mutation (full-replace de `parameters.items` + `governance.items`) | RESOLVIDO §9 → `S1_IMPLEMENTED` |
 | — | weights/goals por seção | **não editáveis** via `/settings` — pesos vivem em D2/I2; metas em W012 `si.goal.*` | — | coberto por outros contratos |
 
 **Body S1** (`UpdateStrategicIndicatorsSettingsBodySchema`): `parameters.items[] {key,label,value}` + `governance.items[] {key,label,value,observation}` — replace total, não merge parcial.
@@ -99,7 +99,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | Classe | Operações |
 |---|---|
 | READY_FOR_IMPLEMENTATION (contrato completo no owner) | D1, D2, D3, I1, I2, I3, I4, C1, C2, C3 |
-| RESOLVIDO (§9) | D4 → `D4_APPROVABLE` (flag-only, sem cascata — implementação aguarda Coordination); S1 → `S1_CONTRACT_GAP` (owner sem OCC em module_settings — pedido de contrato dedicado) |
+| IMPLEMENTED (§9) | D4 `si.department.deactivate` + S1 `si.settings.update` (owner OCC corrigido; 16 capabilities governadas no total) |
 | NEEDS_OWNER_CONTRACT | indicator re-association; CR approve/reject/cancel/update |
 | BLOCKED (outra wave) | D5, I5 (W015); batch/import/jobs/cache (W014) |
 
@@ -130,7 +130,9 @@ Investigação executada em `DAVI-SI-W013-ACT-ACCEPTANCE-AND-SECURITY-CLOSURE-01
 | Contrato PREPARE | Deve enumerar no impact: indicadores ativos do departamento e metas vigentes afetadas (reads já existentes: `list_si_admin_indicators` + `list_si_indicator_goals`) |
 | Risco residual | Dashboards/IGD recomputam sem o departamento — efeito de apresentação/cálculo reversível, não destrutivo |
 
-Decisão: **`D4_APPROVABLE`** — contrato owner completo e paridade total com o portal. Liberação subordinada à aprovação de Coordination e implementação com gates próprios (impact list obrigatório no PREPARE diff). **Não exposta nesta tarefa.**
+Decisão original: **`D4_APPROVABLE`** — contrato owner completo e paridade total com o portal.
+
+**Resolução (`DAVI-SI-W013-ACT-D4-S1-COMPLETION-01`): `D4_IMPLEMENTED`.** Coordination aprovou a implementação. PREPARE lista indicadores ativos + metas vigentes + impacto persistido-vs-indireto (árvore/IGD/dashboard) + reversibilidade via D3; ACT envia `expected_xmin`, consome proposta única e verifica read-back `is_active=false`. Sem cascata em flags de indicadores/metas.
 
 ### S1 — `si.settings.update` → `S1_CONTRACT_GAP`
 
@@ -142,10 +144,12 @@ Decisão: **`D4_APPROVABLE`** — contrato owner completo e paridade total com o
 | Lacuna crítica | **Sem OCC**: `module_settings` não expõe `xmin` nem versão; update é `WHERE setting_key=%s` sem precondition — check→write race para dois administradores (portal + DAVI) |
 | Semântica de omissão | Item ausente no payload = removido da lista persistida (full-replace) — PREPARE deve obrigatoriamente computar remoções implícitas |
 
-Decisão: **`S1_CONTRACT_GAP`** — bloqueado até o owner ganhar precondition atômica. Menor plano:
-1. Expor `xmin::text AS row_xmin` no read de `module_settings` (GET settings já existe).
-2. `expected_xmin` por `setting_key` (ou versão agregada) no `UPDATE`, com conflito tipado `StaleWriteError`.
-3. Capability DAVI com complete-state proposal: read full state → desired-state payload → diff preservados/alterados/adicionados/removidos → confirm → ACT com revalidação atômica.
-4. Sem merge silencioso no ACT; fingerprint dentro de transação, não reutilizado fora.
+Decisão original: **`S1_CONTRACT_GAP`** — bloqueado até o owner ganhar precondition atômica.
 
-**Não publicar S1 sem esse contrato.** Itens 1–2 são alteração owner (Strategic Indicators API) — abrir pedido de contrato dedicado.
+**Resolução (`DAVI-SI-W013-ACT-D4-S1-COMPLETION-01`): `S1_IMPLEMENTED`.** Coordination autorizou a correção owner. Executado:
+
+1. `GET /settings` expõe `meta.versions` = `{setting_key: xmin::text}` lido na mesma query do estado.
+2. `update_settings` aceita `expected_versions`; UPDATE atomico `WHERE setting_key=%s AND xmin::text=%s ... RETURNING` por setting_key dentro da UoW; conflito tipado `StaleWriteError` → 409; versão parcial/ausente é rejeitada para o conjunto tocado.
+3. **Drift owner corrigido:** o repo exigia kwargs `weights`/`goals` que port/use case não passavam — `PUT /settings` falhava com TypeError (500) em produção. `weights`/`goals` agora opcionais; o bloco legado executa somente quando enviado.
+4. Portal compatibilizado: MFE lê `meta.versions` e envia `expected_parameters_version`/`expected_governance_version` no save — o guard OCC vale para portal e DAVI (não há caminho sem precondition no conjunto `module_settings` tocado).
+5. Capability `si.settings.update`: complete-state proposal — PREPARE lê estado completo, diffs por `key` (preserved/modified/added/removed + remoções implícitas), versões seladas; ACT full-replace com versões; read-back compara blocos persistidos com o proposto.
