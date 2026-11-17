@@ -66,6 +66,7 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_os_boundary_real_ci.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/review-only/**"
@@ -141,6 +142,7 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_os_boundary_real_ci.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/review-only/**"
@@ -265,6 +267,17 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py \
             linux-ops-mcp/tests/test_atlas_hml_real_engine_chain_ci.py \
             linux-ops-mcp/tests/test_atlas_docker_engine_ci.py
+      - name: Demonstrate Docker FD inheritance and filesystem DAC on disposable CI only
+        run: |
+          test "$GITHUB_ACTIONS" = "true"
+          test "$ATLAS_DISPOSABLE_DOCKER" = "true"
+          test "$ATLAS_REAL_HML_CHAIN_CI" = "true"
+          PYTHON_BIN="$(python -c 'import sys; print(sys.executable)')"
+          # CI-only elevated test: the child immediately drops UID/GID and groups.
+          # This tests the *risk* of inherited connected Docker FDs. No PROD host.
+          sudo -n env GITHUB_ACTIONS=true ATLAS_DISPOSABLE_DOCKER=true ATLAS_REAL_HML_CHAIN_CI=true PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=linux-ops-mcp:it-portal-api \
+            "$PYTHON_BIN" -m pytest -q -p no:cacheprovider \
+            linux-ops-mcp/tests/test_atlas_hml_os_boundary_real_ci.py
       - name: Remove only the ephemeral pilot
         if: always()
         run: |
