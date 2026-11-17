@@ -120,3 +120,42 @@ Sem sync bem-sucedido, rotas novas **não aparecerão na seleção de fontes**. 
 - `api-delpi/app/interface/http/routes/financeiro/stock_kardex_router.py`: R07 mensal do Financeiro;
 - `docs/12-roadmap-e-evolucao/controllership-finance/fichas/R07-ficha.md`: status de paridade do fechamento;
 - `tv-dashboard-api/README.md`: sync OpenAPI e catálogo de dados.
+
+## 7. Complemento GLPI #1598 — Filtro de período e granularidade (17/11/2026)
+
+**Motivação:** no editor TV, as três fontes novas tinham apenas `as_of` (data de referência). O usuário não conseguia escolher `Esta semana`, `Este mês até hoje` ou `Mês completo` pelo seletor comum de período nem ajustar o agrupamento dia/semana/mês/ano, como na série OTD de pedidos de compra.
+
+**Implementação em PR separada:** as três operações existentes preservam seus **operationIds**, caminhos e campos legados e agora aceitam:
+
+| Parâmetro | Valores | Interpretação |
+|---|---|---|
+| `granularity` | `day`, `week`, `month`, `year` | Escala temporal para a série; intervalo padrão quando não houver datas explícitas nos KPIs e no ranking |
+| `start_date` / `end_date` | Datas `AAAA-MM-DD`, ambas opcionais mas informadas juntas | Janela inclusiva que prevalece sobre o período padrão de granularidade; compatível com os presets nativos da TV |
+| `as_of` | Data de referência opcional; vazio = data atual em São Paulo | Referência histórica, limite para períodos futuros |
+| `branch` / `warehouse` | Filtros existentes | Preservados |
+| `top_limit` | 1 a 50 | Apenas no ranking; preservado |
+
+**Distinção crucial:** `granularity=month` significa **agrupar por mês**, não “este mês até hoje”. A escolha **Esta semana**, **Este mês até hoje**, **Este mês completo**, etc., é feita pelo seletor de **Período** do TV Dashboard. Ele materializa `dateRangePreset` em `start_date/end_date` em cada atualização. Essa intenção é recalculada automaticamente, sem datas fixas gravadas na tela.
+
+### Efeito de cada filtro
+
+1. **Resumo** `/tv/summary` (granularity padrão = `month`): os campos legados `year_*_brl` e `month_*_brl` continuam disponíveis. Campos adicionais `period_divergence_brl`, `period_shortage_value_brl`, `period_surplus_value_brl`, `period_net_value_brl` e `period_*_count` correspondem à **janela escolhida**. Sem datas explícitas, o campo `period_*` representa o dia, a semana (segunda até hoje), o mês (1º até hoje) ou o ano (01/01 até hoje) definidos por `granularity`.
+2. **Série** `/tv/monthly-series` (granularity padrão = `month`): `items[].periodo` mostra um ponto por dia (AAAA-MM-DD), semana ISO (segunda-feira, AAAA-MM-DD), mês (AAAA-MM) ou ano (AAAA). Sem datas explícitas mantém janeiro até hoje, agrupado em meses, como antes. Dias/semanas sem ajuste são emitidos com **zero**, sem inventar valores ou repartir dados mensais artificialmente. A implementação diária/semanal faz **agregação SQL** baseada no mesmo `_summary_select` canônico.
+3. **Ranking** `/tv/weekly-items` (granularity padrão = `week`): sem datas escolhe hoje / semana corrente / mês até hoje / ano até hoje. Se a TV envia datas explícitas, usa **exatamente a janela informada** (limitada à data de referência). `granularity` não altera o grão de cada linha: **filial + produto + armazém + natureza**, preservando faltas e sobras separadas. Novos metadados `period_start`, `period_end`, `item_grain`; os aliases legados `week_start`, `week_end` são mantidos para a escolha semanal.
+
+### Configuração sugerida no editor TV
+
+- **Divergência acumulada no ano**: fonte resumo, campo `year_divergence_brl`, filial `02`.
+- **Divergência do mês**: fonte resumo, campo `month_divergence_brl`; alternativamente, `period_divergence_brl` com **Período = Este mês até hoje** para permitir alterar o recorte na própria TV.
+- **Evolução mensal**: fonte série, `granularity=month` + **Período = Este ano até hoje**, colunas `periodo`, `shortage_value_brl`, `surplus_value_brl`. Para um gráfico semanal ou diário, altere somente a granularidade.
+- **Itens com divergência na semana**: fonte ranking, `granularity=week` + **Período = Esta semana (até hoje)** + `top_limit=5`. Tabela com `product_code`, `product_description`, `nature_label`, `signed_quantity`, `signed_value_brl`.
+- Manter `start_date/end_date` **vazios** ao usar preset relativo; o runtime da TV os calculará dinamicamente, e não devem ser fixados na configuração.
+
+### Segurança e limites
+
+- Recorte máximo: **366 dias**, inclusive; não permite consulta com só uma das datas, datas anteriores a 2023 ou início posterior à referência.
+- Presets `this_month_full` / `this_week_full` podem enviar fim futuro; a API limita os dados à data de referência (hoje na ausência de `as_of`). O campo `period_end` mostra a data efetiva.
+- O ranking usa TOP-N depois de agrupar no SQL e retorna `truncated`; `granularity` não pode ser injetada no SQL (lista fixa de buckets).
+- Segurança e critérios fiscais permanecem iguais: `api-delpi.access`, consultas somente leitura, `INVENT`, estornos excluídos, faltas/sobras separadas, `D3_CUSTO1` operacional (não substitui TTAT as-of do R07).
+- **Não requer novo DataModel nem alteração da UI do TV Dashboard**: o catálogo das três fontes recebe `granularity` e as datas canônicas, reconhecidas pelo seletor nativo de Período.
+- **Pendente:** PR revisada, CI, deploy `api-delpi` e `tv-dashboard-api`, sincronização OpenAPI, homologação com valores do Protheus e verificação dos presets no editor real.
