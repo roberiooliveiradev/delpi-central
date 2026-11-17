@@ -303,16 +303,14 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       xlsxBtn.click(),
     ]);
     expect(xlsxDl.suggestedFilename()).toMatch(/\.xlsx$/i);
-    /* PDF corporativo abre janela de impressão (popup), não download. */
-    const [pdfPopup] = await Promise.all([
-      page.waitForEvent("popup", { timeout: 20_000 }),
-      pdfBtn.click(),
-    ]);
-    await pdfPopup.waitForLoadState("domcontentloaded");
+    /* PDF corporativo usa iframe oculto de impressão (sem download). */
+    await pdfBtn.click();
+    const printFrame = page
+      .frameLocator("iframe[data-delpi-document-print-frame]")
+      .first();
     await expect(
-      pdfPopup.getByText(/Yamazumi/i).first(),
-    ).toBeVisible({ timeout: 15_000 });
-    await pdfPopup.close();
+      printFrame.getByText(/Yamazumi/i).first(),
+    ).toBeAttached({ timeout: 15_000 });
     await shot(page, "lb-exports");
 
     /* Sem overflow horizontal da página no viewport atual. */
