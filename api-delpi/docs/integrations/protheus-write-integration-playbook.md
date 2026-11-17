@@ -136,9 +136,15 @@ Nunca retry automático em escrita. `UNKNOWN` exige reconciliação manual
 | `PROTHEUS_REST_EXPECTED_BASE_URL` | `http://192.168.1.233:8701/rest` | literal TST | `http://192.168.1.231:8061` |
 | `PROTHEUS_{ENTITY}_…_ENABLED` | `true` só durante homologação | `false` literal até janela autorizada | `false` |
 
-HML precisa de acesso ao banco de parâmetros (`INTRANET_DB_*` ou fallback
-`TOTVS_DB_*`) — hoje está propositalmente desligado no compose
-(`totvs-disabled.hml.invalid`); sem isso a integração falha fechada.
+HML precisa de acesso ao banco de parâmetros — os `DB_*`/`TOTVS_DB_*` de
+HML são deny-listed (`totvs-disabled.hml.invalid`), então a integração só
+resolve com `INTRANET_DB_*` reais no `.env.hml` do servidor (checkout HML:
+`~/projetos-teste/delpi-central`, NÃO `~/projetos/delpi-central` — este é o
+checkout de produção). Sem `INTRANET_DB_*` a integração falha fechada.
+Provisionado em 2026-11-17: `.env.hml` com `INTRANET_DB_*` +
+`PROTHEUS_PRODUCT_UPDATE_ENABLED=true` + pins TST; container
+`delpi-hml-api-delpi` healthy com a rota live e params resolvendo
+`URL_REST=http://192.168.1.233:8701/rest`.
 
 ## 7. Receita de homologação live (TST01)
 
