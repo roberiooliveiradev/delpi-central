@@ -339,12 +339,11 @@ export function isChartColorPaletteActive(
   palette: ChartColorPalette,
   options: ComunicadoChartOptions,
 ): boolean {
-  if (palette.id === SIGN_COLOR_PALETTE_ID) {
-    return options.colorScale?.mode === "by_sign";
+  if (options.colorScale?.mode === "by_sign") {
+    return palette.id === SIGN_COLOR_PALETTE_ID;
   }
-  if (options.colorScale?.paletteId === palette.id && options.colorScale?.mode !== "by_sign") {
-    return true;
-  }
+  if (palette.id === SIGN_COLOR_PALETTE_ID) return false;
+  if (options.colorScale?.paletteId === palette.id) return true;
   return (
     options.seriesColor === palette.seriesColor &&
     JSON.stringify(options.categoryColors ?? []) === JSON.stringify(palette.colors)
