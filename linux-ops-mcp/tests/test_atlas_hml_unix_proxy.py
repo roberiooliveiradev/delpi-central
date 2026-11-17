@@ -49,7 +49,7 @@ class Source:
 def endpoint(tmp_path):
     root=tmp_path/"atlas-hml-readonly"
     root.mkdir(mode=0o700)
-    os.chmod(root,0o700)
+    os.chmod(root,0o750)
     path=root/"inspect.sock"
     listener=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
     listener.bind(str(path))
@@ -267,7 +267,10 @@ def test_unsafe_listener_permissions_symlink_or_raw_socket_alias_refused(
             )
         return
     elif unsafe=="raw-alias":
-        monkeypatch.setattr(proxy,"_DOCKER_RAW",(path,))
+        from linux_ops_mcp import atlas_hml_uds_policy as policy
+        original_check = proxy.verify_socket_metadata
+        monkeypatch.setattr(proxy,"verify_socket_metadata",
+            lambda **kw: original_check(**kw,raw_sockets=(path,)))
         expected="HML_RAW_DOCKER_SOCKET_DENIED"
     else:
         raise AssertionError(unsafe)
