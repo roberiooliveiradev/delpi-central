@@ -2,6 +2,7 @@
  * conteúdo local (labels/hints), nunca paths nem contratos. */
 
 import {
+  PRC_CHANNEL_LABELS,
   PRC_EVENT_LABELS,
   PRC_ENUM_OPTION_LABELS,
   PRC_FIELD_HELP,
@@ -314,12 +315,11 @@ export {
 
 /** Rótulos de apresentação para a origem técnica da solicitação.
  * O contrato persiste `detail.source` (ex.: `my-requests`); a UI
- * nunca expõe o código bruto — desconhecido cai no fallback. */
+ * nunca expõe o código bruto — desconhecido cai no fallback. Deriva
+ * do mapa canônico de canais do plugin-ui (mesma superfície de
+ * auditoria — uma única fonte de rótulos). */
 export const PRC_SOURCE_LABELS: Record<string, string> = {
-  "my-requests": "Minhas Solicitações",
-  my_requests: "Minhas Solicitações",
-  engineering: "Portal Engenharia",
-  "engineering-api": "Portal Engenharia",
+  ...PRC_CHANNEL_LABELS,
 };
 
 export function prcSourceLabel(source: string | null | undefined): string {

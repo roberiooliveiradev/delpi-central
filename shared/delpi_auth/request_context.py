@@ -36,3 +36,20 @@ def reset_request_authorization(token) -> None:
 
 def clear_request_authorization() -> None:
     _request_authorization.set(None)
+_request_caller_app = ContextVar("request_caller_app", default=None)
+
+
+def set_request_caller_app(caller_app: str | None):
+    return _request_caller_app.set(caller_app)
+
+
+def get_request_caller_app() -> str | None:
+    return _request_caller_app.get()
+
+
+def reset_request_caller_app(token) -> None:
+    _request_caller_app.reset(token)
+
+
+def clear_request_caller_app() -> None:
+    _request_caller_app.set(None)

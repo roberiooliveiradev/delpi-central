@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.context_resolver import resolve_user_context
+from delpi_auth.request_context import get_request_caller_app
 
 from engineering_app.application.use_cases.product_registration.actor import (
     prc_actor_from_principal,
@@ -88,7 +89,19 @@ def _user(operation_id: str):
     return user, None
 
 
-def _actor(user, channel: str = "portal"):
+# Canal de auditoria por superfície — derivado do header
+# ``X-Delpi-Caller-App`` que cada MFE já envia (não informado →
+# ``portal`` legado). EVA continua ``eva`` via prc_semantic.
+_CALLER_APP_CHANNELS = {
+    "my-requests": "my_requests",
+    "engineering": "engineering",
+}
+
+
+def _actor(user, channel: str | None = None):
+    if channel is None:
+        caller = (get_request_caller_app() or "").strip().lower()
+        channel = _CALLER_APP_CHANNELS.get(caller, "portal")
     return prc_actor_from_principal(user, channel=channel)
 
 

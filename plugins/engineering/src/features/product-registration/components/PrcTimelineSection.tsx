@@ -11,14 +11,23 @@ import { prcTimelineItemViews } from "@delpi/plugin-ui/index";
 export function PrcTimelineSection({
   events,
   loading,
+  avatarByUserId,
 }: {
   events: PrcTimelineEvent[];
   loading?: boolean;
+  /** Foto canônica do Portal por user_id (Core via BFF); ausente → iniciais. */
+  avatarByUserId?: ReadonlyMap<string, string>;
 }) {
   const items = prcTimelineItemViews(events).map((v) => ({
     id: v.id,
     title: v.title,
-    marker: <EngineeringInitialsAvatar name={v.actorLabel} size="sm" />,
+    marker: (
+      <EngineeringInitialsAvatar
+        name={v.actorLabel}
+        src={v.actorUserId ? avatarByUserId?.get(v.actorUserId) : undefined}
+        size="sm"
+      />
+    ),
     occurredAt: v.occurredAt,
     timeLabel: v.timeLabel,
     detail: (

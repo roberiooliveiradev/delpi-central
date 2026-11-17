@@ -25,6 +25,12 @@ describe("PrcDetailPage — conversa PRC (estrutural)", () => {
 
   it("terminal congela a conversa (policy backend espelhada na UI)", () => {
     expect(SRC).toMatch(/conversationFrozen=\{[\s\S]*completed[\s\S]*rejected/);
-    expect(SRC).not.toMatch(/loadAvatar=/);
+  });
+
+  it("avatar do autor usa o resolvedor governado do BFF (Core)", () => {
+    // PRC-AUDIT — foto canônica do Portal via
+    // engineering-api /v1/participants (S2S → Core); ausente → iniciais.
+    expect(SRC).toMatch(/loadAvatar=\{loadConversationAvatar\}/);
+    expect(SRC).toMatch(/downloadParticipantAvatarBlob/);
   });
 });

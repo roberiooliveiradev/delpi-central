@@ -1006,6 +1006,24 @@ export const PRC_EVENT_LABELS: Record<string, string> = {
   "flag.deleted": "Bandeira excluída",
 };
 
+/** Rótulo honesto do canal de auditoria — ``portal`` é o valor legado
+ * de eventos anteriores ao mapa por caller-app; canais novos nomeiam
+ * a superfície real (Minhas Solicitações / Portal Engenharia / EVA). */
+export const PRC_CHANNEL_LABELS: Record<string, string> = {
+  portal: "Portal",
+  engineering: "Portal Engenharia",
+  "engineering-api": "Portal Engenharia",
+  my_requests: "Minhas Solicitações",
+  "my-requests": "Minhas Solicitações",
+  eva: "EVA",
+};
+
+export function prcChannelLabel(channel: string | null | undefined): string {
+  const raw = (channel || "").trim();
+  if (!raw) return "";
+  return PRC_CHANNEL_LABELS[raw] ?? raw;
+}
+
 const PRC_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -1111,7 +1129,7 @@ export function prcTimelineItemViews(
         transition,
         reasonText: ev.reason?.trim() || null,
         channel,
-        metaText: `${actor}${ev.actor_email ? ` · ${ev.actor_email}` : ""}${channel ? ` · canal ${channel}` : ""}`,
+        metaText: `${actor}${ev.actor_email ? ` · ${ev.actor_email}` : ""}${channel ? ` · canal ${prcChannelLabel(channel)}` : ""}`,
       };
     });
 }

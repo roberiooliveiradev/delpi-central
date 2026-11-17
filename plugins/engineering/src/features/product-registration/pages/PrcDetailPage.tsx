@@ -40,8 +40,11 @@ import {
 import {
   ConversationPanel,
   mapApiFieldsToCorrectionErrors,
+  prcTimelineItemViews,
   type PrcCorrectionTargetErrors,
 } from "@delpi/plugin-ui/index";
+import { downloadParticipantAvatarBlob } from "../../../api/participantsApi";
+import { useParticipantAvatarUrls } from "../../../hooks/useParticipantAvatarUrls";
 import { navigateEngineeringView } from "../../../app/engineeringRoutes";
 import {
   buildPrcQueueUrl,
@@ -127,6 +130,25 @@ export function PrcDetailPage({
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [verifying, setVerifying] = useState(false);
+
+  /* Avatares dos atores do histórico — fonte canônica Core via BFF
+   * participants da engineering-api; ausência de foto cai em iniciais. */
+  const historyViews = useMemo(() => prcTimelineItemViews(timeline), [timeline]);
+  const avatarByUserId = useParticipantAvatarUrls(
+    useMemo(
+      () => [
+        ...historyViews.map((v) => v.actorUserId),
+        detail?.requester.subject,
+        detail?.assignedTo,
+      ],
+      [historyViews, detail?.requester.subject, detail?.assignedTo],
+    ),
+  );
+  const loadConversationAvatar = useCallback(
+    (userId: string, signal: AbortSignal) =>
+      downloadParticipantAvatarBlob(userId, signal).catch(() => null),
+    [],
+  );
   /* FIX-12 — erros de campo do PATCH /returned-fields contextualizados
    * no editor compartilhado. */
   const [correctionFieldErrors, setCorrectionFieldErrors] =
@@ -566,6 +588,9 @@ export function PrcDetailPage({
               <PrcPersonCell
                 subject={detail.requester.subject}
                 displayName={detail.requester.displayName}
+                avatarSrc={avatarByUserId.get(
+                  detail.requester.subject || "",
+                )}
               />
             </div>
             {detail.assignedTo ? (
@@ -576,6 +601,7 @@ export function PrcDetailPage({
                 <PrcPersonCell
                   subject={detail.assignedTo}
                   displayName={detail.assignedToDisplayName}
+                  avatarSrc={avatarByUserId.get(detail.assignedTo)}
                 />
               </div>
             ) : null}
@@ -861,6 +887,7 @@ export function PrcDetailPage({
               }
               portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
               sectionTitle="Conversa sobre a solicitação"
+              loadAvatar={loadConversationAvatar}
             />
             <PrcInformationExchangePanel
               requestId={detail.id}
@@ -873,7 +900,10 @@ export function PrcDetailPage({
               busy={busy}
               onChanged={load}
             />
-            <PrcTimelineSection events={timeline} />
+            <PrcTimelineSection
+              events={timeline}
+              avatarByUserId={avatarByUserId}
+            />
           </>
         ) : null}
 

@@ -19,6 +19,8 @@ from ..request_context import (
     set_request_authorization,
     reset_request_authorization,
     clear_request_authorization,
+    set_request_caller_app,
+    reset_request_caller_app,
 )
 from ..service_token import request_has_valid_internal_service_token
 
@@ -227,6 +229,9 @@ async def jwt_middleware(
         auth_context_token = set_request_authorization(
             request.headers.get("Authorization") or ""
         )
+        caller_context_token = set_request_caller_app(
+            request.headers.get("X-Delpi-Caller-App")
+        )
         try:
             return await call_next(request)
         except Exception as e:
@@ -236,6 +241,7 @@ async def jwt_middleware(
             logger.exception("unhandled_error_service_request path=%s", path)
             return JSONResponse(status_code=500, content={"detail": "Internal server error"})
         finally:
+            reset_request_caller_app(caller_context_token)
             reset_request_authorization(auth_context_token)
             reset_current_user(context_token)
 
@@ -245,6 +251,7 @@ async def jwt_middleware(
 
     token = auth_header.split(" ", 1)[1]
     context_token = None
+    caller_context_token = None
     auth_context_token = set_request_authorization(auth_header)
 
     try:
@@ -289,6 +296,9 @@ async def jwt_middleware(
 
         request.state.user = user
         context_token = set_current_user(user)
+        caller_context_token = set_request_caller_app(
+            request.headers.get("X-Delpi-Caller-App")
+        )
 
     except Exception as exc:
         logger.exception("token_validation_failed path=%s", path)
@@ -304,6 +314,8 @@ async def jwt_middleware(
         logger.exception("unhandled_error_authenticated_request path=%s", path)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
     finally:
+        if context_token is not None:
+            reset_request_caller_app(caller_context_token)
         reset_request_authorization(auth_context_token)
         if context_token is not None:
             reset_current_user(context_token)

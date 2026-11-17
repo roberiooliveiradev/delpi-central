@@ -124,6 +124,10 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/product-registration/reference-data/suppliers/search",
         "/v1/product-registration/outbound/requests",
         "/v1/product-registration/outbound/requests/{request_id}",
+        # PRC-AUDIT — BFF de avatar canônico do Portal (proxy S2S da
+        # Core person-profile); gate engineering.access, falha → 404.
+        "/v1/participants/lookup",
+        "/v1/participants/{user_id}/avatar",
 }
 
 

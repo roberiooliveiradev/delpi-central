@@ -82,6 +82,33 @@ describe("prcTimelineItemViews — UI-FIX-03", () => {
     expect(ret.metaText).toContain("canal portal-engineering");
   });
 
+  it("canal conhecido usa o rótulo canônico da superfície", () => {
+    const cases: Array<[string, string]> = [
+      ["my_requests", "Minhas Solicitações"],
+      ["my-requests", "Minhas Solicitações"],
+      ["engineering", "Portal Engenharia"],
+      ["eva", "EVA"],
+      ["portal", "Portal"],
+    ];
+    for (const [channel, label] of cases) {
+      const [view] = prcTimelineItemViews([
+        { ...FIXTURE[0], metadata: { channel } },
+      ]);
+      expect(view.metaText).toContain(`canal ${label}`);
+    }
+  });
+
+  it("canal desconhecido cai no valor bruto; ausente não emite «canal»", () => {
+    const [unknown] = prcTimelineItemViews([
+      { ...FIXTURE[0], metadata: { channel: "portal-engineering" } },
+    ]);
+    expect(unknown.metaText).toContain("canal portal-engineering");
+    const [noChannel] = prcTimelineItemViews([
+      { ...FIXTURE[0], metadata: {} },
+    ]);
+    expect(noChannel.metaText).not.toContain("canal");
+  });
+
   it("evento sem label conhecido cai no código bruto; sem reason/meta ok", () => {
     const items = prcTimelineItemViews([
       { ...FIXTURE[0], event_type: "custom.internal", reason: undefined },

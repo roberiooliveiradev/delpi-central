@@ -67,8 +67,10 @@ describe("PrcDetailPage — hero UX V3", () => {
   });
 
   it("canal corporativo é apresentado como Minhas Solicitações", () => {
-    expect(COPY).toMatch(/my_requests: "Minhas Solicitações"/);
-    expect(COPY).toMatch(/"my-requests": "Minhas Solicitações"/);
+    // Rótulos de canal derivam do mapa canônico do plugin-ui (uma
+    // única fonte) — não do literal duplicado local.
+    expect(COPY).toMatch(/\.\.\.PRC_CHANNEL_LABELS/);
+    expect(COPY).toMatch(/PRC_CHANNEL_LABELS,/);
     expect(COPY).not.toMatch(/Canal corporativo \(My Requests\)/);
   });
 
@@ -82,6 +84,30 @@ describe("PrcDetailPage — hero UX V3", () => {
   it("reexecução de conclusão usa ref estável, não querySelector frágil", () => {
     expect(SRC).not.toMatch(/document\s*\.?\s*querySelector\(/);
     expect(SRC).toMatch(/actionsRef\.current\?\.scrollIntoView/);
+  });
+});
+
+describe("PrcDetailPage — avatar canônico (Core via BFF participants)", () => {
+  it("resolve avatares pelo hook BFF e propaga ao histórico", () => {
+    expect(SRC).toMatch(/useParticipantAvatarUrls/);
+    expect(SRC).toMatch(/avatarByUserId=\{avatarByUserId\}/);
+    expect(SRC).toMatch(/loadAvatar=\{loadConversationAvatar\}/);
+  });
+
+  it("hero também recebe a foto canônica via PrcPersonCell", () => {
+    expect(SRC).toMatch(/avatarSrc=\{avatarByUserId\.get\(/);
+    const TIMELINE = readFileSync(
+      resolve(__dirname, "../components/PrcTimelineSection.tsx"),
+      "utf8",
+    );
+    expect(TIMELINE).toMatch(/avatarByUserId\?:/);
+    expect(TIMELINE).toMatch(/src=\{v\.actorUserId/);
+    const CELL = readFileSync(
+      resolve(__dirname, "../components/PrcPersonCell.tsx"),
+      "utf8",
+    );
+    expect(CELL).toMatch(/avatarSrc\?:/);
+    expect(CELL).toMatch(/src=\{avatarSrc/);
   });
 });
 

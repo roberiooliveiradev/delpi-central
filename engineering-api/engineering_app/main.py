@@ -26,6 +26,9 @@ from engineering_app.interface.http.routes.lmp_routes import (
 from engineering_app.interface.http.routes.nonconformity_routes import (
     router as nonconformity_router,
 )
+from engineering_app.interface.http.routes.participants_routes import (
+    router as participants_router,
+)
 from engineering_app.interface.http.routes.product_registration_routes import (
     router as product_registration_router,
 )
@@ -133,6 +136,7 @@ app.include_router(home_router)
 app.include_router(overview_router)
 app.include_router(lmp_router)
 app.include_router(nonconformity_router)
+app.include_router(participants_router)
 app.include_router(product_router)
 app.include_router(product_registration_router)
 app.include_router(realtime_router)
