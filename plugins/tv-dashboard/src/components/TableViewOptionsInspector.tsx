@@ -151,10 +151,7 @@ export function TableViewOptionsInspector({
                   ariaLabel="Fundo da tabela"
                   value={isTableBackgroundTransparent(block) ? "transparent" : "normal"}
                   onChange={(value) =>
-                    updateSelected(
-                      tableBackgroundTransparencyPatch(block, value === "transparent")
-                        as Partial<ComunicadoBlock>,
-                    )
+                    updateSelected(tableBackgroundTransparencyPatch(block, value === "transparent"))
                   }
                   options={[
                     { value: "normal", label: "Normal (fundo padrão)" },
