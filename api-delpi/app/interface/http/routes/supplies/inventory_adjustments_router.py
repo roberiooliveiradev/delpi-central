@@ -194,10 +194,9 @@ def _tv_response(*, operation_id: str, action: str, **filters):
 
 @router.get(
     "/tv/summary",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_supplies_inventory_adjustments_tv_summary",
-        path="/supplies/inventory-adjustments/tv/summary",
-    ),
+    operation_id="get_supplies_inventory_adjustments_tv_summary",
+    summary="Indicadores anuais e mensais de divergência de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
 )
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_summary(
@@ -220,10 +219,9 @@ def get_inventory_adjustments_tv_summary(
 
 @router.get(
     "/tv/monthly-series",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_supplies_inventory_adjustments_tv_monthly_series",
-        path="/supplies/inventory-adjustments/tv/monthly-series",
-    ),
+    operation_id="get_supplies_inventory_adjustments_tv_monthly_series",
+    summary="Série mensal de faltas e sobras de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
 )
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_monthly_series(
@@ -243,10 +241,9 @@ def get_inventory_adjustments_tv_monthly_series(
 
 @router.get(
     "/tv/weekly-items",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_supplies_inventory_adjustments_tv_weekly_items",
-        path="/supplies/inventory-adjustments/tv/weekly-items",
-    ),
+    operation_id="get_supplies_inventory_adjustments_tv_weekly_items",
+    summary="Ranking semanal de produtos com ajustes de inventário",
+    description="Fonte de dados somente leitura para os gráficos do GR Diário no TV Dashboard.",
 )
 @require_permission(API_DELPI_ACCESS)
 def get_inventory_adjustments_tv_weekly_items(
