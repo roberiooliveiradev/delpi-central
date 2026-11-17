@@ -1,0 +1,23 @@
+evaluated_sha: 917e5c764c6d2d9e1b3ba3c19b3b64c527681f62
+implementation_sha: 522a1fefe72c311343bee42fba47743706b6647e
+model: qwen/qwen3-14b
+model_fingerprint: e4a5b706a3b3156b
+profile: openrouter_qwen
+corpus: INT2 (DELIA_EVAL_SCENARIO_IDS=INT2_B_aggregation_count,INT2_G_aggregation_total_variant)
+evaluated_at: "2026-11-17"
+arms:
+  - id: armB-two-agent
+    flag: DELIA_TWO_AGENT_EXPERIMENT=1
+    run_id: or-qwen14b-3c4b119d2537
+    dir: armB-two-agent-or-qwen14b-3c4b119d2537
+    outcomes:
+      INT2_B_aggregation_count: NON_GROUNDED (recovery exercised; honest override)
+      INT2_G_aggregation_total_variant: GROUNDED
+  - id: armA-single-agent
+    flag: DELIA_TWO_AGENT_EXPERIMENT=0
+    run_id: or-qwen14b-bdf3943b2291
+    dir: armA-single-or-qwen14b-bdf3943b2291
+    outcomes:
+      INT2_B_aggregation_count: GROUNDED
+      INT2_G_aggregation_total_variant: GROUNDED
+sanitization: argument_values_sanitized; 0 token-shaped strings
