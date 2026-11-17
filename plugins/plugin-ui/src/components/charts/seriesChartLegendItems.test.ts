@@ -156,3 +156,37 @@ describe("seriesChartLegendItems", () => {
     ]);
   });
 });
+
+
+describe("GLPI #1610 · legenda semântica por sinal", () => {
+  const colorScale = { mode: "by_sign" as const, polarity: "high_is_good" as const };
+  it("lista negativos, positivos e zero com cores iguais às barras (inclui multi-série)", () => {
+    const items = buildSeriesChartLegendItems({
+      chartType: "bar",
+      points: [],
+      seriesColor: "#089bdb",
+      colorScale,
+      seriesList: [
+        { name: "SC", points: [{ label: "Jul", value: -40 }, { label: "Ago", value: 0 }] },
+        { name: "ES", points: [{ label: "Jul", value: 25 }, { label: "Ago", value: 15 }] },
+      ],
+    });
+    expect(items).toEqual([
+      { name: "Negativo", color: "#dc2626", semantic: true },
+      { name: "Positivo", color: "#16a34a", semantic: true },
+      { name: "Zero", color: "#94a3b8", semantic: true },
+    ]);
+  });
+
+  it("não inventa valor zero a partir de lacunas e não usa legenda semântica em linha", () => {
+    const args = {
+      points: [{ label: "Jan", value: null }, { label: "Fev", value: -5 }],
+      seriesColor: "#089bdb",
+      colorScale,
+    };
+    expect(buildSeriesChartLegendItems({ chartType: "horizontal_bar", ...args })).toEqual([
+      { name: "Negativo", color: "#dc2626", semantic: true },
+    ]);
+    expect(buildSeriesChartLegendItems({ chartType: "line", ...args })).toBeUndefined();
+  });
+});

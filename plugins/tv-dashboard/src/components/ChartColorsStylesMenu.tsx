@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import type { ComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
+import type { ComunicadoChartOptions, ComunicadoChartType } from "@delpi/tv-dashboard-presentation";
 
 import {
   CHART_STYLE_RECIPES,
+  SIGN_COLOR_PALETTE_ID,
   applyChartColorPalette,
   applyChartColorScaleMode,
   applyChartColorScalePolarity,
@@ -16,6 +17,7 @@ import {
 
 type Props = {
   options: ComunicadoChartOptions;
+  chartKind?: ComunicadoChartType;
   onApplyOptions: (next: ComunicadoChartOptions) => void;
   /** Ações extras (ex.: legenda) dentro do mesmo chrome do menu. */
   footer?: ReactNode;
@@ -62,9 +64,14 @@ function PaletteGrid({
 }
 
 /** Painel compartilhado Alterar Cores / Estilos (ribbon + float pincel). */
-export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props) {
+export function ChartColorsStylesMenu({ options, chartKind, onApplyOptions, footer }: Props) {
   const categorical = chartPalettesByKind("categorical");
-  const semantic = chartPalettesByKind("semantic");
+  const showSignColors = chartKind === "bar" || chartKind === "horizontal_bar";
+  const semantic = chartPalettesByKind("semantic").filter(
+    (palette) => showSignColors || palette.id !== SIGN_COLOR_PALETTE_ID,
+  );
+  const signPalette = semantic.find((palette) => palette.id === SIGN_COLOR_PALETTE_ID);
+  const colorBySign = options.colorScale?.mode === "by_sign";
   const colorByValue = options.colorScale?.mode === "by_value";
   const colorByGoal = options.colorScale?.mode === "by_goal";
   const polarity = options.colorScale?.polarity ?? (colorByGoal ? "high_is_good" : "high_is_bad");
@@ -93,7 +100,8 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
         <h4>Escalas (melhor / pior)</h4>
         <p className="td-chart-style-menu__hint">
           Pelo valor: rampa no número. Pela meta: verde ≥ meta, laranja até 5% abaixo, vermelho
-          abaixo disso. Sem escala: ordem das categorias.
+          abaixo disso. Por sinal: negativo vermelho, positivo verde, zero cinza.
+          Sem escala: ordem das categorias.
         </p>
         <PaletteGrid palettes={semantic} options={options} onApply={applyPalette} />
         <div className="td-chart-style-menu__scale-controls">
@@ -137,6 +145,22 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
             />
             <span>Colorir pela meta</span>
           </label>
+          {showSignColors && signPalette ? (
+            <label className="td-chart-style-menu__scale-toggle">
+              <input
+                type="checkbox"
+                checked={colorBySign}
+                onChange={(event) =>
+                  onApplyOptions(
+                    event.target.checked
+                      ? applyChartColorPalette(signPalette, options)
+                      : applyChartColorScaleMode(options, "off", polarity),
+                  )
+                }
+              />
+              <span>Colorir pelo sinal (− vermelho / + verde)</span>
+            </label>
+          ) : null}
           {!hasGoal ? (
             <p className="td-chart-style-menu__hint">
               Para colorir pela meta, adicione a linha de meta e informe o valor.

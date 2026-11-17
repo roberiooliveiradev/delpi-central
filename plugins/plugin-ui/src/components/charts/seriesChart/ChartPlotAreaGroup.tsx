@@ -130,6 +130,7 @@ export function ChartPlotAreaGroup({
                 seriesIndex={origin}
                 layoutSeriesIndex={index}
                 seriesCount={seriesList.length}
+                colorScale={config.colorScale}
                 pointSelection={pointSelection}
               />
               );

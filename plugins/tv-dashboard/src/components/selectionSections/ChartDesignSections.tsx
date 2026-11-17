@@ -371,6 +371,7 @@ function ChartStylesBandOrInline({
   const colorsMenu = (
     <div className="td-chart-float__popover td-chart-float__popover--style">
       <ChartColorsStylesMenu
+        chartKind={ctrl.chartKind}
         options={ctrl.options}
         onApplyOptions={(next) => {
           ctrl.persistOptions(next);

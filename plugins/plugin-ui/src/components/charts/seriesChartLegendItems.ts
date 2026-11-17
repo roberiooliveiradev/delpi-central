@@ -2,6 +2,7 @@ import {
   resolveSeriesChartLegendSort,
   seriesChartPointsHaveFiniteValue,
   seriesOriginIndex,
+  SIGN_SCALE_COLORS,
   type SeriesChartColorScale,
   type SeriesChartKind,
   type SeriesChartLegendSort,
@@ -20,6 +21,8 @@ export type SeriesChartLegendItem = {
   color: string;
   /** Índice de chartParts da série. Ausente = entrada de categoria. */
   sourceIndex?: number;
+  /** Cor semântica descritiva; não representa uma série editável na legenda. */
+  semantic?: boolean;
 };
 
 /**
@@ -259,6 +262,32 @@ export function buildSeriesChartLegendItems(args: {
     sort,
     usesCategoryLegend,
   });
+
+  if (
+    (chartType === "bar" || chartType === "horizontal_bar") &&
+    colorScale?.mode === "by_sign"
+  ) {
+    // Em modo de sinal a cor é definida por cada valor, não pelo índice
+    // da série/categoria. A legenda deve explicar a convenção de fato.
+    const sourcePoints =
+      seriesWithData && seriesWithData.length > 0
+        ? seriesWithData.flatMap((series) => series.points)
+        : points;
+    const values = sourcePoints
+      .filter((point) => seriesChartPointsHaveFiniteValue([point]))
+      .map((point) => Number(point.value));
+    const items: SeriesChartLegendItem[] = [];
+    if (values.some((v) => v < 0)) {
+      items.push({ name: "Negativo", color: SIGN_SCALE_COLORS.negative, semantic: true });
+    }
+    if (values.some((v) => v > 0)) {
+      items.push({ name: "Positivo", color: SIGN_SCALE_COLORS.positive, semantic: true });
+    }
+    if (values.some((v) => v === 0)) {
+      items.push({ name: "Zero", color: SIGN_SCALE_COLORS.zero, semantic: true });
+    }
+    return items;
+  }
 
   if (multiSeries && seriesWithData) {
     const items = seriesWithData.map((series, index) => {

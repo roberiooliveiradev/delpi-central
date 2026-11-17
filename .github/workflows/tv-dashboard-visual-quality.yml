@@ -52,6 +52,11 @@ jobs:
           npx eslint \
             src/components/ChartViewOptionsInspector.tsx \
             src/components/ChartPartInspector.tsx \
+            src/components/ChartColorsStylesMenu.tsx \
+            src/components/ChartColorsStylesMenu.test.tsx \
+            src/components/ChartSelectionFloatToolbar.tsx \
+            src/content/chartStyleRecipes.ts \
+            src/content/chartStyleRecipes.test.ts \
             src/components/formatRibbon/ChartRibbonShapeChrome.tsx \
             src/components/KpiViewOptionsInspector.tsx \
             src/components/KpiPartInspector.tsx \
@@ -59,14 +64,16 @@ jobs:
             src/components/TablePartInspector.tsx \
             src/utils/visualBackgroundTransparency.ts \
             src/utils/visualBackgroundTransparency.test.ts
-      - name: Testes do editor TV Dashboard
-        run: npm test --prefix plugins/tv-dashboard -- src/utils/visualBackgroundTransparency.test.ts
+      - name: Testes do editor TV Dashboard e preset por sinal
+        run: npm test --prefix plugins/tv-dashboard -- src/utils/visualBackgroundTransparency.test.ts src/content/chartStyleRecipes.test.ts src/components/ChartColorsStylesMenu.test.tsx
       - name: Build de produção do editor
         run: npm run build --prefix plugins/tv-dashboard
       - name: Regressão de polaridade e origem zero dos gráficos
         run: npm test --prefix plugins/plugin-ui -- src/components/charts/seriesChart/zeroBasedBarGeometry.test.tsx src/components/charts/seriesChart/layout.test.ts src/components/charts/seriesChartNullAlignment.test.tsx
       - name: Regressão do velocímetro (cor do valor e símbolo %)
         run: npm test --prefix plugins/plugin-ui -- src/components/charts/SpeedometerGauge.test.tsx
+      - name: Regressão cores por sinal nas colunas e legenda
+        run: npm test --prefix plugins/plugin-ui -- src/components/charts/seriesChart/ChartSeriesBar.test.tsx src/components/charts/seriesChartLegendItems.test.ts
       - name: Build do kit visual compartilhado
         run: npm run build --prefix plugins/plugin-ui
       - name: Regressão do kit de tabelas

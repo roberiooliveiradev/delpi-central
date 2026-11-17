@@ -159,6 +159,8 @@ export {
   resolveGoalThresholdColor,
   GOAL_SCALE_BAND_RATIO,
   GOAL_SCALE_COLORS,
+  SIGN_SCALE_COLORS,
+  resolveSignScaleColor,
   seriesValueExtent,
   seriesChartThemeStyle,
   usableSeriesChartPoints,
