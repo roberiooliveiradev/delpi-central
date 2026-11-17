@@ -52,6 +52,7 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_real_engine_chain_ci.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
       - ".github/workflows/atlas-p22e-integration.yml"
@@ -105,6 +106,7 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_engine_boundary.py"
       - "linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_real_engine_chain_ci.py"
       - "linux-ops-mcp/tests/test_atlas_docker_engine_ci.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/05-atlas-p22d-candidate-schema.sql"
       - ".github/workflows/atlas-p22e-integration.yml"
@@ -160,6 +162,7 @@ jobs:
     timeout-minutes: 12
     env:
       ATLAS_DISPOSABLE_DOCKER: "true"
+      ATLAS_REAL_HML_CHAIN_CI: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -182,6 +185,22 @@ jobs:
           done
           echo 'Ephemeral CI Docker pilot failed health readiness'
           exit 1
+      - name: Start separate ephemeral HML-target fixture on CI host only
+        run: |
+          test "$(id -u)" != "0"
+          docker run -d --rm --name delpi-hml-public-hub \
+            --label com.docker.compose.project=delpi-hml \
+            --label com.docker.compose.service=public-hub \
+            --health-cmd 'test -f /etc/os-release' \
+            --health-interval 1s --health-retries 10 \
+            alpine:3.20 sleep 600
+          for i in $(seq 1 30); do
+            state=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' delpi-hml-public-hub)
+            if [ "$state" = healthy ]; then exit 0; fi
+            sleep 1
+          done
+          echo 'Ephemeral HML-target Docker fixture failed health readiness'
+          exit 1
       - name: Verify real Docker Engine GET and fail-closed receipt
         run: |
           PYTHONPATH=linux-ops-mcp:it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \
@@ -194,7 +213,10 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_git_head_peek.py \
             linux-ops-mcp/tests/test_atlas_hml_unix_proxy.py \
             linux-ops-mcp/tests/test_atlas_hml_boundary_chain.py \
+            linux-ops-mcp/tests/test_atlas_hml_real_engine_chain_ci.py \
             linux-ops-mcp/tests/test_atlas_docker_engine_ci.py
       - name: Remove only the ephemeral pilot
         if: always()
-        run: docker rm -f atlas-ci-pilot-hml >/dev/null 2>&1 || true
+        run: |
+          docker rm -f delpi-hml-public-hub >/dev/null 2>&1 || true
+          docker rm -f atlas-ci-pilot-hml >/dev/null 2>&1 || true
