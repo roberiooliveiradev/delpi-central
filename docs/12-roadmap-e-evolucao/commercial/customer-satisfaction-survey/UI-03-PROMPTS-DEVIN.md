@@ -406,3 +406,9 @@ Os anteriores, mais: nenhuma lógica de fluxo (navegação entre etapas, valida�
 | D8 | Verificador independente aprovado | Veredito sem edição |
 
 **Publicação:** se o `main` local voltar a ter commit de outro trabalho não publicado, usar o mesmo caminho autorizado no §6.8 item 4 (worktree temporário a partir de `origin/main`, só o commit do pacote).
+
+### 8.7 Ajustes da revisão da declaração (17/11/2026)
+
+1. **R8:** aceita a estrutura proposta (`__main` com números + legenda; “Sua nota”, divisor e N/A como irmãos; reposicionamento por `order` só a partir de 600 px; ordem de foco inalterada).
+2. **`FormButton` sem depender da ordem dos `@import`:** a sobrescrita do `ActionButton` não pode depender de `questionnaire.css` vir depois de `action-controls.css` em `styles.css` (frágil: qualquer reordenação quebra o visual). Escopar os seletores na raiz do kit, ex.: `.delpi-ui-form-root .delpi-ui-form-button`, ganhando especificidade sem `!important` e sem tocar no `ActionButton`; incluir no teste de contrato.
+3. **Rodapé fixo:** registrar no relatório que o `position: sticky` só funciona se nenhum ancestral tiver `overflow` diferente de `visible` — conferir na demo e anotar como verificação obrigatória da página pública (P6).
