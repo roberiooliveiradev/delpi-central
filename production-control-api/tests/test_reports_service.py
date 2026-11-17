@@ -257,7 +257,7 @@ def test_reports_catalog_lists_stock_balances_and_production_orders() -> None:
     service = _service(gateway)
     catalog = service.list_catalog(_user(*FULL_PERMS), branch="01")
     ids = [item["id"] for item in catalog["reports"]]
-    assert ids == ["stock-balances", "production-orders"]
+    assert ids == ["stock-balances", "production-orders", "product-sales"]
     assert catalog["reports"][0]["icon"] == "warehouse"
     assert catalog["reports"][0]["eyebrow"] == "Estoque"
     assert catalog["reports"][1]["icon"] == "clipboard-list"
@@ -483,3 +483,31 @@ def test_production_orders_rejects_unknown_sort() -> None:
     catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
     assert catalog_calls[0]["sort"] == "op_asc"
     assert payload["filters"]["sort"] == "op_asc"
+
+
+def test_product_sales_contract_and_branch_gate() -> None:
+    import pytest
+    from production_control_app.domain.errors import BranchAccessDenied
+    class Gateway(FakeGateway):
+        def fetch_product_sales_analytics(self, *, branch, product_code, months):
+            self.calls.append({"branch": branch, "product_code": product_code, "months": months})
+            return {"success": True, "data": {"branch": branch,
+                "product": {"code": product_code, "description": "PA", "unit": "UN"},
+                "monthly": [], "customers": [], "summary": {"total_quantity": 0}}}
+    gateway = Gateway()
+    svc = _service(gateway)
+    actual = svc.product_sales(_user(*FULL_PERMS), branch="02", product_code="90263114", months=24)
+    assert actual["report_id"] == "product-sales"
+    assert gateway.calls == [{"branch": "02", "product_code": "90263114", "months": 24}]
+    with pytest.raises(PermissionError):
+        svc.product_sales(_user("production-control.access"), branch="01",
+                          product_code="90263114", months=12)
+    with pytest.raises(BranchAccessDenied):
+        svc.product_sales(_user("production-control.access", "production-control.reports.view",
+                                "production-control.view.filial-01"), branch="02",
+                          product_code="90263114", months=12)
+    with pytest.raises(ValueError):
+        svc.product_sales(_user(*FULL_PERMS), branch="01", product_code="9' OR 1=1", months=12)
+    with pytest.raises(ValueError):
+        svc.product_sales(_user(*FULL_PERMS), branch="01", product_code="90263114", months=13)
+    assert len(gateway.calls) == 1
