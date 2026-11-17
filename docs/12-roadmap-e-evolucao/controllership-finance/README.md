@@ -12,6 +12,8 @@
 
 > **13/11/2026 — Regra de trabalho:** produção acompanha a main. Funcionalidade nova entra desligada por flag e é ligada depois do ensaio HML PASS.
 
+> **17/11/2026 — CF-UX-054-R3 (no código, sem deploy):** exclusão definitiva de versão de checklist (`delete_checklist_template_version` + diagnóstico de vínculos) e paridade CLARA da cascata de competência (`checklist.version_delete`, `competence.delete` com manifesto selado). Elegível qualquer status sem vínculos; competências/snapshots bloqueiam; trilha append-only preservada; numeração nunca reutilizada. Ver [doc 173](./173-cf-ux-054-r3-exclusao-definitiva-versao-checklist.md) e correção no [doc 162](./162-cf-ux-054-exclusao-competencia-mensal.md).
+
 > **13/11/2026 — Tempo real do LNF (W1):** [Doc 167](./167-lnf-tempo-real-websocket.md) `CONTRACT_DRAFT` · [ADR-002](./adr/ADR-002-tempo-real-lnf-websocket-bff.md) `ACCEPTED`. WebSocket na BFF, aviso + refetch. D-W4 revista: a W6 entra quando a W5 estiver DONE.
 
 > **13/11/2026 — Migração do LNF concluída em 2026-11-13.** Trilha [165](./165-trilha-execucao-migracao-lnf-ate-clara.md) toda DONE (incl. F7.4 CLARA PROD: catálogo OK; 01=11 / 02=3 abertas; backlog 11/0). BFF dona do schema; MFE só BFF; api-delpi sem LNF. Pendência: tags `rollback-f6-*` em **2026-11-20**. [163](./163-plano-migracao-lancamento-notas-fiscais.md) · [164](./164-runbook-corte-lancamento-notas-fiscais.md) · [ADR-001](./adr/ADR-001-hospedagem-lancamento-notas-fiscais.md).

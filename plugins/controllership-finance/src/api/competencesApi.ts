@@ -166,11 +166,20 @@ export type CompetenceDeletionReason = {
 };
 
 export type CompetenceDeletionDiagnosis = {
-  outcome: "eligible" | "blocked" | "not_found" | "unavailable";
+  outcome:
+    | "eligible"
+    | "eligible_with_dependents"
+    | "blocked"
+    | "not_found"
+    | "unavailable";
   competence_id?: string;
   period: string;
   status?: string;
   reasons: CompetenceDeletionReason[];
+  dependents?: {
+    exclusive: CompetenceDeletionReason[];
+    shared_files: number;
+  };
 };
 
 export type CompetenceDeletionResult = {
@@ -202,6 +211,8 @@ export async function deleteCompetence(
     expected_competence_id: string;
     reason?: string;
     idempotency_key: string;
+    delete_dependents?: boolean;
+    expected_dependents?: Record<string, number>;
   },
   options?: { signal?: AbortSignal },
 ): Promise<CompetenceDeletionResult> {

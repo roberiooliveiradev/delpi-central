@@ -454,3 +454,31 @@ class CompetenceDeleteUnavailable(CompetenceDeleteError):
 class CompetenceDeleteInvalid(CompetenceDeleteError):
     code = "competence_delete_invalid"
     status = 422
+
+
+class VersionDeleteError(ChecklistDomainError):
+    """Falha tipada da exclusão definitiva de versão de checklist."""
+
+    def __init__(self, message: str, *, details: dict | None = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
+
+
+class VersionDeleteBlocked(VersionDeleteError):
+    code = "version_delete_blocked"
+    status = 409
+
+
+class VersionDeleteConflict(VersionDeleteError):
+    code = "version_delete_conflict"
+    status = 409
+
+
+class VersionDeleteUnavailable(VersionDeleteError):
+    code = "version_delete_unavailable"
+    status = 503
+
+
+class VersionDeleteInvalid(VersionDeleteError):
+    code = "version_delete_invalid"
+    status = 422

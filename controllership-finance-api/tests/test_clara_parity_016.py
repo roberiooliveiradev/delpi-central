@@ -286,6 +286,7 @@ NEW_CAPS = [
     "checklist.version_discard",
     "checklist.version_publish",
     "checklist.version_inactivate",
+    "checklist.version_delete",
     "checklist.doc_requirement",
 ]
 
@@ -297,6 +298,7 @@ DESTRUCTIVE_CAPS = {
     "catalog.entry_deactivate",
     "checklist.version_discard",
     "checklist.version_inactivate",
+    "checklist.version_delete",
     "invoice_posting.cancel",
 }
 

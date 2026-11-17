@@ -23,6 +23,8 @@ const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const discardMock = vi.fn();
 const listEventsMock = vi.fn();
+const diagnoseDeleteMock = vi.fn();
+const deleteMock = vi.fn();
 
 vi.mock("../../api/adminApi", () => ({
   listChecklistTemplates: (...args: unknown[]) =>
@@ -37,6 +39,9 @@ vi.mock("../../api/adminApi", () => ({
   inactivateTemplateVersion: (...args: unknown[]) =>
     inactivateMock(...args),
   discardTemplateVersion: (...args: unknown[]) => discardMock(...args),
+  diagnoseTemplateVersionDeletion: (...args: unknown[]) =>
+    diagnoseDeleteMock(...args),
+  deleteTemplateVersion: (...args: unknown[]) => deleteMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
 }));
 
@@ -212,6 +217,99 @@ describe("ChecklistVersionPage", () => {
     await waitFor(() => expect(inactivateMock).toHaveBeenCalled());
     expect(inactivateMock.mock.calls[0]).toEqual(["t-1", 1]);
     expect(window.location.pathname).toBe(before);
+  });
+
+  it("deletes an eligible published version after typed confirmation", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(PUBLISHED_DETAIL);
+    diagnoseDeleteMock.mockResolvedValue({
+      outcome: "eligible",
+      template_id: "t-1",
+      version_id: "v-1",
+      version: 1,
+      status: "PUBLISHED",
+      revision: 7,
+      item_count: 1,
+      reasons: [],
+      dependents: {
+        exclusive: [
+          {
+            code: "checklist_template_item",
+            count: 1,
+            label: "itens do checklist",
+          },
+        ],
+      },
+    });
+    deleteMock.mockResolvedValue({
+      version_id: "v-1",
+      version: 1,
+      status: "PUBLISHED",
+      deleted: true,
+      deleted_at: "2026-04-20T10:00:00Z",
+      audit_reference: "evt-1",
+    });
+    render(<ChecklistVersionPage basePath={BASE} version={1} />);
+    await screen.findByText("CK-E-01");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Excluir versão" }),
+    );
+    const confirmInput = await screen.findByLabelText(
+      "Digite v1 para confirmar",
+    );
+    fireEvent.change(confirmInput, { target: { value: "v1" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Excluir definitivamente" }),
+    );
+    await waitFor(() => expect(deleteMock).toHaveBeenCalled());
+    expect(deleteMock.mock.calls[0][0]).toBe("t-1");
+    expect(deleteMock.mock.calls[0][1]).toBe(1);
+    expect(deleteMock.mock.calls[0][2]).toMatchObject({
+      expected_version_id: "v-1",
+      expected_revision: 7,
+      expected_item_count: 1,
+    });
+    // Versão deixou de existir — volta à Administração.
+    await waitFor(() =>
+      expect(window.location.pathname).toBe(
+        `${BASE}/closing/admin`,
+      ),
+    );
+  });
+
+  it("shows the blocking reasons instead of the confirmation form", async () => {
+    setupHappy();
+    getVersionMock.mockResolvedValue(PUBLISHED_DETAIL);
+    diagnoseDeleteMock.mockResolvedValue({
+      outcome: "blocked",
+      template_id: "t-1",
+      version_id: "v-1",
+      version: 1,
+      status: "PUBLISHED",
+      revision: 7,
+      item_count: 1,
+      reasons: [
+        {
+          code: "monthly_competence",
+          count: 2,
+          label: "competências vinculadas",
+          periods: ["2026-03", "2026-04"],
+        },
+      ],
+    });
+    render(<ChecklistVersionPage basePath={BASE} version={1} />);
+    await screen.findByText("CK-E-01");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Excluir versão" }),
+    );
+    await screen.findByText(/competências vinculadas \(2\)/);
+    expect(screen.getByText(/2026-03, 2026-04/)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", {
+        name: "Excluir definitivamente",
+      }),
+    ).toBeNull();
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 
   it("publishes a review version with effective period", async () => {

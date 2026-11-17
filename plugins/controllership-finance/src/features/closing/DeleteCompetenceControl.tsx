@@ -100,9 +100,12 @@ export function DeleteCompetenceControl({
   }
 
   const eligible = diagnosis?.outcome === "eligible";
+  const withDependents = diagnosis?.outcome === "eligible_with_dependents";
+  const exclusiveDependents = diagnosis?.dependents?.exclusive ?? [];
+  const submittable = eligible || withDependents;
   const checking = diagnosis === null && diagnosisError === null;
   const canSubmit =
-    !busy && eligible && confirmation.trim() === competence.period;
+    !busy && submittable && confirmation.trim() === competence.period;
 
   async function submit() {
     if (!canSubmit || sending.current) return;
@@ -114,6 +117,14 @@ export function DeleteCompetenceControl({
         expected_competence_id: competence.competence_id,
         reason: reason.trim(),
         idempotency_key: idempotencyKey.current,
+        ...(withDependents
+          ? {
+              delete_dependents: true,
+              expected_dependents: Object.fromEntries(
+                exclusiveDependents.map((item) => [item.code, item.count]),
+              ),
+            }
+          : {}),
       });
       if (!result.deleted || result.period !== competence.period) {
         throw new Error("A Central de Fechamento não confirmou esta competência.");
@@ -128,7 +139,7 @@ export function DeleteCompetenceControl({
     }
   }
 
-  const fieldsLocked = busy || !eligible;
+  const fieldsLocked = busy || !submittable;
 
   return (
     <>
@@ -197,6 +208,16 @@ export function DeleteCompetenceControl({
             {eligible ? (
               <CfFeedbackMessage intent="success" title="Exclusão permitida">
                 Nenhuma dependência operacional foi encontrada.
+              </CfFeedbackMessage>
+            ) : null}
+            {withDependents ? (
+              <CfFeedbackMessage
+                intent="warning"
+                title="Dados vinculados serão removidos"
+              >
+                {`A exclusão governada removerá, junto com a competência: ${exclusiveDependents
+                  .map((item) => `${item.count} ${item.label}`)
+                  .join(", ")}. A auditoria da operação permanece.`}
               </CfFeedbackMessage>
             ) : null}
             <CfTextAreaField

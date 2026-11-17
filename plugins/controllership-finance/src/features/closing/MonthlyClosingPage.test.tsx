@@ -1203,6 +1203,47 @@ describe("exclusão administrativa de competência", () => {
     expect(deleteCompetenceMock).not.toHaveBeenCalled();
   });
 
+  it("confirma exclusão governada enviando o manifesto de dependentes", async () => {
+    setLocation(`${BASE}/closing/monthly-closing/2026-10`);
+    viewerCaps.manage = true;
+    mockOpenMonth();
+    listCompetencesMock.mockResolvedValue(COMPETENCES);
+    diagnoseDeletionMock.mockResolvedValue({
+      outcome: "eligible_with_dependents",
+      period: "2026-10",
+      competence_id: "c-oct",
+      status: "OPEN",
+      reasons: [],
+      dependents: {
+        exclusive: [
+          { code: "closing_document", count: 1, label: "documento" },
+          { code: "document_message", count: 3, label: "mensagens de documento" },
+        ],
+        shared_files: 0,
+      },
+    });
+    render(<MonthlyClosingPage basePath={BASE} period="2026-10" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Excluir competência" }));
+    expect(await screen.findByText("Dados vinculados serão removidos")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Digite 2026-10 para confirmar"), {
+      target: { value: "2026-10" },
+    });
+    deleteCompetenceMock.mockResolvedValue({
+      competence_id: "c-oct",
+      period: "2026-10",
+      deleted: true,
+      deleted_at: "2026-11-09T00:00:00Z",
+      audit_reference: "audit-1",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar exclusão" }));
+    await waitFor(() => expect(deleteCompetenceMock).toHaveBeenCalledTimes(1));
+    expect(deleteCompetenceMock.mock.calls[0][1].delete_dependents).toBe(true);
+    expect(deleteCompetenceMock.mock.calls[0][1].expected_dependents).toEqual({
+      closing_document: 1,
+      document_message: 3,
+    });
+  });
+
   it("confirma a exclusão elegível sem motivo", async () => {
     openEligibleCompetence();
     fireEvent.click(await screen.findByRole("button", { name: "Excluir competência" }));

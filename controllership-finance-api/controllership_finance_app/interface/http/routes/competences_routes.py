@@ -56,6 +56,8 @@ class DeleteCompetenceRequest(BaseModel):
     expected_competence_id: str = Field(min_length=36, max_length=36)
     reason: str = Field(default="", max_length=500)
     idempotency_key: str = Field(min_length=8, max_length=128)
+    delete_dependents: bool = False
+    expected_dependents: dict[str, int] | None = None
 
 
 @router.get("", operation_id="list_closing_competences")
@@ -145,6 +147,8 @@ def delete_closing_competence(
             reason=body.reason,
             idempotency_key=body.idempotency_key,
             channel="portal",
+            delete_dependents=body.delete_dependents,
+            expected_dependents=body.expected_dependents,
         )
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "delete_closing_competence")

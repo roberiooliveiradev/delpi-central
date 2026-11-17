@@ -272,6 +272,79 @@ export function saveDocumentRequirement(
   });
 }
 
+export type VersionDeletionReason = {
+  code: string;
+  count: number;
+  label: string;
+  periods?: string[];
+};
+
+export type VersionDeletionDiagnosis = {
+  outcome: "eligible" | "blocked";
+  template_id: string;
+  version_id: string;
+  version: number;
+  status: TemplateVersionStatus;
+  revision: number;
+  item_count: number;
+  reasons: VersionDeletionReason[];
+  dependents?: {
+    exclusive: VersionDeletionReason[];
+  };
+};
+
+export type VersionDeletionResult = {
+  version_id: string;
+  version: number;
+  status: string;
+  deleted: boolean;
+  deleted_at: string;
+  audit_reference: string;
+  replayed?: boolean;
+  dependents?: Record<string, number> | null;
+};
+
+/** Diagnóstico de vínculos da exclusão definitiva da versão. */
+export async function diagnoseTemplateVersionDeletion(
+  templateId: string,
+  version: number,
+  options?: { signal?: AbortSignal },
+): Promise<VersionDeletionDiagnosis> {
+  const envelope = await httpGet<Envelope<VersionDeletionDiagnosis>>(
+    cfApiUrl(
+      `${BASE}/${templateId}/versions/${version}/deletion-eligibility`,
+    ),
+    options,
+  );
+  if (!envelope?.data) {
+    throw new Error("Diagnóstico de exclusão indisponível.");
+  }
+  return envelope.data;
+}
+
+/** Exclusão definitiva da versão — manifesto selado do diagnóstico. */
+export function deleteTemplateVersion(
+  templateId: string,
+  version: number,
+  body: {
+    expected_version_id: string;
+    expected_revision: number;
+    expected_item_count: number;
+    reason?: string;
+    idempotency_key: string;
+  },
+): Promise<VersionDeletionResult> {
+  return httpPost<Envelope<VersionDeletionResult>>(
+    cfApiUrl(`${BASE}/${templateId}/versions/${version}/delete`),
+    body,
+  ).then((envelope) => {
+    if (!envelope?.data?.deleted) {
+      throw new Error("A exclusão não foi confirmada pela BFF.");
+    }
+    return envelope.data;
+  });
+}
+
 export async function listTemplateEvents(
   templateId: string,
   version?: number,

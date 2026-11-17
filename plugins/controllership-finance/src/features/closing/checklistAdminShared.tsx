@@ -9,7 +9,7 @@
  * componentes apenas renderizam e encaminham. Edição de DRAFT é
  * atômica com OCC `revision`; `stale_revision` pede recarga.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   ActionButton,
@@ -27,6 +27,8 @@ import {
 import { ApiError } from "../../api/httpClient";
 import { CatalogSaveError } from "./documentCatalog";
 import {
+  deleteTemplateVersion,
+  diagnoseTemplateVersionDeletion,
   discardTemplateVersion,
   inactivateTemplateVersion,
   publishTemplateVersion,
@@ -35,6 +37,7 @@ import {
   type ChecklistTemplateItem,
   type ChecklistTemplateVersion,
   type DraftItemInput,
+  type VersionDeletionDiagnosis,
 } from "../../api/adminApi";
 import {
   CfDateField,
@@ -102,6 +105,14 @@ export const ERROR_MESSAGES: Record<string, string> = {
     "O identificador do documento diverge da rota — recarregue a página.",
   busy:
     "Outra operação administrativa está em curso neste checklist — tente novamente em instantes.",
+  version_delete_blocked:
+    "A versão tem vínculos que impedem a exclusão definitiva.",
+  version_delete_conflict:
+    "A versão mudou desde o diagnóstico — recarregue e refaça a confirmação.",
+  version_delete_invalid:
+    "Os dados da exclusão estão fora do contrato — recarregue a página.",
+  version_delete_unavailable:
+    "A persistência da Central de Fechamento está indisponível — tente novamente.",
 };
 
 export function toQueryError(
@@ -152,6 +163,7 @@ export const EVENT_LABELS: Record<string, string> = {
   VERSION_PUBLISHED: "Versão publicada",
   VERSION_INACTIVATED: "Versão inativada",
   VERSION_DISCARDED: "Versão descartada",
+  VERSION_DELETED: "Versão excluída definitivamente",
 };
 
 /** Tom semântico do marker da timeline por tipo de evento de auditoria. */
@@ -166,6 +178,7 @@ export const EVENT_TONES: Record<
   VERSION_PUBLISHED: "success",
   VERSION_INACTIVATED: "default",
   VERSION_DISCARDED: "danger",
+  VERSION_DELETED: "danger",
 };
 
 export const SHEET_OPTIONS = [
@@ -253,6 +266,7 @@ export type VersionActions = {
   askReturn: (row: ChecklistTemplateVersion) => void;
   askInactivate: (row: ChecklistTemplateVersion) => void;
   askDiscard: (row: ChecklistTemplateVersion) => void;
+  askDelete: (row: ChecklistTemplateVersion) => void;
   /** Diálogos de confirmação/parâmetros — renderizar no fim da página. */
   dialogs: React.ReactNode;
 };
@@ -284,6 +298,17 @@ export function useChecklistVersionActions(args: {
   const [returnReason, setReturnReason] = useState("");
   const [discardTarget, setDiscardTarget] =
     useState<ChecklistTemplateVersion | null>(null);
+
+  const [deleteTarget, setDeleteTarget] =
+    useState<ChecklistTemplateVersion | null>(null);
+  const [deleteDiagnosis, setDeleteDiagnosis] =
+    useState<VersionDeletionDiagnosis | null>(null);
+  const [deleteDiagError, setDeleteDiagError] =
+    useState<QueryError | null>(null);
+  const [deleteDiagBusy, setDeleteDiagBusy] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const deleteIdempotencyKey = useRef("");
 
   const run = useCallback(
     (work: () => Promise<unknown>, done?: () => void) => {
@@ -330,6 +355,72 @@ export function useChecklistVersionActions(args: {
   const askDiscard = useCallback((row: ChecklistTemplateVersion) => {
     setDiscardTarget(row);
   }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    setDeleteTarget(null);
+    setDeleteDiagnosis(null);
+    setDeleteDiagError(null);
+    setDeleteConfirmation("");
+    setDeleteReason("");
+  }, []);
+
+  const askDelete = useCallback(
+    (row: ChecklistTemplateVersion) => {
+      if (!templateId) return;
+      setDeleteTarget(row);
+      setDeleteDiagnosis(null);
+      setDeleteDiagError(null);
+      setDeleteConfirmation("");
+      setDeleteReason("");
+      deleteIdempotencyKey.current = crypto.randomUUID();
+      setDeleteDiagBusy(true);
+      diagnoseTemplateVersionDeletion(templateId, row.version)
+        .then((diagnosis) => {
+          setDeleteDiagBusy(false);
+          setDeleteDiagnosis(diagnosis);
+        })
+        .catch((err: unknown) => {
+          setDeleteDiagBusy(false);
+          setDeleteDiagError(
+            toQueryError(
+              err,
+              "O diagnóstico de exclusão não pôde ser concluído.",
+            ),
+          );
+        });
+    },
+    [templateId],
+  );
+
+  const retryDeleteDiagnosis = useCallback(() => {
+    if (deleteTarget) askDelete(deleteTarget);
+  }, [deleteTarget, askDelete]);
+
+  const confirmDelete = useCallback(() => {
+    if (!templateId || !deleteTarget || !deleteDiagnosis) return;
+    run(
+      () =>
+        deleteTemplateVersion(templateId, deleteTarget.version, {
+          expected_version_id: deleteDiagnosis.version_id,
+          expected_revision: deleteDiagnosis.revision,
+          expected_item_count: deleteDiagnosis.item_count,
+          reason: deleteReason.trim(),
+          idempotency_key: deleteIdempotencyKey.current,
+        }),
+      () => {
+        closeDeleteDialog();
+        onDiscarded?.();
+      },
+    );
+  }, [
+    templateId,
+    deleteTarget,
+    deleteDiagnosis,
+    deleteReason,
+    run,
+    closeDeleteDialog,
+    onDiscarded,
+  ]);
 
   const submitPublish = useCallback(() => {
     if (!templateId || !publishTarget || !publishPeriod) return;
@@ -524,6 +615,121 @@ export function useChecklistVersionActions(args: {
             />
           </CfDialog>
         ) : null}
+
+        {deleteTarget ? (
+          <CfDialog
+            open
+            title={`Excluir definitivamente v${deleteTarget.version}`}
+            onClose={() => !busy && closeDeleteDialog()}
+            closeAriaLabel="Fechar exclusão"
+          >
+            <div className="cf-validation-panel__form">
+              {deleteDiagBusy ? (
+                <p className="cf-validation-panel__doc-detail">
+                  Consultando vínculos da versão…
+                </p>
+              ) : null}
+              {deleteDiagError ? (
+                <>
+                  <p className="cf-validation-panel__doc-detail">
+                    {deleteDiagError.message}
+                  </p>
+                  <div className="cf-validation-panel__form-actions">
+                    <ActionButton
+                      variant="primary"
+                      disabled={busy || deleteDiagBusy}
+                      onClick={retryDeleteDiagnosis}
+                    >
+                      Tentar novamente
+                    </ActionButton>
+                    <ActionButton
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={closeDeleteDialog}
+                    >
+                      Voltar
+                    </ActionButton>
+                  </div>
+                </>
+              ) : null}
+              {deleteDiagnosis?.outcome === "blocked" ? (
+                <>
+                  <p className="cf-validation-panel__doc-detail">
+                    A versão v{deleteTarget.version} não pode ser
+                    excluída porque ainda possui vínculos:
+                  </p>
+                  <ul className="cf-validation-panel__doc-detail">
+                    {(deleteDiagnosis.reasons ?? []).map((reason) => (
+                      <li key={reason.code}>
+                        {reason.label} ({reason.count})
+                        {reason.periods?.length
+                          ? ` — competências ${reason.periods.join(", ")}`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="cf-validation-panel__form-actions">
+                    <ActionButton
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={closeDeleteDialog}
+                    >
+                      Voltar
+                    </ActionButton>
+                  </div>
+                </>
+              ) : null}
+              {deleteDiagnosis?.outcome === "eligible" ? (
+                <>
+                  <p className="cf-validation-panel__doc-detail">
+                    A versão v{deleteTarget.version} (
+                    {STATUS_LABELS[deleteDiagnosis.status] ??
+                      deleteDiagnosis.status}
+                    ) e seus {deleteDiagnosis.item_count} itens de
+                    configuração serão removidos de forma definitiva e
+                    irreversível. Competências, snapshots e histórico de
+                    auditoria não são afetados.
+                  </p>
+                  <CfTextField
+                    label={`Digite v${deleteTarget.version} para confirmar`}
+                    required
+                    value={deleteConfirmation}
+                    disabled={busy}
+                    onChange={setDeleteConfirmation}
+                  />
+                  <CfTextAreaField
+                    label="Motivo da exclusão (opcional)"
+                    rows={3}
+                    fullWidth
+                    value={deleteReason}
+                    disabled={busy}
+                    onChange={setDeleteReason}
+                  />
+                  <div className="cf-validation-panel__form-actions">
+                    <ActionButton
+                      variant="primary"
+                      disabled={
+                        busy ||
+                        deleteConfirmation.trim() !==
+                          `v${deleteTarget.version}`
+                      }
+                      onClick={confirmDelete}
+                    >
+                      Excluir definitivamente
+                    </ActionButton>
+                    <ActionButton
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={closeDeleteDialog}
+                    >
+                      Voltar
+                    </ActionButton>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </CfDialog>
+        ) : null}
       </>
     ),
     [
@@ -538,6 +744,15 @@ export function useChecklistVersionActions(args: {
       confirmInactivate,
       discardTarget,
       confirmDiscard,
+      deleteTarget,
+      deleteDiagBusy,
+      deleteDiagError,
+      deleteDiagnosis,
+      deleteConfirmation,
+      deleteReason,
+      confirmDelete,
+      closeDeleteDialog,
+      retryDeleteDiagnosis,
     ],
   );
 
@@ -550,6 +765,7 @@ export function useChecklistVersionActions(args: {
     askReturn,
     askInactivate,
     askDiscard,
+    askDelete,
     dialogs,
   };
 }
@@ -620,6 +836,17 @@ export function VersionStatusActions(props: {
         >
           <Archive {...VERSION_ACTION_ICON_PROPS} />
           Inativar
+        </ActionButton>
+      ) : null}
+      {version.status !== "DRAFT" ? (
+        <ActionButton
+          variant="ghost"
+          className="cf-action-btn--danger"
+          disabled={busy}
+          onClick={() => actions.askDelete(version)}
+        >
+          <Trash2 {...VERSION_ACTION_ICON_PROPS} />
+          Excluir versão
         </ActionButton>
       ) : null}
     </>

@@ -26,6 +26,8 @@ const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const discardMock = vi.fn();
 const listEventsMock = vi.fn();
+const diagnoseDeleteMock = vi.fn();
+const deleteMock = vi.fn();
 
 vi.mock("../../api/adminApi", () => ({
   listChecklistTemplates: (...args: unknown[]) =>
@@ -43,6 +45,9 @@ vi.mock("../../api/adminApi", () => ({
   inactivateTemplateVersion: (...args: unknown[]) =>
     inactivateMock(...args),
   discardTemplateVersion: (...args: unknown[]) => discardMock(...args),
+  diagnoseTemplateVersionDeletion: (...args: unknown[]) =>
+    diagnoseDeleteMock(...args),
+  deleteTemplateVersion: (...args: unknown[]) => deleteMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
 }));
 
@@ -76,12 +81,6 @@ const VERSION_DRAFT = {
   revision: 1,
 };
 
-const VERSION_REVIEW = {
-  ...VERSION_DRAFT,
-  version_id: "v-3",
-  version: 3,
-  status: "REVIEW",
-};
 
 function setupHappy() {
   listTemplatesMock.mockResolvedValue([TEMPLATE]);

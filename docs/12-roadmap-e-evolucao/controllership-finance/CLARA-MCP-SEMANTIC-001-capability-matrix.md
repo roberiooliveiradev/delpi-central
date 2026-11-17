@@ -136,6 +136,7 @@ com justificativa por efeito está no
 | checklist.version_discard | delete | `checklist.version_discard` | manage | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
 | checklist.version_publish | execute | `checklist.version_publish` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 | checklist.version_inactivate | delete | `checklist.version_inactivate` | manage | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
+| checklist.version_delete | delete | `checklist.version_delete` | manage | DESTRUCTIVE | prepare→consent→commit | MIGRATED |
 | checklist.doc_requirement | execute | `checklist.doc_requirement` | manage | GOVERNED_HIGH | prepare→consent→commit | MIGRATED |
 
 ## 3. Propriedades preservadas (não por linha, por mecanismo)

@@ -461,3 +461,30 @@ def test_reason_normalizes_blank_and_keeps_short_text():
     assert _reason(" ok ") == "ok"
     with pytest.raises(CompetenceDeleteInvalid):
         _reason("x" * 501)
+
+
+def test_delete_forwards_dependents_confirmation(_auth_pipeline, repo):
+    _authorize_manage(_auth_pipeline, repo)
+    manifest = {"closing_document": 1, "document_message": 3}
+    response = _delete(
+        _client(),
+        headers=_headers(),
+        body={
+            **DELETE_BODY,
+            "delete_dependents": True,
+            "expected_dependents": manifest,
+        },
+    )
+    assert response.status_code == 200
+    call = repo.delete_competence.call_args.kwargs
+    assert call["delete_dependents"] is True
+    assert call["expected_dependents"] == manifest
+
+
+def test_delete_default_dependents_flags(_auth_pipeline, repo):
+    _authorize_manage(_auth_pipeline, repo)
+    response = _delete(_client(), headers=_headers())
+    assert response.status_code == 200
+    call = repo.delete_competence.call_args.kwargs
+    assert call["delete_dependents"] is False
+    assert call["expected_dependents"] is None

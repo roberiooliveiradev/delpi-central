@@ -165,22 +165,29 @@ class ClosingChecklistRepository:
     ) -> list[dict[str, Any]]:
         """Eventos append-only das versões do template (P6 auditoria)."""
         self.get_template(template_id)
+        version_expr = (
+            "COALESCE(v.version, "
+            "CASE WHEN e.detail ? 'version' AND "
+            "e.detail->>'version' ~ '^[0-9]+$' "
+            "THEN (e.detail->>'version')::int END)"
+        )
         clauses = [
             "e.entity_type = 'checklist_template_version'",
-            "v.template_id = %s",
+            "(v.template_id = %s OR (v.version_id IS NULL AND "
+            "e.detail->>'template_id' = %s))",
         ]
-        params: list[Any] = [template_id]
+        params: list[Any] = [template_id, template_id]
         if version is not None:
-            clauses.append("v.version = %s")
+            clauses.append(f"{version_expr} = %s")
             params.append(version)
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 f"""
                 SELECT e.event_id, e.entity_id, e.competence_id,
                        e.event_type, e.actor_subject, e.detail,
-                       e.created_at, v.version
+                       e.created_at, {version_expr} AS version
                   FROM {_q('closing_audit_event')} e
-                  JOIN {_q('checklist_template_version')} v
+                  LEFT JOIN {_q('checklist_template_version')} v
                     ON v.version_id = e.entity_id
                  WHERE {' AND '.join(clauses)}
                  ORDER BY e.created_at DESC
@@ -223,7 +230,9 @@ class ClosingChecklistRepository:
                             (template_id,),
                         )
                         latest = cur.fetchone()
-                        next_version = (latest["version"] + 1) if latest else 1
+                        next_version = self._next_version_locked(
+                            cur, template_id
+                        )
                         cur.execute(
                             f"""
                             INSERT INTO {_q('checklist_template_version')}
@@ -942,6 +951,8 @@ class ClosingChecklistRepository:
         reason: str,
         idempotency_key: str,
         channel: str = "portal",
+        delete_dependents: bool = False,
+        expected_dependents: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         from controllership_finance_app.infrastructure.persistence.competence_deletion import (
             delete_competence,
@@ -954,7 +965,74 @@ class ClosingChecklistRepository:
             reason=reason,
             idempotency_key=idempotency_key,
             channel=channel,
+            delete_dependents=delete_dependents,
+            expected_dependents=expected_dependents,
         )
+
+    def diagnose_template_version_deletion(
+        self, template_id: str, version: int
+    ) -> dict[str, Any]:
+        from controllership_finance_app.infrastructure.persistence.checklist_version_deletion import (
+            diagnose_template_version_deletion,
+        )
+
+        return diagnose_template_version_deletion(template_id, version)
+
+    def delete_template_version(
+        self,
+        template_id: str,
+        version: int,
+        *,
+        actor: str,
+        expected_version_id: str,
+        expected_revision: int,
+        expected_item_count: int,
+        reason: str,
+        idempotency_key: str,
+        channel: str = "portal",
+    ) -> dict[str, Any]:
+        from controllership_finance_app.infrastructure.persistence.checklist_version_deletion import (
+            delete_template_version,
+        )
+
+        return delete_template_version(
+            template_id,
+            version,
+            actor=actor,
+            expected_version_id=expected_version_id,
+            expected_revision=expected_revision,
+            expected_item_count=expected_item_count,
+            reason=reason,
+            idempotency_key=idempotency_key,
+            channel=channel,
+        )
+
+    def _next_version_locked(self, cur, template_id: str) -> int:
+        """Próximo número de versão sem reutilização silenciosa.
+
+        Alta-marca = maior versão existente ou já citada na trilha
+        append-only (versão excluída definitivamente nunca volta).
+        """
+        cur.execute(
+            f"""
+            SELECT GREATEST(
+                COALESCE((
+                    SELECT max(version)
+                      FROM {_q('checklist_template_version')}
+                     WHERE template_id = %s
+                ), 0),
+                COALESCE((
+                    SELECT max((detail->>'version')::int)
+                      FROM {_q('closing_audit_event')}
+                     WHERE entity_type = 'checklist_template_version'
+                       AND detail->>'template_id' = %s
+                       AND detail->>'version' ~ '^[0-9]+$'
+                ), 0)
+            ) AS high_water
+            """,
+            (template_id, template_id),
+        )
+        return int(cur.fetchone()["high_water"]) + 1
 
     def list_competence_items(
         self,
@@ -1299,17 +1377,9 @@ class ClosingChecklistRepository:
                                 "intenção de publicar checklist vazio."
                             )
 
-                        cur.execute(
-                            f"""
-                            SELECT max(version) AS max_version
-                              FROM {_q('checklist_template_version')}
-                             WHERE template_id = %s
-                            """,
-                            (template_id,),
+                        next_version = self._next_version_locked(
+                            cur, template_id
                         )
-                        next_version = (
-                            cur.fetchone()["max_version"] or 0
-                        ) + 1
                         published_versions: list[dict[str, Any]] = []
                         audit_event_ids: list[str] = []
                         try:

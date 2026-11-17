@@ -384,8 +384,10 @@ def _present_competence_delete(p: dict) -> dict:
         ),
         effect=(
             "a competência deixa de existir. A exclusão é irreversível "
-            "por este canal e só ocorre sem documentos, checklist, "
-            "pendências, pacotes ou outras dependências operacionais. "
+            "e remove também documentos, mensagens, itens de checklist "
+            "e demais dados exclusivos listados no diagnóstico; "
+            "competências com artefatos oficiais ou referências "
+            "compartilhadas são recusadas. "
             "A auditoria de abertura permanece."
         ),
         motivation=reason or None,
@@ -835,6 +837,24 @@ def _present_tpl_inactivate(p: dict) -> dict:
     )
 
 
+def _present_tpl_version_delete(p: dict) -> dict:
+    reason = " ".join(str(p.get("reason") or "").split())
+    return _simple(
+        "Excluir definitivamente a versão",
+        (
+            f"v{p.get('version')} do template "
+            f"{_short(p.get('template_id'))}"
+        ),
+        effect=(
+            "DESTRUTIVO e irreversível: a versão e seus itens de "
+            "configuração são removidos. Competências, snapshots e "
+            "demais vínculos bloqueiam a operação; a trilha de "
+            "auditoria é preservada."
+        ),
+        motivation=reason or None,
+    )
+
+
 def _present_tpl_doc_requirement(p: dict) -> dict:
     return _simple(
         "Atualizar o requisito documental do item",
@@ -900,6 +920,7 @@ _PRESENTERS: dict[str, Callable[[dict], dict]] = {
     "checklist.version_discard": _present_tpl_discard,
     "checklist.version_publish": _present_tpl_publish,
     "checklist.version_inactivate": _present_tpl_inactivate,
+    "checklist.version_delete": _present_tpl_version_delete,
     "checklist.doc_requirement": _present_tpl_doc_requirement,
     **LNF_PRESENTERS,
 }

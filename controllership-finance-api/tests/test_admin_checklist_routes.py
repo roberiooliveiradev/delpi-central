@@ -525,3 +525,195 @@ def test_discard_stale_revision_conflict(_auth_pipeline, repo):
     assert (
         response.json()["data"]["error"]["code"] == "stale_revision"
     )
+
+
+# --- definitive version deletion (CF-UX-054-R3) ------------------------------
+
+DELETE_DIAG_URL = (
+    f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1"
+    "/deletion-eligibility"
+)
+DELETE_URL = (
+    f"/admin/checklist-templates/{TEMPLATE_ID}/versions/1/delete"
+)
+VERSION_ID = "22222222-2222-4222-8222-222222222222"
+DELETE_BODY = {
+    "expected_version_id": VERSION_ID,
+    "expected_revision": 3,
+    "expected_item_count": 2,
+    "reason": "versão substituída",
+    "idempotency_key": "del-test-0001",
+}
+
+
+def test_delete_diagnosis_happy_path(_auth_pipeline, repo):
+    repo.diagnose_template_version_deletion.return_value = {
+        "outcome": "eligible",
+        "template_id": TEMPLATE_ID,
+        "version_id": VERSION_ID,
+        "version": 1,
+        "status": "INACTIVE",
+        "revision": 3,
+        "item_count": 2,
+        "reasons": [],
+        "dependents": {"exclusive": []},
+    }
+    response = _client().get(DELETE_DIAG_URL, headers=_headers())
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["outcome"] == "eligible"
+    repo.diagnose_template_version_deletion.assert_called_once_with(
+        TEMPLATE_ID, 1
+    )
+
+
+def test_delete_diagnosis_access_only_forbidden(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _client().get(DELETE_DIAG_URL, headers=_headers())
+    assert response.status_code == 403
+    repo.diagnose_template_version_deletion.assert_not_called()
+
+
+def test_delete_happy_path(_auth_pipeline, repo):
+    repo.delete_template_version.return_value = {
+        "version_id": VERSION_ID,
+        "template_id": TEMPLATE_ID,
+        "version": 1,
+        "status": "INACTIVE",
+        "deleted": True,
+        "deleted_at": "2026-04-20T10:00:00Z",
+        "audit_reference": "evt-1",
+        "replayed": False,
+        "dependents": {"checklist_template_item": 2},
+    }
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["deleted"] is True
+    kwargs = repo.delete_template_version.call_args.kwargs
+    assert kwargs["expected_version_id"] == VERSION_ID
+    assert kwargs["expected_revision"] == 3
+    assert kwargs["expected_item_count"] == 2
+    assert kwargs["idempotency_key"] == "del-test-0001"
+    assert kwargs["channel"] == "portal"
+
+
+def test_delete_replayed_reported(_auth_pipeline, repo):
+    repo.delete_template_version.return_value = {
+        "version_id": VERSION_ID,
+        "version": 1,
+        "deleted": True,
+        "deleted_at": "2026-04-20T10:00:00Z",
+        "audit_reference": "evt-1",
+        "replayed": True,
+        "dependents": None,
+    }
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["replayed"] is True
+    assert "já registrada" in response.json()["message"]
+
+
+def test_delete_access_only_forbidden(_auth_pipeline, repo):
+    _auth_pipeline["rbac"] = _rbac(permissions=[ACCESS])
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 403
+    repo.delete_template_version.assert_not_called()
+
+
+def test_delete_no_token_unauthorized(repo):
+    response = _client().post(DELETE_URL, json=DELETE_BODY)
+    assert response.status_code == 401
+    repo.delete_template_version.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "body,missing",
+    [
+        ({**DELETE_BODY, "expected_version_id": ""}, "expected_version_id"),
+        ({**DELETE_BODY, "idempotency_key": ""}, "idempotency_key"),
+        (
+            {**DELETE_BODY, "expected_item_count": -1},
+            "expected_item_count",
+        ),
+    ],
+)
+def test_delete_manifest_validation_422(
+    _auth_pipeline, repo, body, missing
+):
+    response = _client().post(
+        DELETE_URL, json=body, headers=_headers()
+    )
+    assert response.status_code == 422
+    repo.delete_template_version.assert_not_called()
+
+
+def test_delete_blocked_409(_auth_pipeline, repo):
+    repo.delete_template_version.side_effect = de.VersionDeleteBlocked(
+        "A versão tem vínculos que impedem a exclusão definitiva.",
+        details={
+            "outcome": "blocked",
+            "reasons": [
+                {
+                    "code": "monthly_competence",
+                    "count": 1,
+                    "label": "competências vinculadas",
+                }
+            ],
+        },
+    )
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 409
+    error = response.json()["data"]["error"]
+    assert error["code"] == "version_delete_blocked"
+    assert error["details"]["reasons"][0]["code"] == (
+        "monthly_competence"
+    )
+
+
+def test_delete_manifest_conflict_409(_auth_pipeline, repo):
+    repo.delete_template_version.side_effect = de.VersionDeleteConflict(
+        "O manifesto da versão diverge do estado atual."
+    )
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 409
+    assert (
+        response.json()["data"]["error"]["code"]
+        == "version_delete_conflict"
+    )
+
+
+def test_delete_unavailable_503(_auth_pipeline, repo):
+    repo.delete_template_version.side_effect = (
+        de.VersionDeleteUnavailable("persistência indisponível")
+    )
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 503
+    assert (
+        response.json()["data"]["error"]["code"]
+        == "version_delete_unavailable"
+    )
+
+
+def test_delete_version_not_found_404(_auth_pipeline, repo):
+    repo.delete_template_version.side_effect = de.VersionNotFound(
+        "Versão de checklist não encontrada."
+    )
+    response = _client().post(
+        DELETE_URL, json=DELETE_BODY, headers=_headers()
+    )
+    assert response.status_code == 404
+    assert (
+        response.json()["data"]["error"]["code"] == "version_not_found"
+    )

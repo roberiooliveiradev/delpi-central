@@ -9,6 +9,8 @@ efetivo (Core é a única autoridade). Consumida pela página
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Header, Query, Request
 from pydantic import BaseModel, Field
 
@@ -91,15 +93,33 @@ class ReturnToDraftRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=2000)
 
 
+class DeleteTemplateVersionRequest(BaseModel):
+    """Exclusão definitiva de versão de checklist (CF-UX-054-R3).
+
+    `expected_*` selam o manifesto do diagnóstico — divergência de
+    identidade, revisão ou contagem de itens é conflito.
+    """
+
+    expected_version_id: str = Field(min_length=36, max_length=36)
+    expected_revision: int = Field(ge=1)
+    expected_item_count: int = Field(ge=0)
+    reason: str = Field(default="", max_length=500)
+    idempotency_key: str = Field(min_length=8, max_length=128)
+
+
 def _repository() -> ClosingChecklistRepository:
     return ClosingChecklistRepository()
 
 
 def _domain_fail(exc: ChecklistDomainError, operation_id: str):
+    error: dict[str, Any] = {"code": exc.code}
+    details = getattr(exc, "details", None)
+    if details:
+        error["details"] = details
     return fail(
         exc.message,
         exc.status,
-        data={"error": {"code": exc.code}},
+        data={"error": error},
         operation_id=operation_id,
     )
 
@@ -406,4 +426,75 @@ def inactivate_checklist_template_version(
         inactivated,
         message="Versão inativada prospectivamente.",
         operation_id="inactivate_checklist_template_version",
+    )
+
+
+@router.get(
+    "/{template_id}/versions/{version}/deletion-eligibility",
+    operation_id="diagnose_checklist_template_version_deletion",
+)
+def diagnose_checklist_template_version_deletion(
+    request: Request, template_id: str, version: int
+):
+    """Diagnóstico da exclusão definitiva (CF-UX-054-R3).
+
+    Inventaria vínculos impeditivos (competências via FK, snapshots por
+    proveniência, tabelas desconhecidas fail-closed) e dependentes
+    exclusivos (itens) que seriam removidos junto.
+    """
+    authorized_admin(request)
+    try:
+        diagnosis = _repository().diagnose_template_version_deletion(
+            template_id, version
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(
+            exc, "diagnose_checklist_template_version_deletion"
+        )
+    return ok(
+        diagnosis,
+        operation_id="diagnose_checklist_template_version_deletion",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version}/delete",
+    operation_id="delete_checklist_template_version",
+)
+def delete_checklist_template_version(
+    request: Request,
+    template_id: str,
+    version: int,
+    body: DeleteTemplateVersionRequest,
+):
+    """Exclusão definitiva e transacional de versão elegível.
+
+    Remove itens + versão (nunca competências/snapshots — eles
+    bloqueiam). Distinto do descarte de DRAFT (DELETE na versão, só
+    `expected_revision`): esta operação admite qualquer status sem
+    vínculos e preserva a trilha append-only via `VERSION_DELETED`.
+    """
+    user = authorized_admin(request)
+    try:
+        result = _repository().delete_template_version(
+            template_id,
+            version,
+            actor=actor_subject(user),
+            expected_version_id=body.expected_version_id,
+            expected_revision=body.expected_revision,
+            expected_item_count=body.expected_item_count,
+            reason=body.reason,
+            idempotency_key=body.idempotency_key,
+            channel="portal",
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "delete_checklist_template_version")
+    return ok(
+        result,
+        message=(
+            "Exclusão já registrada."
+            if result.get("replayed")
+            else "Versão de checklist excluída definitivamente."
+        ),
+        operation_id="delete_checklist_template_version",
     )

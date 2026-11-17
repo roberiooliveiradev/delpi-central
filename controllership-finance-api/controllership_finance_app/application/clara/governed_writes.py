@@ -32,6 +32,7 @@ from controllership_finance_app.domain.closing_checklist.errors import (
     ChecklistDomainError,
     CompetenceDeleteBlocked,
     MissingReason,
+    VersionDeleteBlocked,
 )
 from controllership_finance_app.application.clara.entry_audit_capabilities import (
     build_entry_audit_capability_table,
@@ -200,6 +201,20 @@ def _state_present(state: dict) -> bool:
     return False
 
 
+def _dependents_manifest(diagnosis: dict) -> dict[str, int]:
+    """Manifesto {code: count} dos dependentes exclusivos do
+    diagnóstico de exclusão — selado no snapshot (staleness) e
+    revalidado sob lock pela BFF na execução."""
+    exclusive = (diagnosis.get("dependents") or {}).get(
+        "exclusive"
+    ) or []
+    return {
+        str(item.get("code")): int(item.get("count") or 0)
+        for item in exclusive
+        if item.get("code") and int(item.get("count") or 0) > 0
+    }
+
+
 class ClaraGovernedWrites:
     """Orquestrador PREPARE/ACT — delega execução aos repositórios canônicos."""
 
@@ -347,21 +362,29 @@ class ClaraGovernedWrites:
                 diagnosis = self._checklist.diagnose_competence_deletion(
                     str(period)
                 )
-                if diagnosis.get("outcome") != "eligible":
+                if diagnosis.get("outcome") not in (
+                    "eligible",
+                    "eligible_with_dependents",
+                ):
                     reasons = diagnosis.get("reasons") or []
+                    dependents = (
+                        diagnosis.get("dependents") or {}
+                    ).get("exclusive") or []
                     summary = ", ".join(
                         f"{item.get('label')} ({item.get('count')})"
-                        for item in reasons
+                        for item in [*reasons, *dependents]
                     ) or "dependência não detalhada"
                     raise CompetenceDeleteBlocked(
                         "A competência não pode ser excluída: " + summary,
                         details=diagnosis,
                     )
+                manifest = _dependents_manifest(diagnosis)
                 return {
                     "competence": {
                         "status": diagnosis.get("status"),
                         "competence_id": diagnosis.get("competence_id"),
-                        "dependency_count": 0,
+                        "dependency_count": len(manifest),
+                        "dependents": manifest,
                     }
                 }
             if capability in (
@@ -484,6 +507,35 @@ class ClaraGovernedWrites:
                     "template_id": str(template_id),
                     "template": self._template_state(template_id),
                 }
+            if capability == "checklist.version_delete":
+                template_id = params.get("template_id")
+                version = params.get("version")
+                if template_id is None or version is None:
+                    return {}
+                diagnosis = (
+                    self._checklist.diagnose_template_version_deletion(
+                        str(template_id), int(version)
+                    )
+                )
+                if diagnosis.get("outcome") != "eligible":
+                    reasons = diagnosis.get("reasons") or []
+                    summary = ", ".join(
+                        f"{item.get('label')} ({item.get('count')})"
+                        for item in reasons
+                    ) or "vínculo não detalhado"
+                    raise VersionDeleteBlocked(
+                        "A versão do checklist não pode ser excluída: "
+                        + summary,
+                        details=diagnosis,
+                    )
+                return {
+                    "template_id": str(template_id),
+                    "version": int(version),
+                    "version_id": str(diagnosis.get("version_id") or ""),
+                    "status": diagnosis.get("status"),
+                    "revision": diagnosis.get("revision"),
+                    "item_count": diagnosis.get("item_count"),
+                }
             if capability.startswith("checklist."):
                 template_id = params.get("template_id")
                 version = params.get("version")
@@ -574,6 +626,49 @@ class ClaraGovernedWrites:
             "state": row[0] if row else None,
             "package_version_id": str(row[1]) if row else None,
         }
+
+    def _execute_competence_delete(self, p: dict, actor: str) -> dict:
+        """Exclusão governada de competência pelo caso de uso canônico.
+
+        O manifesto de dependentes é relido do diagnóstico — o
+        snapshot selado já foi comparado ao atual (staleness) e a BFF
+        revalida `expected_dependents` sob lock (OCC), então qualquer
+        divergência vira conflito tipado, nunca exclusão parcial.
+        """
+        diagnosis = self._checklist.diagnose_competence_deletion(
+            str(p["period"])
+        )
+        manifest = _dependents_manifest(diagnosis)
+        return self._checklist.delete_competence(
+            p["period"],
+            actor=actor,
+            expected_competence_id=str(p["expected_competence_id"]),
+            reason=p.get("reason") or "",
+            idempotency_key=p["idempotency_key"],
+            channel="mcp",
+            delete_dependents=bool(manifest),
+            expected_dependents=manifest or None,
+        )
+
+    def _execute_version_delete(self, p: dict, actor: str) -> dict:
+        """Exclusão definitiva de versão de checklist pelo caso de uso
+        canônico — `expected_*` vem do mesmo diagnóstico selado."""
+        diagnosis = (
+            self._checklist.diagnose_template_version_deletion(
+                str(p["template_id"]), int(p["version"])
+            )
+        )
+        return self._checklist.delete_template_version(
+            str(p["template_id"]),
+            int(p["version"]),
+            actor=actor,
+            expected_version_id=str(diagnosis.get("version_id") or ""),
+            expected_revision=int(diagnosis.get("revision") or 0),
+            expected_item_count=int(diagnosis.get("item_count") or 0),
+            reason=p.get("reason") or "",
+            idempotency_key=p["idempotency_key"],
+            channel="mcp",
+        )
 
     def _competence_state(self, period: str) -> dict:
         with plugins_db_connect() as conn:
@@ -1010,16 +1105,7 @@ class ClaraGovernedWrites:
                     f"({p.get('expected_competence_id')})"
                 ),
                 "execute": lambda p, actor, groups: (
-                    self._checklist.delete_competence(
-                        p["period"],
-                        actor=actor,
-                        expected_competence_id=str(
-                            p["expected_competence_id"]
-                        ),
-                        reason=p.get("reason") or "",
-                        idempotency_key=p["idempotency_key"],
-                        channel="mcp",
-                    )
+                    self._execute_competence_delete(p, actor)
                 ),
                 "verify": lambda p, result: bool(
                     (result or {}).get("deleted")
@@ -2235,6 +2321,34 @@ class ClaraGovernedWrites:
                         p["template_id"], p["version"]
                     ).get("status")
                     == "INACTIVE"
+                ),
+            },
+            "checklist.version_delete": {
+                "gate": "manage",
+                "destructive": True,
+                "resource_type": "checklist_template_version",
+                "resource_key": lambda p: (
+                    f"{p.get('template_id')}:v{p.get('version')}"
+                ),
+                "required_params": (
+                    "template_id", "version", "idempotency_key"
+                ),
+                "describe": lambda p: (
+                    f"excluir definitivamente a versão "
+                    f"v{p.get('version')} do template "
+                    f"{p.get('template_id')} (irreversível)"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._execute_version_delete(p, actor)
+                ),
+                "verify": lambda p, result: bool(
+                    (result or {}).get("deleted")
+                ),
+                "postcondition": lambda p, result, actor: (
+                    self._template_version_state(
+                        p["template_id"], p["version"]
+                    ).get("status")
+                    == "MISSING"
                 ),
             },
             "checklist.doc_requirement": {
