@@ -14,6 +14,10 @@ const ACTION_BAR = readFileSync(
   resolve(__dirname, "../components/PrcActionBar.tsx"),
   "utf8",
 );
+const API = readFileSync(
+  resolve(__dirname, "../api/productRegistrationApi.ts"),
+  "utf8",
+);
 const SPECS = readFileSync(
   resolve(__dirname, "../components/prcActionSpecs.ts"),
   "utf8",
@@ -77,6 +81,24 @@ describe("PrcDetailPage — hero UX V3", () => {
   it("reexecução de conclusão usa ref estável, não querySelector frágil", () => {
     expect(SRC).not.toMatch(/document\s*\.?\s*querySelector\(/);
     expect(SRC).toMatch(/actionsRef\.current\?\.scrollIntoView/);
+  });
+});
+
+describe("runAction — recibo de conclusão não substitui o detalhe", () => {
+  /* Regressão: `complete` retorna recibo sem `allowedActions`; adotá-lo
+   * como detalhe quebrava `detail.allowedActions.includes(...)` no
+   * render seguinte (TypeError → tela branca em ?tab=verification). */
+  it("só adota res.data como detalhe quando o payload tem forma de caso", () => {
+    expect(SRC).toMatch(
+      /"allowedActions" in res\.data[\s\S]{0,140}?setDetail\(res\.data\)/,
+    );
+  });
+
+  it("contrato tipa o recibo de conclusão (não é PrcRequestDetail)", () => {
+    expect(API).toMatch(/PrcCompletionReceipt/);
+    expect(API).toMatch(
+      /Envelope<PrcRequestDetail \| PrcCompletionReceipt>/,
+    );
   });
 });
 

@@ -270,7 +270,13 @@ export function PrcDetailPage({
           },
           newIdemKey(`prc-${spec.action}-${requestId}`),
         );
-        setDetail(res.data);
+        /* Ações retornam o detalhe serializado; `complete` retorna o
+         * recibo de conclusão (sem `allowedActions`). Adotar como
+         * detalhe só quando o payload tiver a forma do caso — a fonte
+         * autoritativa é o refetch logo abaixo. */
+        if ("allowedActions" in res.data) {
+          setDetail(res.data);
+        }
         setEditing(false);
         setFeedback({
           kind: "success",

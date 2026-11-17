@@ -687,12 +687,28 @@ export type PrcRequestInformationBody = {
   pendingFields?: string[];
 };
 
+/** Recibo retornado por `actions/complete`/`verify-and-complete`
+ * (PRC-REF-020): confirmação da conclusão — NÃO é o detalhe
+ * serializado do caso (não carrega `allowedActions`/`technicalDraft`). */
+export type PrcCompletionReceipt = {
+  status: string;
+  requestId: string;
+  recordId?: string;
+  revisionNumber?: number | null;
+  publishedRevisionNumber?: number | null;
+  technicalChange?: boolean;
+  changeKind?: string | null;
+  verifiedAt?: string;
+  verificationId?: string;
+  officialCode?: string;
+};
+
 export async function prcAction(
   requestId: string,
   actionPath: string,
   body: Record<string, unknown> | PrcRequestInformationBody,
   idempotencyKey?: string,
-): Promise<Envelope<PrcRequestDetail>> {
+): Promise<Envelope<PrcRequestDetail | PrcCompletionReceipt>> {
   return postJson(
     `${BASE}/requests/${requestId}/actions/${actionPath}`,
     body,
