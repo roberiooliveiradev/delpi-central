@@ -63,9 +63,11 @@ jobs:
           expected = sorted([
               "get_host_health", "list_managed_services",
               "get_service_health", "get_deployment_revision",
+              "list_servers", "get_server_health",
+              "get_infrastructure_health", "get_server_services",
           ])
           assert names == expected, (names, expected)
-          print("tool inventory: 4 read-only tools")
+          print("tool inventory: 8 read-only tools")
           PY
       - name: Build constrained image, without starting containers
         run: docker build --pull -f linux-ops-mcp/Dockerfile -t delpi/linux-ops-mcp:ci .

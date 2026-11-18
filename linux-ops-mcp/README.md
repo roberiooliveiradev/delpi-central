@@ -1,17 +1,28 @@
-# Delpi Linux Operations MCP — P1 READ-ONLY em operacao; P2 PREPARE em desenvolvimento
+# Delpi Linux Operations MCP — P1 READ-ONLY multisservidor; P2 PREPARE em desenvolvimento
 
-**Status atualizado em 2026-11-15:** o operador confirmou login Keycloak OAuth, conexao do plugin ATLAS no ChatGPT e chamada real de leitura de observacao Linux via gateway HTTPS. As notas historicas abaixo documentam o periodo de preparacao anterior ao go-live. O MCP segue com **quatro tools READ apenas**, sem PREPARE/ACT. A evolucao P2.1-P2.2e adiciona somente modulos Python de governanca/atestacao **nao importados no `server.py`**. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
+**Status atualizado em 2026-11-18:** o ATLAS opera com **oito tools READ** (quatro legadas de host unico + quatro multisservidor). Continua sem PREPARE/ACT. A evolucao P2.x de deploy/HML permanece em modulos Python **nao importados no `server.py`**, isolada desta capacidade de monitoramento. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
 
 ## Scope and reuse
 
-Four typed READ tools; no ACT/PREPARE; no SSH, subprocess, shell, Docker socket, SQL or arbitrary filesystem access:
+Eight typed READ tools; no ACT/PREPARE; no SSH, subprocess, shell, Docker socket, SQL or arbitrary filesystem access.
 
-- `get_host_health`: curated CPU/RAM/swap/root disk and freshness.
+### Legacy single-host tools (compatibilidade)
+
+- `get_host_health`: curated CPU/RAM/swap/root disk and freshness for `LINUX_OPS_SERVER_ID`.
 - `list_managed_services`: allowlisted systemd unit states and Docker aggregate counts. **No container list**, since collector summary is intentionally limited.
 - `get_service_health`: allowlisted systemd unit. Service status is the *last observation*, **not current probe**.
 - `get_deployment_revision`: returns **not_available** until there is a canonical attested deployed-SHA source. GitHub HEAD is **never** reported as production revision.
 
-Data owner: existing `it-portal-api` `GET /servers/{server_id}/observations/latest`, permission `it-portal.access` and `it-portal.servers.view`; HTTP GET only. Existing Linux collector owns observation ingestion. No duplicate inventory collector, migrations, API schemas or gateway configuration.
+### Multiserver tools (inventario dinamico do Portal de TI)
+
+- `list_servers`: lista servidores do inventario oficial com filtros e paginacao (nao para no primeiro page_size=25).
+- `get_server_health`: saude de um servidor por UUID ou hostname (Linux e Windows); hostnames ambiguos devolvem candidatos.
+- `get_infrastructure_health`: consolidado de saude com concorrencia limitada e isolamento de falhas por servidor.
+- `get_server_services`: servicos Windows via `host-services` / dashboard; Linux via systemd allowlist da observacao.
+
+Arquitetura detalhada: [docs/06-multiserver-health.md](./docs/06-multiserver-health.md).
+
+Data owner: `it-portal-api` (`/servers`, `/observations/latest`, `/host-services`, `/dashboard/windows-services-health`), permissions `it-portal.access` + `it-portal.servers.view`; HTTP GET only. Coletores Linux/Windows existentes permanecem donos da ingestao. Sem segundo inventario, migrations ou schemas paralelos.
 
 MCP AuthN reuses `delpi_mcp.auth.mcp_transport_auth`, `delpi_auth` JWT validation and RBAC context, `delpi_mcp.resource_contract` metadata/challenge and `delpi_mcp.transport`. The IT Portal backend **independently rechecks** its permissions against the same human bearer. Any unavailable Core RBAC, bad issuer/aud/scope, missing permissions, stale token or service identity fails closed. Stale **observation** is allowed but explicitly labeled stale.
 
@@ -19,10 +30,12 @@ MCP AuthN reuses `delpi_mcp.auth.mcp_transport_auth`, `delpi_auth` JWT validatio
 
 Required runtime env, in approved canonical env storage:
 - `LINUX_OPS_IT_PORTAL_URL=http://it-portal-api:8000`: fixed internal service URL. The adapter denies outbound URLs except local IT Portal approved hosts.
-- `LINUX_OPS_SERVER_ID=<existing UUID>`: registered srv-api ID (no new server).
+- `LINUX_OPS_SERVER_ID=<existing UUID>`: ainda exigido pelas **tools legadas** de host unico; as tools multisservidor descobrem servidores dinamicamente pelo inventario.
 - `LINUX_OPS_MCP_RESOURCE_URL=https://.../apps/linux-ops-mcp/mcp`: **exact OAuth audience** for approved transport.
 - `KEYCLOAK_ISSUER=https://.../auth/realms/delpi`: real trusted issuer.
 - `PUBLIC_BASE_URL=https://...`: transport host/Origin allowlist derivation.
+
+Optional tuning (defaults seguros): `LINUX_OPS_STALE_AFTER_HOURS`, `LINUX_OPS_INFRA_CONCURRENCY`, `LINUX_OPS_INFRA_MAX_SERVERS`, thresholds `LINUX_OPS_{MEMORY,DISK,CPU}_{ATTENTION,CRITICAL}_PCT`.
 
 **Do not create arbitrary new compose/env files**: `.cursor/rules/platform-delivery-runtime-operations.mdc` requires use of existing canonical sources. This follow-up introduces an opt-in `linux-ops` profile in the canonical `infra/docker-compose.yml`, but **does not activate** it or modify gateway/Keycloak. Runtime deployment must be a separate, reviewed and authorized change.
 

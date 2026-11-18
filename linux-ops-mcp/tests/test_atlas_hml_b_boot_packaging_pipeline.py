@@ -241,10 +241,21 @@ def test_readiness_matrix_blocked_and_mcp_read_count():
     assert "PREPARE_DISABLED" in matrix.blocks
     try:
         from linux_ops_mcp.server import READ_TOOLS
-        assert len(READ_TOOLS) == 4
+        legacy = {
+            "get_deployment_revision", "get_host_health",
+            "get_service_health", "list_managed_services",
+        }
+        multiserver = {
+            "list_servers", "get_server_health",
+            "get_infrastructure_health", "get_server_services",
+        }
+        assert legacy <= READ_TOOLS
+        assert multiserver <= READ_TOOLS
+        assert len(READ_TOOLS) == 8
+        assert not any(name.startswith(("prepare_", "act_")) for name in READ_TOOLS)
     except Exception:
         # fallback: count @mcp.tool in server.py
         text = Path(__file__).resolve().parents[1].joinpath(
             "linux_ops_mcp", "server.py"
         ).read_text(encoding="utf-8")
-        assert text.count("@mcp.tool(") == 4
+        assert text.count("@mcp.tool(") == 8

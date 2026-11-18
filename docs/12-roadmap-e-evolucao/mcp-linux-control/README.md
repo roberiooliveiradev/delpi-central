@@ -35,6 +35,7 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 |---|---|---|---|
 | A0 | Inventario de `srv-api`, limites e riscos | DOCUMENTADO | Evidencia sem secrets, arquitetura de acesso aprovada |
 | A1 | MCP privado/publicado HTTPS + Keycloak OAuth + READ | **OPERADOR_CONFIRMOU_PASS** | Consulta real `get_host_health` pelo ChatGPT com snapshot/timestamp |
+| A1-M | Monitoramento multisservidor READ (Linux+Windows) via inventario IT Portal | **CODIGO_EM_PR / feat/atlas-multiserver-health-20261118** | 8 tools READ; list/health/infra/services; sem PREPARE/ACT; CI + testes locais; runtime ChatGPT pendente |
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |
@@ -54,7 +55,7 @@ Estados documentais nao substituem testes. `CODIGO_EM_PR` nao significa implemen
 
 | Capacidade futura do ATLAS | Fonte no Portal de TI | Precondicao |
 |---|---|---|
-| Consultar servidores e servicos Windows/Linux | `it-portal-api` (inventario, observacoes, services) | Leitura Core autorizada, dados com timestamp/proveniencia |
+| Consultar servidores e servicos Windows/Linux | `it-portal-api` (inventario, observacoes, services) | **A1-M em PR:** tools `list_servers` / `get_server_health` / `get_infrastructure_health` / `get_server_services`; runtime ChatGPT ainda pendente |
 | Preparar deploy de Portal TI/MFE/API | Repositorio + ATLAS deploy control plane | SHA/CI, allowlist, approval, HML antes de PROD |
 | Investigar incidente e recomendar acao | Observacoes, dependencia de servicos e GLPI (via owners) | Nao executar comandos; respostas sanitizadas |
 | Controlar um servico Windows explicitamente autorizado | Funcionalidade separada ja existente no Portal do TI | Permissao especifica, lista de servicos, confirmation/owner; **nao** herdar permissao de deploy |
