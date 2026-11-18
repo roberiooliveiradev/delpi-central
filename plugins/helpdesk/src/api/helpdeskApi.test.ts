@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchTicketAttachmentBlob } from "./helpdeskApi";
+import { fetchTicketAttachmentBlob, listCategories } from "./helpdeskApi";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -68,5 +68,53 @@ describe("fetchTicketAttachmentBlob", () => {
     });
     await expect(fetchTicketAttachmentBlob("1299", 1344)).resolves.toBeInstanceOf(Blob);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("listCategories", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("ordena categorias por nome em pt-BR com números naturais e mantém os IDs do GLPI", async () => {
+    const items = [
+      { id: 42, name: "TI 10" },
+      { id: 7, name: "Zebra" },
+      { id: 11, name: "Árvore" },
+      { id: 38, name: "TI 2" },
+      { id: 5, name: "análise" },
+    ];
+    const fetchMock = vi.fn(async () => fakeResponse(JSON.stringify({ items })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await listCategories();
+
+    expect(response.items).toEqual([
+      { id: 5, name: "análise" },
+      { id: 11, name: "Árvore" },
+      { id: 38, name: "TI 2" },
+      { id: 42, name: "TI 10" },
+      { id: 7, name: "Zebra" },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/apps/helpdesk-api/ticket-categories",
+      expect.objectContaining({ headers: expect.any(Object) }),
+    );
+    // O catálogo do GLPI permanece intacto; apenas a apresentação é ordenada.
+    expect(items[0]).toEqual({ id: 42, name: "TI 10" });
+  });
+
+  it("mantém desempate determinístico pelo ID para nomes equivalentes", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => fakeResponse(JSON.stringify({
+      items: [
+        { id: 20, name: "ÁREA" },
+        { id: 8, name: "area" },
+        { id: 15, name: "Área" },
+      ],
+    }))));
+
+    const response = await listCategories();
+
+    expect(response.items.map((item) => item.id)).toEqual([8, 15, 20]);
   });
 });

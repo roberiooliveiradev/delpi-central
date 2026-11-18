@@ -261,8 +261,22 @@ export function getTicket(id: string, signal?: AbortSignal) {
   return request<TicketDetail>(`/tickets/${id}`, { signal });
 }
 
+// Ordena o catálogo exibido nos seletores de categoria sem alterar IDs ou a ordem no GLPI.
+const ticketCategoryCollator = new Intl.Collator("pt-BR", {
+  sensitivity: "base",
+  numeric: true,
+});
+
 export function listCategories(signal?: AbortSignal) {
-  return request<{ items: { id: number; name: string }[] }>("/ticket-categories", { signal });
+  return request<{ items: { id: number; name: string }[] }>("/ticket-categories", { signal }).then(
+    (body) => ({
+      ...body,
+      items: [...body.items].sort(
+        (left, right) =>
+          ticketCategoryCollator.compare(left.name, right.name) || left.id - right.id,
+      ),
+    }),
+  );
 }
 
 export function listUrgencies(signal?: AbortSignal) {
