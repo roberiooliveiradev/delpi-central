@@ -1,5 +1,7 @@
 # Portal Engenharia MFE — Plano executável Devin: refatoração completa do Product Registration
 
+> **PRC_DOC_REANCHOR_2026_11_18 — atualizacao de precedencia:** O plano UX0-UX5 foi escrito antes das entregas PRC de novembro. Nao executar novamente como `PLANNED` o recorte conversa PRC/3 abas/modal/resumo UPDATE, confirmado em codigo e com deploy PRD reportado. O aceite limitado desse recorte nao torna automaticamente PASS todos os sete modulos nem autoriza novo deploy. [Fechamento consolidado PRC](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Estados legados permanecem para auditoria, nao como estado corrente deste recorte.
+
 > **Status:** `TARGET / IMPLEMENTATION_AUTHORIZED_FOR_DEV / NOT_IMPLEMENTED_BY_THIS_DOCUMENT / PRODUCTION_DEPLOY_SUSPENDED` — 2026-11-07.
 >
 > **Executor-alvo:** Devin (agente de desenvolvimento). **Owner do produto/MFE:** Portal Engenharia. **Owners preservados:** Core/Keycloak (AuthZ), Engineering API (workflows/persistência), api-delpi (leitura oficial TOTVS), TOTVS (SoT), EVA (ação semântica governada).
