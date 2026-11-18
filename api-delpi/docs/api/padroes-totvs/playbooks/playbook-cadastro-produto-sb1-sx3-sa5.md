@@ -635,3 +635,77 @@ Catálogo vivo consultado por **login de formulário** (`POST {restall} __USER/_
 | Negativos | permissão insuficiente, payload inválido, obrigatório ausente, código duplicado, timeout | recusa determinística, `UNKNOWN` sinalizado | — |
 
 Execução depende de **autorização explícita TST01** com identidade, dados e rollback definidos — `TEST_NOT_RUN` nesta fase.
+
+---
+
+## 13. Ratificação SA5 e aprofundamento CREATE (P0–P2, 19/11/2026)
+
+### 13.1 Rotina oficial SA5 — `PROVEN_SOURCE`
+
+`docs/13-fontes-totvs-protheus/73. CRM/Dmata061.prx` (+ `NãoCompilar/mata061_dlp.prx`): cópia DELPI de **MATA061 — "Cadastro de Produto X Fornecedores (Modelo 2)"**, browse MVC `MPFormModel` sobre SA5. É a rotina oficial de manutenção da amarração.
+
+**Achados do modelo oficial:**
+
+- Chave primária do modelo: `A5_FILIAL + A5_FORNECE + A5_LOJA + A5_PRODUTO + A5_FABR + A5_FALOJA + A5_REFGRD` (`SetPrimaryKey`) — mais rica que a tripla `FORNECE+LOJA+PRODUTO` usada nas leituras; `A5_FABR`/`A5_FALOJA` (fabricante/loja fabricante) e `A5_REFGRD` (referência de grade, default vazio) integram a identidade do vínculo.
+- `SetUniqueLine` no grid = `FORNECE+LOJA+PRODUTO+FABR+FALOJA+REFGRD`.
+- `IntegDef` delega a `MATI060` — existe **adaptador EAI oficial** para Produto×Fornecedor (`TO_INVENTORY`: verificar se `TOTVSEAI` publicado roteia mensagens MATI060 neste ambiente).
+- Campos visíveis editáveis no Model 2: SX3-driven (`FWFormStruct`), excluídos da view `A5_PRODUTO|A5_NOMPROD|A5_REFGRD|A5_DESREF`.
+
+**Compatibilidade ExecAuto:** MVC Model-2/browse **não** é dirigível por `MSExecAuto` com arrays como MATA010 — `PROVEN_SOURCE` que a estratégia execauto-array **não se aplica** a MATA061. Caminhos oficiais possíveis (em ordem de preferência):
+
+1. **EAI `MATI060`** via `TOTVSEAI` (nativa publicada) — mensagem oficial de integração para a entidade; exige confirmar adapter ativo/configurado no ambiente (`TO_INVENTORY` — verificar `EAIDEPARAREST`/config EAI).
+2. **`.PRW` custom instanciando o modelo oficial** (`MPFormModel 'MATA061'`/`DMATA061`, `SetValue`+`VldActivate`+commit) — preserva pontos de entrada e validações do modelo; padrão reconhecido para rotinas MVC sem execauto.
+3. ❌ RecLock/SQL direto — **proibido** (RQ-P1-03 e regra totvs-protheus-write-integration).
+
+**Precedente legado identificado:** `02.Compras/IXMLSEF.prw::AtuSA5XSA2` grava SA5 por `RecLock` direto dentro do fluxo de importação de NF-e (preenche inicializadores SX3 + `A5_NOMEFOR`/`A5_NOMPROD` denormalizados + `A5_CODPRF`/`A5_DESCPRF`). Documenta o comportamento de negócio real (quais campos importam na criação do vínculo), **mas não é modelo de integração** — registrado como anti-padrão de contexto, não reutilizável.
+
+**Identidade SA5 (SX3 live):** obrigatórios `X3_OBRIGAT='x'`: `A5_FILIAL, A5_FORNECE, A5_LOJA, A5_NOMEFOR, A5_PRODUTO, A5_CODPRF, A5_REFGRD, A5_DESCPRF`. `A5_NOMEFOR`/`A5_NOMPROD` são denormalizados (rotina preenche via `Posicione SA2/SB1`); `A5_CODPRCA` (catálogo) opcional; `A5_SITU` default `"C"`, `A5_FABREV` default `"F"`; `A5_EMBAL/QTDMN/LEADT` atributos do vínculo.
+
+**Contrato candidato (proposta — não implementada):**
+
+| Operação | Semântica | Chave/identidade | Campos principais | Estado |
+|---|---|---|---|---|
+| `SA5_ADD` | cria vínculo | FILIAL+FORNECE+LOJA+PRODUTO(+FABR+FALOJA+REFGRD=∅) | `CODPRF` (obrig.), `DESCPRF`, `CODPRCA`, `EMBAL`, `QTDMN`, `LEADT` | PROPOSTA |
+| `SA5_UPDATE` | altera atributos do vínculo | mesma chave | apenas atributos alterados; identidade imutável | PROPOSTA |
+| `SA5_REMOVE` | exclusão lógica `D_E_L_E_T_` via rotina oficial — **não** presumir física | mesma chave | — | PROPOSTA (semântica a ratificar) |
+| `SA5_READBACK` | confirmação | mesma chave | ODBC `products.suppliers` (já existente) | REUSE |
+
+Autorização técnica pendente: decisão entre EAI/MATI060 vs .PRW-modelo → `ARCHITECTURE_DECISION_REQUIRED` (owner Integrações TOTVS + ERP). Read-back ODBC já cobre `CONFIRMED`.
+
+### 13.2 CREATE SB1 — aprofundamento (RQ-P2-02)
+
+`PROVEN_CODE` (DLP04I01 POST `/v1/IncProduto/incluir`): parser JSON → array fixo de 22 triplas → `MSExecAuto(Mata010,3)`; `lMsErroAuto`/`lMsHelpAuto`/`lAutoErrNoFile` PRIVATE corretos; erro → `GetAutoGrLog()` completo → `RETOBJ 400`; `B1_COD` vem do payload (manual — sem `SXE/SXF`/`GetSXENum`/`RollbackSxE` no handler; `RollbackSxE` aparece **comentado**).
+
+`TO_INVENTORY` (não comprovável por fonte/catálogo):
+
+- Conjunto mínimo real que `MATA010` op3 aceita (handler encaminha os 22 incondicionalmente — o mínimo é da rotina, não do handler).
+- Obrigatoriedade condicional por `B1_TIPO`/`B1_GRUPO`/filial (VALID/WHEN do SX3 extraídos, semântica pendente).
+- Geração automática de `B1_COD` com campo vazio (MATA010 interativo usa semáforo SXE; comportamento execauto = hipótese a ensaiar — incluir caso "código vazio" e "código duplicado" no protocolo).
+- Valores default aplicados pela rotina quando campos chegam em branco.
+
+### 13.3 Schemas nativos — probes read-only TST01 (19/11)
+
+| Classe | Probe | Resultado | Veredito |
+|---|---|---|---|
+| `MRPPRODUCT` | `GET api/pcp/v1/mrpproduct/01/TESTE` | 404 "Nenhum registro" (rota viva, responde negócio) | **PROVEN_LIVE** — entidade de dados MRP do produto (subconjunto SB1: lead/ressuprimento/indicadores); POST é upsert — candidato complementar p/ campos de planejamento, **não** CREATE SB1 completo |
+| `MRPPRODUCT` | `GET ...?pagesize=1` | 500 | rota viva; params/contexto exigidos `TO_INVENTORY` |
+| `ACCOUNTINGITEMS` | `GET api/ctb/v1/AccountingItems?pagesize=1` | 404 "Registro não encontrado" (wrapper json) | **PROVEN_LIVE-ish** — entidade "Item Contábil" (CTB); **sem evidência** de gravar `SB1.B1_CONTA` — item contábil ≠ conta contábil do produto; `TO_INVENTORY` |
+| `TSIITEM` | `GET /tsiitem` | 404 HTTPREST | publicada no catálogo mas **não alcançável** no path anunciado — resolução de URI `TO_INVENTORY` |
+
+**Conclusão nativas:** nenhuma substitui `DELPIPRODUTO` para CREATE/UPDATE SB1 completo; `MRPPRODUCT` pode complementar campos de planejamento; `ACCOUNTINGITEMS` segue `TO_INVENTORY` para a lacuna `B1_CONTA`.
+
+### 13.4 Protocolo de ensaios TST01 — CREATE (executável, `TEST_NOT_RUN`)
+
+| # | Ensaio | Entrada | Critério de sucesso | Restauração |
+|---|---|---|---|---|
+| E1 | CREATE mínimo | `B1_COD=TESTEPRC*`, `B1_DESC`, `B1_TIPO=PA`, `B1_UM`, `B1_LOCPAD`, `B1_GRUPO` válido | 200/ACK + read-back ODBC existe | delete governado / flag teste |
+| E2 | Obrigatório ausente | E1 sem `B1_TIPO` | 400 com `GetAutoGrLog` legível | — |
+| E3 | Código duplicado | E1 repetido | rejeição determinística documentada | — |
+| E4 | Código vazio | E1 sem `B1_COD` | comprova/elimina geração SXE | cleanup do gerado |
+| E5 | Variação por tipo | `B1_TIPO` ∈ {PA, MP, PI} | mínimos por tipo mapeados | idem E1 |
+| E6 | Campo-a-campo | cada um dos 22 campos isolado vs E1 | campo persiste; não-enviados preservam default | snapshot/restore |
+| E7 | Filiais | filial 01 vs 02 (se autorizado) | escopo `xFilial` correto | idem |
+| E8 | Read-back | products.detail + SX3 | `CONFIRMED` ≠ ACK | — |
+| E9 | UNKNOWN | timeout induzido | sem retry, estado investigável | reconciliação manual |
+
+Gates do protocolo: identidade de serviço autorizada, `PROTHEUS_REST_EXPECTED_BASE_URL` pinado TST01 (`233:8701`), `AMBIENTE=2`, snapshot pré-ensaio, zero escrita fora dos objetos `TESTEPRC*`, confirmação de PRD intacto ao final.

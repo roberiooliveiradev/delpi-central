@@ -934,3 +934,15 @@ Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fon
 **Critérios de aceite do próximo gate:** ensaios TST01 conforme protocolo §12.5 do playbook (CREATE mínimo, campo-a-campo, representação completa, B1_CONTA, SA5 pós-decisão, negativos) — `TEST_NOT_RUN` até autorização TST01 explícita com identidade/massa/rollback.
 
 **Próximo gate autorizado:** decisão arquitetural SA5 + autorização de ensaios TST01 → depois façade CREATE api-delpi.
+
+#### 10.8 P0–P2 — recuperação de merge, SA5 e verificação (19/11/2026)
+
+**TASK_ID:** `EVA-PRC-P0-P2-MERGE-RECOVERY-SA5-CONTRACT-AND-VERIFICATION-01`
+
+**P0 — merge Controladoria:** `ALREADY_RESOLVED` — a sessão owner resolveu e evoluiu o WIP; `closing_checklist_repository.py` sem marcadores (o hit anterior era comentário `====`), sintaxe válida; stash autostash preservado. Testes do owner: `TEST_NOT_RUN` neste host (libodbc ausente; suite pg requer DB live). Nenhum código de Controladoria incorporado ao plano PRC.
+
+**P1 — SA5:** rotina oficial **identificada**: `MATA061` (Produto X Fornecedores, MVC Model-2, `Dmata061.prx` DELPI). Chave oficial: `FILIAL+FORNECE+LOJA+PRODUTO+FABR+FALOJA+REFGRD`. **Não é ExecAuto-compatível** — caminhos: (a) EAI `MATI060` via `TOTVSEAI` (`TO_INVENTORY` — adapter ativo?), (b) `.PRW` instanciando modelo oficial. RecLock/SQL direto proibido; precedente legado `AtuSA5XSA2` (IXMLSEF) documentado como anti-padrão não-reutilizável. Decisão de caminho: `ARCHITECTURE_DECISION_REQUIRED` (Integrações TOTVS + ERP).
+
+**P2 — verifier + CREATE:** `devin` CLI instalado, **não autenticado** — bloqueio ambiental requer login interativo do operador (sem credencial improvisada); verificação permanece `INCONCLUSIVE`, pedidos preservados. CREATE: handler encaminha 22 campos incondicionalmente a `MATA010` op3; `B1_COD` manual (sem SXE no handler; geração execauto = `TO_INVENTORY`); mínimos por tipo = `TO_INVENTORY`. Probes TST01 read-only: `MRPPRODUCT` viva (upsert, subconjunto MRP), `ACCOUNTINGITEMS` viva-ish sem evidência de `B1_CONTA`, `TSIITEM` publicada mas path não alcançado. Protocolo de ensaios E1–E9 no playbook §13.4 — `TEST_NOT_RUN`.
+
+**Próximo gate:** decisão SA5 (EAI vs .PRW-modelo) + autorização TST01 com identidade/massa/rollback + login do verificador.
