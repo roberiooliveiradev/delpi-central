@@ -119,6 +119,8 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(integrations_effective_access_bp)
     app.register_blueprint(integrations_person_profiles_bp)
     app.register_blueprint(integrations_protheus_identities_bp)
+    app.register_blueprint(integrations_organization_bp)
+    app.register_blueprint(admin_hr_identity_bp)
     app.register_blueprint(mcp_providers_bp)
     app.register_blueprint(integrations_mcp_providers_bp)
     app.register_blueprint(admin_presence_bp)
