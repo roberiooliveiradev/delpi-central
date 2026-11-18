@@ -216,7 +216,7 @@ def inspect_stage73_directory(
         or root.is_symlink() or not root.is_dir()
         or type(path) is not str or path not in known_modes
         or type(expected_uid) is not int or expected_uid < 0
-        or type(expected_gid) is not int or expected_gid <= 0
+        or type(expected_gid) is not int or expected_gid < 0
         or type(expected_mode) is not int
         or expected_mode != known_modes[path]
         or (root == Path("/") and path == "/run/atlas-hml-readonly"

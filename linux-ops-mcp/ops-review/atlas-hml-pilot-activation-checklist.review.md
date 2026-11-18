@@ -10,7 +10,8 @@ enable PREPARE/ACT, or authorize srv-api changes.
 - [ ] Owner operational window, commands, baseline and rollback approved in writing
 
 ## Host preflight (authorized observation only)
-- [ ] Stage74/75 auditors against disposable fixture then `--host-readonly`
+- [ ] Stage74/76 classified tmpfiles audit + Stage75 gate (fixture then `--host-readonly`)
+- [ ] Critical tmpfiles codes empty; info-class OS baselines documented
 - [ ] No conflicting tmpfiles / ATLAS units already present
 - [ ] Identities atlas-hml / bridge / signer present; no docker primary group
 - [ ] DAC/ACL/setgid match policy; reject if tmpfiles success left drift
