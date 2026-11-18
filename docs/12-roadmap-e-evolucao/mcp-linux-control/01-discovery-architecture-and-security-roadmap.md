@@ -696,3 +696,15 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Workflow de testes Linux e Docker descartável ampliado e cenários adversariais adicionados. Revisão independente do código apenas **uma vez** após CI da PR consolidada, conforme contrato; não equivale a SEC-01 humana.
 - Continuam pendentes: evidência do PID real em `srv-api`, isolamento Docker por todos os caminhos, origem criptograficamente atestada, replay após restart, privilégio do produtor root, ACL/LSM reais, rollback testado, SEC-01..10 e change-control.
 - **Progresso 52% conservador.** Quatro MCP READ, PREPARE/ACT OFF. Sem deploy, systemd, Docker/Compose PROD, contas, grupo, socket, filesystem `/run`, migração ou alterações operacionais.
+
+## Etapa 60 | 17/11/2026 | Envelope Ed25519, continuidade persistente, lifecycle e rollback tipado
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 51](./51-atlas-hml-b-signed-envelope-lifecycle-rollback.md). **Status:** Draft PR #261 / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Envelope versionado com geração, alvo HML, digest e recusa de JSON legado como autenticado; trust Ed25519 com keyring público, rotação/revogação; assinatura bem-sucedida permanece no domínio de confiança do produtor root (sem autenticidade independente cross-domain).
+- Store de continuidade fail-closed em diretórios descartáveis (atomic+fsync): replay entre reinícios simulados, regressão/gap de contador e corrupção.
+- Biblioteca de lifecycle (init→available→failed/recovery_blocked) com backpressure/timeouts e latch de integridade sem fallback Docker/PROD/PREPARE/ACT.
+- Produtor assinado source-only (claim+envelope+handoff atômico), baseline tipada de rollback com simulação só em fixture, matriz SEC-01..10 referenciada sem atestar, E2E descartável positivo/negativo/adversarial.
+- Guarda do presenter reforçada (inventário de FDs, sockets inesperados, `LISTEN_*`). CI Linux/Docker atualizado; `cryptography` apenas para verificação Ed25519.
+- **Pendentes:** SEC-01..10, parecer humano, isolamento host real, segregação de chave fora do host do produtor, instalação autorizada.
+- **Progresso 55%.** Quatro MCP READ, PREPARE/ACT OFF. **Sem pull/deploy.**

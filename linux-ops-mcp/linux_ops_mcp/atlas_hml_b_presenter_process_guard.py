@@ -21,6 +21,12 @@ _DENIED_ENV = frozenset({
     "DOCKER_CERT_PATH", "CONTAINER_HOST", "SSH_AUTH_SOCK",
     "LD_PRELOAD", "LD_LIBRARY_PATH",
 })
+# Socket activation variables are rejected unless the caller explicitly opts
+# into validating a single prebound listener (fixture/CI path). Unexpected
+# LISTEN_* inheritance is treated as an alternate Docker/transport risk.
+_SOCKET_ACTIVATION_ENV = frozenset({
+    "LISTEN_PID", "LISTEN_FDS", "LISTEN_FDNAMES",
+})
 _RESIDUAL = (
     "PRESENTER_SELF_OBSERVATION_NOT_HOST_ATTESTATION",
     "PRODUCER_ROOT_DOCKER_RISK_NOT_ATTESTED",
@@ -43,6 +49,9 @@ class PresenterProcessReview:
     status: str = "blocked"
     identity_fd_preflight_passed: bool = False
     sandbox_basics_observed: bool = False
+    socket_activation_consistent: bool = False
+    open_fd_count: int = 0
+    unexpected_socket_fds: int = 0
     host_isolation_attested: bool = False
     docker_isolation_attested: bool = False
     producer_privilege_attested: bool = False
@@ -118,6 +127,29 @@ def _fd_set() -> tuple[tuple[int, bool], ...]:
         raise HMLPresenterBoundaryError("HML_PRESENTER_FDS_UNVERIFIABLE") from None
 
 
+def _socket_activation_consistent(listener_fd: int) -> bool:
+    """Refuse inherited systemd activation unless it names exactly this FD."""
+    present = _SOCKET_ACTIVATION_ENV & set(os.environ)
+    if not present:
+        return True
+    if present != _SOCKET_ACTIVATION_ENV:
+        return False
+    try:
+        listen_pid = int(os.environ["LISTEN_PID"])
+        listen_fds = int(os.environ["LISTEN_FDS"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if listen_pid != os.getpid() or listen_fds != 1:
+        return False
+    # systemd passes activated sockets starting at FD 3.
+    if listener_fd != 3:
+        return False
+    names = os.environ.get("LISTEN_FDNAMES", "")
+    if type(names) is not str or not 1 <= len(names) <= 64 or "/" in names:
+        return False
+    return True
+
+
 def _review_prebound_process_fixture(
     listener: socket.socket, *, expected_uid: int, expected_gid: int,
     expected_path: Path,
@@ -167,6 +199,10 @@ def _review_prebound_process_fixture(
                 for fd, is_socket in fds
             )
         )
+        activation_ok = _socket_activation_consistent(descriptor)
+        unexpected_sockets = sum(
+            1 for fd, is_socket in fds if is_socket and fd != descriptor
+        )
     except (OSError, TypeError, ValueError, AttributeError):
         raise HMLPresenterBoundaryError("HML_PRESENTER_CONTEXT_UNVERIFIABLE") from None
     no_capability = proc["caps"][0:3] == (0, 0, 0) and proc["caps"][4] == 0
@@ -176,7 +212,8 @@ def _review_prebound_process_fixture(
     )
     identity_fd_ok = (
         listener_valid and identity_valid and fd_valid
-        and no_capability and not prohibited_env
+        and no_capability and not prohibited_env and activation_ok
+        and unexpected_sockets == 0
     )
     # NNP/seccomp/cap bounding alone are not proof of filter quality or LSM.
     sandbox_basics = (
@@ -186,16 +223,21 @@ def _review_prebound_process_fixture(
     blocks: list[str] = []
     if not identity_valid:
         blocks.append("HML_PRESENTER_IDENTITY_DENIED")
-    if not listener_valid or not fd_valid:
+    if not listener_valid or not fd_valid or unexpected_sockets:
         blocks.append("HML_PRESENTER_FD_BOUNDARY_DENIED")
     if not no_capability:
         blocks.append("HML_PRESENTER_CAPABILITIES_DENIED")
     if prohibited_env:
         blocks.append("HML_PRESENTER_ENVIRONMENT_DENIED")
+    if not activation_ok:
+        blocks.append("HML_PRESENTER_SOCKET_ACTIVATION_DENIED")
     if not sandbox_basics:
         blocks.append("HML_PRESENTER_SANDBOX_NOT_CONFIRMED")
     return PresenterProcessReview(
         identity_fd_preflight_passed=identity_fd_ok,
         sandbox_basics_observed=sandbox_basics,
+        socket_activation_consistent=activation_ok,
+        open_fd_count=len(fds),
+        unexpected_socket_fds=unexpected_sockets,
         blocks=(*blocks, *_RESIDUAL),
     )
