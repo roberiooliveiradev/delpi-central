@@ -422,4 +422,13 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
         )
 
         with self as repo:
-            return repo.execute_one(sql, params)
+            rows = repo.execute_query(sql, params)
+
+        # A PK SA5 garante no máximo um registro; mais de uma linha é
+        # anomalia de dados e nunca deve devolver a "primeira" arbitrária.
+        if len(rows) > 1:
+            raise RuntimeError(
+                "Anomalia de identidade SA5: múltiplos vínculos para a "
+                "mesma chave completa. Registro não retornado."
+            )
+        return rows[0] if rows else None
