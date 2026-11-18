@@ -89,3 +89,25 @@ def require_effective_access_service_token():
         return wrapper
 
     return decorator
+
+
+def require_organization_read_service_token():
+    """Dedicated S2S capability for RH team lookup; shared token is NOT accepted.
+
+    Only X-Delpi-Service-Token is accepted. Avoid Bearer here because the
+    upstream auth middleware otherwise treats it as an end-user JWT.
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            expected = os.getenv("CORE_ORGANIZATION_READ_SERVICE_TOKEN", "")
+            if not expected:
+                return forbidden("Organization read service token is not configured")
+            provided = request.headers.get("X-Delpi-Service-Token")
+            if not provided:
+                return unauthorized("Organization read service token required")
+            if not secrets.compare_digest(provided, expected):
+                return forbidden("Invalid organization read service token")
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
