@@ -169,6 +169,76 @@ criar worktree ou branch automaticamente para preservar
 concorrência, a criação passa a exigir autorização do usuário.
 Não resolver o conflito silenciosamente — reportar a divergência.
 
+## Escopo de sessão (agent-scope)
+
+Cada sessão de trabalho — agente ou humano — registra um **lease de
+escopo** antes do primeiro commit, declarando os caminhos que a task
+toca. O pre-commit hook bloqueia commit sem lease, arquivo fora do
+escopo e arquivo dentro do escopo de outra sessão ativa (commit por
+cima). Regra canônica: `.cursor/rules/agent-session-scope.mdc`;
+mecanismo: `agent-kit/scope/session_scope.py`.
+
+```bash
+# no início da sessão (dentro do worktree da task):
+python3 agent-kit/scope/session_scope.py register \
+  --session <id-da-task> --context <ctx> [--path '<glob>'] \
+  --agent devin|cursor|claude|human --note '<tarefa>'
+
+# verificação prévia do stage, sem commitar:
+python3 agent-kit/scope/session_scope.py check --staged
+
+# ao encerrar a sessão:
+python3 agent-kit/scope/session_scope.py release --session <id-da-task>
+```
+
+- Contextos/globs disponíveis: `agent-kit/scope/contexts.json`
+  (`ctx:<domínio>` = plugin+API, `plugin:<nome>`, `dir:<topdir>`,
+  `meta:*`). Contextos `restricted` (`infra`, `shared`, `.cursor`,
+  `.github`, `agent-kit`, `gateway`, `core-api`) exigem
+  `--allow-restricted` e justificativa em `--note`.
+- Múltiplas sessões no mesmo worktree: exportar `AGENT_SESSION=<id>`
+  para o hook desambiguar o lease.
+- Commit bloqueado não se resolve com `--no-verify` (escape excepcional
+  a reportar): corrigir o stage, ampliar o próprio lease com
+  `register`, ou coordenar com a sessão dona do arquivo.
+- Auditoria multi-worktree (sentinela `.devin/skills/agent-sentinel/`):
+  `python3 agent-kit/scope/session_scope.py audit`.
+
+## Escopo de sessão (agent-scope)
+
+Cada sessão de trabalho — agente ou humano — registra um **lease de
+escopo** antes do primeiro commit, declarando os caminhos que a task
+toca. O pre-commit hook bloqueia commit sem lease, arquivo fora do
+escopo e arquivo dentro do escopo de outra sessão ativa (commit por
+cima). Regra canônica: `.cursor/rules/agent-session-scope.mdc`;
+mecanismo: `agent-kit/scope/session_scope.py`.
+
+```bash
+# no início da sessão (dentro do worktree da task):
+python3 agent-kit/scope/session_scope.py register \
+  --session <id-da-task> --context <ctx> [--path '<glob>'] \
+  --agent devin|cursor|claude|human --note '<tarefa>'
+
+# verificação prévia do stage, sem commitar:
+python3 agent-kit/scope/session_scope.py check --staged
+
+# ao encerrar a sessão:
+python3 agent-kit/scope/session_scope.py release --session <id-da-task>
+```
+
+- Contextos/globs disponíveis: `agent-kit/scope/contexts.json`
+  (`ctx:<domínio>` = plugin+API, `plugin:<nome>`, `dir:<topdir>`,
+  `meta:*`). Contextos `restricted` (`infra`, `shared`, `.cursor`,
+  `.github`, `agent-kit`, `gateway`, `core-api`) exigem
+  `--allow-restricted` e justificativa em `--note`.
+- Múltiplas sessões no mesmo worktree: exportar `AGENT_SESSION=<id>`
+  para o hook desambiguar o lease.
+- Commit bloqueado não se resolve com `--no-verify` (escape excepcional
+  a reportar): corrigir o stage, ampliar o próprio lease com
+  `register`, ou coordenar com a sessão dona do arquivo.
+- Auditoria multi-worktree (sentinela `.devin/skills/agent-sentinel/`):
+  `python3 agent-kit/scope/session_scope.py audit`.
+
 ## Exceção operacional ATLAS | MCP Linux (decisão específica do owner, 17/11/2026)
 
 Para **qualquer alteração do ATLAS** (arquivos `linux-ops-mcp/linux_ops_mcp/atlas_*`, `linux-ops-mcp/review-only/atlas-*`, documentação `mcp-linux-control`, gates/CI ATLAS), prevalece sobre a regra geral de commit direto em `main` e deploy automático:

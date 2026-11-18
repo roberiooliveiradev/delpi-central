@@ -1,0 +1,107 @@
+---
+description: Escopo de sessão de agentes — lease por worktree, pre-commit bloqueando commit fora do escopo ou em escopo alheio, audit sentinela multi-worktree; carregar em trabalho concorrente multi-agente
+alwaysApply: false
+---
+
+# Escopo de sessão de agentes (agent-scope)
+
+Disciplina de execução para múltiplos agentes/autores concorrentes no monorepo.
+Owner transversal: `platform-quality-testing.mdc`. Mecanismo canônico:
+`agent-kit/scope/session_scope.py` — não criar registro, hook ou audit paralelo.
+
+## Fontes canônicas
+
+| Conceito | Fonte | Local |
+|---|---|---|
+| política (opt-in) | `agent-scope.json` na raiz | versionado; ausência = feature off |
+| ownership fixo de contextos | `agent-kit/scope/contexts.json` | versionado; `restricted` exige `--allow-restricted` |
+| lease de sessão | `<git-common-dir>/agent-scope/sessions/<id>.json` | local, compartilhado por todos os worktrees, **nunca commitado** |
+| enforcement de commit | `.git/hooks/pre-commit` → `session_scope.py pre-commit` | instalado por `install-hook`; vale p/ todos os worktrees |
+| auditoria multi-worktree | `session_scope.py audit [--json]` | sentinela (`.devin/skills/agent-sentinel/`) |
+
+Fallback local: `<git-common-dir>/agent-scope/config.json|contexts.json` cobre
+branches que **nunca tiveram** `agent-scope.json` na história. Arquivo removido
+no worktree ou por commit = desligamento intencional → feature off naquela
+branch. O arquivo do worktree prevalece quando existe.
+
+## Obrigações de toda sessão (agente ou humano)
+
+1. **Antes de editar/commitar**, registrar o lease:
+
+   ```bash
+   python3 agent-kit/scope/session_scope.py register \
+     --session <id-da-tarefa> --context <ctx> [--context <ctx2>] \
+     [--path '<glob-extra>'] [--agent devin|cursor|claude|human] \
+     [--ttl <horas>] [--note '<tarefa>']
+   ```
+
+   Default de `--session`: `$AGENT_SESSION` ou nome do worktree.
+2. Lease deve ser **mínimo e verdadeiro**: contextos/globs que a tarefa realmente
+   toca. `register --path '**'` para "liberar geral" é violação da disciplina.
+3. Contexto `restricted` (`infra`, `shared`, `gateway`, `.cursor`, `.github`,
+   `agent-kit`, `core-api`) exige `--allow-restricted` explícito — registrar a
+   justificativa em `--note`.
+4. **Ao terminar**, `release --session <id>` (ou deixar expirar o TTL).
+5. Commit bloqueado não se resolve com `--no-verify`: ou o arquivo está no
+   escopo errado (corrigir o stage), ou o lease está estreito (ampliar com
+   `register` no próprio lease), ou é escopo de outra sessão (coordenar com o
+   dono — **nunca** commitar por cima).
+6. Vários trabalhos no mesmo worktree = vários leases; o hook usa
+   `AGENT_SESSION` para desambiguação quando houver mais de um lease ativo no
+   worktree.
+
+## O que o pre-commit bloqueia
+
+- commit **sem lease** no worktree (quando `require_lease`);
+- arquivo staged **fora do escopo** da sessão;
+- arquivo staged **dentro do escopo de outra sessão ativa** (commit por cima).
+
+O hook é a camada autoritativa: vale para agente via ferramenta, sessão
+headless e humano no terminal. Verificação prévia sem commit:
+`session_scope.py check [--staged]`.
+
+## Sentinela (agente administrador)
+
+O sentinela não é enforcement — quem bloqueia é o hook determinístico. O
+sentinela **audita e reporta**:
+
+```bash
+python3 agent-kit/scope/session_scope.py audit          # todos os worktrees
+python3 agent-kit/scope/session_scope.py audit --json   # saída estruturada
+python3 agent-kit/scope/session_scope.py audit --diff origin/main  # inclui commits não-push
+python3 agent-kit/scope/session_scope.py status         # leases ativos
+python3 agent-kit/scope/session_scope.py expire         # limpa leases vencidos
+```
+
+Veredictos: `out_of_scope` (arquivo fora do lease do worktree), `foreign_scope`
+(arquivo no escopo de outra sessão — colisão real), `unregistered_dirty`
+(worktree sujo sem lease), `stale_leases` (lease vencido ou worktree removido).
+
+Exit code `1` com qualquer violação — apto a relatório periódico ou gate.
+
+## Relação com outros mecanismos
+
+- `delpi-verifier` prova **qualidade da entrega** (outro agente, outro modelo);
+  agent-scope prova **disciplina de escopo entre sessões**. Um não substitui o outro.
+- `test-and-commit.mdc` governa DoD; esta regra governa **quem pode tocar o quê**
+  em trabalho concorrente.
+- `architecture-ci-enforcement.mdc` governa o diff; agent-scope governa a sessão.
+
+## O que NÃO fazer
+
+- Commitar arquivo fora do lease ou no escopo de outra sessão.
+- `--no-verify` como rotina — é escape excepcional a ser reportado.
+- Desligar `agent-scope.json`, remover o hook ou editar lease alheio para fazer
+  um commit passar.
+- Registrar lease amplo (`**`, monorepo inteiro) para evitar pensar o escopo.
+- Criar registry, hook, audit ou lista de contextos paralela ao `agent-kit/scope/`.
+- Tratar saída do `audit` como opcional quando a própria sessão aparece em violação.
+
+## Checklist
+
+- [ ] Lease registrado antes do primeiro commit da sessão?
+- [ ] Escopo = contextos/globs reais da tarefa (mínimo)?
+- [ ] `check` limpo antes de commitar?
+- [ ] Arquivo de outra sessão no stage → coordenado com o dono?
+- [ ] `release`/`expire` ao encerrar?
+- [ ] Violações do `audit` reportadas em vez de escondidas?
