@@ -6625,3 +6625,59 @@ Sondagem real nos 3 PDFs (`run_visual_benchmark` in-process, modelos `paddlex` o
 - **`B3_IMPLEMENTED_VERIFIED_DEPLOY_BLOCKED`**: deploy proibido; imagem de produção inalterada; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `AUTOMATIC_APPROVAL=false`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
 - Próximo bounded step sugerido: dataset GT de coerência balão×componente para homologar thresholds e medir falsos conflitos/compatíveis; critério para `fill_semantics` governado se a Engenharia quiser ativar comparação de cor real.
 - Issue #131: update manual pendente (`gh` sem auth no ambiente).
+
+### 94.42.10 E1/VAL-01 — GT-01: Avaliação Integrada e Critérios de Homologação de Balões
+
+**Task:** `EVA-E1-VAL01-BALLOON-GT01-GROUND-TRUTH-INTEGRATED-EVALUATION-AND-ACCEPTANCE-01`
+**Modo:** `READ_ONLY / EVALUATION_FOUNDATION / GT_CANDIDATE / NO_DEPLOY`
+**Estado:** `GT01_EVALUATION_READY_OWNER_APPROVAL_PENDING`
+
+#### Corpus e separação
+
+- Inventário em `eva-val01-g1/balloon-gt01-corpus-manifest.json` — 18 documentos do corpus autorizado (Doc 120 + 3 B3 + G1 dev), com SHA-256 coletado por acesso autorizado ao fileserver (~4.841 PDFs disponíveis).
+- **DEVELOPMENT:** 90261723, 90261731, 90264311 (+ 90264026, 90264004, 90264017, 90264135 do dev G1).
+- **VALIDATION_EXPOSED:** 11 documentos sondados (inventário de capacidade: 122 balões candidatos, 74 líderes fora do dev set).
+- **TRUE_UNSEEN_HOLDOUT = NOT_AVAILABLE** — todo documento avaliado foi exposto a saída da EVA; holdout cego exige seleção do owner nos PDFs não sondados.
+- `split_approval_status=OWNER_BLOCKED`; sem vazamento dev→holdout por inexistência de holdout.
+
+#### Ground truth candidato
+
+- `annotations-balloon/` — 3 documentos, 14 ocorrências de balão, schema `eva_val01_balloon_annotation.v1` (extensão da estrutura G1), todos `DRAFT`/`OWNER_BLOCKED`, anotador `devin-cli (draft-assist)`, revisão humana pendente.
+- `synthetic-balloon/` — 2 fixtures sintéticos de troca (A→terminal, B→barra de cabo), rotulados `SYNTHETIC_FIXTURE`, nunca apresentados como NC real.
+- **Casos reais de balão trocado: 0** — sem denominador para `CONFLICT_RECALL`; a pergunta central permanece INCONCLUSIVE.
+
+#### Avaliação integrada (dev set, 14 ocorrências — `overlays/gt01-balloon-eval-report.json`)
+
+| Métrica | Valor | Den. |
+|---|---|---|
+| DETECTION_PRECISION / RECALL | 1.0 / 1.0 | 14/14 |
+| TABLE_ASSOCIATION_ACCURACY | 1.0 | 12/12 (incl. 4 associações ambíguas multi-linha corretas) |
+| LEADER_DETECTION_RATE | 1.0 | 14/14 |
+| TARGET_ASSOCIATION_ACCURACY | 1.0 | 6/6 SINGLE |
+| AMBIGUITY_PRESERVATION_RATE | 1.0 | 8/8 |
+| CONFLICT_PRECISION / RECALL | INCONCLUSIVE | 0 casos reais |
+| FALSE_ALERT_RATE | 0.0 | 0/14 |
+| FALSE_NEGATIVE_RATE | INCONCLUSIVE | 0 |
+| ABSTENTION_RATE | 0.857 | 12/14 |
+
+Sintético: 2/2 `TRUE_CONFLICT` (valida a maquinaria do avaliador, não detecção real). `METRICS_STATUS=EXPLORATORY_ONLY` — GT não aprovado e dev set não é evidência de generalização.
+
+#### Limites diagnosticados
+
+- **Diagonais:** 0 detectadas em 13 docs; docs com alta taxa balão→líder perdido (90263572 32→13; 90264178 23→10) sugerem perdas que podem incluir diagonais — gap **não resolvido**.
+- **Ambiguidades:** junção cabo/terminal/luva/protetor é o padrão dominante; todas preservadas, nenhuma resolvida por proximidade.
+- **shape_class:** proxy geométrico; regiões `mixed` abstêm-se.
+- **Cor:** `schematic_or_unknown` em todo corpus → `NOT_COMPARABLE`; hue divergiu entre desenhos irmãos (60 vs 30), confirmando preenchimento esquemático ≠ cor de material.
+- **Worker isolado:** `worker_bad_response:rc=0` reproduzido — Paddlex emite progresso não-JSON no stdout do subprocesso; sondas usaram `isolation=inprocess` (diagnóstico, não prova de produção). Correção exige owner/escopo próprios.
+
+#### Thresholds e verificação
+
+- `THRESHOLDS_PROPOSED` T1–T7 no pacote de revisão (`balloon-gt01-review-package.md`): falsos conflitos zero-tolerance, falsos positivos de detecção zero-tolerance, ambiguidade 100% preservada, recall de troca owner-defined (sem casos reais), reprodutibilidade por rerun. **Nenhum aprovado** — decisão da Engenharia.
+- Testes: 6 focados do avaliador + 73 balão B1/B3 = 79/79; suíte de regressão preservada.
+- Verificação independente: pedida (ver `.git/delpi-verifier/requests/eva-gt01-*`).
+
+#### Parecer do executor e pendências
+
+- Avaliação reproduzível entregue: manifesto, anotações draft, avaliador com testes, relatório hashado, limites quantificados onde há referência.
+- **Pendências do owner:** aprovar/corrigir as 14 ocorrências draft; selecionar holdout real; fornecer casos reais documentados de balão trocado (NC histórica) — sem eles a homologação de detecção de troca permanece impossível; aprovar/rejeitar T1–T7; decidir escopo do worker isolado e da ambiguidade de junção.
+- Issue #131: update pendente (`gh` sem autenticação no ambiente).

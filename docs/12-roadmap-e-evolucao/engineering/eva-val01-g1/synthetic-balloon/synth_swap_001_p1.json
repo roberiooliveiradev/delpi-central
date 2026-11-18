@@ -1,0 +1,63 @@
+{
+  "schema": "eva_val01_balloon_annotation.v1",
+  "annotation_status": "SYNTHETIC_FIXTURE",
+  "gt_approval_status": "NOT_APPLICABLE_SYNTHETIC",
+  "synthetic": true,
+  "annotator": "devin-cli",
+  "document_id": "gt01:synth-swap-001",
+  "product_code": "SYNTH001",
+  "pdf_sha256": null,
+  "page": 1,
+  "coordinate_system": "pixels_top_left",
+  "render_ref": null,
+  "drawing_family": "synthetic_harness",
+  "table_items": [
+    {"row_index": 0, "item_label": "a", "component_code": "10420256",
+     "component_description": "CABO PVC 105C 18AWG"},
+    {"row_index": 1, "item_label": "b", "component_code": "10080110",
+     "component_description": "TERM. OLHAL 5,3"}
+  ],
+  "balloon_occurrences": [
+    {
+      "balloon_occurrence_id": "synth001:p1:a",
+      "balloon_label": "A",
+      "balloon_bbox": [100, 100, 160, 160],
+      "balloon_visual_presence": "PRESENT",
+      "table_item_label": "a", "table_item_reference": "row_index:0",
+      "component_code": "10420256",
+      "leader_presence": "PRESENT",
+      "leader_segments": "synthetic",
+      "leader_endpoint": "terminal_region",
+      "target_region": [500, 500, 560, 560],
+      "target_component_annotation": "terminal_body",
+      "observed_component_type": "compact_region",
+      "observed_color": "NOT_GOVERNED",
+      "attribute_observable": "geometry_only",
+      "balloon_relation_status": "ASSOCIATION_SWAPPED",
+      "annotation_evidence": "SYNTHETIC: cable-declared balloon points at compact terminal region — swapped",
+      "annotation_uncertainty": null,
+      "review_status": "SYNTHETIC"
+    },
+    {
+      "balloon_occurrence_id": "synth001:p1:b",
+      "balloon_label": "B",
+      "balloon_bbox": [200, 100, 260, 160],
+      "balloon_visual_presence": "PRESENT",
+      "table_item_label": "b", "table_item_reference": "row_index:1",
+      "component_code": "10080110",
+      "leader_presence": "PRESENT",
+      "leader_segments": "synthetic",
+      "leader_endpoint": "cable_bar_region",
+      "target_region": [300, 300, 900, 340],
+      "target_component_annotation": "cable_body",
+      "observed_component_type": "elongated_fill_region",
+      "observed_color": "NOT_GOVERNED",
+      "attribute_observable": "geometry_only",
+      "balloon_relation_status": "ASSOCIATION_SWAPPED",
+      "annotation_evidence": "SYNTHETIC: terminal-declared balloon points at elongated cable bar — swapped",
+      "annotation_uncertainty": null,
+      "review_status": "SYNTHETIC"
+    }
+  ],
+  "notes": "SYNTHETIC fixture exercising the evaluator conflict path. NOT a real nonconformity."
+}
