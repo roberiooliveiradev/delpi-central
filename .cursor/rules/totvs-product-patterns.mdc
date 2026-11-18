@@ -135,3 +135,7 @@ Quando a tarefa envolver **entender ou reproduzir um relatório, regra, rotina, 
 ## Local de desenvolvimento de novos fontes — decisão PO
 
 Para novos fontes candidatos de integrações DELPI, desenvolver **somente** em `api-delpi/integrations/protheus-advpl/modules/<capability>/src/`, com contrato/testes no módulo conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` continua fonte de consulta de versões upstream (`master`@SHA), **não destino de commits**. Não alterar o espelho `docs/13-fontes-totvs-protheus/`. Handoff ZIP gerado por SHA aprovado, sem publicações ERP/compilação/deploy nesta fase.
+
+## Limite de aplicabilidade para desenvolvimento ADVPL
+
+A biblioteca `padroes-totvs`, SQL de leitura da API DELPI e schemas SX3 sao auxiliares na compreensao de tabelas/dados. **Nao** sao a fonte de contrato funcional de novos `.PRW`/`.TLPP`. Para fontes ADVPL, a autoridade de comportamento e a rotina oficial TOTVS ou customizacao demonstrada no repositorio ERP @SHA, validada no TST01 quando autorizada. Nunca transpor SQL, repositorios Python, joins ou rotas READ para handlers ADVPL; nunca substituir rotina oficial por DML/RecLock. Referenciar tambem `totvs-protheus-write-integration.mdc` e a skill Devin.
