@@ -65,6 +65,9 @@ class Settings:
     TOTVS_DB_USER: str | None = _get_env("TOTVS_DB_USER")
     TOTVS_DB_PASSWORD: str | None = _get_env("TOTVS_DB_PASSWORD")
     TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
+    # Logical TOTVS target selector (backend-governed): TST01|PROD.
+    # Unset = legacy per-variable behavior. See providers/totvs/environment.py.
+    TOTVS_TARGET_ENV: str | None = _get_env("TOTVS_TARGET_ENV")
 
     # ==========================
     # Intranet SQL Server (PARAMETROS_MINHADELPI — Protheus REST)

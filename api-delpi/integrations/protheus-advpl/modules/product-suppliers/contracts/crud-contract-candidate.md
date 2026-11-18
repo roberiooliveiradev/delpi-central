@@ -48,3 +48,16 @@ HTTP 200/400 (erros oficiais via log do modelo, análogo a GetAutoGrLog —
   (requer FABR/FALOJA/REFGRD projetados — gap G0-C).
 - Confirmação pós-op: read-after-write pela PK completa; 2xx =
   `ACKNOWLEDGED`, não `CONFIRMED` sem read-back.
+
+## READ — decisão de superfície (G2-B3, registro aditivo)
+
+A leitura SA5 no contexto REST ADVPL (`FWLoadModel('DMATA061')` + operação
+VIEW + carga pela PK integral) permanece `TO_INVENTORY` — o ciclo de
+leitura via modelo não está comprovado contra a versão instalada e não foi
+inventado. Decisão técnica aprovada para a superfície de **leitura**:
+adapter SQL read-only na `api-delpi`
+(`ProductSuppliersRepository.get_supplier_link` + projeções aditivas de
+`A5_FILIAL/A5_FABR/A5_FALOJA/A5_REFGRD`), compartilhando a seleção
+governada de ambiente (`TOTVS_TARGET_ENV`). Isto **não** é implementação
+do GET do `.PRW` nem autoriza escrita — a fachada ADVPL mantém READ/GET
+como `TO_INVENTORY` e DELETE como `BLOCKED`.

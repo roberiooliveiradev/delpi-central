@@ -26,3 +26,10 @@ class Supplier:
 
     last_price: Optional[float]
     last_price_date: Optional[str]
+
+    # SA5 identity completion (G2-B — Product x Supplier full key).
+    # Additive Optional fields: existing consumers are unaffected.
+    branch: Optional[str] = None
+    manufacturer_code: Optional[str] = None
+    manufacturer_store: Optional[str] = None
+    grade_reference: Optional[str] = None

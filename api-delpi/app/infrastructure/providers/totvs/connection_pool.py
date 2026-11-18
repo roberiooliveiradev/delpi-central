@@ -10,6 +10,9 @@ import time
 import pyodbc
 
 from app.config import settings
+from app.infrastructure.providers.totvs.environment import (
+    resolve_totvs_environment,
+)
 
 logger = logging.getLogger("totvs.pool")
 if not logger.handlers:
@@ -30,9 +33,12 @@ _pool_lock = threading.Lock()
 
 
 def build_totvs_connection_string() -> str:
+    profile = resolve_totvs_environment()
     host = settings.TOTVS_DB_HOST or settings.DB_HOST
     port = settings.TOTVS_DB_PORT or settings.DB_PORT
-    database = settings.TOTVS_DB_DATABASE or settings.DB_DATABASE
+    # Legacy: TOTVS_DB_DATABASE → DB_DATABASE. Com TOTVS_TARGET_ENV, o
+    # catálogo aprovado governa o banco (divergência falha fechada).
+    database = profile.sql_database or settings.DB_DATABASE
     user = settings.TOTVS_DB_USER or settings.DB_USER
     password = settings.TOTVS_DB_PASSWORD or settings.DB_PASSWORD
 
