@@ -18,11 +18,12 @@
    a060VldGrv, MT061MN, SX3) executam no ciclo do modelo.
 
    CLASSIFICACAO POR OPERACAO (sem fingimento de contrato):
-     CREATE (POST)  = SOURCE_IMPLEMENTED — ciclo MPFormModel documentado
-                      + ids/chave comprovados no fonte do modelo.
-     UPDATE (PUT)   = CONTRACT_CANDIDATE — inclui chamada de carga da
-                      linha existente cuja assinatura exata depende de
-                      confirmacao (VALIDAR NO TST01).
+     CREATE (POST)  = SOURCE_CANDIDATE — ciclo MPFormModel documentado +
+                      ids/chave comprovados no fonte do modelo; commit so
+                      aceito com retorno logico .T. de CommitData().
+     UPDATE (PUT)   = BLOCKED — carga inequivoca do vinculo pela PK
+                      integral sem view nao esta comprovada; o handler
+                      retorna 501 explicito e NUNCA executa CommitData.
      READ (GET)     = TO_INVENTORY — sem rotina oficial de leitura REST;
                       retorna 501 explicito. Leitura segue na superficie
                       SQL governada da api-delpi (evidencia auxiliar,
@@ -42,8 +43,10 @@
      oficial do modelo (contexto empresa/filial da sessao REST).
 
    LIMITES / VALIDAR NO TST01:
-     - Assinatura exata de Load() do MPFormModel para carga da linha
-       existente (UPDATE) — parametros marcados VALIDAR NO TST01.
+     - Carregamento do vinculo pela PK integral sem view (UPDATE) —
+       metodo oficial nao comprovado; PUT permanece bloqueado.
+     - Retorno de CommitData() exigido logico .T.; retorno nao-logico
+       e tratado como resultado AMBIGUO (erro, nao sucesso).
      - a060LinOk executa o dup-check apenas em isInserted() e le
        M->A5_PRODUTO/M->A5_REFGRD (contexto de tela): em REST sem view,
        M-> e indefinido — dup-check pode validar chave incompleta ou
@@ -98,7 +101,11 @@ static function lPrepSA5(oDados, aMiss, cErro)
 
     for nI := 1 to len(aReq)
         xVal := oDados:GetJSonObject(aReq[nI])
-        if ValType(xVal) == "U" .or. ValType(xVal) <> "C" .or. Empty(xVal)
+        // A5_REFGRD: presenca e tipo exigidos, mas valor vazio e aceito —
+        // produtos sem grade nao possuem referencia (conservador;
+        // regra efetiva do modelo/SX3 = VALIDAR NO TST01).
+        if ValType(xVal) == "U" .or. ValType(xVal) <> "C" .or. ;
+           (aReq[nI] <> "A5_REFGRD" .and. Empty(xVal))
             aadd(aMiss, aReq[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
             lOk := .F.
         endif
@@ -153,24 +160,29 @@ static function lModelErr(oModel, cErro)
 Return cErro
 
 /* -----------------------------------------------------------------------
-   lExecSA5 — corpo comum das operacoes de escrita via modelo oficial.
-   nOp = MODEL_OPERATION_INSERT | MODEL_OPERATION_UPDATE
+   lExecSA5 — CREATE do vinculo via modelo oficial DMATA061.
+   Semantica de sucesso: COMMIT_ACKNOWLEDGED pelo modelo — nunca
+   PERSISTENCE_CONFIRMED (confirmacao exige read-back governado).
+   Nenhum caminho retorna 200 sem CommitData() explicitamente .T.;
+   retorno nao-logico do commit = resultado AMBIGUO (erro, nao sucesso).
    ----------------------------------------------------------------------- */
-static function lExecSA5(oSelf, nOp)
+static function lExecSA5(oSelf)
 
     Local aArea      := GetArea()
     Local lRet       := .T.
+    Local lActivated := .F.
     Local cErro      := ""
     Local cErroBlk   := ""
     Local aMiss      := {}
     Local aIdent     := aSA5Ident()
     Local aAttr      := aSA5Attrs()
     Local nI         := 0
+    Local xCommit    := NIL
     Local oModel     := NIL
     Local oGrid      := NIL
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
-    Local oException := ErrorBlock({|e| cErroBlk := e:Description + e:ErrorStack, Break(e) })
+    Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
 
     oSelf:SetContentType("application/json")
 
@@ -188,8 +200,9 @@ static function lExecSA5(oSelf, nOp)
             // (FWLoadModel comprovado na ViewDef do fonte oficial;
             //  GetModel/GetValue/Length/GoLine usados pelos callbacks)
             oModel := FWLoadModel("DMATA061")
-            oModel:SetOperation(nOp)
+            oModel:SetOperation(MODEL_OPERATION_INSERT)
             oModel:Activate()
+            lActivated := .T.
 
             // header: produto (+ref. grade) — relation oficial aplica
             // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid
@@ -197,61 +210,66 @@ static function lExecSA5(oSelf, nOp)
             oModel:GetModel("DMdFieldSA5"):SetValue("A5_REFGRD",  oDados["A5_REFGRD"])
 
             oGrid := oModel:GetModel("DMdGridSA5")
+            oGrid:AddLine()
 
-            if nOp == MODEL_OPERATION_UPDATE
-                // VALIDAR NO TST01 — carga da linha existente pela
-                // relacao oficial (IndexKey(2)): filial via contexto.
-                // A PK integral e imposta pelo SetPrimaryKey do modelo;
-                // aqui localizamos a linha do vinculo informado.
-                if !lLoadSa5Line(oModel, oGrid, oDados)
+            // linha corrente: identidade restante + atributos
+            for nI := 2 to len(aIdent)   // A5_PRODUTO vem do header
+                oGrid:SetValue(aIdent[nI], oDados[aIdent[nI]])
+            next nI
+            for nI := 1 to len(aAttr)
+                oGrid:SetValue(aAttr[nI], oDados[aAttr[nI]])
+            next nI
+
+            if !oModel:VldData()
+                lRet := .F.
+                cErro := lModelErr(oModel, cErro)
+            else
+                // MODEL_VALIDATED != COMMIT_ACKNOWLEDGED !=
+                // PERSISTENCE_CONFIRMED — exige retorno logico .T.
+                xCommit := oModel:CommitData()
+                if ValType(xCommit) <> "L"
                     lRet := .F.
-                    cErro := "Vinculo SA5 nao localizado pela identidade completa (ou assinatura Load pendente — VALIDAR NO TST01)."
-                endif
-            endif
-
-            if lRet
-                if nOp == MODEL_OPERATION_INSERT
-                    oGrid:AddLine()
-                endif
-
-                // linha corrente: identidade + atributos
-                for nI := 2 to len(aIdent)   // A5_PRODUTO vem do header
-                    oGrid:SetValue(aIdent[nI], oDados[aIdent[nI]])
-                next nI
-                for nI := 1 to len(aAttr)
-                    oGrid:SetValue(aAttr[nI], oDados[aAttr[nI]])
-                next nI
-
-                if !oModel:VldData()
+                    cErro := "Resultado ambiguo do commit do modelo " + ;
+                        "DMATA061 — integracao nao confirmada; verificar " + ;
+                        "o vinculo antes de repetir (VALIDAR NO TST01)."
+                elseif !xCommit
                     lRet := .F.
                     cErro := lModelErr(oModel, cErro)
-                else
-                    oModel:CommitData()
                 endif
-            endif
-
-            oModel:DeActivate()
-
-            if lRet
-                oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
-                    "Vinculo integrado com sucesso!", "dlp")
-            else
-                oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp")
             endif
         endif
 
     Recover
         ErrorBlock(oException)
         lRet := .F.
-        oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErroBlk, "dlp")
+        oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
+            "Falha interna na integracao Produto x Fornecedor.", "dlp")
     End sequence
 
-    // finalizacao unica: restaura o handler anterior em todo caminho
+    // finalizacao unica: restaura o handler anterior em todo caminho;
+    // detalhe tecnico (cErroBlk) fica no log do app server, nunca no body
     ErrorBlock(oException)
+    if lActivated .and. ValType(oModel) == "O"
+        Begin Sequence
+            oModel:DeActivate()
+        Recover
+            // falha de cleanup nao pode sobrescrever o resultado real
+        End sequence
+    endif
+    if !Empty(cErroBlk)
+        ConOut("DLP04I02 error: " + cErroBlk)
+    endif
 
     if lRet
+        oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
+            "Vinculo aceito pelo modelo oficial DMATA061 " + ;
+            "(commit reconhecido; confirmacao final via read-back governado).", "dlp")
         oSelf:setStatus(200)
     else
+        if Empty(cErro)
+            cErro := "Operacao rejeitada pela integracao Produto x Fornecedor."
+        endif
+        oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp")
         oSelf:setStatus(400)
     endif
     oSelf:setResponse(oJsonRet:toJson())
@@ -262,47 +280,31 @@ static function lExecSA5(oSelf, nOp)
 
 Return .T.
 
-/* -----------------------------------------------------------------------
-   lLoadSa5Line — posiciona o grid na linha do vinculo informado.
-   VALIDAR NO TST01: assinatura/semantica exata de carga de linhas do
-   MPFormModel Model-2 por chave de relacao no ambiente instalado.
-   Estrategia documentada: percorrer as linhas carregadas pelo modelo
-   e comparar a identidade; se o modelo nao pre-carregar as linhas na
-   ativacao UPDATE, a carga por Load/Seek oficial precisa ser definida
-   com a equipe ERP antes de compilar.
-   ----------------------------------------------------------------------- */
-static function lLoadSa5Line(oModel, oGrid, oDados)
-
-    local lFound := .F.
-    local nI     := 0
-
-    for nI := 1 to oGrid:Length()
-        oGrid:GoLine(nI)
-        if !oGrid:IsDeleted() .and. ;
-           oGrid:GetValue("A5_FORNECE") == oDados["A5_FORNECE"] .and. ;
-           oGrid:GetValue("A5_LOJA")    == oDados["A5_LOJA"]    .and. ;
-           oGrid:GetValue("A5_FABR")    == oDados["A5_FABR"]    .and. ;
-           oGrid:GetValue("A5_FALOJA")  == oDados["A5_FALOJA"]  .and. ;
-           oGrid:GetValue("A5_REFGRD")  == oDados["A5_REFGRD"]
-            lFound := .T.
-            exit
-        endif
-    next nI
-
-Return lFound
-
 /*/{Protheus.doc} sa5Prod (POST)
     Inclusao de vinculo SA5 via modelo oficial DMATA061.
 /*/
 WSMETHOD POST sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
-Return lExecSA5(self, MODEL_OPERATION_INSERT)
+Return lExecSA5(self)
 
 /*/{Protheus.doc} sa5Prod (PUT)
-    Alteracao de atributos do vinculo SA5 via modelo oficial DMATA061.
-    Identidade imutavel; representacao completa exigida.
+    CONTRACT_CANDIDATE — alteracao de atributos do vinculo via modelo
+    oficial. A carga inequivoca do vinculo pela PK integral no contexto
+    REST (sem view) nao esta comprovada; ate a evidencia TST01, o PUT
+    nao executa o ciclo do modelo nem CommitData — indisponibilidade
+    explicita, nunca sucesso ficticio nem update parcial inseguro.
 /*/
 WSMETHOD PUT sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
-Return lExecSA5(self, MODEL_OPERATION_UPDATE)
+
+    Local oJsonRet := JsonObject():New()
+
+    Self:SetContentType("application/json")
+    Self:setStatus(501)
+    Self:setResponse(RETOBJ(oJsonRet, "501", "Nao implementado", ;
+        "Alteracao SA5 = CONTRACT_CANDIDATE: carga oficial do vinculo pela " + ;
+        "chave integral pendente de comprovacao (VALIDAR NO TST01)", "dlp"):toJson())
+    FreeObj(oJsonRet)
+
+Return .T.
 
 /*/{Protheus.doc} sa5Prod (GET)
     TO_INVENTORY — sem rotina oficial de leitura REST comprovada.

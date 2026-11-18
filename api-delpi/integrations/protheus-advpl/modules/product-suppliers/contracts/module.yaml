@@ -39,10 +39,10 @@ candidate_source:
   path: src/DLP04I02.PRW
   mechanism: FWLoadModel('DMATA061') — MPFormModel Model-2 oficial
   operations:
-    CREATE: SOURCE_IMPLEMENTED
-    UPDATE: CONTRACT_CANDIDATE (Load da linha = VALIDAR NO TST01)
-    READ: TO_INVENTORY (GET retorna 501 explicito; leitura via api-delpi)
-    DELETE: BLOCKED (a060VldGrv ultimo vinculo; DELETE retorna 501)
+    CREATE: SOURCE_CANDIDATE (commit so .T. logico; M-> VALIDAR NO TST01)
+    UPDATE: BLOCKED (carga pela PK nao comprovada; PUT retorna 501)
+    READ: TO_INVENTORY (GET 501; leitura via api-delpi get_supplier_link)
+    DELETE: BLOCKED (a060VldGrv; DELETE retorna 501)
   provenance:
     erp_repo: Delpi-ti/protheus-erp
     erp_branch: master

@@ -34,7 +34,37 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("DMdFieldSA5", self.text)
         self.assertIn("DMdGridSA5", self.text)
         self.assertIn("MODEL_OPERATION_INSERT", self.upper)
-        self.assertIn("MODEL_OPERATION_UPDATE", self.upper)
+        # UPDATE bloqueado: sem fluxo executavel de update
+        self.assertNotIn("MODEL_OPERATION_UPDATE", self.code)
+
+    def test_update_blocked_no_commit_path(self):
+        # PUT nao executa CommitData — indisponibilidade explicita
+        self.assertIn("CONTRACT_CANDIDATE", self.upper)
+        # CommitData existe exatamente uma vez (fluxo CREATE)
+        self.assertEqual(self.code.count("COMMITDATA()"), 1)
+        self.assertNotIn("LLOADSA5LINE", self.upper)
+
+    def test_commit_result_checked(self):
+        # Nenhum 200 sem retorno logico .T. de CommitData
+        self.assertIn('VALTYPE(XCOMMIT) <> "L"', self.code)
+        self.assertIn("RESULTADO AMBIGUO", self.code)
+        # sucesso declara COMMIT_ACKNOWLEDGED, nao persistencia confirmada
+        self.assertIn("READ-BACK", self.code)
+
+    def test_error_sanitized(self):
+        # stack trace nao retornado ao consumidor
+        self.assertNotIn("ERRORSTACK", self.code)
+        self.assertIn("FALHA INTERNA", self.code)
+        self.assertIn("CONOUT", self.code)
+
+    def test_deactivate_guarded(self):
+        self.assertIn("LACTIVATED", self.code)
+        self.assertIn("DEACTIVATE()", self.code)
+        # DeActivate protegido por flag + proprio Begin/Recover
+        self.assertGreaterEqual(self.code.count("BEGIN SEQUENCE"), 2)
+
+    def test_refgrd_empty_allowed(self):
+        self.assertIn('AREQ[NI] <> "A5_REFGRD"', self.code)
 
     def test_mvc_lifecycle_calls(self):
         for call in ("SETOPERATION", "ACTIVATE()", "VLDDATA",
@@ -109,8 +139,8 @@ class ModuleConsistencyTests(unittest.TestCase):
 
     def test_operation_classification(self):
         ops = self.manifest["candidate_source"]["operations"]
-        self.assertEqual(ops["CREATE"], "SOURCE_IMPLEMENTED")
-        self.assertIn("CONTRACT_CANDIDATE", ops["UPDATE"])
+        self.assertIn("SOURCE_CANDIDATE", ops["CREATE"])
+        self.assertIn("BLOCKED", ops["UPDATE"])
         self.assertIn("TO_INVENTORY", ops["READ"])
         self.assertIn("BLOCKED", ops["DELETE"])
 
