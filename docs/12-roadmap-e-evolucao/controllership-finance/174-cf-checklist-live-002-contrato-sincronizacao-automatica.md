@@ -40,6 +40,24 @@
   4. **Qualquer outro caso → `UNEVALUATED` e o registro fica BLOQUEADO para sync** — "indeterminado" trata-se como concluído até reconciliação governada (`POST /admin/competences/{id}/completion-assessment`, `manage`, motivo obrigatório, auditada) certificar `NEVER`. Precondição, read-back do predicado e rollback (re-avaliação) documentados no gate de migração. PROD hoje tem zero competências — janela teórica.
 - **Safety net:** o consumidor de sync também invoca o helper antes de avaliar elegibilidade — conclusão que escapou da escrita é capturada antes de qualquer mutação.
 
+### 2.2b Inicialização de `NEVER` na abertura (R6.2 — resolve a tensão DEFAULT×predicado)
+
+`DEFAULT 'UNEVALUATED'` é deliberado: **legado nasce indeterminado, novas identidades nascem `NEVER` por proveniência** — a avaliação da "nova" competência é trivial e exata: um `competence_id` recém-criado não pode ter sido concluído antes de existir. `NEVER` não é inferido de campo nulo; é atribuído pelo fato durável da criação governada da identidade.
+
+Sequência transacional de `open_competence` (ajuste TARGET no Gate 2 — hoje o método faz lock em templates → winner → `INSERT monthly_competence ON CONFLICT DO NOTHING` → cópia integral dos itens, `closing_checklist_repository.py:798-908`):
+
+1. `authorized_user` (`access`) + escopo/regra de negócio — inalterado.
+2. Lock no template (ordenação: template antes de competence — §5) → winner da versão vigente.
+3. `INSERT monthly_competence` com `competence_id` novo, `first_completed_at=NULL`, **`completion_record='NEVER'` explícito no INSERT** — nunca confiar no DEFAULT; o DEFAULT `UNEVALUATED` cobre legado e defesa em profundidade (qualquer escrita fora deste caminho canônico nasce bloqueada).
+4. Cópia integral dos itens do winner em `competence_checklist_item` (snapshot, mesma tx).
+5. `closing_audit_event` `COMPETENCE_OPENED` (já emitido) com `detail.completion_record='NEVER'`.
+6. Commit atômico — **competência parcialmente aberta é impossível por construção**: `NEVER` e snapshots commitam juntos ou não existem.
+7. Read-back do predicado §2.3 sobre a nova identidade.
+
+Tratamento de falha (todos fail-closed por atomicidade): falha antes do INSERT → nada; falha entre INSERT e snapshots → **rollback integral** — não existe competência `NEVER` com snapshot inconsistente; `ON CONFLICT DO NOTHING` + retorno `created=false` cobre retry/concorrência (a reabertura idempotente devolve a competência existente com o `completion_record` já avaliado — nunca reatribui `NEVER` a identidade antiga); competência previamente excluída e recriada → novo UUID + `NEVER` novo (elegível — é o caso desejado do PO); competência `UNEVALUATED` legada → jamais recebe `NEVER` por este caminho (só reconciliação governada).
+
+**Testes contratuais (TEST_NOT_RUN):** nova competência recebe `NEVER` com read-back; `UNEVALUATED` legada não sincroniza; recriada = novo UUID + `NEVER`; retry não duplica; falha intermediária reverte abertura inteira; abertura concorrente serializada; edição de catálogo durante abertura não produz snapshot misto (lock do template).
+
 ### 2.3 Predicado canônico de elegibilidade
 
 ```text
@@ -168,7 +186,9 @@ Matriz de evidências na reativação (retirado por `catalog_retire` → `REACTI
 
 `item_correction.status` CHECK admite `PENDING|APPROVED|REJECTED` (V005:116) e `REJECTED` só é escrito por `review_correction` (decisão humana, `CORRECTION_REJECTED`). Usá-lo para encerramento automático por retirada **confundiria** rejeição humana com encerramento administrativo em listagens (`list_item_corrections`, CLARA `_correction_state`, manifesto de exclusão). Contrato de encerramento (D6 **DECIDED_BY_PO** — o PO decidiu *que* encerra, a representação é decisão técnica):
 
-- **Correção:** novo estado terminal **`CLOSED_REQUIREMENT_RETIRED`** (alternativa A — CHECK V031+) com `closure_reason='requirement_retired'` + `closed_by`=autor da revisão + `closed_at` + audit `CORRECTION_CLOSED_REQUIREMENT_RETIRED`. `REJECTED` permanece exclusivo de rejeição humana. Aplicado somente às correções `PENDING` do item retirado; correções `APPROVED`/`REJECTED` ficam como estão.
+- **Correção:** novo estado terminal **`CLOSED_REQUIREMENT_RETIRED`** com `closure_reason='requirement_retired'` + `closed_by`=autor da revisão + `closed_at` + audit `CORRECTION_CLOSED_REQUIREMENT_RETIRED`. `REJECTED` permanece exclusivo de rejeição humana. Aplicado somente às correções `PENDING` do item retirado; correções `APPROVED`/`REJECTED` ficam como estão.
+- **Contrato de persistência (R6.1 — corrige a capacidade):** `item_correction.status` hoje é `VARCHAR(12) CHECK IN ('PENDING','APPROVED','REJECTED')` (V005:116 — constraint inline, nome físico `item_correction_status_check`). `CLOSED_REQUIREMENT_RETIRED` (25 chars) **não cabe** — migration V031+ TARGET exige: `ALTER COLUMN status TYPE VARCHAR(32)` (capacidade com folga para estados administrativos futuros, coerente com o padrão de enums do domínio), `DROP CONSTRAINT item_correction_status_check` + `ADD CONSTRAINT ... CHECK IN ('PENDING','APPROVED','REJECTED','CLOSED_REQUIREMENT_RETIRED')` preservando os três estados existentes, `ADD COLUMN closure_reason VARCHAR(80) NULL`, `ADD COLUMN closed_by UUID NULL`, `ADD COLUMN closed_at TIMESTAMPTZ NULL` — todos nullable, zero reclassificação de dados, nenhum `REJECTED` histórico convertido. **Consumers a atualizar no mesmo gate:** `list_item_corrections` (DTO/rota), CLARA `_correction_state`/`operation_presentation`, manifesto de `competence_deletion`, `governed_writes`, `tool_bridge`, testes de rotas/correções — o novo estado deve ser apresentado como encerramento administrativo, nunca como rejeição humana.
+- **Testes contratuais (TEST_NOT_RUN):** inserção dos 3 estados antigos; inserção `CLOSED_REQUIREMENT_RETIRED`; rejeição de valor fora do CHECK; persistência de `closure_reason/closed_by/closed_at`; DTO/CLARA leem o estado novo como "encerrada"; `REJECTED` continua exclusivo de decisão humana; encerramento idempotente por revisão; trilha de audit íntegra.
 - **Pendência:** `state='DISMISSED'` + `dismiss_justification='catalog_retire'` + `resolution_notes` com referência da revisão — `DISMISSED` já existe no CHECK (V006) e separa "encerrada por perda de aplicabilidade" de "resolvida por execução" (`RESOLVED`); nunca apresentada como documento entregue/validado.
 - **Preservação obrigatória:** identidade, origem, histórico, datas, vínculo com item, eventos anteriores, relação com documentos e motivo do encerramento — nada é apagado.
 
