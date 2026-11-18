@@ -147,6 +147,20 @@ def put_user_hr_registration(user_id: str):
             "É obrigatória a confirmação manual da identidade (confirmIdentity=true).",
             status=422,
         )
+    verification_reference = body.get("verificationReference")
+    if verification_reference is not None:
+        if (
+            not isinstance(verification_reference, str)
+            or not 5 <= len(verification_reference.strip()) <= 120
+            or any(ord(ch) < 32 or ord(ch) > 126 for ch in verification_reference)
+        ):
+            return api_error(
+                "validation_error",
+                "verificationReference deve ser uma referência textual ASCII de 5 a 120 caracteres.",
+                status=422,
+            )
+        verification_reference = verification_reference.strip()
+
     try:
         uid = _uuid(user_id)
         registration = PortalRhOrganizationGateway.validate_registration(
@@ -183,6 +197,7 @@ def put_user_hr_registration(user_id: str):
                     "before_registration": before_registration,
                     "after_registration": registration,
                     "identity_confirmed": True,
+                    "verification_reference": verification_reference,
                 },
                 "ip_address": request.remote_addr,
             })
