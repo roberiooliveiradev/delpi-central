@@ -282,6 +282,7 @@ O tema escuro segue o padrão do kit (`:root[data-theme="dark"] .delpi-ui-…`, 
 | R4 | O catálogo `plugin-ui` não está registrado nos apps de HML (problema anterior a este pacote) | Acompanhar o componente no catálogo de PROD (`/apps/plugin-ui`) |
 | R5 | A pasta de trabalho do executor tem versões locais de `UI-02-PROMPTS-DEVIN.md` e `README.md` diferentes do HEAD | Nunca publicar. Cada pacote confere `git diff --cached --stat` antes do commit |
 | R6 | **Ocorrido:** o commit `40caeb143` (outra frente, TOTVS G2-B2) publicou a versão local antiga do `README.md` desta pasta e desfez a linha do plano da UI-02 | Linha restaurada pela coordenação em 18/11/2026. Outras frentes afetadas por esse commit não foram tocadas e devem ser avisadas ao solicitante |
+| R7 | **Ocorrido de novo:** o commit `fc46a3fba` (outra frente, Controladoria CF-004-R4) publicou a versão local antiga deste arquivo e apagou a §4 (revisão do P1) | §4 restaurada pela coordenação em 18/11/2026. **A pasta de trabalho do executor precisa ser alinhada ao HEAD** nos arquivos desta pasta, com autorização do solicitante |
 
 ---
 
