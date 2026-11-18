@@ -1,11 +1,22 @@
 # Strategic Indicators — DAVI MCP Full Portal Parity Plan
 
-> Status: PRODUCT_DIRECTION_ACCEPTED / IMPLEMENTATION_PENDING
+> Status atual (2026-11-18): **IMPLEMENTED / W016_DEV_FULL_PARITY_ACCEPTED / PRODUCTION_DEPLOYED_WITH_RESIDUALS / DELIVERY_CLOSED_BY_COORDINATION**. Evidência: W016 `4ebe5816e7`, fechamento `c13c36e22c`, matriz `03-w016-portal-parity-matrix.md`; deploy da V037 reportado e discovery autenticado das seis ferramentas verificado no ChatGPT. Este status substitui o cabeçalho histórico de planejamento para fins de execução; seções históricas permanecem como trilha de decisão.
 > Decision: DAVI-ADR-SI-CRUD-001 (Coordination, 2026-11-16)
 > Task: DAVI-SI-FULL-PORTAL-PARITY-PLAN-001
 > Scope: planejar paridade funcional conversacional do portal de Indicadores Estratégicos no DAVI, sem implementar.
 > Evidence: discovery DEVIN DAVI-STRATEGIC-INDICATORS-CRUD-DISCOVERY-01, code inventory; HEAD revalidar em toda task. GitHub code snapshot observado durante planejamento: 0b0bea01c98a78f998dafe6b417834b1c437bf06. Não equivale a deployed SHA.
 > Master roadmap: ../davi/01-reestruturacao-strategic-indicators-mcp-semantico.md (plano mestre das waves do DAVI; este documento detalha somente a integração Strategic Indicators, não o substitui).
+
+
+## Encerramento de entrega — Coordination, 2026-11-18
+
+**Decisão:** encerrar por ora as entregas de paridade DAVI × Strategic Indicators como **implementadas**, com aceite funcional integral em DEV e deploy produtivo reportado e verificado por smoke não mutante. Novas waves dependem de nova demanda.
+
+- **Escopo:** 50/50 ações elegíveis de portal cobertas no inventário W016; 1 rota genérica legada de importação intencionalmente bloqueada por design. Seis tools semânticas: `get_context`, `knowledge`, `read`, `analyze`, `execute`, `delete`.
+- **Evidência DEV:** PostgreSQL + OAuth + MCP reais, três identidades de teste, operações de escrita e exclusão em fixtures, PREPARE/ACT, cascatas, import merge/replace, auditoria e concorrência. Reconciliação V034 e V037; suíte aplicável SI 378/378 e DAVI 132/132, total **510 PASS, 0 FAIL/ERROR**, gates arquiteturais sem findings; verificador r3 **ACCEPT_WITH_RESIDUAL**, zero ordens abertas.
+- **Produção:** executor reportou deploy dos serviços `delpi-strategic-indicators-api` e `delpi-api-delpi`, migração V037 aplicada e smoke não mutante PASS. Ferramenta `delete` foi descoberta e invocada no ChatGPT com negativas seguras; **ACT destrutivo em produção não executado**, por decisão da Coordination. Não extrapolar resultado DEV para writes produtivos.
+- **Resíduos não bloqueantes do aceite delimitado:** 17 skips reportados na suíte ampla, 40 falhas ambientais fora do escopo aplicável (necessitam acompanhamento próprio); testes negativos com segunda identidade provados em DEV, não em ChatGPT produtivo; aceites produtivos por capacidade/ACT não executados integralmente. Tratar resíduos como backlog de operação/governança, não como novas implementações já aprovadas.
+- **Autoridade:** owner SI continua source of truth e AuthZ final; DAVI não concede permissões. Encerramento documental não altera regras de negócio nem autoriza mutações produtivas.
 
 ## 1. Resultado de produto e critérios
 
