@@ -51,6 +51,8 @@ export type NcByStatusPoint = {
 export type AuditDashboardCharts = {
   score_by_period: ScoreByPeriodPoint[];
   score_by_area: ScoreByAreaPoint[];
+  score_by_leaf_area?: ScoreByAreaPoint[];
+  score_by_macro_area?: ScoreByAreaPoint[];
   score_by_senso: ScoreBySensoPoint[];
   nc_by_status: NcByStatusPoint[];
 };
