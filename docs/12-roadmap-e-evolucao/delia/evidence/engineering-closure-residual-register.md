@@ -2184,21 +2184,3 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 | `R6-N6/N7` | `PENDING` | dependem de R4 |
 
 **NEXT:** verificação independente delpi-verifier da task. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
-
-### 2026-11-18 — F1 comprehension operation anchor & handoff reliability
-
-**TASK:** `COORDINATION_C3_T2_COMPREHENSION_OPERATION_ANCHOR_AND_HANDOFF_RELIABILITY_GATE`
-**BASE:** `c16050fe5f` (re-anchor; HEAD avançou p/ `566fc81c96` por commit concorrente DAVI — worktree sobre ele nos testes) · **LIVE_EVAL:** `or-qwen14b-1f6486aa44a9` (arm B), `or-qwen14b-bbe9701c3635` + `or-qwen14b-b9d2c74e7fdf` (arm A ×2), 9 cenários INT2 cada
-**EVIDENCE:** `evidence/c3-t2-f1-operation-anchor/`
-
-| ID | Estado | Evidência |
-|---|---|---|
-| `T2-COMPREHENSION-OPERATION-ANCHOR` | `REMEDIATED_PROVEN (unit+live) / RESIDUAL_RECOVERY` | Causa-raiz confirmada por RED×3: acceptor normalizava `operation` sem delivery; sob `aggregation` a classe declarada virava required_scope vinculante e desqualificava agregado legítimo de outra consultation-class. Fix EXTEND em `_normalize_obligation_tuple` (rejeita `operation` sob `delivery=aggregation` → INVALID_GOAL bounded com `non_material_operations`+`operation_guidance`; campo nunca removido silenciosamente). Suficiência intacta: obrigação legada que CHEGA com operation sob aggregation segue binding estrito (novo invariant test). v4=v3+cláusula (v1–v3 preservados). Live arm B 6/9: G2 prova recover [F,F,T] com feedback nomeado; arm A ×2: 4/9 e 5/9 — recover sob violações encadeadas (dotted+operation) imperfeito no single-agent (aderência do modelo, não defeito de contrato). Novo residual observado: plano aggregation aceito sem required_args → `owner_path_unbound` honesto (candidato a task futura). |
-| `T2-B-COMPREHENSION-AGENT-ERROR` | `OPEN_LOW (instrumentado)` | Classificada como upstream/transporte (requests=0 = exceção pré-request, não semântica). Gap de observabilidade remediado: `comprehension_agent_error:<ExcClass>` no trace (substring consumers preservados; só nome da classe, sem mensagem/segredo). n=0 recorrências no arm B (único com comprehension pass) — monitorar próxima ocorrência agora classificável. |
-| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` (mantido) | inalterado — suficiência não relaxada |
-| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | inalterado |
-| `R6-N6/N7` | `PENDING` | dependem de R4 |
-
-**HANDOFF (RQ-4):** validado ponta a ponta — gate `handoff_error is None` + plano aceito; eco JSON bounded do objeto validado; budget subtrativo; clarificação limpa pós-aceite; terminais propagam. Zero owner calls sem plano aceito nos 3 runs.
-
-**NEXT:** verificação independente delpi-verifier da task. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.

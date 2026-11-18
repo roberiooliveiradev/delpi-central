@@ -800,9 +800,7 @@ def _comprehension_catalog_block(
             "one operation_classes value only (entity actions like "
             "search/get belong in required_args, never in "
             "operation — omit operation unless the objective itself "
-            "demands that class; under aggregation delivery operation "
-            "is rejected as non-material (the aggregate is the "
-            "demonstration). required_args declares only the "
+            "demands that class). required_args declares only the "
             "material business scope the user asked for (filters, "
             "identities, units, periods) using the field vocabulary "
             "the owner publishes — never presentation selectors like "
@@ -2297,12 +2295,7 @@ class PydanticAiInvestigationOrchestrator:
             operation kind (e.g. "analise…" → analysis): it restricts
             which capability classes may demonstrate the obligation,
             so a class you merely preferred as strategy silently
-            disqualifies other capable capabilities. Under
-            ``expected_delivery="aggregation"`` ``operation`` is
-            rejected outright as non-material — the authoritative
-            owner aggregate is the demonstration and any
-            consultation-class invocation producing it qualifies.
-            Anchored
+            disqualifies other capable capabilities. Anchored
             obligations are verified mechanically against
             owner-declared evidence metadata; unanchored text binds
             evidence but never proves pertinence. A declaration is a
@@ -2428,34 +2421,6 @@ class PydanticAiInvestigationOrchestrator:
                         "the invocation args, not this field; omit "
                         "operation unless the objective itself demands "
                         "that class."
-                    )
-                non_material_ops = sorted(
-                    {
-                        str(item.get("operation")).strip()
-                        for item in needed
-                        if isinstance(item, dict)
-                        and isinstance(item.get("operation"), str)
-                        and item["operation"].strip()
-                        and item["operation"].strip().casefold()
-                        in _OBLIGATION_OPERATIONS
-                    }
-                ) if (
-                    str(expected_delivery).strip().casefold()
-                    == "aggregation"
-                ) else []
-                if non_material_ops:
-                    rejected["non_material_operations"] = (
-                        non_material_ops[:8]
-                    )
-                    rejected["operation_guidance"] = (
-                        "under aggregation delivery the authoritative "
-                        "owner aggregate is the demonstration — an "
-                        "operation-class restriction only freezes "
-                        "your chosen strategy into a scope no other "
-                        "consultation-class capability can echo; omit "
-                        "operation and declare analytic demands in "
-                        "the obligation description or "
-                        "evidence_source."
                     )
                 presentation_scope_keys = sorted(
                     {
@@ -3665,7 +3630,7 @@ class PydanticAiInvestigationOrchestrator:
             error_class = (
                 "comprehension_output_retries_exhausted"
                 if exc_name == "UnexpectedModelBehavior"
-                else f"comprehension_agent_error:{exc_name}"
+                else "comprehension_agent_error"
             )
             _logger.info(
                 "orchestration engine=pydantic_ai "

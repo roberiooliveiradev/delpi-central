@@ -436,6 +436,7 @@ def test_g2_aggregation_satisfied_despite_spurious_filter_target():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
+                "operation": "read",
             }
         ],
         business_subject="processos de transformação",
@@ -494,6 +495,7 @@ def test_g2_residual_clarification_does_not_veto_satisfied_aggregation():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
+                "operation": "read",
             }
         ],
         business_subject="processos de transformação",
@@ -602,6 +604,7 @@ def test_g2_complete_declaration_promotes_clarification_terminal():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
+                "operation": "read",
             }
         ],
         expected_delivery="aggregation",
@@ -659,6 +662,7 @@ def test_g2_unbound_target_still_runs_partial_identifier_coverage():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
+                "operation": "read",
             }
         ],
         expected_delivery="aggregation",
@@ -704,6 +708,7 @@ def test_g2_unbound_target_still_fails_when_obligation_unsatisfied():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
+                "operation": "read",
             }
         ],
         expected_delivery="aggregation",

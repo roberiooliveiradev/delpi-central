@@ -66,7 +66,8 @@ Base: `POST|GET /apps/controllership-finance-api/admin/checklist-templates` (exi
 | GET | `/admin/checklist-templates/{template_id}/series` | manage | série ativa + histórico de séries |
 | GET | `/admin/checklist-templates/{template_id}/series/{series_no}` | manage | detalhe da série (versoes, alta-marca) |
 | GET | `/admin/checklist-templates/{template_id}/series/active` | manage | série ativa canônica |
-| POST | `/admin/checklist-templates/{template_id}/series` | manage | **start_checklist_sequence** — D4: confirmação explícita+`reason`+OCC+idempotência+audit+read-back; único `manage` |
+| POST | `/admin/checklist-templates/{template_id}/series` | manage | **start_checklist_sequence** — D4: confirmação explícita+`reason`+OCC+idempotência+audit+read-back; único `manage`. Cria série + V1 `DRAFT` **vazia** (RQ-01: inicialização é fluxo separado — ver §5) |
+| POST | `/admin/checklist-templates/{template_id}/versions/{version_id}/items:initialize` | manage | **carga inicial excepcional** — somente versão `DRAFT` de série nova; manifesto `items[]` validado (16 itens), atômico, `reason`+idempotência+fingerprint; proibido em `PUBLISHED` (edição posterior = `revisions`) |
 
 ### 3.2 Versões e revisões
 
@@ -129,7 +130,7 @@ CREATE TABLE controllership_finance.checklist_version_revision (
     fingerprint     VARCHAR(64) NOT NULL,          -- sha256 do catálogo resultante
     reason          TEXT NOT NULL,
     idempotency_key VARCHAR(80) NOT NULL UNIQUE,
-    reverted_by     UUID REFERENCES checklist_version_revision(revision_id),
+    reverts_revision_id UUID REFERENCES checklist_version_revision(revision_id), -- setado na revisão NOVA compensatória; a revisão original NUNCA é atualizada (RQ-02 append-only)
     created_by      UUID NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (version_id, revision_no)
@@ -146,13 +147,15 @@ CREATE TABLE controllership_finance.checklist_version_revision_change (
 );
 ```
 
-OCC: `expected_revision` comparado a `checklist_template_version.revision`; write = `UPDATE … SET revision=revision+1 WHERE version_id=$1 AND revision=$2` (0 linhas → `stale_revision`). Reversão = nova revisão com `changes` compensatórias + `reverted_by`; nunca UPDATE físico em revisão anterior (histórico reconstruível: items = replay de `changes`).
+OCC: `expected_revision` comparado a `checklist_template_version.revision`; write = `UPDATE … SET revision=revision+1 WHERE version_id=$1 AND revision=$2` (0 linhas → `stale_revision`). **Reversão append-only (RQ-02):** `revert_revision` gera revisão NOVA com `reverts_revision_id`=alvo e `changes` compensatórias derivadas de `before_state`/`after_state` do alvo; a revisão original permanece imutável — estado reconstruível por replay de `changes` ordenado por `revision_no`, e reverter uma reversão é outra revisão compensatória.
 
 ### 4.3 Itens do catálogo — retirada lógica
 
 `checklist_template_item` (hoje só linhas vivas): `ADD item_state VARCHAR(10) NOT NULL DEFAULT 'ACTIVE' CHECK IN ('ACTIVE','RETIRED')`, `ADD retired_revision_id UUID REFERENCES checklist_version_revision`, `ADD retired_by UUID`, `ADD retired_at TIMESTAMPTZ`. `RETIRE`/`REACTIVATE` = UPDATE governado (mesmo `item_id`/`item_key`) — nunca DELETE; `ADD` = nova linha. Winner passa a projetar apenas `item_state='ACTIVE'`.
 
 `competence_checklist_item`: `ADD cancel_origin VARCHAR(14) CHECK (cancel_origin IS NULL OR cancel_origin IN ('MANUAL','CATALOG_RETIRE'))`, `ADD cancelled_revision_id UUID` — proveniência que autoriza REACTIVATE no sync (doc 174 §3.1) e bloqueia `unknown_cancel_origin`.
+
+**Autoridade de identidade (RQ-05):** as colunas tipadas `cancel_origin`+`cancelled_revision_id` são a **única autoridade** para comprovar retirada por catálogo — `state_reason` é texto informativo e o evento de audit espelha, nunca decide. Regra fail-closed: `CANCELLED` com `cancel_origin IS NULL` (legado) → origem desconhecida → **nunca** reativado; `cancel_origin='MANUAL'` → nunca reativado pelo sync; divergência entre coluna tipada e audit/evento → `unknown_cancel_origin` + run `FAILED` investigável, sem mutação. `REACTIVATE` exige `cancel_origin='CATALOG_RETIRE'` ∧ `cancelled_revision_id` referenciando revisão da mesma versão/linha.
 
 ### 4.4 Conclusão histórica — `monthly_competence`
 
@@ -173,6 +176,8 @@ CREATE TABLE controllership_finance.checklist_sync_event (
     event_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     revision_id    UUID NOT NULL REFERENCES checklist_version_revision(revision_id) ON DELETE RESTRICT,
     state          VARCHAR(10) NOT NULL DEFAULT 'EMITTED' CHECK (state IN ('EMITTED','DISPATCHED','FAILED')),
+    completion_state VARCHAR(26) CHECK (completion_state IS NULL OR completion_state IN ('CONVERGED','CONVERGED_WITH_EXCLUSIONS','INCOMPLETE')),
+    converged_at   TIMESTAMPTZ,               -- só setado com read-back de convergência (RQ-03)
     attempts       INT NOT NULL DEFAULT 0,
     last_error     TEXT,
     emitted_at     TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -183,7 +188,8 @@ CREATE TABLE controllership_finance.checklist_sync_run (
     competence_id UUID NOT NULL REFERENCES monthly_competence(competence_id) ON DELETE RESTRICT,
     revision_id   UUID NOT NULL,
     state         VARCHAR(24) NOT NULL DEFAULT 'PENDING'
-        CHECK (state IN ('PENDING','APPLIED','APPLIED_WITH_EXCLUSIONS','SKIPPED','PARTIAL','FAILED')),
+        CHECK (state IN ('PENDING','APPLYING','APPLIED','APPLIED_WITH_EXCLUSIONS','SKIPPED','PARTIAL','FAILED')),
+    attempts      INT NOT NULL DEFAULT 0,
     skip_reason   VARCHAR(40),
     exclusions    JSONB NOT NULL DEFAULT '[]',
     started_at    TIMESTAMPTZ,
@@ -213,6 +219,8 @@ Novos/estendidos em `application/checklist/` (domain em `domain/closing_checklis
 | Use case | Regra central | Guards |
 |---|---|---|
 | `start_checklist_sequence` | fecha série ativa (`CLOSED`), cria série `n+1` + V1 `DRAFT`; registra evento | manage, confirm, reason, OCC, idempotency; série anterior íntegra |
+| `initialize_checklist_catalog` | carga inicial dos itens na V1 `DRAFT` (tx única, manifesto validado) | manage, reason, idempotency_key, versão `DRAFT` da série nova, catálogo vazio ou replay idêntico |
+| `publish_checklist_version` (existente) | publicação da V1 inicializada — mesmos guards da série legada; `effective_from_period` | manage; V1 sem manifesto íntegro não publica |
 | `apply_revision` | aplica `changes[]` atômicas sob lock da versão; emite `checklist_sync_event` na mesma tx | `expected_revision` (OCC), `reason`, `idempotency_key`, versão `PUBLISHED` |
 | `revert_revision` | gera revisão compensatória com `changes` invertidas | mesmos guards; revisão alvo existente e não revertida |
 | `preview_revision` | diff catálogo×changes + candidatos elegíveis | read-only |
@@ -261,7 +269,7 @@ Reavaliado na tx do run, sob `FOR UPDATE` na competência; `UNEVALUATED`/`COMPLE
 
 ### 7.2 Fluxo do evento
 
-`apply_revision` commita `checklist_version_revision` + `checklist_sync_event(EMITTED)` na mesma tx → dispatcher claim (`FOR UPDATE SKIP LOCKED`) → para cada competência candidata (`OPEN`): upsert `checklist_sync_run(revision_id, competence_id)` (UNIQUE = idempotência) → `reconcile_competence` → `state` final + `exclusions[]` → evento `DISPATCHED`; exceção → `FAILED` + `attempts++` + `last_error` → retry com backoff; `attempts ≥ max` → `FAILED` permanente (dead-letter observável).
+`apply_revision` commita `checklist_version_revision` + `checklist_sync_event(EMITTED)` na mesma tx → dispatcher claim (`FOR UPDATE SKIP LOCKED`, evento `EMITTED→DISPATCHED`) → para cada competência candidata (`OPEN`): upsert `checklist_sync_run(revision_id, competence_id)` (UNIQUE = idempotência) → `reconcile_competence` → run terminal + `exclusions[]`. **Máquina de estados completa (RQ-03):** runs `PENDING→APPLYING→{APPLIED|APPLIED_WITH_EXCLUSIONS|SKIPPED|PARTIAL|FAILED}`; `PARTIAL|FAILED` retriable até `max_attempts` (backoff exponencial); esgotado = dead-letter operacional com alerta. Evento `DISPATCHED` só transita para **concluído** quando *todo* run está terminal **e** o read-back de convergência (diff snapshot×winner vazio por competência aplicada) confirma — registrado em `checklist_sync_event.converged_at` + `completion_state ∈ {CONVERGED, CONVERGED_WITH_EXCLUSIONS, INCOMPLETE}`; enquanto existir run `PENDING|APPLYING|FAILED` retriável o evento permanece aberto. Restart: poller retoma `EMITTED`/`DISPATCHED` não convergidos; evento duplicado/atrasado converge pelo `UNIQUE(revision_id,competence_id)` dos runs.
 
 **Coalescência por reconciliação:** o evento é gatilho; o run recomputa `diff(snapshot, winner_vigente)` ao vivo — ordem de eventos é irrelevante; evento duplicado/atrasado converge para o mesmo estado.
 
@@ -303,7 +311,9 @@ Nenhuma regra paralela: tools em `interface/mcp/tool_bridge.py` chamam os mesmos
 | `tool_list_documents`, `tool_list_pendencies` | mantido | access | reflete item `CANCELLED` por retirada |
 | `ClaraGovernedWrites` (correções, validação) | mantido — lê `CLOSED_REQUIREMENT_RETIRED` como encerramento administrativo | access/escopo | `_correction_state` precisa mapear o novo estado (§4.5) |
 | `ClaraBatchOrchestrator` | EXTEND — batch de exigências passa a gravar revisão | manage | reaproveita orquestração existente |
-| **start_checklist_sequence** | **capability nova — não criada neste gate** | manage | `DECISION_REQUIRED`: expor à CLARA (PREPARE/ACT) ou manter Portal-only? Recomendação: **Portal-only** no MVP — operação excepcional sem ganho em chat |
+| `tool_checklist_list_series` · `tool_checklist_list_revisions` · `tool_checklist_revision_detail` · `tool_checklist_impact_preview` | capabilities novas de leitura | manage | paridade de consulta com o Portal |
+| `tool_checklist_apply_revision` · `tool_checklist_revert_revision` | capabilities novas de escrita PREPARE→confirmação no chat→ACT→read-back | manage | mesmos use cases da BFF; sem regra paralela |
+| `tool_checklist_start_sequence` · `tool_checklist_initialize_catalog` · `tool_checklist_sync_status` · `tool_checklist_retry_failed_sync` | capabilities novas PREPARE/ACT | manage | **paridade integral (RQ-06, DECIDED_BY_PO — nenhuma operação Portal-only)**: inclusive início de sequência e carga inicial da V1 |
 
 Apresentação de `CLOSED_REQUIREMENT_RETIRED` em `operation_presentation`/`_correction_state`/"manifesto de exclusão" (`competence_deletion`): classificar como `closed_administrative`, nunca `rejected` — atualização no mesmo gate de implementação.
 
@@ -330,7 +340,7 @@ Estados obrigatórios: loading/empty/error/**forbidden**/`sync parcial`/`sync_fa
 
 1. **Inventário read-only** do ambiente-alvo: revalidar estado (V1 antiga `INACTIVE`, V2 `REVIEW` com 16 itens, competências, propostas CLARA) — dados históricos podem ter mudado.
 2. **Manifesto dos 16 itens** (item_key→campos) + `fingerprint` sha256 — artefato versionado junto ao runbook.
-3. **Dry-run** da sequência completa em cópia: `start_checklist_sequence` → V1 DRAFT → 16×ADD via revisão em lote → `effective_from_period='2026-01'` → `publish` → read-back → sync de candidatas (esperado: zero competências ou comportamento documentado).
+3. **Dry-run** da sequência completa em cópia: `start_checklist_sequence` → V1 DRAFT vazia → `items:initialize` com o manifesto de 16 → `effective_from_period='2026-01'` → `publish` → read-back → sync de candidatas (esperado: zero competências ou comportamento documentado).
 4. **Exclusões governadas** só se o inventário confirmar necessidade (fluxo CF-UX-054 já existente).
 5. **Execução** com `manage`+confirmação+motivo+idempotência; sem four-eyes (D4).
 6. **Read-back + evidências**: série ativa=2, winner=V1(2,1), 16 itens ACTIVE, fingerprint confere, eventos de audit íntegros.
@@ -376,6 +386,6 @@ Backend autoridade: `effective capability (Core) ∧ escopo ∧ regra`; JWT cont
 ## 13. Resíduos e decisões
 
 - **D8 — validade temporal da evidência (PO, DECISION_REQUIRED):** contratado conservador — visível, não auto-válida; mecanismo de reaproveitamento não projetado.
-- **start_sequence na CLARA:** recomendado Portal-only no MVP (§8) — confirmar com GPT Arquiteto.
+- **Paridade Portal↔CLARA (RQ-06):** resolvida por decisão do PO — Portal = MCP/CLARA em capacidade funcional, segurança e resultado; todas as operações admin expostas via tools com PREPARE/ACT e read-back; diferença apenas de apresentação.
 - **Nº efetivo das migrations V031–V035:** reserva lógica; confirmar HEAD no Gate 2B.
 - **Gate 2A aprovação:** pendente do GPT Arquiteto — este documento não se auto-aprova.

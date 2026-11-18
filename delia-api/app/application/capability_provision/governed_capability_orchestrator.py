@@ -2714,16 +2714,11 @@ class OperationalCapabilityOrchestrator:
             declared=True,
         )
         targets = _normalize_identity_tuple(target_identities)
-        normalized_needed = _normalize_obligation_tuple(
-            evidence_needed, delivery=delivery
-        )
+        normalized_needed = _normalize_obligation_tuple(evidence_needed)
         if normalized_needed is None:
-            # An ``operation`` outside the owner operation vocabulary —
-            # or any ``operation`` declared under ``aggregation``
-            # delivery, where the authoritative aggregate and not the
-            # consultation class is the material requirement — is a
-            # contract violation; reject the plan so the model receives
-            # bounded vocabulary feedback (RC5/T2-operation-anchor).
+            # An ``operation`` outside the owner operation vocabulary
+            # is a contract violation — reject the plan so the model
+            # receives bounded vocabulary feedback (RC5).
             _logger.info(
                 "orchestration stage=semantic_plan "
                 "decision=invalid_obligation_operation "

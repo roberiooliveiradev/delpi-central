@@ -2409,8 +2409,6 @@ def _obligation_item(obligation: object) -> MaterialObligation:
 
 def _normalize_obligation_tuple(
     raw: object,
-    *,
-    delivery: str | None = None,
 ) -> tuple[MaterialObligation, ...] | None:
     """Normalize declared evidence obligations; None on invalid vocab.
 
@@ -2419,16 +2417,6 @@ def _normalize_obligation_tuple(
     typed RC5 anchor form. An ``operation`` outside the owner
     operation vocabulary rejects the whole plan so the model receives
     bounded vocabulary feedback instead of a silently dropped field.
-
-    Under ``aggregation`` delivery a declared ``operation`` is also
-    non-material: the deliverable is the authoritative owner
-    aggregate, which ANY consultation-class invocation that echoes the
-    material scope demonstrates — an operation class only freezes the
-    model's chosen strategy into a restriction the objective never
-    demanded (T2-COMPREHENSION-OPERATION-ANCHOR residual: a declared
-    ``analysis`` locked out the legitimate ``read`` total). Reject so
-    the model re-declares the analytic demand via description/
-    evidence_source — never silently drop a declared requirement.
     """
     if not isinstance(raw, (list, tuple)):
         return ()
@@ -2461,11 +2449,6 @@ def _normalize_obligation_tuple(
         if (
             obligation.operation is not None
             and obligation.operation not in _OBLIGATION_OPERATIONS
-        ):
-            return None
-        if (
-            delivery == "aggregation"
-            and obligation.operation is not None
         ):
             return None
         if (

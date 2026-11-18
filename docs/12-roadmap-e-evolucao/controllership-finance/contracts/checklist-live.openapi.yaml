@@ -31,7 +31,9 @@ paths:
       tags: [admin-checklist-series]
       operationId: start_checklist_sequence
       summary: Inicia nova sequência de numeração (D4 — excepcional)
-      parameters: [{ $ref: '#/components/parameters/TemplateId' }]
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -88,6 +90,7 @@ paths:
       parameters:
         - { $ref: '#/components/parameters/TemplateId' }
         - { $ref: '#/components/parameters/VersionId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -138,6 +141,7 @@ paths:
         - { $ref: '#/components/parameters/TemplateId' }
         - { $ref: '#/components/parameters/VersionId' }
         - { $ref: '#/components/parameters/RevisionId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
       requestBody:
         required: true
         content:
@@ -185,6 +189,46 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ImpactPreview' }
+  /admin/checklist-templates/{template_id}/versions/{version_id}/items:initialize:
+    post:
+      tags: [admin-checklist-revisions]
+      operationId: initialize_checklist_catalog
+      summary: Carga inicial excepcional dos itens em versão DRAFT de série nova (RQ-01)
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, items]
+              properties:
+                reason: { type: string, minLength: 1 }
+                items:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/CatalogItem' }
+      responses:
+        '201':
+          description: Catálogo inicializado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version_id: { type: string, format: uuid }
+                  items_created: { type: integer }
+                  fingerprint: { type: string }
+        '400': { $ref: '#/components/responses/DomainError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/DomainError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /admin/checklist-templates/{template_id}/sync-runs:
     get:
       tags: [closing-sync]
@@ -205,6 +249,26 @@ paths:
                   runs:
                     type: array
                     items: { $ref: '#/components/schemas/SyncRun' }
+  /admin/checklist-templates/{template_id}/sync-events/{event_id}:retry:
+    post:
+      tags: [closing-sync]
+      operationId: retry_checklist_sync_event
+      summary: Reprocessa runs FAILED de um evento de sincronização (autorizado)
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - name: event_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '202':
+          description: Reprocessamento aceito
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncStatus' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /closing-competences/{period}/sync-status:
     get:
       tags: [closing-sync]
@@ -252,6 +316,11 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
 components:
   parameters:
+    IdempotencyKey:
+      name: X-Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 80 }
     TemplateId:
       name: template_id
       in: path
@@ -268,6 +337,22 @@ components:
       required: true
       schema: { type: string, format: uuid }
   schemas:
+    CatalogItem:
+      type: object
+      required: [item_key, sort_order, sheet, name, applicability, branch_scope]
+      properties:
+        item_key: { type: string, maxLength: 32 }
+        sort_order: { type: integer }
+        sheet: { type: string, enum: [ELETRONICO, FISICO] }
+        name: { type: string, maxLength: 255 }
+        purpose: { type: string }
+        origin_kind: { type: string, enum: [TOTVS, EXTERNAL, MIXED] }
+        recipient_area: { type: string, enum: [CONTABIL, FISCAL] }
+        applicability: { type: string, enum: [REQUIRED, CONDITIONAL, OPTIONAL] }
+        branch_scope: { type: string, enum: [MATRIX, BRANCH, BOTH] }
+        validation_scope: { type: string, enum: [PER_ATTACHMENT, WHOLE_SET] }
+        totvs_report_ref: { type: string, maxLength: 8 }
+        requirement_notes: { type: string }
     Series:
       type: object
       properties:
@@ -323,7 +408,7 @@ components:
         revision_id: { type: string, format: uuid }
         state:
           type: string
-          enum: [PENDING, APPLIED, APPLIED_WITH_EXCLUSIONS, SKIPPED, PARTIAL, FAILED]
+          enum: [PENDING, APPLYING, APPLIED, APPLIED_WITH_EXCLUSIONS, SKIPPED, PARTIAL, FAILED]
         skip_reason: { type: string }
         exclusions: { type: array, items: { type: object } }
         started_at: { type: string, format: date-time }
@@ -333,7 +418,7 @@ components:
       properties:
         state:
           type: string
-          enum: [SYNCED, PENDING, PARTIAL, FAILED]
+          enum: [SYNCED, PENDING, PARTIAL, FAILED, CONVERGED, CONVERGED_WITH_EXCLUSIONS, INCOMPLETE]
         revision_applied: { type: integer }
         pending_events: { type: integer }
         runs:
@@ -381,10 +466,28 @@ components:
                 - sync_pending
                 - sync_failed
                 - unknown_cancel_origin
+                - catalog_not_initialized
+                - item_key_conflict
+                - version_not_draft
                 - draft_already_open
                 - version_has_open_competences
             message: { type: string }
   responses:
+    Unauthorized:
+      description: Não autenticado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Sem capability efetiva ou fora de escopo
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: Limite de requisições excedido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     NotFound:
       description: Recurso inexistente
       content:
