@@ -130,3 +130,5 @@ Resumo:
 - [ ] Exclusão de produto / cadastro? → [cadastro-produto.md](./cadastro-produto.md).
 - [ ] Playbook de domínio existe? → pasta [`playbooks/`](./playbooks/).
 - [ ] Doc da rota aponta para a seção/playbook (não copia tabelas inteiras).
+
+**Workspace de desenvolvimento de novos fontes (decisão PO):** [`api-delpi/integrations/protheus-advpl/`](../../integrations/protheus-advpl/README.md), modular por capacidade, com contratos e manifestos de handoff. `Delpi-ti/protheus-erp` é consultado em modo READ-ONLY para base e histórico; **não** é o destino dos commits desta iniciativa. O RPO continua sob controle da equipe ERP.
