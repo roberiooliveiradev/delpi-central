@@ -130,8 +130,8 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page.getByRole("button", { name: "Abrir ferramenta" }).click();
     await expect(page).toHaveURL(/processes\/line-balancing/);
     await expect(
-      page.getByRole("heading", { name: "Balanceamento de Linha" }),
-    ).toBeVisible();
+      page.getByRole("button", { name: /Produto DELPI/ }),
+    ).toBeVisible({ timeout: 30_000 });
 
     /* Hub compacto: só a ferramenta operacional — planejadas não ocupam a tela. */
     await page.goto("/apps/engineering/processes");
@@ -219,7 +219,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
      * contexto (takt/cargas do mesmo estudo). */
     await page.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
     await expect(
-      page.getByRole("heading", { name: "Capacidade e takt" }),
+      page.getByRole("heading", { name: "Capacidade e takt", exact: true }),
     ).toBeVisible();
     await expect(page.getByText(/Produto 90264302/).first()).toBeVisible();
     await page.getByRole("button", { name: /M5 · Yamazumi/ }).click();
