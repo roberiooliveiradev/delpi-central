@@ -96,9 +96,12 @@ def test_state_disappearing_in_running_instance_latches(directory):
 
 def test_competing_process_directory_lock_fails_closed(directory):
     instance = store(directory)
-    with os.fdopen(os.open(directory, os.O_RDONLY | os.O_DIRECTORY), "rb") as locked:
-        fcntl.flock(locked.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    directory_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        fcntl.flock(directory_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         deny("HML_CONTINUITY_STORE_BUSY", lambda: instance.commit(record(1)))
+    finally:
+        os.close(directory_fd)
     assert instance.halted
     assert not (directory / store_mod._FILENAME).exists()
 
