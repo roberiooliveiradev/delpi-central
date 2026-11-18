@@ -47,6 +47,21 @@ describe("parsePpcPath", () => {
     expect(route.reportId).toBe("production-orders");
   });
 
+  it("recognizes the product Raio-X deep link after clicking its catalog card", () => {
+    const href = buildPpcHref({
+      subpluginId: "reports",
+      branch: "02",
+      reportId: "product-sales",
+    });
+    expect(href).toBe("/apps/production-control/reports?branch=02&report=product-sales");
+
+    const url = new URL(href, "https://portal.delpi.local");
+    const route = parsePpcPath(url.pathname, url.search, "01");
+    expect(route.subpluginId).toBe("reports");
+    expect(route.branch).toBe("02");
+    expect(route.reportId).toBe("product-sales");
+  });
+
   it("ignores unknown report ids", () => {
     const route = parsePpcPath(
       "/apps/production-control/reports",
