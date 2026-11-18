@@ -49,7 +49,6 @@ import {
   type RoutingOperationView,
 } from "../../products/routing/routingGrouping";
 import type { BalanceRunParams } from "../../products/routing/useRoutingStudyDraft";
-import { BALANCING_METHODS, METHOD_STATUS_BADGE_VARIANT } from "./methodCatalog";
 import { LineBalanceStudioMount } from "./LineBalanceStudio";
 import {
   buildManualStudyInput,
@@ -533,32 +532,6 @@ export function LineBalancingPage() {
           ) : null}
         </EngineeringSectionCard>
       ) : null}
-
-      <EngineeringSectionCard
-        title="Métodos de balanceamento"
-        subtitle="Catálogo M1–M6 — somente capacidades reais; métodos planejados mostram requisitos em vez de cálculo inerte."
-      >
-        <div className="engineering-processes__method-list">
-          {BALANCING_METHODS.map((m) => (
-            <div key={m.id} className="engineering-processes__method-item">
-              <span className="engineering-processes__method-head">
-                <strong>
-                  {m.label} — {m.name}
-                </strong>
-                <EngineeringStatusBadge label={m.statusLabel} variant={METHOD_STATUS_BADGE_VARIANT[m.status] ?? "neutral"} />
-              </span>
-              <p className="engineering-routing__muted">{m.summary}</p>
-              {m.requirements?.length ? (
-                <ul className="engineering-routing__limitations">
-                  {m.requirements.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </EngineeringSectionCard>
 
       <EngineeringConfirmDialog
         open={clearOpen}

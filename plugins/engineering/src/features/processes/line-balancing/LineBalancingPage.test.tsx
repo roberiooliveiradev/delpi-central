@@ -28,6 +28,7 @@ const home = readFileSync(
 );
 const app = readFileSync(join(here, "../../../App.tsx"), "utf8");
 const css = readFileSync(join(here, "../../../index.css"), "utf8");
+const methodCatalog = readFileSync(join(here, "methodCatalog.ts"), "utf8");
 
 describe("Processes card (PROC-01)", () => {
   it("catálogo tem a seção processes com os destinos da ferramenta", () => {
@@ -62,9 +63,10 @@ describe("Processes routing (PROC-02/03)", () => {
     expect(hub).toContain("navigateGovernedHref");
   });
 
-  it("ferramentas futuras aparecem como planejamento, sem ação falsa", () => {
-    expect(hub).toContain("Em planejamento");
-    expect(hub).toContain("disabled: true");
+  it("ferramentas planejadas não ocupam a tela — somente a ferramenta operacional", () => {
+    expect(hub).not.toContain("Em planejamento");
+    expect(hub).not.toContain("PLANNED_TOOLS");
+    expect(hub).toContain("Abrir ferramenta");
   });
 });
 
@@ -98,9 +100,10 @@ describe("M1 reuse + catálogo (PROC-07/08)", () => {
     expect(page).not.toContain("build_balance_result");
   });
 
-  it("catálogo lista os seis métodos sem ação falsa", () => {
-    expect(page).toContain("BALANCING_METHODS.map");
-    expect(page).toContain("METHOD_STATUS_BADGE_VARIANT");
+  it("catálogo M1–M6 preservado no módulo, sem listagem extensa na entrada", () => {
+    expect(methodCatalog).toContain("BALANCING_METHODS");
+    expect(page).not.toContain("BALANCING_METHODS");
+    expect(page).not.toContain("Métodos de balanceamento");
   });
 });
 
@@ -173,7 +176,7 @@ describe("Layout (PROC-17/18)", () => {
   it("classes de composição próprias existem no CSS do MFE", () => {
     for (const cls of [
       "engineering-processes__lookup",
-      "engineering-processes__method-list",
+      "engineering-processes__tool-row",
     ]) {
       expect(css).toContain(`.${cls}`);
     }

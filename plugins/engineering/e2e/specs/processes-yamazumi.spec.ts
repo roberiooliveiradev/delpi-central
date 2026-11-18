@@ -9,9 +9,9 @@ import {
 /** Evidência E2E — Processos > Balanceamento de Linha (Yamazumi V3).
  *
  * Login SSO real → home do Portal Engenharia → card Processos → hub
- * → ferramenta independente (sem Ficha do Produto) → consulta do
+ * compacto → ferramenta independente (sem Ficha do Produto) → consulta do
  * roteiro oficial por código → seleção explícita de filial/estágio →
- * parâmetros + catálogo M1–M6 → Yamazumi (postos, atribuição, gráfico
+ * parâmetros → análise oficial M1 → Yamazumi (postos, atribuição, gráfico
  * carga × takt) → cenário B → F5 restore → limpeza confirmada →
  * exportações → dark/light × viewports do config.
  *
@@ -132,9 +132,12 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.getByRole("heading", { name: "Balanceamento de Linha" }),
     ).toBeVisible();
 
-    /* Ferramentas futuras: planejamento sem ação falsa. */
+    /* Hub compacto: só a ferramenta operacional — planejadas não ocupam a tela. */
     await page.goto("/apps/engineering/processes");
-    await expect(page.getByText("Em planejamento").first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Abrir ferramenta" }),
+    ).toBeVisible();
+    await expect(page.getByText("Em planejamento")).toHaveCount(0);
 
     await expectNoFailures(pageErrors, forbiddenCalls);
   });
@@ -187,16 +190,12 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.getByText(/Roteiro oficial · OBSERVED/),
     ).toBeVisible({ timeout: 15_000 });
 
-    /* Catálogo dos seis métodos com status honesto. */
-    for (const label of ["M1", "M2", "M3", "M4", "M5", "M6"]) {
-      await expect(
-        page.getByText(new RegExp(`^${label} —`)),
-      ).toBeVisible();
-    }
+    /* Entrada enxuta: listagem extensa de métodos não domina a primeira
+     * tela (catálogo funcional preservado para a sidebar futura). */
     await expect(
-      page.getByText("Planejado").first(),
-    ).toBeVisible();
-    await shot(page, "lb-method-catalog");
+      page.getByRole("heading", { name: "Métodos de balanceamento" }),
+    ).toHaveCount(0);
+    await shot(page, "lb-tool-entry");
 
     /* Condições no Studio → análise oficial M1 pelo contrato do domínio. */
     await page

@@ -1020,22 +1020,25 @@
   align-items: end;
 }
 
-.engineering-processes__method-list {
-  display: grid;
-  gap: var(--en-grid-gap);
-  margin-top: var(--en-grid-gap);
-}
-
-.engineering-processes__method-item {
-  border-top: 1px solid var(--en-border, var(--delpi-ui-border, #e2e8f0));
-  padding-top: 8px;
-}
-
-.engineering-processes__method-head {
+.engineering-processes__tool-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--en-grid-gap);
+}
+
+.engineering-processes__tool-identity {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
+  color: var(--en-text);
+}
+
+.engineering-processes__tool-identity strong {
+  font-size: 15px;
+  font-weight: 650;
 }
 
 .engineering-processes__yamazumi-grid {
