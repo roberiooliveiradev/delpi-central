@@ -262,9 +262,15 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.getByText(/Selecione a filial e o estágio produtivo/),
     ).toBeVisible({ timeout: 45_000 });
     await chooseOption(page, "Estágio produtivo", /^Estágio /);
-    await expect(page.getByText("Cenário B").first()).toBeVisible({
-      timeout: 30_000,
-    });
+    /* Rascunho restaurado: o seletor volta ao Cenário A e o B preservado
+     * aparece como opção do seletor de cenários. */
+    await expect(
+      page.getByRole("combobox", { name: "Cenário" }),
+    ).toContainText("Cenário", { timeout: 30_000 });
+    await chooseOption(page, "Cenário", /^Cenário B/);
+    await expect(
+      page.getByRole("combobox", { name: "Cenário" }),
+    ).toContainText("Cenário B");
     await shot(page, "lb-restored-after-f5");
 
     /* Limpar estudo → confirmação → rascunho removido. */
