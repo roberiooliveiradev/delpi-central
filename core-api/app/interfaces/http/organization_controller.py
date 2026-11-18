@@ -12,6 +12,9 @@ from uuid import UUID
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
+from app.application.services.direct_report_manager_discovery_service import (
+    DirectReportManagerDiscoveryService,
+)
 from app.application.services.organization_identity_review_service import (
     OrganizationIdentityReviewService,
 )
@@ -440,3 +443,42 @@ def get_manager_reports_direct_weekly_opens(registration: str):
     except Exception:
         logger.exception("reports_direct_team_weekly_failed")
         return api_error("internal_error", "Falha na consulta semanal direta.", status=500)
+
+
+@integrations_organization_bp.route(
+    "/managers/<registration>/reports/eligible-managers", methods=["GET"]
+)
+@require_reports_direct_usage_service_token()
+@integration_rate_limit(max_requests=12, per_seconds=60, key_prefix="reports-eligible-managers")
+def get_report_eligible_managers(registration: str):
+    """Scoped read-only candidate listing; never enumerates outside RH subtree."""
+    try:
+        root = PortalRhOrganizationGateway.validate_registration(registration)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            snapshot = DirectReportManagerDiscoveryService(
+                OrganizationTeamService(
+                    PortalRhOrganizationGateway(), uow.hr_registrations,
+                ),
+                uow.users,
+            ).preview(root)
+        logger.info(
+            "glpi887_manager_discovery root=%s count=%s ready=%s",
+            root, snapshot["managerCount"], snapshot["readyCount"],
+        )
+        return jsonify(snapshot), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except PortalRhManagerNotFound:
+        return api_error("manager_not_found", "Gestor raiz não encontrado no RH.", status=404)
+    except PortalRhOrganizationUnauthorized:
+        return api_error("rh_unavailable", "Credencial RH recusada.", status=503)
+    except PortalRhOrganizationContractError:
+        return api_error("rh_contract_error", "Hierarquia RH inválida.", status=502)
+    except PortalRhOrganizationUnavailable:
+        return api_error("rh_unavailable", "Portal RH indisponível.", status=503)
+    except Exception:
+        logger.exception("glpi887_manager_discovery_failed")
+        return api_error("internal_error", "Falha ao descobrir gestores elegíveis.", status=500)
