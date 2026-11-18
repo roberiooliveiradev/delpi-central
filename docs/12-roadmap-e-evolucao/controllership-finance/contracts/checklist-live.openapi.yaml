@@ -1,0 +1,409 @@
+openapi: 3.1.0
+info:
+  title: Controllership Finance BFF — Checklist Vivo (Gate 2A contract)
+  description: >-
+    Artefato de contrato (não executável) das extensões do checklist vivo.
+    Base canônica /apps/controllership-finance-api. Autorização efetiva via Core:
+    controllership-finance.access (operação) / controllership-finance.manage (admin).
+  version: 0.2.0
+tags:
+  - name: admin-checklist-series
+  - name: admin-checklist-revisions
+  - name: closing-sync
+paths:
+  /admin/checklist-templates/{template_id}/series:
+    get:
+      tags: [admin-checklist-series]
+      operationId: list_checklist_series
+      parameters: [{ $ref: '#/components/parameters/TemplateId' }]
+      responses:
+        '200':
+          description: Série ativa + histórico
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  series:
+                    type: array
+                    items: { $ref: '#/components/schemas/Series' }
+    post:
+      tags: [admin-checklist-series]
+      operationId: start_checklist_sequence
+      summary: Inicia nova sequência de numeração (D4 — excepcional)
+      parameters: [{ $ref: '#/components/parameters/TemplateId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, confirmation]
+              properties:
+                reason: { type: string, minLength: 1 }
+                confirmation:
+                  type: string
+                  const: START_NEW_SEQUENCE
+      responses:
+        '201':
+          description: Nova série criada com V1 DRAFT
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Series' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/checklist-templates/{template_id}/series/active:
+    get:
+      tags: [admin-checklist-series]
+      operationId: get_active_checklist_series
+      parameters: [{ $ref: '#/components/parameters/TemplateId' }]
+      responses:
+        '200':
+          description: Série ativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Series' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/checklist-templates/{template_id}/versions/{version_id}/revisions:
+    get:
+      tags: [admin-checklist-revisions]
+      operationId: list_checklist_version_revisions
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+      responses:
+        '200':
+          description: Revisões da versão
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revisions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Revision' }
+    post:
+      tags: [admin-checklist-revisions]
+      operationId: apply_checklist_revision
+      summary: Aplica revisão atômica em lote à versão publicada
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, expected_revision, changes]
+              properties:
+                reason: { type: string, minLength: 1 }
+                expected_revision: { type: integer, minimum: 1 }
+                changes:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/RevisionChange' }
+      responses:
+        '201':
+          description: Revisão aplicada; sync emitido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revision: { $ref: '#/components/schemas/Revision' }
+                  sync: { $ref: '#/components/schemas/SyncStatus' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/DomainError' }
+  /admin/checklist-templates/{template_id}/versions/{version_id}/revisions/{revision_id}:
+    get:
+      tags: [admin-checklist-revisions]
+      operationId: get_checklist_version_revision
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+        - { $ref: '#/components/parameters/RevisionId' }
+      responses:
+        '200':
+          description: Detalhe com changes before/after
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Revision' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/checklist-templates/{template_id}/versions/{version_id}/revisions/{revision_id}/revert:
+    post:
+      tags: [admin-checklist-revisions]
+      operationId: revert_checklist_revision
+      summary: Nova revisão compensatória (nunca reescreve histórico)
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+        - { $ref: '#/components/parameters/RevisionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, expected_revision]
+              properties:
+                reason: { type: string, minLength: 1 }
+                expected_revision: { type: integer, minimum: 1 }
+      responses:
+        '201':
+          description: Revisão compensatória aplicada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revision: { $ref: '#/components/schemas/Revision' }
+                  sync: { $ref: '#/components/schemas/SyncStatus' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/checklist-templates/{template_id}/versions/{version_id}/impact-preview:
+    post:
+      tags: [admin-checklist-revisions]
+      operationId: preview_checklist_revision
+      summary: Impacto read-only de uma revisão antes de aplicar
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - { $ref: '#/components/parameters/VersionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [changes]
+              properties:
+                changes:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/RevisionChange' }
+      responses:
+        '200':
+          description: Competências elegíveis e itens afetados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImpactPreview' }
+  /admin/checklist-templates/{template_id}/sync-runs:
+    get:
+      tags: [closing-sync]
+      operationId: list_checklist_sync_runs
+      parameters:
+        - { $ref: '#/components/parameters/TemplateId' }
+        - name: revision_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Runs por revisão
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items: { $ref: '#/components/schemas/SyncRun' }
+  /closing-competences/{period}/sync-status:
+    get:
+      tags: [closing-sync]
+      operationId: get_competence_sync_status
+      parameters:
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+      responses:
+        '200':
+          description: Estado agregado de sync da competência
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncStatus' }
+  /admin/competences/{competence_id}/completion-assessment:
+    post:
+      tags: [closing-sync]
+      operationId: assess_competence_completion
+      summary: Reconciliação governada de histórico UNEVALUATED
+      parameters:
+        - name: competence_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, completion_record, evidence_summary]
+              properties:
+                reason: { type: string, minLength: 1 }
+                completion_record:
+                  type: string
+                  enum: [NEVER, COMPLETED]
+                evidence_summary: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: Registro reconciliado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompetenceCompletion' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  parameters:
+    TemplateId:
+      name: template_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    VersionId:
+      name: version_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RevisionId:
+      name: revision_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    Series:
+      type: object
+      properties:
+        series_id: { type: string, format: uuid }
+        template_id: { type: string, format: uuid }
+        series_no: { type: integer, minimum: 1 }
+        status: { type: string, enum: [ACTIVE, CLOSED] }
+        start_reason: { type: string }
+        started_by: { type: string, format: uuid }
+        started_at: { type: string, format: date-time }
+    Revision:
+      type: object
+      properties:
+        revision_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision_no: { type: integer, minimum: 1 }
+        fingerprint: { type: string }
+        reason: { type: string }
+        created_by: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        reverted_by: { type: string, format: uuid }
+        changes:
+          type: array
+          items: { $ref: '#/components/schemas/RevisionChange' }
+    RevisionChange:
+      type: object
+      required: [op, item_key]
+      properties:
+        op: { type: string, enum: [ADD, UPDATE, RETIRE, REORDER, REACTIVATE] }
+        item_key: { type: string, maxLength: 32 }
+        payload: { type: object }
+        before_state: { type: object }
+        after_state: { type: object }
+    ImpactPreview:
+      type: object
+      properties:
+        catalog_fingerprint: { type: string }
+        eligible_competences: { type: integer }
+        affected_items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_key: { type: string }
+              op: { type: string }
+              competences_affected: { type: integer }
+              exclusions: { type: array, items: { type: object } }
+    SyncRun:
+      type: object
+      properties:
+        run_id: { type: string, format: uuid }
+        competence_id: { type: string, format: uuid }
+        revision_id: { type: string, format: uuid }
+        state:
+          type: string
+          enum: [PENDING, APPLIED, APPLIED_WITH_EXCLUSIONS, SKIPPED, PARTIAL, FAILED]
+        skip_reason: { type: string }
+        exclusions: { type: array, items: { type: object } }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time }
+    SyncStatus:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: [SYNCED, PENDING, PARTIAL, FAILED]
+        revision_applied: { type: integer }
+        pending_events: { type: integer }
+        runs:
+          type: object
+          properties:
+            applied: { type: integer }
+            applied_with_exclusions: { type: integer }
+            skipped: { type: integer }
+            partial: { type: integer }
+            failed: { type: integer }
+        exclusions: { type: array, items: { type: object } }
+    CompetenceCompletion:
+      type: object
+      properties:
+        competence_id: { type: string, format: uuid }
+        period: { type: string }
+        first_completed_at: { type: string, format: date-time }
+        completion_record:
+          type: string
+          enum: [NEVER, COMPLETED, UNEVALUATED]
+        completion_basis:
+          type: string
+          enum: [MARKER, BACKFILL, GOVERNED]
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                - stale_revision
+                - series_not_found
+                - version_not_active
+                - item_not_found
+                - item_retired
+                - item_locked_by_package
+                - competence_completed
+                - competence_unevaluated
+                - operation_repeated
+                - idempotency_conflict
+                - forbidden
+                - scope_denied
+                - sync_pending
+                - sync_failed
+                - unknown_cancel_origin
+                - draft_already_open
+                - version_has_open_competences
+            message: { type: string }
+  responses:
+    NotFound:
+      description: Recurso inexistente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflito OCC/idempotência/estado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    DomainError:
+      description: Regra de negócio violada
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
