@@ -22,7 +22,7 @@ O usuário — ou a CLARA, num comando — escolhe o período e as filiais e exe
 | [mcp/](./mcp/README.md) | CLARA: capacidades no catálogo, conhecimento (fichas AE-00 a AE-15), diretivas de conduta, perguntas ao owner |
 | [reference/](./reference/skill-auditoria-entradas-nfe-protheus/) | cópia da skill (SKILL.md, catálogo de regras, scripts) para o porte e o teste de paridade; sem a cópia da SF4 |
 | [planning/](./planning/planejamento-auditoria-entradas.xlsx) | tarefas, dependências, responsáveis e datas |
-| [fiscal-adjustments/](./fiscal-adjustments/README.md) | ajustes pedidos pelo Fiscal (SA1 em B/D, IBS/CBS, TES de insumo, uma ocorrência por causa, reverificação) — inventário T14 |
+| [fiscal-adjustments/](./fiscal-adjustments/README.md) | ajustes pedidos pelo Fiscal (SA1 em B/D, IBS/CBS, TES de insumo, uma ocorrência por causa, reverificação) — [trilha T15–T23](./fiscal-adjustments/track.md) |
 
 ## Próximos passos
 
