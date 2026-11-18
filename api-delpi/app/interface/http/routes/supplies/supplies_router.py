@@ -25,6 +25,7 @@ from app.interface.http.supplies_bff_service_access import (
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
 from app.core.responses import error_response
 from app.core.exceptions import DatabaseConnectionError
+from app.infrastructure.persistence.totvs.supplies_repositories.otd_physical_receipts import PhysicalOtdSourceUnavailable
 from app.application.services.supplies.freight_impact_service import compose_freight_impact
 from app.application.dto.financial.purchase_freight_links_request import PurchaseFreightLinksRequest
 from app.composition.financial_composer import build_get_purchase_freight_links_use_case
@@ -180,6 +181,13 @@ def get_otd(
             fields=kpi_fields(SUPPLIES_OTD_FIELD_LABELS),
         )
 
+    except PhysicalOtdSourceUnavailable as exc:
+        log_error(f"Fonte LNF para OTD indisponível: {exc}")
+        return error_response(
+            "Recebimento físico indisponível. Apuração do OTD não publicada.",
+            status_code=503,
+        )
+
     except ValueError as exc:
         log_error(f"Erro de validação ao buscar OTD: {exc}")
         return error_response(str(exc), status_code=400)
@@ -220,6 +228,13 @@ def get_supplies_purchase_order_otd_series(
             operation_id="get_supplies_purchase_order_otd_series",
             message="Purchase order OTD (MP) time series fetched successfully.",
         )
+    except PhysicalOtdSourceUnavailable as exc:
+        log_error(f"Fonte LNF para OTD indisponível: {exc}")
+        return error_response(
+            "Recebimento físico indisponível. Apuração do OTD não publicada.",
+            status_code=503,
+        )
+
     except ValueError as exc:
         log_error(f"Validation error while fetching purchase order OTD series: {exc}")
         return error_response(str(exc), status_code=400)
@@ -268,6 +283,13 @@ def get_supplies_purchase_order_otd_panel(
             message="Purchase order OTD (MP) panel fetched successfully.",
             fields=kpi_fields(SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS),
         )
+    except PhysicalOtdSourceUnavailable as exc:
+        log_error(f"Fonte LNF para OTD indisponível: {exc}")
+        return error_response(
+            "Recebimento físico indisponível. Apuração do OTD não publicada.",
+            status_code=503,
+        )
+
     except ValueError as exc:
         log_error(f"Validation error while fetching purchase order OTD panel: {exc}")
         return error_response(str(exc), status_code=400)
@@ -306,6 +328,13 @@ def get_supplies_purchase_order_otd(
             message="Purchase order OTD (MP) percentage fetched successfully.",
             fields=kpi_fields(SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS),
         )
+    except PhysicalOtdSourceUnavailable as exc:
+        log_error(f"Fonte LNF para OTD indisponível: {exc}")
+        return error_response(
+            "Recebimento físico indisponível. Apuração do OTD não publicada.",
+            status_code=503,
+        )
+
     except ValueError as exc:
         log_error(f"Validation error while fetching purchase order OTD: {exc}")
         return error_response(str(exc), status_code=400)
