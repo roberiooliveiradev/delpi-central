@@ -5,3 +5,6 @@
 @import "./styles/collapsible-tool-rail.css";
 @import "./styles/combobox-number.css";
 @import "./styles/number-stepper.css";
+
+/* SegmentToggle canonical styles are defined by the generic chart-card stylesheet. */
+@import "./styles/chart-card.css";
