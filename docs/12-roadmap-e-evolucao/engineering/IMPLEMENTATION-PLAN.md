@@ -1,5 +1,7 @@
 # Portal de Engenharia — Implementation Plan
 
+> **PRC_DOC_REANCHOR_2026_11_18 — atualizacao de precedencia:** Os gates antigos de redesign/PRC nao equivalem ao estado atual do recorte de conversa compartilhada, ficha com tres abas, modal expandido e resumo UPDATE. Para esse recorte, ha deploy PRD reportado e confirmacao visual do PO em 18/11; detalhes e residuais no documento de fechamento. Os demais fluxos e stages do plano permanecem com seus proprios gates. [Fechamento consolidado PRC](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Estados legados permanecem para auditoria, nao como estado corrente deste recorte.
+
 > **Status:** `PLANNED / NOT_STARTED` — 2026-09-11  
 > **Primeiro gate:** E0 baseline.  
 > **Regra de execução:** nenhuma etapa futura é autorização automática; revalidar código/contratos/regras antes de cada `E*.S*` e executar somente após pedido explícito do Product Owner.
