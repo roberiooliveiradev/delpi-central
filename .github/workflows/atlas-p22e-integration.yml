@@ -364,6 +364,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_b_key_lifecycle.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signer.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_stage64_review.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py \
             linux-ops-mcp/tests/test_atlas_hml_b_socket_activation_adversarial.py \

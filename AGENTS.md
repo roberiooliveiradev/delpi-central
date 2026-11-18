@@ -153,3 +153,13 @@ Regra 10 — Conflito de instruções. Se outra instrução recomendar
 criar worktree ou branch automaticamente para preservar
 concorrência, a criação passa a exigir autorização do usuário.
 Não resolver o conflito silenciosamente — reportar a divergência.
+
+## Exceção operacional ATLAS | MCP Linux (decisão específica do owner, 17/11/2026)
+
+Para **qualquer alteração do ATLAS** (arquivos `linux-ops-mcp/linux_ops_mcp/atlas_*`, `linux-ops-mcp/review-only/atlas-*`, documentação `mcp-linux-control`, gates/CI ATLAS), prevalece sobre a regra geral de commit direto em `main` e deploy automático:
+
+- Trabalhar **somente em branch exclusiva e PR por pacote**, com autorização do owner para criação/troca de branch conforme governança abaixo; nunca integrar a PR automaticamente. Somente o owner decide o merge.
+- A aprovação de código e o merge **NÃO** autorizam `git pull`, scripts `up-prod-sequential.sh` / `up-hml-sequential.sh`, instalação systemd, criação de UID/GID/ACL, geração de chave ou ativação no `srv-api`. Qualquer ação no host exige autorização operacional própria, escopo/comandos exatos, janela, baseline e rollback.
+- Durante as Etapas 62 a 64: `SOURCE-ONLY`, quatro MCP **READ**, `PREPARE/ACT OFF`, `status=blocked`. Unidades `.review` são deliberadamente **não instaláveis**. Nunca transformar `ExecStart=/usr/bin/false` em comando operacional sem nova aprovação e revisão.
+- Fluxo obrigatório: CI no HEAD, DELPI Verifier independente documentado, riscos residuais explicitados, parecer/aceite do owner em GitHub; nenhum resultado de CI ou assinatura local substitui atestação host ou parecer humano SEC-01.
+- Alterações em código de outros módulos e deploys não ATLAS continuam sob suas respectivas políticas, mas não podem habilitar inadvertidamente um componente ATLAS em HML/PROD.
