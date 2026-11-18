@@ -7453,3 +7453,29 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   ExcClass unexercised (n=0 no arm B), CI remota não revalidada.
 - **ESTADO:** DEPLOY=NOT_RUN; TWO_AGENT_PROMOTION=NOT_AUTHORIZED;
   PHASE_ADVANCEMENT=NO.
+
+- **RECOVERY (2026-11-18):** reversão acidental `ad4802e242` — resíduo de
+  índice/stale-autostash do worktree compartilhado varrido em commit CF;
+  blobs revertidos ≡ `30d0d330d8` byte a byte (PROVEN; ação exata de
+  staging não comprovada). Restauração `f7ee2fad66` — 75 paths explícitos,
+  delta byte-idêntico a `a62279cd04` (`75 files, 17216+/17−`), WIP
+  concorrente preservado.
+- **TESTS (restaurado):** targeted 126 PASS (5 arquivos); full suite
+  exit 0 (~1170); no container prod 68 PASS (acceptor/obligation
+  contract + evidence-closure negatives).
+- **VERIFIER (restaurado):** r1 **ACCEPT_WITH_RESIDUAL** scope
+  `943958cf25..f7ee2fad66` — report `.git/delpi-verifier/reports/`.
+- **CI:** `f7ee2fad66` audit+architecture-gate success; `1614050887`
+  all checks success.
+- **DEPLOY:** `DEPLOY_STATUS=EXECUTED` — autorização explícita
+  (USER_DECISION em `DELIA-C3-T2-F1-ACCIDENTAL-REVERT-ROOT-CAUSE-RECOVERY-AND-DEPLOY-01`)
+  resolvendo o gate do Doc 16 para este recovery bounded; `delpi-delia-api`
+  via `up-prod-sequential.sh --build delia-api`; `IMAGE=e6c6d8cb0aa9`;
+  `SOURCE_SHA=1614050887` (delia-api ≡ árvore restaurada; `f7ee2fad66`
+  ancestral); container healthy; health 200; logs 24h zero errors;
+  `DELIA_TWO_AGENT_EXPERIMENT` OFF (ausente); sem INT3/INT4 físicos;
+  `default_instruction_version=comprehension-v4-aggregation-operation`
+  no runtime.
+- **ESTADO ATUAL:** DEPLOY=EXECUTED (bounded recovery);
+  TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO;
+  F2=PENDING_COORDINATION.

@@ -2202,3 +2202,19 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 **HANDOFF (RQ-4):** validado ponta a ponta — gate `handoff_error is None` + plano aceito; eco JSON bounded do objeto validado; budget subtrativo; clarificação limpa pós-aceite; terminais propagam. Zero owner calls sem plano aceito nos 3 runs.
 
 **NEXT:** verificação independente delpi-verifier da task. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.
+
+### 2026-11-18 — F1 recovery, production deploy & git-integrity residuals
+
+**TASK:** `DELIA-C3-T2-F1-ACCIDENTAL-REVERT-ROOT-CAUSE-RECOVERY-AND-DEPLOY-01` + `...POSTDEPLOY-INDEPENDENT-VERIFICATION-AND-GIT-INTEGRITY-GATE-01`
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `GIT-STALE-INDEX-SWEEP` | `OCCURRED_REMEDIATED / OPEN_LOW` | `ad4802e242` varreu 75 paths F1 para blobs ≡ `30d0d330d8` (PROVEN por git objects; ação exata de staging não comprovada). Recuperado `f7ee2fad66` byte-idêntico a `a62279cd04`. Prevenção candidata: gate staged-scope pré-commit (proposta à Coordenação, não implementada nesta task). |
+| `STASH-0-MIXED-RESIDUE` | `OPEN_LOW` | `stash@{0}`=`04f3c350b3` (94 arquivos): F1 ≡ HEAD (redundante); CF/api-delpi majoritariamente ≡ worktree/HEAD (redundante); EXCETO 2 blobs exclusivos: `closing_checklist_repository.py` (`9cad8438`, 3157 linhas; HEAD=3418, WIP≠ambos — variante intermediária, owner CF) e `api-delpi/tests/test_davi_si_w015_governed_deletes.py` (`af4ebc5d`, 784 linhas; HEAD=807 — versão pré-W016 superada em HEAD; owner api-delpi/DAVI). Sem pop/drop sem autorização dos owners. |
+| `STASH-4-DELIA-INTERMEDIATE` | `OPEN_LOW` | `stash@{4}`: 3 blobs delia (`delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py`, `delia-api/scripts/int1_openrouter_qwen14b_instrumented_eval.py`, `delia-api/tests/test_two_agent_experiment.py`) ≠ F1 e ≠ pré-F1 — estados intermediários prováveis de dev; + `docs/12-roadmap-e-evolucao/controllership-finance/fichas/tes/fonte/gerar_catalogo_tes.py` (não-delia) também difere de HEAD — inventário não-delia parcial; reconciliar com owner antes de descarte. |
+| `SRV-API-WORKTREE-HYGIENE` | `OPEN_LOW` | prod checkout: `up-hml-sequential.sh` só mode 644→775 local; `egg-info` gerado; `up-prod-sequential.sh` mode 664 no repo (invocado via `bash`). Não bloqueia pull/deploy; saneamento é do owner infra. |
+| `ENG-EVA-ACT-ENVS-IN-DELIA-CONTAINER` | `OBSERVED_LOW` | `ENG_EVA_ACT_ENABLED`/`ENG_EVA_ACT_DELETE_ENABLED` presentes no env do container delia-api via `.env` compartilhado — inertes para delia-api (não lidas); ACT autônomo DÉLIA permanece desabilitado. Owner: frente engineering. |
+
+**PREVENÇÃO (RQ-5):** `EXISTING_EQUIVALENT=YES` — política de escopo de commit já existe em `AGENTS.md` (commit só dos arquivos da task, sem misturar frentes), `delpi-verifier` verifica escopo por range quando solicitado, `architecture-gate` detecta regressões pós-push. Gap: nenhuma proteção **pré-commit** no índice compartilhado (sem hooks instalados; CI é pós-push). `REUSE_DECISION=EXTEND` — gate de staged-scope pré-commit como extensão mínima do fluxo existente (pathspec-scoped commit ou check `git diff --cached --name-only ⊆ escopo declarado`); plano+diff propostos à Coordenação, não implementado nesta task.
+
+**NEXT:** gate staged-scope proposto à Coordenação; decisão de owner sobre `stash@{0}`/`stash@{4}`; `F2_ENTRY_CANDIDATE` submetido — sem avanço autorizado.
