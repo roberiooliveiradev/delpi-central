@@ -186,7 +186,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | Arquivo | Conteúdo |
 |---|---|
 | [controle-mp/README.md](./controle-mp/README.md) | Índice — iframe legado → nativo em Minhas Solicitações |
-| [controle-mp/EVOLUCAO.md](./controle-mp/EVOLUCAO.md) | Evolução (não implementar): solicitante em my-requests + tratativa do analista |
+| [engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md](./engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md) | Plano mestre vigente PRC: Portal Engenharia, automação TOTVS e similaridade; legado recuperável pelo Git |
 
 ### Inspeções de Entrada
 
