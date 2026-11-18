@@ -1,6 +1,6 @@
 # W016 — Matriz de paridade portal Strategic Indicators × DAVI
 
-> Inventário inicial (RQ-12 do brief W015-DISCOVERY-AND-W016-READINESS).
+> **Estado atual: IMPLEMENTED / DEV E2E ACCEPTED / PRODUCTION DEPLOYED / CLOSED_BY_COORDINATION (2026-11-18).** A matriz surgiu como inventário W015; os resultados finais DEV e o deploy W016 foram acrescentados posteriormente. Ver seção 11.
 > Base: `origin/main` @ 570119b9d5 + W015 (a6a7dedc88, 2e4c3d472f).
 > Fontes autoritativas: rotas SI (`strategic_indicators_routes.py`, 47 rotas),
 > telas MFE (`plugins/strategic-indicators/src/ui/pages`, 9 páginas +
@@ -167,3 +167,22 @@ para o contrato V034 (provider emite `value=None`+`unit_values`; a
 agregação sum/average é aplicada pelo calculator via
 `branch_value_aggregation`; snapshot de departamento usa cache global
 `department_id=None` por design). Suite SI 378/378 — ZERO RED.
+
+## 11. Fechamento de entrega W016 — 2026-11-18
+
+**Decisão da DAVI Architecture / Coordination:** paridade conversacional Strategic Indicators **IMPLEMENTADA**, homologada em DEV e entrega encerrada por ora, **com resíduos registrados**. Não converter este aceite em afirmação de que todos os writes/ACTs foram exercitados em produção.
+
+| Evidência / gate | Estado comprovado ou reportado |
+|---|---|
+| Escopo portal | 50/50 ações elegíveis cobertas; 1 import genérico legado `BLOCKED_BY_DESIGN` |
+| Ferramentas MCP | 6/6, incluindo `delete`, invocável em ChatGPT autenticado (teste negativo sem mutação) |
+| Testes funcionais DEV | 20 READ SI, 24 EXECUTE, 3 DELETE; bulk/import/cache/jobs, AuthZ com 3 identidades e PostgreSQL real: PASS reportado |
+| Zero-red aplicável | SI 378/378 + DAVI 132/132 = 510 PASS; 0 FAIL/ERROR; cinco gates arquiteturais sem findings |
+| Verificador independente | `ACCEPT_WITH_RESIDUAL` r3, 0 ordens abertas |
+| Correções W016 | V037 audit, import replace flat, digest estável sem `exported_at`, verificação de conteúdo de `module_settings`, e três assertions V034 reconciliadas |
+| Produção | Deploy reportado com V037 aplicada; API owner/MCP healthy e smoke não mutante PASS; documentação em `c13c36e22c` |
+| ACT destrutivo em produção | **TEST_NOT_RUN por decisão explícita de Coordination** — somente fixtures DEV usadas em testes destrutivos |
+| Segunda identidade negativa | PASS em DEV; em ChatGPT/produção continua não demonstrado |
+| Resíduos fora da suíte aplicável | 17 skips e 40 falhas ambientais na suíte ampla api-delpi, a acompanhar separadamente; não alegar `ALL_GREEN` universal |
+
+**Classificação:** `W016_FULL_PARITY_DEV_ACCEPTED_AND_PRODUCTION_DEPLOYED_WITH_RESIDUALS` / `DELIVERY_CLOSED_BY_COORDINATION`. As capacidades implementadas permanecem disponíveis sob AuthZ do owner; nenhuma wave adicional de paridade autorizada neste fechamento. Novos requisitos e eventuais ajustes de rollout/ambiente devem constituir demanda própria.
