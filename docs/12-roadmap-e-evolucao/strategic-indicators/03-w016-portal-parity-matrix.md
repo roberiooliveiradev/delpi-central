@@ -161,7 +161,9 @@ Bugs reais encontrados e corrigidos nesta validação (detalhes no doc 04):
    volátil (ACT sempre `proposal_stale`) e verify comparava
    `module_settings` por contagem — ambos corrigidos.
 
-Resíduo: 3 falhas pré-existentes na suite SI (comercial/dashboard) —
-assertions stale vs semântica consolidada pós-V034 (`value=None` por
-design em itens consolidados; `department_id=None` no cache global).
-Fora do escopo DAVI; requer manutenção de testes no owner SI.
+Resíduo ENCERRADO (task ZERO-RED-RECONCILIATION): as 3 falhas SI
+eram STALE_TEST_EXPECTATION — assertions e nomes dos testes corrigidos
+para o contrato V034 (provider emite `value=None`+`unit_values`; a
+agregação sum/average é aplicada pelo calculator via
+`branch_value_aggregation`; snapshot de departamento usa cache global
+`department_id=None` por design). Suite SI 378/378 — ZERO RED.
