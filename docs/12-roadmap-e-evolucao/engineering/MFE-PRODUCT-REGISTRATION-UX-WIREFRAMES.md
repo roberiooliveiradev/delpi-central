@@ -744,3 +744,50 @@ O bloco **Dados anexados** corresponde ao \`PrcAttachmentsSection\` atual; nao i
 Mudanca de **composicao e navegacao de frontend**, nao de contrato, backend, migration, RBAC, workflow, EVA ou source of truth. O deploy autorizado para a tarefa subsequente e **HML apenas**; PRD depende de decisao posterior. Exigir G0 HEAD/git status e protecao de WIP alheio, testes no SHA, smoke autenticado com dois atores HML quando disponiveis, evidencias visuais e relatorio. \`TEST_NOT_RUN\`/\`INCONCLUSIVE\` nao podem virar \`PASS\`.
 
 **Fontes de referencia:** screenshots apresentados pelo PO na conversa de 17/11/2026; implementacao corrente de \`PrcDetailPage.tsx\`, \`prcNavigate.ts\`; Issue #207; documento 130 (release de conversa); fix F-01 \`82561bf9ed\` (evidencia HML reportada). A decisao de layout e \`TARGET\` ate implementacao e teste no SHA efetivo.
+
+---
+
+## PRC-UX-CONVERSATION-EXPANDABLE-MODAL-01 — conversa expansivel em modal host-contained
+
+**Status:** aprovado pelo PO apos avaliacao visual do layout de tres abas em HML; implementacao HML em `EVA-PRC-CONVERSATION-EXPANDABLE-HOST-MODAL-HML-01`. Evolucao da decisao `PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01` — nao a substitui.
+
+### Decisao
+
+A conversa PRC (`ConversationPanel` compartilhado do `@delpi/plugin-ui`) mantem o modo compacto embutido e ganha, opt-in, o botao **Expandir** no header da secao. O modo expandido abre **a mesma conversa** em modal que preenche a area util do microfrontend, sem cobrir a sidebar/chrome do portal.
+
+```text
+COMPACTO (inalterado)                     EXPANDIDO (novo)
+Conversa sobre a solicitacao  [⛶]         modal fill no host do MFE:
+mensagens + editor compactos              header (titulo + contexto + Recolher/X)
+                                          mensagens com scroll proprio
+                                          editor na base, acessivel
+```
+
+### Reuso e fundamento
+
+- Modal: `createHostContainedModalShell({ containedLayout: "fill" })` — padrao canonico de workbench da regra `mfe-modal-host-contained` (nunca cobre sidebar; referencia: `plugins/tv-dashboard/.../Modal.tsx`).
+- Componente: `ConversationPanel` recebe `expandable` (opt-in) e `expandDialogDescription` — **um unico ponto** de implementacao no kit; nenhum painel duplicado por MFE.
+- Ciclo de vida: o componente painel **nunca remonta** — apenas a superficie visual alterna entre `PanelSectionCard` e o dialog. `draft`, anexos pendentes, `editingId` e realtime (`refreshKey`, F-01) sao preservados por construcao. Card vira placeholder inerte atras do overlay.
+- Submodais (preview de anexo) continuam acima do modal da conversa; Escape no preview nao recolhe a conversa.
+- Acessibilidade: `role="dialog"`/`aria-modal` do ModalShell, `aria-label` no gatilho, fechamento por X/«Recolher»/Escape, foco inicial no composer, retorno do foco ao gatilho.
+
+### Integracao
+
+- Portal Engenharia (`PrcDetailPage`): `expandable` + `Solicitacao PRC · {prcShortId}` — dentro da aba Ficha tecnica, ordem da decisao de tres abas preservada.
+- Minhas Solicitacoes (`PrcCasePage`): `expandable` + `Solicitacao PRC · {id.slice(0,8)}`.
+- Zero mudanca de API, AuthZ, workflow ou ownership (engineering-api segue autoridade).
+
+### Requisitos e testes
+
+| RQ/AC | Criterio |
+| --- | --- |
+| RQ-01 | Botao Expandir nos dois MFEs, opt-in; sem `expandable` nenhum consumidor muda. |
+| RQ-02 | Modal `fill` host-contained; sidebar preservada; sem scroll horizontal. |
+| RQ-03 | Compacto: alturas vigentes intactas (18/34rem, 26rem mobile). Expandido: header → viewport flexivel → composer. |
+| RQ-04 | Rascunho, anexos pendentes e edicao preservados expandir/recolher; sem duplicar conversa ativa. |
+| RQ-05 | F-01 realtime funciona nos dois modos; preview de anexo empilha acima. |
+| AC (testes) | `ConversationPanel.expandable.test.tsx`: opt-in, host-contained, recolher, Escape, foco ao gatilho, draft/anexo preservados, unica superficie. Estrutural nos 2 MFEs. E2E HML autenticado + screenshots 320/390/768/1440/zoom 200. |
+
+### Limites e evidencias
+
+Mudanca de **frontend/UX**, nao de contrato/backend. Deploy autorizado: **HML apenas**; PRD depende de decisao posterior. Residuais conhecidos permanecem (avatar foto corporativa; Escape nao empilha entre modais irmaos por design do guard local — mitigado no painel).

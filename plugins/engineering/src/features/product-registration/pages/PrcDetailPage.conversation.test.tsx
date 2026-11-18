@@ -63,4 +63,12 @@ describe("PrcDetailPage — conversa PRC (estrutural)", () => {
     expect(bump).toBeGreaterThan(sync);
     expect(bump).toBeLessThan(editGate);
   });
+
+  it("EXPANDABLE — conversa oferece expansão em modal host-contained", () => {
+    /* Decisão PO: mesmo ConversationPanel, opt-in `expandable`, com
+     * linha contextual da solicitação no cabeçalho do modal. */
+    expect(SRC).toMatch(/expandable/);
+    expect(SRC).toMatch(/expandDialogDescription=\{/);
+    expect(SRC).toMatch(/prcShortId\(detail\.id\)/);
+  });
 });

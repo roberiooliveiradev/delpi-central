@@ -496,6 +496,8 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                   loadAvatar={loadConversationAvatar}
                   portalScopeClassName={MR_PORTAL_SCOPE}
                   sectionTitle="Conversa sobre a solicitação"
+                  expandable
+                  expandDialogDescription={`Solicitação PRC · ${detail.id.slice(0, 8)}`}
                 />
                 <MyRequestsSectionCard title="Linha do tempo">
                 <RequestHistoryTimeline

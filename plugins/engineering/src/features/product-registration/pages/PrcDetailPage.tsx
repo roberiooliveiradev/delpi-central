@@ -863,6 +863,8 @@ export function PrcDetailPage({
               portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
               sectionTitle="Conversa sobre a solicitação"
               loadAvatar={loadConversationAvatar}
+              expandable
+              expandDialogDescription={`Solicitação PRC · ${prcShortId(detail.id)}`}
             />
             <EngineeringSectionCard title="Histórico da solicitação">
               <PrcInformationExchangePanel

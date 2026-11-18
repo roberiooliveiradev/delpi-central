@@ -53,3 +53,41 @@
     max-height: 26rem;
   }
 }
+
+/* Modo expandido — mesma superfície dentro do modal host-contained
+ * (`delpi-ui-modal--host-fill`). A lista de mensagens mantém a rolagem
+ * própria; o frame ocupa a altura restante do diálogo. */
+.delpi-ui-conversation-panel--expanded {
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-conversation-panel--expanded .delpi-ui-conversation-panel__frame {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Corpo do modal expandido: a conversa preenche a área útil do host. */
+.delpi-ui-conversation-panel-modal .delpi-ui-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Card compacto atrás do overlay enquanto a conversa está expandida. */
+.delpi-ui-conversation-panel--placeholder {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--delpi-ui-border, var(--border, #e2e8f0));
+  border-radius: 0.75rem;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  font-size: 0.875rem;
+}
+
+.delpi-ui-conversation-panel__placeholder-text {
+  margin: 0;
+}

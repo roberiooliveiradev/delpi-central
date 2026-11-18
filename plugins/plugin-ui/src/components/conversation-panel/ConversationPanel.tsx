@@ -8,7 +8,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Maximize2, Minimize2 } from "lucide-react";
+
 import { ActionButton } from "../actions/ActionButton";
+import { IconButton } from "../actions/IconButton";
+import { createHostContainedModalShell } from "../feedback/ModalShell";
 import { createDashboardAttachmentPreviewStrip } from "../forms/AttachmentPreviewStrip";
 import { attachmentPreviewStripBemClasses } from "../forms/AttachmentPreviewStrip";
 import { createDashboardMessageThread } from "../collaboration/MessageThread";
@@ -156,6 +160,15 @@ export type ConversationPanelProps = {
   sectionHint?: string;
   fileAccept?: string;
   maxFileBytes?: number;
+  /**
+   * Opt-in: botão «Expandir» no header da seção — abre a MESMA conversa
+   * em modal contido no host do MFE (`createHostContainedModalShell` +
+   * `fill`), sem cobrir a sidebar do portal. O painel não remonta:
+   * rascunho, anexos pendentes e edição em andamento são preservados.
+   */
+  expandable?: boolean;
+  /** Linha contextual no cabeçalho do modal (ex.: `Solicitação PRC · A1B2C3D4`). */
+  expandDialogDescription?: string;
 };
 
 const COMPOSER_LABELS = {
@@ -264,6 +277,8 @@ export function ConversationPanel({
   sectionHint,
   fileAccept = DEFAULT_ACCEPT,
   maxFileBytes = 10 * 1024 * 1024,
+  expandable = false,
+  expandDialogDescription,
 }: ConversationPanelProps) {
   const [items, setItems] = useState<ConversationComment[]>([]);
   const [draft, setDraft] = useState("");
@@ -289,6 +304,44 @@ export function ConversationPanel({
   const [pendingSrcById, setPendingSrcById] = useState<Map<string, string>>(
     () => new Map(),
   );
+  const [expanded, setExpanded] = useState(false);
+  const expandTriggerWrapRef = useRef<HTMLSpanElement | null>(null);
+
+  /* Modal host-contained (`fill`) — instância estável por portalScope;
+   * o diálogo portala para o root do MFE e não cobre a sidebar. */
+  const ExpandedModal = useMemo(
+    () =>
+      expandable && portalScopeClassName
+        ? createHostContainedModalShell({
+            prefix: "delpi-ui-conversation-panel",
+            portalScopeClassName,
+            containedLayout: "fill",
+          })
+        : null,
+    [expandable, portalScopeClassName],
+  );
+
+  /* Submodal (preview de anexo) absorve o Escape: o ModalShell escuta
+   * `document` e não empilha — sem este guard, um Escape no preview
+   * recolheria a conversa expandida junto. */
+  const collapseExpanded = useCallback(() => {
+    if (preview) return;
+    setExpanded(false);
+    requestAnimationFrame(() => {
+      expandTriggerWrapRef.current?.querySelector("button")?.focus();
+    });
+  }, [preview]);
+
+  /* A thread remonta ao trocar de superfície; reancora no rodapé quando
+   * o usuário já acompanhava as últimas mensagens. */
+  useEffect(() => {
+    if (!expanded) return;
+    const raf = requestAnimationFrame(() => {
+      const el = msgsRef.current;
+      if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [expanded]);
 
   const isEditing = Boolean(editingId);
   const authorIds = useMemo(
@@ -808,9 +861,14 @@ export function ConversationPanel({
     ? "Esta solicitação foi finalizada. A conversa está somente leitura."
     : "Você pode ler a conversa, mas não tem permissão para enviar mensagens neste momento.";
 
-  return (
-    <PanelSectionCard title={sectionTitle} hint={sectionHint}>
-      <div className="delpi-ui-conversation-panel">
+  const conversationSurface = (isExpanded: boolean) => (
+    <div
+      className={
+        isExpanded
+          ? "delpi-ui-conversation-panel delpi-ui-conversation-panel--expanded"
+          : "delpi-ui-conversation-panel"
+      }
+    >
         {error ? (
           <PanelStateBanner variant="error">{error}</PanelStateBanner>
         ) : null}
@@ -879,7 +937,62 @@ export function ConversationPanel({
             </PanelRoomConversationChatColumn>
           </PanelRoomPanel>
         </div>
-      </div>
+    </div>
+  );
+
+  return (
+    <PanelSectionCard
+      title={sectionTitle}
+      hint={sectionHint}
+      actions={
+        ExpandedModal ? (
+          <span ref={expandTriggerWrapRef}>
+            <IconButton
+              aria-label="Expandir conversa"
+              disabled={expanded}
+              onClick={() => setExpanded(true)}
+            >
+              <Maximize2 size={16} aria-hidden="true" />
+            </IconButton>
+          </span>
+        ) : undefined
+      }
+    >
+      {expanded ? (
+        <div
+          className="delpi-ui-conversation-panel delpi-ui-conversation-panel--placeholder"
+          aria-hidden="true"
+        >
+          <p className="delpi-ui-conversation-panel__placeholder-text">
+            Conversa aberta no modo expandido.
+          </p>
+        </div>
+      ) : (
+        conversationSurface(false)
+      )}
+
+      {expanded && ExpandedModal ? (
+        <ExpandedModal
+          open
+          title={sectionTitle}
+          description={expandDialogDescription}
+          onClose={collapseExpanded}
+          closeAriaLabel="Recolher conversa"
+          initialFocusSelector=".delpi-ui-conversation-panel--expanded [contenteditable='true']"
+          headerActions={
+            <ActionButton
+              type="button"
+              variant="ghost"
+              aria-label="Recolher conversa"
+              onClick={collapseExpanded}
+            >
+              <Minimize2 size={15} aria-hidden="true" /> Recolher
+            </ActionButton>
+          }
+        >
+          {conversationSurface(true)}
+        </ExpandedModal>
+      ) : null}
 
       <FilePreviewModal
         open={Boolean(preview)}
