@@ -193,6 +193,7 @@ def test_wave005_mcp_tools_wave001_four():
         "read",
         "analyze",
         "execute",
+        "delete",
     ]
 
 

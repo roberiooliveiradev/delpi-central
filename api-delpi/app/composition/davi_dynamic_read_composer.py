@@ -82,6 +82,26 @@ def davi_execute_wired(
     )
 
 
+def davi_delete_wired(
+    *,
+    actor_id: str | None = None,
+    actor_email: str | None = None,
+    authorization: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Delete tool wiring: request-bound identity + governed destructive runner."""
+    from app.application.external_capabilities.governed_writes.orchestrator import (
+        davi_delete,
+    )
+
+    return davi_delete(
+        actor_id=actor_id,
+        actor_email=actor_email,
+        authorization=authorization,
+        **kwargs,
+    )
+
+
 def davi_read_wired(
     *,
     authorization: str | None = None,

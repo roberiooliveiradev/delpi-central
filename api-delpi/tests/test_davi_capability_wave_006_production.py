@@ -383,6 +383,7 @@ def test_wave006_mcp_tools_wave001_four():
         "read",
         "analyze",
         "execute",
+        "delete",
     ]
 
 

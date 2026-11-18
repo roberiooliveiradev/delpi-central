@@ -493,8 +493,9 @@ def _act(orch, cap, prep, auth=AUTH_OK, confirm=True):
 # --------------------------------------------------------------- gate
 def test_w014_capability_set():
     assert len(SI_W014_WRITE_CAPABILITIES) == 7
-    assert len(WRITE_CAPABILITIES) == 23
-    assert "si.config.import_replace" not in WRITE_CAPABILITIES
+    # W015 added si.config.import_replace to the execute family.
+    assert len(WRITE_CAPABILITIES) == 24
+    assert "si.config.import_replace" in WRITE_CAPABILITIES
     assert "si.job.delete" not in WRITE_CAPABILITIES
 
 

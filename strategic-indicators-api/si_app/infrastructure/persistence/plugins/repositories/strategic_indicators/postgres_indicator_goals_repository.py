@@ -66,6 +66,7 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         audit_origin: str | None = None,
         correlation_id: str | None = None,
         audit_meta: dict | None = None,
+        deleted: bool = False,
     ) -> None:
         """Persist the goal mutation into ``strategic_indicators.settings_audit``.
 
@@ -74,7 +75,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         together. Correlation metadata (write origin, caller correlation id,
         consequential effects) is embedded under ``_audit_meta`` inside
         ``payload_after`` because the audit schema carries no dedicated
-        correlation column.
+        correlation column. For deletes (``deleted=True``) there is no after
+        row, so the metadata rides inside ``payload_before`` instead and
+        ``payload_after`` stays ``None``.
         """
         from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_settings_audit_repository import (
             PostgresStrategicIndicatorsSettingsAuditRepository,
@@ -90,14 +93,21 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         entity_key += f":v{goal_row.get('version')}"
         entity_key = entity_key[:150]
 
-        payload_after = {k: v for k, v in goal_row.items() if k != "row_xmin"}
         meta = dict(audit_meta or {})
         if audit_origin:
             meta["write_origin"] = audit_origin
         if correlation_id:
             meta["correlation_id"] = correlation_id
-        if meta:
-            payload_after["_audit_meta"] = meta
+
+        if deleted:
+            payload_after = None
+            if meta:
+                payload_before = dict(payload_before or goal_row)
+                payload_before["_audit_meta"] = meta
+        else:
+            payload_after = {k: v for k, v in goal_row.items() if k != "row_xmin"}
+            if meta:
+                payload_after["_audit_meta"] = meta
 
         PostgresStrategicIndicatorsSettingsAuditRepository(
             self._connection
@@ -1187,22 +1197,88 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
         *,
         goal_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
-        before = self.fetch_goal_identity(goal_id)
-        if not before:
-            raise ValueError("Meta não encontrada.")
+        with self._unit_of_work():
+            before_row = self.fetch_one(
+                """
+                SELECT *
+                FROM strategic_indicators.indicator_goals
+                WHERE id = %s
+                """,
+                (goal_id,),
+            )
+            if not before_row:
+                raise ValueError("Meta não encontrada.")
 
-        try:
-            delete_indicator_goal_hard(self, goal_id=goal_id)
-            self.commit()
-        except Exception:
-            self.rollback()
-            raise
+            # Serialize against concurrent writers of the same goal scope so
+            # a sibling mutation cannot interleave inside this transaction.
+            self._lock_goal_scope(
+                indicator_id=str(before_row["indicator_id"]),
+                goal_year=int(before_row["goal_year"]),
+                goal_scope_branch=str(before_row.get("goal_scope_branch") or ""),
+            )
 
-        return {
-            "message": "Meta analítica excluída com sucesso.",
-            "goal_id": goal_id,
-        }
+            monthly_targets = self.fetch_one(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goal_monthly_targets
+                WHERE indicator_goal_id = %s
+                """,
+                (goal_id,),
+            )
+            copied_refs = self.fetch_one(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goals
+                WHERE copied_from_goal_id = %s
+                """,
+                (goal_id,),
+            )
+
+            # Guarded delete: a stale ``expected_xmin`` refuses the change
+            # atomically in the same statement as the mutation. FK rules
+            # cascade monthly targets and SET NULL on copied_from refs in
+            # the same transaction.
+            deleted = self.execute_returning_one(
+                """
+                DELETE FROM strategic_indicators.indicator_goals
+                WHERE id = %s
+                  AND (%s::text IS NULL OR xmin::text = %s)
+                RETURNING *
+                """,
+                (goal_id, expected_xmin, expected_xmin),
+            )
+            if deleted is None:
+                if expected_xmin is not None:
+                    raise StrategicIndicatorsGoalConflictError(
+                        "Versão da meta divergente; recarregue antes de excluir."
+                    )
+                raise ValueError("Meta não encontrada.")
+
+            self._insert_goal_audit_event(
+                event_type="indicator_goal.deleted",
+                goal_row=before_row,
+                payload_before=before_row,
+                actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+                audit_meta={
+                    "monthly_targets_deleted": int(
+                        (monthly_targets or {}).get("cnt") or 0
+                    ),
+                    "copied_from_references_cleared": int(
+                        (copied_refs or {}).get("cnt") or 0
+                    ),
+                },
+                deleted=True,
+            )
+            return {
+                "message": "Meta analítica excluída com sucesso.",
+                "goal_id": goal_id,
+            }
 
     def deactivate_indicator_goal(
         self,

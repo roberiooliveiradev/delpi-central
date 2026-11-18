@@ -91,6 +91,10 @@ class StrategicIndicatorsDepartmentIndicatorsRepositoryPort(ABC):
         *,
         indicator_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        expected_goal_count: int | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         raise NotImplementedError
 

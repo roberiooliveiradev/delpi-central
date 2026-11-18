@@ -31,7 +31,7 @@ from app.application.external_capabilities.governed_writes.si_goal_capabilities 
 
 def test_schema_covers_every_approved_write_capability() -> None:
     assert set(WRITE_CAPABILITY_ARG_SCHEMAS) == set(WRITE_CAPABILITIES)
-    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 23
+    assert len(WRITE_CAPABILITY_ARG_SCHEMAS) == 24
 
 
 def test_schema_endpoint_serves_write_capability() -> None:
@@ -56,15 +56,27 @@ def test_schema_endpoint_serves_all_14_caps() -> None:
 
 
 def test_schema_endpoint_unknown_capability_still_unknown() -> None:
-    out = davi_get_context(action="schema", capability="si.department.delete")
-    assert out["capability"]["available"] is False
-    assert out["capability"]["davi_status"] == "UNKNOWN"
-    out = davi_get_context(action="schema", capability="si.indicator.delete")
-    assert out["capability"]["available"] is False
-    out = davi_get_context(action="schema", capability="si.goal.delete")
-    assert out["capability"]["available"] is False
     out = davi_get_context(action="schema", capability="http.post")
     assert out["capability"]["available"] is False
+    assert out["capability"]["davi_status"] == "UNKNOWN"
+    out = davi_get_context(action="schema", capability="si.config.import")
+    assert out["capability"]["available"] is False
+
+
+def test_schema_endpoint_serves_delete_capabilities() -> None:
+    """W015: the three governed deletes publish closed argument schemas
+    under the GOVERNED_DELETE status (executed via the delete tool)."""
+    for cap_id in (
+        "si.goal.delete",
+        "si.indicator.delete",
+        "si.department.delete",
+    ):
+        out = davi_get_context(action="schema", capability=cap_id)
+        cap = out["capability"]
+        assert cap["available"] is True, cap_id
+        assert cap["davi_status"] == "GOVERNED_DELETE"
+        assert "confirm_before_act" in cap["confirmation"]
+        assert cap["argument_schema"]["additionalProperties"] is False
 
 
 def test_read_capability_schema_unchanged() -> None:
@@ -90,6 +102,7 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
 
     from app.application.external_capabilities.governed_writes import (
         si_w014_capabilities as w014,
+        si_w015_capabilities as w015,
     )
 
     vocab = {
@@ -116,6 +129,7 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
         "si.cache.refresh": w014._CACHE_REFRESH_ARGS,
         "si.cache.invalidate": w014._CACHE_INVALIDATE_ARGS,
         "si.job.tree_load": w014._JOB_TREE_LOAD_ARGS,
+        "si.config.import_replace": w015._IMPORT_REPLACE_ARGS,
     }
     for cap_id, allowed in vocab.items():
         props = set(WRITE_CAPABILITY_ARG_SCHEMAS[cap_id]["properties"])
@@ -123,3 +137,25 @@ def test_schema_key_sets_match_closed_vocabularies() -> None:
         assert not missing, f"{cap_id}: schema publishes args outside vocabulary: {missing}"
         required = WRITE_CAPABILITY_ARG_SCHEMAS[cap_id]["required"]
         assert set(required) <= props, f"{cap_id}: required not in properties"
+
+
+def test_delete_schemas_match_closed_vocabularies() -> None:
+    """Drift guard for the destructive family (delete tool)."""
+    from app.application.external_capabilities.governed_writes import (
+        si_w015_capabilities as w015,
+    )
+    from app.application.external_capabilities.governed_writes.arg_schemas import (
+        DELETE_CAPABILITY_ARG_SCHEMAS,
+    )
+
+    vocab = {
+        "si.goal.delete": w015._DELETE_ARGS["si.goal.delete"],
+        "si.indicator.delete": w015._DELETE_ARGS["si.indicator.delete"],
+        "si.department.delete": w015._DELETE_ARGS["si.department.delete"],
+    }
+    assert set(DELETE_CAPABILITY_ARG_SCHEMAS) == set(vocab)
+    for cap_id, allowed in vocab.items():
+        props = set(DELETE_CAPABILITY_ARG_SCHEMAS[cap_id]["properties"])
+        assert props <= set(allowed)
+        required = DELETE_CAPABILITY_ARG_SCHEMAS[cap_id]["required"]
+        assert set(required) <= props

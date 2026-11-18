@@ -60,6 +60,7 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         actor_user_id: str | None,
         audit_origin: str | None = None,
         correlation_id: str | None = None,
+        audit_meta: dict | None = None,
     ) -> None:
         """Persist the mutation into ``strategic_indicators.settings_audit``.
 
@@ -77,13 +78,18 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
             if payload_after_row is not None
             else None
         )
-        meta: dict = {}
+        meta: dict = dict(audit_meta or {})
         if audit_origin:
             meta["write_origin"] = audit_origin
         if correlation_id:
             meta["correlation_id"] = correlation_id
         if meta and payload_after is not None:
             payload_after["_audit_meta"] = meta
+        elif meta and payload_after is None:
+            # Deletes carry no after row; provenance rides inside
+            # payload_before instead (same `_audit_meta` key).
+            payload_before = dict(payload_before or {})
+            payload_before["_audit_meta"] = meta
 
         PostgresStrategicIndicatorsSettingsAuditRepository(
             self._connection
@@ -584,33 +590,93 @@ class PostgresStrategicIndicatorsDepartmentIndicatorsRepository(
         *,
         indicator_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        expected_goal_count: int | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         with self._unit_of_work():
+            # Row lock blocks sibling mutations/deletes on this indicator
+            # while the dependent set is validated inside the transaction.
             before = self.fetch_one(
                 """
                 SELECT *
                 FROM strategic_indicators.department_indicators
                 WHERE indicator_id = %s
+                FOR UPDATE
                 """,
                 (indicator_id,),
             )
             if not before:
                 raise ValueError("Indicador estrutural não encontrado.")
 
-            delete_indicator_goals_cascade(self, indicator_id=indicator_id)
-            self.execute(
+            if expected_xmin is not None:
+                current_xmin = self.fetch_one(
+                    """
+                    SELECT xmin::text AS row_xmin
+                    FROM strategic_indicators.department_indicators
+                    WHERE indicator_id = %s
+                    """,
+                    (indicator_id,),
+                )
+                if not current_xmin or current_xmin["row_xmin"] != expected_xmin:
+                    raise StrategicIndicatorsAdminConflictError(
+                        "Versão do indicador divergente; recarregue antes de excluir."
+                    )
+
+            goals_count = self.fetch_one(
                 """
-                DELETE FROM strategic_indicators.department_indicators
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goals
                 WHERE indicator_id = %s
                 """,
                 (indicator_id,),
             )
+            goal_total = int((goals_count or {}).get("cnt") or 0)
+            if expected_goal_count is not None and goal_total != int(
+                expected_goal_count
+            ):
+                raise StrategicIndicatorsAdminConflictError(
+                    "Dependentes do indicador divergentes; recarregue antes de excluir."
+                )
+
+            monthly_count = self.fetch_one(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goal_monthly_targets t
+                INNER JOIN strategic_indicators.indicator_goals g
+                    ON g.id = t.indicator_goal_id
+                WHERE g.indicator_id = %s
+                """,
+                (indicator_id,),
+            )
+
+            delete_indicator_goals_cascade(self, indicator_id=indicator_id)
+            deleted = self.execute_returning_one(
+                """
+                DELETE FROM strategic_indicators.department_indicators
+                WHERE indicator_id = %s
+                RETURNING *
+                """,
+                (indicator_id,),
+            )
+            if deleted is None:
+                raise ValueError("Indicador estrutural não encontrado.")
+
             self._insert_admin_audit_event(
                 event_type="department_indicator.deleted",
                 entity_key=f"indicator:{indicator_id}",
                 payload_before=before,
                 payload_after_row=None,
                 actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+                audit_meta={
+                    "indicator_goals_deleted": goal_total,
+                    "monthly_targets_deleted": int(
+                        (monthly_count or {}).get("cnt") or 0
+                    ),
+                },
             )
             return {
                 "message": "Indicador estrutural excluído com sucesso.",

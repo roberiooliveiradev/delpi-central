@@ -104,6 +104,7 @@ async def test_read_tool_surface_unchanged() -> None:
     tools = await create_mcp_server().list_tools()
     assert sorted(t.name for t in tools) == [
         "analyze",
+        "delete",
         "execute",
         "get_context",
         "knowledge",

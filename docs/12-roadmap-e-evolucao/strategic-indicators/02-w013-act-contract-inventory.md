@@ -3,7 +3,7 @@
 **TASK_ID origem:** `DAVI-SI-W013-READ-CLOSURE-AND-ACT-READINESS-01` (Frente B)
 **Status:** `READ_ONLY_INVENTORY / CONTRACT_SPEC / NO_CODE / NO_DEPLOY / NO_WRITE`
 **Autoridade:** Strategic Indicators API é owner de dados, regras, AuthZ efetiva, persistência e auditoria. DAVI/api-delpi é façade semântica; nenhum write é executado em banco nem com service token.
-**Wave:** W013-ACT (departments, indicators, settings, change requests). W014 (batch/jobs/config-import/cache) foi implementada neste mesmo contrato (§10); W015 (deletes destrutivos + mode=replace) segue bloqueado.
+**Wave:** W013-ACT (departments, indicators, settings, change requests). W014 (batch/jobs/config-import/cache) foi implementada neste mesmo contrato (§10); W015 (deletes destrutivos + mode=replace) implementada — ver §11.
 
 Este documento NÃO autoriza implementação. Cada operação abaixo requer briefing de implementação aprovado pela Coordination antes de virar capability `si.*` no `execute` governado.
 
@@ -28,7 +28,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | D2 | `si.department.update` | `PUT /admin/departments/{department_id}` | direct mutation (full-replace body; `new_department_id` permite rename de PK) | READY_FOR_IMPLEMENTATION |
 | D3 | `si.department.activate` | `POST /admin/departments/{id}/activate` | activation | READY_FOR_IMPLEMENTATION |
 | D4 | `si.department.deactivate` | `POST /admin/departments/{id}/deactivate` | deactivation | RESOLVIDO §9 → `D4_IMPLEMENTED` |
-| D5 | `si.department.delete` | `DELETE /admin/departments/{id}` | destructive | **W015 — BLOCKED** (não implementar nesta wave) |
+| D5 | `si.department.delete` | `DELETE /admin/departments/{id}` | destructive | **W015 — IMPLEMENTED** (§11) |
 | — | reorder/hierarquia/peso | sem rota dedicada — via D2 (`display_order`, `weight_pct`) | — | coberto por D2; sem endpoint separado no owner |
 
 **Body D1** (`CreateDepartmentBodySchema`): `department_id`, `department_name`, `short_name`, `strategic_summary`, `headline_goal`, `supporting_focus`, `weight_pct`, `aggregation_mode`, `display_order`.
@@ -49,7 +49,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | I2 | `si.indicator.update` | `PUT /admin/indicators/{indicator_id}` | direct mutation (`new_indicator_id` rename; `weight_pct`, `scope_type`, `performance_direction`, `value_*`, `aggregation implícito`) | READY_FOR_IMPLEMENTATION |
 | I3 | `si.indicator.activate` | `POST /admin/indicators/{id}/activate` | activation | READY_FOR_IMPLEMENTATION |
 | I4 | `si.indicator.deactivate` | `POST /admin/indicators/{id}/deactivate` | deactivation | READY_FOR_IMPLEMENTATION |
-| I5 | `si.indicator.delete` | `DELETE /admin/indicators/{id}` | destructive | **W015 — BLOCKED** |
+| I5 | `si.indicator.delete` | `DELETE /admin/indicators/{id}` | destructive | **W015 — IMPLEMENTED** (§11) |
 | — | re-associação entre departamentos | **não existe** no owner (update não aceita `department_id`) | — | **NEEDS_OWNER_CONTRACT** — se o portal suporta mover indicador, falta rota; não inventar |
 
 **Body I1** (`CreateDepartmentIndicatorBodySchema`): `indicator_id`, `indicator_name`, `weight_pct`, `scope_type`, `performance_direction` (default `higher_is_better`), `strategic_description`, `source_key`, `value_unit`, `value_prefix`, `value_suffix`, `value_decimals` (0–6), `display_order`.
@@ -88,7 +88,7 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | Família | Owner routes | Wave destino |
 |---|---|---|
 | Goals unitários | `POST/PUT /indicator-goals*`, `activate`, `deactivate` | **JÁ IMPLEMENTADO — W012** (`si.goal.create/update/activate/deactivate`, OCC via `expected_max_version`/`expected_row_xmin`) |
-| Goal delete | `DELETE /indicator-goals/{id}` | W015 |
+| Goal delete | `DELETE /indicator-goals/{id}` | **W015 — IMPLEMENTED** (`si.goal.delete`, §11) |
 | Batch goals | `bulk-create`, `duplicate-year`, `fill-missing` | W014 (mass write → política de risco dedicada; `overwrite_existing`) |
 | Config export/import | `GET /admin/config/export` (READ já em W013), `import/preview`, `import/apply`, `import` | W014 (replace mode é destrutivo parcial — PREPARE+preview obrigatórios) |
 | Cache | `POST /cache/invalidate`, `POST /cache/refresh` (`view`) | W014 (operacional, side-effect leve) |
@@ -101,7 +101,8 @@ PREPARE → DIFF → CONFIRMAÇÃO EXPLÍCITA NO CHAT → ACT → AUTHZ OWNER �
 | READY_FOR_IMPLEMENTATION (contrato completo no owner) | D1, D2, D3, I1, I2, I3, I4, C1, C2, C3 |
 | IMPLEMENTED (§9) | D4 `si.department.deactivate` + S1 `si.settings.update` (owner OCC corrigido; 16 capabilities governadas no total) |
 | NEEDS_OWNER_CONTRACT | indicator re-association; CR approve/reject/cancel/update |
-| BLOCKED (outra wave) | D5, I5 (W015); `mode=replace` destrutivo do import (W015); `si.config.import` genérico (sem capability) — batch/import-merge/jobs/cache (W014) implementados, ver §10 |
+| IMPLEMENTED (W015, §11) | D5 `si.department.delete`, I5 `si.indicator.delete`, `si.goal.delete`, `si.config.import_replace` — tool `delete` registrada para a família destrutiva |
+| BLOCKED (sem wave prevista) | `si.config.import` genérico (sem capability); `http.post`/SQL genérico — batch/import-merge/jobs/cache (W014) implementados, ver §10 |
 
 ## 8. Próximo briefing de implementação (proposta para Coordination)
 
@@ -169,4 +170,19 @@ Decisão original: **`S1_CONTRACT_GAP`** — bloqueado até o owner ganhar preco
 | `si.cache.invalidate` | `POST /cache/invalidate` (`settings.manage`) | zero-args; wipe snapshots + schedule refresh (semântica owner inalterada) |
 | `si.job.tree_load` | `POST /departments/tree/load-job` (`view`) | `created_by_user_id` bound; `get` actor-scoped fail-closed (cross-actor/anon → 404); admission caps 2/ator + 8 global → 429; worker interno usa lookup sem scoping (OC-1 do verificador corrigida) |
 
-Permanecem BLOCKED: `si.config.import` (nome genérico — sem capability), `mode=replace` destrutivo (W015), todos os deletes (W015), `http.post`/SQL genérico. Rotas W014 validam `write_origin`/`correlation_id` via `_validate_audit_meta` (allowlist `davi-mcp`); `except HTTPException: raise` adicionado nas rotas W014 **e** W012/W013 (write_origin inválido era 500 — agora 400).
+Permanecem BLOCKED: `si.config.import` (nome genérico — sem capability) e `http.post`/SQL genérico. `mode=replace` destrutivo e os três deletes foram implementados na W015 (§11). Rotas W014/W015 validam `write_origin`/`correlation_id` via `_validate_audit_meta` (allowlist `davi-mcp`); `except HTTPException: raise` adicionado nas rotas W014 **e** W012/W013 (write_origin inválido era 500 — agora 400).
+
+## 11. W015 — deletes destrutivos + import replace (implementado)
+
+**Capability set (4):** `si.goal.delete`, `si.indicator.delete`, `si.department.delete` (família `delete`, tool `delete` exclusiva) + `si.config.import_replace` (família `execute`). A tool MCP `delete` é a sexta tool registrada; as famílias são disjuntas — deletes não rodam via `execute` e writes não rodam via `delete`.
+
+**Semântica owner real (HARD DELETE):**
+
+- `si.goal.delete`: `DELETE` físico da meta; `indicator_goal_monthly_targets` via FK CASCADE; `copied_from_goal_id` de outras metas via SET NULL. UoW: lock advisory por escopo → `DELETE ... WHERE id=%s AND (%s::text IS NULL OR xmin::text = %s)` (OCC atômico no próprio statement) → audit `indicator_goal.deleted` na mesma tx (`_audit_meta` em `payload_before`: targets deletados, refs limpas, write_origin, correlation_id).
+- `si.indicator.delete`: `FOR UPDATE` na row do indicador → re-check `xmin` in-tx → `expected_goal_count` contra o conjunto dependente (FK RESTRICT é backstop — perda silenciosa impossível) → cascata goals+targets → `DELETE` indicador → audit `department_indicator.deleted` com contagens.
+- `si.department.delete`: `FOR UPDATE` no departamento e nas rows dos indicadores → `expected_xmin` + `expected_indicator_count` + `expected_goal_count` → cascata (indicadores, goals, targets) → `DELETE` departamento → audit `department.deleted` com `indicators_deleted`/`indicator_goals_deleted`/`monthly_targets_deleted`.
+- `si.config.import_replace`: reutiliza o pipeline transacional do import — `delete_catalog_for_replace` (goals → indicators → departments) + rebuild + `expected_counts` conferidos DENTRO da tx → `config.imported` audit mesma tx. Recovery: PREPARE roda `export_user_admin_config` e sela o artifact + digest na proposta — honestidade: o export só carrega metas **ativas**, versões anteriores e row metadata (xmin/ids) não são restauráveis (disclosed no impact diff).
+
+**Política governada:** `PREPARE → destructive impact diff (record type, dependentes com contagens reais, semântica hard delete, irreversibilidade) → confirmação explícita em turno posterior → ACT (proposal selada, actor-bound, single-use, fingerprint recompute + owner-side OCC atômico) → read-back/pós-condição autoritativa`. Permissão revogada entre PREPARE e ACT → falha fechada (owner AuthZ revalidada no ACT).
+
+**Fechaduras:** sem soft delete inventado no BFF; impact diff declara irreversibilidade; `si.config.import` genérico, `http.post` e SQL seguem inexistentes; `X-Delpi-Service-Token` nunca anexado a fluxos user-parity.

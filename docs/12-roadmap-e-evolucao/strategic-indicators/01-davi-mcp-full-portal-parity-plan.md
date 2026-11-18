@@ -28,7 +28,7 @@ Acesso ao DAVI nunca implica acesso ao SI. Não criar RBAC DAVI, novas permissõ
 Discovery Devin (source inspection, TEST_NOT_RUN):
 - `strategic-indicators-api/si_app` FastAPI, MFE `plugins/strategic-indicators/`, schema `strategic_indicators`, rotas `/strategic-indicators`; inventário reporta cerca de 51 rotas de negócio e 7 integration routes: validar enumeração exata no HEAD.
 - SI permissions reportadas: `strategic-indicators.view`, `strategic-indicators.trends.view`, `strategic-indicators.settings.manage` (manifest tem demais permissões; sua aplicação por rota exige inventário).
-- DAVI MCP: quatro tools registradas em `api-delpi/app/interface/mcp/server.py`: `get_context`, `knowledge`, `read`, `analyze`. `execute/delete` planejadas, não implementadas.
+- DAVI MCP: seis tools registradas em `api-delpi/app/interface/mcp/server.py`: `get_context`, `knowledge`, `read`, `analyze`, `execute`, `delete` (W012–W015 implementadas).
 - Atual DAVI catalog/index = api-delpi OpenAPI, allowlist v30 e executor ASGI READ-only; SI API não integra diretamente o executor. Dashboard SI BFF existente usa dashboard permissions e service principal, portanto NÃO satisfaz user parity do SI.
 - `X-Delpi-Service-Token` do client SI atual pode produzir superadmin; proibido para fluxos DAVI user-parity.
 - Goals `monthly_curve` possui targets mensais autoritativos; não reduzir a meta anual a um valor derivado ou média sintética. Há commit recente `0b0bea01c98a78f998dafe6b417834b1c437bf06` tratando rollup de curvas mensais: revalidar implementação e contratos antes de testes.
@@ -92,7 +92,7 @@ Serviço de proposta somente se necessário a boundary/consumer real, seguindo A
 
 **Wave SI-3 — Admin parity:** departamentos, indicadores, configurações, change requests, bulk, import preview/apply, jobs/cache; cada intenção por use case canônico, mesmo `execute` sem tools extras.
 
-**Wave SI-4 — Destructive delete:** registrar `delete` quando política e testes de hard delete/cascade, audit, confirmation, replay e recovery estiverem aprovados; goals/departments/indicators separadamente.
+**Wave SI-4 — Destructive delete:** ✅ **IMPLEMENTADA (W015)** — tool `delete` registrada; `si.goal.delete`, `si.indicator.delete`, `si.department.delete` (hard delete com OCC atômico + dependent guards + audit) e `si.config.import_replace` (via `execute`, recovery artifact selado); política destrutiva e testes aprovados no contrato §11 do inventário.
 
 **Wave SI-5 — End-to-end acceptance & rollout:** matriz portal x DAVI com positive/negative user AuthZ, provider discovery, Agent private preview, performance, rate policy, deploy SHA, rollback, documentação, compartilhamento governado; aceites separados por capability. Não chamar completo até todas as ações portal inventariadas terem teste ou bloqueio explícito.
 

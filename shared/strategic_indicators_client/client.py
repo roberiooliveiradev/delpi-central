@@ -827,10 +827,22 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         department_id: str,
+        expected_xmin: str | None = None,
+        expected_indicator_count: int | None = None,
+        expected_goal_count: int | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "DELETE",
             f"/strategic-indicators/admin/departments/{department_id}",
+            params={
+                "expected_xmin": expected_xmin,
+                "expected_indicator_count": expected_indicator_count,
+                "expected_goal_count": expected_goal_count,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -919,10 +931,20 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         indicator_id: str,
+        expected_xmin: str | None = None,
+        expected_goal_count: int | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "DELETE",
             f"/strategic-indicators/admin/indicators/{indicator_id}",
+            params={
+                "expected_xmin": expected_xmin,
+                "expected_goal_count": expected_goal_count,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 
@@ -931,10 +953,18 @@ class StrategicIndicatorsApiClient:
         *,
         authorization: str,
         goal_id: str,
+        expected_xmin: str | None = None,
+        write_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         return self._write_user_scoped(
             "DELETE",
             f"/strategic-indicators/indicator-goals/{goal_id}",
+            params={
+                "expected_xmin": expected_xmin,
+                "write_origin": write_origin,
+                "correlation_id": correlation_id,
+            },
             authorization=authorization,
         )
 

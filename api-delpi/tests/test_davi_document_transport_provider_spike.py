@@ -83,7 +83,7 @@ def test_spike_enabled_registers_resources_and_tool(monkeypatch: pytest.MonkeyPa
     tools = asyncio.run(mcp.list_tools())
     names = sorted(t.name for t in tools)
     assert SPIKE_TOOL_NAME in names
-    assert len(names) == 6
+    assert len(names) == 7
     assert "search_products" not in names
 
     resources = asyncio.run(mcp.list_resources())

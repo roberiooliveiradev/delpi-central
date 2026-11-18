@@ -20,6 +20,10 @@ from app.application.external_capabilities.governed_writes.si_admin_capabilities
 from app.application.external_capabilities.governed_writes.si_w014_capabilities import (
     SI_W014_WRITE_CAPABILITIES,
 )
+from app.application.external_capabilities.governed_writes.si_w015_capabilities import (
+    SI_W015_DELETE_CAPABILITIES,
+    SI_W015_WRITE_CAPABILITIES,
+)
 
 _STR = {"type": "string"}
 _NUM = {"type": "number"}
@@ -286,6 +290,12 @@ WRITE_CAPABILITY_ARG_SCHEMAS: dict[str, dict[str, Any]] = {
         },
         [],
     ),
+    "si.config.import_replace": _schema(
+        {
+            "bundle": _OBJ,
+        },
+        ["bundle"],
+    ),
 }
 
 WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
@@ -318,6 +328,7 @@ WRITE_CAPABILITY_META: dict[str, dict[str, str]] = {
         ("si.cache.refresh", "si_cache", "Schedule a materialized period_scores refresh."),
         ("si.cache.invalidate", "si_cache", "Wipe materialized snapshots and schedule a recompute."),
         ("si.job.tree_load", "tree_load_job", "Dispatch an async department-tree load job."),
+        ("si.config.import_replace", "admin_config", "Destructive replace of the whole catalog from a bundle (wipes departments/indicators/goals in one transaction)."),
     )
 }
 
@@ -329,9 +340,51 @@ def get_write_capability_schema(capability: str) -> dict[str, Any] | None:
         SI_GOAL_WRITE_CAPABILITIES
         | SI_ADMIN_WRITE_CAPABILITIES
         | SI_W014_WRITE_CAPABILITIES
+        | SI_W015_WRITE_CAPABILITIES
     ):
         return None
     schema = WRITE_CAPABILITY_ARG_SCHEMAS.get(capability)
     if schema is None:
         return None
     return {**WRITE_CAPABILITY_META.get(capability, {}), **schema}
+
+
+DELETE_CAPABILITY_ARG_SCHEMAS: dict[str, dict[str, Any]] = {
+    "si.goal.delete": _schema(
+        {"goal_id": _STR},
+        ["goal_id"],
+    ),
+    "si.indicator.delete": _schema(
+        {"indicator_id": _STR},
+        ["indicator_id"],
+    ),
+    "si.department.delete": _schema(
+        {"department_id": _STR},
+        ["department_id"],
+    ),
+}
+
+DELETE_CAPABILITY_META: dict[str, dict[str, str]] = {
+    cap: {
+        "entity": entity,
+        "shape": "governed_write_prepare",
+        "destructive": "true",
+        "description": desc,
+    }
+    for cap, entity, desc in (
+        ("si.goal.delete", "indicator_goal", "Hard-delete a goal and its monthly targets (irreversible; copied_from links are cleared)."),
+        ("si.indicator.delete", "department_indicator", "Hard-delete an indicator and every goal version/target under it (irreversible)."),
+        ("si.department.delete", "department", "Hard-delete a department, all its indicators and their goals (irreversible)."),
+    )
+}
+
+
+def get_delete_capability_schema(capability: str) -> dict[str, Any] | None:
+    """Return the PREPARE argument schema for a governed destructive
+    capability, or ``None`` when the id is not an approved delete."""
+    if capability not in SI_W015_DELETE_CAPABILITIES:
+        return None
+    schema = DELETE_CAPABILITY_ARG_SCHEMAS.get(capability)
+    if schema is None:
+        return None
+    return {**DELETE_CAPABILITY_META.get(capability, {}), **schema}

@@ -112,8 +112,12 @@ class DaviAgentIntelligenceService:
                 "BOUNDED_GOVERNED — approved only "
                 "(si.goal.*/si.department.*/si.indicator.*/"
                 "si.change_request.*/si.settings.update/"
-                "si.config.import_apply/si.cache.*/si.job.tree_load — "
-                "PREPARE/ACT+confirm, owner AuthZ + OCC). Rest NOT_EXPOSED."
+                "si.config.import_apply/si.config.import_replace/"
+                "si.cache.*/si.job.tree_load — "
+                "PREPARE/ACT+confirm, owner AuthZ + OCC). "
+                "Destructive deletes only via the delete tool "
+                "(si.goal.delete/si.indicator.delete/si.department.delete — "
+                "physical, audited, irreversible). Rest NOT_EXPOSED."
             ),
             "authority": (
                 "Live READ directives — supersede stale Agent "

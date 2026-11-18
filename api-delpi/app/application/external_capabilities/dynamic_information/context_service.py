@@ -16,6 +16,7 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
     MCP_TOOL_EXECUTE,
+    MCP_TOOL_DELETE,
 )
 from app.application.external_capabilities.davi_agent_intelligence_service import (
     DaviAgentIntelligenceService,
@@ -48,11 +49,12 @@ _SEMANTIC_TOOLS = (
     MCP_TOOL_READ,
     MCP_TOOL_ANALYZE,
     MCP_TOOL_EXECUTE,
+    MCP_TOOL_DELETE,
 )
 _AVAILABLE_TOOLS = _SEMANTIC_TOOLS
 # Sibling-pattern tools decided for later waves — reported honestly as
 # unavailable so the model never invents them.
-_PLANNED_TOOLS = ("delete",)
+_PLANNED_TOOLS: tuple[str, ...] = ()
 
 _BUDGET_KEYS = (
     "execute_max_items",
@@ -80,6 +82,14 @@ def _write_capabilities() -> tuple[str, ...]:
     )
 
     return tuple(sorted(WRITE_CAPABILITIES))
+
+
+def _delete_capabilities() -> tuple[str, ...]:
+    from app.application.external_capabilities.governed_writes.orchestrator import (
+        DELETE_CAPABILITIES,
+    )
+
+    return tuple(sorted(DELETE_CAPABILITIES))
 
 
 def _context(actor_id: str | None) -> dict[str, Any]:
@@ -130,6 +140,17 @@ def _context(actor_id: str | None) -> dict[str, Any]:
                 "execute(capability, proposal_handle, confirm=true)."
             ),
             "capabilities": sorted(_write_capabilities()),
+        },
+        "governed_deletes": {
+            "policy": "confirm_before_act",
+            "flow": (
+                "PREPARE via delete(capability, arguments) → review the "
+                "exact destructive impact diff → ACT in a LATER "
+                "user-confirmed turn via delete(capability, "
+                "proposal_handle, confirm=true). Deletes are physical "
+                "and irreversible."
+            ),
+            "capabilities": sorted(_delete_capabilities()),
         },
         "versions": {
             "catalog_allowlist": _catalog_version(),
@@ -189,6 +210,7 @@ def _capability_schema(capability: str | None) -> dict[str, Any]:
     }
     if action is None or not action.executable:
         from app.application.external_capabilities.governed_writes.arg_schemas import (
+            get_delete_capability_schema,
             get_write_capability_schema,
         )
 
@@ -209,6 +231,25 @@ def _capability_schema(capability: str | None) -> dict[str, Any]:
                         "type": "object",
                         "additionalProperties": False,
                         "properties": write_schema.get("properties", {}),
+                    },
+                }
+            )
+            return payload
+        delete_schema = get_delete_capability_schema(requested)
+        if delete_schema is not None:
+            capability_payload.update(
+                {
+                    "available": True,
+                    "davi_status": "GOVERNED_DELETE",
+                    "entity": delete_schema.get("entity"),
+                    "shape": delete_schema.get("shape"),
+                    "description": delete_schema.get("description"),
+                    "confirmation": "confirm_before_act (PREPARE → sealed proposal → explicit confirm → ACT)",
+                    "required_arguments": delete_schema.get("required", []),
+                    "argument_schema": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": delete_schema.get("properties", {}),
                     },
                 }
             )

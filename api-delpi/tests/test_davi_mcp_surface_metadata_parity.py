@@ -29,7 +29,8 @@ def test_get_context_description_does_not_claim_read_unimplemented() -> None:
     assert "read/analyze/execute/delete" not in lowered
     # W012: execute is live (bounded si.goal.*); only delete stays unimplemented.
     assert "execute/delete remain" not in lowered
-    assert "delete remains not implemented" in lowered
+    assert "delete remains not implemented" not in lowered
+    assert "delete tool" in lowered
     assert "read or analyze" in lowered or "read/analyze" in lowered
 
 

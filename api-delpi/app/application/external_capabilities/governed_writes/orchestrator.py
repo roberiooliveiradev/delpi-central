@@ -44,6 +44,11 @@ from app.application.external_capabilities.governed_writes.si_w014_capabilities 
     SI_W014_WRITE_CAPABILITIES,
     SiW014WriteStack,
 )
+from app.application.external_capabilities.governed_writes.si_w015_capabilities import (
+    SI_W015_DELETE_CAPABILITIES,
+    SI_W015_WRITE_CAPABILITIES,
+    SiW015WriteStack,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +67,12 @@ WRITE_CAPABILITIES = (
     SI_GOAL_WRITE_CAPABILITIES
     | SI_ADMIN_WRITE_CAPABILITIES
     | SI_W014_WRITE_CAPABILITIES
+    | SI_W015_WRITE_CAPABILITIES
 )
+
+# Destructive family — executable ONLY through the `delete` tool. Kept
+# disjoint from WRITE_CAPABILITIES so `execute` can never reach a delete.
+DELETE_CAPABILITIES = SI_W015_DELETE_CAPABILITIES
 
 
 def _require_identity(actor_id: str | None, authorization: str | None) -> str:
@@ -81,16 +91,20 @@ class DaviGovernedWriteOrchestrator:
         si_stack: SiGoalWriteStack | None = None,
         admin_stack: SiAdminWriteStack | None = None,
         w014_stack: SiW014WriteStack | None = None,
+        w015_stack: SiW015WriteStack | None = None,
     ) -> None:
         self._si_stack = si_stack or SiGoalWriteStack()
         self._admin_stack = admin_stack or SiAdminWriteStack()
         self._w014_stack = w014_stack or SiW014WriteStack()
+        self._w015_stack = w015_stack or SiW015WriteStack()
 
     def _stack_for(self, capability: str):
         if capability in SI_ADMIN_WRITE_CAPABILITIES:
             return self._admin_stack
         if capability in SI_W014_WRITE_CAPABILITIES:
             return self._w014_stack
+        if capability in SI_W015_DELETE_CAPABILITIES | SI_W015_WRITE_CAPABILITIES:
+            return self._w015_stack
         return self._si_stack
 
     # ------------------------------------------------------------- PREPARE
@@ -103,8 +117,9 @@ class DaviGovernedWriteOrchestrator:
         actor_id: str | None,
         actor_email: str | None,
         authorization: str | None,
+        allowed: frozenset = WRITE_CAPABILITIES,
     ) -> dict[str, Any]:
-        if capability not in WRITE_CAPABILITIES:
+        if capability not in allowed:
             raise GovernedWriteError(
                 f"Capability '{capability}' is not an approved governed write.",
                 code=CAPABILITY_NOT_ALLOWED,
@@ -161,8 +176,9 @@ class DaviGovernedWriteOrchestrator:
         confirm: bool | None,
         actor_id: str | None,
         authorization: str | None,
+        allowed: frozenset = WRITE_CAPABILITIES,
     ) -> dict[str, Any]:
-        if capability not in WRITE_CAPABILITIES:
+        if capability not in allowed:
             raise GovernedWriteError(
                 f"Capability '{capability}' is not an approved governed write.",
                 code=CAPABILITY_NOT_ALLOWED,
@@ -348,4 +364,44 @@ def davi_execute(
         actor_id=actor_id,
         actor_email=actor_email,
         authorization=authorization,
+    )
+
+
+def davi_delete(
+    *,
+    capability: str,
+    arguments: dict[str, Any] | None = None,
+    proposal_handle: str | None = None,
+    proposal_id: str | None = None,
+    confirm: bool | None = None,
+    actor_id: str | None,
+    actor_email: str | None = None,
+    authorization: str | None,
+    orchestrator: DaviGovernedWriteOrchestrator | None = None,
+) -> dict[str, Any]:
+    """Delete-tool entry: PREPARE/ACT for the governed destructive family.
+
+    Same sealed-proposal, actor-bound, confirm-before-act contract as
+    `davi_execute`, but the allowlist is the destructive set — write
+    capabilities are rejected here and delete capabilities are rejected
+    by `davi_execute`.
+    """
+    orchestrator = orchestrator or get_davi_write_orchestrator()
+    if proposal_handle or proposal_id:
+        return orchestrator.act(
+            capability=capability,
+            proposal_handle=proposal_handle,
+            proposal_id=proposal_id,
+            confirm=confirm,
+            actor_id=actor_id,
+            authorization=authorization,
+            allowed=DELETE_CAPABILITIES,
+        )
+    return orchestrator.prepare(
+        capability=capability,
+        args=arguments,
+        actor_id=actor_id,
+        actor_email=actor_email,
+        authorization=authorization,
+        allowed=DELETE_CAPABILITIES,
     )

@@ -29,6 +29,8 @@ from app.application.external_capabilities.constants import (
     MCP_TOOL_ANALYZE_TITLE,
     MCP_TOOL_EXECUTE,
     MCP_TOOL_EXECUTE_TITLE,
+    MCP_TOOL_DELETE,
+    MCP_TOOL_DELETE_TITLE,
     MCP_TOOL_READ,
     MCP_TOOL_READ_TITLE,
 )
@@ -48,6 +50,7 @@ from app.application.external_capabilities.governed_writes.errors import (
 )
 from app.composition.davi_dynamic_read_composer import (
     davi_analyze_wired,
+    davi_delete_wired,
     davi_execute_wired,
     davi_knowledge_wired,
     davi_read_wired,
@@ -66,6 +69,7 @@ from app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from app.interface.mcp.schemas import (
     GetContextInput,
     AnalyzeInput,
+    DeleteInput,
     ExecuteInput,
     KnowledgeInput,
     ReadInput,
@@ -74,6 +78,7 @@ from app.interface.mcp.schemas import (
     analyze_input_json_schema,
     analyze_output_json_schema,
     execute_input_json_schema,
+    delete_input_json_schema,
     knowledge_input_json_schema,
     knowledge_output_json_schema,
     read_input_json_schema,
@@ -225,6 +230,8 @@ class ApiDelpiMCPServer(MCPServer):
                 output_schema = analyze_output_json_schema()
             elif info.name == MCP_TOOL_EXECUTE:
                 input_schema = execute_input_json_schema()
+            elif info.name == MCP_TOOL_DELETE:
+                input_schema = delete_input_json_schema()
             payload: dict[str, Any] = {
                 "name": info.name,
                 "title": info.title,
@@ -254,6 +261,8 @@ class ApiDelpiMCPServer(MCPServer):
                 AnalyzeInput.model_validate(arguments or {})
             elif name == MCP_TOOL_EXECUTE:
                 ExecuteInput.model_validate(arguments or {})
+            elif name == MCP_TOOL_DELETE:
+                DeleteInput.model_validate(arguments or {})
         except ValidationError as exc:
             log_error(f"mcp {name} validation rejected error_count={exc.error_count()}")
             return validation_error_tool_result()
@@ -287,7 +296,8 @@ def create_mcp_server() -> MCPServer:
             "the live semantic tools read or analyze (or knowledge for "
             "governed documentation). Governed write-class capabilities are "
             "executed exclusively through the execute tool (PREPARE/ACT); "
-            "delete remains not implemented on this surface."
+            "governed destructive deletes run exclusively through the "
+            "delete tool (PREPARE/ACT)."
         ),
         annotations=ToolAnnotations.model_validate(
             tool_annotations_payload(
@@ -583,8 +593,9 @@ def create_mcp_server() -> MCPServer:
             "si.change_request.create, si.change_request.comment, "
             "si.change_request.submit, si.goal.bulk_create, "
             "si.goal.duplicate_year, si.goal.fill_missing, "
-            "si.config.import_apply, si.cache.refresh, "
-            "si.cache.invalidate, si.job.tree_load (Strategic Indicators "
+            "si.config.import_apply, si.config.import_replace, "
+            "si.cache.refresh, si.cache.invalidate, si.job.tree_load "
+            "(Strategic Indicators "
             "governed writes; backend AuthZ remains authoritative on "
             "every call). "
             "This tool never accepts URLs, methods, paths or SQL. "
@@ -666,6 +677,103 @@ def create_mcp_server() -> MCPServer:
             return _authz_error_result(exc)
         except Exception as exc:
             log_error(f"mcp execute failed: {exc}")
+            raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
+
+    @mcp.tool(
+        name=MCP_TOOL_DELETE,
+        title=MCP_TOOL_DELETE_TITLE,
+        description=(
+            "Delete records through an approved governed destructive "
+            "capability via PREPARE/ACT. PREPARE: pass 'capability' plus "
+            "'arguments'; returns a sealed proposal (proposal_handle), the "
+            "exact impact diff — record type, dependents, cascades, "
+            "irreversibility — and NO deletion. ACT: present the exact "
+            "impact to the user and require ONE explicit affirmative "
+            "confirmation of THAT proposal in a later user message — the "
+            "initial delete request is never itself confirmation. Then "
+            "pass 'capability', the 'proposal_handle' (or 'proposal_id') "
+            "and confirm=true; the sealed server-side proposal is the "
+            "single authority — arguments cannot be changed at ACT. "
+            "Approved capabilities: si.goal.delete (hard-deletes the goal "
+            "and its monthly targets), si.indicator.delete (hard-deletes "
+            "the indicator and every goal version/target under it), "
+            "si.department.delete (hard-deletes the department, all its "
+            "indicators and their goals) — all irreversible, owner-audited, "
+            "backend AuthZ authoritative on every call. si.config."
+            "import_replace is NOT here — it runs through the execute "
+            "tool as a bounded governed write. This tool never accepts "
+            "URLs, methods, paths or SQL."
+        ),
+        annotations=ToolAnnotations.model_validate(
+            tool_annotations_payload(
+                MCP_TOOL_DELETE_TITLE,
+                read_only=False,
+                destructive=True,
+                idempotent=False,
+            )
+        ),
+        meta=security_schemes_meta(DAVI_MCP_SECURITY_SCHEMES),
+        structured_output=True,
+    )
+    def delete_tool(
+        capability: str,
+        arguments: dict[str, Any] | None = None,
+        proposal_handle: str | None = None,
+        proposal_id: str | None = None,
+        confirm: bool | None = None,
+    ) -> CallToolResult:
+        try:
+            params = DeleteInput(
+                capability=capability,
+                arguments=arguments,
+                proposal_handle=proposal_handle,
+                proposal_id=proposal_id,
+                confirm=confirm,
+            )
+        except ValidationError:
+            return validation_error_tool_result("Invalid delete parameters.")
+        try:
+            data = davi_delete_wired(
+                capability=params.capability,
+                arguments=params.arguments,
+                proposal_handle=params.proposal_handle,
+                proposal_id=params.proposal_id,
+                confirm=params.confirm,
+                actor_id=_actor_id(),
+                actor_email=_actor_email(),
+                authorization=_authorization(),
+            )
+            return CallToolResult(
+                content=[
+                    TextContent(
+                        type="text",
+                        text=(
+                            "Deletion proposal prepared." if data.get("phase") == "prepare"
+                            else "Delete executed and verified."
+                        ),
+                    )
+                ],
+                structuredContent=data,
+                isError=False,
+            )
+        except GovernedWriteError as exc:
+            return typed_error_tool_result(
+                exc.code or OWNER_EXECUTION_ERROR_CODE,
+                exc.message or "Delete rejected.",
+                recoverable=exc.code in {
+                    "validation",
+                    "capability_not_allowed",
+                    "confirmation_required",
+                    "proposal_required",
+                    "proposal_expired",
+                    "proposal_stale",
+                    "conflict",
+                },
+            )
+        except PermissionError as exc:
+            return _authz_error_result(exc)
+        except Exception as exc:
+            log_error(f"mcp delete failed: {exc}")
             raise RuntimeError(EXTERNAL_INTERNAL_ERROR_MESSAGE) from exc
 
     if document_transport_spike_enabled():

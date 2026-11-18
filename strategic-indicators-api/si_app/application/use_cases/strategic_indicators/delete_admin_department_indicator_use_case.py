@@ -17,6 +17,10 @@ class DeleteStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         *,
         indicator_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        expected_goal_count: int | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         if not indicator_id.strip():
             raise ValueError("indicator_id é obrigatório.")
@@ -24,4 +28,8 @@ class DeleteStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         return self._repository.delete_department_indicator(
             indicator_id=indicator_id.strip(),
             actor_user_id=actor_user_id,
+            expected_xmin=expected_xmin,
+            expected_goal_count=expected_goal_count,
+            audit_origin=audit_origin,
+            correlation_id=correlation_id,
         )

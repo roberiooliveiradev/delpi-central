@@ -673,19 +673,38 @@ def deactivate_admin_department(
 
 @router.delete("/admin/departments/{department_id}")
 @require_permission("strategic-indicators.settings.manage")
-def delete_admin_department(department_id: str, request: Request):
+def delete_admin_department(
+    department_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    expected_indicator_count: int | None = Query(None),
+    expected_goal_count: int | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_delete_strategic_indicators_admin_department_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 department_id=department_id,
                 actor_user_id=actor_user_id,
-    
+                expected_xmin=expected_xmin,
+                expected_indicator_count=expected_indicator_count,
+                expected_goal_count=expected_goal_count,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -859,19 +878,36 @@ def deactivate_admin_department_indicator(
 
 @router.delete("/admin/indicators/{indicator_id}")
 @require_permission("strategic-indicators.settings.manage")
-def delete_admin_department_indicator(indicator_id: str, request: Request):
+def delete_admin_department_indicator(
+    indicator_id: str,
+    request: Request,
+    expected_xmin: str | None = Query(None),
+    expected_goal_count: int | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
         use_case = build_delete_strategic_indicators_admin_department_indicator_use_case()
         return _invalidate_read_cache_after_mutation(
             use_case.execute(
                 indicator_id=indicator_id,
                 actor_user_id=actor_user_id,
-    
+                expected_xmin=expected_xmin,
+                expected_goal_count=expected_goal_count,
+                audit_origin=audit_origin,
+                correlation_id=correlation,
             )
         )
+    except StrategicIndicatorsAdminConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1122,19 +1158,31 @@ def deactivate_indicator_goal(
 def delete_indicator_goal(
     goal_id: str,
     request: Request,
+    expected_xmin: str | None = Query(None),
+    write_origin: str | None = Query(None),
+    correlation_id: str | None = Query(None),
 ):
     try:
         actor_user_id = _extract_actor(request)
+        audit_origin, correlation = _validate_audit_meta(
+            write_origin, correlation_id
+        )
 
         use_case = build_delete_strategic_indicators_indicator_goal_use_case()
         result = use_case.execute(
             goal_id=goal_id,
             actor_user_id=actor_user_id,
-
+            expected_xmin=expected_xmin,
+            audit_origin=audit_origin,
+            correlation_id=correlation,
         )
         return _invalidate_read_cache_after_mutation(result)
+    except StrategicIndicatorsGoalConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,

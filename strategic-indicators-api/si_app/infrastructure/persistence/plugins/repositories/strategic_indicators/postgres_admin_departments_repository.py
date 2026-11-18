@@ -59,6 +59,7 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         actor_user_id: str | None,
         audit_origin: str | None = None,
         correlation_id: str | None = None,
+        audit_meta: dict | None = None,
     ) -> None:
         """Persist the mutation into ``strategic_indicators.settings_audit``.
 
@@ -76,13 +77,18 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
             if payload_after_row is not None
             else None
         )
-        meta: dict = {}
+        meta: dict = dict(audit_meta or {})
         if audit_origin:
             meta["write_origin"] = audit_origin
         if correlation_id:
             meta["correlation_id"] = correlation_id
         if meta and payload_after is not None:
             payload_after["_audit_meta"] = meta
+        elif meta and payload_after is None:
+            # Deletes carry no after row; provenance rides inside
+            # payload_before instead (same `_audit_meta` key).
+            payload_before = dict(payload_before or {})
+            payload_before["_audit_meta"] = meta
 
         PostgresStrategicIndicatorsSettingsAuditRepository(
             self._connection
@@ -485,24 +491,84 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
         *,
         department_id: str,
         actor_user_id: str | None,
+        expected_xmin: str | None = None,
+        expected_indicator_count: int | None = None,
+        expected_goal_count: int | None = None,
+        audit_origin: str | None = None,
+        correlation_id: str | None = None,
     ) -> dict:
         with self._unit_of_work():
+            # Row locks block sibling mutations/deletes on the department and
+            # its indicators while the dependent set is validated in-tx.
             before = self.fetch_one(
                 """
                 SELECT *
                 FROM strategic_indicators.departments
                 WHERE department_id = %s
+                FOR UPDATE
                 """,
                 (department_id,),
             )
             if not before:
                 raise ValueError("Departamento não encontrado.")
 
+            if expected_xmin is not None:
+                current_xmin = self.fetch_one(
+                    """
+                    SELECT xmin::text AS row_xmin
+                    FROM strategic_indicators.departments
+                    WHERE department_id = %s
+                    """,
+                    (department_id,),
+                )
+                if not current_xmin or current_xmin["row_xmin"] != expected_xmin:
+                    raise StrategicIndicatorsAdminConflictError(
+                        "Versão do departamento divergente; recarregue antes de excluir."
+                    )
+
             indicator_rows = self.fetch_all(
                 """
                 SELECT indicator_id
                 FROM strategic_indicators.department_indicators
                 WHERE department_id = %s
+                FOR UPDATE
+                """,
+                (department_id,),
+            )
+            if expected_indicator_count is not None and len(indicator_rows) != int(
+                expected_indicator_count
+            ):
+                raise StrategicIndicatorsAdminConflictError(
+                    "Dependentes do departamento divergentes; recarregue antes de excluir."
+                )
+
+            goals_count = self.fetch_one(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goals g
+                INNER JOIN strategic_indicators.department_indicators di
+                    ON di.indicator_id = g.indicator_id
+                WHERE di.department_id = %s
+                """,
+                (department_id,),
+            )
+            goal_total = int((goals_count or {}).get("cnt") or 0)
+            if expected_goal_count is not None and goal_total != int(
+                expected_goal_count
+            ):
+                raise StrategicIndicatorsAdminConflictError(
+                    "Dependentes do departamento divergentes; recarregue antes de excluir."
+                )
+
+            monthly_count = self.fetch_one(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM strategic_indicators.indicator_goal_monthly_targets t
+                INNER JOIN strategic_indicators.indicator_goals g
+                    ON g.id = t.indicator_goal_id
+                INNER JOIN strategic_indicators.department_indicators di
+                    ON di.indicator_id = g.indicator_id
+                WHERE di.department_id = %s
                 """,
                 (department_id,),
             )
@@ -519,19 +585,32 @@ class PostgresStrategicIndicatorsAdminDepartmentsRepository(
                 """,
                 (department_id,),
             )
-            self.execute(
+            deleted = self.execute_returning_one(
                 """
                 DELETE FROM strategic_indicators.departments
                 WHERE department_id = %s
+                RETURNING *
                 """,
                 (department_id,),
             )
+            if deleted is None:
+                raise ValueError("Departamento não encontrado.")
+
             self._insert_admin_audit_event(
                 event_type="department.deleted",
                 entity_key=f"department:{department_id}",
                 payload_before=before,
                 payload_after_row=None,
                 actor_user_id=actor_user_id,
+                audit_origin=audit_origin,
+                correlation_id=correlation_id,
+                audit_meta={
+                    "indicators_deleted": len(indicator_rows),
+                    "indicator_goals_deleted": goal_total,
+                    "monthly_targets_deleted": int(
+                        (monthly_count or {}).get("cnt") or 0
+                    ),
+                },
             )
             return {
                 "message": "Departamento excluído com sucesso.",
