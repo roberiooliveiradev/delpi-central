@@ -6681,3 +6681,42 @@ Sintético: 2/2 `TRUE_CONFLICT` (valida a maquinaria do avaliador, não detecç�
 - Avaliação reproduzível entregue: manifesto, anotações draft, avaliador com testes, relatório hashado, limites quantificados onde há referência.
 - **Pendências do owner:** aprovar/corrigir as 14 ocorrências draft; selecionar holdout real; fornecer casos reais documentados de balão trocado (NC histórica) — sem eles a homologação de detecção de troca permanece impossível; aprovar/rejeitar T1–T7; decidir escopo do worker isolado e da ambiguidade de junção.
 - Issue #131: update pendente (`gh` sem autenticação no ambiente).
+
+### 94.42.11 E1/VAL-01 — DEPLOY-01: Implantação Produtiva Experimental B1+B2+B3
+
+**Task:** `EVA-E1-VAL01-BALLOON-DEPLOY01-PRODUCTION-ROLLOUT-AND-LIVE-VALIDATION-01`
+**Estado:** `DEPLOY01_PRODUCTION_EXPERIMENT_ACTIVE / TECHNICAL_HOMOLOGATION_PENDING`
+
+#### Gates e autorizações
+
+- **GATE-A (funcional experimental):** APROVADO — owner autorizou "deploy produtivo" experimental nesta sessão (análise candidata, sem NC/escrita/aprovação técnica).
+- **GATE-B (operacional/infra):** APROVADO — mesma autorização do owner; janela imediata; rollback por imagem preparado.
+- **GATE-C (segurança):** contrato inalterado — Keycloak/S2S/RBAC/delegated identity intactos; nenhuma permissão adicionada; worker sem JWT/acervo (bytes in → evidence out).
+- **GATE-D (qualidade operacional):** suíte engineering-api 1680 pass/21 skip (executor) / 1686 reproduzida pelo verificador; limites preservados (RLIMIT 16GB, CPU 900s, concorrência 1).
+- **GATE-E (reversibilidade):** `infra-engineering-api:pre-deploy01-8617de34-rollback` (digest `8617de344417`) tagueado e verificado antes da mudança.
+
+#### Imagens
+
+- **Anterior:** `infra-engineering-api:latest` digest `sha256:8617de344417…` (build 2026-11-17T18:42Z; continha B1+B2, **sem** B1-R1/B3).
+- **Candidata/implantada:** `infra-engineering-api:deploy01-74492b551b` → `latest`, digest `sha256:2066695be758…`, fonte `74492b551b` (contém B1, B1-R1, B2, B3, GT-01 e fix do worker `01e0ff2d1c`; build com `INSTALL_VISION_EXTRAS=true`).
+
+#### Worker isolado (§6)
+
+- Diagnóstico GT-01 confirmado como **condicional**: ruído não-JSON do PaddleX no stdout só aparece quando o engine escreve banners/progresso (ex.: cache de modelos não aquecido). Na imagem antiga o worker passava no warm-cache; o modo de falha permanecia latente.
+- **Fix (`01e0ff2d1c`):** `_run_quiet` redireciona stdout→stderr em nível de fd dentro do worker durante `run_visual_benchmark`; stdout volta a ser canal JSON puro; hook `VISUAL_WORKER_SIMULATE` movido para dentro da região + novo hook `stdout_noise`.
+- **Prova pós-deploy:** `run_pipeline_isolated` dentro do container produtivo novo → `status ok`, 207 tokens, rc=0, isolation=subprocess, SHA `9b64ae20…` do 90480120 preservado.
+- Verificador independente (cursor/Composer, `32e0c4ff9c..01e0ff2d1c`): **ACCEPT_WITH_RESIDUAL**, zero OCs — prova em imagem não reproduzível pelo verificador (contrato); contagem de suíte difere por commits posteriores.
+
+#### Deploy e runtime
+
+- `docker compose up -d engineering-api` recriou `delpi-engineering-api`; health `Up (healthy)` no digest novo; rollback não executado.
+- `ocr_runtime_status` live: `AVAILABLE`, ocr_enabled, busy=false, isolation=subprocess, limits 16GB/900s/1 worker.
+- **90480120 (NC histórica 21/10/2026 — troca de letras de balões):** pipeline B1+B2+B3 no digest implantado → **7 candidatos de balão** (A2, A7, A3, A1, AA, A5, A1-duplicado) vs **0** no job produtivo anterior (`aj-e4fde0baf8e0421e`). 6 `MATCH_CANDIDATE`, `A5 NOT_LOCATED`, 5 `AMBIGUOUS_REGIONS` preservadas, B3 todo `INCONCLUSIVE`/`NOT_COMPARABLE` — zero conflito fabricado, ambiguidade e abstenção intactas.
+- `CORRECTED_DRAWING_REFERENCE=NOT_VERIFIED` — nenhuma pasta/versão "Corrigido" encontrada no fileserver; PDF atual é o mesmo SHA histórico (sem supor correção).
+- MCP/`drawing.runtime_status` por contrato externo: endpoint montado em `/mcp` atrás de Keycloak — verificação via ChatGPT (delegated identity) fica como pendência da Coordination; não há token de serviço emitido nesta sessão.
+
+#### Limites
+
+- Isto é **experimento operacional**, não homologação: `GROUND_TRUTH_APPROVED=NO`, `BALLOON_SWAP_DETECTION=NOT_PROVEN`, thresholds GT-01 não aprovados.
+- `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `DRAWING_PUBLICATION=false`.
+- Issue #131: pendente (`gh` sem auth).
