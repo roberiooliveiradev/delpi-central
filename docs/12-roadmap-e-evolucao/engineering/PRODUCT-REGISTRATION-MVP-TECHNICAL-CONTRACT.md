@@ -1,6 +1,8 @@
 # Product Registration — contrato técnico do MVP Engineering-only
 
-> **PRC_CURRENT_MASTER_2026_11_18 — fonte única para a evolução de automação de cadastro e similaridade técnica:** o plano que estava em `docs/12-roadmap-e-evolucao/controle-mp/EVOLUCAO.md` foi consolidado NESTE documento do Portal Engenharia, por decisão explícita do PO. O arquivo separado deve ser removido após a migração. Atualizações futuras de CREATE/UPDATE TOTVS, SA5, avaliação normativa e decisões de deduplicação devem ser incrementadas no capítulo `PRC-TOTVS-AUTOMATION-AND-NORMATIVE-SIMILARITY` abaixo. Os contratos oficiais dos owners permanecem em suas fontes próprias, referenciados daqui; este adendo não autoriza write/deploy.\n\n
+> **PRC_CURRENT_MASTER_2026_11_18 — fonte única para a evolução de automação de cadastro e similaridade técnica:** o plano que estava em `docs/12-roadmap-e-evolucao/controle-mp/EVOLUCAO.md` foi consolidado NESTE documento do Portal Engenharia, por decisão explícita do PO. O arquivo separado foi removido após a migração; histórico disponível no Git. Atualizações futuras de CREATE/UPDATE TOTVS, SA5, avaliação normativa e decisões de deduplicação devem ser incrementadas no capítulo `PRC-TOTVS-AUTOMATION-AND-NORMATIVE-SIMILARITY` abaixo. Os contratos oficiais dos owners permanecem em suas fontes próprias, referenciados daqui; este adendo não autoriza write/deploy.
+
+
 > **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV` (runtime Engineering API + Portal; AuthZ solicitante sem `engineering.access` = `ARCHITECTURE_DECISION_REQUIRED` / `PENDING_OWNER`).
 
 > **Data:** 2026-11-06
@@ -656,7 +658,7 @@ Decisão PO 2026-11-09: [adendo normativo D16-REF-01](./PRODUCT-REGISTRATION-D16
 
 ### 1. Precedência, escopo e mudança de contexto
 
-O documento legado `controle-mp/EVOLUCAO.md` (preservado no histórico Git até o commit de migração) representava migração do antigo iframe/Request Engine e devem ser lidas como **baseline histórica**, não como instrução vigente de criar um novo fluxo `requests-api` para matéria-prima. O PRC operacional atual possui **uma solicitação de Engenharia governada pela Engineering API**, consumida tanto pelo Portal Engenharia quanto por Minhas Solicitações. Não criar segunda autoridade, clone de pedidos, segundo cadastro mestre nem importações cruzadas entre bounded contexts.
+O documento legado `controle-mp/EVOLUCAO.md` (preservado no histórico Git até o commit de migração) representava migração do antigo iframe/Request Engine e deve ser tratado como **baseline histórica**, não como instrução vigente de criar um novo fluxo `requests-api` para matéria-prima. O PRC operacional atual possui **uma solicitação de Engenharia governada pela Engineering API**, consumida tanto pelo Portal Engenharia quanto por Minhas Solicitações. Não criar segunda autoridade, clone de pedidos, segundo cadastro mestre nem importações cruzadas entre bounded contexts.
 
 O recorte de conversa/UX foi concluído pelo PO em 18/11/2026; evidências, SHAs e resíduos estão em [fechamento consolidado PRC](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Este capítulo é uma **nova evolução**, e não reabre esse aceite.
 
@@ -800,3 +802,83 @@ Separar com clareza:
 **Pendências de decisão ainda abertas (não converter em fato):** owner e lifecycle exato do contrato de análise; campos críticos por família e equivalência admissível; estratégia de código oficial no CREATE; permissões específicas para escritura; API de write SA5; comportamento de `UTILIZAR_EXISTENTE`; transações parciais; expiração da decisão; limites/ranking dos candidatos; disponibilização sem novos scopes. Resolver via inventário e ratificação técnica, sem preencher lacunas por inferência.
 
 **Regra editorial para as próximas rodadas:** acrescentar neste capítulo novas subseções `G0 evidence`, `G1 decisions`, `execution reports`, `residual ledger` com `TASK_ID, SHA, owner, contract_version, environment, PASS/FAIL/PENDING/TEST_NOT_RUN, reversibility`. Atualizar este plano em vez de escrever master plan paralelo; documentação de contrato técnico ratificado pode existir na área do próprio owner e ser referenciada daqui.
+
+
+### 10. Nova prioridade PO — inventário integral do cadastro e expansão do schema PRC (18/11/2026)
+
+**TASK_ID:** `EVA-PRC-PRODUCT-MASTER-FIELD-INVENTORY-FIRST-01`  
+**Status:** `PO_DIRECTION_RECORDED / G0_READ_ONLY_PLANNED / CONTRACT_AND_SCHEMA_RATIFICATION_PENDING / NO_CODE_CHANGE / NO_TOTVS_WRITE`.  
+**Decisão superveniente do PO:** **antes** de criar rotas CRUD, ampliar frontend ou automatizar write, inventariar e reconciliar a **totalidade dos campos relevantes do produto no TOTVS** com os payloads reais das operações CREATE e UPDATE e com os campos atualmente rastreados pelo PRC. O catálogo reduzido foi suficiente para o fluxo anterior, mas **não deve ser tratado como contrato completo de criação ou de versionamento de cadastro**.
+
+#### 10.1 Achados de código inspecionado (não extrapolar)
+
+| Camada | Fonte verificada | Evidência / limitação |
+|---|---|---|
+| PRC domínio | `engineering-api/engineering_app/domain/product_registration/catalog.py` | `PAYLOAD_SCHEMA_VERSION=1`; catálogo `_PRODUCT_FIELDS` contém **10 especificações top-level**: `officialProductCode, description, group, productKind, defaultWarehouse, unit, thirdPartyProduct, accountingAccount, customerReference, suppliers`. `suppliers` representa coleção, não coluna SB1. Campos atuais de CREATE intake e UPDATE são restritos à allowlist `FieldSpec`. |
+| api-delpi update | `api-delpi/app/application/services/integrations/protheus_product_payload.py` | `PRODUCT_FIELD_SPECS` exige **21 campos B1 no corpo de UPDATE** + `B1_COD` do path; `FULL_REPRESENTATION_REQUIRED` impede payload parcial. Este contrato não prova requisitos de CREATE, nem todas as colunas SB1. |
+| ADVPL criado/alterado | `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW` | `WSMETHOD POST incProd` usa `Mata010(..., 3)` e `WSMETHOD PUT incProd` usa `Mata010(..., 4)`. Ambos montam arrays com **22 nomes `B1_*`** (incluindo `B1_COD`); handler observado consome valores incondicionalmente, inclusive conversão `VAL()` em `B1_PICMRET` e `B1_CONV`. **Não comprova** deployment da mesma versão do .PRW no ambiente live, obrigatoriedade por operação ou efeitos de defaults/gatilhos. |
+| Leitura Engenharia | `api-delpi/app/application/services/product/protheus_field_normalizer.py` | `PRODUCT_DETAIL_ENGINEERING_FIELDS` é projeção mais ampla, mas não inclui automaticamente todos os B1 de escrita; read path/projection, aliases, permissão e tipagem precisam de inventário campo a campo. |
+| Fornecedores | SA5 + contexto PRC `supplierCode/store/partNumber/catalogNumber` | Entidade/vínculo separado; não contar SA5 como campos da SB1 nem presumir que POST/PUT de produto escreva fornecedor. |
+
+**Conjunto inicial de campos no handler ADVPL (ponto de partida, não catálogo final):**
+
+`B1_COD, B1_GRUPO, B1_DESC, B1_REFEREN, B1_REFCANT, B1_CODDES, B1_TIPO, B1_YHOHS, B1_POSIPI, B1_LOCPAD, B1_UM, B1_SEGUM, B1_TE, B1_TS, B1_PICMRET, B1_CONV, B1_TIPCONV, B1_TPMAT, B1_ESPECIE, B1_EX_NCM, B1_EX_NBM, B1_ORIGEM`.
+
+Outras informações presentes no PRC, por exemplo `accountingAccount` (B1_CONTA), **não aparecem nesse array**; não concluir que são dispensáveis ou gravadas. Mapear origem, exigência para cada família, rotina oficial, viabilidade de exposição por adapter e cobertura de read-back. Divergências entre limites atuais (`FieldSpec`, DTO, tabela/dicionário e API) devem ser registradas, **não normalizadas silenciosamente**.
+
+#### 10.2 G0 — entregável obrigatório: matriz de campos rastreável, sem nova documentação mestre
+
+Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fontes técnicas autoritativas (dicionário SX3/SB1, fonte ADVPL real e publicada, catálogo API, projeção READ e PRC `FieldSpec`), incluindo para **cada** atributo:
+
+1. Família e entidade oficial: SB1, SA5 ou outra tabela *somente se validada pelo owner*; nome nativo `B1_*`/`A5_*`, tipo, comprimento, precisão, domínio/enum, validação, padrão/default e obrigatoriedade real de CREATE, UPDATE e leitura.
+2. Campo contratual e origem: path REST CREATE, path REST UPDATE, campo no handler `.PRW`, path de resposta READ, path normalizado `FieldSpec`, label e grupo UI; marcar `MISSING`, `UNSUPPORTED`, `READ_ONLY`, `WRITE_SUPPORTED`, `TO_CONFIRM`, nunca inventar mapeamento.
+3. Proprietário do preenchimento: **solicitante**, **analista de Engenharia**, **valor controlado pelo sistema/regra ratificada**, **derivado de leitura oficial**, **gerado exclusivamente pelo ERP** ou **somente leitura**. Não preencher campos desconhecidos com vazio/zero para satisfazer contrato.
+4. Escopo de negócio: grupo/família de produto, filial/empresa/contexto oficial quando aplicável; campo obrigatório condicional e interdependências (`B1_UM/B1_SEGUM/B1_CONV/B1_TIPCONV`, `B1_TE/B1_TS`, classificação fiscal etc.) **a confirmar nas regras vigentes**, sem presumir valores.
+5. Ciclo de vida: permitido editar pelo solicitante? pelo analista? na criação? no UPDATE? valor derivado/protegido? precisa justificativa? exige confirmação adicional? política de máscara e visibilidade conforme AuthZ.
+6. Rastreabilidade: `field_path` estável, `source`, `source_field`, `source_revision`, `before`, `requested`, `prepared`, `confirmed_after`, `operation_id`, `actor`, `timestamp`, `status`; campos sensíveis exigem minimização e regras de acesso.
+7. Testes e evidência: fonte, commit/hash, endpoint/versão, cenário CREATE/UPDATE/READ, erro e postcondition; `PROVEN | TO_INVENTORY | PLANNED`, `PASS | FAIL | TEST_NOT_RUN | INCONCLUSIVE` separados.
+
+**Artefatos esperados do G0 dentro deste plano:** (a) matriz SB1 integral e SA5 separado; (b) diff `SB1/SX3 × ADVPL POST × ADVPL PUT × api-delpi READ/WRITE × PRC v1 × UI`; (c) gaps e preenchimento por owner; (d) decisões pendentes; (e) versão proposta do novo schema; (f) RQ/AC para execução por fases. A matriz pode ser incorporada aqui como tabelas, ou como **artefato técnico gerado e versionado no owner** apenas quando houver necessidade real de máquina; não abrir outro documento de planejamento concorrente.
+
+#### 10.3 Evolução do rastreamento de produto (não confundir intake, draft, ERP e revisão)
+
+**Direção funcional:** ampliar o catálogo tipado e versionado do PRC para abranger todos os atributos que a Engenharia está autorizada a acompanhar, inclusive aqueles não exibidos inicialmente na ficha simplificada. **Não** transformar automaticamente toda a SB1 em campos editáveis pelo usuário nem replicar indiscriminadamente dados fiscais/comerciais/sensíveis.
+
+- Separar claramente `CREATE_INTAKE` (mínimo legítimo para abrir solicitação), `ENGINEERING_PREPARATION` (complemento governado do analista antes do ACT), `UPDATE_REQUESTED_DIFF` (apenas intenção seletiva), `ERP_FULL_WRITE_REPRESENTATION` (snapshot completo quando contrato upstream exigir), `OFFICIAL_READBACK` (prova de persistência) e `TRACKED_PRODUCT_REVISION` (snapshot técnico autorizado e historicamente comparável).
+- Versionar `payload_schema_version`, mapeamentos, DTOs, validações, getters/projeções, snapshots, diffs e eventos. Alterações de schema exigem migration/backfill/compatibilidade a inventariar; casos/revisões antigos devem continuar legíveis, sem reinterpretação indevida.
+- No UPDATE, aplicar diff seletivo ao **snapshot oficial fresco**, compor representação completa do PUT no backend, proteger campos não alterados e recusar contexto obsoleto; `full PUT` **não significa** que o solicitante pediu alteração de todos os campos.
+- No CREATE, preencher o conjunto completo **conforme regras ratificadas por tipo/família** e pelas fontes verdadeiras; distinguir dado obrigatório do ERP, opcional, calculado, fornecido pela Engenharia e default oficial. Nunca produzir valor de campo técnico/fiscal por inferência de LLM.
+- Para rastrear modificações, registrar intenção, valores observados antes/depois e origem por campo, inclusive diferenças normalizadas, sem registrar como `ALTERADO` aquilo que apenas foi enviado intacto no payload completo. A revisão de produto segue causalidade e regras V1/Vn+1/no-op do contrato vigente.
+- Garantir read-back dos campos realmente aplicados e suas operações SA5; se o campo for inacessível/unverifiable ao consumidor autorizado, tratar como `CONTRACT_GAP` e não fabricar confirmação.
+- Definir UI progressiva: campos principais em primeiro plano, **seções técnicas adicionais por categoria**, campos avançados, metadados e comparação de alterações; front deriva do contrato aprovado e não de arrays paralelos divergentes.
+- A EVA pode interpretar as normas de descrição e **sugerir** preenchimento de campos quando houver fonte verificável e permissão, mas suas sugestões permanecem `DRAFT/CANDIDATE`; o profissional autorizado valida antes da aplicação. Modelo e API OpenAI (se utilizados) ficam atrás de adapter governado, não tornam-se owner do cadastro nem acesso autônomo ao ERP.
+
+#### 10.4 Ordem de execução corrigida — esta seção prevalece sobre G0–G8 anteriores
+
+| Ordem | Gate | Entrega e dependência | Estado |
+|---|---|---|---|
+| **1** | **G0-A — Inventário de campos** | Conferir SB1/SX3, SA5, ADVPL POST/PUT, api-delpi READ/WRITE, `catalog.py`, DTOs, validações, tabelas/snapshots e frontend; matriz integral e gaps **antes de qualquer nova rota** | `NEXT / READ_ONLY / NO_DEPLOY` |
+| **2** | G0-B / G1 — Contratos e schema PRC | Aprovar quais campos solicitar, quem complementa, como versionar/rastrear, catálogos/lookups, obrigatórios por operação/família, migração/compatibilidade, segurança e AC | `PLANNED / OWNER_RATIFICATION_REQUIRED` |
+| **3** | G2 — API DELPI CRUD delimitado | Inventariar equivalente, criar fachada **CREATE** se faltante, reutilizar/aperfeiçoar **UPDATE** e investigar **SA5**; somente rotas necessárias, sem DELETE de produto no escopo; gates OFF, pin, tracker, sem retry | `PLANNED / NO_WRITE_AUTHORIZATION` |
+| **4** | G3 — Engineering API / fluxo PRC | Integrar contratos oficiais, schema expandido, PREPARE/ACT, idempotência, read-after-write, reconciliação, tratamento parcial, conclusão e revisões | `PLANNED` |
+| **5** | G4 — Similaridade normativa e EVA/OpenAI | Reutilizar engine governado, candidatos de produto/fornecedores/PN e comparação por normas, sem inventar dados; integrar à Engineering API por interface/adapters, com mesma AuthZ do usuário | `PLANNED` |
+| **6** | G5 — Frontend integrado | Evoluir CREATE e UPDATE com campos necessários e seções progressivas; análise de possíveis duplicidades; decisão/justificativa; prévia e confirmação `Aplicar no TOTVS`; estados/erros | `PLANNED` |
+| **7** | G6 — E2E HML/TST01 | Cobertura positiva/negativa com identidade autorizada, cenários por campo, schema antigo/novo, fornecedor, partial failure, snapshot/restore e read-back | `PLANNED / SEPARATE_TST01_AUTHORIZATION` |
+| **8** | G7 — Release PRD | Rollout separado de schema, API, MFE e habilitação write; gates de segurança/rollback/revoke, testes e aceite por owners | `NOT_AUTHORIZED` |
+
+**Execução incremental:** o **próximo trabalho autorizado conceitualmente é apenas G0-A, READ_ONLY / NO_DEPLOY**. A criação de endpoints e a alteração de schema são consequências de um inventário fechado, não premissas. A expressão “API da Open” usada no direcionamento fica registrada como **integração com capacidade de IA a confirmar no G0/G1**; eventual uso de API OpenAI deve passar pelo adapter/provider aprovado e **não** criar comunicação direta modelo→TOTVS nem uma nova autoridade de escrita.
+
+#### 10.5 RQ/AC adicionais do primeiro gate
+
+| ID | Critério verificável |
+|---|---|
+| AC-F01 | Inventário completo dos atributos elegíveis SB1/SX3 e relações SA5, com provenance, tipos, limites, defaults e obrigatoriedade conforme owner |
+| AC-F02 | Todos os nomes consumidos pelos handlers POST/PUT ADVPL reconciliados com ambos os contratos REST; `VAL()`/nulos/strings/overwrites e campos não expostos documentados |
+| AC-F03 | Matriz `oficial × read × write × PRC v1 × UI` com gaps explícitos, incluindo `B1_CONTA` fora do array observado de write |
+| AC-F04 | Responsável pelo preenchimento de cada campo e obrigatoriedade CREATE/UPDATE por contexto ratificados; nenhum valor inventado |
+| AC-F05 | Schema tipado/versionado proposto, separando intake mínimo, preparação completa, diff, payload ERP e revisão rastreada |
+| AC-F06 | Compatibilidade dos casos, revisões, eventos e fornecedores antigos demonstrada por estratégia e testes planejados |
+| AC-F07 | Read-back verificável ou `CONTRACT_GAP` em cada campo sujeito a publicação; eventos de alteração não confundem payload completo com diff |
+| AC-F08 | Somente após aceite G0/G1 autorizar implementação de rotas CRUD e consumidores, com grants/permissões e gates separados |
+
+**Registro de decisão PO (18/11/2026):** inventário de campos **primeiro**; em seguida contratos/schema, rotas CRUD de produto via API DELPI, integração Engineering API + inteligência EVA/provider, frontend e validação/release. Manter a evolução neste documento único, sem novos planos concorrentes.
