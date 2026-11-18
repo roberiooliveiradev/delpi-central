@@ -9,7 +9,7 @@
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
 | **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
-| **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **A executar** (ver §5) |
+| **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **Declaração aprovada com ajustes** em 18/11/2026 (ver §5.7) — em execução |
 | P3 | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | **Somente HML** | A gerar |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
 | P5 | 5 | Detalhe do participante (4, 16) | **Somente HML** | A gerar |
@@ -369,3 +369,35 @@ Qualquer outro arquivo, inclusive no PluginUI e em Clientes, está fora do escop
 | A5 | Auditorias de §1.3 sem item novo; lint, testes e build do Comercial verdes | Saídas |
 | A6 | Deploy **somente HML** do serviço `commercial`; risco de PROD do I7 registrado | Comando e resultado |
 | A7 | Verificador independente aprovado | Veredito sem edição |
+
+### 5.7 Revisão da declaração do P2 (18/11/2026)
+
+**Veredito:** ACCEPT_WITH_ADJUSTMENTS.
+
+**Decisão aceita:** sair de `CommercialDataTableSection` para a composição que Clientes e Pedidos em aberto já usam (`usePersistedViewLayout`, `CommercialDataListToolbar`, `CommercialDataTable`/`CommercialDataCardsGrid`, `CommercialDataCardsSortBar`, `CommercialPagination`).
+
+- Motivo comprovado: a Section guarda a visão (tabela ou cards) e a ordenação em estado interno e não tem espaço para a barra “Ordenar por”.
+- Mudar a Section no PluginUI ficaria fora do escopo e afetaria outras páginas.
+- A Section usa o mesmo `useTableColumnVisibility` (`DataTableSection.tsx:9,489`), então as preferências salvas podem ser preservadas.
+
+**Ajustes obrigatórios:**
+
+1. **Preferências salvas.** Chamar `usePersistedViewLayout`, `useTableColumnVisibility` e `useTableFontSize` com **as mesmas chaves, as mesmas chaves de coluna e os mesmos padrões** que a Section usa hoje.
+   - Teste: uma preferência gravada no formato atual (ex.: coluna “Respostas” oculta, visão em cards, fonte alterada) é lida corretamente pela página nova.
+   - Se os formatos não forem iguais, parar e declarar.
+2. **Comportamentos que a Section dava e agora são da página.** Testar cada um:
+   - clique e Enter na linha abrem a campanha;
+   - carregando, vazio e vazio por filtro com os mesmos textos;
+   - paginação padrão 20 com `TABLE_PAGE_SIZE_OPTIONS`;
+   - **voltar à página 1** ao mudar filtro, ordenação ou itens por página;
+   - “Página X de Y · N registro(s)”;
+   - colunas ocultas também somem nos cards, se a Section fazia isso hoje.
+3. **“Atualizado em”:** usar `delpi-ui-section-hint-label` é aceito, porque já existe precedente em `OpenOrdersTable.tsx:553`. Se `CommercialSectionHintLabel` renderizar exatamente esse texto sem ícone de ajuda, preferir o componente. Nenhuma regra nova de CSS.
+4. **Teste estrutural obsoleto.** Trocar a asserção que proíbe `response_rate` é uma mudança pedida pela especificação, não um afrouxamento de teste: a UI-02 vigente §3.1 exige a coluna Taxa de resposta, e a Q24 adia só “Ver resultados” e “Respostas por empresa”.
+   - No pedido de verificação e no relatório, declarar como **“asserção alinhada à especificação vigente”**, com a citação.
+   - A nova asserção deve **vetar** “Ver resultados”, “Respostas por empresa” e rotas da UI-01/UI-06 nesta página.
+5. **Linha de base das falhas.** Listar no relatório, **pelo nome**, as 13 falhas `.mjs` antes e depois.
+   - Depois do pacote: `satisfactionSurveys.structural.test.mjs` verde e **nenhuma falha nova**.
+   - Se o “help coverage gate” mudar de conteúdo por causa das dicas novas, as dicas novas não podem aparecer na lista de falhas.
+6. **Estado da ordenação** só em memória (sem `localStorage`), igual entre tabela e cards. Sem ordenação escolhida, a ordem é a do `filterCampaigns`.
+7. **Commit:** mostrar `git diff --cached --stat` antes do commit e incluir no relatório. A pasta de documentação da Pesquisa não entra neste commit.
