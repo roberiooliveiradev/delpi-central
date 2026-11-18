@@ -345,14 +345,18 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                   <Settings2 size={14} aria-hidden />
                   <span>
                     <strong>
-                      {item.providerKey === "management_revenue_monthly"
-                        ? "Top clientes"
-                        : "Unidade"}
+                      {item.providerKey === DIRECT_WEEKLY_KEY
+                        ? "Gestor RH"
+                        : item.providerKey === "management_revenue_monthly"
+                          ? "Top clientes"
+                          : "Unidade"}
                     </strong>
                     <em>
-                      {item.providerKey === "management_revenue_monthly"
-                        ? String(customerLimit)
-                        : formatBranchUnitLabel(branch)}
+                      {item.providerKey === DIRECT_WEEKLY_KEY
+                        ? managerRegistration
+                        : item.providerKey === "management_revenue_monthly"
+                          ? String(customerLimit)
+                          : formatBranchUnitLabel(branch)}
                     </em>
                   </span>
                 </div>
@@ -695,6 +699,8 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               ) : null}
             </section>
 
+            {item.providerKey !== DIRECT_WEEKLY_KEY ? (
+              <>
             <ShortageItemNotesSection
               definitionId={definitionId}
               branch={branch}
@@ -713,6 +719,13 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               Tela operacional (link do e-mail):{" "}
               <a href={followUpPath(definitionId)}>{followUpPath(definitionId)}</a>
             </p>
+              </>
+            ) : (
+              <p className="rp-inline-note">
+                Exclusivo para o gestor e seus subordinados diretos.
+                A liberação do envio será feita separadamente pela administração.
+              </p>
+            )}
 
             <section className="rp-card">
               <div className="rp-card__header">
