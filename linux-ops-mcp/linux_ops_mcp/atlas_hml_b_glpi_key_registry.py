@@ -104,14 +104,15 @@ def review_glpi_key_registry_record(raw: bytes) -> HMLGlpiKeyRegistryReview:
         or doc["act_enabled"] is not False
     ):
         raise HMLGlpiKeyRegistryError("HML_GLPI_FIELD_DENIED")
-    # Reject accidental secret-looking payloads
+    # Reject accidental secret-looking payloads. The JSON field name
+    # private_material_present is allowed; PEM/PKCS8/passphrase/DER are not.
     lowered = raw.lower()
-    for needle in (b"private", b"begin ", b"passphrase", b"pkcs8", b"\x30\x82"):
-        if needle in lowered and needle != b"private":
-            # 'private_material_present' field name is allowed; PEM/DER is not.
-            if needle != b"private":
-                pass
-    if b"begin " in lowered or b"pkcs8" in lowered or b"passphrase" in lowered:
+    if (
+        b"begin " in lowered
+        or b"pkcs8" in lowered
+        or b"passphrase" in lowered
+        or b"\x30\x82" in raw
+    ):
         raise HMLGlpiKeyRegistryError("HML_GLPI_SECRET_PAYLOAD_DENIED")
     return HMLGlpiKeyRegistryReview(
         key_id=doc["key_id"],
