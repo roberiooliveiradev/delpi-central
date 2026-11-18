@@ -35,7 +35,7 @@ Organizar por **capacidade de negócio**, não por HTTP verb. Cada módulo possu
 
 - `product-master`: REUSE/EXTEND `DLP04I01.PRW` (upstream `DELPIPRODUTO`, MATA010/ExecAuto), preservando contratos publicados. CREATE/UPDATE já têm fonte; operações adicionais exigem inventário/contrato e autorização.
 - `product-suppliers`: avaliar primeiro submodelo `Model061` em `MATA010M_DLP.PRW` e o `Dmata061.prx` MVC antes de NEW; fachada REST SA5 candidata independente, somente após ratificação do modelo, identidade completa e operações suportadas.
-- **DELETE:** nunca implementar sem semântica ERP aprovada. **READ:** reutilizar API DELPI existente quando adequado; read-back SA5 precisa chave integral.
+- **DELETE:** nunca implementar sem semântica ERP aprovada. **READ:** rotas de leitura Python/SQL existentes permanecem para consumidores proprios e podem fornecer evidencia auxiliar de diagnostico, mas **nao** definem nem implementam o contrato ADVPL. Novo GET em PRW exige rotina/mecanismo Protheus oficial comprovado. Read-back SA5 requer chave integral e verificacao governada separada.
 - Cobertura de CRUD = operações de negócio contratadas, não exposição indiscriminada dos campos físicos.
 
 ## Fontes e evidência
@@ -58,3 +58,7 @@ Organizar por **capacidade de negócio**, não por HTTP verb. Cada módulo possu
 Keycloak = identidade; Core = AuthZ/RBAC; `api-delpi` = integração; Engenharia = workflow PRC; equipe ERP = compilação/publicação/rotinas e regras oficiais. Sem SQL/RecLock direto no ERP. Nunca executar ERP write, RPO compile ou deploy por consequência de commit de fonte/documentação. Se `AGENTS.md` exigir deploy geral, resolver conflito de escopo com owner **antes** de ação que afetaria runtime.
 
 **Próxima tarefa permitida:** criar módulos/contratos e primeiros fontes candidatos em `modules/`, com revisão técnica e testes estáticos; a compilação TST01 depende de aprovação/handoff separado.
+
+## Invariante obrigatoria: SQL e READ da API DELPI sao auxiliares, nao implementacao ADVPL
+
+Todos os fontes `.PRW`/`.TLPP` candidatos devem ancorar cada operacao em rotina padrao TOTVS ou customizacao real do repositorio ERP @SHA; respeitar validacoes e mecanismos oficiais (MATA010/ExecAuto, MATA061/MVC somente quando comprovado). Dados SQL/SX3 e rotas READ da `api-delpi` servem **apenas** para entendimento de schema, campos, diagnostico e auditoria de consistencia em fluxo separado. E vedado copiar SELECT/joins/filtros/payloads SQL para ADVPL, preencher dados ausentes consultando API SQL ou substituir persistencia oficial por `RecLock`/DML. Sem contrato oficial, marcar `TO_INVENTORY`; nao implementar fallback. Preservar as rotas existentes de leitura nos seus limites atuais.
