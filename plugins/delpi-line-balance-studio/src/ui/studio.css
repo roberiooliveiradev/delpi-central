@@ -74,10 +74,6 @@ table.delpi-ui-table th { --delpi-ui-title: var(--secundary, #003866); }
   .top { padding-inline: 12px; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .study-actions { width: 100%; }
-  /* O grupo de ações do SectionCard é flex-shrink:0 — em tela estreita
-   * ele excede a largura do cartão e clipa o último botão. Basis 100%
-   * o leva para a linha seguinte, onde os itens quebram em duas linhas. */
-  .delpi-ui-section-card__actions { flex-basis: 100%; flex-shrink: 1; }
 }
 @media (max-width: 385px) {
   .brand strong { font-size: 15px; }

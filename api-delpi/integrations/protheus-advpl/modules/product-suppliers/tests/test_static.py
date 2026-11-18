@@ -57,6 +57,20 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("FALHA INTERNA", self.code)
         self.assertIn("CONOUT", self.code)
 
+    def test_model_error_not_forwarded_to_consumer(self):
+        # detalhe oficial do modelo vai ao log, nao ao body HTTP
+        self.assertIn("LMODELERR(OMODEL, CERROLOG)", self.code)
+        self.assertIn('CONOUT("DLP04I02 MODEL:', self.code)
+        self.assertIn("DETALHE TECNICO NO LOG DO APPSERVER", self.code)
+        # respostas usam mensagens estaveis — nenhum RETOBJ recebe o log
+        for m in re.finditer(r"RETOBJ\(([^)]*)\)", self.code, re.S):
+            self.assertNotIn("CERROLOG", m.group(1))
+
+    def test_json_read_uses_proven_accessor(self):
+        # leitura do payload pelo acessor do sibling compilado (DLP04I01)
+        self.assertNotIn('ODADOS["', self.code)
+        self.assertIn('ODADOS:GETJSONOBJECT("A5_PRODUTO")', self.code)
+
     def test_deactivate_guarded(self):
         self.assertIn("LACTIVATED", self.code)
         self.assertIn("DEACTIVATE()", self.code)
@@ -134,15 +148,28 @@ class ModuleConsistencyTests(unittest.TestCase):
 
     def test_sources_and_status(self):
         self.assertIn("DLP04I02.PRW", self.manifest["sources"])
-        self.assertEqual(self.manifest["development_status"],
-                         "SOURCE_CANDIDATE")
+        self.assertEqual(
+            self.manifest["development_status"],
+            "SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE")
 
     def test_operation_classification(self):
         ops = self.manifest["candidate_source"]["operations"]
         self.assertIn("SOURCE_CANDIDATE", ops["CREATE"])
+        self.assertIn("TST01_VALIDATION_PENDING", ops["CREATE"])
         self.assertIn("BLOCKED", ops["UPDATE"])
-        self.assertIn("TO_INVENTORY", ops["READ"])
+        self.assertIn("OFFICIAL_LOAD_CONTRACT_PENDING", ops["UPDATE"])
+        self.assertIn("TO_INVENTORY", ops["READ_ADVPL"])
+        self.assertIn("PROVEN_CODE", ops["READ_API_DELPI"])
         self.assertIn("BLOCKED", ops["DELETE"])
+        self.assertIn("ERP_DECISION_REQUIRED", ops["DELETE"])
+
+    def test_pending_operations_consistency(self):
+        ops = {o["op"]: o["status"] for o in
+               self.manifest["operations"]["pending"]}
+        self.assertIn("TST01_VALIDATION_PENDING", ops["SA5_ADD"])
+        self.assertIn("OFFICIAL_LOAD_CONTRACT_PENDING", ops["SA5_UPDATE"])
+        self.assertIn("TO_INVENTORY", ops["SA5_READ_ADVPL"])
+        self.assertIn("ERP_DECISION_REQUIRED", ops["SA5_REMOVE"])
 
     def test_other_module_untouched(self):
         other = MODULE.parents[0] / "product-master" / "src"

@@ -22,7 +22,8 @@ class DocsConsistencyTests(unittest.TestCase):
         for doc in ("official-model-inventory.md", "sa5-field-matrix.md",
                     "crud-contract-candidate.md",
                     "mvc-lifecycle-investigation.md",
-                    "architecture-decision-candidate.md"):
+                    "architecture-decision-candidate.md",
+                    "tst01-compilation-checklist.md"):
             self.assertTrue((MODULE / "contracts" / doc).exists(), doc)
 
     def test_sa5_identity_seven_fields(self):
@@ -35,12 +36,14 @@ class DocsConsistencyTests(unittest.TestCase):
         self.assertEqual(self.manifest["architecture"]["decision"],
                          "DECISION_REQUIRED")
         self.assertEqual(self.manifest["sources"], ["DLP04I02.PRW"])
-        self.assertEqual(self.manifest["development_status"],
-                         "SOURCE_CANDIDATE")
+        self.assertEqual(
+            self.manifest["development_status"],
+            "SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE")
 
     def test_delete_blocked_pending_semantics(self):
         ops = {o["op"]: o for o in self.manifest["operations"]["pending"]}
-        self.assertEqual(ops["SA5_REMOVE"]["status"], "BLOCKED")
+        self.assertIn("BLOCKED", ops["SA5_REMOVE"]["status"])
+        self.assertIn("ERP_DECISION_REQUIRED", ops["SA5_REMOVE"]["status"])
         self.assertIn("a060VldGrv", ops["SA5_REMOVE"]["note"])
 
     def test_docs_reference_official_model(self):

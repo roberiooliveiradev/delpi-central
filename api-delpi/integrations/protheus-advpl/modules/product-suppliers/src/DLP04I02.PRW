@@ -173,6 +173,7 @@ static function lExecSA5(oSelf)
     Local lActivated := .F.
     Local cErro      := ""
     Local cErroBlk   := ""
+    Local cErroLog   := ""
     Local aMiss      := {}
     Local aIdent     := aSA5Ident()
     Local aAttr      := aSA5Attrs()
@@ -206,23 +207,27 @@ static function lExecSA5(oSelf)
 
             // header: produto (+ref. grade) — relation oficial aplica
             // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid
-            oModel:GetModel("DMdFieldSA5"):SetValue("A5_PRODUTO", oDados["A5_PRODUTO"])
-            oModel:GetModel("DMdFieldSA5"):SetValue("A5_REFGRD",  oDados["A5_REFGRD"])
+            oModel:GetModel("DMdFieldSA5"):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
+            oModel:GetModel("DMdFieldSA5"):SetValue("A5_REFGRD",  oDados:GetJSonObject("A5_REFGRD"))
 
             oGrid := oModel:GetModel("DMdGridSA5")
             oGrid:AddLine()
 
             // linha corrente: identidade restante + atributos
             for nI := 2 to len(aIdent)   // A5_PRODUTO vem do header
-                oGrid:SetValue(aIdent[nI], oDados[aIdent[nI]])
+                oGrid:SetValue(aIdent[nI], oDados:GetJSonObject(aIdent[nI]))
             next nI
             for nI := 1 to len(aAttr)
-                oGrid:SetValue(aAttr[nI], oDados[aAttr[nI]])
+                oGrid:SetValue(aAttr[nI], oDados:GetJSonObject(aAttr[nI]))
             next nI
 
             if !oModel:VldData()
                 lRet := .F.
-                cErro := lModelErr(oModel, cErro)
+                // detalhe oficial do modelo NAO vai ao consumidor —
+                // conteudo nao comprovado como seguro; fica no log
+                cErroLog := lModelErr(oModel, cErroLog)
+                cErro := "Rejeitado pela validacao oficial do modelo " + ;
+                    "DMATA061 (detalhe tecnico no log do AppServer)."
             else
                 // MODEL_VALIDATED != COMMIT_ACKNOWLEDGED !=
                 // PERSISTENCE_CONFIRMED — exige retorno logico .T.
@@ -234,7 +239,9 @@ static function lExecSA5(oSelf)
                         "o vinculo antes de repetir (VALIDAR NO TST01)."
                 elseif !xCommit
                     lRet := .F.
-                    cErro := lModelErr(oModel, cErro)
+                    cErroLog := lModelErr(oModel, cErroLog)
+                    cErro := "Persistencia rejeitada pelo modelo oficial " + ;
+                        "DMATA061 (detalhe tecnico no log do AppServer)."
                 endif
             endif
         endif
@@ -258,6 +265,9 @@ static function lExecSA5(oSelf)
     endif
     if !Empty(cErroBlk)
         ConOut("DLP04I02 error: " + cErroBlk)
+    endif
+    if !Empty(cErroLog)
+        ConOut("DLP04I02 model: " + cErroLog)
     endif
 
     if lRet
