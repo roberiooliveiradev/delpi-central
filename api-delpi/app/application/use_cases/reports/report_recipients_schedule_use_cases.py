@@ -104,8 +104,15 @@ class UpsertReportScheduleUseCase:
         enabled: bool = True,
         timezone_name: str = DEFAULT_TIMEZONE,
     ) -> dict[str, Any]:
-        if self._repository.get_definition(definition_id) is None:
+        definition = self._repository.get_definition(definition_id)
+        if definition is None:
             raise LookupError("Definição de relatório não encontrada.")
+        if definition.get("providerKey") == "team_direct_app_opens_weekly":
+            if schedule_kind.strip().lower() != "weekly" or weekday != 0:
+                raise ValueError(
+                    "Relatório de subordinados diretos deve ser agendado "
+                    "somente às segundas-feiras (semana já concluída)."
+                )
         cron = build_cron_expression(
             schedule_kind=schedule_kind,
             hour=hour,
