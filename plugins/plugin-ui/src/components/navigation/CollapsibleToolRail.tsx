@@ -57,7 +57,7 @@ function ToolRailGroupView({
           <span className="delpi-ui-tool-rail__group-label">{group.label}</span>
         )
       )}
-      {(!expanded || isOpen) && (
+      {isOpen && (
         <div className="delpi-ui-tool-rail__items">
           {group.items.map(item => (
             <button
