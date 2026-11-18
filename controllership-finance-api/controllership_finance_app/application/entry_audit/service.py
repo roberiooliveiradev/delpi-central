@@ -27,6 +27,8 @@ from controllership_finance_app.domain.entry_audit.models import (
     FiscalBookLine,
     ProtheusHeader,
     ProtheusItem,
+    ReformBookLine,
+    ReformTaxLine,
     TesRecord,
 )
 from controllership_finance_app.infrastructure.entry_audit.xml_reader import read_xml_payloads
@@ -44,6 +46,8 @@ class ProtheusEntriesPort(Protocol):
     def documents_by_access_keys(self, *, branch: str, access_keys: list[str]) -> list[dict]: ...
     def items(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
     def fiscal_book(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
+    def reform_taxes(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
+    def reform_book(self, *, branch: str, received_from: date, received_to: date, species: list[str]) -> list[dict]: ...
     def tes(self) -> list[dict]: ...
     def branches(self) -> list[dict]: ...
 
@@ -208,6 +212,8 @@ class EntryAuditService:
             headers = self._protheus.documents(branch=run["branch_code"], received_from=analysis["date_from"], received_to=analysis["date_to"], species=species)
             items = self._protheus.items(branch=run["branch_code"], received_from=analysis["date_from"], received_to=analysis["date_to"], species=species)
             book = self._protheus.fiscal_book(branch=run["branch_code"], received_from=analysis["date_from"], received_to=analysis["date_to"], species=species)
+            reform_taxes = self._protheus.reform_taxes(branch=run["branch_code"], received_from=analysis["date_from"], received_to=analysis["date_to"], species=species) if config.ibscbs_enabled else []
+            reform_book = self._protheus.reform_book(branch=run["branch_code"], received_from=analysis["date_from"], received_to=analysis["date_to"], species=species) if config.ibscbs_enabled and config.ibscbs_book_from else None
             tes_rows = self._protheus.tes()
             branch_row = next((row for row in self._protheus.branches() if row.get("code") == run["branch_code"]), {})
             self._store.mark_run(run_id, stage="reading_xml", documents_read=len(headers), xml_downloaded=0)
@@ -229,6 +235,8 @@ class EntryAuditService:
                 ctes=ctes,
                 config=config,
                 fiscal_book=[_book(row) for row in book if _composite(row) not in blocked_docs],
+                reform_taxes=[_reform(row) for row in reform_taxes if _composite(row) not in blocked_docs],
+                reform_book=[_reform_book(row) for row in reform_book if _composite(row) not in blocked_docs] if reform_book is not None else None,
             )
             posted_outside = self._posted_outside(run["branch_code"], result) if config.improvements_enabled else []
             lnf = self._lnf_matches(result, run["branch_code"], auditable_headers)
@@ -849,6 +857,9 @@ def _snapshot(config: AuditConfig, lookback_days: int) -> dict:
         "participant_by_type_enabled": config.participant_by_type_enabled,
         "input_tes": config.input_tes,
         "cause_grouping_enabled": config.cause_grouping_enabled,
+        "ibscbs_enabled": config.ibscbs_enabled,
+        "ibscbs_exceptions": config.ibscbs_exceptions,
+        "ibscbs_book_from": config.ibscbs_book_from,
     }
 
 
@@ -862,6 +873,9 @@ def _config_from(snapshot: dict) -> AuditConfig:
         participant_by_type_enabled=bool(snapshot.get("participant_by_type_enabled")),
         input_tes=str(snapshot.get("input_tes") or ""),
         cause_grouping_enabled=bool(snapshot.get("cause_grouping_enabled")),
+        ibscbs_enabled=bool(snapshot.get("ibscbs_enabled")),
+        ibscbs_exceptions=str(snapshot.get("ibscbs_exceptions") or ""),
+        ibscbs_book_from=str(snapshot.get("ibscbs_book_from") or ""),
     )
 
 
@@ -941,6 +955,39 @@ def _book(row: dict) -> FiscalBookLine:
         branch=str(row.get("branch") or ""),
         movement=str(row.get("movement_type") or "E"),
         cancelled=bool(str(row.get("cancelled_on") or "").strip()),
+    )
+
+
+def _reform(row: dict) -> ReformTaxLine:
+    return ReformTaxLine(
+        branch=str(row.get("branch") or ""),
+        number=str(row.get("document_number") or ""),
+        series=str(row.get("series") or ""),
+        supplier_code=str(row.get("supplier_code") or ""),
+        supplier_store=str(row.get("supplier_store") or ""),
+        item=str(row.get("item") or ""),
+        tes=str(row.get("tes") or ""),
+        tax_code=str(row.get("tax") or ""),
+        rule_code=str(row.get("rule_code") or ""),
+        base_amount=_num(row.get("base")),
+        tax_rate=_num(row.get("rate")),
+        tax_amount=_num(row.get("amount")),
+    )
+
+
+def _reform_book(row: dict) -> ReformBookLine:
+    return ReformBookLine(
+        branch=str(row.get("branch") or ""),
+        number=str(row.get("document_number") or ""),
+        series=str(row.get("series") or ""),
+        supplier_code=str(row.get("supplier_code") or ""),
+        supplier_store=str(row.get("supplier_store") or ""),
+        item=str(row.get("item") or ""),
+        tax_code=str(row.get("tax") or ""),
+        cst=str(row.get("cst") or ""),
+        base_amount=_num(row.get("base")),
+        tax_rate=_num(row.get("rate")),
+        tax_amount=_num(row.get("amount")),
     )
 
 

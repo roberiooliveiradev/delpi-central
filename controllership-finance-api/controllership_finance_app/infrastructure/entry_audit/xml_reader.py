@@ -137,6 +137,40 @@ def _when(value: str) -> datetime | None:
         return None
 
 
+def _ibscbs(parent: ET.Element | None) -> dict | None:
+    """Grupo IBSCBS (reforma): CST/cClassTrib + gIBSCBS (vBC, IBS UF/Mun, CBS)."""
+    if parent is None:
+        return None
+    for node in parent.iter():
+        if _local(node.tag) != "IBSCBS":
+            continue
+        return {
+            "cst": _child_text(node, "", "CST"),
+            "class": _child_text(node, "", "cClassTrib"),
+            "base": _child_num(node, "gIBSCBS", "vBC"),
+            "ibs_uf_rate": _child_num(node, "gIBSUF", "pIBSUF"),
+            "ibs_uf_amount": _child_num(node, "gIBSUF", "vIBSUF"),
+            "ibs_mun_rate": _child_num(node, "gIBSMun", "pIBSMun"),
+            "ibs_mun_amount": _child_num(node, "gIBSMun", "vIBSMun"),
+            "cbs_rate": _child_num(node, "gCBS", "pCBS"),
+            "cbs_amount": _child_num(node, "gCBS", "vCBS"),
+        }
+    return None
+
+
+def _ibscbs_total(root: ET.Element, namespace: str) -> dict:
+    """Totais da NF-e em `total/IBSCBSTot` (vBCIBSCBS, gIBS, gCBS)."""
+    node = _find(root, namespace, "IBSCBSTot")
+    if node is None:
+        return {}
+    return {
+        "reform_base": _child_num(node, "", "vBCIBSCBS"),
+        "ibs_uf_amount": _child_num(node, "gIBS", "vIBSUF"),
+        "ibs_mun_amount": _child_num(node, "gIBS", "vIBSMun"),
+        "cbs_amount": _child_num(node, "gCBS", "vCBS"),
+    }
+
+
 def _nfe(root: ET.Element) -> XmlDocument | None:
     info = _find(root, _NFE, "infNFe")
     if info is None:
@@ -153,6 +187,7 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
                 icms = node
                 break
         ipi_amount = _child_num(detail, "IPITrib", "vIPI") + _child_num(detail, "IPI", "vIPIDevol")
+        reform = _ibscbs(detail) or {}
         items.append(
             XmlItem(
                 number=int(detail.attrib.get("nItem") or 0),
@@ -175,9 +210,20 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
                 simple_rate=_child_num(icms, "", "pCredSN") if icms is not None else 0.0,
                 discount=_child_num(detail, "prod", "vDesc"),
                 other_amount=_child_num(detail, "prod", "vOutro"),
+                has_ibscbs=bool(reform),
+                ibscbs_cst=str(reform.get("cst") or ""),
+                ibscbs_class=str(reform.get("class") or ""),
+                reform_base=float(reform.get("base") or 0.0),
+                ibs_uf_rate=float(reform.get("ibs_uf_rate") or 0.0),
+                ibs_uf_amount=float(reform.get("ibs_uf_amount") or 0.0),
+                ibs_mun_rate=float(reform.get("ibs_mun_rate") or 0.0),
+                ibs_mun_amount=float(reform.get("ibs_mun_amount") or 0.0),
+                cbs_rate=float(reform.get("cbs_rate") or 0.0),
+                cbs_amount=float(reform.get("cbs_amount") or 0.0),
             )
         )
     direction = "Entrada" if _text(root, _NFE, ".//ide/tpNF") == "0" else "Saída"
+    reform_total = _ibscbs_total(root, _NFE)
     return XmlDocument(
         access_key=access_key,
         model="55",
@@ -202,6 +248,11 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
         status_code=_text(root, _NFE, ".//protNFe/infProt/cStat"),
         items=tuple(items),
         operation_nature=_text(root, _NFE, ".//ide/natOp"),
+        has_ibscbs=bool(reform_total) or any(item.has_ibscbs for item in items),
+        reform_base=float(reform_total.get("reform_base") or 0.0),
+        ibs_uf_amount=float(reform_total.get("ibs_uf_amount") or 0.0),
+        ibs_mun_amount=float(reform_total.get("ibs_mun_amount") or 0.0),
+        cbs_amount=float(reform_total.get("cbs_amount") or 0.0),
     )
 
 
@@ -241,6 +292,8 @@ def _cte(root: ET.Element) -> XmlDocument | None:
         _text(root, _CTE, ".//ide/toma4/CNPJ") or _text(root, _CTE, ".//ide/toma4/CPF")
     )
     service = _num(root, _CTE, ".//vPrest/vTPrest")
+    imposto = next((node for node in root.iter(f"{{{_CTE}}}imposto")), None)
+    reform = _ibscbs(imposto) or {}
     linked = tuple(
         (node.text or "").strip()
         for node in root.iter(f"{{{_CTE}}}chave")
@@ -280,6 +333,16 @@ def _cte(root: ET.Element) -> XmlDocument | None:
         linked_keys=linked,
         taker_role=role or ("outros" if taker_tax_id else ""),
         operation_nature=_text(root, _CTE, ".//ide/natOp"),
+        has_ibscbs=bool(reform),
+        ibscbs_cst=str(reform.get("cst") or ""),
+        ibscbs_class=str(reform.get("class") or ""),
+        reform_base=float(reform.get("base") or 0.0),
+        ibs_uf_rate=float(reform.get("ibs_uf_rate") or 0.0),
+        ibs_uf_amount=float(reform.get("ibs_uf_amount") or 0.0),
+        ibs_mun_rate=float(reform.get("ibs_mun_rate") or 0.0),
+        ibs_mun_amount=float(reform.get("ibs_mun_amount") or 0.0),
+        cbs_rate=float(reform.get("cbs_rate") or 0.0),
+        cbs_amount=float(reform.get("cbs_amount") or 0.0),
     )
 
 

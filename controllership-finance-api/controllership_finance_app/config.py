@@ -180,6 +180,11 @@ class Settings:
     ENTRY_AUDIT_CAUSE_GROUPING_ENABLED: bool = str(
         _get_env("ENTRY_AUDIT_CAUSE_GROUPING_ENABLED", default="false")
     ).strip().lower() in {"1", "true", "sim", "yes"}
+    ENTRY_AUDIT_IBSCBS_ENABLED: bool = str(
+        _get_env("ENTRY_AUDIT_IBSCBS_ENABLED", default="false")
+    ).strip().lower() in {"1", "true", "sim", "yes"}
+    ENTRY_AUDIT_IBSCBS_EXCEPTIONS: str = _get_env("ENTRY_AUDIT_IBSCBS_EXCEPTIONS", default="")
+    ENTRY_AUDIT_IBSCBS_BOOK_FROM: str = _get_env("ENTRY_AUDIT_IBSCBS_BOOK_FROM", default="")
 
 
 settings = Settings()

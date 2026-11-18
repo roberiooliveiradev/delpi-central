@@ -67,6 +67,8 @@ _ENTITY_LABELS: dict[str, str] = {
     "entry_audit_document": "cabeçalhos de entrada (SF1) para a auditoria",
     "entry_audit_item": "itens de entrada (SD1) para a auditoria",
     "entry_audit_fiscal_book_line": "linhas do livro fiscal (SFT) para a auditoria",
+    "entry_audit_reform_tax": "tributos calculados da reforma IBS/CBS (F2D/F2B) por item",
+    "entry_audit_reform_book_line": "linhas IBS/CBS do livro fiscal (CD2) para a auditoria",
     "entry_audit_tes": "cadastro de TES (SF4) para a auditoria",
     "entry_audit_branch": "filiais da empresa para a auditoria de entradas",
     "financial_purchase_freight_link": (

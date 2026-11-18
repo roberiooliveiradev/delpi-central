@@ -402,6 +402,9 @@ AUTHORIZED_SOURCES: list[SourceSpec] = [
     _s("ficha-ae-14", "fichas/auditoria-entradas/AE-14.md",
        "DOCUMENT", "AE-14 — Como a CLARA conduz a auditoria",
        "APPROVED_RULE", "auditoria-entradas"),
+    _s("ficha-ae-16", "fichas/auditoria-entradas/AE-16.md",
+       "DOCUMENT", "AE-16 — IBS e CBS (reforma tributária)",
+       "CURRENT_IMPLEMENTATION", "auditoria-entradas"),
     # -- TES: cadastro SF4 (extração 09/11/2026) e uso no fechamento ------
     _s("ficha-tes-00", "fichas/tes/TES-00.md",
        "DOCUMENT", "TES-00 — O que é TES e como ler",

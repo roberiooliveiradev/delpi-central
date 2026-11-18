@@ -255,6 +255,110 @@ def list_entry_audit_fiscal_book_route(
 
 
 @router.get(
+    "/tax-items",
+    operation_id="list_entry_audit_tax_items",
+    **_meta("list_entry_audit_tax_items", "/financeiro/entry-audit/tax-items"),
+)
+@_guard
+def list_entry_audit_tax_items_route(
+    branch: str = _branch_query(),
+    received_from: str | None = _received_from_query(),
+    received_to: str | None = _received_to_query(),
+    species: list[str] = _species_query(),
+    access_keys: list[str] = Query(default_factory=list, description="44-digit access keys. No receipt-date filter. At most 50."),
+    page: int = _page_query(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
+):
+    if access_keys:
+        try:
+            lookup = EntryAuditAccessKeyQuery.from_values(
+                branch=branch,
+                access_keys=access_keys,
+                limit=access_key_get_limit(),
+            )
+        except EntryAuditQueryError as exc:
+            return error_response(str(exc), status_code=422, code="VALIDATION_ERROR")
+        return _run(
+            lambda use_case: use_case.reform_taxes_by_access_keys(lookup),
+            "list_entry_audit_tax_items",
+            "Entry audit reform taxes loaded successfully.",
+        )
+    if not received_from or not received_to:
+        return error_response(
+            "received_from and received_to are required when access_keys is omitted.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+        )
+    query = _period(
+        branch=branch,
+        received_from=received_from,
+        received_to=received_to,
+        species=species,
+        page=page,
+        page_size=page_size,
+    )
+    if not isinstance(query, EntryAuditPeriodQuery):
+        return query
+    return _run(
+        lambda use_case: use_case.reform_taxes(query),
+        "list_entry_audit_tax_items",
+        "Entry audit reform taxes loaded successfully.",
+    )
+
+
+@router.get(
+    "/tax-book",
+    operation_id="list_entry_audit_tax_book",
+    **_meta("list_entry_audit_tax_book", "/financeiro/entry-audit/tax-book"),
+)
+@_guard
+def list_entry_audit_tax_book_route(
+    branch: str = _branch_query(),
+    received_from: str | None = _received_from_query(),
+    received_to: str | None = _received_to_query(),
+    species: list[str] = _species_query(),
+    access_keys: list[str] = Query(default_factory=list, description="44-digit access keys. No receipt-date filter. At most 50."),
+    page: int = _page_query(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
+):
+    if access_keys:
+        try:
+            lookup = EntryAuditAccessKeyQuery.from_values(
+                branch=branch,
+                access_keys=access_keys,
+                limit=access_key_get_limit(),
+            )
+        except EntryAuditQueryError as exc:
+            return error_response(str(exc), status_code=422, code="VALIDATION_ERROR")
+        return _run(
+            lambda use_case: use_case.reform_book_by_access_keys(lookup),
+            "list_entry_audit_tax_book",
+            "Entry audit reform book loaded successfully.",
+        )
+    if not received_from or not received_to:
+        return error_response(
+            "received_from and received_to are required when access_keys is omitted.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+        )
+    query = _period(
+        branch=branch,
+        received_from=received_from,
+        received_to=received_to,
+        species=species,
+        page=page,
+        page_size=page_size,
+    )
+    if not isinstance(query, EntryAuditPeriodQuery):
+        return query
+    return _run(
+        lambda use_case: use_case.reform_book(query),
+        "list_entry_audit_tax_book",
+        "Entry audit reform book loaded successfully.",
+    )
+
+
+@router.get(
     "/tes",
     operation_id="list_entry_audit_tes",
     **_meta("list_entry_audit_tes", "/financeiro/entry-audit/tes"),

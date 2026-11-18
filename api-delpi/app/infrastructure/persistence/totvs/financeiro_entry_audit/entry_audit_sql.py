@@ -179,6 +179,138 @@ SELECT RTRIM(SD1.D1_FILIAL) AS branch,
     return sql, ["branch", "received_from", "received_to", *species, "offset", "page_size"]
 
 
+_REFORM_TAXES_SELECT = """
+SELECT RTRIM(SD1.D1_FILIAL) AS branch,
+       RTRIM(SD1.D1_DOC) AS document_number,
+       RTRIM(SD1.D1_SERIE) AS series,
+       RTRIM(SD1.D1_FORNECE) AS supplier_code,
+       RTRIM(SD1.D1_LOJA) AS supplier_store,
+       RTRIM(SD1.D1_ITEM) AS item,
+       RTRIM(SD1.D1_TES) AS tes,
+       RTRIM(F2B.F2B_TRIB) AS tax,
+       RTRIM(F2B.F2B_REGRA) AS rule_code,
+       F2D.F2D_BASE AS base,
+       F2D.F2D_ALIQ AS rate,
+       F2D.F2D_VALOR AS amount,
+       COUNT(*) OVER() AS total_count
+  FROM SD1010 SD1 WITH (NOLOCK)
+ INNER JOIN SF1010 SF1 WITH (NOLOCK)
+    ON SF1.D_E_L_E_T_ = ' '
+   AND SF1.F1_FILIAL = SD1.D1_FILIAL
+   AND SF1.F1_DOC = SD1.D1_DOC
+   AND SF1.F1_SERIE = SD1.D1_SERIE
+   AND SF1.F1_FORNECE = SD1.D1_FORNECE
+   AND SF1.F1_LOJA = SD1.D1_LOJA
+ INNER JOIN F2D010 F2D WITH (NOLOCK)
+    ON F2D.D_E_L_E_T_ = ' '
+   AND F2D.F2D_TABELA = 'SD1'
+   AND RTRIM(F2D.F2D_DTEXCL) = ''
+   AND F2D.F2D_IDREL = SD1.D1_IDTRIB
+ INNER JOIN F2B010 F2B WITH (NOLOCK)
+    ON F2B.D_E_L_E_T_ = ' '
+   AND F2B.F2B_ID = F2D.F2D_IDCAD
+ WHERE SD1.D_E_L_E_T_ = ' '
+   AND F2B.F2B_TRIB IN ('CBSFED', 'IBSEST', 'IBSMUN')
+"""
+
+
+def reform_taxes_sql(species: list[str]) -> tuple[str, list[str]]:
+    """Calculated reform taxes (IBS/CBS) per entry item — SD1→F2D→F2B."""
+    species_sql, _ = _species_clause("SF1.F1_ESPECIE", species)
+    sql = f"""
+{_REFORM_TAXES_SELECT}
+   AND SF1.F1_FILIAL = ?
+   AND SF1.F1_RECBMTO >= ?
+   AND SF1.F1_RECBMTO <= ?
+   AND {species_sql}
+ ORDER BY SF1.F1_RECBMTO, SD1.D1_DOC, SD1.D1_SERIE, SD1.D1_FORNECE, SD1.D1_LOJA, SD1.D1_ITEM, F2B.F2B_TRIB
+ {_page_clause()}
+"""
+    return sql, ["branch", "received_from", "received_to", *species, "offset", "page_size"]
+
+
+def reform_taxes_by_access_keys_sql(key_count: int) -> tuple[str, list[str]]:
+    """Calculated reform taxes by access key, any receipt date."""
+    placeholders = ", ".join("?" for _ in range(key_count))
+    sql = f"""
+{_REFORM_TAXES_SELECT}
+   AND SF1.F1_FILIAL = ?
+   AND RTRIM(SF1.F1_CHVNFE) IN ({placeholders})
+ ORDER BY SD1.D1_DOC, SD1.D1_SERIE, SD1.D1_FORNECE, SD1.D1_LOJA, SD1.D1_ITEM, F2B.F2B_TRIB
+"""
+    return sql, ["branch", *["access_key"] * key_count]
+
+
+def reform_book_sql(species: list[str]) -> tuple[str, list[str]]:
+    """Reform taxes booked in the digital ledger (CD2) per entry item."""
+    species_sql, _ = _species_clause("SF1.F1_ESPECIE", species)
+    sql = f"""
+SELECT RTRIM(CD2.CD2_FILIAL) AS branch,
+       RTRIM(CD2.CD2_DOC) AS document_number,
+       RTRIM(CD2.CD2_SERIE) AS series,
+       RTRIM(CD2.CD2_CODFOR) AS supplier_code,
+       RTRIM(CD2.CD2_LOJFOR) AS supplier_store,
+       RTRIM(CD2.CD2_ITEM) AS item,
+       RTRIM(CD2.CD2_IMP) AS tax,
+       RTRIM(CD2.CD2_CST) AS cst,
+       CD2.CD2_BC AS base,
+       CD2.CD2_ALIQ AS rate,
+       CD2.CD2_VLTRIB AS amount,
+       COUNT(*) OVER() AS total_count
+  FROM CD2010 CD2 WITH (NOLOCK)
+ INNER JOIN SF1010 SF1 WITH (NOLOCK)
+    ON SF1.D_E_L_E_T_ = ' '
+   AND SF1.F1_FILIAL = CD2.CD2_FILIAL
+   AND SF1.F1_DOC = CD2.CD2_DOC
+   AND SF1.F1_SERIE = CD2.CD2_SERIE
+   AND SF1.F1_FORNECE = CD2.CD2_CODFOR
+   AND SF1.F1_LOJA = CD2.CD2_LOJFOR
+ WHERE CD2.D_E_L_E_T_ = ' '
+   AND CD2.CD2_TPMOV = 'E'
+   AND CD2.CD2_IMP IN ('CBSFED', 'IBSEST', 'IBSMUN')
+   AND SF1.F1_FILIAL = ?
+   AND SF1.F1_RECBMTO >= ?
+   AND SF1.F1_RECBMTO <= ?
+   AND {species_sql}
+ ORDER BY SF1.F1_RECBMTO, CD2.CD2_DOC, CD2.CD2_SERIE, CD2.CD2_CODFOR, CD2.CD2_LOJFOR, CD2.CD2_ITEM, CD2.CD2_IMP
+ {_page_clause()}
+"""
+    return sql, ["branch", "received_from", "received_to", *species, "offset", "page_size"]
+
+
+def reform_book_by_access_keys_sql(key_count: int) -> tuple[str, list[str]]:
+    """Booked reform taxes by access key, any receipt date."""
+    placeholders = ", ".join("?" for _ in range(key_count))
+    sql = f"""
+SELECT RTRIM(CD2.CD2_FILIAL) AS branch,
+       RTRIM(CD2.CD2_DOC) AS document_number,
+       RTRIM(CD2.CD2_SERIE) AS series,
+       RTRIM(CD2.CD2_CODFOR) AS supplier_code,
+       RTRIM(CD2.CD2_LOJFOR) AS supplier_store,
+       RTRIM(CD2.CD2_ITEM) AS item,
+       RTRIM(CD2.CD2_IMP) AS tax,
+       RTRIM(CD2.CD2_CST) AS cst,
+       CD2.CD2_BC AS base,
+       CD2.CD2_ALIQ AS rate,
+       CD2.CD2_VLTRIB AS amount
+  FROM CD2010 CD2 WITH (NOLOCK)
+ INNER JOIN SF1010 SF1 WITH (NOLOCK)
+    ON SF1.D_E_L_E_T_ = ' '
+   AND SF1.F1_FILIAL = CD2.CD2_FILIAL
+   AND SF1.F1_DOC = CD2.CD2_DOC
+   AND SF1.F1_SERIE = CD2.CD2_SERIE
+   AND SF1.F1_FORNECE = CD2.CD2_CODFOR
+   AND SF1.F1_LOJA = CD2.CD2_LOJFOR
+ WHERE CD2.D_E_L_E_T_ = ' '
+   AND CD2.CD2_TPMOV = 'E'
+   AND CD2.CD2_IMP IN ('CBSFED', 'IBSEST', 'IBSMUN')
+   AND SF1.F1_FILIAL = ?
+   AND RTRIM(SF1.F1_CHVNFE) IN ({placeholders})
+ ORDER BY CD2.CD2_DOC, CD2.CD2_SERIE, CD2.CD2_CODFOR, CD2.CD2_LOJFOR, CD2.CD2_ITEM, CD2.CD2_IMP
+"""
+    return sql, ["branch", *["access_key"] * key_count]
+
+
 def fiscal_book_sql(species: list[str]) -> tuple[str, list[str]]:
     species_sql, _ = _species_clause("SF1.F1_ESPECIE", species)
     sql = f"""

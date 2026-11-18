@@ -57,7 +57,7 @@
 | T17 | 1 | TES de insumo | DONE | DEV | | 2026-11-18 | `ENTRY_AUDIT_INPUT_TES` exclui `ipi_on_consumption` nos dois caminhos; IPI acima/sem destaque intactos; snapshot grava a lista |
 | T17H | 1 | Onda 1 em HML e PROD + CLARA | DONE | HML/PROD | | 2026-11-18 | onda 1 ativa nos dois ambientes; regras-alvo zeradas no rerun 01–17/11 (163 ocorrências); corpus republicado |
 | T18 | 2 | Uma ocorrência por causa + fila + indicadores | DONE | DEV/HML/PROD | | 2026-11-18 | flag on em HML e PROD; 163 linhas v1 → 146 causas nos dois ambientes; migração 18 v1 → 13 causas (11 resolvidas/2 pendentes), idempotente; corpus republicado |
-| T19 | 3 | IBS/CBS | TODO | DEV/HML/PROD | | | |
+| T19 | 3 | IBS/CBS | IN_PROGRESS | DEV | | 2026-11-20 | api-delpi `/tax-items`+`/tax-book` (F2D/F2B e CD2, período e por chave); parser `IBSCBS`/`IBSCBSTot` NF-e+CT-e; 4 regras `ibscbs.*` Alta por causa; flags FA-18; AE-16; BFF 344 testes entry-audit + api-delpi 17 |
 | T20 | 4 | Reverificação sob demanda | TODO | DEV/HML/PROD | | | |
 | — | — | **PARADA: verificação do owner pela CLARA (critérios 1–5)** | — | PROD | | | |
 | T22 | — | Front-end | TODO | DEV/HML | | | |

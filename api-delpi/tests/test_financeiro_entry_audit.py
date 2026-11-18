@@ -90,6 +90,8 @@ def test_router_declares_the_five_read_operations() -> None:
         "list_entry_audit_documents_by_access_key",
         "list_entry_audit_items",
         "list_entry_audit_fiscal_book",
+        "list_entry_audit_tax_items",
+        "list_entry_audit_tax_book",
         "list_entry_audit_tes",
         "list_entry_audit_branches",
     }
@@ -139,6 +141,36 @@ def test_items_and_fiscal_book_follow_the_same_document_filter() -> None:
     assert "FT_VALICM" in book
     assert item_names[3] == "SPED"
     assert book_names[3] == "CTE"
+
+
+def test_reform_taxes_sql_joins_the_configurador_chain() -> None:
+    sql, names = entry_audit_sql.reform_taxes_sql(["SPED"])
+    assert "F2D010" in sql and "F2B010" in sql
+    assert "F2D.F2D_IDREL = SD1.D1_IDTRIB" in sql
+    assert "F2B.F2B_ID = F2D.F2D_IDCAD" in sql
+    assert "F2D.F2D_TABELA = 'SD1'" in sql
+    assert "F2B.F2B_TRIB IN ('CBSFED', 'IBSEST', 'IBSMUN')" in sql
+    assert "F1_RECBMTO >= ?" in sql and "F1_ESPECIE" in sql
+    assert names[:3] == ["branch", "received_from", "received_to"] and names[3] == "SPED"
+    by_key, key_names = entry_audit_sql.reform_taxes_by_access_keys_sql(2)
+    assert "F1_CHVNFE" in by_key and "F1_RECBMTO" not in by_key.split("WHERE", 1)[1]
+    assert key_names == ["branch", "access_key", "access_key"]
+    for text in (sql, by_key):
+        assert "DELETE" not in text.upper() and "UPDATE" not in text.upper() and "INSERT" not in text.upper()
+
+
+def test_reform_book_sql_reads_the_cd2_ledger() -> None:
+    sql, names = entry_audit_sql.reform_book_sql(["CTE"])
+    assert "CD2010" in sql
+    assert "CD2_TPMOV = 'E'" in sql
+    assert "CD2.CD2_IMP IN ('CBSFED', 'IBSEST', 'IBSMUN')" in sql
+    assert "CD2.CD2_DOC = " not in sql  # join is SF1.F1_DOC = CD2.CD2_DOC
+    assert "SF1.F1_DOC = CD2.CD2_DOC" in sql
+    assert "F1_RECBMTO >= ?" in sql and "F1_ESPECIE" in sql
+    assert names[:3] == ["branch", "received_from", "received_to"] and names[3] == "CTE"
+    by_key, key_names = entry_audit_sql.reform_book_by_access_keys_sql(1)
+    assert "F1_CHVNFE" in by_key and key_names == ["branch", "access_key"]
+    assert "DELETE" not in sql.upper() and "UPDATE" not in sql.upper() and "INSERT" not in sql.upper()
 
 
 def test_tes_and_branches_do_not_take_a_period() -> None:

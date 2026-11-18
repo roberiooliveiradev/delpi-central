@@ -821,6 +821,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_entry_audit_fiscal_book": RouteContract(
         "entry_audit_fiscal_book_line", "paged_list"
     ),
+    "list_entry_audit_tax_items": RouteContract(
+        "entry_audit_reform_tax", "paged_list"
+    ),
+    "list_entry_audit_tax_book": RouteContract(
+        "entry_audit_reform_book_line", "paged_list"
+    ),
     "list_entry_audit_tes": RouteContract(
         "entry_audit_tes", "paged_list"
     ),

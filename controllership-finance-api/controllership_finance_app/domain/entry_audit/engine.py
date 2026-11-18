@@ -51,6 +51,8 @@ from controllership_finance_app.domain.entry_audit.models import (
     OccurrenceItem,
     ProtheusHeader,
     ProtheusItem,
+    ReformBookLine,
+    ReformTaxLine,
     TesRecord,
     UnmatchedDocument,
     XmlDocument,
@@ -70,6 +72,8 @@ def audit(
     ctes: dict[str, XmlDocument],
     config: AuditConfig | None = None,
     fiscal_book: list[FiscalBookLine] | None = None,
+    reform_taxes: list[ReformTaxLine] | None = None,
+    reform_book: list[ReformBookLine] | None = None,
 ) -> AuditResult:
     settings = config or AuditConfig()
     result = AuditResult()
@@ -106,6 +110,7 @@ def audit(
         result, item_rows, invoices, tes, book, company_state, presumed_tes, presumed_on,
         settings, item_hits, boosted,
     )
+    _ibscbs(result, item_rows, invoices, ctes, reform_taxes, reform_book, settings, item_hits)
     header_hits.sort(key=lambda hit: (SEVERITY_ORDER[hit["severity"]], hit["title"], hit["supplier"], hit["number"]))
     item_hits.sort(key=lambda hit: (SEVERITY_ORDER[hit["severity"]], hit["title"], hit["supplier"], hit["number"], hit["item"]))
     for hit in _consolidate(header_hits + item_hits, settings):
@@ -618,6 +623,282 @@ def _fiscal_book(result, rows, tes, book, hits, boosted, settings) -> None:
             _hit(hits, row, None, "fiscal_book.amount_mismatch", "ICMS do livro fiscal diferente do item", "Média", "ICMS livro", round(line["icms"], 2), row["icms"], "Crédito no livro (SFT) diferente do ICMS calculado na SD1. Reprocessar o livro ou conferir ajuste manual.", item=row["item"])
 
 
+REFORM_TAXES = ("CBSFED", "IBSEST", "IBSMUN")
+_REFORM_LABEL = {"CBSFED": "CBS", "IBSEST": "IBS UF", "IBSMUN": "IBS Mun"}
+_REFORM_XML = {
+    "CBSFED": ("cbs_rate", "cbs_amount"),
+    "IBSEST": ("ibs_uf_rate", "ibs_uf_amount"),
+    "IBSMUN": ("ibs_mun_rate", "ibs_mun_amount"),
+}
+
+
+class _ReformPosted:
+    """IBS/CBS calculado (SD1→F2D→F2B) indexado por (documento, item)."""
+
+    def __init__(self, lines: list[ReformTaxLine] | None):
+        self.present = lines is not None
+        self.by_item: dict[tuple[str, int], dict[str, dict]] = {}
+        for line in lines or []:
+            key = (
+                "|".join([line.branch, str(line.number).lstrip("0"), str(line.series).lstrip("0"), line.supplier_code, line.supplier_store]),
+                _item_number(line.item),
+            )
+            slot = self.by_item.setdefault(key, {}).setdefault(
+                line.tax_code.strip().upper(), {"base": 0.0, "amount": 0.0, "rates": set(), "rules": set()}
+            )
+            slot["base"] += line.base_amount
+            slot["amount"] += line.tax_amount
+            slot["rates"].add(round(line.tax_rate, 4))
+            if line.rule_code:
+                slot["rules"].add(line.rule_code)
+
+    def item(self, row) -> dict[str, dict]:
+        key = _document_key(row["branch"], row["number"], row["series"], row["supplier"], row["store"])
+        return self.by_item.get((key, _item_number(row["item"])), {})
+
+    def doc(self, row) -> dict[str, dict]:
+        key = _document_key(row["branch"], row["number"], row["series"], row["supplier"], row["store"])
+        merged: dict[str, dict] = {}
+        for (doc_key, _item), taxes in self.by_item.items():
+            if doc_key != key:
+                continue
+            for tax, values in taxes.items():
+                slot = merged.setdefault(tax, {"base": 0.0, "amount": 0.0, "rates": set(), "rules": set()})
+                slot["base"] += values["base"]
+                slot["amount"] += values["amount"]
+                slot["rates"] |= values["rates"]
+                slot["rules"] |= values["rules"]
+        return merged
+
+
+class _ReformBooked:
+    """IBS/CBS do livro digital (CD2) indexado por (documento, item) — FA-12."""
+
+    def __init__(self, lines: list[ReformBookLine] | None):
+        self.present = lines is not None
+        self.by_item: dict[tuple[str, int], dict[str, dict]] = {}
+        for line in lines or []:
+            key = (
+                "|".join([line.branch, str(line.number).lstrip("0"), str(line.series).lstrip("0"), line.supplier_code, line.supplier_store]),
+                _item_number(line.item),
+            )
+            slot = self.by_item.setdefault(key, {}).setdefault(
+                line.tax_code.strip().upper(), {"base": 0.0, "amount": 0.0, "rates": set(), "cst": set()}
+            )
+            slot["base"] += line.base_amount
+            slot["amount"] += line.tax_amount
+            slot["rates"].add(round(line.tax_rate, 4))
+            if line.cst:
+                slot["cst"].add(line.cst)
+
+    def item(self, row) -> dict[str, dict]:
+        key = _document_key(row["branch"], row["number"], row["series"], row["supplier"], row["store"])
+        return self.by_item.get((key, _item_number(row["item"])), {})
+
+
+def _ibscbs_exceptions(raw: str) -> dict[str, set[str]]:
+    tokens = {"crt": set(), "cfop": set(), "tes": set()}
+    for token in str(raw or "").split(","):
+        token = token.strip()
+        if ":" in token:
+            kind, _, value = token.partition(":")
+            kind = kind.strip().lower()
+            if kind in tokens and value.strip():
+                tokens[kind].add(value.strip())
+    return tokens
+
+
+def _ibscbs_excepted(exceptions: dict[str, set[str]], crt: str, row, xml_cfop: str) -> bool:
+    if exceptions["crt"] and str(crt or "") in exceptions["crt"]:
+        return True
+    cfops = {row["cfop"], xml_cfop} - {""}
+    if exceptions["cfop"] and cfops & exceptions["cfop"]:
+        return True
+    return bool(exceptions["tes"] and row["tes"] in exceptions["tes"])
+
+
+def _reform_xml_values(source, tax: str) -> tuple[float, float, float]:
+    rate_field, amount_field = _REFORM_XML[tax]
+    return (
+        float(getattr(source, "reform_base", 0.0) or 0.0),
+        float(getattr(source, rate_field, 0.0) or 0.0),
+        float(getattr(source, amount_field, 0.0) or 0.0),
+    )
+
+
+def _ibscbs_compare(hits, row, document, xml_source, taxes: dict, tes_label: str, settings, item: str = "") -> bool:
+    """Compara presença, base, alíquota e valor por tributo (FA-8/FA-10)."""
+    found = False
+    for tax in REFORM_TAXES:
+        xml_base, xml_rate, xml_amount = _reform_xml_values(xml_source, tax)
+        agg = taxes.get(tax)
+        posted_base = agg["base"] if agg else 0.0
+        posted_amount = agg["amount"] if agg else 0.0
+        rates = agg["rates"] if agg else set()
+        rules = ", ".join(sorted(agg["rules"])) if agg else ""
+        diffs = []
+        if abs(posted_amount - xml_amount) > settings.tolerance:
+            diffs.append(f"valor lançado R$ {_brl(posted_amount)} × XML R$ {_brl(xml_amount)}")
+        if agg and (len(rates) > 1 or abs(next(iter(rates)) - xml_rate) > 0.01):
+            diffs.append(f"alíquota lançada {'/'.join(f'{rate:g}' for rate in sorted(rates))}% × XML {xml_rate:g}%")
+        if agg and abs(posted_base - xml_base) > settings.tolerance:
+            diffs.append(f"base lançada R$ {_brl(posted_base)} × XML R$ {_brl(xml_base)}")
+        if not diffs:
+            continue
+        found = True
+        label = _REFORM_LABEL[tax]
+        _hit(
+            hits, row, document, "ibscbs.value_mismatch", f"{label} calculado diferente do XML",
+            "Alta", label, posted_amount, xml_amount,
+            f"{label} divergente ({'; '.join(diffs)}). {tes_label}, regra do Configurador {rules or '—'}: conferir a regra e recalcular o item.",
+            item=item,
+        )
+    return found
+
+
+def _ibscbs(result, item_rows, invoices, ctes, reform_taxes, reform_book, settings, hits) -> None:
+    """FA-8 — IBS/CBS em todas as entradas, NF-e e CT-e (onda 3, todas Alta)."""
+    if not settings.ibscbs_enabled:
+        return
+    del result
+    posted = _ReformPosted(reform_taxes)
+    exceptions = _ibscbs_exceptions(settings.ibscbs_exceptions)
+
+    # NF-e: por item, e o total da nota (FA-10).
+    keys = {row["access_key"] for row in item_rows if row["danfe"] and row["access_key"] in invoices}
+    for key in sorted(keys):
+        document = invoices[key]
+        if document.cancelled:
+            continue
+        doc_rows = sorted(
+            (row for row in item_rows if row["access_key"] == key), key=lambda item: _item_number(item["item"])
+        )
+        xml_items = sorted(document.items, key=lambda item: item.number)
+        paired = len(doc_rows) == len(xml_items)
+        doc_excepted = True
+        for index, row in enumerate(doc_rows):
+            xml_item = xml_items[index] if paired else None
+            if _ibscbs_excepted(exceptions, document.crt, row, xml_item.cfop if xml_item else ""):
+                continue
+            doc_excepted = False
+            taxes = posted.item(row)
+            tes_label = f"TES {row['tes']}"
+            if xml_item is not None and xml_item.has_ibscbs and not taxes:
+                _hit(
+                    hits, row, document, "ibscbs.xml_not_posted", "IBS/CBS do XML não calculado no lançamento",
+                    "Alta", "IBS/CBS", "sem F2D", f"CST {xml_item.ibscbs_cst or '—'}/cClassTrib {xml_item.ibscbs_class or '—'}",
+                    f"O XML traz IBS/CBS (CST {xml_item.ibscbs_cst or '—'}, cClassTrib {xml_item.ibscbs_class or '—'}) e o item não calculou os tributos da reforma: sem linha F2D. {tes_label}: conferir o Configurador de Tributos e recalcular o item.",
+                    item=row["item"],
+                )
+            elif (xml_item is None or not xml_item.has_ibscbs) and not taxes:
+                _hit(
+                    hits, row, document, "ibscbs.posting_missing", "Item sem cálculo de IBS/CBS",
+                    "Alta", "IBS/CBS", "sem F2D", "sem IBSCBS",
+                    f"Item sem linha F2D e sem grupo IBSCBS no XML: a reforma exige o cálculo em toda entrada. {tes_label}: conferir o Configurador de Tributos e recalcular o item.",
+                    item=row["item"],
+                )
+            elif xml_item is not None and xml_item.has_ibscbs:
+                _ibscbs_compare(hits, row, document, xml_item, taxes, tes_label, settings, item=row["item"])
+        if doc_excepted:
+            continue
+        doc_taxes = posted.doc(doc_rows[0]) if doc_rows else {}
+        if not doc_taxes:
+            # Sem nenhuma linha F2D, os itens já cobriram (xml_not_posted/posting_missing).
+            continue
+        xml_total = {
+            "CBSFED": document.cbs_amount or sum(item.cbs_amount for item in document.items),
+            "IBSEST": document.ibs_uf_amount or sum(item.ibs_uf_amount for item in document.items),
+            "IBSMUN": document.ibs_mun_amount or sum(item.ibs_mun_amount for item in document.items),
+        }
+        for tax in REFORM_TAXES:
+            posted_amount = doc_taxes.get(tax, {}).get("amount", 0.0)
+            if abs(posted_amount - xml_total[tax]) <= settings.tolerance:
+                continue
+            label = _REFORM_LABEL[tax]
+            _hit(
+                hits, doc_rows[0], document, "ibscbs.value_mismatch", f"{label} da nota diferente do total do XML",
+                "Alta", label, round(posted_amount, 2), xml_total[tax],
+                f"Total de {label} lançado R$ {_brl(posted_amount)} × XML R$ {_brl(xml_total[tax])} na nota. TES dos itens: {', '.join(sorted({row['tes'] for row in doc_rows if row['tes']})) or '—'}.",
+            )
+
+    # CT-e: IBS/CBS no imposto, nível do documento.
+    cte_keys = {row["access_key"] for row in item_rows if not row["danfe"] and row["access_key"] in ctes}
+    for key in sorted(cte_keys):
+        document = ctes[key]
+        if document.cancelled:
+            continue
+        doc_rows = sorted(
+            (row for row in item_rows if row["access_key"] == key), key=lambda item: _item_number(item["item"])
+        )
+        if not doc_rows:
+            continue
+        if all(_ibscbs_excepted(exceptions, document.crt, row, "") for row in doc_rows):
+            continue
+        taxes = posted.doc(doc_rows[0])
+        tes_label = f"TES {', '.join(sorted({row['tes'] for row in doc_rows if row['tes']})) or '—'}"
+        if document.has_ibscbs and not taxes:
+            _hit(
+                hits, doc_rows[0], document, "ibscbs.xml_not_posted", "CT-e: IBS/CBS do XML não calculado no lançamento",
+                "Alta", "IBS/CBS", "sem F2D", f"CST {document.ibscbs_cst or '—'}/cClassTrib {document.ibscbs_class or '—'}",
+                f"O CT-e traz IBS/CBS (CST {document.ibscbs_cst or '—'}, cClassTrib {document.ibscbs_class or '—'}) e o lançamento não calculou os tributos da reforma: sem linha F2D. {tes_label}: conferir o Configurador e recalcular.",
+            )
+        elif not document.has_ibscbs and not taxes:
+            _hit(
+                hits, doc_rows[0], document, "ibscbs.posting_missing", "CT-e: sem cálculo de IBS/CBS",
+                "Alta", "IBS/CBS", "sem F2D", "sem IBSCBS",
+                f"CT-e sem linha F2D e sem grupo IBSCBS no XML: a reforma exige o cálculo em toda entrada. {tes_label}: conferir o Configurador e recalcular.",
+            )
+        elif document.has_ibscbs:
+            _ibscbs_compare(hits, doc_rows[0], document, document, taxes, tes_label, settings)
+
+    # FA-12 — livro digital (CD2) a partir de ENTRY_AUDIT_IBSCBS_BOOK_FROM.
+    book_from = settings.ibscbs_book_from
+    if not book_from or reform_book is None:
+        return
+    booked = _ReformBooked(reform_book)
+    for row in item_rows:
+        issued = row.get("issue_date")
+        if issued is None or issued.isoformat() < book_from:
+            continue
+        document = invoices.get(row["access_key"]) or ctes.get(row["access_key"])
+        xml_cfop = ""
+        if document is not None and row["danfe"]:
+            xml_cfop = next((item.cfop for item in document.items if item.number == _item_number(row["item"])), "")
+        crt = document.crt if document is not None else ""
+        if _ibscbs_excepted(exceptions, crt, row, xml_cfop):
+            continue
+        taxes = posted.item(row)
+        book_taxes = booked.item(row)
+        if not taxes and not book_taxes:
+            continue
+        for tax in REFORM_TAXES:
+            calc = taxes.get(tax)
+            book_line = book_taxes.get(tax)
+            diffs = []
+            if not calc and not book_line:
+                continue
+            if calc and not book_line:
+                diffs.append(f"calculado R$ {_brl(calc['amount'])} sem linha no livro (CD2)")
+            elif book_line and not calc:
+                diffs.append(f"livro (CD2) com R$ {_brl(book_line['amount'])} sem cálculo (F2D)")
+            else:
+                if abs(calc["amount"] - book_line["amount"]) > settings.tolerance:
+                    diffs.append(f"valor no livro R$ {_brl(book_line['amount'])} × calculado R$ {_brl(calc['amount'])}")
+                if abs(calc["base"] - book_line["base"]) > settings.tolerance:
+                    diffs.append(f"base no livro R$ {_brl(book_line['base'])} × calculada R$ {_brl(calc['base'])}")
+            if not diffs:
+                continue
+            label = _REFORM_LABEL[tax]
+            rules = ", ".join(sorted(calc["rules"])) if calc else ""
+            csts = ", ".join(sorted(book_line["cst"])) if book_line else ""
+            _hit(
+                hits, row, document, "ibscbs.book_mismatch", f"{label} do livro diferente do calculado",
+                "Alta", f"{label} livro", calc["amount"] if calc else 0.0, book_line["amount"] if book_line else 0.0,
+                f"{label} divergente entre o cálculo (F2D) e o livro digital (CD2): {'; '.join(diffs)}. TES {row['tes']}, regra {rules or '—'}{f', CST do livro {csts}' if csts else ''}. Reprocessar o livro ou conferir ajuste manual.",
+                item=row["item"],
+            )
+
+
 def _unusual_nature(rows, hits) -> None:
     grouped: dict[str, list[dict]] = defaultdict(list)
     for row in rows:
@@ -786,6 +1067,7 @@ def _items(items: list[ProtheusItem], rows: list[dict], branch: str) -> list[dic
             "name": header.get("name", ""), "state": header.get("state", ""), "own_form": header.get("own_form", ""),
             "party_kind": header.get("party_kind", "supplier"), "invoice_type": header.get("invoice_type", ""),
             "species": header.get("species", ""), "danfe": header.get("danfe", False),
+            "issue_date": header.get("issue_date"),
         })
     return built
 
