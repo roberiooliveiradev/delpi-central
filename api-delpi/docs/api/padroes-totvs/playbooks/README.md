@@ -18,3 +18,4 @@ Playbooks de **domínio Protheus** da biblioteca. Índice completo: [../README.m
 | [playbook-crm-totvs-dicionario.md](./playbook-crm-totvs-dicionario.md) | CRM TOTVS — SX3/SX9; volumes em [crm-sigatec.md](../crm-sigatec.md) |
 | [playbook-carteira-semanal-previsto-realizado.md](./playbook-carteira-semanal-previsto-realizado.md) | Carteira semanal previsto × realizado (SC6 / NF) |
 | [playbook-cadastro-fornecedor-sa2.md](./playbook-cadastro-fornecedor-sa2.md) | Auditoria completa SA2 — schema, índices, SX9, CREATE/UPDATE, de-para p/ API |
+| [playbook-inventario-rpo-smartclient.md](./playbook-inventario-rpo-smartclient.md) | Inventário técnico RPO/SmartClient — superfície live, SOAP catalog, limites de automação (POC) |

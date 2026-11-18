@@ -960,3 +960,17 @@ Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fon
 **Não comprovados:** ativação exata do modelo Model-2 (`VALIDAR TST01`); URI `TSIITEM`; relação `ACCOUNTINGITEMS↔B1_CONTA`; semântica de `EAIADAPTERTESTREST` (não executada — efeito colateral não comprovado).
 
 **Próximo gate:** ratificação da decisão candidata + autorização TST01 (ensaios §13.4/§14.7) → só então `.PRW` + façade.
+
+#### 10.10 POC — acesso a RPO/SmartClient para inventário técnico (18/11/2026)
+
+**TASK_ID:** `EVA-TOTVS-RPO-SMARTCLIENT-AUTOMATION-FEASIBILITY-01` — artefato: `api-delpi/docs/api/padroes-totvs/playbooks/playbook-inventario-rpo-smartclient.md`.
+
+**Alcançado live (read-only):** WebApp `https://192.168.1.232:1450/webapp/` carrega headless (broker cookie + Playwright/Chromium em Docker); único programa publicado = `SIGAADV`, único ambiente = `DELPI`. Catálogo SOAP `:8080` inventariado (32 serviços: 20 HABILITADO fiscais, 12 DESABILITADO — inclui `EAISERVICE`/`FWWSEAI`/`FWDICTIONARY`, **corroborando G0-C**). Versões de runtime capturadas: appserver `24.3.1.5 guapor`, webapp `7.00.240223P`. Portas mapeadas: `.232` (1450/4321/5555/8080/3389/445), `.233` (5555/3389/445/8701), `.231` (8061/3389).
+
+**Bloqueio central comprovado:** sessão `SIGAADV` abre o WebSocket da sessão mas exige **agente SmartClient local** (`127.0.0.1:2601`) — sem agente a página não renderiza; login/Central de Diagnóstico/pilha não alcançáveis. Inspeção de funções compiladas no RPO = `INCONCLUSIVE` por acesso (nenhuma classe REST de inspeção; FWDICTIONARY desabilitado; TCP SmartClient é protocolo proprietário; RPO via SMB proibido).
+
+**Implicação para CRUD SB1/SA5:** metadados de dicionário (SX3) e catálogos REST/SOAP/versioning são **automatizáveis hoje**; inventário de funções compiladas, pontos de entrada ativos e drift fonte×RPO exigem **façade `.PRW` read-only de inventário** (mesmo gate de compilação do SA5) ou DevStudio/estação autorizada.
+
+**Decisão proposta:** coletor versionado (script/CLI governado) como capacidade mínima; **sem** agente/skill/MCP dedicado por ora. Ratificação: Integrações TOTVS + Coordination — junto com a decisão SA5 do §10.9.
+
+**Próximo gate:** decidir façade de inventário `.PRW` (read-only, WSRESTFUL) + identidade interativa aprovada para sessão/agente → só então inventário compilado + ensaios SA5.
