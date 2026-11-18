@@ -27,11 +27,11 @@ _REQUIRED_FILES = frozenset({
     "atlas-hml-runtime-layout.tmpfiles.candidate",
 })
 _EXPECTED_TMPFILES = frozenset({
-    "d /run/atlas-hml-readonly 0750 root atlas-hml -",
-    "d /run/atlas-hml-signer 0750 atlas-hml-signer atlas-hml-signer -",
-    "d /run/atlas-hml-signer-socket 02750 atlas-hml-signer atlas-hml-bridge -",
-    "d /var/lib/atlas-hml-signer-state 0750 atlas-hml-signer atlas-hml-signer -",
-    "d /var/lib/atlas-hml-signer-keys 0700 atlas-hml-signer atlas-hml-signer -",
+    "d /run/atlas-hml-readonly :0750 :root :atlas-hml -",
+    "d /run/atlas-hml-signer :0750 :atlas-hml-signer :atlas-hml-signer -",
+    "d /run/atlas-hml-signer-socket :02750 :atlas-hml-signer :atlas-hml-bridge -",
+    "d /var/lib/atlas-hml-signer-state :0750 :atlas-hml-signer :atlas-hml-signer -",
+    "d /var/lib/atlas-hml-signer-keys :0700 :atlas-hml-signer :atlas-hml-signer -",
 })
 _HARDENED = {
     "NoNewPrivileges": "yes",

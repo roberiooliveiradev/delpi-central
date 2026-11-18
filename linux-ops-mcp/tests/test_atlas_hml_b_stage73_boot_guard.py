@@ -35,7 +35,7 @@ def test_packaging_blocked_and_five_tmpfiles_rules():
     assert not v.boot_recreation_attested and not v.can_execute
     assert not v.prepare_eligible
     assert len([line for line in payload.splitlines() if line.startswith("d ")]) == 5
-    assert "d /run/atlas-hml-signer-socket 02750 atlas-hml-signer atlas-hml-bridge -" in payload
+    assert "d /run/atlas-hml-signer-socket :02750 :atlas-hml-signer :atlas-hml-bridge -" in payload
 
 
 @pytest.mark.parametrize("name,old,new", [
@@ -77,13 +77,13 @@ def test_unsafe_bridge_directive_denied(entry):
 
 @pytest.mark.parametrize("replacement", [
     "d /run/atlas-hml-signer-socket 0777 atlas-hml-signer atlas-hml-bridge -",
-    "d /run/atlas-hml-signer-socket 02750 root atlas-hml-bridge -",
+    "d /run/atlas-hml-signer-socket :02750 :root :atlas-hml-bridge -",
     "d /run/docker.sock 0777 root docker -",
 ])
 def test_tmpfiles_drift_denied(replacement):
     data = sources()
     name = "atlas-hml-runtime-layout.tmpfiles.candidate"
-    old = "d /run/atlas-hml-signer-socket 02750 atlas-hml-signer atlas-hml-bridge -"
+    old = "d /run/atlas-hml-signer-socket :02750 :atlas-hml-signer :atlas-hml-bridge -"
     data[name] = data[name].replace(old, replacement)
     with pytest.raises((guard.Stage73ReviewError, HMLCandidateUnitError)):
         guard.review_stage73_package(data)

@@ -117,16 +117,16 @@ def test_extended_or_unverifiable_directory_acl_denied(socket_dir, monkeypatch):
 
 
 @pytest.mark.parametrize("replacement", [
-    " 0750 atlas-hml-signer atlas-hml-bridge -",
-    " 02750 atlas-hml-signer docker -",
-    " 02770 atlas-hml-signer atlas-hml-bridge -",
-    " 02750 root atlas-hml-bridge -",
+    " :0750 :atlas-hml-signer :atlas-hml-bridge -",
+    " :02750 :atlas-hml-signer :docker -",
+    " :02770 :atlas-hml-signer :atlas-hml-bridge -",
+    " :02750 :root :atlas-hml-bridge -",
 ])
 def test_tmpfiles_mutated_mode_or_identity_denied(replacement):
     from linux_ops_mcp.atlas_hml_b_candidate_unit_review import _DIR
     sources = {p.name: p.read_text(encoding="utf-8") for p in _DIR.glob("*.candidate")}
     name = "atlas-hml-runtime-layout.tmpfiles.candidate"
-    old = " 02750 atlas-hml-signer atlas-hml-bridge -"
+    old = " :02750 :atlas-hml-signer :atlas-hml-bridge -"
     assert old in sources[name]
     sources[name] = sources[name].replace(old, replacement, 1)
     with pytest.raises(HMLCandidateUnitError, match="HML_CANDIDATE_TMPFILES_DENIED"):
