@@ -217,7 +217,11 @@ def test_admin_hr_mapping_validates_rh_and_audits(
         )
         response = client.put(
             f"/admin/organization/users/{uid}/hr-registration",
-            json={"registration": "00001", "confirmIdentity": True},
+            json={
+                "registration": "00001",
+                "confirmIdentity": True,
+                "verificationReference": "GLPI-887 / ficha RH",
+            },
         )
     assert response.status_code == 200
     mock_gateway.return_value.get_collaborator.assert_called_once_with("00001")
@@ -225,6 +229,7 @@ def test_admin_hr_mapping_validates_rh_and_audits(
         user_id=uid, registration="00001", verified_by_user_id=actor
     )
     uow.audits.log.assert_called_once()
+    assert uow.audits.log.call_args.args[0]["payload"]["verification_reference"] == "GLPI-887 / ficha RH"
 
 
 def test_admin_read_requires_manage(client):
@@ -254,3 +259,22 @@ def test_inactive_rh_collaborator_never_exposes_core_uuid():
     assert result["members"][0]["active"] is False
     assert result["members"][0]["coreUserId"] is None
     assert result["members"][0]["identityStatus"] == "unmapped"
+
+
+def test_hr_mapping_rejects_bad_evidence_reference_before_db(client, app):
+    uid = uuid4()
+    with app.app_context(), client:
+        g.current_user = SimpleNamespace(
+            id=str(uuid4()),
+            is_superadmin=False,
+            permissions=["rbac.manage", "users.manage"],
+        )
+        response = client.put(
+            f"/admin/organization/users/{uid}/hr-registration",
+            json={
+                "registration": "00001",
+                "confirmIdentity": True,
+                "verificationReference": "invalid\\nline",
+            },
+        )
+    assert response.status_code == 422
