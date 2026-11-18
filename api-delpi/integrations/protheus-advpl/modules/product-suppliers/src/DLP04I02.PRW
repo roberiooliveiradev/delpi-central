@@ -29,7 +29,10 @@
                       separada desta fachada).
      DELETE         = BLOCKED — a060VldGrv oficial rejeita salvar modelo
                       com todas as linhas excluidas (ultimo vinculo);
-                      semantica de exclusao pendente de ratificacao.
+                      o mesmo callback tambem rejeita GRID VAZIO
+                      (Length()==0): inclusao exige sempre uma linha e
+                      UPDATE falha fechado se a linha nao carregar.
+                      Semantica de exclusao pendente de ratificacao.
                       Retorna 501 explicito — nunca RecLock/DbDelete.
 
    IDENTIDADE SA5 (PK oficial do modelo — imutavel em UPDATE):
@@ -41,8 +44,13 @@
    LIMITES / VALIDAR NO TST01:
      - Assinatura exata de Load() do MPFormModel para carga da linha
        existente (UPDATE) — parametros marcados VALIDAR NO TST01.
-     - a060LinOk le M->A5_PRODUTO/M->A5_REFGRD (contexto de tela): em
-       REST sem view, comportamento do dup-check = VALIDAR NO TST01.
+     - a060LinOk executa o dup-check apenas em isInserted() e le
+       M->A5_PRODUTO/M->A5_REFGRD (contexto de tela): em REST sem view,
+       M-> e indefinido — dup-check pode validar chave incompleta ou
+       falhar. Sem preencher memvars artificialmente (proibido pela
+       task); comportamento exato = VALIDAR NO TST01.
+     - a060VldGrv chama Help() (UI): comportamento fora de tela =
+       VALIDAR NO TST01.
      - API de erro do modelo (GetErrorMessage) = VALIDAR NO TST01.
      - Presenca compilada do modelo 'DMATA061' e PEs ativos no RPO.
      - Compilacao/homologacao: pendente (TST01, equipe ERP).

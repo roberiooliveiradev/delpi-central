@@ -44,3 +44,37 @@ linhas `DMdGridSA5` e confirma pelo commit oficial do modelo.
   browse×modelo não comprovada — não presumir.
 - Política DELETE: permanece **bloqueada por contrato** até semântica
   oficial + aprovação do owner.
+
+## RQ-01 — Matriz de evidência por API MVC (G2-B2, rodada 2)
+
+| API | Assinatura usada | Evidência | Status |
+|---|---|---|---|
+| `FWLoadModel('DMATA061')` | função → oModel | `ViewDef` do fonte oficial (linha ~198) | PROVEN_SOURCE |
+| `oModel:SetOperation(nOp)` | method | contrato MPFormModel (FWMVCDEF) | FRAMEWORK — VALIDAR NO TST01 |
+| `oModel:Activate()` | method | contrato MPFormModel | FRAMEWORK — VALIDAR NO TST01 |
+| `oModel:GetModel(id)` | `GetModel('DMdGridSA5')` | `a060VldGrv` no fonte oficial | PROVEN_SOURCE |
+| `oModel:GetValue(field)` | grid/header | `a060LinOk` no fonte oficial | PROVEN_SOURCE |
+| `sub:SetValue(field,val)` | grid/header | framework; `SetValue` não aparece no fonte | FRAMEWORK — VALIDAR NO TST01 |
+| `grid:AddLine()` | method | framework (linhas do grid) | FRAMEWORK — VALIDAR NO TST01 |
+| `grid:Length()/:GoLine/:IsDeleted` | methods | `a060VldGrv` no fonte oficial | PROVEN_SOURCE |
+| `line:isInserted()` | method | `a060LinOk` no fonte oficial | PROVEN_SOURCE |
+| `oModel:VldData()` | method | framework (bPreValidacao/bPosValidacao existem) | FRAMEWORK — VALIDAR NO TST01 |
+| `oModel:CommitData()` | method | framework | FRAMEWORK — VALIDAR NO TST01 |
+| `oModel:DeActivate()` | method | framework | FRAMEWORK — VALIDAR NO TST01 |
+| `oModel:GetErrorMessage()` | method | framework — forma exata do retorno incerta | VALIDAR NO TST01 |
+| `oModel:Load(...)` | não usado | assinatura para carga por PK incerta | VALIDAR NO TST01 (evitado) |
+
+## Achados da rodada 2 (fonte oficial)
+
+- `a060VldGrv` falha quando `Length()==nDeleted` — inclui o caso
+  **grid vazio (0==0)**: CREATE exige `AddLine`; UPDATE falha fechado se
+  as linhas não carregarem na ativação.
+- `a060LinOk` é `bLinOk` do grid (`AddGrid`, linha ~143); roda dup-check
+  `ExistChav` apenas em `isInserted()`, lendo `M->A5_PRODUTO`/`M->A5_REFGRD`
+  do contexto de tela. Sem view, `M->` é indefinido → dup-check pode
+  validar chave incompleta ou falhar — VALIDAR NO TST01, memvars não são
+  preenchidos artificialmente.
+- `a060VldGrv` chama `Help()` (UI) no caminho de erro — comportamento
+  fora de tela = VALIDAR NO TST01.
+- Relação oficial propaga `A5_FILIAL (xFilial)`, `A5_PRODUTO`, `A5_REFGRD`
+  do header ao grid — o fonte não precisa reescrevê-los por linha.
