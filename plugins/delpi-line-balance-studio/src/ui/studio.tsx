@@ -4,7 +4,6 @@ import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import {
   ActionButton,
-  BrandMark,
   PageHeader,
   pageHeaderTitleRowBemClasses,
   DataTable,
@@ -394,8 +393,9 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.reactRoot?.render(
       <div className="studio" key={this.studyRevision}>
         <header className="top">
-          <div className="brand"><BrandMark className="brand-mark" />
-            <div><strong>Line Balance Studio</strong><small>DELPI · Engenharia de Processos</small></div>
+          <div className="brand">
+            <strong>Balanceamento de Linha</strong>
+            <small>DELPI · Engenharia de Processos</small>
           </div>
           <StatusBadge classNames={badgeClasses} label="Rascunho manual" variant="info" />
         </header>

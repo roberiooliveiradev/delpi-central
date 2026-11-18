@@ -23,7 +23,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 .studio { background: var(--app-canvas, Canvas); min-width: 0; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px max(18px, calc((100% - 1220px) / 2)); background: var(--surface-2, Canvas); color: var(--text, CanvasText); }
-.brand { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.brand { min-width: 0; }
 .brand strong { font-size: 17px; font-weight: 680; letter-spacing: -.025em; }
 .brand small { display: block; }
 .brand small { color: var(--text-muted); font-size: 11px; }
@@ -40,7 +40,5 @@
 
 }
 @media (max-width: 385px) {
-  .brand { gap: 8px; white-space: normal; }
   .brand strong { font-size: 15px; }
 }
-.brand-mark { width: 54px; height: 34px; flex-shrink: 0; background: var(--secundary); border-radius: 8px; }

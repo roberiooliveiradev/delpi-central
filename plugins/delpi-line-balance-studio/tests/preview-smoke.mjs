@@ -34,6 +34,10 @@ try {
     assert.equal((await trigger.textContent()).trim(), option);
   };
   await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
+  assert.equal(await page.title(), "Balanceamento de Linha · DELPI");
+  assert.match(await host.locator(".top").textContent(), /Balanceamento de Linha/);
+  assert.match(await host.locator(".top").textContent(), /DELPI · Engenharia de Processos/);
+  assert.equal(await host.locator(".top svg").count(), 0);
   const conditionsButton = host.getByRole("button", { name: "Condições de produção" });
   assert.match(await conditionsButton.getAttribute("class"), /delpi-ui-action-btn/);
   assert.match(await selectTrigger("Cenário").getAttribute("class"), /delpi-ui-select__trigger/);
