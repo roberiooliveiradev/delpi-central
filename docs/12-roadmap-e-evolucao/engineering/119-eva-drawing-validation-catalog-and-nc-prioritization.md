@@ -6759,3 +6759,38 @@ TECHNICAL_HOMOLOGATION=PENDING
 **Prova pós-deploy no container produtivo:** mesmo PDF (`sha 9b64ae20…`) via `run_pipeline_isolated` + `build_document_understanding` → **11 candidatos** (pág.1: `A2,A7,A3,A1,AA,A5,A1` — paridade com baseline interno de 7; pág.2: `AA,60,LL,E` detecção raw conservadora), `geometry_regions` restaurada, 207 tokens. `_int_page_keyed` confirmado carregado na imagem.
 
 **Estado final:** `DRIFT01_FIX_VERIFIED_LIVE_MCP_VALIDATION_PENDING` — a prova final pelo endpoint oficial (`drawing.runtime_status`/`job_list`/`product.drawing_understanding` com identidade delegada ChatGPT) exige sessão ChatGPT — Coordination; executor não possui token delegado. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`, `GT-01` continua `OWNER_BLOCKED`; Issue #131 pendente (`gh` sem auth) — sem alegação de homologação.
+
+### 94.42.13 E1/VAL-01 — B1-R2: Real Drawing Detection Recovery (90480120)
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B1R2-REAL-DRAWING-DETECTION-RECOVERY-AND-VISUAL-GT-01`
+
+**Documento:** `90480120.pdf`, SHA `9b64ae20…555cd8`, 2 páginas, 316317 bytes, mtime 2026-10-26. NC histórica 21/10/2026 (troca de letras de balões) — `NC_STATUS=DONE`, `CORRECTED_DRAWING_REFERENCE=NOT_VERIFIED` (fileserver `/mnt/fileserver/desenhos/` é plano; nenhuma pasta/versão "Corrigido" encontrada em fonte autorizada).
+
+**Baseline (job MCP `aj-6ce3f56fb6be4604`, pós-DRIFT-01):** p1 `A2,A7,A3,A1,AA,A5,A1` (7); p2 `AA,60,LL,E` (4). Total 11.
+
+**Inventário visual DRAFT (annotator devin-cli, OWNER_BLOCKED — `eva-val01-g1/annotations-balloon/90480120_p{1,2}.json`):** p1 = 10 ocorrências (`A3,A7,A1,A6,A2,AA,A5,A1,A6,A2` — A1/A2/A6 duplicados em duas vistas); p2 = 4 (`A8,AA,A9,A4`).
+
+**Primeiro ponto de falha por ocorrência:**
+
+- `A6`×2, `A2`(2ª ocorr.), `A8`, `A9`, `A4`: OCR Paddle emitiu `a6)`, `(a2)`, `a8)`, `a9)`, `a4)` — o arco do círculo magenta sangra para o token como `(`/`)` → `isalnum()` rejeitava antes da contenção. Primitivas e círculos presentes — a perda era na validação do rótulo, não no OCR nem no OpenCV.
+- `60` (FP): elipse vermelha da cota `60±5` — o token `±5` está dentro do mesmo contorno colorido.
+- `LL` (FP): texto vertical "Delpi" do logo dentro do contorno da tomada — transborda 77px o contorno casado.
+- `E` (FP candidato): letra dentro de círculo do detalhe do conector — ambiguidade genuína.
+
+**Causa raiz:** ausência de (1) normalização de sangria de contorno no rótulo, (2) guarda de transbordamento token×contorno, (3) evidência de tolerância `±` para distinguir cota ovalada de balão numérico.
+
+**Correção (boundary `_detect_balloon_candidates`, + fallback `identify_balloon_candidates`):**
+
+- Rótulo: `raw.strip("()[]")` antes de `isalnum()` — só colchetes nas pontas; `A-1` e `±1` seguem inválidos. `item_label` recebe o texto limpo; `ocr_raw_text` preserva a evidência original.
+- Transbordamento: token que excede o contorno > `max(10px, 0.28×min(prim))` não é rótulo dele (sangria legítima medida ≤8px/27px; `ll` excede 43–77px).
+- Tolerância: `±`-token dentro do mesmo contorno → `contour_contains_tolerance`; número solto sem `±` permanece candidato (balão numérico é convenção legítima).
+
+**Resultado no registro isolado real:** p1 = 10 candidatos (paridade total com o inventário DRAFT); p2 = `AA,A9,A8,E,A4` (4 reais + `E` ambíguo preservado); FPs `60`/`LL` eliminados com razões auditáveis; `e` permanece CANDIDATE (sem evidência para excluir). `balloon_table_validation`: 6→**13 MATCH_CANDIDATE**, `A5`/`E` NOT_LOCATED (A5 = percepção tabular pré-existente, achado para Coordination).
+
+**Métricas exploratórias (denominador DRAFT, não homologado):** recall real 8/14→14/14; precisão candidata 8/11→14/15 (E ambíguo).
+
+**Testes:** 6 novos em `test_balloon_b1.py` (sangria `A6)`/`(A2)`, tolerância no contorno, numérico sem `±`, transbordamento vertical, `A-1` negativo). Suíte engineering-api: **1694 pass / 21 skip**.
+
+**Limitações registradas:** `E` p2 permanece ambíguo; associação tabular de `A5` e códigos duplos em `A1` são achados de percepção tabular (encaminhar à Coordination); anotações são DRAFT até revisão da Engenharia; métricas não homologadas.
+
+**Estado:** `B1R2_FIX_VERIFIED_RELEASE_PENDING` — sem deploy (task proíbe); release candidate em main; validação live MCP e GT da Engenharia pendentes. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.

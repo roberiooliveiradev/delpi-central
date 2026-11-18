@@ -527,7 +527,11 @@ def identify_balloon_candidates(u: dict) -> list[dict]:
     for circ in circles:
         cbox = circ.get("bounding_box_px") or circ.get("box_px") or []
         for t in toks:
-            txt = (t.get("normalized_text") or t.get("text") or "").strip()
+            txt = (t.get("normalized_text") or t.get("text") or "")
+            # B1-R2: mesma sangria de contorno do caminho canônico —
+            # '(' / ')' do círculo absorvidos no token não fazem parte
+            # do rótulo.
+            txt = txt.strip().strip("()[]")
             tbox = t.get("bounding_box_px") or []
             if 1 <= len(txt) <= 3 and txt.isalnum() and _inside(tbox, cbox):
                 out.append(

@@ -1854,6 +1854,12 @@ _BALLOON_GLYPH_FILL_MIN = 0.60
 # mínima: a caixa OCR do rótulo pode exceder o interior do contorno
 # (~1,3× medido em desenho real com padding de descender).
 _BALLOON_MIN_PRIM_PX = 24.0
+# Quanto a caixa OCR pode transbordar o contorno e ainda ser o rótulo
+# dele — padding de descender/kerning excede ~0,24× do contorno em
+# desenho real (90264311: 27px/113px); texto que excede bastante o
+# contorno (rótulo vertical sobre a peça, ≥0,38×) não é rótulo dele.
+_BALLOON_LABEL_OVERFLOW_FRAC = 0.28
+_BALLOON_LABEL_OVERFLOW_MIN_PX = 10.0
 
 
 def _xyxy_of(box: list[float] | None) -> list[float] | None:
@@ -1929,11 +1935,29 @@ def _detect_balloon_candidates(
         b for b in (_xyxy_of(d) for d in (dimension_boxes or [])) if b
     ]
     seen: set = set()
+
+    def _tolerance_in_contour(cb: list[float]) -> bool:
+        for t2 in annotated:
+            if not (t2.get("text") or "").strip().startswith("±"):
+                continue
+            b2 = _xyxy_of(t2.get("bounding_box_px"))
+            if b2 is None:
+                continue
+            cx2, cy2 = (b2[0] + b2[2]) / 2, (b2[1] + b2[3]) / 2
+            if cb[0] <= cx2 <= cb[2] and cb[1] <= cy2 <= cb[3]:
+                return True
+        return False
+
     for a in annotated:
         if a.get("region") not in {"drawing_area", "notes"}:
             continue
         raw = (a.get("text") or "").strip()
-        label = raw.upper()
+        # B1-R2: o contorno do balão sangra para o token OCR como
+        # '(' / ')' / '[' / ')' — ex.: ``a6)``, ``(a2)``. A sangria
+        # é artefato do contorno, não do rótulo: só colchetes nas
+        # pontas são removidos; pontuação interna ('a-1') continua
+        # invalidando o rótulo.
+        label = raw.strip("()[]").upper()
         if not (
             1 <= len(label) <= 3
             and label.isascii()
@@ -1956,9 +1980,23 @@ def _detect_balloon_candidates(
             tarea = (tb[2] - tb[0]) * (tb[3] - tb[1])
             if tarea <= 0 or inter < tarea * 0.5:
                 continue
+            # B1-R2: o rótulo do balão está contido no contorno — a
+            # sangria admissível é só o padding da caixa OCR. Token
+            # que excede bastante o contorno (texto vertical sobre a
+            # peça) não é rótulo dele; tenta o próximo contorno.
+            ovf = max(
+                cb[0] - tb[0], tb[2] - cb[2],
+                cb[1] - tb[1], tb[3] - cb[3],
+            )
+            if ovf > max(
+                _BALLOON_LABEL_OVERFLOW_MIN_PX,
+                _BALLOON_LABEL_OVERFLOW_FRAC * min(cb[2] - cb[0], cb[3] - cb[1]),
+            ):
+                continue
             cand = {
-                "item_label": raw,
+                "item_label": raw.strip("()[]"),
                 "normalized_label": label,
+                "ocr_raw_text": raw,
                 "page": page,
                 "bounding_box_px": cb,
                 "token_bounding_box_px": tb,
@@ -1997,6 +2035,12 @@ def _detect_balloon_candidates(
                 for db in dim_boxes
             ):
                 reason = "token_is_dimension_candidate"
+            elif _tolerance_in_contour(cb):
+                # B1-R2: tolerância '±' dentro do mesmo contorno —
+                # cota ovalada ('60±5'), não rótulo de balão. Número
+                # solto sem '±' permanece candidato: balão numérico
+                # é convenção legítima.
+                reason = "contour_contains_tolerance"
             else:
                 cx, cy = (cb[0] + cb[2]) / 2, (cb[1] + cb[3]) / 2
                 if (

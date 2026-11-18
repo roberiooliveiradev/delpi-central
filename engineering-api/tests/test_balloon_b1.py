@@ -278,6 +278,93 @@ def test_b1_document_level_missing_page_primitives_abstains():
     assert u["balloon_candidates"] == []
 
 
+# ---------- B1-R2 — recuperação em desenho real (90480120) --------
+
+
+def test_b1r2_contour_bleed_paren_suffix_recovers_label():
+    """Caso real 90480120: o arco do círculo magenta sangra para o
+    token OCR ('a6)', 'a8)', 'a9)', 'a4)') — não é parte do rótulo."""
+    tokens = [_tok("A6)", 1063, 383, 1110, 420)]
+    prims = {"circles": [_circle(1067, 380, 1109, 422)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert [b["normalized_label"] for b in u["balloon_candidates"]] == [
+        "A6"]
+    b = u["balloon_candidates"][0]
+    assert b["item_label"] == "A6"
+    assert b["ocr_raw_text"] == "A6)"
+
+
+def test_b1r2_contour_bleed_wrapped_parens_recovers_label():
+    """Sangria dos dois lados do contorno: '(a2)' → rótulo A2."""
+    tokens = [_tok("(A2)", 1521, 1153, 1575, 1195)]
+    prims = {"circles": [_circle(1522, 1147, 1576, 1201)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert [b["normalized_label"] for b in u["balloon_candidates"]] == [
+        "A2"]
+
+
+def test_b1r2_tolerance_in_contour_excludes_dimension_oval():
+    """Token '±5' dentro do mesmo contorno → elipse é cota ('60±5'),
+    não balão — excluído com razão auditável."""
+    tokens = [
+        _tok("60", 1800, 988, 1861, 1044),
+        _tok("±5", 1849, 984, 1884, 1015),
+    ]
+    prims = {"enclosures": [_enclosure(1810, 984, 1877, 1039)],
+             "circles": []}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+    reasons = {e["excluded_reason"] for e in u["balloon_excluded"]}
+    assert "contour_contains_tolerance" in reasons
+
+
+def test_b1r2_numeric_balloon_without_tolerance_stays_candidate():
+    """Número solto sem '±' continua candidato — balão numérico é
+    convenção legítima; a regra não bane dígitos."""
+    tokens = [_tok("60", 1800, 988, 1861, 1044)]
+    prims = {"enclosures": [_enclosure(1810, 984, 1877, 1039)],
+             "circles": []}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert [b["normalized_label"] for b in u["balloon_candidates"]] == [
+        "60"]
+
+
+def test_b1r2_vertical_text_overflowing_contour_not_label():
+    """Texto vertical sobre a peça ('ll' do logotipo) excede o contorno
+    em 77px — não é rótulo daquele contorno."""
+    tokens = [_tok("ll", 296, 1046, 398, 1234)]
+    prims = {"enclosures": [_enclosure(303, 1041, 419, 1157)],
+             "circles": []}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(2339, 1653), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+
+
+def test_b1r2_inner_punctuation_still_not_label():
+    """Sangria é só nas pontas: 'a-1' continua inválido (negativo)."""
+    tokens = [_tok("A-1", 600, 400, 640, 430)]
+    prims = {"circles": [_circle(595, 395, 645, 435)]}
+    u = build_understanding(
+        tokens, document_hash=SHA, page=1,
+        render_size_px=(1000, 700), graphic_primitives=prims,
+    )
+    assert u["balloon_candidates"] == []
+
+
 def test_b1_legacy_dict_and_list_primitive_shapes():
     """identify_balloon_candidates aceita dict real e lista tipada."""
     toks = [{"normalized_text": "7", "region": "drawing_area",
