@@ -88,6 +88,7 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
             "ExecStart": "/usr/bin/false",
             "InaccessiblePaths": "/run/docker.sock /var/run/docker.sock",
             "ReadOnlyPaths": "/run/atlas-hml-signer",
+            "ReadWritePaths": "/run/atlas-hml-signer-socket /var/lib/atlas-hml-signer-state",
         },
     },
     "atlas-hml-nonroot-bridge.service.review": {
@@ -107,12 +108,7 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
     "atlas-hml-local-signer.socket.review": {
         "Unit": {
             **_SIGNER_UNIT,
-            "Description": "ATLAS HML LOCAL SIGNER SOCKET REVIEW ONLY",
-        },
-        "Socket": {
-            "ListenStream": "/run/atlas-hml-signer/sign.sock",
-            "SocketUser": "root", "SocketGroup": "atlas-hml-bridge",
-            "SocketMode": "0660", "Accept": "no",
+            "Description": "ATLAS HML SIGNER SOCKET ACTIVATION SUPERSEDED REVIEW ONLY",
         },
     },
 }
@@ -125,6 +121,7 @@ _ALWAYS_BLOCKS = (
     "SYSTEMD_HOST_SANDBOX_NOT_ATTESTED",
     "ROOT_PRODUCER_DOCKER_PRIVILEGE_UNREVIEWED",
     "SOCKET_PARENT_OWNER_NOT_ATTESTED",
+    "ROOT_PREBOUND_SIGNER_SOCKET_REJECTED",
     "RAW_DOCKER_ALIASES_AND_FDS_NOT_EXHAUSTIVELY_ATTESTED",
     "SNAPSHOT_ORIGIN_AND_REPLAY_NOT_ATTESTED",
     "INDEPENDENT_SECURITY_REVIEW_REQUIRED",

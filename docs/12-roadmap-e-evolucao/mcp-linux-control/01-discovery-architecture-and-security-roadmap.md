@@ -749,3 +749,12 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Runbook 55 define modelo UID/DAC/UDS e revisão de systemd não instalável, plano de bootstrap com âncora externa e bloqueio em rollback, baseline somente leitura, condições STOP e rollback estritamente limitado a ATLAS; inclui ressalva do risco root no mesmo host.
 - `AGENTS.md` passa a distinguir explicitamente a governança ATLAS de branch/PR/manual merge/sem deploy automático. CI Linux/Docker inclui testes negativos do contrato offline; DELPI Verifier específico da Etapa 64 após CI.
 - Nenhuma chave, conta, checkpoint ou serviço real criado; nenhuma operação Docker/host; SEC-01..10, aceite operacional, perímetro real e rollback ensaiado pendentes. Quatro MCP READ, PREPARE/ACT OFF. **Progresso conservador 58%; não executar pull/deploy.**
+
+## Etapa 65 | 17/11/2026 | Correção SO_PEERCRED signer-owned + CI com UIDs distintos
+
+**Fonte:** issue #232 e [runbook 56](./56-atlas-hml-b-etapa65-signersocket-peer-real.md). **SOURCE-ONLY; status BLOCKED; progresso de referência 58%.**
+- Etapa 64 mesclada na main, PR #272; DELPI Verifier ACCEPT_WITH_RESIDUAL sem ordens de correção.
+- Linux AF_UNIX SO_PEERCRED pode refletir o UID root que chamou listen(), mesmo que o serviço herde o FD sob UID de signer. Fica **rejeitado** o uso de socket activation root para o signer; não permitir root como cliente nem enfraquecer peer verification.
+- Blueprints .review: signer.socket sem seção Socket; signer.service mantém ExecStart=/usr/bin/false e condição impossível; planejamento de socket parent signer:bridge 02750 e arquivo 0660, com chave e store isolados.
+- Novo teste Linux elevado no runner GitHub CI descarta UID idêntico: processos UID 61021 (signer) e UID 61022 (bridge), SO_PEERCRED, chaves/Docker negados à bridge e gerações 1->2 após restart. Nunca cria usuários nem toca srv-api.
+- Exigem-se gates reais: SEC-01/exceção, SEC-02..10, unidades operacionais revisadas, primeiro checkpoint com âncora externa, autorização de chave/GLPI e instalação HML, baseline PROD e rollback. Quatro MCP READ, PREPARE/ACT OFF. **NÃO executar pull/deploy.**
