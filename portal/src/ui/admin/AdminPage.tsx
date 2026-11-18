@@ -78,7 +78,7 @@ export const AdminPage = () => {
     () => [
       { key: "stats" as const, label: "Estatísticas", icon: BarChart3 },
       { key: "users" as const, label: "Usuários", icon: Users },
-      { key: "identity" as const, label: "Identidades RH", icon: Fingerprint },
+      { key: "identity" as const, label: "Vincular cadastros", icon: Fingerprint },
       { key: "apps" as const, label: "Aplicações", icon: LayoutGrid },
       { key: "roles" as const, label: "Papéis", icon: Shield },
       { key: "groups" as const, label: "Grupos", icon: UsersRound },
