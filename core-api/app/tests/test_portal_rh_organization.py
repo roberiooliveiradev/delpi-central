@@ -231,3 +231,26 @@ def test_admin_read_requires_manage(client):
     assert client.get(
         f"/admin/organization/users/{uuid4()}/hr-registration"
     ).status_code == 401
+
+
+def test_inactive_rh_collaborator_never_exposes_core_uuid():
+    gateway = MagicMock()
+    inactive_member = _member("00002")
+    inactive_member["active"] = False
+    gateway.get_team.return_value = {
+        "manager": _person(),
+        "members": [inactive_member],
+        "includeIndirect": False,
+        "includeInactive": True,
+    }
+    mappings = MagicMock()
+    mappings.get_core_user_ids.return_value = {
+        "00001": "core-manager",
+        "00002": "core-inactive",
+    }
+    result = OrganizationTeamService(gateway, mappings).get_team(
+        "00001", include_inactive=True
+    )
+    assert result["members"][0]["active"] is False
+    assert result["members"][0]["coreUserId"] is None
+    assert result["members"][0]["identityStatus"] == "unmapped"
