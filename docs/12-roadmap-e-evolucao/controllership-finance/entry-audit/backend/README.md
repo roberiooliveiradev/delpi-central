@@ -634,3 +634,48 @@ Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga
 `entry_audit_xml_cache`: `access_key` PK, `model`, `xml_gzip` BYTEA, `fetched_at`.
 
 Reexecução da filial apaga documento, ocorrência, sem par, CT-e e TES daquele `run` e grava de novo. `entry_audit_status` fica.
+
+## 7. Contrato dos ajustes do Fiscal (T15 — alvo, decisões FA-1 a FA-18)
+
+Detalhe de implementação nas etapas da [trilha dos ajustes](../fiscal-adjustments/track.md). Tudo aditivo; campos e rotas novos nascem atrás das flags FA-18 e de `ENTRY_AUDIT_ENABLED`.
+
+### 7.1 api-delpi — aditivos
+
+`documents` e `documents_by_access_keys`: campos novos `participant_kind` (`customer` quando `F1_TIPO IN ('B','D')`, senão `supplier`), `participant_name`, `participant_tax_id`, `participant_state` — lidos de `SA1010` (`A1_COD`/`A1_LOJA` = `F1_FORNECE`/`F1_LOJA`) nos B/D e de `SA2010` nos demais. `invoice_type` e `supplier_*` permanecem.
+
+| Rota | `operationId` | `data.items[]` |
+|---|---|---|
+| `GET /financeiro/entry-audit/tax-items` | `list_entry_audit_tax_items` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `tax` (`CBSFED`/`IBSEST`/`IBSMUN`), `rule_code` (`F2B_REGRA`), `base`, `rate`, `amount` — linhas `F2D010` ligadas por `SD1.D1_IDTRIB = F2D.F2D_IDREL` e `F2D.F2D_IDCAD = F2B.F2B_ID`. Filtros `branch`, `received_from`, `received_to` |
+| `GET /financeiro/entry-audit/documents/by-access-keys` | `list_entry_audit_documents_by_keys` | já existe (aditivo `participant_*`) |
+| `GET /financeiro/entry-audit/items/by-access-keys` | `list_entry_audit_items_by_keys` | mesmos campos de `/items`; body/query com chaves de acesso |
+| `GET /financeiro/entry-audit/fiscal-book/by-access-keys` | `list_entry_audit_book_by_keys` | mesmos campos de `/fiscal-book` |
+| `GET /financeiro/entry-audit/tax-book` | `list_entry_audit_tax_book` | linhas `CD2010` da reforma por item (`CD2_IMP`, `CD2_CST`, `CD2_BC`, `CD2_ALIQ`, `CD2_VLTRIB`), por período/filial e por chave — fonte da regra de livro IBS/CBS (FA-12) |
+
+### 7.2 BFF — ocorrência por causa (onda 2)
+
+`Occurrence` v2: `cause_id`, `items[]` (`item`, `protheus_value`, `xml_value`, `difference`), `total_difference`, `followers[]` (ocorrências acompanhantes, como «Acompanha…»), `resolution_source` (`manual`|`auto`), `persists_after_manual` (bool), `last_checked_at`. Severidade da causa = a maior dos itens. Chave estável v2: `{branch}|{access_key}|{cause_id}` (sem chave: mesma forma doc/série/participante atual). A v1 permanece legível pela migração FA-6.
+
+Leitura: `occurrences` e `occurrence/{key}` devolvem a causa completa; `resolve`/`reopen` agem na causa; exportação uma linha por item com coluna «Causa» (FA-16).
+
+| Rota | Método | `data` |
+|---|---|---|
+| `GET /entry-audit/pending` | GET | fila consolidada por chave de acesso + `cause_id` (FA-5): a ocorrência da análise mais recente de cada causa pendente. Filtros `date_from`, `date_to`, `branch`, `severity`; paginação padrão |
+| `POST /entry-audit/reverify` | POST | escopo `{analysis_id}` ou `{date_from, date_to, branches}` ou `{occurrence_key}`. 202; execução assíncrona pelo worker existente (tipo de job novo, sem agendador — FA-13). `controllership-finance.access`; também `entry_audit.reverify` direto na CLARA (FA-17) |
+
+KPIs FA-7 em `summary`, `trend` e `pending`, recalculados a cada mudança de status: `clean` (nunca teve causa), `corrected` (todas as causas resolvidas), `pending` (com divergência pendente), mais `pending_high`, `pending_medium` e `pending_difference_total`.
+
+Novos `rule_id` (Alta; nascem já por causa): `ibscbs.xml_not_posted`, `ibscbs.posting_missing`, `ibscbs.value_mismatch`, `ibscbs.book_mismatch` (esta só após `ENTRY_AUDIT_IBSCBS_BOOK_FROM`).
+
+### 7.3 Configuração — flags FA-18
+
+| Variável | Padrão | Papel |
+|---|---|---|
+| `ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED` | `false` | onda 1 — participante por `F1_TIPO` |
+| `ENTRY_AUDIT_INPUT_TES` | vazio | onda 1 — TES de insumo (exclui `coherence.ipi_on_consumption`); vazio = desligado |
+| `ENTRY_AUDIT_CAUSE_GROUPING_ENABLED` | `false` | onda 2 — ocorrência por causa, fila e KPIs FA-7 |
+| `ENTRY_AUDIT_IBSCBS_ENABLED` | `false` | onda 3 — regras `ibscbs.*` |
+| `ENTRY_AUDIT_IBSCBS_EXCEPTIONS` | vazio | FA-9 — exceções por CRT do emitente, CFOP ou TES |
+| `ENTRY_AUDIT_IBSCBS_BOOK_FROM` | `2027-01-01` | FA-12 — início da regra de livro IBS/CBS (fonte `CD2010`) |
+| `ENTRY_AUDIT_REVERIFY_ENABLED` | `false` | onda 4 — `POST /entry-audit/reverify` e `entry_audit.reverify` |
+
+Cada análise continua gravando o mapa de configuração em `config_snapshot` (inclui `input_tes` e as flags da rodada).

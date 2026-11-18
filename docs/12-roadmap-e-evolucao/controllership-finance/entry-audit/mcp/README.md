@@ -78,11 +78,13 @@ Mesmas seis tools; só entradas novas no catálogo, todas com gate `controllersh
 | `read` | `entry_audit.occurrences` | — | `ref` + filtros + `page` | lista de ocorrências |
 | `read` | `entry_audit.occurrence` | — | `ref` (análise) + `key` | detalhe com por quê, o que fazer, regra e histórico |
 | `read` | `entry_audit.documents` / `entry_audit.unmatched` / `entry_audit.cte` / `entry_audit.tes` | — | `ref` + filtros | as demais abas |
-| `analyze` | `analysis_type=entry_audit_findings` | — | `refs[0]` ou `parameters.ref`, filtros, `compare_to` (outra análise, opcional) | achados agrupados pela causa da regra (TES, cadastro, fornecedor, lançamento). A TES entra na frase só quando a ocorrência tem TES |
+| `analyze` | `analysis_type=entry_audit_findings` | — | `refs[0]` ou `parameters.ref`, filtros, `compare_to` (outra análise, opcional) | achados agrupados pela causa da regra (TES, cadastro, participante, lançamento); com a onda 2 (FA-4) as contagens são de **causas**, não de linhas de ocorrência |
 | `execute` | `entry_audit.run` | **direto** (D6) | `date_from`, `date_to`, `document_types` (padrão: os da página), `branches` (padrão: todas permitidas) | executa a auditoria; idempotente |
 | `execute` | `entry_audit.rerun` | **direto** | `ref`, `branches` | reexecuta, inclusive só a filial que falhou |
 | `execute` | `entry_audit.resolve` / `entry_audit.reopen` | **direto** | `key`, `kind` (`occurrence`\|`unmatched`) | status compartilhado |
-| `knowledge` | domínio `controllership` | — | `query` | fichas AE-00 a AE-15 |
+| `read` | `entry_audit.pending` | — | `date_from`, `date_to`, `branch`, `severity`, `page` | fila consolidada por chave de acesso + causa (FA-5), ocorrência da análise mais recente — atrás de `ENTRY_AUDIT_CAUSE_GROUPING_ENABLED` |
+| `execute` | `entry_audit.reverify` | **direto** (FA-17) | `ref` (análise) ou `date_from`, `date_to`, `branches` ou `key` (uma ocorrência) | reverificação sob demanda das notas com causa pendente ou resolvida à mão (FA-13/FA-14/FA-15) — atrás de `ENTRY_AUDIT_REVERIFY_ENABLED` |
+| `knowledge` | domínio `controllership` | — | `query` | fichas AE-00 a AE-17 (AE-16 = IBS/CBS, AE-17 = reverificação e indicadores) |
 
 Cada entrada tem `description` curta no catálogo e contrato em `get_context(topic='schema')`, como as do LNF. Este catálogo está aceito na T1. A ocorrência lida traz `rule_id` (backend §6.5) além do nome da skill. Com `ENTRY_AUDIT_ENABLED` falso as entradas não aparecem no catálogo. As seis tools e as assinaturas não mudam.
 

@@ -54,6 +54,7 @@ Limites do AS-IS: trabalho manual a cada execução; SF4 pode estar desatualizad
 | D15 | HML | o Cursor sobe containers que faltarem, registra manifestos no Core HML, cria usuários de teste e espelha no Keycloak de HML os clientes de serviço e escopos que existem em PROD (segredo novo, só no `.env.hml`) para não travar os testes; nunca em PROD | **DECIDIDO** (owner, 2026-11-14) |
 | D16 | Portal Financeiro | será fundido ao Controladoria & Finanças, mantendo `controllership-finance.access`; é um fluxo futuro, fora desta trilha | **DECIDIDO** (owner, 2026-11-14) |
 | D14 | Conhecimento | fichas AE-00 a AE-15 no domínio `controllership` do corpus | **DECIDIDO** (owner aprovou a trilha, 2026-11-13) |
+| D17 | Ajustes do Fiscal | participante por tipo de nota (SA1 em B/D), IBS/CBS, exclusão por TES de insumo, uma ocorrência por causa e reverificação sob demanda — decisões FA-1 a FA-18 em [ADR-006](../adr/ADR-006-ajustes-fiscais-entry-audit.md), trilha em [fiscal-adjustments/](./fiscal-adjustments/track.md) | **DECIDIDO** (owner, 2026-11-18) |
 
 ## 4. Arquitetura (TARGET)
 

@@ -101,9 +101,60 @@ Total da NF-e: `total/IBSCBSTot` (`vBCIBSCBS`, `gIBS`, `gCBS`, …) ao lado de `
 
 ## 5. Riscos e aberturas levantados na T14
 
-1. SA1 não é autoridade absoluta no partido B/D: em 10/27 notas o CNPJ da SA1 difere do emitente do XML — a regra nova precisa verificar CNPJ/UF como a SA2 já faz, não assumir o cadastro.
-2. CST/cClassTrib por item só existem dentro do texto `F2B.F2B_DESC` — parsear descrição é frágil; contrato precisa decidir a fonte (regra F2B × grupo `IBSCBS` do XML).
+1. SA1 não é autoridade absoluta no partido B/D: em 10/27 notas o CNPJ da SA1 difere do emitente do XML — a leitura por participante (FA-1/FA-2) precisa verificar CNPJ/UF como a SA2 já faz, não assumir o cadastro.
+2. CST/cClassTrib por item no **lançamento** não existem fora do texto `F2B.F2B_DESC` — FA-11 decidiu não ler o texto; ver §6.3 (a T15 achou fonte estruturada no lado XML: `DKM`).
 3. Itens das TES 085/159 (tipo B) não geram linhas F2D — nessas notas o IBS/CBS só existe no XML.
 4. `summary.clean`/`divergent` conta documento com ocorrência **resolvida** como divergente — os «indicadores ao vivo» do ajuste 5 pedem regra nova, não só leitura.
-5. Ajuste 5 (reverificação automática) contraria a decisão D10 («sob demanda, em qualquer dia; sem agendamento») — exige decisão do owner/ADR antes de implementar.
-6. «B/D → SA1» já existe no `invoice_posting` (LNF): decidir o owner canônico do conceito para não nascer segunda implementação divergente (`centralized-rules-first`).
+5. Ajuste 3 (TES de insumo) é **exclusão, não regra nova** (FA-3): a lista `ENTRY_AUDIT_INPUT_TES` **suprime** `coherence.ipi_on_consumption` nessas TES; «Crédito de IPI acima do XML» e «IPI escriturado sem destaque» continuam para todas.
+6. «B/D → SA1» já existe no `invoice_posting` (LNF): owner canônico decidido em FA-1 (leitura na api-delpi; duplicação registrada no ADR-006).
+
+## 6. Inventário complementar da T15 (leitura, 2026-11-18)
+
+### 6.1 Participantes B/D — as 10 com CNPJ da SA1 ≠ emitente
+
+Classificação (FA-2; sem CNPJ no repositório — só raízes e contagens):
+
+| Categoria | Notas |
+|---|---|
+| (a) formulário próprio | 0 |
+| (b) emitente = própria empresa | **10** — todas: 9 na filial 01 contra o mesmo código/loja de cliente (emitente = estabelecimento da própria empresa em SC) e 1 na filial 02 (emitente = estabelecimento da própria empresa em ES) |
+| (c) mesma raiz, outro estabelecimento | 0 |
+| (d) raiz diferente | 0 — a raiz gravada na SA1 difere da do emitente em 10/10; o tipo (b) domina |
+
+Para (c)/(d) a pergunta era «existe outro código/loja na SA1 com o CNPJ do emitente?»: **sim em 10/10** — os dois estabelecimentos da própria empresa estão cadastrados na SA1 (um código por estabelecimento).
+
+**Projeção com FA-1/FA-2** (análise canônica 01–17/11): hoje `key.supplier_mismatch` ×6 e `coherence.cfop_vs_state` ×6, todas nas notas B da TES 085. Com o participante lido da SA1: as 16 notas da TES 085 e a da TES 201 casam CNPJ → as 6 Altas de fornecedor e os 6 de UF **zeram**; as 10 notas acima (TES 159 ×6, TES 120 ×4) ganham **Alta «cliente»** (CNPJ do cliente ≠ emitente). `cfop_vs_state` projetado ≈ **0** (UF da SA1 coerente com o CFOP em todas: participante SC + CFOP 1xxx, participante SP + CFOP 2901, participante SC + CFOP 2201 na filial ES). **Saldo: Altas de participante sobem de 6 para ~10** — aviso da Parte 4 registrado, segue (a regra do Fiscal prevê Alta «cliente»).
+
+### 6.2 IPI em consumo — as 4 `ipi_on_consumption` da análise canônica
+
+As 4 ocorrências são todas **TES 052** (NF-C em 2 itens, NF-D e mais uma nota da filial 01): **saem 4/4 com FA-3** (052 ∈ `ENTRY_AUDIT_INPUT_TES`). Continuam valendo para essas notas `item.ipi_credit_mismatch` e `header.ipi_not_booked`.
+
+### 6.3 CST/cClassTrib e livro — busca estruturada
+
+Critério: dicionário (`SX2`/`SX3`) e `INFORMATION_SCHEMA` sobre `F2B`, `F2D`, `F27`, `F28`, `CD2`, `SFT`, `SF3`, `SDT`, `DKM`, `SFX` e campos `D1_*`, `F2B_*`, `F2D_*` com `CST`/`CCLAS`/`CLASTR`/`IBS`/`CBS`. Search miss descartado por consulta direta a cada tabela.
+
+| Fonte | Resultado |
+|---|---|
+| Lançamento (SD1/F2B/F2D/F27/F28) | **sem coluna** de CST ou cClassTrib da reforma — SD1 tem só `D1_CLASFIS`/`D1_GRPCST`; a regra F2B guarda CST/cClassTrib só no texto `F2B_DESC` (FA-11 não o usa) |
+| `DKM010` «Tributos de Documentos» (`DKM_TABELA='SDT'`) | **fonte estruturada do lado XML**: `DKM_TRIB` ∈ {`CBS`, `IBSUF`, `IBSMun`, `IS`}, `DKM_CST`, `DKM_CLASTR` (=cClassTrib), `DKM_XMLBAS/XMLALQ/XMLVLR` — populado quando o XML foi importado ao Protheus (118 notas no período; o lado `DKM_BASE/ALIQ/VALOR` calculado veio zerado). A BFF já lê o XML, então a DKM é referência, não dependência |
+| `CD2010` «Livro digital de Impostos-SPED» | **fonte estruturada do livro** (FA-12): por item (`CD2_TPMOV='E'` + doc/série/fornecedor/loja/item), `CD2_IMP` ∈ {`CBSFED`, `IBSEST`} no período (855 + 855 linhas, 1.694 com valor>0), `CD2_CST`, `CD2_BC`, `CD2_ALIQ`, `CD2_VLTRIB`. `IBSMUN` existe na tabela mas sem linhas de entrada no período. A SFT continua sem colunas IBS/CBS — o livro da reforma é o CD2 |
+| `SFX0101` | «Complemento de comun/telecom» — fora de escopo, `FX_CCLASS` vazio |
+| `CJN`/`NSZ`/`NUQ`/`C38`/`CC3`/`DKM_*` | cadastros com coluna `*CCLASS*` vazios ou fora de domínio (CNAE, jurídico, NF-e modelo 21/22) |
+| `F2H010` apuração genérica | 1 linha (CBSFED, 08/2026) — não usada como fonte |
+
+Efeito nas decisões: FA-11 fica como decidida (sem CST/cClassTrib estruturado **no lançamento** → residual + de-para regra F2B mantido pelo Fiscal); FA-12 passa a ter fonte (`CD2010`) em vez de «sem fonte achada» — a regra do livro continua nascendo desligada (`ENTRY_AUDIT_IBSCBS_BOOK_FROM`).
+
+### 6.4 Volume IBS/CBS nas entradas de 01–17/11 (filiais 01+02)
+
+Itens sem linha F2D (de 2.083): 361, por TES — 040 ×142/158, 042 ×81/83, 204 ×42/42, 085 ×24/24, 156 ×17/17, 148 ×15/29, 083 ×11/11, 089 ×6/6, 159 ×6/6, 308 ×4/4, demais ≤4. Documentos com ao menos um item sem F2D: ~130.
+
+Matriz XML × lançamento (notas da SF1 com chave, 396 — 393 com XML no cache):
+
+| Modelo | XML com IBSCBS, sem F2D | XML com IBSCBS, com F2D | XML sem IBSCBS, sem F2D | XML sem IBSCBS, com F2D |
+|---|---|---|---|---|
+| NF-e | 49 | 156 | 13 | 70 |
+| CT-e | 89 | 16 | 0 | 0 |
+
+Leitura pelas regras FA-8: candidatos a `ibscbs.xml_not_posted` ≈ 138 documentos (49 NF-e + 89 CT-e); `ibscbs.posting_missing` ≈ 13 NF-e; `ibscbs.value_mismatch` ≈ até 172 (156 NF-e + 16 CT-e com os dois lados).
+
+NF-e **sem** IBSCBS no XML: 83 — **63 de emitente do Simples** (CRT=1) e 20 de outros regimes. Com `ENTRY_AUDIT_IBSCBS_EXCEPTIONS` vazia (FA-9), todas entram na regra — o volume de Altas do Simples é o maior bloco de `posting_missing`/«XML sem IBS/CBS» e merece destaque no report HML.
