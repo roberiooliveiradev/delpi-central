@@ -6907,3 +6907,44 @@ Invariantes: 15 candidatos / 9 excluídos / 10 linhas de tabela; `balloon_table_
 **Deploy (canônico, srv-api):** rollback tagueado `infra-engineering-api:pre-b2r2-bb5d05c7-rollback`; prod pull ff-only → `0bbfa241f3` (⊃ `3d5c489aa8`, WIP prod preservado); rebuild sequencial; `delpi-engineering-api` healthy, digest `86bf8f6953f6`, tag `b2r2-3d5c489aa8`; código verificado in-container; `/health` 200; limites preservados (subprocess, 16GB, 900s, concorrência 1).
 
 **Estado:** `B2R2_FIX_VERIFIED_LIVE_MCP_PENDING` — experimental, não homologação. Resíduos: leque do A5 converge num único ramo anexado (ramos não ancorados na borda não viram raiz); destino `NOT_IDENTIFIED` quando a extremidade não toca região registrada; endpoints ±1px; `ENGINEERING_APPROVAL=DRAFT`, `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`.
+
+### 94.42.17 E1/VAL-01 — B2-R2 / VAL-02: Retrospective Verification and Visual Target Evaluation
+
+**TASK_ID:** `EVA-E1-VAL01-B2R2-VAL02-INDEPENDENT-VERIFICATION-AND-VISUAL-TARGET-VALIDATION-01`
+
+**Baseline MCP (Coordination, job `aj-9a41ca4c69794678`, digest `86bf8f6953f6`, fonte `0bbfa241f3` ⊃ `3d5c489aa8`):** 15 candidatos / 14 matches / B3 14 INC + 1 NC; A5 CANDIDATE(4 segs, ep 2092,801, NOT_IDENTIFIED), A9 CANDIDATE(ep 2005,1086), A4 CANDIDATE(ep 2047,1216), A3/A8 CANDIDATE, E AMBIGUOUS.
+
+**RQ-VAL02-02 — verificação retroativa:** `devin` segue sem auth CLI; `cursor`/`auto`/`composer` seguem em usage limit (reset 02/12/2026). Pedido re-executado → `INCONCLUSIVE` (evidência atualizada preservada; veredito anterior não promovido).
+
+**RQ-VAL02-03/05 — inspeção visual Devin (render 200dpi, overlays orig×EVA; DEVIN_VISUAL_OBSERVATION, não GT):**
+
+| Balão | EVA (baseline) | Verdade visual | Veredito |
+|---|---|---|---|
+| A5 p1 | CANDIDATE→vértece peça | **leque de 3 ramos → 3 dots**; EVA encadeou ramo ~15° nas arestas da haste até vértice | PATH_MISMATCH + FALSE_CONNECTION + MISSED_BRANCH×2 |
+| A9 p2 | CANDIDATE (2005,1086) | diagonal→dot (1997,1085) | MATCH (~8px) |
+| A4 p2 | CANDIDATE (2047,1216) | líder real ~5°→dot (1990,1105); chanfro de peça anexou | FALSE_CONNECTION + líder perdido |
+| A3 p1 | CANDIDATE (148,599) | vertical contínua→2º dot (150,595) | MATCH (convenção multi-dot) |
+| A8 p2 | CANDIDATE (1045,1107) | vertical→dot (1045,1105) | MATCH (~2px) |
+| E p2 | AMBIGUOUS | arestas de região de detalhe | ambiguidade justificada |
+
+**Causas raiz provadas:**
+
+1. **Raiz sob o anel (understanding `_leader_roots`):** ponta dentro do interior do balão era rejeitada; líderes reais são traçados por baixo do anel (ramo A5 ~48° com raiz em (1897,922)). Fix: ponta dentro da caixa expandida (banda OU interior) conta como anexo; a regra "exatamente uma ponta anexada" continua rejeitando traços do próprio anel. `_LEADER_EDGE_INSET_PX` removido (semântica absorvida).
+2. **Líder quebrado na binarização (adapter):** o líder do A4 (~5°, tinta verde clara) fragmenta em 2 corridas ~30px com lacuna ~15px < `maxLineGap`; nenhuma chega a `minLineLength`. Fix: `maxLineGap` 6→12 — reconstrói como composto dentro da janela angular vigente. Zona cega ~2–8° permanece documentada (residual).
+3. **Avaliado e descartado:** máscara de saturação para líderes coloridos — inundaria segmentos com marcas de peças (vermelho/azul saturados); discriminação de matiz seria desenho-específica.
+
+**Resultado pós-fix no desenho real (container descartável, mesma imagem + mounts):**
+
+- **A4:** CANDIDATE, endpoint **(1990,1103) = dot real** — PATH corrigido (antes: falso endpoint no chanfro).
+- **A5:** **AMBIGUOUS, 4 raízes** ≈ os 3 ramos do leque + fragmento — multiplicidade preservada, sem endpoint falso promovido.
+- **A9/A3/A6/A7/A2(p1):** CANDIDATE→AMBIGUOUS — raízes extras são traços reais anexáveis (arestas de peça/compostos gap-bridged); ambiguidade geométrica honesta, não falso anexo.
+- **E:** AMBIGUOUS (9 raízes — região densa).
+- **Invariantes:** 15 candidatos / 9 excluídos / 10 linhas de tabela / a1,aa,a8,aa(p2) inalterados; `automatic_approval=False`.
+
+**Testes:** +3 B2 (raiz sob o anel CANDIDATE, leque raiz-interior AMBIGUOUS, negativo ambas-pontas-dentro) + 1 adapter (diagonal quebrada→composto, skipif cv2); teste histórico `interior_not_leader` atualizado para a premissa corrigida pela evidência real. RED→GREEN demonstrado. Suíte: **1711 pass / 24 skip**. Audits: 0 findings.
+
+**Regressão cruzada (pipeline completo, imagem produtiva ± mounts):** 90261723/90261731/90264311 — **zero diferença** em estados/endpoints/alvos de líderes.
+
+**B3/B1/tabela:** contagens baseline preservadas; nenhuma promoção de confiança.
+
+**Estado:** correção local verificada + deploy canônico conforme AGENTS.md; verificação independente `INCONCLUSIVE` por indisponibilidade ambiental (documentada, exceção owner reutilizada da B2-R2); `LIVE_MCP_VALIDATION` pela Coordination; pacote de revisão visual (overlays `/tmp/val02_*`, SHA `9b64ae20…`) para GT owner — `HUMAN_DRAFT_OBSERVATION`, não homologado.
