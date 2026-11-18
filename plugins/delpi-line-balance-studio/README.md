@@ -30,3 +30,7 @@ python -m http.server 8080 --directory preview-dist
 ```
 
 Abra `http://localhost:8080`. No GitHub, selecione **GitHub Actions** em **Settings → Pages → Source**. O workflow **Line Balance Studio · GitHub Pages** publica somente `preview-dist` e pode ser disparado novamente a partir da `main`.
+
+## UX V4 aprovada — entrada e métodos
+
+A decisão visual do Product Owner em **2026-11-18** foi documentada em [UX V4: cards de origem e sidebar retrátil](docs/ux-v4-study-entry-and-method-sidebar.md). O início do Studio terá **dois cards grandes com ícones próprios** (`Produto DELPI` / `Estudo manual`), uma **sidebar secundária interna e recolhível** com ícone de cada método M1–M6, e **contexto de estudo compartilhado** entre métodos. Após iniciar um estudo, os cards dão lugar a um cabeçalho compacto e ao workspace. Os métodos planejados ficam em grupo discreto e não são executáveis. **Status: APPROVED_PRODUCT_DESIGN / TARGET_IMPLEMENTATION / TEST_NOT_RUN** — não é funcionalidade já entregue pela v0.1.
