@@ -18,6 +18,7 @@ export {
 export { ActionButton, type ActionButtonProps } from "./components/actions/ActionButton";
 export { IconButton, type IconButtonProps } from "./components/actions/IconButton";
 export { NativeTextControl, type NativeTextControlProps } from "./components/forms/NativeTextControl";
+export { NATIVE_CONTROL_COMPACT_CLASS } from "./components/forms/nativeControlClasses";
 export { ModernSelectControl } from "./components/forms/FormSelectControl";
 export { NumberStepperControl, type NumberStepperControlProps } from "./components/forms/NumberStepperControl";
 export { SegmentToggle, type SegmentToggleProps } from "./components/forms/SegmentToggle";

@@ -16,20 +16,18 @@ import {
   TabularExportButtons,
 } from "@delpi/plugin-ui/index";
 import type { StudioStudyInput } from "@delpi/line-balance-studio";
+import type { StudioRoutingState } from "@delpi/line-balance-studio/ui";
 
 import { getCurrentAccessToken, HomeApiError } from "../../../api/httpClient";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
   EngineeringEmptyState,
-  EngineeringFilterSelect,
   EngineeringFormActions,
   EngineeringKpiCard,
-  EngineeringLoadingActivityCard,
   EngineeringSectionCard,
   EngineeringStateBanner,
   EngineeringStatusBadge,
-  EngineeringTextField,
 } from "../../../ui/engineeringUi";
 import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
 import { DataTable, type DataTableColumn } from "../../products/components/dataTableUi";
@@ -111,7 +109,6 @@ const OP_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
 ];
 
 export function LineBalancingPage() {
-  const [productCode, setProductCode] = useState("");
   const [queriedCode, setQueriedCode] = useState("");
   const [branch, setBranch] = useState("");
   const [branches, setBranches] = useState<string[]>([]);
@@ -242,10 +239,13 @@ export function LineBalancingPage() {
     [draftContext, identity],
   );
 
-  /* Estudo manual — mesmo fluxo de rascunho, contexto neutro. */
-  const startManualStudy = useCallback(() => {
+  /* Estudo manual — mesmo fluxo de rascunho, contexto neutro; o nome
+   * informado na entrada do Studio aplica-se apenas a rascunho novo. */
+  const startManualStudy = useCallback((name?: string) => {
     const restored = loadStudioDraft(studioDraftKey(identity, MANUAL_CONTEXT), MANUAL_CONTEXT);
-    const seed = restored.status === "ok" ? restored.study : buildManualStudyInput();
+    const seed = restored.status === "ok"
+      ? restored.study
+      : { ...buildManualStudyInput(), ...(name ? { name } : {}) };
     setStudySeed(seed);
     setLiveStudy(seed);
     liveStudyRef.current = seed;
@@ -254,10 +254,7 @@ export function LineBalancingPage() {
     setBalanceError(null);
   }, [identity]);
 
-  const showStudio = Boolean(studySeed) && (Boolean(stage) || Boolean(studySeed));
-
-  const searchRouting = useCallback(() => {
-    const code = productCode.trim();
+  const searchRouting = useCallback((code: string) => {
     if (!code) return;
     setQueriedCode(code);
     setBranch("");
@@ -267,7 +264,28 @@ export function LineBalancingPage() {
     setBalanceResult(null);
     setClearedNotice(false);
     setStaleNotice(null);
-  }, [productCode]);
+  }, []);
+
+  /* Troca de origem — encerra a sessão; o rascunho local salvo do
+   * contexto permanece em storage e é restaurado ao retornar. */
+  const resetOrigin = useCallback(() => {
+    setQueriedCode("");
+    setBranch("");
+    setBranches([]);
+    setStageKey(null);
+    setStudySeed(undefined);
+    setLiveStudy(undefined);
+    liveStudyRef.current = undefined;
+    setBalanceError(null);
+    setBalanceResult(null);
+    setClearedNotice(false);
+    setStaleNotice(null);
+  }, []);
+
+  const onRoutingContext = useCallback(({ branch: nextBranch, stage: nextStage }: { branch: string; stage: string }) => {
+    if (nextBranch !== branch) setBranch(nextBranch);
+    setStageKey(nextStage || null);
+  }, [branch]);
 
   const confirmClear = useCallback(() => {
     let removed = false;
@@ -337,6 +355,45 @@ export function LineBalancingPage() {
     [grouped],
   );
 
+  /* Estado da consulta oficial apresentado pelo Studio — a mesma
+   * informação que antes dirigia os estados do host, agora serializada
+   * no contrato público do elemento. */
+  const studioRoutingState: StudioRoutingState = useMemo(() => {
+    if (!queriedCode) return { phase: "idle" };
+    if (routingLoading) return { phase: "searching", productCode: queriedCode };
+    if (routingError) {
+      return {
+        phase: "error",
+        productCode: queriedCode,
+        message: isForbidden(routingError)
+          ? "Acesso negado pela fonte oficial — você não tem autorização para consultar o roteiro."
+          : isNotFound(routingError)
+            ? "Produto não encontrado ou sem roteiro na fonte oficial."
+            : routingError instanceof HomeApiError
+              ? routingError.message
+              : "Fonte oficial de roteiro indisponível.",
+      };
+    }
+    if (!grouped.stages.length) {
+      return {
+        phase: "error",
+        productCode: queriedCode,
+        message: "Roteiro oficial vazio para este contexto — nenhuma operação retornada.",
+      };
+    }
+    return {
+      phase: "awaiting-stage",
+      productCode: queriedCode,
+      branch,
+      branchOptions,
+      stage: stage?.key ?? "",
+      stageOptions,
+      message: stage
+        ? undefined
+        : "Selecione a filial e o estágio produtivo para visualizar as operações oficiais e iniciar o estudo.",
+    };
+  }, [queriedCode, routingLoading, routingError, grouped.stages.length, branch, branchOptions, stage, stageOptions]);
+
   const exportStudy = useCallback(
     (format: "csv" | "xlsx" | "pdf") => {
       const study = liveStudyRef.current ?? studySeed;
@@ -356,73 +413,34 @@ export function LineBalancingPage() {
 
   return (
     <>
-      <EngineeringSectionCard
-        title="Balanceamento de Linha"
-        subtitle="Consulte o roteiro oficial de fabricação e construa estudos de balanceamento no Line Balance Studio — hipóteses locais nunca alteram o roteiro oficial."
-      >
-        <div className="engineering-processes__lookup" role="group" aria-label="Consulta do roteiro oficial">
-          <EngineeringTextField
-            id="lb-product-code"
-            label="Código do produto"
-            value={productCode}
-            onChange={setProductCode}
-            hint="Código oficial do produto na fonte autorizada."
-          />
-          <EngineeringActionButton
-            variant="primary"
-            disabled={!productCode.trim() || routingLoading}
-            onClick={searchRouting}
-          >
-            {routingLoading ? "Consultando…" : "Buscar roteiro"}
-          </EngineeringActionButton>
-          {queriedCode ? (
-            <>
-              <EngineeringFilterSelect
-                label="Filial"
-                options={branchOptions}
-                value={branch}
-                onChange={setBranch}
-              />
-              <EngineeringFilterSelect
-                label="Estágio produtivo"
-                options={stageOptions}
-                value={stage?.key ?? ""}
-                onChange={(v) => setStageKey(v || null)}
-                disabled={!grouped.stages.length}
-              />
-            </>
-          ) : null}
-          <EngineeringActionButton variant="default" onClick={startManualStudy}>
-            Novo estudo manual
-          </EngineeringActionButton>
-        </div>
-      </EngineeringSectionCard>
-
       {staleNotice ? <EngineeringStateBanner variant="default">{staleNotice}</EngineeringStateBanner> : null}
       {clearedNotice ? (
         <EngineeringStateBanner variant="default">Rascunho local do contexto atual limpo — o roteiro oficial permanece intacto.</EngineeringStateBanner>
       ) : null}
 
-      {!queriedCode && !studySeed ? (
-        <EngineeringEmptyState message="Informe o código do produto e acione Buscar roteiro para consultar a fonte oficial — ou inicie um estudo manual." />
-      ) : queriedCode && routingLoading ? (
-        <EngineeringLoadingActivityCard title="Consultando" description="Consultando o roteiro oficial…" />
-      ) : queriedCode && routingError ? (
-        isForbidden(routingError) ? (
-          <EngineeringEmptyState message="Acesso negado pela fonte oficial — você não tem autorização para consultar o roteiro." />
-        ) : isNotFound(routingError) ? (
-          <EngineeringEmptyState message="Produto não encontrado ou sem roteiro na fonte oficial." />
-        ) : (
-          <EngineeringStateBanner variant="error">
-            {routingError instanceof HomeApiError ? routingError.message : "Fonte oficial de roteiro indisponível."}
-          </EngineeringStateBanner>
-        )
-      ) : queriedCode && !grouped.stages.length ? (
-        <EngineeringEmptyState message="Roteiro oficial vazio para este contexto — nenhuma operação retornada." />
-      ) : null}
+      <LineBalanceStudioMount
+        study={studySeed}
+        routingState={studioRoutingState}
+        onStudyChange={onStudyChange}
+        onRoutingSearch={searchRouting}
+        onRoutingContext={onRoutingContext}
+        onManualStudy={startManualStudy}
+        onOriginReset={resetOrigin}
+      />
 
-      {queriedCode && !routingLoading && !routingError && grouped.stages.length > 0 && !stage && !studySeed ? (
-        <EngineeringEmptyState message="Selecione a filial e o estágio produtivo para visualizar as operações oficiais e iniciar o estudo." />
+      {studySeed ? (
+        <EngineeringFormActions>
+          {saveStatus !== "idle" ? (
+            <EngineeringStatusBadge
+              label={SAVE_LABEL[saveStatus] ?? saveStatus}
+              variant={saveStatus === "saved" ? "success" : "warning"}
+            />
+          ) : null}
+          <EngineeringActionButton variant="default" onClick={() => setClearOpen(true)}>
+            Limpar estudo
+          </EngineeringActionButton>
+          <TabularExportButtons onExport={exportStudy} />
+        </EngineeringFormActions>
       ) : null}
 
       {stage && studySeed?.source === "OBSERVED_ROUTING" ? (
@@ -446,29 +464,6 @@ export function LineBalancingPage() {
             />
           </EngineeringSectionCard>
         </>
-      ) : null}
-
-      {showStudio ? (
-        <EngineeringSectionCard
-          title="Estudo de balanceamento"
-          subtitle="Line Balance Studio — organização DRAFT_LOCAL de postos e cenários SIMULATION sobre a fonte oficial ou entradas manuais."
-          actions={
-            saveStatus !== "idle" ? (
-              <EngineeringStatusBadge
-                label={SAVE_LABEL[saveStatus] ?? saveStatus}
-                variant={saveStatus === "saved" ? "success" : "warning"}
-              />
-            ) : undefined
-          }
-        >
-          <LineBalanceStudioMount study={studySeed} onStudyChange={onStudyChange} />
-          <EngineeringFormActions>
-            <EngineeringActionButton variant="default" onClick={() => setClearOpen(true)}>
-              Limpar estudo
-            </EngineeringActionButton>
-            <TabularExportButtons onExport={exportStudy} />
-          </EngineeringFormActions>
-        </EngineeringSectionCard>
       ) : null}
 
       {queriedCode && stage && studySeed?.source === "OBSERVED_ROUTING" ? (

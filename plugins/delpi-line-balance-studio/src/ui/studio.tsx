@@ -1,11 +1,17 @@
-import { Timer, Clock3, ChartColumn, CircleDashed } from "lucide-react";
+import {
+  Timer, Clock3, ChartColumn, CircleDashed,
+  PackageSearch, SquarePen, Gauge, ListOrdered, GitBranch, Columns3,
+  ChartNoAxesColumnIncreasing, UsersRound,
+} from "lucide-react";
 import { useRef, useState, type DragEvent as ReactDragEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import {
   ActionButton,
-  PageHeader,
-  pageHeaderTitleRowBemClasses,
+  NavigationCard,
+  navigationCardBemClasses,
+  CollapsibleToolRail,
+  type ToolRailGroup,
   DataTable,
   dataTableBemClasses,
   SectionCard,
@@ -21,13 +27,87 @@ import {
   NativeTextControl,
   NATIVE_CONTROL_COMPACT_CLASS,
   type NativeTextControlProps,
-} from "@delpi/plugin-ui/native-controls";
-import { createManualStudy, createObservedStudy, summarizeShift } from "../index.js";
+} from "@delpi/plugin-ui/workspace-controls";
+import { createManualStudy, createObservedStudy, listMethods, summarizeShift } from "../index.js";
 import studioStyles from "./studio.css?inline";
-import type { ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
+import type { MethodId, ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
 
-const pageHeaderClasses = pageHeaderTitleRowBemClasses("lbs");
-const pageHeaderLabels = { refresh: "Atualizar", refreshing: "Atualizando" };
+/** Origem do estudo escolhida nos cards de entrada. */
+export type StudioOrigin = "OBSERVED_ROUTING" | "MANUAL";
+
+/** Estado da consulta de roteiro oficial dirigida pelo host — o Studio só
+ * apresenta e emite intenções; HTTP, AuthZ, filial e estágio são do host. */
+export type StudioRoutingState = Readonly<{
+  phase: "idle" | "searching" | "awaiting-stage" | "error";
+  productCode?: string;
+  branch?: string;
+  branchOptions?: readonly { value: string; label: string }[];
+  stage?: string;
+  stageOptions?: readonly { value: string; label: string }[];
+  /** Mensagem resolvida pelo host (erro ou orientação) — nunca montada aqui. */
+  message?: string;
+}>;
+
+/** Eventos públicos emitidos pelo elemento (bubbles + composed). */
+export const STUDIO_EVENTS = {
+  originSelect: "studio-origin-select",
+  routingSearch: "studio-routing-search",
+  routingContext: "studio-routing-context",
+  manualStudy: "studio-manual-study",
+  originReset: "studio-origin-reset",
+  methodChange: "studio-method-change",
+} as const;
+
+const navCardClasses = navigationCardBemClasses("lbs");
+const UI_PREFS_KEY = "delpi-lbs:ui";
+const METHOD_ICONS: Record<MethodId, ReactNode> = {
+  M1: <Gauge size={18} />,
+  M2: <ListOrdered size={18} />,
+  M3: <GitBranch size={18} />,
+  M4: <Columns3 size={18} />,
+  M5: <ChartNoAxesColumnIncreasing size={18} />,
+  M6: <UsersRound size={18} />,
+};
+const METHOD_STATUS_TEXT: Record<MethodId, string> = {
+  M1: "Diagnóstico local",
+  M5: "Disponível",
+  M2: "Planejado",
+  M3: "Planejado",
+  M4: "Planejado",
+  M6: "Planejado",
+};
+const methodNames: Record<MethodId, string> = {
+  M1: "Capacidade e takt",
+  M2: "FFD / LCR",
+  M3: "Peso posicional",
+  M4: "Kilbridge–Wester",
+  M5: "Yamazumi",
+  M6: "Recursos",
+};
+const railGroups = (catalog: readonly { id: MethodId; status: string }[]): readonly ToolRailGroup[] => [
+  {
+    id: "methods",
+    items: catalog.filter(method => method.status !== "PLANNED").map(method => ({
+      id: method.id,
+      label: `${method.id} · ${methodNames[method.id]}`,
+      icon: METHOD_ICONS[method.id],
+      statusText: METHOD_STATUS_TEXT[method.id],
+    })),
+  },
+  {
+    id: "upcoming",
+    label: "Próximos métodos",
+    collapsible: true,
+    defaultOpen: false,
+    items: catalog.filter(method => method.status === "PLANNED").map(method => ({
+      id: method.id,
+      label: `${method.id} · ${methodNames[method.id]}`,
+      icon: METHOD_ICONS[method.id],
+      statusText: METHOD_STATUS_TEXT[method.id],
+      disabled: true,
+    })),
+  },
+];
 const sectionClasses = sectionCardKaizenBemClasses("lbs");
 const sectionLabels = { titleHelpAriaLabel: (title: string) => `Ajuda: ${title}` };
 const kpiClasses = simpleKpiCardBemClasses("lbs", "kpi", { withBody: true, withSubtitle: true });
@@ -79,6 +159,16 @@ export class LineBalanceStudioElement extends HTMLElement {
   private reactRoot: Root | undefined;
   private studyRevision = 0;
   private shiftDrafts: Partial<Record<ShiftInput["mode"], ShiftInput>> = {};
+  private originChoice: StudioOrigin | null = null;
+  private routingSession: StudioRoutingState = { phase: "idle" };
+  private routingUnsupported = false;
+  private productCodeInput = "";
+  private manualNameInput = "";
+  private selectedMethod: MethodId = "M5";
+  private railExpanded = true;
+  private confirmReset = false;
+  private routingWait: ReturnType<typeof setTimeout> | undefined;
+  private manualWait: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     super();
@@ -89,6 +179,24 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.surface.addEventListener("dragover", this.onDragOver);
     this.surface.addEventListener("drop", this.onDrop);
     this.surface.addEventListener("dragend", this.clearDrag);
+    let prefs: { method?: string; railExpanded?: boolean } = {};
+    try { prefs = JSON.parse(globalThis.localStorage?.getItem(UI_PREFS_KEY) ?? "{}"); } catch { /* preferência corrompida não bloqueia */ }
+    if (prefs.method === "M1" || prefs.method === "M5") this.selectedMethod = prefs.method;
+    this.railExpanded = typeof prefs.railExpanded === "boolean"
+      ? prefs.railExpanded
+      : !globalThis.matchMedia?.("(max-width: 900px)").matches;
+  }
+
+  private saveUiPrefs(): void {
+    try {
+      globalThis.localStorage?.setItem(UI_PREFS_KEY, JSON.stringify({
+        method: this.selectedMethod, railExpanded: this.railExpanded,
+      }));
+    } catch { /* sem persistência de preferência o Studio continua usável */ }
+  }
+
+  private emit(type: string, detail: unknown): void {
+    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
   }
 
   connectedCallback(): void {
@@ -113,10 +221,85 @@ export class LineBalanceStudioElement extends HTMLElement {
     if (value?.source === "OBSERVED_ROUTING") {
       for (const operation of value.operations) this.observedBaseline.set(operation.id, operation.durationSeconds);
     }
+    if (value) this.originChoice = value.source === "OBSERVED_ROUTING" ? "OBSERVED_ROUTING" : "MANUAL";
     this.studyRevision += 1;
     this.showConditions = false;
+    this.confirmReset = false;
     this.shiftDrafts = {};
     this.scenarioId = value?.scenarios[0]?.id ?? "";
+    this.render();
+  }
+
+  /** Consulta oficial em andamento — dirigida pelo host, refletida aqui. */
+  set routingState(value: StudioRoutingState | undefined) {
+    this.routingSession = value ?? { phase: "idle" };
+    this.routingUnsupported = false;
+    this.render();
+  }
+
+  private selectOrigin(origin: StudioOrigin): void {
+    if (this.draft) return;
+    this.originChoice = origin;
+    this.routingUnsupported = false;
+    this.emit(STUDIO_EVENTS.originSelect, { origin });
+    this.render();
+  }
+
+  private requestRoutingSearch(): void {
+    const productCode = this.productCodeInput.trim();
+    if (!productCode) return;
+    this.routingUnsupported = false;
+    this.emit(STUDIO_EVENTS.routingSearch, { productCode });
+    clearTimeout(this.routingWait);
+    this.routingWait = setTimeout(() => {
+      if (this.routingSession.phase === "idle" && !this.draft) {
+        this.routingUnsupported = true;
+        this.render();
+      }
+    }, 1600);
+  }
+
+  private requestManualStudy(): void {
+    const name = this.manualNameInput.trim() || "Estudo manual";
+    this.emit(STUDIO_EVENTS.manualStudy, { name });
+    clearTimeout(this.manualWait);
+    /* Sem host respondendo ao evento (demo independente, outro portal), o
+     * Studio semeia o rascunho manual pelo contrato local. */
+    this.manualWait = setTimeout(() => {
+      if (!this.draft && this.originChoice === "MANUAL") {
+        this.study = {
+          id: crypto.randomUUID(), name,
+          operations: [], stations: [],
+          scenarios: [{ id: "a", name: "Cenário A", assignments: [] }],
+        };
+        this.emit("study-change", { study: this.study });
+      }
+    }, 350);
+  }
+
+  private requestOriginReset(): void {
+    if (!this.confirmReset) {
+      this.confirmReset = true;
+      this.render();
+      return;
+    }
+    this.confirmReset = false;
+    this.draft = undefined;
+    this.originChoice = null;
+    this.productCodeInput = "";
+    this.manualNameInput = "";
+    this.scenarioId = "";
+    this.observedBaseline.clear();
+    this.emit(STUDIO_EVENTS.originReset, {});
+    this.render();
+  }
+
+  private selectMethod(id: string): void {
+    const method = listMethods().find(item => item.id === id);
+    if (!method || method.status === "PLANNED") return;
+    this.selectedMethod = method.id;
+    this.saveUiPrefs();
+    this.emit(STUDIO_EVENTS.methodChange, { method: method.id });
     this.render();
   }
 
@@ -395,9 +578,162 @@ export class LineBalanceStudioElement extends HTMLElement {
     );
   }
 
+  private renderRail(): ReactNode {
+    return (
+      <CollapsibleToolRail
+        groups={railGroups(listMethods())}
+        activeId={this.selectedMethod}
+        expanded={this.railExpanded}
+        ariaLabel="Métodos"
+        expandLabel="Expandir métodos"
+        collapseLabel="Recolher métodos"
+        onExpandedChange={expanded => { this.railExpanded = expanded; this.saveUiPrefs(); this.render(); }}
+        onSelect={id => this.selectMethod(id)}
+      />
+    );
+  }
+
+  private renderEntry(): ReactNode {
+    const routing = this.routingSession;
+    return (
+      <section className="entry" aria-label="Novo estudo">
+        <div className="entry-head">
+          <h2>Novo estudo</h2>
+          <p>{this.originChoice ? "Configure a origem selecionada para iniciar." : "Como deseja começar?"}</p>
+        </div>
+        <div className="origin-cards">
+          <NavigationCard
+            density="featured"
+            selected={this.originChoice === "OBSERVED_ROUTING"}
+            icon={<PackageSearch size={36} />}
+            title="Produto DELPI"
+            description="Consultar roteiro oficial"
+            classNames={navCardClasses}
+            aria-label="Produto DELPI — consultar roteiro oficial"
+            onClick={() => this.selectOrigin("OBSERVED_ROUTING")}
+          />
+          <NavigationCard
+            density="featured"
+            selected={this.originChoice === "MANUAL"}
+            icon={<SquarePen size={36} />}
+            title="Estudo manual"
+            description="Criar processo do zero"
+            classNames={navCardClasses}
+            aria-label="Estudo manual — criar processo do zero"
+            onClick={() => this.selectOrigin("MANUAL")}
+          />
+        </div>
+        {this.originChoice === "OBSERVED_ROUTING" && this.renderRoutingForm(routing)}
+        {this.originChoice === "MANUAL" && (
+          <div className="origin-form">
+            <label className="field">Nome do estudo
+              <NativeTextControl id="lb-study-name" value={this.manualNameInput}
+                placeholder="Ex.: Montagem hipotética" aria-label="Nome do estudo"
+                onChange={value => { this.manualNameInput = value; this.render(); }}
+                onKeyDown={event => { if (event.key === "Enter") this.requestManualStudy(); }} />
+            </label>
+            <ActionButton id="lb-create-manual" variant="primary" onClick={() => this.requestManualStudy()}>
+              Criar estudo
+            </ActionButton>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  private renderRoutingForm(routing: StudioRoutingState): ReactNode {
+    const searching = routing.phase === "searching";
+    return (
+      <div className="origin-panel">
+        <div className="origin-form">
+          <label className="field">Código do produto
+            <NativeTextControl id="lb-product-code" value={this.productCodeInput}
+              aria-label="Código do produto"
+              onChange={value => { this.productCodeInput = value; this.render(); }}
+              onKeyDown={event => { if (event.key === "Enter") this.requestRoutingSearch(); }} />
+          </label>
+          <ActionButton id="lb-search-routing" variant="primary"
+            disabled={!this.productCodeInput.trim() || searching}
+            onClick={() => this.requestRoutingSearch()}>
+            {searching ? "Consultando…" : "Buscar roteiro"}
+          </ActionButton>
+        </div>
+        {searching && <StateBox>Consultando o roteiro oficial…</StateBox>}
+        {routing.phase === "error" && (
+          <StateBox variant="warning" dismissible={false}>
+            {routing.message ?? "Fonte oficial de roteiro indisponível."}
+          </StateBox>
+        )}
+        {this.routingUnsupported && routing.phase === "idle" && (
+          <StateBox variant="warning" dismissible={false}>
+            A consulta oficial de roteiro é fornecida pelo portal host — indisponível neste ambiente.
+          </StateBox>
+        )}
+        {routing.phase === "awaiting-stage" && (
+          <div className="origin-form">
+            <div className="field">
+              <label>Filial</label>
+              <ModernSelectControl ariaLabel="Filial" portalWithinShadowRoot
+                value={routing.branch ?? ""} options={routing.branchOptions ?? []}
+                onChange={value => this.emit(STUDIO_EVENTS.routingContext, { branch: value, stage: "" })} />
+            </div>
+            <div className="field">
+              <label>Estágio produtivo</label>
+              <ModernSelectControl ariaLabel="Estágio produtivo" portalWithinShadowRoot
+                value={routing.stage ?? ""} options={routing.stageOptions ?? []}
+                disabled={!routing.stageOptions?.length}
+                onChange={value => this.emit(STUDIO_EVENTS.routingContext, { branch: routing.branch ?? "", stage: value })} />
+            </div>
+          </div>
+        )}
+        {routing.phase === "awaiting-stage" && routing.message && <StateBox>{routing.message}</StateBox>}
+      </div>
+    );
+  }
+
+  private renderCapacityPanel(stations: { id: string; name: string; load: number; unknown: number }[], takt: number | null, observed: boolean): ReactNode {
+    return (
+      <SectionCard title="Capacidade e takt" subtitle="Diagnóstico local do estudo · CALCULATED local"
+        classNames={sectionClasses} labels={sectionLabels}>
+        <DataTable rows={stations} rowKey={station => station.id} classNames={tableClasses}
+          labels={tableLabels} layout="scroll" compact
+          columns={[
+            { key: "station", header: "Posto", render: station => station.name },
+            { key: "load", header: "Carga conhecida", align: "right", render: station =>
+              `${format(station.load)} s${station.unknown ? ` · ${station.unknown} sem tempo` : ""}` },
+            { key: "takt", header: "vs takt", render: station =>
+              takt === null ? "—" : station.load > takt ? `+${format(station.load - takt)} s acima` : "Dentro do takt" },
+          ]}
+        />
+        {takt === null && (
+          <StateBox>Informe turno produtivo e demanda por turno válida nas condições de produção para obter a referência de takt.</StateBox>
+        )}
+        <StateBox>{observed
+          ? "O dimensionamento oficial (takt, conteúdo de trabalho e mínimo teórico de postos) é executado pelo domínio autorizado do portal — este painel é apenas o diagnóstico local do rascunho."
+          : "Estudo manual sem contrato de cálculo oficial — os valores acima são diagnóstico local do rascunho (SIMULATION / DRAFT_LOCAL)."}</StateBox>
+      </SectionCard>
+    );
+  }
+
   private render(): void {
     const study = this.draft;
-    if (!study) { this.reactRoot?.render(null); return; }
+    if (!study) {
+      this.reactRoot?.render(
+        <div className="studio">
+          <header className="top">
+            <div className="brand">
+              <strong>Balanceamento de Linha</strong>
+              <small>DELPI · Engenharia de Processos</small>
+            </div>
+          </header>
+          <div className="layout">
+            {this.renderRail()}
+            <div className="main">{this.renderEntry()}</div>
+          </div>
+        </div>,
+      );
+      return;
+    }
     const scenario = this.scenario;
     const assignment = new Map(scenario?.assignments.map(item => [item.operationId, item.stationId]));
     const operations = study.operations.map((operation, index) => ({
@@ -437,37 +773,51 @@ export class LineBalanceStudioElement extends HTMLElement {
             <strong>Balanceamento de Linha</strong>
             <small>DELPI · Engenharia de Processos</small>
           </div>
-          <div className="badges">
-            {observed && <StatusBadge classNames={badgeClasses}
-              label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
-            <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
-          </div>
         </header>
-        {observed && <p className="context">
-          Produto {observed.productCode} · Filial {observed.branchCode} · {observed.stageLabel ?? `Estágio ${observed.stageId}`}
-          {observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}
-          {observed.truncated ? " — resultado truncado pela fonte oficial" : ""}
-        </p>}
-        <div className="workspace">
-          <PageHeader layout="titleRow" title={study.name} classNames={pageHeaderClasses} labels={pageHeaderLabels}
-            subtitle={<label className="edit-name">Nome do estudo
-              <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
-            </label>}
-            actions={<>
-              {study.scenarios.length > 1 && (
-                <div className="scenario-control">
-                  <ModernSelectControl ariaLabel="Cenário" portalWithinShadowRoot
-                    value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
-                    onChange={value => this.onField("scenario", value)} />
-                </div>
-              )}
-              {study.scenarios.length < 4 && (
-                <ActionButton onClick={() => this.onAction("add-scenario")}>+ Novo cenário</ActionButton>
-              )}
-              <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
-                onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
-            </>} />
-          {this.showConditions && this.renderConditions(conditions)}
+        <div className="layout">
+          {this.renderRail()}
+          <div className="main">
+            <div className="study-head">
+              <div className="study-id">
+                <strong>{observed ? `Produto ${observed.productCode}` : study.name}</strong>
+                <span className="study-sub">
+                  {observed
+                    ? `Filial ${observed.branchCode} · ${observed.stageLabel ?? `Estágio ${observed.stageId}`}${observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}`
+                    : "Estudo manual · sem vínculo com produto oficial"}
+                </span>
+                <label className="edit-name">Nome do estudo
+                  <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
+                </label>
+              </div>
+              <div className="badges">
+                {observed && <StatusBadge classNames={badgeClasses}
+                  label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
+                <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
+              </div>
+              <div className="study-actions">
+                {study.scenarios.length > 1 && (
+                  <div className="scenario-control">
+                    <ModernSelectControl ariaLabel="Cenário" portalWithinShadowRoot
+                      value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
+                      onChange={value => this.onField("scenario", value)} />
+                  </div>
+                )}
+                {study.scenarios.length < 4 && (
+                  <ActionButton onClick={() => this.onAction("add-scenario")}>+ Novo cenário</ActionButton>
+                )}
+                <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
+                  onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
+                <ActionButton onClick={() => this.requestOriginReset()}>Trocar origem</ActionButton>
+              </div>
+            </div>
+            {this.confirmReset && (
+              <div className="confirm-bar" role="alertdialog" aria-label="Confirmar troca de origem">
+                <span>Trocar a origem encerra a sessão atual do estudo — o rascunho local salvo deste contexto permanece disponível.</span>
+                <ActionButton variant="primary" onClick={() => this.requestOriginReset()}>Sim, trocar origem</ActionButton>
+                <ActionButton onClick={() => { this.confirmReset = false; this.render(); }}>Manter estudo</ActionButton>
+              </div>
+            )}
+            {this.showConditions && this.renderConditions(conditions)}
           <section className="metrics" aria-label="Indicadores" aria-live="polite">
             <SimpleKpiCard classNames={kpiClasses} title="Takt de referência" valueTag="strong" icon={<Timer size={18} />}
               value={takt === null ? "—" : `${format(takt)} s`} subtitle="por unidade" />
@@ -478,6 +828,8 @@ export class LineBalanceStudioElement extends HTMLElement {
             <SimpleKpiCard classNames={kpiClasses} title="Sem posto" valueTag="strong" icon={<CircleDashed size={18} />}
               value={String(unassigned)} subtitle={`de ${operations.length} operações`} />
           </section>
+          {this.selectedMethod === "M1" && this.renderCapacityPanel(stations, takt, Boolean(observed))}
+          {this.selectedMethod === "M5" && (
           <SectionCard title="Yamazumi" subtitle="Carga por posto · segundos" classNames={sectionClasses} labels={sectionLabels}
             actions={<ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>}>
             {stations.length > 0 ? (
@@ -510,6 +862,7 @@ export class LineBalanceStudioElement extends HTMLElement {
               />
             ) : <StateBox>Adicione um posto para montar o gráfico.</StateBox>}
           </SectionCard>
+          )}
           <SectionCard title="Operações" subtitle="Edite os tempos e atribua um posto a cada operação."
             classNames={sectionClasses} labels={sectionLabels}
             actions={<ActionButton id="add-operation" variant="primary"
@@ -546,6 +899,7 @@ export class LineBalanceStudioElement extends HTMLElement {
               ]}
             />
           </SectionCard>
+          </div>
         </div>
       </div>,
     );

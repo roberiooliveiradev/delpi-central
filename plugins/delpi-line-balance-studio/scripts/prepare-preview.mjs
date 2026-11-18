@@ -6,6 +6,7 @@ import { build } from "esbuild";
 const root = new URL("../", import.meta.url);
 const path = (name) => fileURLToPath(new URL(name, root));
 const controls = path("../plugin-ui/src/native-controls");
+const workspaceControls = path("../plugin-ui/src/workspace-controls");
 /* `x.css?inline` retorna o CSS processado (com @import resolvido) como
  * texto — mesmo contrato do Vite para injeção em shadow DOM. */
 const cssInlinePlugin = {
@@ -36,6 +37,15 @@ const shared = {
   alias: {
     "@delpi/plugin-ui/native-controls": controls + ".ts",
     "@delpi/plugin-ui/native-controls.css": controls + ".css",
+    "@delpi/plugin-ui/workspace-controls": workspaceControls + ".ts",
+    "@delpi/plugin-ui/workspace-controls.css": workspaceControls + ".css",
+    /* React único: componentes do kit resolveriam "react" a partir de
+     * plugin-ui/node_modules (walk-up), criando uma segunda instância e
+     * quebrando os hooks — pinar na cópia do Studio. */
+    "react": path("node_modules/react"),
+    "react/jsx-runtime": path("node_modules/react/jsx-runtime"),
+    "react-dom": path("node_modules/react-dom"),
+    "react-dom/client": path("node_modules/react-dom/client"),
   },
   nodePaths: [path("node_modules")],
   tsconfigRaw: { compilerOptions: { jsx: "react-jsx" } },

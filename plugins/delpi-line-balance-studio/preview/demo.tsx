@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { ActionButton } from "@delpi/plugin-ui/native-controls";
-import { registerLineBalanceStudio, type LineBalanceStudioElement } from "../src/ui/studio.js";
-import type { ManualStudyInput } from "../src/index.js";
+import { registerLineBalanceStudio, STUDIO_EVENTS, type LineBalanceStudioElement, type StudioRoutingState } from "../src/ui/studio.js";
+import type { ManualStudyInput, ObservedStudyInput } from "../src/index.js";
 
 registerLineBalanceStudio();
 const studio = document.querySelector<LineBalanceStudioElement>("delpi-line-balance-studio")!;
@@ -38,6 +38,55 @@ const example: ManualStudyInput = {
   },
 };
 
+/* Adaptador fictício do host — demonstra o contrato oficial: o Studio emite
+ * intenções e o host devolve `routingState` + estudo OBSERVED. */
+const observedStudy = (productCode: string, stage: string): ObservedStudyInput => ({
+  id: `demo-${productCode}`,
+  name: `Produto ${productCode}`,
+  source: "OBSERVED_ROUTING",
+  routing: {
+    productCode, branchCode: "01", stageId: stage,
+    stageLabel: `Estágio ${stage}`, routeCode: "R-01",
+  },
+  operations: operations.map((operation, index) => ({
+    ...operation,
+    reference: `OP ${String((index + 1) * 10).padStart(3, "0")} · CT 900`,
+  })),
+  stations: [{ id: "p1", name: "Posto 1" }, { id: "p2", name: "Posto 2" }],
+  scenarios: [{ id: "a", name: "Cenário A", assignments: [] }],
+  conditions: example.conditions,
+});
+
+let queriedCode = "";
+const setRouting = (state: StudioRoutingState) => { studio.routingState = state; };
+
+studio.addEventListener(STUDIO_EVENTS.routingSearch, event => {
+  queriedCode = (event as CustomEvent<{ productCode: string }>).detail.productCode;
+  setRouting({ phase: "searching", productCode: queriedCode });
+  setTimeout(() => setRouting({
+    phase: "awaiting-stage",
+    productCode: queriedCode,
+    branch: "",
+    branchOptions: [
+      { value: "", label: "Todas as filiais" },
+      { value: "01", label: "Filial 01" },
+      { value: "02", label: "Filial 02" },
+    ],
+    stage: "",
+    stageOptions: [
+      { value: "", label: "Selecionar estágio…" },
+      { value: "10", label: "Estágio 10 · Montagem" },
+      { value: "20", label: "Estágio 20 · Inspeção" },
+    ],
+    message: "Selecione a filial e o estágio produtivo para carregar as operações oficiais.",
+  }), 400);
+});
+
+studio.addEventListener(STUDIO_EVENTS.routingContext, event => {
+  const { stage } = (event as CustomEvent<{ branch: string; stage: string }>).detail;
+  if (stage) studio.study = observedStudy(queriedCode || "90264302", stage);
+});
+
 function newStudy() {
   studio.study = {
     id: crypto.randomUUID(), name: "Estudo manual", operations: [], stations: [],
@@ -49,6 +98,6 @@ createRoot(document.getElementById("demo-actions")!).render(
   <>
     <ActionButton id="example" onClick={() => { studio.study = example; }}>Carregar exemplo</ActionButton>
     <ActionButton id="new" onClick={newStudy}>Novo estudo</ActionButton>
+    <ActionButton id="reset" onClick={() => { studio.study = undefined; }}>Tela inicial</ActionButton>
   </>,
 );
-studio.study = example;

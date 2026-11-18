@@ -78,13 +78,26 @@ describe("BFF contracts (PROC-04/06/07)", () => {
     expect(page).not.toContain("api-delpi/v1");
   });
 
-  it("estados honestos: sem produto, consultando, 403, 404, vazio, estágio", () => {
-    expect(page).toContain("Informe o código do produto");
-    expect(page).toContain("Consultando o roteiro oficial");
+  it("estados honestos serializados no routingState do Studio", () => {
+    expect(page).toContain("studioRoutingState");
+    expect(page).toContain('"searching"');
+    expect(page).toContain('"awaiting-stage"');
     expect(page).toContain("isForbidden");
     expect(page).toContain("isNotFound");
     expect(page).toContain("Roteiro oficial vazio");
     expect(page).toContain("Selecione a filial e o estágio produtivo");
+  });
+
+  it("host não duplica cards de origem nem rail de métodos do Studio", () => {
+    expect(page).not.toContain("NavigationCard");
+    expect(page).not.toContain("CollapsibleToolRail");
+    expect(page).not.toContain("Produto DELPI");
+    expect(mount).toContain("STUDIO_EVENTS.routingSearch");
+    expect(mount).toContain("STUDIO_EVENTS.manualStudy");
+    expect(mount).toContain("STUDIO_EVENTS.originReset");
+    expect(mount).toContain("routingState");
+    expect(page).toContain("onRoutingContext");
+    expect(page).toContain("onOriginReset");
   });
 
   it("estágio nunca é selecionado automaticamente", () => {
@@ -174,11 +187,7 @@ describe("Exports e segurança (PROC-16/19)", () => {
 
 describe("Layout (PROC-17/18)", () => {
   it("classes de composição próprias existem no CSS do MFE", () => {
-    for (const cls of [
-      "engineering-processes__lookup",
-      "engineering-processes__tool-row",
-    ]) {
-      expect(css).toContain(`.${cls}`);
-    }
+    expect(css).toContain(".engineering-processes__tool-row");
+    expect(css).not.toContain("engineering-processes__lookup");
   });
 });

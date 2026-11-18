@@ -87,13 +87,15 @@ test("reports invalid references, duplicate IDs and assignments, and invalid val
   ]);
 });
 
-test("exposes the six methods without marking planned capabilities as runnable", () => {
+test("exposes the six methods with honest execution status", () => {
   const methods = listMethods();
   deepStrictEqual(methods.map(method => method.id), ["M1", "M2", "M3", "M4", "M5", "M6"]);
-  ok(methods.every(method => method.status === "PLANNED"));
-  deepStrictEqual(methods.filter(method => method.next).map(method => method.id), ["M5"]);
+  deepStrictEqual(methods.map(method => method.status), [
+    "LIMITED", "PLANNED", "PLANNED", "PLANNED", "AVAILABLE", "PLANNED",
+  ]);
+  deepStrictEqual(methods.filter(method => method.next).map(method => method.id), ["M2"]);
   methods[0].status = "AVAILABLE";
-  equal(listMethods()[0].status, "PLANNED");
+  equal(listMethods()[0].status, "LIMITED");
 });
 
 test("calculates equivalent day shifts by clock or by direct durations", () => {

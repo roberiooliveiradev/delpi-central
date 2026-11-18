@@ -23,6 +23,7 @@
       "@delpi/plugin-ui/index": ["./src/shims/plugin-ui.d.ts"],
       "@delpi/plugin-ui/styles": ["./src/shims/plugin-ui.d.ts"],
       "@delpi/plugin-ui/native-controls": ["../plugin-ui/src/native-controls.ts"],
+      "@delpi/plugin-ui/workspace-controls": ["../plugin-ui/src/workspace-controls.ts"],
       "@delpi/line-balance-studio/ui": ["../delpi-line-balance-studio/src/ui/studio.tsx"],
       "@delpi/line-balance-studio": ["../delpi-line-balance-studio/src/index.ts"]
     }
