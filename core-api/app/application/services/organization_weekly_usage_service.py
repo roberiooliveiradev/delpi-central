@@ -9,10 +9,17 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
 from uuid import UUID
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-REPORT_TIMEZONE = ZoneInfo("America/Sao_Paulo")
+# Core image uses python:3.11-slim; tzdata may be absent at runtime.
+# Brazil has observed UTC-3 without DST since 2019. This safe fallback
+# avoids blocking the API on hosts with no OS time zone database.
+try:
+    REPORT_TIMEZONE = ZoneInfo("America/Sao_Paulo")
+except ZoneInfoNotFoundError:
+    REPORT_TIMEZONE = timezone(timedelta(hours=-3))
+REPORT_TIMEZONE_LABEL = "America/Sao_Paulo"
 MAX_TEAM_MEMBERS = 500
 MAX_WEEK_AGE_DAYS = 90
 
@@ -168,7 +175,7 @@ class OrganizationWeeklyUsageService:
             "includeIndirect": bool(include_indirect),
             "weekStart": monday.isoformat(),
             "weekEndExclusive": (monday + timedelta(days=7)).isoformat(),
-            "timezone": str(REPORT_TIMEZONE),
+            "timezone": REPORT_TIMEZONE_LABEL,
             "teamCount": len(members),
             **counts,
             "totalRecordedOpens": total,
