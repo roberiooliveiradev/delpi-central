@@ -44,13 +44,18 @@ async function chooseOption(
   optionName: RegExp,
   triggerIndex = 0,
 ) {
-  await page
+  const trigger = page
     .getByRole("button", { name: triggerLabel, exact: true })
-    .nth(triggerIndex)
-    .click();
+    .or(page.getByRole("combobox", { name: triggerLabel, exact: true }))
+    .nth(triggerIndex);
+  await trigger.click();
   const listbox = page.getByRole("listbox");
   await expect(listbox).toBeVisible({ timeout: 10_000 });
-  await listbox.getByRole("button", { name: optionName }).first().click();
+  await listbox
+    .getByRole("option", { name: optionName })
+    .or(listbox.getByRole("button", { name: optionName }))
+    .first()
+    .click();
   /* Em viewports estreitos o painel em portal pode permanecer aberto
    * após a seleção — fecha com Escape sem invalidar a escolha. */
   const closed = await page
