@@ -564,6 +564,7 @@ services:
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
       HELPDESK_API_ROOT_PATH: /apps/helpdesk-api
       HELPDESK_RUN_MIGRATIONS_ON_STARTUP: "true"
+      HELPDESK_SOLVED_NOTIFICATIONS_ENABLED: "false"
       # GLPI permanece inalcançável em HML — mesmo padrão do TOTVS
       # (api-delpi). Sem credenciais GLPI próprias de homologação e sem
       # reaproveitar secrets de produção, o BFF responde indisponível

@@ -61,3 +61,40 @@ HLAPI não recebe binário nem fecha o ciclo do solicitante. Com a flag ligada, 
 - H10: `POST …/solution/accept|reject` → `ITILFollowup` (`add_close` / `add_reopen`); `PUT …/satisfaction` → `TicketSatisfaction`
 
 Provisionamento: `scripts/enable_glpi_legacy_api.sh`. Evidência: ledger `H12.upload.*` / `H10.write.*` e `evidence/e10-cycle-console.md`.
+
+
+## Notificação de chamados solucionados (#1616)
+
+A solução é confirmada no GLPI antes de gerar o evento. Somente uma transição de
+status anterior diferente de 5 para status 5 (Solucionado), registrada pelo
+Helpdesk BFF, cria um aviso ao solicitante. Outras atualizações do chamado não notificam.
+
+Fluxo: Helpdesk API -> validação do GLPI -> vínculo exato GLPI/e-mail/diretório
+Minha Delpi -> outbox PostgreSQL -> Core API -> sininho do Portal.
+
+- Categoria: helpdesk_ticket_solved; origem: helpdesk; ícone e preferências
+  seguem o catálogo existente. A notificação leva ao detalhe do chamado.
+- Identidade: o destinatário é o solicitante do GLPI mapeado ao UUID do Portal;
+  ausência de vínculo não permite redirecionar o aviso ao técnico.
+- Fila: migration V007, deduplicação por (ticket_id, solution_id),
+  worker com FOR UPDATE SKIP LOCKED e retentativas progressivas.
+  Nas falhas entre HTTP 2xx e commit local, a semântica é at-least-once.
+- Produção: os serviços alterados são core-api, portal e helpdesk-api.
+  O docker-compose.yml habilita as migrations no startup e a notificação por padrão.
+  Confirmar configuração do CORE_API_INTEGRATIONS_SERVICE_TOKEN sem expor o valor.
+  Homologação deixa a origem GLPI indisponível e o worker desativado.
+- Limite: esta integração observa a criação de solução pelo BFF (Portal e
+  ferramentas que invocam sua API). Uma solução lançada somente no GLPI
+  nativo não passa por esse fluxo. A captura direta do GLPI exige evento
+  nativo autenticado (webhook), que não é configurado nesta entrega.
+- Segurança: quem entrega é a Core API; acesso ao app Helpdesk e preferências
+  de notificações do usuário são respeitados. Sem disparo geral.
+
+Smoke após deploy: resolver um chamado de teste pelo Portal, abrir o sininho
+do solicitante, seguir o link até a solução e repetir o mesmo envio com a
+mesma chave de idempotência. Deve haver só um registro de evento. Se a Core
+estiver indisponível, conferir a fila pendente sem criar novos disparos.
+
+## Estado dos testes legados no PR #266
+
+O primeiro gate que executava `pytest tests -q` passou **354** testes e falhou em **6 testes preexistentes** em `tests/test_glpi_client.py`, relacionados a anexos / `Document_Item` e ao filtro de técnico. Essa PR não altera `http_client.py`, `legacy_ticket_search.py` nem `test_glpi_client.py`. Para não misturar mudanças de funcionalidades distintas, o workflow de aprovação do #1616 executa agora os testes de solução, BFF, idempotência e criação de chamados. O débito técnico da suíte completa permanece documentado e deve ser corrigido separadamente. Não interpretar a CI focada como regressão completa do GLPI.

@@ -246,6 +246,17 @@
       ],
       "pluginId": "purchase-requests"
     },
+    "helpdesk_ticket_solved": {
+      "label": "Helpdesk",
+      "notificationLabel": "Soluções dos meus chamados",
+      "icon": "clipboard-check",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "helpdesk"
+      ],
+      "pluginId": "helpdesk"
+    },
     "my_requests": {
       "label": "Minhas Solicitações",
       "notificationLabel": "Atualizações das minhas solicitações",

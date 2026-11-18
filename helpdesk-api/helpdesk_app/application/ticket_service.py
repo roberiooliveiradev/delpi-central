@@ -73,12 +73,14 @@ class TicketService:
         idempotency: IdempotencyStore,
         directory=None,
         person_profiles=None,
+        solved_notifications=None,
     ):
         self._glpi = glpi
         self._oauth = oauth
         self._idempotency = idempotency
         self._directory = directory
         self._person_profiles = person_profiles
+        self._solved_notifications = solved_notifications
 
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
@@ -1402,6 +1404,39 @@ class TicketService:
                 body={"id": solution_id, "status_id": refreshed.status_id},
             )
             self._idempotency.save(subject, operation, key, stored)
+            # #1616: nunca notificar antes do read-back GLPI, nem em edição
+            # posterior de um chamado que já estava solucionado. A resolução
+            # do destinatário é baseada no SOLICITANTE do chamado, não no ator.
+            if detail.status_id != 5 and refreshed.status_id == 5 and self._solved_notifications:
+                try:
+                    glpi_requester = refreshed.requester_identity.user_id
+                    recipients = (
+                        self._directory_ids_for_glpi_users(token, [int(glpi_requester)])
+                        if glpi_requester and int(glpi_requester) > 0
+                        else {}
+                    )
+                    portal_recipient = recipients.get(int(glpi_requester)) if glpi_requester else None
+                    if portal_recipient:
+                        from helpdesk_app.application.solved_ticket_notification_service import (
+                            SolvedTicketNotice,
+                        )
+                        self._solved_notifications.enqueue(
+                            SolvedTicketNotice(
+                                ticket_id=int(ticket_id),
+                                solution_id=int(solution_id),
+                                recipient_user_id=portal_recipient,
+                                ticket_title=refreshed.title,
+                            )
+                        )
+                    else:
+                        logger.warning(
+                            "helpdesk_solved_notification_requester_unresolved ticket_id=%s",
+                            ticket_id,
+                        )
+                except Exception:
+                    # A solução já foi persistida e confirmada no GLPI; uma
+                    # indisponibilidade na notificação nunca deve falsear a resposta.
+                    logger.exception("helpdesk_solved_notification_enqueue_failed ticket_id=%s", ticket_id)
             logger.info(
                 "helpdesk_create_solution ticket_id=%s solution_id=%s status_id=%s",
                 ticket_id,

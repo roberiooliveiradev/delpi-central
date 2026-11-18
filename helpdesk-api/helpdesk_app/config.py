@@ -47,6 +47,12 @@ class Settings:
     PLUGINS_DB_USER: str | None = _get_env("PLUGINS_DB_USER")
     PLUGINS_DB_PASSWORD: str | None = _get_env("PLUGINS_DB_PASSWORD")
 
+    # #1616: ativação explícita e reversível do canal de soluções.
+    HELPDESK_SOLVED_NOTIFICATIONS_ENABLED: bool = (
+        str(_get_env("HELPDESK_SOLVED_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+
     GLPI_BASE_URL: str = _get_env(
         "GLPI_BASE_URL", default="https://helpdesk.centraldelpi.com.br"
     )

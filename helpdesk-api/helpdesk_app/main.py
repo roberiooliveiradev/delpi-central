@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,12 +12,14 @@ from delpi_auth.cors_policy import build_allowed_origins
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.profile_sync_service import ProfileSyncService
 from helpdesk_app.application.ticket_service import TicketService
+from helpdesk_app.application.solved_ticket_notification_service import CoreHelpdeskNotificationGateway
 from helpdesk_app.config import settings
 from helpdesk_app.domain.errors import HelpdeskError
 from helpdesk_app.infrastructure.core_directory_service import CoreDirectoryService
 from helpdesk_app.infrastructure.core_person_profile_service import CorePersonProfileService
 from helpdesk_app.infrastructure.crypto import TokenCipher
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
+from helpdesk_app.infrastructure.persistence.solved_ticket_notification_outbox import PostgresSolvedTicketNotificationOutbox
 from helpdesk_app.infrastructure.persistence.postgres import (
     PostgresIdempotencyStore,
     PostgresSessionStore,
@@ -73,6 +76,10 @@ def build_runtime():
         PostgresIdempotencyStore(),
         directory=directory,
         person_profiles=person_profiles,
+        solved_notifications=(
+            PostgresSolvedTicketNotificationOutbox()
+            if settings.HELPDESK_SOLVED_NOTIFICATIONS_ENABLED else None
+        ),
     )
     # IDENTITY-002A: technical writer only when flag+pair are complete —
     # otherwise reconcile stays in deferred_write_authority semantics (001B).
@@ -85,6 +92,24 @@ def build_runtime():
     return oauth, tickets, profile_sync
 
 
+async def dispatch_solved_ticket_notifications(outbox: PostgresSolvedTicketNotificationOutbox) -> None:
+    """Entrega assíncrona com reenvio de falhas; 1+ réplicas usam row locking."""
+    gateway = CoreHelpdeskNotificationGateway()
+    if not gateway.service_token:
+        logging.getLogger("helpdesk.notifications").warning(
+            "helpdesk_solved_notifications_disabled_missing_service_token"
+        )
+    while True:
+        try:
+            if gateway.service_token:
+                await asyncio.to_thread(outbox.process_due, gateway)
+        except Exception:
+            logging.getLogger("helpdesk.notifications").exception(
+                "helpdesk_solved_notification_worker_failed"
+            )
+        await asyncio.sleep(30)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     check_credentials()
@@ -94,7 +119,18 @@ async def lifespan(app: FastAPI):
     app.state.tickets = tickets
     app.state.profile_sync = profile_sync
     app.state.public_base_url = settings.PUBLIC_BASE_URL
-    yield
+    worker = None
+    if settings.HELPDESK_SOLVED_NOTIFICATIONS_ENABLED:
+        worker = asyncio.create_task(
+            dispatch_solved_ticket_notifications(tickets._solved_notifications)
+        )
+    try:
+        yield
+    finally:
+        if worker is not None:
+            worker.cancel()
+            with suppress(asyncio.CancelledError):
+                await worker
 
 
 app = FastAPI(

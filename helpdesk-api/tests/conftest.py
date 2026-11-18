@@ -1020,6 +1020,7 @@ def build_client(
     glpi: FakeGlpi | None = None,
     directory=None,
     person_profiles=None,
+    solved_notifications=None,
     sync_writer=None,
     idempotency=None,
 ) -> tuple[TestClient, FakeGlpi]:
@@ -1048,6 +1049,7 @@ def build_client(
         idempotency or MemoryIdempotencyStore(),
         directory=directory,
         person_profiles=person_profiles,
+        solved_notifications=solved_notifications,
     )
     from helpdesk_app.application.profile_sync_service import ProfileSyncService
 
