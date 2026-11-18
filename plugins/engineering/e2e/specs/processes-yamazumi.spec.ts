@@ -223,19 +223,24 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     });
     await shot(page, "lb-m1-result");
 
-    /* Yamazumi — postos e atribuição de operações oficiais. */
+    /* Yamazumi — postos e atribuição de operações (nome fica no input
+     * CommitInput, não em texto). */
     await page
       .getByRole("button", { name: /Adicionar posto/ })
       .click();
     await page
       .getByRole("button", { name: /Adicionar posto/ })
       .click();
-    await expect(page.getByText("Posto 1").first()).toBeVisible();
-    await expect(page.getByText("Posto 2").first()).toBeVisible();
+    await expect(page.getByLabel("Nome do posto 1")).toHaveValue("Posto 1");
+    await expect(page.getByLabel("Nome do posto 2")).toHaveValue("Posto 2");
 
-    /* Atribui operações ao Posto 1 via seletor acessível da tabela. */
+    /* Segunda operação local (PROVIDED) para distribuir entre postos —
+     * o roteiro real tem uma única operação deduplicada. */
+    await page
+      .getByRole("button", { name: /Adicionar operação/ })
+      .click();
     await chooseOption(page, "Posto da operação 1", /^Posto 1/);
-    await chooseOption(page, "Posto da operação 2", /^Posto 1/);
+    await chooseOption(page, "Posto da operação 2", /^Posto 2/);
     await shot(page, "lb-yamazumi-assigned");
 
     /* Reordenação por botão — alternativa acessível ao drag-and-drop. */
