@@ -86,8 +86,10 @@ Estados alternativos (vindos da API): ainda não aberta · encerrada · resposta
 | Sucesso (círculo do agradecimento; ícone em `on-accent` do tema) | `--delpi-ui-success` | `#1a7f37` (ícone branco) | `#2ecc71` (ícone `#041b2e`) | Portal escuro |
 | Aviso (imutabilidade) | `--delpi-ui-form-warning-bg / -border / -text` (novos) | `#fff8e6` / `#f0d58c` / `#5c4400` | `#273736` / `#6a6230` / `#fde68a` | Derivado de `--warning` do Portal |
 | Foco | `--delpi-ui-focus-ring` | contorno 3 px `#8fc3ea` | contorno 3 px `#7fd3f5` | Novo |
-| Fundo do logo | `--delpi-ui-form-logo-bg` (novo) | transparente | `#ffffff` (selo com padding 6×10 px, raio 8 px) | Mesmo padrão de `--pub-logo-bg` no escuro; o logo azul-marinho não aparece sobre fundo escuro |
+| Fundo do logo | `--delpi-ui-form-logo-bg` (novo) | transparente | `#ffffff` | Selo com **a mesma caixa nos dois temas** (padding 6×10 px, raio 8 px); só o fundo muda. O logo azul-marinho não aparece sobre fundo escuro |
 | Fonte | `--delpi-ui-form-font` (novo) | `'Segoe UI', Inter, system-ui, -apple-system, sans-serif` | idem | — |
+
+**Troca de tema (decisão de 18/11/2026):** trocar entre claro e escuro muda **apenas cores** e o esquema de cores; nenhuma medida, posição ou espaçamento muda. A troca é **suave** (≈ 200 ms), sem animação no carregamento e imediata para quem usa movimento reduzido.
 
 **Ajustes de contraste (valem para os dois temas e substituem a maquete inicial):**
 - A borda das notas e do “Não se aplica” passou de `#c4ccd5` (1,6:1) para `#8c959f` (3,0:1) no claro; no escuro `#788792` dá 4,3:1. Controles precisam de 3:1 com o fundo (WCAG 1.4.11).

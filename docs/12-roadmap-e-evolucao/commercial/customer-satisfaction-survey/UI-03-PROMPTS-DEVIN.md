@@ -16,6 +16,7 @@
 | **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **ACEITO COM RESÍDUOS** (código restaurado pelo P6-R; ver §16) — aguarda o H8 do solicitante |
 | **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **ACEITO** — commit `c51e18890e`, HML em 18/11/2026 (ver §16) |
 | **P6.1** | 7 | Correções visuais da conferência em HML (R21–R24) | PluginUI → PROD; `public-hub` → **somente HML** | **ACEITO** — commit `570119b9d5`, 18/11/2026 (ver §19) |
+| **P6.2** | 7 | Troca de tema só de cores, sem mudar posição/espaçamento, com transição suave (R25–R26) | PluginUI → PROD e HML | **PRONTO PARA EXECUÇÃO** (§21) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -800,3 +801,47 @@ Deploy: `plugin-ui` em **PROD e HML** (kit genérico); `public-hub` **somente em
 **Veredito do coordenador:** `ACCEPT`. Conferido: commit `570119b9d5` em `main`, 4 arquivos do §18.1 (`QuestionCard.tsx` intocado); `legend` com `float: left` e variante `tall` ajustada dentro da `@media`, ambos protegidos por teste de contrato. **Conferência visual em HML (375 px, claro):** rótulo do tema e enunciado dentro do cartão, borda superior inteira — igual à referência. R19, R21, R22 e R23 fechados; R24 não reproduzido em 5 carregamentos limpos (encerrado como ocorrência do ambiente de teste). Deploy: `plugin-ui` PROD e HML; `public-hub` só HML.
 
 **Pendente para fechar a UI-03 em HML:** H8 — envio real pelo solicitante e conferência de “Respondida” no Portal.
+
+---
+
+## 20. H8 — envio real pelo solicitante (18/11/2026)
+
+**Aprovado.** O solicitante respondeu e enviou o formulário do participante DRIVES ITAJAI em HML: tela “Obrigado por participar!” conforme a referência; reabrir o link mostra “Resposta já registrada”; no Portal, a campanha passou a ter 3 participantes “Respondida” (eram 2). Com isso, o fluxo ponta a ponta do formulário público está homologado em HML, ressalvado o P6.2.
+
+## 21. Pacote P6.2 — Troca de tema só de cores, com transição suave
+
+### 21.1 Problema (informado pelo solicitante e conferido no código)
+
+| Resíduo | Descrição | Causa |
+|---|---|---|
+| **R25** | Ao trocar entre claro e escuro, **posição e espaçamento mudam** (cabeçalho cresce, conteúdo desce, logo anda para a direita) | `questionnaire.css`: só no escuro, `.delpi-ui-form-root[data-color-scheme="dark"] .delpi-ui-form-logo` ganha `padding: 6px 10px` e raio — a caixa do logo aumenta 12 px de altura e 20 px de largura. Origem: a UI-03 §3.2 descreveu o selo como “só no escuro”, **erro de especificação do coordenador** |
+| **R26** | A troca de tema é instantânea; o solicitante quer **troca suave** | Não há transição de cores no kit |
+
+**Regra (decisão do solicitante, 18/11/2026):** trocar o tema muda **apenas cores** (e o esquema de cores do navegador); **nenhuma** medida, posição, espaçamento, borda ou tamanho pode mudar entre claro e escuro; a troca é **suave**.
+
+### 21.2 Escopo permitido
+
+`plugins/plugin-ui/src/styles/questionnaire.css`, `questionnaireCssContract.test.ts`, `src/components/forms/questionnaire/QuestionnaireThemeScope.tsx` (+ teste) e, se necessário, `useSessionColorScheme.ts` (+ teste); `plugins/plugin-ui/docs/component-catalog.md`. Nada no `public-hub`.
+
+### 21.3 Entregáveis
+
+1. **R25 — geometria igual nos dois temas:** o selo do logo tem **a mesma caixa nos dois temas** (padding 6 × 10 px e raio 8 px sempre); só o fundo muda (`--delpi-ui-form-logo-bg`: transparente no claro, branco no escuro). Varredura completa: **nenhuma** regra dentro de `[data-color-scheme="dark"]` pode declarar propriedade de geometria (`padding`, `margin`, `width`, `height`, `gap`, `border-width`, `top/left/...`, `font-size`, `line-height` etc.) — só cores, sombras e `color-scheme`. **Teste de contrato** que falhe se aparecer propriedade de geometria em bloco do escuro.
+2. **R26 — transição suave:** ao trocar o tema (pelo botão ou pela mudança do aparelho), cores de fundo, texto, borda, sombra e ícones mudam com transição de **cerca de 200 ms** (`ease`). Requisitos:
+   - **sem transição no carregamento inicial** da página (não “piscar” do claro para o escuro);
+   - **não sobrescrever** transições existentes (ex.: a barra de progresso que anima a largura) — preferir aplicar a transição de cores **só durante a troca** (ex.: atributo temporário no `QuestionnaireThemeScope`, removido após a duração);
+   - **respeitar `prefers-reduced-motion: reduce`**: troca imediata;
+   - sem seletor global; escopo na raiz do kit.
+3. Testes: geometria idêntica dos componentes nos dois temas (ex.: medidas do cabeçalho com logo iguais no claro e no escuro, em ambiente que calcule layout ou por contrato do CSS); atributo de transição presente só durante a troca e ausente no carregamento; com movimento reduzido, sem transição.
+4. Atualizar a UI-03 §3.2 (linha do “Fundo do logo”) **somente se** o executor tiver permissão de documentação neste pacote — caso contrário, o coordenador atualiza.
+
+### 21.4 Aceite
+
+| # | Critério | Evidência |
+|---|---|---|
+| I-a | Mesma posição e mesmo espaçamento nos dois temas em 375 e 1280 px (abertura, cabeçalho das etapas, revisão, resultado) | Capturas sobrepostas ou medições das caixas no relatório |
+| I-b | Troca suave pelo botão e pela mudança do aparelho; sem animação no carregamento; imediata com movimento reduzido | Testes + gravação ou descrição medida |
+| I-c | Barra de progresso continua animando a largura | Teste ou captura |
+| I-d | Contrato do CSS impede geometria em bloco do escuro | Teste |
+| I-e | Testes, build, `verify-host-exports`, auditorias, verificador; deploy `plugin-ui` PROD e HML; reconferir `main` após o push | Saídas |
+
+A página pública em HML recebe a correção sem novo deploy do `public-hub` (o kit é carregado em tempo de execução).
