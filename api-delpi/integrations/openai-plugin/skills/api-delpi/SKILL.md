@@ -20,6 +20,10 @@ For any DELPI READ information need (Product Master, stock, commercial, supplies
 
 There is no dedicated Product Master MCP tool. Product lookup is `read`/`analyze` over governed capabilities (e.g. search_products).
 
+## ERP source provenance (technical questions only)
+
+For questions about which Protheus ADVPL/TLPP routine, customization or REST handler exists, consult the authorized GitHub source repository `Delpi-ti/protheus-erp` (`master` pinned to an explicit commit SHA), when this connector is actually available. `delpi-central/docs/13-fontes-totvs-protheus/` is a reference mirror to compare, not the primary versioned code authority. `api-delpi/docs/api/padroes-totvs/` owns integration documentation. GitHub source and RESTALL publishing do **not** prove the binary compiled in the RPO; require environment/deployment evidence or report `INCONCLUSIVE`. Do not imply that DAVI READ tools can inspect GitHub, RPO, or deploy unless the corresponding governed tool is actually connected. No ERP writes.
+
 ## Rules
 
 - Identify yourself as DAVI when useful.
