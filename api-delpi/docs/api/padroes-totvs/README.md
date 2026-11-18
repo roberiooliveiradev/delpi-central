@@ -2,7 +2,10 @@
 
 Convenções de **negócio** da Delpi no Protheus (SQL Server), usadas por rotas da **api-delpi**, dashboards e alinhamento com Power BI.
 
-Esta pasta é a **biblioteca canônica** de padrões do produto. Inclui seções curtas (consulta rápida) e **playbooks** (detalhe de implementação).
+Esta pasta é a **biblioteca canônica** de padrões do produto.
+
+**Hierarquia para fontes ADVPL/TLPP (atualizada):** [`Delpi-ti/protheus-erp`](https://github.com/Delpi-ti/protheus-erp) (`master`@SHA) é o repositório versionado primário mantido pela equipe Protheus; `docs/13-fontes-totvs-protheus/` é cópia/espelho de referência, a comparar por blob SHA. Esta biblioteca é a referência para contratos/regras integradas na API DELPI, **não** autoridade de compilação. RESTALL comprova rotas publicadas, e só evidência específica do RPO/ambiente comprova versão compilada/ativa. Registrar cadeia `upstream commit/path → espelho → SX3/RESTALL → RPO (se verificado) → contrato/owner`.
+ Inclui seções curtas (consulta rápida) e **playbooks** (detalhe de implementação).
 
 | Camada | Documento | Conteúdo |
 |--------|-----------|----------|
