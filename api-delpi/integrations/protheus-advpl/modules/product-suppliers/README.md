@@ -21,5 +21,15 @@ não projeta `FABR`/`FALOJA`/`REFGRD` (gap documentado em G0-C).
 | REST SA5 existente | nenhuma em 527/526 classes RESTALL |
 | Fonte candidato | `DLP04I02.PRW` — `SOURCE_NAME_AVAILABLE=INCONCLUSIVE` (sem colisão em delpi-central/espelho; repo ERP inacessível) |
 
-**Pendência:** a chamada de persistência oficial do modelo Model-2 (header+grid)
-ainda depende de validação no TST01 antes de qualquer fonte candidato.
+## Inventário G2-B (concluído — sem implementação)
+
+- `contracts/official-model-inventory.md` — modelo `DMATA061` completo
+  (ModelDef/ViewDef/MenuDef, `SetPrimaryKey` 7 campos, `a060LinOk`/`a060VldGrv`).
+- `contracts/mvc-lifecycle-investigation.md` — CREATE/READ/UPDATE/DELETE por
+  operação; **achado crítico:** `a060VldGrv` bloqueia excluir o último vínculo.
+- `contracts/sa5-field-matrix.md` — matriz de campos com status.
+- `contracts/crud-contract-candidate.md` — superfície REST conceitual (PLANNED).
+- `contracts/architecture-decision-candidate.md` — recomendação `EXTEND`
+  (façada sobre `FWLoadModel('DMATA061')`), `DECISION_REQUIRED` dos owners.
+
+**Nenhum `.PRW` criado** — contrato MVC segue `TO_INVENTORY`/`VALIDAR NO TST01`.
