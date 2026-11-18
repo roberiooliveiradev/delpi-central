@@ -6840,3 +6840,34 @@ TECHNICAL_HOMOLOGATION=PENDING
 **Verificação independente (delpi-verifier, cursor/Composer):** rodada 1 `ACCEPT_WITH_RESIDUAL` sobre `9e43df9611..172eae0553` — zero OCs; residuais: prova em registro real/cross-drawing não reproduzível pelo verificador (container/SSH proibidos ao verificador — evidência executor-side), tipagem irmã sem `>=2` em `rows_from_native_cells`.
 
 **Sibling fix (`2615738f98` + `596cf9e916`):** a regra `codes >= 2` foi estendida a `rows_from_native_cells` (mesma classe, caminho de células nativas) e a docstring de `_leader_roots` corrigida para refletir a faixa de borda. Nota de processo: `2615738f98` carregou indevidamente WIP staged alheio (docs satisfaction-survey, versões anteriores ao HEAD remoto) — revertido integralmente por `596cf9e916`; net efetivo do par = somente `understanding.py` (+5/-2); WIP do owner preservado no index local. Verificação do delta `172eae0553..596cf9e916`: `ACCEPT_WITH_RESIDUAL` r1, zero OCs; residual = sem teste dedicado do caminho nativo e prova live fora do contrato do verificador.
+
+### 94.42.15 E1/VAL-01 — DEPLOY-02: Consolidação B1-R2 + COMP-01 e Residual de Tabela de Item Único
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-DEPLOY02-B1R2-COMP01-PRODUCTION-RELEASE-AND-LIVE-MCP-VALIDATION-01`
+
+**Consolidação verificada no HEAD (`ce4b55b1cc` → commit do fix `12bc12535f`):** DRIFT-01 (`_int_page_keyed`), B1-R2 (sangria `strip("()[]")`, guarda de transbordamento, `contour_contains_tolerance`), COMP-01 (`_LEADER_EDGE_INSET_PX = 4.0`, `codes >= 2` em `_structure_table` e `rows_from_native_cells`) — todos presentes.
+
+**RQ-DEPLOY02-02 — risco de tabela de item único (residual levantado pela Coordination):**
+
+Análise do predicado `codes >= 2` por caminho:
+
+- **Token path** (`_detect_component_table` → `_structure_table`): a detecção exige ≥2 códigos-âncora na coluna — uma coluna `codes == 1` nunca pode ser a única portadora de códigos (a âncora sempre tem ≥2), logo a regra não bloqueia caso legítimo sem cabeçalho; com cabeçalho, a tipagem por rótulo já cobre item único. Nenhuma mudança — o limite arquitetural real é a detecção upstream (tabela literalmente de 1 linha/1 código não forma cluster; documentado, não regredido).
+- **Native path** (`rows_from_native_cells`): células vêm da grade SLANet — intratabular por construção. A classe de contaminação que motivou `codes >= 2` (faixa Y absorvendo tokens extratabulares) não existe aqui. A guarda estendida era estrita demais: tabela nativa legítima de 1 item sem cabeçalho confiável perdia a coluna de código.
+
+**Fix (`12bc12535f`):** no caminho nativo, `codes >= 2` tipifica por pluralidade de células; `codes == 1` tipifica somente quando a coluna é a **única portadora de códigos** da grade (evidência estrutural de pluralidade entre colunas). Duas+ colunas com uma célula-código cada permanecem ambíguas → abstenção. O ratio `codes/total >= 0.5` permanece obrigatório. Sem threshold reduzido, sem heurística de produto.
+
+**Testes (test_dec042_native_table_gate.py, RED→GREEN):** T1/T5 item único sem cabeçalho tipifica; sibling esparso (2 linhas, 1 código) tipifica; invariante com cabeçalho preservada; negativo (duas colunas-código ambíguas) abstém. T2/T3/T6 do caminho de tokens já cobertos pelos testes COMP-01 (stray isolado, multi-código, header desalinhado).
+
+**Validação no registro real:** `90480120` byte-identical vs HEAD (registro sem células nativas — caminho não exercido). Cross-drawing `90261723`/`90261731`/`90264311` (registros raw do worker produtivo) byte-identical. Suíte completa: **1702 pass / 21 skip**.
+
+**Verificação independente (delpi-verifier, cursor/Composer, r1):** `ACCEPT_WITH_RESIDUAL` sobre `de1954a00c..12bc12535f`, zero OCs — 5/5 ACs PASS; residuais não-bloqueadores: byte-identical dos irmãos é evidência executor-side (verificador não reexecuta pipeline real) e premissa SLANet-intratabular documentada.
+
+**Deploy produtivo (srv-api, autorização DEPLOY-02 da Coordination, modo GATED_PRODUCTION_DEPLOY):**
+
+- **Baseline:** repo `6d39cda37f99`, imagem `sha256:aecbf6056c54`; rollback tagueado `infra-engineering-api:pre-deploy02-6d39cda-rollback`.
+- **Candidata:** `infra-engineering-api:deploy02-2872465309` → `latest`, digest `sha256:bb5d05c74c02`, fonte `2872465309` (ff-only; WIP prod preservado).
+- **Container:** `delpi-engineering-api` healthy no digest novo; código verificado in-container (`code_bearing_cols` presente); limits preservados (RLIMIT 16GB, CPU 900s, `ENG_DRAWING_OCR_MAX_CONCURRENCY=1`, isolation=subprocess); gateway `/apps/engineering-api/mcp` unauth → 401.
+- **Prova interna no container (pipeline isolado + understanding, PDF real SHA `9b64ae20…`):** 15 candidatos (p1: 10 — A3,A7,A1×2,A6×2,A2×2,AA,A5; p2: A8,AA,A9,A4 + E ambíguo); `60`/`LL` excluídos; líderes A3/A8 `CANDIDATE` (fix de borda ativo em produção), A2/A6 `AMBIGUOUS`, A5/A9/A4/E `NOT_FOUND` (limitação diagonal/leque documentada); tabela 10 linhas com códigos limpos; `balloon_table_validation.v1`: **14 BALLOON_LABEL_IDENTIFIED** + E `NOT_LOCATED`, `automatic_approval=false`, `review_required=true`.
+- **CHATGPT_LIVE_VALIDATION=PENDING_COORDINATION** — prova por identidade delegada cabe à Coordination.
+
+**Estado:** `DEPLOY02_PRODUCTION_EXPERIMENT_ACTIVE_LIVE_MCP_PENDING` — experimento operacional, não homologação; `GROUND_TRUTH_APPROVED=NO`, `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`. Issue #131 pendente (`gh` sem auth).
