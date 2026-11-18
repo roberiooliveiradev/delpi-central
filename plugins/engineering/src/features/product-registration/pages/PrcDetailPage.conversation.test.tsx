@@ -1,4 +1,5 @@
-/** PRC-CONVERSATION — contrato estrutural: conversa na aba Histórico,
+/** PRC-CONVERSATION — contrato estrutural: conversa empilhada na Ficha
+ * técnica (decisão PO PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01),
  * adapter PRC e scope do MFE, sem avatar fictício. */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -10,17 +11,34 @@ const SRC = readFileSync(
 );
 
 describe("PrcDetailPage — conversa PRC (estrutural)", () => {
-  it("monta ConversationPanel do kit com adapter PRC na aba history", () => {
+  it("monta ConversationPanel do kit com adapter PRC na Ficha técnica", () => {
     expect(SRC).toMatch(
       /import \{[^}]*ConversationPanel[^}]*\} from "@delpi\/plugin-ui\/index"/,
     );
     expect(SRC).toMatch(/prcConversationApi/);
-    const history = SRC.indexOf('tab === "history"');
+    const draft = SRC.indexOf('tab === "draft"');
+    const attachments = SRC.indexOf("<PrcAttachmentsSection");
     const panel = SRC.indexOf("<ConversationPanel");
-    expect(panel).toBeGreaterThan(history);
+    const exchange = SRC.indexOf("<PrcInformationExchangePanel");
+    const timeline = SRC.indexOf("<PrcTimelineSection");
+    expect(panel).toBeGreaterThan(draft);
+    expect(panel).toBeGreaterThan(attachments);
+    expect(exchange).toBeGreaterThan(panel);
+    expect(timeline).toBeGreaterThan(exchange);
     expect(SRC).toMatch(/api=\{prcConversationApi\}/);
     expect(SRC).toMatch(/requestId=\{detail\.id\}/);
     expect(SRC).toMatch(/sectionTitle="Conversa sobre a solicitação"/);
+  });
+
+  it("três abas apenas — Histórico absorvido pela Ficha técnica", () => {
+    expect(SRC).not.toContain('key: "history"');
+    expect(SRC).not.toContain('tab === "history"');
+    const tabsDecl = SRC.slice(
+      SRC.indexOf("const TABS"),
+      SRC.indexOf("];", SRC.indexOf("const TABS")),
+    );
+    expect(tabsDecl.match(/\{ key: "/g)).toHaveLength(3);
+    expect(SRC).toMatch(/title="Histórico da solicitação"/);
   });
 
   it("terminal congela a conversa (policy backend espelhada na UI)", () => {

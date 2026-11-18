@@ -248,6 +248,11 @@ describe("prcNavigate url state", () => {
     expect(parsePrcTab("")).toBe("draft");
     /* deep link legado `?tab=overview` → Ficha técnica, sem erro. */
     expect(parsePrcTab("?tab=overview")).toBe("draft");
+    /* legado `?tab=history` (aba removida —
+     * PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01) → Ficha
+     * técnica, que agora empilha conversa + histórico. */
+    expect(parsePrcTab("?tab=history")).toBe("draft");
+    expect(parsePrcTab("?tab=revisions")).toBe("revisions");
   });
 });
 

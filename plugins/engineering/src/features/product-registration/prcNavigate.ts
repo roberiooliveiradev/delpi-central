@@ -215,18 +215,19 @@ export function buildPrcQueueUrl(
 export type PrcTabKey =
   | "draft"
   | "verification"
-  | "history"
   | "revisions";
 
 export const PRC_TAB_KEYS: readonly PrcTabKey[] = [
   "draft",
   "verification",
-  "history",
   "revisions",
 ];
 
-/** `?tab=` ausente, inválido ou legado (`overview`) → Ficha técnica,
- * aba inicial padrão do detalhe PRC (UI-FIX-06). */
+/** `?tab=` ausente, inválido ou legado (`overview`, `history`) → Ficha
+ * técnica, aba inicial padrão do detalhe PRC (UI-FIX-06,
+ * PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01 — a aba Histórico
+ * foi absorvida pela Ficha técnica e a URL legada resolve para a aba
+ * padrão, com canonicalização na página). */
 export function parsePrcTab(search: string): PrcTabKey {
   const raw = new URLSearchParams(search).get("tab");
   return (PRC_TAB_KEYS as readonly string[]).includes(raw || "")

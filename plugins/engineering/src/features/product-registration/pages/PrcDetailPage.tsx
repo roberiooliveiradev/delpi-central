@@ -1,6 +1,8 @@
 /** Detalhe da solicitação PRC — header com status/ações, andamento do
  * workflow, cards de identificação e abas por URL
- * (Ficha técnica · Verificação TOTVS · Histórico · Revisões).
+ * (Ficha técnica · Verificação TOTVS · Revisões — conversa e histórico
+ * empilhados full-width na Ficha técnica, decisão PO
+ * PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01).
  * allowedActions é a única autoridade de ações; CAS via
  * expectedVersion; nenhuma conclusão otimista. */
 
@@ -17,6 +19,7 @@ import {
   EngineeringLoadingActivityCard,
   EngineeringPageHero,
   EngineeringPagePath,
+  EngineeringSectionCard,
   EngineeringStateBanner,
   EngineeringTabs,
 } from "../../../ui/engineeringUi";
@@ -88,7 +91,6 @@ import { summarizeDiagnosis } from "../prcVerificationDiagnosis";
 const TABS: { key: PrcTabKey; label: string }[] = [
   { key: "draft", label: "Ficha técnica" },
   { key: "verification", label: "Verificação TOTVS" },
-  { key: "history", label: "Histórico" },
   { key: "revisions", label: "Revisões" },
 ];
 
@@ -845,6 +847,40 @@ export function PrcDetailPage({
               requestId={detail.id}
               refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
             />
+            {/* PRC-UX-DETAIL-THREE-TABS — conversa logo após os anexos e
+             * histórico imediatamente abaixo, ambos full-width em coluna
+             * única (decisão PO); props e autorização preservados. */}
+            <ConversationPanel
+              requestId={detail.id}
+              api={prcConversationApi}
+              refreshKey={conversationRefreshKey}
+              canComment={
+                detail.status !== "completed" && detail.status !== "rejected"
+              }
+              conversationFrozen={
+                detail.status === "completed" || detail.status === "rejected"
+              }
+              portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
+              sectionTitle="Conversa sobre a solicitação"
+              loadAvatar={loadConversationAvatar}
+            />
+            <EngineeringSectionCard title="Histórico da solicitação">
+              <PrcInformationExchangePanel
+                requestId={detail.id}
+                requestStatus={detail.status}
+                requesterSubject={detail.requester.subject}
+                currentSubject={currentSubject}
+                informationExchange={detail.informationExchange}
+                allowedActions={detail.allowedActions}
+                refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
+                busy={busy}
+                onChanged={load}
+              />
+              <PrcTimelineSection
+                events={timeline}
+                avatarByUserId={avatarByUserId}
+              />
+            </EngineeringSectionCard>
           </>
         ) : null}
 
@@ -877,40 +913,6 @@ export function PrcDetailPage({
               });
             }}
           />
-        ) : null}
-
-        {tab === "history" ? (
-          <>
-            <ConversationPanel
-              requestId={detail.id}
-              api={prcConversationApi}
-              refreshKey={conversationRefreshKey}
-              canComment={
-                detail.status !== "completed" && detail.status !== "rejected"
-              }
-              conversationFrozen={
-                detail.status === "completed" || detail.status === "rejected"
-              }
-              portalScopeClassName={ENGINEERING_PORTAL_SCOPE}
-              sectionTitle="Conversa sobre a solicitação"
-              loadAvatar={loadConversationAvatar}
-            />
-            <PrcInformationExchangePanel
-              requestId={detail.id}
-              requestStatus={detail.status}
-              requesterSubject={detail.requester.subject}
-              currentSubject={currentSubject}
-              informationExchange={detail.informationExchange}
-              allowedActions={detail.allowedActions}
-              refreshToken={`${detail.caseVersion}:${detail.updatedAt}`}
-              busy={busy}
-              onChanged={load}
-            />
-            <PrcTimelineSection
-              events={timeline}
-              avatarByUserId={avatarByUserId}
-            />
-          </>
         ) : null}
 
         {tab === "revisions" ? (
