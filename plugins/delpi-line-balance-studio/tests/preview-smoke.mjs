@@ -102,12 +102,14 @@ try {
   await host.getByLabel("Tempo da operação 1 em segundos", { exact: true }).fill("42.5");
   const select = selectTrigger("Posto da operação 1");
   await select.press("ArrowDown");
+  await page.waitForFunction(() => document.querySelector("delpi-line-balance-studio").study.operations[0].durationSeconds === 42.5);
   const firstOption = options.getByRole("option", { name: "Sem posto", exact: true });
   await firstOption.waitFor();
   await page.waitForFunction(() => document.querySelector("delpi-line-balance-studio").shadowRoot.activeElement?.textContent.trim() === "Sem posto");
   await firstOption.press("ArrowDown");
   await options.getByRole("option", { name: "Posto 1", exact: true }).press("Enter");
   await options.waitFor({ state: "hidden" });
+  await metric("Maior carga").filter({ hasText: /^42,5 s$/ }).waitFor();
   assert.equal(await metric("Maior carga").textContent(), "42,5 s");
   assert.equal(await host.evaluate(el => el.study.operations[0].name), "Peça <teste>");
   await host.getByRole("button", { name: "Remover posto 1", exact: true }).click();

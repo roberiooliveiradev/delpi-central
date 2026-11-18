@@ -1,5 +1,5 @@
 import { Timer, Clock3, ChartColumn, CircleDashed } from "lucide-react";
-import { useState, type DragEvent as ReactDragEvent, type ReactNode } from "react";
+import { useRef, useState, type DragEvent as ReactDragEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import {
@@ -50,13 +50,16 @@ type CommitInputProps = Omit<NativeTextControlProps, "onChange" | "onBlur"> & {
 
 function CommitInput({ value, onCommit, ...props }: CommitInputProps) {
   const [editing, setEditing] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   return <NativeTextControl
     {...props}
+    ref={inputRef}
     className={NATIVE_CONTROL_COMPACT_CLASS}
     value={editing ?? value}
     onChange={setEditing}
     onBlur={() => {
-      if (editing !== null && editing !== String(value)) onCommit(editing);
+      const next = inputRef.current?.value;
+      if (next !== undefined && next !== String(value)) onCommit(next);
       setEditing(null);
     }}
     onKeyDown={event => {
