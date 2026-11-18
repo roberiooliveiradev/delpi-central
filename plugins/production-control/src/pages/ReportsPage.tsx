@@ -15,11 +15,9 @@ import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useReportsCatalog } from "../hooks/useReportsCatalog";
 import type { PpcBranch, ReportsCatalogItem } from "../types";
-import { buildPpcHref, navigatePpc } from "../utils/routeParser";
+import { buildPpcHref, navigatePpc, REPORT_IDS } from "../utils/routeParser";
 
 const navCardClassNames = navigationCardBemClasses("ppc");
-
-const KNOWN_REPORTS = new Set(["stock-balances", "production-orders", "product-sales"]);
 
 const LoadingCard = createDashboardLoadingActivityCard({
   prefix: "ppc",
@@ -65,7 +63,7 @@ export function ReportsPage({ branch, reportId }: ReportsPageProps) {
   const [detailReload, setDetailReload] = useState<(() => void) | null>(null);
   const reports = copy.reports;
   const cards = data?.reports ?? [];
-  const activeId = reportId && KNOWN_REPORTS.has(reportId) ? reportId : null;
+  const activeId = reportId && REPORT_IDS.has(reportId) ? reportId : null;
   const inReport = Boolean(activeId);
 
   const onRefreshReady = useCallback((reload: () => void) => {

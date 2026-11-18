@@ -27,6 +27,10 @@ describe("Reports workspace", () => {
     assert.match(page, /ppc-reports-catalog/);
     assert.match(page, /StockBalancesReportPanel/);
     assert.match(page, /ProductionOrdersReportPanel/);
+    assert.match(page, /ProductSalesReportPanel/);
+    assert.match(page, /REPORT_IDS\.has\(reportId\)/);
+    const routeParser = readFileSync(join(root, "utils/routeParser.ts"), "utf8");
+    assert.match(routeParser, /REPORT_IDS = new Set\(\["stock-balances", "production-orders", "product-sales"\]\)/);
     assert.match(page, /production-orders/);
     assert.match(panel, /stockBalances/);
     assert.match(panel, /excelExport/);
