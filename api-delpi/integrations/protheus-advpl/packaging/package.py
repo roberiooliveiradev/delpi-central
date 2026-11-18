@@ -143,6 +143,8 @@ def collect_module_files(repo: str, commit: str, module_id: str, manifest: dict)
             continue
         rel = path[len(base) + 1:]
         check_forbidden(rel)
+        if rel.startswith("tests/"):
+            continue  # test fixtures are dev artifacts, not compilation payload
         in_src = rel.startswith("src/")
         ext = os.path.splitext(rel)[1].lower()
         if in_src and ext in SOURCE_EXTENSIONS and path not in declared:
