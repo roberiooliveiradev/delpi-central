@@ -46,7 +46,7 @@ O estado atual foi lido no código em 18/11/2026. O estado novo é o da maquete.
 | 2 | Lista | Aviso “Escopo parcial” (`copy.partialScope`) | Removido | `SatisfactionSurveysPage.tsx`, conteúdo |
 | 3 | Lista | Sem etiqueta | Etiqueta “MARKETING · PESQUISA DE SATISFAÇÃO” acima do título | `CommercialPageHero` `eyebrow` |
 | 4 | Lista, campanha, participante | Sem data da última leitura | “Atualizado em dd/mm/aaaa, hh:mm” junto do botão Atualizar, igual a Clientes | Hero `actions` |
-| 5 | Lista | Ordenação parcial | Todos os cabeçalhos ordenáveis; barra “Ordenar por” na visão em cards | `CommercialDataTableSection` (`sortKey`/`onSortChange`) |
+| 5 | Lista | Sem ordenação (nem cabeçalho nem cards) | Todos os cabeçalhos ordenáveis; barra “Ordenar por” na visão em cards | `CommercialDataTableSection` (`sortKey`/`onSortChange`) |
 | 6 | Campanha | Aviso “Escopo parcial” | Removido | `SatisfactionCampaignDetailPage.tsx` |
 | 7 | Campanha — Participantes | Filtros e tabela espalhados | Um único quadro “Participantes” com filtros, barra da tabela, tabela e paginação dentro | `CampaignParticipantsTab.tsx` |
 | 8 | Campanha | Números (`cm-satisfaction-metrics`) dentro da aba | Participantes, Respondidas, Pendentes e Taxa de resposta no bloco de título, como em Minha Carteira | Hero `highlights`; remover a grade da aba |
