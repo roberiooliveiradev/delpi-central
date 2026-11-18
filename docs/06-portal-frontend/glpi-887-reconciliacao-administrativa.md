@@ -65,3 +65,22 @@ somente o serviço `portal` depois do merge autorizado.
 Os relatórios semanais individuais permanecem condicionados a identidades
 Core verificadas, consentimento de rastreamento e autorização de
 destinatários conforme LGPD. Nenhum envio automático foi habilitado.
+
+## Ajuste de UX: modal centralizado
+
+O botão **Vincular** abre um modal centralizado na janela atual, sem
+descer ao final da lista. O modal usa o componente compartilhado
+`Modal` e um portal React renderizado diretamente no `document.body`,
+evitando limitações de scroll/overflow do painel.
+
+A busca da conta, resultados e ação **Vincular conta** ficam dentro do
+mesmo modal, com rolagem interna. A tela de confirmação apresenta os dois
+cadastros no próprio modal, sem empilhamento de diálogos.
+
+**Cancelar**, **Fechar** ou a tecla **Esc** fecham a janela e mantêm a
+posição da lista original; não alteram qualquer associação. Erros de
+busca ou vinculação ficam visíveis no modal. O fluxo de API, as permissões
+e a auditoria permanecem inalterados.
+
+A PR afeta apenas a interface `portal`; sem migration, alteração Core,
+deploy do Portal RH ou reinicialização de serviços externos.
