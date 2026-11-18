@@ -296,15 +296,16 @@ class DirectTeamUsageWeeklyProvider:
             for row in dataset.rows
             if row["recordedOpens"] is not None
         )
+        formatted_opens = f"{total_opens:,}".replace(",", ".")
         body = (
             '<p style="margin:0 0 14px;font-size:14px;">'
             'Acessos semanais dos <strong>subordinados diretos</strong> '
             f'no período <strong>{html.escape(period)}</strong>.</p>'
             '<p style="margin:0 0 22px;color:#475569;font-size:13px;">'
             f'<strong>{dataset.row_count}</strong> colaboradores da equipe direta '
-            f'&nbsp;|&nbsp; <strong>{total_opens:,}</strong> aberturas registradas'
+            f'&nbsp;|&nbsp; <strong>{formatted_opens}</strong> aberturas registradas'
             '</p>'
-        ).replace(f"{total_opens:,}", f"{total_opens:,}".replace(",", "."))
+        )
 
         if not dataset.rows:
             body += "<p>Não há subordinados diretos ativos nesta equipe.</p>"
