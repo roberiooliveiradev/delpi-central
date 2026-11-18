@@ -35,3 +35,7 @@ Saída esperada: `OPERAÇÃO | ROTINA OFICIAL | CONTRATO | GATE+PIN | IDENTIDADE
 - `MATA010M_DLP.PRW` contém submodelo `Model061` (grid SA5) condicionado a `MV_CADPROD` e permissões. Investigar essa alternativa de reuso antes de criar integração separada, sem inferir runtime.
 - Não há prova de rota REST de escrita SA5 publicada no último inventário; MATI060/EAI não estava configurado. Revalidar se houve mudança. Operações CRUD requerem contracts oficiais, autorização do owner e read-back pela chave completa.
 - Só escrever por rotina oficial validada: ExecAuto quando suportado; modelo MVC se aprovado e homologado. Jamais `RecLock` ou SQL de escrita direta. Separar `PROVEN_SOURCE`, `PROVEN_RUNTIME`, `TO_INVENTORY` e `TEST_NOT_RUN`.
+
+## Workspace de desenvolvimento — decisão PO
+
+Para os novos fontes ADVPL DELPI, **escrever e versionar somente em** `api-delpi/integrations/protheus-advpl/modules/<capability>/src/` no repositório `delpi-central`; contratos/testes junto do módulo; pacote gerado via `packaging/` e manifesto em `handoffs/` conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` permanece referência de leitura para upstream@SHA **sem push, alteração ou PR** neste ciclo. `docs/13-fontes-totvs-protheus/` é espelho referencial, não workspace editável. Não gerar ZIP de cópias manuais nem compilar/deploy por commit.
