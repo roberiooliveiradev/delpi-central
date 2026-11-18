@@ -641,10 +641,10 @@ export class AdminApi {
     );
   }
 
-  confirmHrIdentityMapping(userId: string, registration: string) {
+  confirmHrIdentityMapping(userId: string, registration: string, verificationReference: string) {
     return this.client.put<{ mapping: HrIdentityMapping }>(
       `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
-      { registration, confirmIdentity: true },
+      { registration, confirmIdentity: true, verificationReference },
     );
   }
 
