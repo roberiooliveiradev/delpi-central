@@ -33,7 +33,7 @@ import json
 import sys
 from uuid import uuid4
 
-from psycopg.types.json import Json
+from psycopg.rows import dict_row
 
 from controllership_finance_app.application.entry_audit.vocabulary import (
     stable_key_v2_from_v1,
@@ -145,6 +145,7 @@ def main() -> int:
         print(__doc__)
         return 2
     with plugins_db_connect() as conn:
+        conn.row_factory = dict_row
         groups = _plan(conn)
         resolved = sum(1 for g in groups.values() if g["all_resolved"])
         print(
