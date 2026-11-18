@@ -20,7 +20,27 @@ reference_source:
   mirror_commit: "be614649b7"
 candidate_source:
   name: "DLP04I01.PRW"
-  status: PLANNED
+  status: SOURCE_CANDIDATE
+  path: "src/DLP04I01.PRW"
+  provenance:
+    erp_repo: "Delpi-ti/protheus-erp"
+    erp_branch: "master"
+    erp_head: "INCONCLUSIVE (repo privado nao revalidado nesta sessao; ultima referencia 86616df50b17)"
+    erp_path: "04. Estoque/DLP04I01.PRW"
+    erp_blob_sha: "cdb68b0487222823a96162c0e493e442648e21f7 (espelho; parity com master nao revalidada)"
+    mirror_path: "docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW"
+    mirror_commit: "be614649b7"
+    note: "SHA do candidato = commit do delpi-central que o contem; distinto do SHA upstream"
+  changes:
+    - "validacao explicita de JSON (400 em payload invalido)"
+    - "contrato de representacao completa: 22 campos obrigatorios em POST e PUT"
+    - "numericos: N nativo ou C estrita lIsNumStr (sinal+ digitos+ . opcional); zero valido"
+    - "caractere: somente ValType C — sem conversao de tipo"
+    - "ErrorBlock restaurado em todos os caminhos (finalizacao unica)"
+    - "remocao de codigo morto e artefatos de ambiente"
+  pending_validation:
+    - "compilacao e homologacao TST01 pela equipe ERP"
+    - "pontos de entrada ativos na MATA010 do ambiente"
 development_status: SOURCE_CANDIDATE
 operations:
   known:
@@ -46,16 +66,3 @@ restrictions:
   direct_sql_reclock: FORBIDDEN
 sources:
   - "DLP04I01.PRW"
-source_candidate:
-  path: "src/DLP04I01.PRW"
-  status: SOURCE_CANDIDATE
-  derived_from: "04. Estoque/DLP04I01.PRW (espelho blob cdb68b0487222823a96162c0e493e442648e21f7)"
-  changes:
-    - "validacao explicita de JSON (400 em payload invalido)"
-    - "contrato de representacao completa: 22 campos obrigatorios em POST e PUT"
-    - "numericos B1_PICMRET/B1_CONV: N nativo ou C via VAL(), ausente rejeitado"
-    - "remocao de codigo morto e artefatos de ambiente (fGravaLog path fixo, fJsontext, debug logs)"
-    - "array ExecAuto via helper lPrepSB1() — mesmos 22 campos e ordem"
-  pending_validation:
-    - "compilacao e homologacao TST01 pela equipe ERP"
-    - "pontos de entrada ativos na MATA010 do ambiente"

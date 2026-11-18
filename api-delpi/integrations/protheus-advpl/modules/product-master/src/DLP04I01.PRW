@@ -15,12 +15,19 @@
         contrato sao obrigatorios em POST e PUT; campo ausente/nulo =>
         400 com lista de campos faltantes (antes: quebra generica
         "expected C->U, function val" ou gravacao destrutiva).
-     3. Campos numericos (B1_PICMRET, B1_CONV): aceita tipo N nativo do
-        JSON ou C convertible via VAL(); recusa vazio/ausente.
-     4. Removido codigo morto e artefatos de ambiente: rotina de log em
+     3. Campos numericos (B1_PICMRET, B1_CONV): N nativo do JSON ou C
+        estritamente numerica (regra lIsNumStr: sinal opcional na 1a
+        posicao, digitos, no maximo um ponto decimal, sem separador de
+        milhar/espaco); qualquer outra string rejeitada antes do ExecAuto
+        — sem conversao silenciosa. Zero ("0" ou 0) e valor valido.
+     4. Campos caractere: somente ValType "C"; N/L/A/O rejeitados — sem
+        conversao automatica de tipo.
+     5. ErrorBlock restaurado em todos os caminhos (sucesso, rejeicao,
+        excecao): fluxo unico de finalizacao, sem retorno antecipado.
+     6. Removido codigo morto e artefatos de ambiente: rotina de log em
         disco com path fixo de unidade do servidor, helper de normalizacao
         de JSON sem chamada ativa, logs de depuracao e blocos comentados.
-     5. Arrays ExecAuto montados por helper interno lPrepSB1() — mesma
+     7. Arrays ExecAuto montados por helper interno lPrepSB1() — mesma
         lista de 22 campos e mesma ordem do fonte original.
 
    CONTRATO REST PRESERVADO:
@@ -96,17 +103,21 @@ static function lPrepSB1(oDados, aSB1, cErro)
         endif
 
         if aFields[nI][2]
-            // campo numerico: N nativo ou C convertivel
+            // campo numerico: N nativo ou C no formato lIsNumStr
             if ValType(xVal) == "N"
                 aadd(aSB1, {cField, xVal, NIL})
-            elseif ValType(xVal) == "C" .and. !Empty(xVal)
+            elseif ValType(xVal) == "C" .and. lIsNumStr(xVal)
                 aadd(aSB1, {cField, Val(xVal), NIL})
             else
                 aadd(aMiss, cField + "(numerico)")
                 lOk := .F.
             endif
-        else
+        elseif ValType(xVal) == "C"
             aadd(aSB1, {cField, xVal, NIL})
+        else
+            // caractere exige ValType "C" — sem conversao de tipo
+            aadd(aMiss, cField + "(tipo " + ValType(xVal) + ")")
+            lOk := .F.
         endif
     next nI
 
@@ -116,6 +127,43 @@ static function lPrepSB1(oDados, aSB1, cErro)
     endif
 
 Return lOk
+
+/* -----------------------------------------------------------------------
+   lIsNumStr — validacao estrita de string numerica (regra documentada):
+   sinal opcional SOMENTE na primeira posicao, ao menos um digito, no
+   maximo um ponto decimal ".", sem separador de milhar, sem espacos.
+   Rejeita: "abc", "12x", "", " ", "1,2,3", ".", "-".
+   Aceita: "0", "12", "-3", "+4", "1.5", ".5".
+   ----------------------------------------------------------------------- */
+static function lIsNumStr(cVal)
+
+    local nI      := 0
+    local nLen    := len(cVal)
+    local nDots   := 0
+    local nDigits := 0
+    local cCh     := ""
+
+    if Empty(cVal)
+        return .F.
+    endif
+
+    for nI := 1 to nLen
+        cCh := SubStr(cVal, nI, 1)
+        if cCh $ "0123456789"
+            nDigits++
+        elseif cCh == "."
+            nDots++
+            if nDots > 1
+                return .F.
+            endif
+        elseif cCh $ "+-" .and. nI == 1
+            // sinal permitido apenas na primeira posicao
+        else
+            return .F.
+        endif
+    next nI
+
+Return nDigits > 0
 
 static function lJoin(aItens, cSep)
 
@@ -151,19 +199,15 @@ static function lExecSB1(oSelf, nOp)
 
     oSelf:SetContentType("application/json")
 
-    if !oDados:FromJson(cJSON)
-        oSelf:setStatus(400)
-        oSelf:setResponse(RETOBJ(oJsonRet, "400", "Erro", ;
-            "Corpo da requisicao nao e um JSON valido", "dlp" ):toJson())
-        FreeObj(oJsonRet)
-        FreeObj(oDados)
-        RestArea(aArea)
-    Return .T.
-    endif
-
     Begin Sequence
 
-        if !lPrepSB1(oDados, @aSB1, @cErro)
+        if !oDados:FromJson(cJSON)
+            // JsonObject():FromJson retorna .F. em JSON malformado;
+            // se lancar erro, o Recover abaixo cobre o mesmo caminho
+            lRet := .F.
+            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
+                "Corpo da requisicao nao e um JSON valido", "dlp")
+        elseif !lPrepSB1(oDados, @aSB1, @cErro)
             lRet := .F.
             oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp")
         else
@@ -187,6 +231,10 @@ static function lExecSB1(oSelf, nOp)
         lRet := .F.
         oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErroBlk, "dlp")
     End sequence
+
+    // finalizacao unica: restaura o handler anterior em TODO caminho
+    // normal (sucesso, rejeicao ou excecao absorvida pela Sequence)
+    ErrorBlock(oException)
 
     if lRet
         oSelf:setStatus(200)
