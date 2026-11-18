@@ -154,6 +154,10 @@
 .delpi-ui-form-logo {
   display: inline-flex;
   align-items: center;
+  /* R25: a caixa do selo é a mesma nos dois temas — só o fundo muda. */
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--delpi-ui-form-logo-bg);
 }
 
 .delpi-ui-form-logo__img {
@@ -173,11 +177,38 @@
   height: 44px;
 }
 
-/* Selo: o logo azul-marinho não aparece sobre fundo escuro. */
-.delpi-ui-form-root[data-color-scheme="dark"] .delpi-ui-form-logo {
-  padding: 6px 10px;
-  background: var(--delpi-ui-form-logo-bg);
-  border-radius: 8px;
+/* Selo: o logo azul-marinho não aparece sobre fundo escuro — a caixa é a
+   mesma do tema claro (R25); aqui só muda a cor de fundo via token. */
+
+/* R26: troca de tema só de cores, com transição suave — o atributo
+   `data-theme-transition` é ligado pelo QuestionnaireThemeScope apenas
+   durante a troca (~200 ms): nenhuma transição fica ativa no carregamento
+   e nenhuma regra permanente é afetada. */
+.delpi-ui-form-root[data-theme-transition],
+.delpi-ui-form-root[data-theme-transition] :where(*) {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    fill 0.2s ease,
+    stroke 0.2s ease,
+    outline-color 0.2s ease;
+}
+
+/* A barra de progresso mantém a animação de largura também durante a troca. */
+.delpi-ui-form-root[data-theme-transition] .delpi-ui-form-progress__fill {
+  transition:
+    width 0.2s ease,
+    background-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-form-root[data-theme-transition],
+  .delpi-ui-form-root[data-theme-transition] :where(*),
+  .delpi-ui-form-root[data-theme-transition] .delpi-ui-form-progress__fill {
+    transition: none;
+  }
 }
 
 /* --- Botão de tema (FormThemeToggle) --------------------------------------- */

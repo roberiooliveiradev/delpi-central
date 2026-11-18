@@ -281,4 +281,108 @@ describe("questionnaire.css — contrato de tokens e escopo", () => {
     expect(normalize(tallColumn![1])).toContain("margin-top: -160px");
     expect(inner).not.toContain("!important");
   });
+
+  it("P6.2 R25: selo do logo tem a mesma caixa nos dois temas — só o fundo muda", () => {
+    const logoBlock = declarationBlock(/\.delpi-ui-form-logo\s*\{([^}]*)\}/);
+    expect(normalize(logoBlock)).toContain("padding: 6px 10px");
+    expect(normalize(logoBlock)).toContain("border-radius: 8px");
+    expect(normalize(logoBlock)).toContain(
+      "background: var(--delpi-ui-form-logo-bg)",
+    );
+    const darkLogo = css.match(
+      /\.delpi-ui-form-root\[data-color-scheme="dark"\]\s+\.delpi-ui-form-logo\s*\{([^}]*)\}/,
+    );
+    // Se existir regra do logo no escuro, só pode declarar cor/fundo.
+    if (darkLogo) {
+      const props = [...darkLogo[1].matchAll(/([a-zA-Z-]+)\s*:/g)].map(
+        (m) => m[1].toLowerCase(),
+      );
+      for (const prop of props) {
+        expect(["background", "background-color"]).toContain(prop);
+      }
+    }
+  });
+
+  it("P6.2 R25: nenhum bloco do tema escuro declara geometria — só cor, sombra e color-scheme", () => {
+    const GEOMETRY = new Set([
+      "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+      "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
+      "width", "height", "min-width", "min-height", "max-width", "max-height",
+      "top", "right", "bottom", "left", "inset", "inset-block", "inset-inline",
+      "gap", "row-gap", "column-gap",
+      "border", "border-width", "border-top-width", "border-right-width",
+      "border-bottom-width", "border-left-width", "border-radius",
+      "border-top-left-radius", "border-top-right-radius",
+      "border-bottom-left-radius", "border-bottom-right-radius",
+      "font-size", "font-family", "font-weight", "line-height",
+      "letter-spacing", "text-indent",
+      "display", "position", "float", "clear", "box-sizing",
+      "flex", "flex-basis", "flex-grow", "flex-shrink",
+      "grid", "grid-template-columns", "grid-template-rows",
+      "aspect-ratio", "transform", "object-fit", "object-position",
+    ]);
+    const darkRules =
+      css.match(/[^{}]*\[data-color-scheme="dark"\][^{]*\{[^}]*\}/g) || [];
+    expect(darkRules.length).toBeGreaterThan(0);
+    for (const rule of darkRules) {
+      const body = rule.slice(rule.indexOf("{") + 1, -1);
+      const props = [...body.matchAll(/([a-zA-Z-]+)\s*:/g)]
+        .map((m) => m[1].toLowerCase())
+        .filter((prop) => !prop.startsWith("--"));
+      for (const prop of props) {
+        expect(
+          GEOMETRY.has(prop),
+          `propriedade de geometria "${prop}" em bloco escuro: ${rule.slice(0, 90)}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("P6.2 R26: transição de cores ~200 ms só durante data-theme-transition, escopo na raiz", () => {
+    const scoped = css.match(
+      /\.delpi-ui-form-root\[data-theme-transition\]\s*,\s*\.delpi-ui-form-root\[data-theme-transition\]\s+:where\(\*\)\s*\{([^}]*)\}/,
+    );
+    expect(scoped, "regra de transição no atributo").toBeTruthy();
+    const decl = normalize(scoped![1]);
+    for (const prop of [
+      "background-color",
+      "border-color",
+      "box-shadow",
+      "color",
+      "fill",
+      "stroke",
+    ]) {
+      expect(decl).toContain(`${prop} 0.2s ease`);
+    }
+    expect(decl).not.toContain("!important");
+    // Barra de progresso não perde a animação de largura durante a troca.
+    const fill = css.match(
+      /\.delpi-ui-form-root\[data-theme-transition\]\s+\.delpi-ui-form-progress__fill\s*\{([^}]*)\}/,
+    );
+    expect(fill, "transição do fill no atributo").toBeTruthy();
+    expect(normalize(fill![1])).toContain("width 0.2s ease");
+    // Movimento reduzido: troca imediata.
+    const reduce = css.match(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\n\}/,
+    );
+    expect(reduce, "bloco prefers-reduced-motion").toBeTruthy();
+    expect(reduce![1]).toContain("transition: none");
+  });
+
+  it("P6.2 R26: nenhuma transição permanente fora do atributo (exceto a largura da barra)", () => {
+    const rules = css.match(/([^{}@]+)\{([^{}]*transition[^{}]*)\}/g) || [];
+    for (const rule of rules) {
+      const selector = rule.slice(0, rule.indexOf("{")).trim();
+      const body = rule.slice(rule.indexOf("{"));
+      if (selector.includes("data-theme-transition")) continue;
+      // Única transição permanente permitida: largura da barra de progresso.
+      expect(
+        selector,
+        `transição permanente fora do atributo: ${selector}`,
+      ).toBe(".delpi-ui-form-progress__fill");
+      expect(body).not.toMatch(
+        /(background-color|border-color|color|fill|stroke)\s/,
+      );
+    }
+  });
 });
