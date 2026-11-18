@@ -183,7 +183,7 @@ def build_manifest(repo: str, commit: str, module_ids: list[str],
         entry["sha256"] = hashlib.sha256(data).hexdigest()
         entry["size_bytes"] = len(data)
 
-    tags = sorted({m["package_tag"] for m in modules_meta})
+    tags = list(dict.fromkeys(m["package_tag"] for m in modules_meta))
     env_tag = (target_env or "UNSET").upper()
     package_id = f"DELPI-ADVPL-{'-'.join(tags) or 'EMPTY'}-{env_tag}-v{version}"
 
@@ -271,12 +271,11 @@ def build_package(repo: str, ref: str, module_ids: list[str], version: str,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default=".", help="delpi-central repo root")
-    parser.add_argument("--commit", required=True,
-                        help="approved commit ref (resolved and pinned)")
+    parser.add_argument("--commit", help="approved commit ref (resolved and pinned)")
     parser.add_argument("--module", action="append", dest="modules",
-                        required=True, help="module id (repeatable)")
-    parser.add_argument("--version", required=True, help="package version X.Y.Z")
-    parser.add_argument("--target-env", required=True,
+                        help="module id (repeatable)")
+    parser.add_argument("--version", help="package version X.Y.Z")
+    parser.add_argument("--target-env",
                         help="delivery target label (e.g. TST01); metadata only")
     parser.add_argument("--status", default="SOURCE_CANDIDATE")
     parser.add_argument("--out-dir", default=f"{WORKSPACE}/packaging/out")
@@ -290,6 +289,10 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"package_id": manifest["package_id"],
                               "verified": True}, indent=2))
             return 0
+        for required_arg in ("commit", "modules", "version", "target_env"):
+            if not getattr(args, required_arg):
+                parser.error(f"--{required_arg.replace('_', '-')} is required "
+                             "for packaging")
         result = build_package(args.repo, args.commit, sorted(set(args.modules)),
                                args.version, args.target_env, args.out_dir,
                                args.status)
