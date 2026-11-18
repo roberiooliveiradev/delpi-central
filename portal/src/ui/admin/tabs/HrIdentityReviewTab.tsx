@@ -44,6 +44,7 @@ export function HrIdentityReviewTab() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmedEvidence, setConfirmedEvidence] = useState(false);
   const [typedRegistration, setTypedRegistration] = useState("");
+  const [verificationReference, setVerificationReference] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -82,6 +83,7 @@ export function HrIdentityReviewTab() {
     setSearchTerm("");
     setConfirmedEvidence(false);
     setTypedRegistration("");
+    setVerificationReference("");
     setNotice(null);
     setError(null);
   };
@@ -110,6 +112,7 @@ export function HrIdentityReviewTab() {
     setSelectedUser(user);
     setConfirmedEvidence(false);
     setTypedRegistration("");
+    setVerificationReference("");
     setConfirmationOpen(false);
   };
 
@@ -120,6 +123,7 @@ export function HrIdentityReviewTab() {
     setSelectedUser(null);
     setConfirmedEvidence(false);
     setTypedRegistration("");
+    setVerificationReference("");
   };
 
   const canConfirm = !!activeMember &&
@@ -127,6 +131,7 @@ export function HrIdentityReviewTab() {
     !activeMember.verified &&
     confirmedEvidence &&
     typedRegistration === activeMember.registration &&
+    verificationReference.trim().length >= 5 &&
     !saving;
 
   const confirmIndividualBinding = async () => {
@@ -148,12 +153,13 @@ export function HrIdentityReviewTab() {
       }
 
       const registered = activeMember.registration;
-      await api.confirmHrIdentityMapping(selectedId, registered);
+      await api.confirmHrIdentityMapping(selectedId, registered, verificationReference.trim());
       setActiveMember(null);
       setSelectedId(null);
       setSelectedUser(null);
       setConfirmedEvidence(false);
       setTypedRegistration("");
+    setVerificationReference("");
       setNotice("Associação da matrícula " + registered + " registrada com auditoria.");
       await load();
     } catch (err) {
@@ -363,6 +369,17 @@ export function HrIdentityReviewTab() {
                 disabled={saving}
                 autoComplete="off"
               />
+              <label htmlFor="hr-verification-reference">Referência da evidência consultada</label>
+              <Input
+                id="hr-verification-reference"
+                size="sm"
+                value={verificationReference}
+                onChange={(event) => setVerificationReference(event.target.value)}
+                placeholder="Ex.: GLPI-887 / registro RH"
+                maxLength={120}
+                disabled={saving}
+                autoComplete="off"
+              />
               <Button
                 variant="primary"
                 disabled={!canConfirm}
@@ -380,10 +397,11 @@ export function HrIdentityReviewTab() {
         open={confirmationOpen}
         title="Confirmar vínculo de identidade"
         message={
-          "Você confirma, após conferência independente dos cadastros oficiais, " +
+          "Você confirma, após conferência humana em fontes oficiais, " +
           "que a matrícula " + (activeMember?.registration || "") +
           " pertence à conta Core " + (selectedId || "") +
-          "? A associação será gravada e auditada individualmente."
+          "? Evidência: " + verificationReference +
+          ". A associação será gravada e auditada individualmente."
         }
         confirmText="Confirmar vínculo"
         danger={false}
