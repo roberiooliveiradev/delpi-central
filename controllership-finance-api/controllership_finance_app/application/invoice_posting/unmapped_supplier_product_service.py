@@ -68,6 +68,42 @@ def unmapped_product_rows(
     return rows
 
 
+def indexed_nfe_product_rows(detail: dict[str, Any], *, request_id: str) -> list[dict[str, Any]]:
+    """Indexa códigos de itens da NF-e somente quando SA2/emitente validaram.
+
+    Sem estado ready, não inferimos código Delpi do pedido ou do fornecedor.
+    """
+    mapping = detail.get("productMapping")
+    if not isinstance(mapping, dict) or mapping.get("state") != "ready":
+        return []
+    items = detail.get("items")
+    if not isinstance(items, list):
+        return []
+    indexed: list[dict[str, Any]] = []
+    for position, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            continue
+        state = str(item.get("mappingStatus") or "").strip()
+        if state not in {"mapped", "unmapped", "ambiguous"}:
+            continue
+        supplier_code = str(item.get("supplierProductCode") or "").strip()[:60] or None
+        internal_code = (
+            str(item.get("internalProductCode") or "").strip()[:40] or None
+            if state == "mapped"
+            else None
+        )
+        indexed.append(
+            {
+                "request_id": request_id,
+                "item_position": position,
+                "supplier_product_code": supplier_code,
+                "internal_product_code": internal_code,
+                "mapping_status": state,
+            }
+        )
+    return indexed
+
+
 class UnmappedSupplierProductRecorder:
     def __init__(self, *, items: ReceivedNfeItemService, requests: Any) -> None:
         self._items = items
@@ -98,6 +134,7 @@ class UnmappedSupplierProductRecorder:
                 supplier_code=supplier_code,
                 supplier_store=supplier_store,
             )
+            indexed_rows = indexed_nfe_product_rows(detail, request_id=request_id)
             rows = unmapped_product_rows(
                 detail,
                 request_id=request_id,
@@ -114,6 +151,15 @@ class UnmappedSupplierProductRecorder:
                 f"na solicitação {request_id}."
             )
             return
+        if indexed_rows:
+            try:
+                self._requests.replace_indexed_nfe_product_rows(indexed_rows)
+            except Exception:
+                # A falha no índice auxiliar nunca cancela a NF-e já cadastrada.
+                log_error(
+                    "Falha ao indexar itens da NF-e "
+                    f"na solicitação {request_id}."
+                )
         if not rows:
             return
         try:

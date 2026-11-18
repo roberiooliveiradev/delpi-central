@@ -126,6 +126,23 @@ export function RequestFilters({
               />
             </label>
             <label className="lnf-field">
+              Código do produto Delpi
+              <input
+                type="search"
+                aria-label="Código do produto Delpi"
+                maxLength={40}
+                value={value.product_code ?? ""}
+                placeholder="Código interno exato"
+                onChange={(e) =>
+                  set({
+                    product_code: e.target.value,
+                    // A consulta por material também deve encontrar notas já lançadas.
+                    status: value.status === "open" ? undefined : value.status,
+                  })
+                }
+              />
+            </label>
+            <label className="lnf-field">
               Número da nota
               <input
                 type="search"

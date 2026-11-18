@@ -251,6 +251,8 @@ export type ListFilters = {
   status?: string;
   supplier?: string;
   document?: string;
+  /** Código Delpi exato; aplica a busca no servidor antes da paginação. */
+  product_code?: string;
   issued_from?: string;
   issued_to?: string;
   received_from?: string;
