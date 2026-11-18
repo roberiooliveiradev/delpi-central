@@ -48,8 +48,13 @@ VERIFIER: (ver rodada delpi-verifier desta entrega)
 DOCUMENTATION_UPDATED: este doc + matriz W016 (§10) + parity plan (W016 wave); inventário W013 já estava correto (sem diff necessário)
 DEV_VERDICT: W016_DEV_FULL_FUNCTIONAL_PARITY_ACCEPTED (condicionado ao
   veredito do verificador independente)
-PRODUCTION_ACCEPTANCE_STATUS: PENDENTE — nenhum teste destrutivo em prod;
-  drift de produção exposto por esta validação (ver RESIDUALS)
+PRODUCTION_ACCEPTANCE_STATUS: DEPLOYED (task ZERO-RED-RECONCILIATION)
+  — srv-api pull + up-prod-sequential --build strategic-indicators-api
+  api-delpi; V037 aplicada no startup (log OK; constraint admite 18
+  event_types); smoke não-mutante: 401 challenge RFC9728 + resource
+  metadata + tools=6 (delete incluso, in-container) + si-api 401
+  unauth + portal 200 + logs limpos. Nenhum ACT/mutação de negócio
+  em produção.
 
 RESIDUALS:
 - (ENCERRADO — task ZERO-RED-RECONCILIATION) as 3 falhas SI eram
