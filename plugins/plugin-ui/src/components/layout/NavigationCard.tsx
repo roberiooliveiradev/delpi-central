@@ -25,6 +25,8 @@ export type NavigationCardProps = {
   description?: string;
   meta?: string;
   disabled?: boolean;
+  /** Controlled selection state for choose-one launchers. */
+  selected?: boolean;
   orientation?: "vertical" | "horizontal";
   /**
    * `featured` — hierarquia visual maior (launcher primary / bento hero tile).
@@ -75,6 +77,7 @@ export function NavigationCard({
   description,
   meta,
   disabled = false,
+  selected = false,
   orientation = "vertical",
   density = "default",
   className,
@@ -96,6 +99,8 @@ export function NavigationCard({
     <button
       type="button"
       className={rootClass}
+      aria-pressed={selected}
+      data-selected={selected ? "true" : undefined}
       disabled={disabled}
       onClick={onClick}
       aria-label={ariaLabel ?? title}
