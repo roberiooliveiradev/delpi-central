@@ -65,9 +65,18 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_envelope.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_trust.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_external_signing_intent.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_key_lifecycle.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signed_pipeline.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_pilot_readiness.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_external_signing_intent.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_key_lifecycle.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_socket_activation_adversarial.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_continuity_store_fd_hardening.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/53-atlas-hml-b-local-signer-key-lifecycle-pilot.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/52-atlas-hml-b-state-lock-keyless-intent-listen-audit.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_continuity_store.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_lifecycle.py"
@@ -176,9 +185,18 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_envelope.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_snapshot_trust.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_external_signing_intent.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_key_lifecycle.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signed_pipeline.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_pilot_readiness.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_external_signing_intent.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_key_lifecycle.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_socket_activation_adversarial.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_continuity_store_fd_hardening.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/53-atlas-hml-b-local-signer-key-lifecycle-pilot.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/52-atlas-hml-b-state-lock-keyless-intent-listen-audit.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_continuity_store.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_lifecycle.py"
@@ -337,6 +355,10 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_b_snapshot_envelope.py \
             linux-ops-mcp/tests/test_atlas_hml_b_snapshot_trust.py \
             linux-ops-mcp/tests/test_atlas_hml_b_external_signing_intent.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_key_lifecycle.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_local_signer.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py \
             linux-ops-mcp/tests/test_atlas_hml_b_socket_activation_adversarial.py \
             linux-ops-mcp/tests/test_atlas_hml_b_continuity_store_fd_hardening.py \
             linux-ops-mcp/tests/test_atlas_hml_b_continuity_store.py \

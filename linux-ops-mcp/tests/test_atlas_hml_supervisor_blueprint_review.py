@@ -21,7 +21,7 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
     report = review.review_blueprint_sources(files)
     assert report.status == "blocked"
     assert report.scope == "hml/public-hub"
-    assert report.files_reviewed == 5
+    assert report.files_reviewed == 7
     for name, value in asdict(report).items():
         if name.endswith("_attested") or name.endswith("_approved") or name in (
             "systemd_units_installed", "prepare_eligible", "can_execute",
@@ -125,10 +125,14 @@ def test_runtime_activation_guard_cannot_be_removed(files):
     for name, source in files.items():
         if name.endswith("tmpfiles.review"):
             continue
-        changed = source.replace(
+        changed = source
+        for sentinel in (
             "ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE",
-            "ConditionPathExists=/etc/os-release",
-        )
+            "ConditionPathExists=/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE",
+        ):
+            changed = changed.replace(
+                sentinel, "ConditionPathExists=/etc/os-release",
+            )
         with pytest.raises(
             review.HMLSupervisorBlueprintError, match="HML_BLUEPRINT_POLICY_DRIFT",
         ):

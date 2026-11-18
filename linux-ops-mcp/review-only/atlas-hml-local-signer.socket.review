@@ -1,0 +1,13 @@
+# ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD SOCKET.
+# Proposed AF_UNIX path for local signer peer-auth; never enable or start.
+[Unit]
+Description=ATLAS HML LOCAL SIGNER SOCKET REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Socket]
+ListenStream=/run/atlas-hml-signer/sign.sock
+SocketUser=root
+SocketGroup=atlas-hml-signer
+SocketMode=0660
+Accept=no
