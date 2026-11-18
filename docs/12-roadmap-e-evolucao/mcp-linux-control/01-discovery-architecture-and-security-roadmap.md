@@ -779,3 +779,14 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Falha no design corrigida: parent candidato do socket passou de 0750 a **02750** signer:bridge, herdando GID do grupo sem chown; bind exige UID/GID/mode exatos e recusa ACL, symlink, caminho existente ou troca de inode. Nao aceita GID primario como fallback.
 - Revisor lexical de tmpfiles exige estritamente as cinco entradas conhecidas; CI testa drift de modo/GID, preexistencia, ACL, symlink, e ponte real sob UIDs diferentes no runner descartavel.
 - PREPARE/ACT OFF; quatro MCP READ; SEC-01..10, auditoria host, chave real, bootstrap e install permanecem pendentes. **Progresso conservador 60%; sem pull/deploy**.
+
+
+## Etapa 71 | 18/11/2026 | Preflight read-only, plano de identidades e reconciliação Git
+
+**Fonte:** issue #232 e [runbook 59](./59-atlas-hml-b-etapa71-preflight-provisionamento.md). **SOURCE-ONLY; BLOCKED; progresso conservador 60%.**
+- Base GitHub: \`b00865e643301c31bb038a49b3f76e022da984cc\`; Etapa 70 PR #277 mesclada. O \`srv-api\` continua com checkout local atrasado e duas alterações legítimas preservadas (modo executável do script HML e um registro em SOURCES.txt).
+- Coletor explícito de preflight observa somente metadados dos caminhos ATLAS allowlisted, contas/grupos esperados, socket Docker (sem conectar), presença de unidades e flag AppArmor. NUNCA confundir com atestação SEC, Docker endpoints/FDs, perfis AppArmor efetivos nem estado systemd real.
+- Plano de provisionamento puramente declarativo: duas contas sem login e UID/GID distintos, cinco diretórios candidatos, socket signer:bridge 02750/0660, negação do grupo Docker e de grupos privilegiados a bridge/signer. Nao gera nem executa comandos.
+- Revisão offline estrita do dossier Git com flags permanentes pull/stash/reset/clean/deploy=false; identifica worktree sujo, refs desatualizadas, mudanças inesperadas, index/untracked e operação concorrente.
+- Testes de diretório fake/ACL, schema adversarial, política de identidades e Git; runner Linux elevado adiciona recusa real do signer UID 61021 a diretório com UID 61022 ou GID incorreto.
+- Quatro MCP READ, PREPARE/ACT OFF, unidade .candidate e .review não instaláveis, sem chave real, Docker ou produção alterados, sem pull/deploy. SEC-01..10, atestação host e change-control permanecem pendentes.

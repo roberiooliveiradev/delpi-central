@@ -219,3 +219,56 @@ def test_signer_owned_socket_two_real_uids_replay_safe_restart():
         assert (state/"continuity-state.v1.json").is_file()
     finally:
         shutil.rmtree(root)
+
+
+STAGE71_WRONG_DIRECTORY = r"""
+import os, sys
+from pathlib import Path
+from linux_ops_mcp.atlas_hml_b_signer_listen import (
+    HMLSignerListenError, bind_signer_owned_socket,
+)
+path, expected_group = sys.argv[1:]
+try:
+    listener = bind_signer_owned_socket(
+        socket_path=Path(path), owner_uid=os.getuid(),
+        socket_gid=int(expected_group),
+    )
+except HMLSignerListenError as exc:
+    assert exc.code == "HML_SIGNER_LISTEN_PARENT_DENIED", exc.code
+    assert not os.path.lexists(path)
+    print("DENIED")
+else:
+    listener.close()
+    raise AssertionError("STAGE71_UNSAFE_DIRECTORY_ACCEPTED")
+"""
+
+
+def test_stage71_signer_rejects_wrong_owner_or_group_real_uid():
+    """Actual nonroot 61021 signer must deny incorrect UID or GID of parent."""
+    root = sandbox()
+    try:
+        source = root / "source"
+        source.mkdir(mode=0o755)
+        shutil.copytree(
+            Path(__file__).resolve().parents[1] / "linux_ops_mcp",
+            source / "linux_ops_mcp",
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
+        for location, subdirs, files in os.walk(source):
+            os.chmod(location, 0o755)
+            for filename in files:
+                os.chmod(Path(location) / filename, 0o644)
+
+        wrong_uid = root / "wrong-owner"
+        wrong_gid = root / "wrong-group"
+        make_dir(wrong_uid, BUID, SGID, 0o2750)
+        make_dir(wrong_gid, SUID, SGID, 0o2750)
+        for directory in (wrong_uid, wrong_gid):
+            proc = child(
+                STAGE71_WRONG_DIRECTORY, [directory / "sign.sock", BGID],
+                SUID, SGID, source=source,
+            )
+            assert done(proc) == "DENIED"
+            assert not (directory / "sign.sock").exists()
+    finally:
+        shutil.rmtree(root)
