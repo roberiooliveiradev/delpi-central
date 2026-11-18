@@ -1,6 +1,6 @@
 # UI-02 — Plano de implementação do novo visual das páginas internas da Pesquisa
 
-> **Estado:** PLANO APROVÁVEL — nenhuma fase iniciada. Criado em 18/11/2026 sobre `main` em `f58b66022`; **revalidar HEAD, branch e working tree no início de cada fase.**
+> **Estado:** PLANO APROVADO em 18/11/2026 (D1–D3 aprovadas pelo solicitante). Pedidos de execução: [UI-02-PROMPTS-DEVIN.md](./UI-02-PROMPTS-DEVIN.md). Criado em 18/11/2026 sobre `main` em `f58b66022`; **revalidar HEAD, branch e working tree no início de cada fase.**
 > **Referência visual aprovada como base:** maquete *Pesquisa de Satisfação — páginas internas do Portal (proposta)*, seis telas, tema escuro — <https://claude.ai/artifact/7sw5awGxjUydGU7MhzuRUk>.
 > **Especificação que este plano implementa:** [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md). Ela será **reescrita como especificação vigente** na fase 0, antes de qualquer código; o histórico de decisões vai para o [BUSINESS-DECISIONS](./BUSINESS-DECISIONS.md).
 > **Ambientes:** desenvolvimento em DEV; testes e homologação em HML; **nada da Pesquisa em PROD** sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).
@@ -28,13 +28,13 @@ Refazer o visual das três páginas internas da Pesquisa no Portal Comercial (li
 
 **Fora do plano:** backend e migrações; formulário público (UI-03, já homologado); páginas de resultados (UI-01, UI-05, UI-06, UI-07), incluindo os botões “Ver resultados” e “Respostas por empresa”; deploy em PROD.
 
-## 3. Decisões abertas
+## 3. Decisões (aprovadas pelo solicitante em 18/11/2026)
 
 | ID | Decisão | Recomendação | Impacto se mudar |
 |---|---|---|---|
-| D1 | **Aba aberta no endereço da página** (pendência #15) | **Sim.** A aba fica no endereço (ex.: `…/satisfaction-surveys/{id}?aba=mensagem`). Atualizar ou compartilhar o link reabre a mesma aba; sem valor, abre Participantes. A fase 0 confirma o formato que o roteador do Comercial (`app/pluginRoutes.ts`) já usa em outras páginas | Se for “não”, a fase 3 só remove o item 15 |
-| D2 | Mostrar a quantidade de perguntas na aba Dados (“Questionário oficial — 15 perguntas”) | Mostrar **somente se** o detalhe da campanha já trouxer a quantidade ou a versão do questionário. Se não trouxer, mostrar só “Questionário oficial — versão de dd/mm/aaaa” | Exigir o dado novo muda o backend e sai deste plano |
-| D3 | Destaque de `{nome_empresa}` e `{link_pesquisa}` no editor da mensagem (item 10) | Componente genérico novo no PluginUI (fase 1), um campo de texto com trechos destacados. O texto continua num campo nativo, para não perder cursor, colar e leitor de tela | Sem o componente, o item 10 fica só na legenda abaixo do campo, e o destaque dentro do texto vira lacuna registrada |
+| D1 | **Aba aberta no endereço da página** (pendência #15) | **APROVADO — sim.** A aba fica no endereço como parâmetro `tab` com os valores do tipo atual `CampaignTab` (`participants`, `message`, `data`), no padrão de parâmetros já usado no Comercial (`utils/*DeepLink.ts`, ex.: `view`). Ex.: `…/satisfaction-surveys/{id}?tab=message`. Atualizar ou compartilhar o link reabre a mesma aba; sem valor ou valor inválido, abre Participantes | Se for “não”, a fase 3 só remove o item 15 |
+| D2 | Mostrar a quantidade de perguntas na aba Dados (“Questionário oficial — 15 perguntas”) | **APROVADO — sem mudar backend.** O tipo `SatisfactionCampaign` traz só `questionnaire_version` (texto) e não traz a quantidade de perguntas: mostrar só “Questionário oficial” + a versão. Como formatar a versão como data (“versão de dd/mm/aaaa”) depende do valor real em HML, a confirmar no inventário do P1 | Exigir o dado novo muda o backend e sai deste plano |
+| D3 | Destaque de `{nome_empresa}` e `{link_pesquisa}` no editor da mensagem (item 10) | **APROVADO — componente genérico novo no PluginUI** (fase 1, pacote P1): campo de texto de uma linha e de várias linhas com trechos destacados, para o Assunto e a Mensagem. O texto continua num campo nativo, para não perder cursor, colar e leitor de tela | Sem o componente, o item 10 fica só na legenda abaixo do campo, e o destaque dentro do texto vira lacuna registrada |
 
 ## 4. Catálogo de mudanças (o que muda em cada tela)
 
