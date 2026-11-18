@@ -33,6 +33,11 @@ class ProtheusHeader:
     st_base: float
     st_amount: float
     insurance_amount: float
+    invoice_type: str = ""
+    participant_kind: str = ""
+    participant_name: str = ""
+    participant_tax_id: str = ""
+    participant_state: str = ""
 
 
 @dataclass(frozen=True)
@@ -145,6 +150,8 @@ class AuditConfig:
     improvements_enabled: bool = False
     # Com D11, «em trânsito» usa date_to da análise, não a maior emissão do download.
     period_end: date | None = None
+    # FA-1/FA-2 (onda 1): com a flag, o participante vem de participant_* — SA1 nas notas tipo B/D.
+    participant_by_type_enabled: bool = False
 
 
 @dataclass(frozen=True)

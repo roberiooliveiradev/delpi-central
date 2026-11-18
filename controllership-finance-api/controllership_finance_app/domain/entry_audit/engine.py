@@ -75,7 +75,7 @@ def audit(
     presumed_tes = settings.presumed_credit_tes or PRESUMED["tes"]
     presumed_on = company_state == PRESUMED["state"]
     documents = {**invoices, **ctes}
-    rows = [_view(header) for header in headers if header.branch == branch]
+    rows = [_view(header, settings.participant_by_type_enabled) for header in headers if header.branch == branch]
     _correct_keys(rows, documents, company_tax_id, settings.tolerance, result)
     for row in rows:
         row["danfe"] = len(row["access_key"]) == 44 and row["access_key"][20:22] == "55"
@@ -320,11 +320,11 @@ def _keys(result, rows, documents, company_tax_id, hits) -> None:
 
 def _supplier_keys(result, rows, documents, company_tax_id, hits) -> None:
     del result
-    seen: dict[tuple[str, str], Counter] = defaultdict(Counter)
+    seen: dict[tuple[str, str, str], Counter] = defaultdict(Counter)
     for row in rows:
         document = documents.get(row["access_key"])
         if document and document.issuer_tax_id and document.issuer_tax_id != company_tax_id and row["own_form"] != "S":
-            seen[(row["supplier"], row["store"])][document.issuer_tax_id] += 1
+            seen[(row["party_kind"], row["supplier"], row["store"])][document.issuer_tax_id] += 1
     for row in rows:
         document = documents.get(row["access_key"])
         issuer = document.issuer_tax_id if document else (row["access_key"][6:20] if _check_digit(row["access_key"]) else "")
@@ -332,7 +332,7 @@ def _supplier_keys(result, rows, documents, company_tax_id, hits) -> None:
             continue
         launched = row["tax_id"]
         if not launched:
-            counts = seen.get((row["supplier"], row["store"]))
+            counts = seen.get((row["party_kind"], row["supplier"], row["store"]))
             if counts:
                 top, count = counts.most_common(1)[0]
                 if top != issuer and count >= 2 and count > counts.get(issuer, 0):
@@ -340,7 +340,9 @@ def _supplier_keys(result, rows, documents, company_tax_id, hits) -> None:
         if launched and launched != issuer:
             who = f" ({document.issuer_name})" if document else ""
             source = "do XML" if document else "na chave"
-            _hit(hits, row, document, "key.supplier_mismatch", "Fornecedor do lançamento com CNPJ diferente do emitente", "Alta", "CNPJ", _cnpj(launched), _cnpj(issuer), f"Lançada no fornecedor {row['supplier']}/{row['store']} ({row['name']}), que é o CNPJ {_cnpj(launched)}; o emitente {source} é o CNPJ {_cnpj(issuer)}{who}. Escriturar no código/loja do CNPJ certo: o SPED leva o participante errado (0150) e o título fica no fornecedor errado.")
+            party = "cliente" if row["party_kind"] == "customer" else "fornecedor"
+            title = "Cliente do lançamento com CNPJ diferente do emitente" if party == "cliente" else "Fornecedor do lançamento com CNPJ diferente do emitente"
+            _hit(hits, row, document, "key.supplier_mismatch", title, "Alta", "CNPJ", _cnpj(launched), _cnpj(issuer), f"Lançada no {party} {row['supplier']}/{row['store']} ({row['name']}), que é o CNPJ {_cnpj(launched)}; o emitente {source} é o CNPJ {_cnpj(issuer)}{who}. Escriturar no código/loja do CNPJ certo: o SPED leva o participante errado (0150) e o título fica no {party} errado.")
 
 
 def _unmatched(result, rows, invoices_only, invoices, ctes, company_tax_id, settings) -> None:
@@ -578,7 +580,8 @@ def _internal(result, row, xml_item, reference, check_cst, company_state, tes, b
     record = tes.get(row["tes"])
     document = None
     if row["own_form"] != "S" and row["cfop"] and row["state"] and row["cfop"][0] != _state_digit(row["state"], company_state):
-        _hit(hits, row, document, "coherence.cfop_vs_state", "CFOP de entrada incompatível com a UF do fornecedor", "Alta", "CFOP", row["cfop"], "UF " + row["state"], f'Fornecedor em {row["state"]} pede CFOP iniciado em {_state_digit(row["state"], company_state)}.', item=row["item"])
+        who = "participante" if settings.participant_by_type_enabled else "fornecedor"
+        _hit(hits, row, document, "coherence.cfop_vs_state", f"CFOP de entrada incompatível com a UF do {who}", "Alta", "CFOP", row["cfop"], "UF " + row["state"], f'{who.capitalize()} em {row["state"]} pede CFOP iniciado em {_state_digit(row["state"], company_state)}.', item=row["item"])
     line = book.item(row)
     consumption = bool(record and record.consumption_material == "Sim") or suffix in CONSUMPTION_OR_ASSET[:3]
     if line is not None:
@@ -740,11 +743,16 @@ class _Book:
         return self.documents.get(_document_key(row["branch"], row["number"], row["series"], row["supplier"], row["store"]))
 
 
-def _view(header: ProtheusHeader) -> dict:
+def _view(header: ProtheusHeader, participant: bool = False) -> dict:
+    use_participant = participant and bool(header.participant_kind)
     return {
         "branch": header.branch, "number": header.number, "series": header.series,
-        "supplier": header.supplier_code, "store": header.supplier_store, "state": header.supplier_state,
-        "name": header.supplier_name, "tax_id": _digits(header.supplier_tax_id), "species": (header.species or "").upper(),
+        "supplier": header.supplier_code, "store": header.supplier_store,
+        "state": header.participant_state if use_participant else header.supplier_state,
+        "name": header.participant_name if use_participant else header.supplier_name,
+        "tax_id": _digits(header.participant_tax_id if use_participant else header.supplier_tax_id),
+        "party_kind": header.participant_kind if use_participant else "supplier",
+        "invoice_type": header.invoice_type, "species": (header.species or "").upper(),
         "own_form": header.own_form, "access_key": header.access_key or "", "original_key": header.access_key or "",
         "issue_date": header.issue_date, "fixed": False,
         "freight": header.freight_amount, "expense": header.expense_amount, "icms_base": header.icms_base,
@@ -769,6 +777,7 @@ def _items(items: list[ProtheusItem], rows: list[dict], branch: str) -> list[dic
             "icms_rate": item.icms_rate, "icms": item.icms_amount, "ipi_base": item.ipi_base, "ipi": item.ipi_amount,
             "st": item.st_amount, "k": key, "access_key": header.get("access_key", ""),
             "name": header.get("name", ""), "state": header.get("state", ""), "own_form": header.get("own_form", ""),
+            "party_kind": header.get("party_kind", "supplier"), "invoice_type": header.get("invoice_type", ""),
             "species": header.get("species", ""), "danfe": header.get("danfe", False),
         })
     return built

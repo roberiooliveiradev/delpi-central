@@ -55,6 +55,12 @@ class Settings:
     CF_NOTIFICATION_DISPATCH_INTERVAL_SECONDS: str = _get_env(
         "CF_NOTIFICATION_DISPATCH_INTERVAL_SECONDS", default="60"
     )
+    CF_CHECKLIST_SYNC_DISPATCH_ENABLED: str = _get_env(
+        "CF_CHECKLIST_SYNC_DISPATCH_ENABLED", default="1"
+    )
+    CF_CHECKLIST_SYNC_DISPATCH_INTERVAL_SECONDS: str = _get_env(
+        "CF_CHECKLIST_SYNC_DISPATCH_INTERVAL_SECONDS", default="60"
+    )
 
     # api-delpi upstream (financial settlement routes, S2S individual).
     DELPI_API_URL: str = _get_env(
@@ -167,6 +173,9 @@ class Settings:
     )
     ENTRY_AUDIT_TOLERANCE: str = _get_env("ENTRY_AUDIT_TOLERANCE", default="0.05")
     ENTRY_AUDIT_XML_CACHE_DAYS: str = _get_env("ENTRY_AUDIT_XML_CACHE_DAYS", default="90")
+    ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED: bool = str(
+        _get_env("ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED", default="false")
+    ).lower() in {"1", "true", "yes"}
 
 
 settings = Settings()

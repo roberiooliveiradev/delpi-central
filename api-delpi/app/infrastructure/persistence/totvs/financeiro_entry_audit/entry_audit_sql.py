@@ -30,6 +30,10 @@ SELECT RTRIM(SF1.F1_FILIAL) AS branch,
        RTRIM(SA2.A2_NOME) AS supplier_name,
        RTRIM(SA2.A2_CGC) AS supplier_tax_id,
        RTRIM(SA2.A2_EST) AS supplier_state,
+       CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN 'customer' ELSE 'supplier' END AS participant_kind,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_NOME ELSE SA2.A2_NOME END) AS participant_name,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_CGC ELSE SA2.A2_CGC END) AS participant_tax_id,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_EST ELSE SA2.A2_EST END) AS participant_state,
        RTRIM(SF1.F1_ESPECIE) AS species,
        RTRIM(SF1.F1_TIPO) AS invoice_type,
        RTRIM(SF1.F1_FORMUL) AS own_form,
@@ -55,6 +59,11 @@ SELECT RTRIM(SF1.F1_FILIAL) AS branch,
    AND SA2.A2_FILIAL = ''
    AND SA2.A2_COD = SF1.F1_FORNECE
    AND SA2.A2_LOJA = SF1.F1_LOJA
+  LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+    ON SA1.D_E_L_E_T_ = ' '
+   AND SA1.A1_FILIAL = ''
+   AND SA1.A1_COD = SF1.F1_FORNECE
+   AND SA1.A1_LOJA = SF1.F1_LOJA
  WHERE SF1.D_E_L_E_T_ = ' '
    AND SF1.F1_FILIAL = ?
    AND SF1.F1_RECBMTO >= ?
@@ -78,6 +87,10 @@ SELECT RTRIM(SF1.F1_FILIAL) AS branch,
        RTRIM(SA2.A2_NOME) AS supplier_name,
        RTRIM(SA2.A2_CGC) AS supplier_tax_id,
        RTRIM(SA2.A2_EST) AS supplier_state,
+       CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN 'customer' ELSE 'supplier' END AS participant_kind,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_NOME ELSE SA2.A2_NOME END) AS participant_name,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_CGC ELSE SA2.A2_CGC END) AS participant_tax_id,
+       RTRIM(CASE WHEN RTRIM(SF1.F1_TIPO) IN ('B', 'D') THEN SA1.A1_EST ELSE SA2.A2_EST END) AS participant_state,
        RTRIM(SF1.F1_ESPECIE) AS species,
        RTRIM(SF1.F1_TIPO) AS invoice_type,
        RTRIM(SF1.F1_FORMUL) AS own_form,
@@ -106,6 +119,14 @@ SELECT RTRIM(SF1.F1_FILIAL) AS branch,
          AND A2_COD = SF1.F1_FORNECE
          AND A2_LOJA = SF1.F1_LOJA
  ) SA2
+ OUTER APPLY (
+      SELECT TOP 1 A1_NOME, A1_CGC, A1_EST
+        FROM SA1010 WITH (NOLOCK)
+       WHERE D_E_L_E_T_ = ' '
+         AND A1_FILIAL = ''
+         AND A1_COD = SF1.F1_FORNECE
+         AND A1_LOJA = SF1.F1_LOJA
+ ) SA1
  WHERE SF1.D_E_L_E_T_ = ' '
    AND SF1.F1_FILIAL = ?
    AND RTRIM(SF1.F1_CHVNFE) IN ({placeholders})

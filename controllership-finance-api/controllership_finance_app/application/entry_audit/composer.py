@@ -22,6 +22,7 @@ def audit_config() -> AuditConfig:
         freight_cfop_suffix=settings.ENTRY_AUDIT_FREIGHT_CFOP_SUFFIX,
         tolerance=float(settings.ENTRY_AUDIT_TOLERANCE),
         unmatched_grace_days=int(settings.ENTRY_AUDIT_UNMATCHED_GRACE_DAYS),
+        participant_by_type_enabled=bool(settings.ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED),
     )
 
 

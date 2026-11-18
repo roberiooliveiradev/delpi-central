@@ -119,6 +119,18 @@ def test_documents_by_access_key_ignore_the_receipt_window_and_deleted_rows() ->
     assert names == ["branch", "access_key", "access_key"]
 
 
+def test_documents_sql_resolve_the_participant_by_invoice_type() -> None:
+    for sql, _names in (
+        entry_audit_sql.documents_sql(["SPED"]),
+        entry_audit_sql.documents_by_access_keys_sql(1),
+    ):
+        assert "SA1010" in sql
+        assert "A1_COD = SF1.F1_FORNECE" in sql and "A1_LOJA = SF1.F1_LOJA" in sql
+        assert "participant_kind" in sql and "participant_name" in sql
+        assert "participant_tax_id" in sql and "participant_state" in sql
+        assert "('B', 'D')" in sql and "'customer'" in sql
+
+
 def test_items_and_fiscal_book_follow_the_same_document_filter() -> None:
     items, item_names = entry_audit_sql.items_sql(["SPED"])
     book, book_names = entry_audit_sql.fiscal_book_sql(["CTE"])

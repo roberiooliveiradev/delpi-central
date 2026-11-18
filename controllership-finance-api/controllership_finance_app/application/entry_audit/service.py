@@ -235,6 +235,7 @@ class EntryAuditService:
                 analysis["id"], run_id, run["branch_code"], result, auditable_headers, auditable_items, tes_rows, lnf, unavailable,
                 xml_by_key={**invoices, **ctes},
                 posted_outside=posted_outside,
+                participant=config.participant_by_type_enabled,
             )
             self._store.mark_run(run_id, stage="saving")
             self._store.replace_output(run_id, **output)
@@ -793,6 +794,7 @@ def _snapshot(config: AuditConfig, lookback_days: int) -> dict:
         "xml_lookback_days": lookback_days,
         "unmatched_grace_days": config.unmatched_grace_days,
         "tolerance": config.tolerance,
+        "participant_by_type_enabled": config.participant_by_type_enabled,
     }
 
 
@@ -803,6 +805,7 @@ def _config_from(snapshot: dict) -> AuditConfig:
         tolerance=float(snapshot.get("tolerance") or 0.05),
         unmatched_grace_days=int(snapshot.get("unmatched_grace_days") or 3),
         improvements_enabled=True,
+        participant_by_type_enabled=bool(snapshot.get("participant_by_type_enabled")),
     )
 
 
@@ -837,6 +840,11 @@ def _header(row: dict) -> ProtheusHeader:
         st_base=_num(row.get("st_base")),
         st_amount=_num(row.get("st_amount")),
         insurance_amount=_num(row.get("insurance_amount")),
+        invoice_type=str(row.get("invoice_type") or ""),
+        participant_kind=str(row.get("participant_kind") or ""),
+        participant_name=str(row.get("participant_name") or ""),
+        participant_tax_id=str(row.get("participant_tax_id") or ""),
+        participant_state=str(row.get("participant_state") or ""),
     )
 
 
@@ -957,7 +965,15 @@ def _tes_codes(header: dict, items: list[dict], item_number: str) -> str:
     return ", ".join(sorted({str(item.get("tes") or "") for item in related if item.get("tes")}))
 
 
-def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None, posted_outside: list[dict] | None = None) -> dict:
+def _display_name(header: dict, xml, participant: bool) -> str:
+    if participant:
+        name = str(header.get("participant_name") or "")
+        if name:
+            return name
+    return str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
+
+
+def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None, posted_outside: list[dict] | None = None, participant: bool = False) -> dict:
     by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
     xml_docs = xml_by_key or {}
     occurrence_rows = []
@@ -965,7 +981,7 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
         header = by_key.get(row.access_key, {})
         xml = xml_docs.get(row.access_key)
         code = stored_field(row.field)
-        supplier_name = str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
+        supplier_name = _display_name(header, xml, participant)
         occurrence_rows.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
@@ -1006,7 +1022,7 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
         if posted:
             reason = f"{reason} Em lançamento (LNF): {posted.get('status') or 'aberta'}."
             severity = "Info"
-        party = str(getattr(row, "party_name", "") or header.get("supplier_name") or (getattr(xml, "issuer_name", "") if xml is not None else ""))
+        party = str(getattr(row, "party_name", "") or _display_name(header, xml, participant))
         series = str(getattr(row, "series", "") or header.get("series") or (getattr(xml, "series", "") if xml is not None else ""))
         issued = str(getattr(row, "issue_date", "") or header.get("issue_date") or "")
         amount = getattr(row, "amount", None)
@@ -1030,8 +1046,8 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
             "series": series,
             "party_name": party,
             "supplier_name": party,
-            "party_tax_id": str(getattr(row, "party_tax_id", "") or header.get("supplier_tax_id") or (getattr(xml, "issuer_tax_id", "") if xml is not None else "")),
-            "party_state": str(getattr(row, "party_state", "") or header.get("supplier_state") or (getattr(xml, "issuer_state", "") if xml is not None else "")),
+            "party_tax_id": str(getattr(row, "party_tax_id", "") or (header.get("participant_tax_id") if participant else "") or header.get("supplier_tax_id") or (getattr(xml, "issuer_tax_id", "") if xml is not None else "")),
+            "party_state": str(getattr(row, "party_state", "") or (header.get("participant_state") if participant else "") or header.get("supplier_state") or (getattr(xml, "issuer_state", "") if xml is not None else "")),
             "issue_date": issued,
             "amount": amount if amount is not None else (getattr(xml, "total_amount", None) if xml is not None else None),
             "icms_base": getattr(row, "icms_base", None) if getattr(row, "icms_base", None) is not None else (getattr(xml, "icms_base", None) if xml is not None else header.get("icms_base")),
@@ -1051,7 +1067,7 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
         identity = _document_identity(header)
         count = sum(1 for row in result.occurrences if _document_identity({"access_key": row.access_key, "branch": branch, "document_number": row.document_number}) == identity)
         xml = xml_docs.get(str(header.get("access_key") or ""))
-        supplier_name = str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
+        supplier_name = _display_name(header, xml, participant)
         documents.append({
             "analysis_id": analysis_id,
             "run_id": run_id,

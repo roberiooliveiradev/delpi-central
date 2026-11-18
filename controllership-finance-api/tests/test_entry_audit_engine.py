@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, datetime
 
 from controllership_finance_app.domain.entry_audit.engine import audit
@@ -209,3 +210,84 @@ def test_transit_uses_the_analysis_end_and_is_info() -> None:
     assert "trânsito" in by_number["1101"].reason
     assert by_number["1102"].severity == "Média"
     assert "trânsito" not in by_number["1102"].reason
+
+
+OTHER = "33333333000181"
+EMITTER = "44444444000191"
+
+
+def _run_participant(headers, items, invoices, enabled=True):
+    return audit(
+        branch="01", company_tax_id=COMPANY, company_state="SC", headers=headers, items=items,
+        tes_records=TES, invoices=invoices, ctes={},
+        config=AuditConfig(improvements_enabled=False, participant_by_type_enabled=enabled),
+    )
+
+
+def test_customer_note_with_matching_participant_stays_clean_and_flag_off_keeps_supplier_rule() -> None:
+    key = _key("55", 1201)
+    header = replace(
+        _header(1201, key, 100, 100, 12),
+        supplier_tax_id=OTHER, invoice_type="B",
+        participant_kind="customer", participant_name="Cliente Sintetico",
+        participant_tax_id=SUPPLIER, participant_state="SC",
+    )
+    invoice = _invoice(1201, key, (_xml_item(1, 100, 12),), 100, 12)
+    items = [_item(1201, "1", 100, 12)]
+    assert _run_participant([header], items, {key: invoice}).occurrences == []
+    flagged = _run_participant([header], items, {key: invoice}, enabled=False)
+    mismatch = [row for row in flagged.occurrences if row.rule_id == "key.supplier_mismatch"]
+    assert len(mismatch) == 1
+    assert "Fornecedor" in mismatch[0].title
+
+
+def test_customer_note_with_different_participant_flags_customer_wording() -> None:
+    key = _key("55", 1202)
+    header = replace(
+        _header(1202, key, 100, 100, 12),
+        invoice_type="D", participant_kind="customer", participant_name="Cliente Sintetico",
+        participant_tax_id=OTHER, participant_state="SC",
+    )
+    invoice = _invoice(1202, key, (_xml_item(1, 100, 12),), 100, 12)
+    result = _run_participant([header], [_item(1202, "1", 100, 12)], {key: invoice})
+    mismatch = [row for row in result.occurrences if row.rule_id == "key.supplier_mismatch"]
+    assert len(mismatch) == 1
+    assert mismatch[0].severity == "Alta"
+    assert "cliente" in mismatch[0].title.lower()
+    assert "cliente" in mismatch[0].action.lower()
+
+
+def test_cfop_vs_state_uses_the_customer_state_only_with_the_flag() -> None:
+    key = _key("55", 1203)
+    header = replace(
+        _header(1203, key, 100, 100, 12),
+        invoice_type="B", participant_kind="customer", participant_name="Cliente Sintetico",
+        participant_tax_id=SUPPLIER, participant_state="ES",
+    )
+    invoice = _invoice(1203, key, (_xml_item(1, 100, 12),), 100, 12)
+    items = [_item(1203, "1", 100, 12, cfop="1101")]
+    flagged = _run_participant([header], items, {key: invoice})
+    hits = [row for row in flagged.occurrences if row.rule_id == "coherence.cfop_vs_state"]
+    assert len(hits) == 1
+    assert "participante" in hits[0].title
+    clean = _run_participant([header], items, {key: invoice}, enabled=False)
+    assert [row for row in clean.occurrences if row.rule_id == "coherence.cfop_vs_state"] == []
+
+
+def test_seen_heuristic_does_not_mix_customer_and_supplier_with_same_code() -> None:
+    key_a, key_b, key_c = _key("55", 1211), _key("55", 1212), _key("55", 1213)
+    customer = replace(
+        _header(1213, key_c, 100, 100, 12),
+        supplier_tax_id="", invoice_type="B", participant_kind="customer",
+        participant_name="Cliente Sintetico", participant_tax_id="", participant_state="SC",
+    )
+    result = _run_participant(
+        [_header(1211, key_a, 100, 100, 12), _header(1212, key_b, 100, 100, 12), customer],
+        [_item(1211, "1", 100, 12), _item(1212, "1", 100, 12), _item(1213, "1", 100, 12)],
+        {
+            key_a: _invoice(1211, key_a, (_xml_item(1, 100, 12),), 100, 12),
+            key_b: _invoice(1212, key_b, (_xml_item(1, 100, 12),), 100, 12),
+            key_c: replace(_invoice(1213, key_c, (_xml_item(1, 100, 12),), 100, 12), issuer_tax_id=EMITTER),
+        },
+    )
+    assert [row for row in result.occurrences if row.rule_id == "key.supplier_mismatch" and row.document_number == "1213"] == []
