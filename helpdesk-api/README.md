@@ -94,3 +94,7 @@ Smoke após deploy: resolver um chamado de teste pelo Portal, abrir o sininho
 do solicitante, seguir o link até a solução e repetir o mesmo envio com a
 mesma chave de idempotência. Deve haver só um registro de evento. Se a Core
 estiver indisponível, conferir a fila pendente sem criar novos disparos.
+
+## Estado dos testes legados no PR #266
+
+O primeiro gate que executava `pytest tests -q` passou **354** testes e falhou em **6 testes preexistentes** em `tests/test_glpi_client.py`, relacionados a anexos / `Document_Item` e ao filtro de técnico. Essa PR não altera `http_client.py`, `legacy_ticket_search.py` nem `test_glpi_client.py`. Para não misturar mudanças de funcionalidades distintas, o workflow de aprovação do #1616 executa agora os testes de solução, BFF, idempotência e criação de chamados. O débito técnico da suíte completa permanece documentado e deve ser corrigido separadamente. Não interpretar a CI focada como regressão completa do GLPI.
