@@ -740,3 +740,12 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Blueprints de bridge `.review` não instaláveis; signer socket agora prevê grupo dedicado `atlas-hml-bridge`, sem conceder ao bridge permissões sobre a chave privada `atlas-hml-signer`. Revisor lexical fail-closed e testes de drift ampliados.
 - Testes E2E de processo/socket/UID real do runner descartável, reboot simulado, replay, concorrência, falha de persistência, alvo PROD, claim stale e policy de peer; workflow Linux/Docker estendido. **CI não atesta systemd/UID real de `srv-api`, root pode comprometer chave e dados do mesmo host.**
 - Pendem SEC-01 ou exceção formal compatível com política, SEC-02..10 no host, bootstrap comprovado, autorização de key-generation e GLPI, diretórios/contas/unidades reais, rollback e janela operacional específica. Quatro MCP READ, PREPARE/ACT OFF, status blocked. **Não fazer pull/deploy, não instalar, não alterar Docker/host ou criar chave real.**
+
+## Etapa 64 | 17/11/2026 | Pré-ativação HML: contrato offline, bootstrap e rollback sob revisão
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 55](./55-atlas-hml-b-etapa64-preflight-operacional.md). **SOURCE-ONLY, BLOCKED**.
+- PR #270 da Etapa 63 mesclada (`cca1732ff0e916d1d8b4fa8b4d3aac780d43123e`); DELPI Verifier `ACCEPT_WITH_RESIDUAL`, independente OK, 1 rodada, nenhuma OC, registrado na issue.
+- Validador puro `atlas_hml_b_stage64_review.py` exige 13 classes de evidência HML e recusa campos extras, PROD, root bridge/signer, expansão MCP, flags de ativação e alteração de identidade. Evidência autodeclarada nunca vira atestação de host nem autorização.
+- Runbook 55 define modelo UID/DAC/UDS e revisão de systemd não instalável, plano de bootstrap com âncora externa e bloqueio em rollback, baseline somente leitura, condições STOP e rollback estritamente limitado a ATLAS; inclui ressalva do risco root no mesmo host.
+- `AGENTS.md` passa a distinguir explicitamente a governança ATLAS de branch/PR/manual merge/sem deploy automático. CI Linux/Docker inclui testes negativos do contrato offline; DELPI Verifier específico da Etapa 64 após CI.
+- Nenhuma chave, conta, checkpoint ou serviço real criado; nenhuma operação Docker/host; SEC-01..10, aceite operacional, perímetro real e rollback ensaiado pendentes. Quatro MCP READ, PREPARE/ACT OFF. **Progresso conservador 58%; não executar pull/deploy.**
