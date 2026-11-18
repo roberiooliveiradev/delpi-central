@@ -278,7 +278,9 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await expect(
       page.getByText(/roteiro oficial consultado permanece intacto/),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Limpar" }).click();
+    await page
+      .getByRole("button", { name: "Limpar", exact: true })
+      .click();
     await expect(page.getByText("Cenário B")).toHaveCount(0);
     await shot(page, "lb-cleared");
 
