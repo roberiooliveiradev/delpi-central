@@ -13,8 +13,8 @@
 | **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
 | **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f124b28a9d`, deploy PROD e HML em 17/11/2026 (ver §11) |
 | **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
-| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **PUBLICADO (`fe905b73b9`, 17/11 17:23) E DESFEITO** por `9665f42e7` (17/11 17:32, outra frente) — revisão suspensa |
-| **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **PRONTO PARA EXECUÇÃO** (§15) |
+| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **ACEITO COM RESÍDUOS** (código restaurado pelo P6-R; ver §16) — aguarda o H8 do solicitante |
+| **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **ACEITO** — commit `c51e18890e`, HML em 18/11/2026 (ver §16) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -728,3 +728,20 @@ Restaurar no `main` **exatamente** o conteúdo do P6 em `plugins/public-hub`, se
 ### 15.5 Relatório
 
 HEAD inicial/final · prova do §15.4.3 · testes · veredito do verificador sem edição · deploy HML e resultados de H1/H2/H6/H7/H9 · link do participante pendente para o H8 do solicitante (DRIVES ITAJAI, se ainda pendente) · confirmação de que nenhum arquivo fora de `plugins/public-hub` foi alterado.
+
+---
+
+## 16. Revisão do P6 e do P6-R (18/11/2026)
+
+**Veredito do coordenador:** P6-R `ACCEPT`; P6 `ACCEPT_WITH_RESIDUAL`, **condicionado ao H8** (envio real feito pelo solicitante e conferência de “Respondida” no Portal).
+
+- **Restauração conferida:** `c51e18890e` em `main`; `git diff fe905b73b9 origin/main -- plugins/public-hub` vazio; 24 arquivos, todos em `plugins/public-hub`; nenhuma outra frente tocada.
+- **Código do P6 conferido:** página é adaptador fino sobre o `GuidedQuestionnaire` (tipos do kit, sem CSS próprio); título público fixo; empresa omitida se ausente; prazo e período **sem hora** no fuso America/Sao_Paulo; N/A e abertas vazias → `null` no envio; estados terminais sem nome da campanha; shell `bare` sem botão de tema nem logo do shell; correção do logo no Dockerfile (`chmod -R a+rX`).
+- **HML:** página nova no ar (`delpi-hml-public-hub`, `c51e18890e`); H1, H2, H6, H7 e H9 aprovados pelo executor; H3–H5 aprovados no P6.
+
+| Resíduo | Descrição | Destino |
+|---|---|---|
+| R18 | **Regressão por commit de outra frente** (`9665f42e7` publicou cópia desatualizada e desfez o P6 e outros trabalhos) | Avisar os owners das demais frentes; a cada pacote, reconferir após o push que o trabalho continua em `main` (já no protocolo do P6-R) |
+| R19 | `plugins/public-hub/README.md` ainda cita o `form.css` antigo | Ajuste de documentação no próximo pacote que tocar o `public-hub` |
+| R20 | O checkout de PROD já contém a página nova; um rebuild do `public-hub` em PROD por outra frente passará a servi-la. Exposição funcional **nula** enquanto `COMMERCIAL_SATISFACTION_SURVEY_ENABLED=false` | Registrado para o owner; tratar no plano de implantação em PROD |
+| H8 | Envio real pelo solicitante (link do participante DRIVES ITAJAI, pendente) | **Solicitante** |
