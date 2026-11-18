@@ -114,12 +114,15 @@ print(struct.unpack("3i",s.getsockopt(socket.SOL_SOCKET,socket.SO_PEERCRED,12))[
 s.close()
 """
 
-def child(script, args, uid, gid):
+def child(script, args, uid, gid, source=None):
+    child_env = {**os.environ, "PYTHONDONTWRITEBYTECODE":"1"}
+    if source is not None:
+        child_env["PYTHONPATH"] = str(source)
     return subprocess.Popen(
         [sys.executable, "-B", "-c", script, *map(str, args)],
         user=uid, group=gid, extra_groups=[], close_fds=True,
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        env={**os.environ, "PYTHONDONTWRITEBYTECODE":"1"},
+        env=child_env,
     )
 
 def done(proc):
@@ -166,6 +169,17 @@ def test_signer_owned_socket_two_real_uids_replay_safe_restart():
         make_dir(keydir,SUID,SGID,0o700)
         make_dir(state,SUID,SGID,0o750)
         make_dir(sockdir,SUID,BGID,0o2750)
+        source=root/"source"
+        source.mkdir(mode=0o755)
+        shutil.copytree(
+            Path(__file__).resolve().parents[1]/"linux_ops_mcp",
+            source/"linux_ops_mcp",
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
+        for location, subdirs, files in os.walk(source):
+            os.chmod(location, 0o755)
+            for filename in files:
+                os.chmod(Path(location)/filename, 0o644)
         keys=generate_ephemeral_keypair()
         key=write_ephemeral_private_key(
             keydir,keys,owner_uid=SUID,expected_gid=SGID,
@@ -183,7 +197,7 @@ def test_signer_owned_socket_two_real_uids_replay_safe_restart():
             signer=child(SIGNER,[
                 key,pub,socketpath,state,when.isoformat(),gen,
                 "true" if gen==1 else "false",BUID,BGID,
-            ],SUID,SGID)
+            ],SUID,SGID,source=source)
             try:
                 for _ in range(200):
                     if socketpath.exists() or signer.poll() is not None:
@@ -193,7 +207,7 @@ def test_signer_owned_socket_two_real_uids_replay_safe_restart():
                 bridge=child(BRIDGE,[
                     handoff,socketpath,key,pub,keys.key_id,when.isoformat(),
                     gen,SUID,BGID,
-                ],BUID,BGID)
+                ],BUID,BGID,source=source)
                 assert json.loads(done(bridge))=={"generation":gen,"status":"blocked"}
                 done(signer)
             finally:
