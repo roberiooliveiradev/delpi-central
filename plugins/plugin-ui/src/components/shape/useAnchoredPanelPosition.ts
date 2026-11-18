@@ -164,6 +164,10 @@ export function useAnchoredPanelPosition(
     update();
     const raf = requestAnimationFrame(update);
 
+    // Scroll events inside a shadow tree do not reach the window.
+    const anchorRoot = anchorRef.current?.getRootNode();
+    const shadowRoot = anchorRoot instanceof ShadowRoot ? anchorRoot : undefined;
+    shadowRoot?.addEventListener("scroll", update, true);
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     window.visualViewport?.addEventListener("resize", update);
@@ -176,6 +180,7 @@ export function useAnchoredPanelPosition(
 
     return () => {
       cancelAnimationFrame(raf);
+      shadowRoot?.removeEventListener("scroll", update, true);
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("resize", update);

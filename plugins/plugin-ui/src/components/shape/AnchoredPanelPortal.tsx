@@ -47,6 +47,8 @@ export type AnchoredPanelPortalProps = {
    * Se omitido, infere o ancestral `.dashboard-*` do âncora.
    */
   portalScopeClassName?: string;
+  /** Keep the panel in the anchor's shadow tree so it can inherit local styles and ARIA references. */
+  portalWithinShadowRoot?: boolean;
   /**
    * Fecha o painel ao clicar fora (âncora + painel) ou pressionar Escape.
    * Recomendado em todo popover ancorado.
@@ -83,6 +85,7 @@ export function AnchoredPanelPortal({
   gap,
   containWithinRef,
   portalScopeClassName,
+  portalWithinShadowRoot = false,
   onDismiss,
   exclusive = true,
   density,
@@ -179,10 +182,13 @@ export function AnchoredPanelPortal({
     </div>
   );
 
+  const anchorRoot = portalWithinShadowRoot ? anchorRef.current?.getRootNode() : undefined;
+  const target = anchorRoot instanceof ShadowRoot ? anchorRoot : document.body;
+
   return (tryResolveCreatePortal(ReactDOM) ?? createPortalNamed)(
     <div className={scopeClass} style={theme.style} data-theme={theme.dataTheme}>
       {panel}
     </div>,
-    document.body,
+    target,
   );
 }

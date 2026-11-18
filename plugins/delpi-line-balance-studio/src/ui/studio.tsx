@@ -5,7 +5,7 @@ import {
   ActionButton,
   ChartSegmentButton,
   IconButton,
-  NativeSelectControl,
+  FormSelectControl,
   NativeTextControl,
   NATIVE_CONTROL_COMPACT_CLASS,
   type NativeTextControlProps,
@@ -310,12 +310,12 @@ export class LineBalanceStudioElement extends HTMLElement {
       <section className="panel conditions" id="conditions" aria-labelledby="conditions-title">
         <h2 id="conditions-title">Condições de produção</h2>
         <div className="fields" key={shift.mode}>
-          <label className="field">
-            Modo de turno
-            <NativeSelectControl className={NATIVE_CONTROL_COMPACT_CLASS} value={shift.mode}
+          <div className="field">
+            <label htmlFor="shift-mode">Modo de turno</label>
+            <FormSelectControl id="shift-mode" ariaLabel="Modo de turno" portalWithinShadowRoot value={shift.mode}
               options={[{ value: "CLOCK", label: "Horários" }, { value: "MINUTES", label: "Minutos" }]}
               onChange={value => this.onField("mode", value)} />
-          </label>
+          </div>
           {shiftFields}
           {field("Demanda por turno", "number", "demand", String(demandUnitsPerShift ?? ""))}
           {field("Tamanho do lote", "number", "batch", String(batchUnits ?? ""))}
@@ -387,7 +387,7 @@ export class LineBalanceStudioElement extends HTMLElement {
             <div className="controls">
               {study.scenarios.length > 1 && (
                 <div className="scenario-control">
-                  <NativeSelectControl aria-label="Cenário" className={NATIVE_CONTROL_COMPACT_CLASS}
+                  <FormSelectControl ariaLabel="Cenário" portalWithinShadowRoot
                     value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
                     onChange={value => this.onField("scenario", value)} />
                 </div>
@@ -474,8 +474,8 @@ export class LineBalanceStudioElement extends HTMLElement {
                       onCommit={value => this.onField("operation-name", value, operation.id)} /></td>
                     <td><CommitInput type="number" min={0} step="any" placeholder="Desconhecido" value={operation.durationSeconds ?? ""}
                       aria-label={`Tempo da operação ${i + 1} em segundos`} onCommit={value => this.onField("duration", value, operation.id)} /></td>
-                    <td><NativeSelectControl className={NATIVE_CONTROL_COMPACT_CLASS} placeholderOption="Sem posto"
-                      aria-label={`Posto da operação ${i + 1}`} value={assignment.get(operation.id) ?? ""} options={stationOptions}
+                    <td><FormSelectControl portalWithinShadowRoot allowEmpty emptyLabel="Sem posto"
+                      ariaLabel={`Posto da operação ${i + 1}`} value={assignment.get(operation.id) ?? ""} options={stationOptions}
                       onChange={value => this.onField("station", value, operation.id)} /></td>
                     <td><IconButton aria-label={`Remover operação ${i + 1}`} onClick={() => this.onAction("remove-operation", operation.id)}>×</IconButton></td>
                   </tr>

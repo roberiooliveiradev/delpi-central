@@ -45,6 +45,8 @@ export type SelectControlProps = {
   className?: string;
   /** Escopo CSS do MFE no portal do painel (ex.: `dashboard-tv-dashboard`). */
   portalScopeClassName?: string;
+  /** Render the dropdown within the anchor’s shadow tree when embedded as a custom element. */
+  portalWithinShadowRoot?: boolean;
   /**
    * Quando definido (ex.: `data-delpi-preserve-text-edit`), aplica no trigger e
    * nas opções — evita blur do contentEditable da ribbon tipográfica.
@@ -91,6 +93,7 @@ export function SelectControl({
   ariaLabel,
   className,
   portalScopeClassName,
+  portalWithinShadowRoot,
   preserveTextEditFocusAttr,
   classNames,
   labels,
@@ -263,6 +266,7 @@ export function SelectControl({
         matchAnchorWidth
         role="presentation"
         portalScopeClassName={portalScopeClassName}
+        portalWithinShadowRoot={portalWithinShadowRoot}
         exclusive={false}
         onDismiss={closePanel}
       >

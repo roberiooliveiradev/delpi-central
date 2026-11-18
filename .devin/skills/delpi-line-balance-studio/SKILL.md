@@ -41,6 +41,7 @@ Construir **do zero** a ferramenta reutilizável `plugins/delpi-line-balance-stu
 
 ## Componentes de interface
 - Inventariar os exports públicos de `@delpi/plugin-ui` antes de implementar telas. Compor o Studio e sua demo com os controles canônicos do kit para inputs, selects e botões. Reservar HTML nativo no Studio à estrutura semântica da página.
+- Usar `FormSelectControl` como seletor padrão do Studio, inclusive em cenários, turno e postos. Em custom elements, manter o painel no mesmo shadow root pelo contrato público do Plugin UI.
 - Quando um controle reutilizável faltar, implementar e testar o componente genérico em `plugins/plugin-ui`, expor sua API e seus estilos públicos e importar no Studio. Manter regras de estudo, estados e cálculos no Studio e no domínio competente.
 - Manter o CSS dos componentes no Plugin UI. No Studio, aplicar somente tokens de tema e layout de página. Validar a integração de fato, o teclado e os temas claro e escuro no navegador.
 

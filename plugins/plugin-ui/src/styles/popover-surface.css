@@ -3,7 +3,7 @@
  * Sem backdrop-filter — superfície opaca + sombra + raio únicos.
  */
 
-:root {
+:root, :host {
   --delpi-ui-popover-radius: 12px;
   --delpi-ui-popover-shadow:
     0 16px 40px color-mix(in srgb, #000 28%, transparent),

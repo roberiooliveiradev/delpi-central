@@ -61,12 +61,13 @@ export function useClickOutside<T extends HTMLElement>(
     if (!active) return;
 
     const handlePointerDown = (event: Event) => {
-      const target = event.target as Node | null;
-      if (!target) return;
+      const path = event.composedPath();
+      const target = path[0] ?? event.target;
+      if (!(target instanceof Node)) return;
       const panels = refsRef.current
         .map((ref) => ref.current)
         .filter((panel): panel is T => Boolean(panel));
-      const inside = panels.some((panel) => panel.contains(target));
+      const inside = panels.some((panel) => path.includes(panel) || panel.contains(target));
       if (inside || isInsideNestedOverlay(target, panels)) return;
       onOutsideRef.current();
     };
