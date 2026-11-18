@@ -118,12 +118,10 @@ def test_g2_one_satisfied_one_pending_does_not_publish_complete():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
-                "operation": "read",
             },
             {
                 "description": "Estrutura do produto 90260921",
                 "evidence_source": "product",
-                "operation": "read",
                 "required_args": {"params": {"code": "90260921"}},
             },
         ],
@@ -202,7 +200,6 @@ def test_g2_complete_without_bound_evidence_is_overridden():
             {
                 "description": "Contagem de processos ativos",
                 "evidence_source": "process",
-                "operation": "read",
             }
         ],
         expected_delivery="aggregation",
