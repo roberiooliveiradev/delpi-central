@@ -6636,7 +6636,7 @@ Sondagem real nos 3 PDFs (`run_visual_benchmark` in-process, modelos `paddlex` o
 
 - Inventário em `eva-val01-g1/balloon-gt01-corpus-manifest.json` — 18 documentos do corpus autorizado (Doc 120 + 3 B3 + G1 dev), com SHA-256 coletado por acesso autorizado ao fileserver (~4.841 PDFs disponíveis).
 - **DEVELOPMENT:** 90261723, 90261731, 90264311 (+ 90264026, 90264004, 90264017, 90264135 do dev G1).
-- **VALIDATION_EXPOSED:** 11 documentos sondados (inventário de capacidade: 122 balões candidatos, 74 líderes fora do dev set).
+- **VALIDATION_EXPOSED:** 11 documentos sondados (inventário de capacidade: 111 balões candidatos, 72 líderes, conforme campos do manifesto).
 - **TRUE_UNSEEN_HOLDOUT = NOT_AVAILABLE** — todo documento avaliado foi exposto a saída da EVA; holdout cego exige seleção do owner nos PDFs não sondados.
 - `split_approval_status=OWNER_BLOCKED`; sem vazamento dev→holdout por inexistência de holdout.
 

@@ -24,7 +24,8 @@ ou prova de detecção de trocas reais.
 - **DEVELOPMENT** (3 com GT draft + 4 do G1 dev): 90261723, 90261731, 90264311,
   90264026, 90264004, 90264017, 90264135.
 - **VALIDATION_EXPOSED** (11, sondados, sem GT): 90264302, 90264161, 90263520,
-  90261606, 90263572, 90264178, 90480120, 90264014, 90264030, 90264043, 90264050.
+  90261606, 90263572, 90264178, 90480120, 90264014, 90264030, 90264043, 90264050
+  (111 balões / 72 líderes candidatos no inventário do manifesto).
 - **TRUE_UNSEEN_HOLDOUT = NOT_AVAILABLE.** Todos os documentos avaliados foram
   expostos a saídas da EVA; nenhum pode ser declarado holdout cego.
 - Fileserver possui ~4.841 PDFs; seleção de holdout exige decisão do owner.
