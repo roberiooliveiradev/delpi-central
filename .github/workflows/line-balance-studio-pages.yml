@@ -6,6 +6,7 @@ on:
     paths:
       - 'plugins/delpi-line-balance-studio/**'
       - 'plugins/plugin-ui/**'
+      - 'portal/src/theme-tokens.css'
       - '.github/workflows/line-balance-studio-pages.yml'
   workflow_dispatch:
 

@@ -12,12 +12,15 @@
 input.delpi-ui-native-control,
 select.delpi-ui-native-control,
 textarea.delpi-ui-native-control {
-  --delpi-ui-control-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
-  --delpi-ui-control-text: var(--delpi-ui-text, var(--text, #111111));
-  --delpi-ui-control-border: var(--delpi-ui-border, var(--border, #d0d7de));
+  --delpi-ui-control-bg: var(--delpi-ui-field-bg, var(--delpi-ui-surface, var(--surface, #ffffff)));
+  --delpi-ui-control-text: var(--delpi-ui-field-text, var(--delpi-ui-text, var(--text, #111111)));
+  --delpi-ui-control-border: var(--delpi-ui-field-border, var(--delpi-ui-border, var(--border, #d0d7de)));
   --delpi-ui-control-muted: var(
-    --delpi-ui-text-muted,
-    color-mix(in srgb, var(--delpi-ui-control-text) 55%, transparent)
+    --delpi-ui-field-placeholder,
+    var(
+      --delpi-ui-text-muted,
+      color-mix(in srgb, var(--delpi-ui-control-text) 55%, transparent)
+    )
   );
   --delpi-ui-control-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
   --delpi-ui-control-radius: 10px;

@@ -40,7 +40,7 @@ const tableLabels = {
   headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
 };
 
-const colors = ["#089bdb", "#73c9ef", "#61a8e1", "#a6dff5", "#7a9de0", "#b2c7ed"];
+const colors = Array.from({ length: 6 }, (_, index) => `var(--chart-${index + 1}, var(--primary, #089bdb))`);
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 const format = (value: number) => numberFormat.format(value);
 const blankShift: ShiftInput = { mode: "CLOCK", start: "", end: "", breaks: [] };

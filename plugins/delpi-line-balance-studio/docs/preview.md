@@ -27,3 +27,5 @@ Inventário em `784d7047a6fb`, por busca literal de `FormSelectControl` em arqui
 | Plugin UI (editor de cores de série, correção PRC e barra de texto rico) | 3 |
 
 A variante anterior continua disponível para esses consumidores. Sua retirada depende da migração dos usos diretos e da confirmação das superfícies que importam controles do kit por federação.
+
+A demo carrega `portal/src/theme-tokens.css`, a mesma fonte importada pelo Portal. O componente integrado herda os tokens do host, inclusive canvas, superfícies, controles, alertas e a paleta de séries.

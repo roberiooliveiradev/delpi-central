@@ -1,37 +1,38 @@
 :host {
   display: block;
-  color-scheme: light dark;
-  /* Inherit Minha DELPI tokens when embedded and use DELPI defaults in the standalone demo. */
-  --lbs-brand: var(--secundary, #003866);
-  --lbs-primary: var(--primary, #089bdb);
-  --lbs-bg: var(--bg, light-dark(#eef5fb, #061622));
-  --lbs-surface: var(--surface, light-dark(#fff, #0a2438));
-  --lbs-line: var(--border, light-dark(#d8e1e9, #284458));
-  --lbs-text: var(--text, light-dark(#003866, #f4f8fc));
-  --lbs-muted: var(--text-muted, light-dark(#52677b, #b8c9d9));
-  --delpi-ui-surface: var(--lbs-surface);
-  --delpi-ui-text: var(--lbs-text);
-  --delpi-ui-text-muted: var(--lbs-muted);
-  --delpi-ui-border: var(--lbs-line);
-  --delpi-ui-accent: var(--lbs-primary);
-  --delpi-ui-on-accent: #061622;
-  --delpi-ui-danger: light-dark(#b42318, #ff9d9d);
-  color: var(--lbs-text);
+  color-scheme: inherit;
+  --delpi-ui-surface: var(--surface);
+  --delpi-ui-text: var(--text);
+  --delpi-ui-text-muted: var(--text-muted);
+  --delpi-ui-border: var(--border);
+  --delpi-ui-accent: var(--primary);
+  --delpi-ui-on-accent: var(--secundary);
+  --delpi-ui-danger: var(--danger);
+  --delpi-ui-field-bg: var(--control-bg);
+  --delpi-ui-field-text: var(--control-text);
+  --delpi-ui-field-border: var(--control-border);
+  --delpi-ui-field-placeholder: var(--control-placeholder);
+  color: var(--text, CanvasText);
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+@supports (color: contrast-color(white)) {
+  :host { --delpi-ui-on-accent: contrast-color(var(--primary)); }
+}
+:host-context([data-theme="light"]) { color-scheme: light; }
+:host-context([data-theme="dark"]) { color-scheme: dark; }
 *, *::before, *::after { box-sizing: border-box; }
-.studio { background: var(--lbs-bg); min-width: 0; }
-.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px max(18px, calc((100% - 1220px) / 2)); background: var(--lbs-brand); color: #f4f8fc; }
+.studio { background: var(--app-canvas, Canvas); min-width: 0; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px max(18px, calc((100% - 1220px) / 2)); background: var(--surface-2, Canvas); color: var(--text, CanvasText); }
 .brand { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .brand strong { font-size: 17px; font-weight: 680; letter-spacing: -.025em; }
 .brand small { display: block; }
-.brand small { color: #dbe9f7; font-size: 11px; }
+.brand small { color: var(--text-muted); font-size: 11px; }
 .workspace { width: min(calc(100% - 36px), 1220px); margin: auto; padding: 25px 0 38px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.edit-name { display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--lbs-muted); font-size: 12px; }
+.edit-name { display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--text-muted); font-size: 12px; }
 .scenario-control { min-width: 0; }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
 .fields { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; margin: 10px 0; }
-.field { display: grid; gap: 3px; color: var(--lbs-muted); font-size: 12px; }
+.field { display: grid; gap: 3px; color: var(--text-muted); font-size: 12px; }
 @media (max-width: 650px) {
   .workspace { width: calc(100% - 24px); padding-top: 16px; gap: 12px; }
   .top { padding-inline: 12px; }
@@ -42,4 +43,4 @@
   .brand { gap: 8px; white-space: normal; }
   .brand strong { font-size: 15px; }
 }
-.brand-mark { width: 54px; height: 34px; flex-shrink: 0; }
+.brand-mark { width: 54px; height: 34px; flex-shrink: 0; background: var(--secundary); border-radius: 8px; }

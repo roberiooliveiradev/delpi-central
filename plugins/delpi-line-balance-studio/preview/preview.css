@@ -1,15 +1,8 @@
+@import "../../../portal/src/theme-tokens.css";
+
 .lbs-demo-document {
-  color-scheme: light dark;
-  --primary: #089bdb;
-  --secundary: #003866;
-  --bg: light-dark(#eef5fb, #061622);
-  --demo-text: light-dark(var(--secundary), #eaf3fb);
-  --delpi-ui-surface: light-dark(#fff, #0a2438);
-  --delpi-ui-text: var(--demo-text);
-  --delpi-ui-border: light-dark(#d8e1e9, #284458);
-  --demo-surface: color-mix(in srgb, var(--primary) 12%, var(--bg));
   font: 13px/1.4 system-ui, sans-serif;
 }
 .lbs-demo-page { margin: 0; background: var(--bg); }
-.demo-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 6px max(12px, calc((100% - 1220px) / 2)); background: var(--demo-surface); color: var(--demo-text); }
+.demo-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 6px max(12px, calc((100% - 1220px) / 2)); background: var(--surface-2); color: var(--text); }
 .demo-actions { display: flex; gap: 5px; }

@@ -14,6 +14,12 @@
   cursor: pointer;
 }
 
+@supports (color: contrast-color(white)) {
+  .delpi-ui-chart-segment-button {
+    color: var(--delpi-ui-chart-segment-ink, contrast-color(var(--delpi-ui-chart-segment-fill, var(--primary, #089bdb))));
+  }
+}
+
 .delpi-ui-chart-segment-button[draggable="true"] { cursor: grab; }
 .delpi-ui-chart-segment-button:last-child { border-radius: 6px 6px 0 0; }
 .delpi-ui-chart-segment-button:hover { filter: brightness(1.15); }

@@ -4,6 +4,9 @@
   padding: 7px 10px;
   border-radius: 8px;
   font-size: 13px;
+  background: var(--delpi-ui-field-bg, var(--delpi-ui-select-bg));
+  color: var(--delpi-ui-field-text, var(--delpi-ui-select-text));
+  border-color: var(--delpi-ui-field-border, var(--delpi-ui-select-border));
 }
 .delpi-ui-select__panel--portal-style { padding: 6px; }
 .delpi-ui-select__panel--portal-style .delpi-ui-select__option {

@@ -118,9 +118,37 @@ try {
   assert.equal(await host.getByRole("heading", { name: "Yamazumi" }).isVisible(), true);
   await selectTrigger("Cenário").click();
   await options.waitFor();
-  assert.match(await options.evaluate(list => getComputedStyle(list.closest(".delpi-ui-select__panel")).backgroundColor), /rgb\(10, 36, 56\)/);
+  assert.equal(await options.evaluate(list => getComputedStyle(list.closest(".delpi-ui-select__panel")).backgroundColor), "rgb(15, 17, 21)");
   await options.getByRole("option").first().press("Escape");
   await options.waitFor({ state: "hidden" });
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+    const themeColors = await host.evaluate(async element => {
+      const shadow = element.shadowRoot;
+      const controls = [...shadow.querySelectorAll("input, .delpi-ui-select__trigger")];
+      for (const control of controls) getComputedStyle(control).backgroundColor;
+      await Promise.allSettled(controls.flatMap(control => control.getAnimations().map(animation => animation.finished)));
+      const computed = getComputedStyle(document.documentElement);
+      const probe = document.createElement("div");
+      document.body.append(probe);
+      const token = name => {
+        probe.style.backgroundColor = `var(${name})`;
+        return getComputedStyle(probe).backgroundColor;
+      };
+      const background = selector => getComputedStyle(shadow.querySelector(selector)).backgroundColor;
+      const result = {
+        expected: [token("--app-canvas"), token("--surface-2"), token("--surface"), token("--control-bg"), token("--control-bg"), token("--chart-4")],
+        actual: [background(".studio"), background(".top"), background(".delpi-ui-kpi-card"), background("input"), background(".delpi-ui-select__trigger"), background(".delpi-ui-chart-segment-button[title^='Crimpar terminais']")],
+        mode: getComputedStyle(element).colorScheme,
+        canvas: computed.getPropertyValue("--bg").trim(),
+      };
+      probe.remove();
+      return result;
+    });
+    assert.equal(themeColors.canvas, theme === "light" ? "#ffffff" : "#0f1115");
+    assert.equal(themeColors.mode, theme);
+    assert.deepEqual(themeColors.actual, themeColors.expected);
+  }
   assert.equal(await conditionsButton.evaluate(element => getComputedStyle(element).minHeight), "44px");
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);

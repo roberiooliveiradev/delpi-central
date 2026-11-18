@@ -1,6 +1,6 @@
 # Tokens do portal UI kit
 
-Fonte de verdade: [`portal/src/index.css`](../index.css) (`:root` e `:root[data-theme="dark"]`).
+Fonte de verdade: [`portal/src/theme-tokens.css`](../theme-tokens.css) (`:root` e `:root[data-theme="dark"]`).
 
 | Token | Uso no kit |
 |-------|------------|
