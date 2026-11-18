@@ -6752,4 +6752,10 @@ TECHNICAL_HOMOLOGATION=PENDING
 
 **Prova pós-fix (registro real do worker isolado do 90480120):** `build_document_understanding` corrigido → `A2, A7, A3, A1, AA, A5, A1` na pág. 1 (paridade com o baseline interno) + candidatos pág. 2 (`AA, 60, LL, E`), 8 excluídos, `geometry_regions` restaurada. Baseline interno é referência de comparação, não ground truth.
 
-**Estado:** `ROOT_CAUSE_PROVEN / FIX_VERIFIED_LOCAL / RELEASE_PENDING_AUTHORIZATION`. Deploy do fix exige autorização operacional específica (§16 da task); validação final pelo caminho oficial ChatGPT MCP (`aj-*` novo) exige identidade delegada da Coordination. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`, `GT-01` continua `OWNER_BLOCKED` — sem alegação de homologação.
+**Verificação independente:** cursor/Composer, `13b47ded5b..23e3f62b51` → **ACCEPT_WITH_RESIDUAL** r1, zero OCs; suíte 1688 reproduzida; residual = prova live RQ-3 não reexecutável pelo verificador (comandos proibidos) — evidência executor-side.
+
+**Release autorizado e executado (2026-11-18):** owner autorizou redeploy nesta sessão. srv-api pull → `ad4802e242` (contém `23e3f62b51`); build `INSTALL_VISION_EXTRAS=true` → digest `sha256:aecbf6056c54…` tagueado `infra-engineering-api:drift01-ad4802e242`/`latest`; rollback `infra-engineering-api:pre-drift01-2066695b-rollback` tagueado antes da mudança. Container `delpi-engineering-api` `Up (healthy)`, `/health` interno = 200.
+
+**Prova pós-deploy no container produtivo:** mesmo PDF (`sha 9b64ae20…`) via `run_pipeline_isolated` + `build_document_understanding` → **11 candidatos** (pág.1: `A2,A7,A3,A1,AA,A5,A1` — paridade com baseline interno de 7; pág.2: `AA,60,LL,E` detecção raw conservadora), `geometry_regions` restaurada, 207 tokens. `_int_page_keyed` confirmado carregado na imagem.
+
+**Estado final:** `DRIFT01_FIX_VERIFIED_LIVE_MCP_VALIDATION_PENDING` — a prova final pelo endpoint oficial (`drawing.runtime_status`/`job_list`/`product.drawing_understanding` com identidade delegada ChatGPT) exige sessão ChatGPT — Coordination; executor não possui token delegado. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`, `GT-01` continua `OWNER_BLOCKED`; Issue #131 pendente (`gh` sem auth) — sem alegação de homologação.
