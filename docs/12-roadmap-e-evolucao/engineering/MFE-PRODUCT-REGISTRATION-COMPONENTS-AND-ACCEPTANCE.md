@@ -1,5 +1,8 @@
 # MFE Controle e Cadastro de Produtos — matriz plugin-ui, contratos UI e aceite visual
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** A matriz de inventario/QA de 07/11 e uma baseline historica; os `PENDING`/checkboxes originais nao significam que as funcionalidades especificas de conversa, tres abas, modal e resumo UPDATE continuem pendentes. Para esse recorte, considerar relatorios de HML/PRD e aceite PO, distinguindo smoke PRD automatizado `TEST_NOT_RUN`; demais sete areas nao sao declaradas aceitas por esta nota. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 > **Estado:** `TARGET / COMPONENT_INVENTORY_PARTIAL / VISUAL_QA_NOT_RUN` · **Fonte:** inspeção GitHub de `plugins/engineering/src/ui/engineeringUi.ts`, `features/product-registration/pages/PrcQueuePage.tsx`, `PrcDetailPage.tsx`, `ProductRegistrationFeature.tsx` e referência `features/products/pages/ProductsListPage.tsx` + capturas DEV apresentadas pelo PO em 2026-11-07.
 >
 > **Wireframes de sete áreas:** [MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md](./MFE-PRODUCT-REGISTRATION-UX-WIREFRAMES.md).
