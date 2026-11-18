@@ -152,11 +152,11 @@ def put_user_hr_registration(user_id: str):
         if (
             not isinstance(verification_reference, str)
             or not 5 <= len(verification_reference.strip()) <= 120
-            or any(ord(ch) < 32 or ord(ch) > 126 for ch in verification_reference)
+            or any(ord(ch) < 32 or ord(ch) == 127 for ch in verification_reference)
         ):
             return api_error(
                 "validation_error",
-                "verificationReference deve ser uma referência textual ASCII de 5 a 120 caracteres.",
+                "verificationReference deve ter de 5 a 120 caracteres, sem controles ou quebras de linha.",
                 status=422,
             )
         verification_reference = verification_reference.strip()
