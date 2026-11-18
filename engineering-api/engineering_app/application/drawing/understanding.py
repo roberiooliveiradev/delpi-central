@@ -2073,10 +2073,6 @@ def _detect_balloon_candidates(
 # ponta, nunca por cruzamento no meio do segmento. A região de destino
 # é evidência candidata — POINTS_TO permanece NOT_CHECKED.
 _LEADER_ATTACH_PX = 18.0
-# Ponta na faixa de borda conta como anexo: o detector de linhas
-# corta o líder no traço do anel, de modo que a extremidade pode
-# cair sobre a borda da caixa ou alguns px dentro dela (COMP-01).
-_LEADER_EDGE_INSET_PX = 4.0
 _LEADER_CLUSTER_PX = 8.0
 _LEADER_MAX_SEGMENTS = 4
 _LEADER_TARGET_NEAR_PX = 22.0
@@ -2128,22 +2124,19 @@ def _leader_roots(
 ) -> list[int]:
     """Índices dos segmentos anexados à fronteira do balão.
 
-    Exatamente uma ponta deve estar na faixa de fronteira (dentro da
-    caixa expandida, fora do interior da caixa — a faixa de borda de
-    _LEADER_EDGE_INSET_PX conta como anexo) e a outra fora da caixa
-    expandida. Segmentos dentro de caixas de cota não são líderes.
+    Exatamente uma ponta deve estar dentro da caixa expandida
+    (faixa de borda ou interior — líderes reais são traçados por
+    baixo do anel e sua extremidade detectada pode cair dentro da
+    caixa) e a outra fora da caixa expandida. Segmentos dentro de
+    caixas de cota não são líderes.
     """
     def _attach(px: float, py: float) -> bool:
-        si = _LEADER_EDGE_INSET_PX
-        shrunk = (
-            cb[0] + si, cb[1] + si, cb[2] - si, cb[3] - si
-        )
-        in_interior = (
-            shrunk[0] <= px <= shrunk[2] and shrunk[1] <= py <= shrunk[3]
-        )
-        return _pt_in_expanded_box(px, py, cb, _LEADER_ATTACH_PX) and not (
-            in_interior
-        )
+        # Faixa de fronteira OU interior do balão: o desenho real
+        # costuma traçar o líder por baixo do anel — a ponta pode cair
+        # dentro da caixa (VAL-02: ramo do leque cuja raiz termina no
+        # interior). A exigência de exatamente uma ponta anexada já
+        # rejeita os traços do próprio anel (as duas dentro).
+        return _pt_in_expanded_box(px, py, cb, _LEADER_ATTACH_PX)
 
     roots: list[int] = []
     for i, (x1, y1, x2, y2) in enumerate(segs):

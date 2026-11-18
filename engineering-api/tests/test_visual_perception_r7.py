@@ -584,3 +584,29 @@ def test_detect_graphic_primitives_no_segments_without_diagonals():
     prims = detect_graphic_primitives(buf.tobytes())
     assert prims is not None
     assert (prims.get("segments") or []) == []
+
+
+@pytest.mark.skipif(not _has("cv2"), reason="opencv extras not installed")
+def test_detect_graphic_primitives_bridges_broken_diagonal():
+    """VAL-02: traço fino quebrado na binarização (lacuna ~10px)
+    reaparece como segmento composto via maxLineGap — líderes com
+    cruzamento/interrupção não somem do canal."""
+    import cv2
+    import numpy as np
+
+    from engineering_app.infrastructure.extraction.opencv_adapter import (
+        detect_graphic_primitives,
+    )
+
+    img = np.full((300, 600), 255, dtype=np.uint8)
+    cv2.line(img, (100, 250), (280, 130), 0, 2)   # ~34° diagonal
+    cv2.rectangle(img, (180, 160), (195, 220), 255, -1)  # gap ~15px
+    _, buf = cv2.imencode(".png", img)
+    prims = detect_graphic_primitives(buf.tobytes())
+    assert prims is not None
+    segs = prims.get("segments") or []
+    spans = [
+        s for s in segs
+        if s["points_px"][0] < 160 and s["points_px"][2] > 220
+    ]
+    assert spans, "linha quebrada não reconstruída como composto"

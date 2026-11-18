@@ -887,11 +887,14 @@ def test_b2_leader_segment_starting_on_balloon_edge():
         assert ll["target_state"] == "SINGLE_REGION"
 
 
-def test_b2_segment_from_balloon_interior_not_leader():
-    """Ponta no interior profundo (fora da faixa de borda) não é anexo."""
+def test_b2_segment_from_balloon_interior_is_leader():
+    """Premissa histórica corrigida pela evidência real (VAL-02):
+    ramos do leque do 90480120 emergem de dentro do anel — a ponta
+    no interior conta como anexo quando a outra sai da caixa."""
     u = _b2_u(v=[[130, 130, 130, 220]])
     ll = u["balloon_candidates"][0]["leader_line"]
-    assert ll["state"] == "NOT_FOUND"
+    assert ll["state"] == "CANDIDATE"
+    assert ll["endpoint_px"] == [130.0, 220.0]
 
 
 def test_b2_no_attached_segment_not_found():
@@ -1226,3 +1229,40 @@ def test_b2r2_diagonal_near_balloon_not_attached():
     ll = u["balloon_candidates"][0]["leader_line"]
     assert ll["state"] == "NOT_FOUND"
     assert ll["endpoint_px"] is None
+
+
+def test_b2r2_leader_root_under_balloon_attaches():
+    """VAL-02: líder desenhado sob o anel tem a ponta dentro da caixa
+    — endpoint no interior ainda é conexão (sai por baixo do balão).
+    Caso real: ramo do leque A5 (1897,922 dentro da caixa)."""
+    # balão (100,100,160,160); ramo parte de dentro (140,120) para
+    # fora (260,60) — endpoint interno deve anexar.
+    u = _b2_u(
+        segs=[_seg(140, 120, 260, 60)],
+        rects=[[240, 40, 330, 80]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["endpoint_px"] == [260.0, 60.0]
+    assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2r2_fan_root_under_balloon_preserves_ambiguity():
+    """Dois ramos — um anexado na borda, outro emergindo de dentro —
+    produzem AMBIGUOUS com ambos os caminhos registrados."""
+    u = _b2_u(
+        segs=[_seg(160, 130, 260, 120),   # ramo na borda direita
+              _seg(140, 120, 260, 60)],   # ramo partindo do interior
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "AMBIGUOUS"
+    assert len(ll["segments_px"]) == 2
+    assert ll["endpoint_px"] is None
+
+
+def test_b2r2_segment_fully_inside_balloon_not_leader():
+    """Negativo: traço com as duas pontas dentro do balão não é
+    líder (anel/texto interno)."""
+    u = _b2_u(segs=[_seg(115, 130, 145, 135)])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"

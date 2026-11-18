@@ -210,7 +210,10 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
     # opening com kernels retos destrói traços inclinados; HoughLinesP
     # sobre o residual (binarização sem as máscaras h/v) recupera
     # segmentos livres sem duplicar o canal eixo-alinhado. Ângulo
-    # agudo 8°–82° filtra o que já é coberto por h_lines/v_lines.
+    # agudo 8°–82° filtra o que já é coberto por h_lines/v_lines —
+    # fora dessa janela a zona cega residual é real, mas o gap de
+    # 12px do Hough reconstrói traços rasos quebrados como
+    # compostos dentro da janela (VAL-02: líder ~5° do A4).
     # Evidência candidata com proveniência — nunca verdade técnica.
     segments: list[dict] = []
     try:
@@ -221,7 +224,10 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
             residual, 1, np.pi / 180,
             threshold=40,
             minLineLength=max(30, kh),
-            maxLineGap=6,
+            # traços finos/coloridos quebram na binarização —
+            # 12px cobre lacunas reais sem fundir linhas distintas
+            # (VAL-02: líder com ~15px de quebra por cruzamento).
+            maxLineGap=12,
         )
         if det_lines is not None:
             for l in det_lines[:, 0]:
