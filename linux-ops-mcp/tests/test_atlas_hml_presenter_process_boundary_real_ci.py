@@ -10,7 +10,8 @@ SECURITY LESSON:
   subprocess(close_fds=True, pass_fds=(listener_fd,), user=nobody,
              group=nobody, extra_groups=[])
   must allow a peer-authenticated snapshot GET but NOT transfer Docker's FD.
-An intentionally poisoned negative passes the Docker FD and must be refused.
+An intentionally poisoned negative passes the Docker FD and must be refused
+by the REUSABLE candidate guard, not only by a handwritten CI assertion.
 Both probes use the same actual presenter candidate on disposable fixtures.
 
 A green CI result never attests systemd, /run/atlas-hml-readonly, srv-api,
@@ -47,6 +48,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from linux_ops_mcp import atlas_hml_snapshot_presenter_candidate as presenter
 from linux_ops_mcp import atlas_hml_snapshot_file_reader as reader
+from linux_ops_mcp import atlas_hml_b_presenter_process_guard as guard
 
 uid, gid, listener_fd, raw_inode = [int(x) for x in sys.argv[1:5]]
 directory = Path(sys.argv[5])
@@ -55,22 +57,22 @@ if os.getuid() != uid or os.geteuid() != uid or os.getgid() != gid:
 if os.getgroups():
     sys.exit(32)
 
-# Enumerate FDs *after exec*; Python fd inheritance is not limited by
-# NoNewPrivileges. Inspect socket inodes and deny even if the forbidden FD
-# number was reallocated by exec.
-sockets = set()
-for name in os.listdir("/proc/self/fd"):
-    try:
-        metadata = os.fstat(int(name))
-    except (ValueError, OSError):
-        continue
-    if stat.S_ISSOCK(metadata.st_mode):
-        sockets.add(metadata.st_ino)
-listener_inode = os.fstat(listener_fd).st_ino
-if raw_inode in sockets:
-    sys.exit(47)  # Intentionally poisoned inheritance fixture is detected.
-if sockets != {listener_inode}:
-    sys.exit(33)
+# Call the candidate guard itself, NOT a second copy of FD policy in
+# the pytest harness. This proves the future reusable check sees the leaked
+# descriptor inside the real restricted child before it handles any request.
+listener = socket.socket(fileno=listener_fd)
+preflight = guard._review_prebound_process_fixture(
+    listener, expected_uid=uid, expected_gid=gid,
+    expected_path=directory / "inspect.sock",
+)
+if preflight.status != "blocked" or preflight.can_execute:
+    sys.exit(39)
+if not preflight.identity_fd_preflight_passed:
+    sys.exit(47)
+# The CI child has not demonstrated systemd, seccomp profile quality, LSM,
+# root-producer isolation or host attestation even when this check passes.
+if preflight.host_isolation_attested or preflight.docker_isolation_attested:
+    sys.exit(40)
 
 # Independent negative: a freshly opened Docker socket must be refused by
 # kernel DAC even though a root process holds another live Docker FD.
@@ -88,7 +90,7 @@ def fixture_reader(*, now):
         directory, owner_uid=0, expected_gid=gid, now=now,
     )
 
-with socket.socket(fileno=listener_fd) as listener:
+try:
     outcome = presenter._serve_one_prebound_snapshot_review(
         listener=listener,
         reader=fixture_reader,
@@ -97,6 +99,8 @@ with socket.socket(fileno=listener_fd) as listener:
         owner_uid=0,
         socket_gid=gid,
     )
+finally:
+    listener.close()
 if (
     outcome.status != "blocked"
     or outcome.docker_access_attested
@@ -155,6 +159,7 @@ def _preflight() -> pwd.struct_passwd:
 _ISOLATED_MODULES = (
     "__init__.py",
     "atlas_hml_snapshot_presenter_candidate.py",
+    "atlas_hml_b_presenter_process_guard.py",
     "atlas_hml_snapshot_file_reader.py",
     "atlas_hml_snapshot_candidate.py",
     "atlas_hml_posix_acl_review.py",

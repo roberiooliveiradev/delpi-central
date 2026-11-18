@@ -678,3 +678,33 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - `P2_DEPLOY_CONTRACT=DOCUMENTED_IN_PR`.
 - `P2_POLICY_CODE=NOT_IMPLEMENTED`, `P2_APPROVAL=NOT_IMPLEMENTED`, `P3_HOST_EXECUTOR=NOT_IMPLEMENTED`, `P4_PROD_DEPLOY=NOT_AUTHORIZED_OR_EXECUTED`.
 - Futuras operacoes exigem identificacao do servico piloto/health, conferencias CI/revisao e executor contido antes de qualquer ACT. A branch/documento nao representa deploy de codigo em runtime.
+
+## Etapa 58 | 17/11/2026 | Arquitetura B: evidência de processo e continuidade offline (PR em revisão)
+
+- **Issue #232; source-only.** Analisadores puros adicionais: observação declarativa e não confiável da identidade do processo Linux (UID/GID, grupos, capabilities, NNP, seccomp, LSM, namespace, FD e aliases Docker); continuidade in-memory que rejeita timestamp regressivo, mesmo instante/replay, payload divergente e troca de container/image.
+- Cobertura de testes positivos e adversariais integrada ao workflow Linux/Docker descartável. Uma declaração de processo íntegro, referência SHA-256 e histórico em memória **não provam** host real, autenticação do produtor, ausência de endpoints alternativos, nem impedem replay após reinício.
+- Sem entrada operacional, instalação systemd, ferramenta MCP adicional, alteração Docker, acesso a servidor, migrações, PREPARE/ACT ou deploy. O protocolo permanece **BLOCKED**; SEC-01 a SEC-10 e revisão humana independente ainda abertos.
+- Próximo marco: avaliar resultados CI, revisão DELPI Verifier única ao fim do pacote, posterior plano de atestação Linux real sob mudança operacional expressamente autorizada. **Progresso geral: 52%; não executar pull/deploy no srv-api.**
+
+## Etapa 59 | 17/11/2026 | Guarda de processo real no CI e sessão de snapshots via FD
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 50](./50-atlas-hml-b-preflight-e-sessao-failstop.md). **Status:** Draft PR / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Guarda reutilizável do próprio subprocesso Linux lê /proc/self/status e FDs; verifica UID/GID efetivos, salvos e de filesystem, grupos, capacidades, descritor prebound e variáveis de transporte Docker. Teste de subprocesso descartável usa a guarda e falha antes de atender ao receber FD Docker herdado; não é mais apenas asserção duplicada no harness.
+- Leitor root:grupo/0640 via descritor mantém API anterior e agora expõe registro **interno** com bytes e fingerprint do inode para testar continuidade; sem redução de verificações ACL, symlink, TOCTOU ou TTL.
+- Sessão source-only fail-stop aceita GETs repetidos sobre o mesmo arquivo imutável, recusa substituição suspeita, timestamp regressivo, identity change, falha de produtor/publicação e shutdown. Sem persistência, sem autenticação do produtor, sem autorização para retomar após falha.
+- Workflow de testes Linux e Docker descartável ampliado e cenários adversariais adicionados. Revisão independente do código apenas **uma vez** após CI da PR consolidada, conforme contrato; não equivale a SEC-01 humana.
+- Continuam pendentes: evidência do PID real em `srv-api`, isolamento Docker por todos os caminhos, origem criptograficamente atestada, replay após restart, privilégio do produtor root, ACL/LSM reais, rollback testado, SEC-01..10 e change-control.
+- **Progresso 52% conservador.** Quatro MCP READ, PREPARE/ACT OFF. Sem deploy, systemd, Docker/Compose PROD, contas, grupo, socket, filesystem `/run`, migração ou alterações operacionais.
+
+## Etapa 60 | 17/11/2026 | Envelope Ed25519, continuidade persistente, lifecycle e rollback tipado
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 51](./51-atlas-hml-b-signed-envelope-lifecycle-rollback.md). **Status:** Draft PR #261 / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Envelope versionado com geração, alvo HML, digest e recusa de JSON legado como autenticado; trust Ed25519 com keyring público, rotação/revogação; assinatura bem-sucedida permanece no domínio de confiança do produtor root (sem autenticidade independente cross-domain).
+- Store de continuidade fail-closed em diretórios descartáveis (atomic+fsync): replay entre reinícios simulados, regressão/gap de contador e corrupção.
+- Biblioteca de lifecycle (init→available→failed/recovery_blocked) com backpressure/timeouts e latch de integridade sem fallback Docker/PROD/PREPARE/ACT.
+- Produtor assinado source-only (claim+envelope+handoff atômico), baseline tipada de rollback com simulação só em fixture, matriz SEC-01..10 referenciada sem atestar, E2E descartável positivo/negativo/adversarial.
+- Guarda do presenter reforçada (inventário de FDs, sockets inesperados, `LISTEN_*`). CI Linux/Docker atualizado; `cryptography` apenas para verificação Ed25519.
+- **Pendentes:** SEC-01..10, parecer humano, isolamento host real, segregação de chave fora do host do produtor, instalação autorizada.
+- **Progresso 55%.** Quatro MCP READ, PREPARE/ACT OFF. **Sem pull/deploy.**
