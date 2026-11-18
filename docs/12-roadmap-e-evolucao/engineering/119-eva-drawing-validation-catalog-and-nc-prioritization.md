@@ -6794,3 +6794,45 @@ TECHNICAL_HOMOLOGATION=PENDING
 **Limitações registradas:** `E` p2 permanece ambíguo; associação tabular de `A5` e códigos duplos em `A1` são achados de percepção tabular (encaminhar à Coordination); anotações são DRAFT até revisão da Engenharia; métricas não homologadas.
 
 **Estado:** `B1R2_FIX_VERIFIED_RELEASE_PENDING` — sem deploy (task proíbe); release candidate em main; validação live MCP e GT da Engenharia pendentes. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`.
+
+### 94.42.14 E1/VAL-01 — COMP-01: Comparação Independente Devin × EVA (90480120)
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-COMP01-DEVIN-EVA-INDEPENDENT-VISUAL-COMPARISON-AND-RECOVERY-01`
+
+**Documento:** `90480120.pdf`, SHA `9b64ae20…555cd8`, 2 páginas. Runtime avaliado: código HEAD local (`cbd1eccb46`+diff COMP-01) sobre o registro isolado real do worker produtivo (`delpi-engineering-api`, digest `aecbf6056c54`, DRIFT-01). Não é prova Live MCP.
+
+**Independência da inspeção Devin — limitação declarada:** o executor já havia inspecionado este PDF na task B1-R2; uma primeira passagem verdadeiramente cega é impossível. Re-inspeção executada com recortes por ocorrência (montagens p1/p2 a 200dpi) e rastreamento de líderes — atividade não realizada na passagem anterior. Registrada como `BLIND_REVIEW=PARTIAL`.
+
+**Inventário visual Devin:** p1 = 10 ocorrências (`A3,A7,A1,A6,A2,AA,A5,A1,A6,A2`); p2 = 4 balões reais (`A8,AA,A9,A4`) + `E` ambíguo + 2 não-balões (`60±5` cota em elipse vermelha; logo "Delpi" circular na tomada). Todos os balões têm líder verde → ponto verde no componente; `A5` tem leque de 3 linhas; `A9`/`A4` líderes diagonais; `A8` líder vertical → fitilho.
+
+**Matriz Devin × EVA (EVA = B1-R2 `942924d5f5`):**
+
+| Aspecto | Devin | EVA antes | Estado |
+|---|---|---|---|
+| Balões p1 | 10 | 10 | MATCH |
+| Balões p2 | 4+E ambíguo | 4+E candidato | MATCH |
+| FPs | 60,LL não-balões | excluídos c/ razão | MATCH |
+| Líder A3 (vertical, visível) | presente | NOT_FOUND | DIVERGÊNCIA |
+| Líder A8 (vertical, visível) | presente | NOT_FOUND | DIVERGÊNCIA |
+| Líderes A9/A4 (diagonais), A5 (leque) | presentes | NOT_FOUND | LIMITAÇÃO documentada (canal eixo-alinhado) |
+| A5 → tabela | linha a5→10081809 existe | NOT_LOCATED | DIVERGÊNCIA |
+| Códigos linha | um código por linha | `"90480120 10081809"`, `"10070916 90480120"` | DIVERGÊNCIA (contaminação) |
+| E → tabela | não consta | NOT_LOCATED | CORRETO |
+
+**Primeiro ponto de falha e causa raiz:**
+
+1. **B2 líderes `A3`/`A8`:** o detector de linhas corta o líder na borda do anel — a ponta do segmento cai exatamente sobre a borda da caixa (`y=492`/`y=1068`, inclusiva na caixa estrita) e `_leader_roots` exigia ponta fora da caixa → `NOT_FOUND`. Segmentos provados presentes nas primitivas (`[148,492,148,599]`, `[1044,1068,1044,1107]`).
+2. **Percepção tabular `A5`:** a faixa Y da linha absorveu tokens do bloco de título (`90480120` col0 + `chicote lwli` col1; e `90480120` col11 na linha A1). A tipagem por conteúdo tipificava coluna com UMA célula-código (`1/1 ≥ 0.5`) → `code_col=0` eliminava o rótulo `a5` do fallback e `_fields_from_cells` concatenava os dois códigos no campo.
+
+**Correções (boundary canônico, sem hardcode de produto/rótulo/coordenada):**
+
+- `_leader_roots`: ponta na faixa de borda conta como anexo — caixa estrita encolhida por `_LEADER_EDGE_INSET_PX = 4.0` (ponta no interior profundo segue rejeitada; teste negativo).
+- `_structure_table`: tipagem por conteúdo exige `cnt["codes"] >= 2` — uma única célula-código não é evidência de coluna.
+
+**EVA depois:** líderes p1 8 CANDIDATE + 2 AMBIGUOUS (A6b e A2a — segunda raiz admitida, ambiguidade honesta); p2 `A8` CANDIDATE, `AA` SINGLE_REGION; `A5`/`A9`/`A4`/`E` NOT_FOUND (diagonais/leque/ausente — limitação registrada). Tabela: **14 MATCH_CANDIDATE** (antes 13), `E` NOT_LOCATED correto, `component_code_candidate` limpo por linha (`A5`→`10081809`).
+
+**Regressão cruzada (registros raw gerados pelo worker isolado produtivo, processados no código HEAD):** `90261723`, `90261731`, `90264311` — **zero divergência** de balões/estados vs dumps anteriores; melhoria em `90264311`: `A1` agora `10081674` limpo (antes `"10081674 90264311"` — mesmo padrão de contaminação eliminado). Suíte engineering-api: **1698 pass / 21 skip**.
+
+**Métricas exploratórias (denominador = inventário Devin DRAFT, não GT homologado):** líderes detectados 9/14→12/14 ocorrências reais (2 = limitação diagonal/leque documentada); associação tabela 13/14→14/14.
+
+**Estado:** `COMP01_FIX_VERIFIED_RELEASE_PENDING` — sem deploy; anotações permanecem DRAFT/OWNER_BLOCKED; validação Live MCP e revisão da Engenharia pendentes. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`.

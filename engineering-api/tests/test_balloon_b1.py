@@ -460,6 +460,99 @@ def test_b1_validation_not_comparable_no_table():
     assert v["summary"]["not_comparable"] == 1
 
 
+def test_b1_stray_single_code_cell_does_not_tipify_column():
+    """COMP-01: código isolado fora da coluna de códigos não tipifica.
+
+    A faixa Y da linha absorveu tokens do bloco de título (o código
+    do próprio produto impresso ao lado da tabela). Uma única célula
+    6-11 dígitos numa coluna não é evidência de coluna de códigos:
+    tipificá-la contaminava ``fields.component_code`` com concatenação
+    e quebrava o fallback de rótulo (code_col=0) → NOT_LOCATED."""
+    from engineering_app.application.drawing.understanding import (
+        _structure_table,
+    )
+
+    def T(text, x, y):
+        return {
+            "text": text, "normalized_text": text,
+            "bounding_box_px": [
+                x - 20, y - 8, x + 20, y - 8, x + 20, y + 8, x - 20, y + 8,
+            ],
+            "confidence": 0.99, "page": 1,
+        }
+
+    table = {
+        "code_col_x": 440,
+        "header_tokens": [],
+        "rows": [
+            {"y": 100, "tokens": [
+                T("a1", 330, 100), T("1", 360, 100),
+                T("10070916", 440, 100), T("cabo pp", 800, 100),
+                T("90480120", 2100, 100),
+            ]},
+            {"y": 130, "tokens": [
+                T("90480120", 75, 130), T("chicote lwli", 160, 130),
+                T("a5", 330, 130), T("1", 360, 130),
+                T("10081809", 440, 130), T("inserto", 800, 130),
+            ]},
+            {"y": 160, "tokens": [
+                T("a6", 330, 160), T("2", 360, 160),
+                T("10090010", 440, 160), T("isolador", 800, 160),
+            ]},
+        ],
+    }
+    rows, _amb, _ct = _structure_table(table, 2339, 1653)
+    by_row = {r["row"]: r for r in rows}
+    assert by_row[0]["component_code"] == "10070916"
+    assert by_row[1]["component_code"] == "10081809"
+    assert by_row[2]["component_code"] == "10090010"
+    # rótulo a5 à esquerda da coluna de código real → associação
+    u = _u(rows=rows, balloons=[_balloon("a5")])
+    e = build_balloon_table_validation(u)["balloons"][0]
+    assert e["state"] == "BALLOON_LABEL_IDENTIFIED"
+    assert e["association"] == "MATCH_CANDIDATE"
+    assert e["table_item"]["component_code_candidate"] == "10081809"
+
+
+def test_b1_sparse_code_column_two_cells_still_tipifies():
+    """Coluna com ≥2 células-código continua tipada por conteúdo."""
+    from engineering_app.application.drawing.understanding import (
+        _structure_table,
+    )
+
+    def T(text, x, y):
+        return {
+            "text": text, "normalized_text": text,
+            "bounding_box_px": [
+                x - 20, y - 8, x + 20, y - 8, x + 20, y + 8, x - 20, y + 8,
+            ],
+            "confidence": 0.99, "page": 1,
+        }
+
+    table = {
+        "code_col_x": 440,
+        "header_tokens": [],
+        "rows": [
+            {"y": 100, "tokens": [
+                T("a1", 330, 100), T("10070916", 440, 100),
+                T("21009999", 700, 100),
+            ]},
+            {"y": 130, "tokens": [
+                T("a2", 330, 130), T("10081809", 440, 130),
+                T("21008888", 700, 130),
+            ]},
+        ],
+    }
+    rows, _amb, col_types = _structure_table(table, 2339, 1653)
+    code_cols = [
+        ci for ci, t in col_types.items() if t == "component_code"
+    ]
+    assert len(code_cols) == 2
+    by_row = {r["row"]: r for r in rows}
+    assert "10070916" in by_row[0]["component_code"]
+    assert "21009999" in by_row[0]["component_code"]
+
+
 def test_b1_validation_empty_understanding():
     v = build_balloon_table_validation({})
     assert v["balloons_identified"] == 0
@@ -776,6 +869,27 @@ def test_b2_parallel_strokes_merge_into_one_leader():
     ll = u["balloon_candidates"][0]["leader_line"]
     assert ll["state"] == "CANDIDATE"
     assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2_leader_segment_starting_on_balloon_edge():
+    """COMP-01: o detector de linhas corta o líder na borda do anel.
+
+    A ponta pode cair exatamente sobre a borda da caixa ou 1–2 px
+    dentro dela (espessura do traço) — continua sendo anexo."""
+    for y_start in (160, 159, 157):
+        u = _b2_u(
+            v=[[130, y_start, 130, 220]], rects=[[80, 210, 400, 240]])
+        ll = u["balloon_candidates"][0]["leader_line"]
+        assert ll["state"] == "CANDIDATE", y_start
+        assert ll["endpoint_px"] == [130.0, 220.0]
+        assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2_segment_from_balloon_interior_not_leader():
+    """Ponta no interior profundo (fora da faixa de borda) não é anexo."""
+    u = _b2_u(v=[[130, 130, 130, 220]])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
 
 
 def test_b2_no_attached_segment_not_found():
