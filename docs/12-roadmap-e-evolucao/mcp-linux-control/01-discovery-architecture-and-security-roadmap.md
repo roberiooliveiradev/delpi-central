@@ -790,3 +790,13 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Revisão offline estrita do dossier Git com flags permanentes pull/stash/reset/clean/deploy=false; identifica worktree sujo, refs desatualizadas, mudanças inesperadas, index/untracked e operação concorrente.
 - Testes de diretório fake/ACL, schema adversarial, política de identidades e Git; runner Linux elevado adiciona recusa real do signer UID 61021 a diretório com UID 61022 ou GID incorreto.
 - Quatro MCP READ, PREPARE/ACT OFF, unidade .candidate e .review não instaláveis, sem chave real, Docker ou produção alterados, sem pull/deploy. SEC-01..10, atestação host e change-control permanecem pendentes.
+
+
+## Etapa 72 | 18/11/2026 | Kit pratico para a primeira janela operacional ATLAS HML
+
+**Fonte:** issue #232 e [runbook 60](./60-atlas-hml-b-etapa72-primeira-janela-operacional.md). **SOURCE-ONLY; status BLOCKED, progresso 60%.**
+- PR #278 (Etapa 71) mesclada, CI 5/5 e DELPI Verifier ACCEPT_WITH_RESIDUAL, nenhuma OC.
+- Entrega utilizavel sob autorizacao futura: shell POSIX de coleta **somente leitura** (em ops-review, extensao .review, nao instalavel) com Git sem locks opcionais, Docker inspect **exatamente** dos hubs HML e PROD, identidade/DAC/ACL, systemd e AppArmor, e fail-closed para status nao atestado; CLI stdout-only com opcao explicita de host ou fixture, sempre status blocked.
+- Plano pratico em tres janelas **separadas**: A) reconciliacao de Git com preservacao obrigatoria das 2 modificacoes locais e evidencias, B) provisionamento de identidades e diretorios, C) piloto HML apenas apos SEC-01..10, ancora externa, chave/GLPI, packaging e provas PROD. A etapa 72 so entrega codigo/planos, nao autoriza A/B/C.
+- Checks negativos: script sem comandos mutantes ou docker control, CLI sem host default e sem escrita de fixture, JSON sempre blocked, CI sintaxe sh -n.
+- Quatro MCP READ, PREPARE/ACT OFF, .candidate/.review nao instalaveis, nenhum comando aplicado no srv-api. A primeira solicitacao operacional apos merge/verifier sera para **janela A Git-only**, com change-control, baseline, backup e rollback aprovados; no auto-merge, pull ou deploy.

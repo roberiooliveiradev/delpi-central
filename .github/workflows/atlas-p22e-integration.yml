@@ -82,6 +82,10 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_provisioning_review.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_git_reconcile.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage72_operator_evidence.py"
+      - "linux-ops-mcp/ops-review/atlas-hml-stage72-host-evidence.sh.review"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_stage72_operator_evidence.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/60-atlas-hml-b-etapa72-primeira-janela-operacional.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/59-atlas-hml-b-etapa71-preflight-provisionamento.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
@@ -223,6 +227,10 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_provisioning_review.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_git_reconcile.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage72_operator_evidence.py"
+      - "linux-ops-mcp/ops-review/atlas-hml-stage72-host-evidence.sh.review"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_stage72_operator_evidence.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/60-atlas-hml-b-etapa72-primeira-janela-operacional.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/59-atlas-hml-b-etapa71-preflight-provisionamento.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
@@ -375,6 +383,8 @@ jobs:
           done
           echo 'Ephemeral HML-target Docker fixture failed health readiness'
           exit 1
+      - name: Review-only operator evidence syntax (no execution)
+        run: sh -n linux-ops-mcp/ops-review/atlas-hml-stage72-host-evidence.sh.review
       - name: Verify real Docker Engine GET and fail-closed receipt
         run: |
           PYTHONPATH=linux-ops-mcp:it-portal-api PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \
@@ -403,6 +413,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage70_socket_dac.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_stage72_operator_evidence.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage64_review.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py \
