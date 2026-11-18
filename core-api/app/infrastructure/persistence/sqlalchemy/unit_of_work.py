@@ -132,6 +132,8 @@ class SqlAlchemyUnitOfWork:
         self.protheus_identities = SqlAlchemyUserProtheusIdentityRepository(
             self.session
         )
+        # Separate HR registration (never a SYS_USR identity).
+        self.hr_registrations = SqlAlchemyUserHrRegistrationRepository(self.session)
 
         # ======================================================
         # Aliases (compatibilidade com código antigo)
