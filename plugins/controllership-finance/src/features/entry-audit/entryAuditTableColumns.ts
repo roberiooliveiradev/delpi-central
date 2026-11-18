@@ -105,8 +105,12 @@ function baseDocumentColumns(
       "Nota/Série",
       (row) =>
         formatNoteSeries(
-          "document_number" in row ? row.document_number : undefined,
-          "series" in row ? (row as EntryAuditDocument).series : undefined,
+          "document_number" in row
+            ? (row.document_number as string | undefined)
+            : undefined,
+          "series" in row
+            ? ((row as EntryAuditDocument).series as string | undefined)
+            : undefined,
         ),
       sortWhitelist,
     ),

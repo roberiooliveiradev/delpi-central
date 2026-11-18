@@ -194,7 +194,10 @@ export function HomePage({ basePath }: HomePageProps) {
         return {
           id: route.id,
           label: route.label,
-          kind: isExternal ? "navigate" : route.kind,
+          kind: (isExternal ? "navigate" : route.kind) as
+            | "navigate"
+            | "create"
+            | undefined,
           icon: hubRouteIcon(route.viewId, { external: isExternal }),
           title: isExternal ? LNF_EXTERNAL_TOOLTIP : undefined,
           pinned: canPin
