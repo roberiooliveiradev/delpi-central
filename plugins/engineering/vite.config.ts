@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
@@ -34,6 +35,14 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: [
+        {
+          find: /^@delpi\/line-balance-studio\/ui$/,
+          replacement: path.resolve(__dirname, "../delpi-line-balance-studio/src/ui/studio.tsx"),
+        },
+        {
+          find: /^@delpi\/line-balance-studio$/,
+          replacement: path.resolve(__dirname, "../delpi-line-balance-studio/src/index.ts"),
+        },
         ...(isVitest ? pluginUiTestAliases(__dirname) : []),
         ...Object.entries(reactResolveAliases(__dirname)).map(([find, replacement]) => ({
           find,

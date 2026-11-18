@@ -23,3 +23,12 @@ O Studio compõe estudos de Engenharia de Processos. O Portal Engenharia é o pr
 ## Abstraction Gate
 
 A API pública resolve o consumo do mesmo estado por futuros editores e portais. As únicas divisões são estudo manual, horário do turno e catálogo. Integrações de dados oficiais, persistência, métodos computacionais e UI serão contratados à medida que houver consumidores e requisitos concretos. A remoção do pacote é suficiente para reverter este incremento enquanto nenhum portal o importar.
+
+## Entrada aditiva — roteiro oficial observado (RQ-LBS-12)
+
+- **Owner / consumidores:** o contrato `StudioStudyInput` pertence ao Studio. Primeiro consumidor: MFE Portal Engenharia (`plugins/engineering`, rota `/apps/engineering/processes/line-balancing`), que converte `GET /v1/products/{code}/routing` em `ObservedStudyInput` uma única vez no adaptador do host.
+- **Entrada:** `ObservedStudyInput` estende a forma manual com `source: "OBSERVED_ROUTING"`, `routing: { productCode, branchCode, stageId, stageLabel?, routeCode?, truncated? }` e `operations: ObservedOperationInput[]` (`id`, `name`, `durationSeconds | null`, `reference?`). A entrada manual `ManualStudyInput` permanece inalterada e retrocompatível (`source` opcional `"MANUAL"`).
+- **Saída:** `createObservedStudy(input)` valida e devolve `ObservedStudy` (`source: "OBSERVED_ROUTING"`, `status: "DRAFT_LOCAL"`, operações `OBSERVED`/`UNKNOWN`, cenários `SIMULATION`). O elemento aceita a união `StudioStudyInput` no setter `study` e emite `study-change` no mesmo formato.
+- **Erros:** mesmos códigos de `createManualStudy` + `REQUIRED` em `routing.productCode | branchCode | stageId`. Nunca converte roteiro observado em `MANUAL`.
+- **AuthZ / limites:** a biblioteca não recebe credenciais nem abre rede; SSO, RBAC, HTTP, filial, estágio, cancelamento e truncamento permanecem no host. `routing.truncated` é exibido, não interpretado.
+- **Compatibilidade:** aditivo — consumidores manuais existentes compilam sem alteração.

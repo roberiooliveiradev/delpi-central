@@ -23,6 +23,8 @@ export default defineConfig({
         /** Splash do public-hub — sem Index. */
         "./screen-loading": "./src/exposes/screenLoading.ts",
         "./styles": "./src/styles-entry.ts",
+        /** Controles nativos consumidos por bibliotecas hospedeiras (ex.: Line Balance Studio). */
+        "./native-controls": "./src/native-controls.ts",
         "./App": "./src/app/bootstrap.tsx",
       },
       shared: { ...FEDERATION_SHARED_REACT, ...FEDERATION_SHARED_XYFLOW },

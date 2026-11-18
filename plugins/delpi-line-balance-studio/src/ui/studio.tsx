@@ -22,8 +22,8 @@ import {
   NATIVE_CONTROL_COMPACT_CLASS,
   type NativeTextControlProps,
 } from "@delpi/plugin-ui/native-controls";
-import { createManualStudy, summarizeShift } from "../index.js";
-import type { ManualStudyInput, ProductionConditionsInput, ScenarioInput, ShiftInput } from "../index.js";
+import { createManualStudy, createObservedStudy, summarizeShift } from "../index.js";
+import type { ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
 
 const pageHeaderClasses = pageHeaderTitleRowBemClasses("lbs");
 const pageHeaderLabels = { refresh: "Atualizar", refreshing: "Atualizando" };
@@ -70,7 +70,8 @@ function CommitInput({ value, onCommit, ...props }: CommitInputProps) {
 
 export class LineBalanceStudioElement extends HTMLElement {
   private readonly surface = document.createElement("div");
-  private draft: ManualStudyInput | undefined;
+  private draft: StudioStudyInput | undefined;
+  private observedBaseline = new Map<string, number | null>();
   private scenarioId = "";
   private showConditions = false;
   private draggedOperation: string | undefined;
@@ -104,10 +105,14 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.shadowRoot?.getElementById(id)?.focus();
   }
 
-  get study(): ManualStudyInput | undefined { return structuredClone(this.draft); }
+  get study(): StudioStudyInput | undefined { return structuredClone(this.draft); }
 
-  set study(value: ManualStudyInput | undefined) {
+  set study(value: StudioStudyInput | undefined) {
     this.draft = structuredClone(value);
+    this.observedBaseline.clear();
+    if (value?.source === "OBSERVED_ROUTING") {
+      for (const operation of value.operations) this.observedBaseline.set(operation.id, operation.durationSeconds);
+    }
     this.studyRevision += 1;
     this.showConditions = false;
     this.shiftDrafts = {};
@@ -115,7 +120,7 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.render();
   }
 
-  private update(draft: ManualStudyInput, focusKey?: string): void {
+  private update(draft: StudioStudyInput, focusKey?: string): void {
     this.draft = draft;
     if (focusKey) {
       flushSync(() => this.render());
@@ -188,6 +193,30 @@ export class LineBalanceStudioElement extends HTMLElement {
           })),
         }, "add-station");
         break;
+      case "add-scenario": {
+        if (study.scenarios.length >= 4) return;
+        const scenarioId = crypto.randomUUID();
+        const letter = "ABCD"[study.scenarios.length] ?? String(study.scenarios.length + 1);
+        this.update({ ...study, scenarios: [...study.scenarios, {
+          id: scenarioId, name: `Cenário ${letter}`, assignments: [],
+        }] });
+        this.scenarioId = scenarioId;
+        this.render();
+        break;
+      }
+      case "move-station-up":
+      case "move-station-down": {
+        const index = study.stations.findIndex(item => item.id === id);
+        const target = action === "move-station-up" ? index - 1 : index + 1;
+        if (index < 0 || target < 0 || target >= study.stations.length) return;
+        const stations = [...study.stations];
+        const current = stations[index];
+        const other = stations[target];
+        if (!current || !other) return;
+        [stations[index], stations[target]] = [other, current];
+        this.update({ ...study, stations });
+        break;
+      }
       case "add-break":
         this.setShift(shift.mode === "CLOCK"
           ? { ...shift, breaks: [...shift.breaks, { start: "", end: "" }] }
@@ -389,10 +418,18 @@ export class LineBalanceStudioElement extends HTMLElement {
     const maxLoad = Math.max(0, ...stations.map(station => station.load));
     const scale = Math.max(10, Math.ceil(Math.max(maxLoad, takt ?? 0) * 1.16 / 10) * 10);
     const incomplete = stations.some(station => station.unknown > 0);
-    const validation = createManualStudy(study);
+    const validation = study.source === "OBSERVED_ROUTING" ? createObservedStudy(study) : createManualStudy(study);
     const invalidOperations = !validation.ok && validation.issues.some(issue => issue.path.startsWith("operations") || issue.path.startsWith("stations"));
     const stationOptions = stations.map(station => ({ value: station.id, label: station.name }));
-    const operationRows = operations.map((operation, index) => ({ ...operation, index }));
+    const observed = study.source === "OBSERVED_ROUTING" ? study.routing : undefined;
+    const operationRows = operations.map((operation, index) => ({
+      id: operation.id, name: operation.name, durationSeconds: operation.durationSeconds,
+      reference: "reference" in operation ? operation.reference : undefined,
+      index,
+      origin: !observed ? "LOCAL"
+        : !this.observedBaseline.has(operation.id) ? "LOCAL"
+        : this.observedBaseline.get(operation.id) === operation.durationSeconds ? "OBSERVED" : "ADJUSTED",
+    }));
     this.reactRoot?.render(
       <div className="studio" key={this.studyRevision}>
         <header className="top">
@@ -400,8 +437,17 @@ export class LineBalanceStudioElement extends HTMLElement {
             <strong>Balanceamento de Linha</strong>
             <small>DELPI · Engenharia de Processos</small>
           </div>
-          <StatusBadge classNames={badgeClasses} label="Rascunho manual" variant="info" />
+          <div className="badges">
+            {observed && <StatusBadge classNames={badgeClasses}
+              label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
+            <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
+          </div>
         </header>
+        {observed && <p className="context">
+          Produto {observed.productCode} · Filial {observed.branchCode} · {observed.stageLabel ?? `Estágio ${observed.stageId}`}
+          {observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}
+          {observed.truncated ? " — resultado truncado pela fonte oficial" : ""}
+        </p>}
         <div className="workspace">
           <PageHeader layout="titleRow" title={study.name} classNames={pageHeaderClasses} labels={pageHeaderLabels}
             subtitle={<label className="edit-name">Nome do estudo
@@ -414,6 +460,9 @@ export class LineBalanceStudioElement extends HTMLElement {
                     value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
                     onChange={value => this.onField("scenario", value)} />
                 </div>
+              )}
+              {study.scenarios.length < 4 && (
+                <ActionButton onClick={() => this.onAction("add-scenario")}>+ Novo cenário</ActionButton>
               )}
               <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
                 onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
@@ -439,6 +488,10 @@ export class LineBalanceStudioElement extends HTMLElement {
                     id: item.id, label: item.name, value: item.seconds, color: item.color,
                   }]),
                   footer: <>
+                    <IconButton aria-label={`Mover ${station.name} para cima`} disabled={index === 0}
+                      onClick={() => this.onAction("move-station-up", station.id)}>↑</IconButton>
+                    <IconButton aria-label={`Mover ${station.name} para baixo`} disabled={index === stations.length - 1}
+                      onClick={() => this.onAction("move-station-down", station.id)}>↓</IconButton>
                     <CommitInput value={station.name} aria-label={`Nome do posto ${index + 1}`}
                       onCommit={value => this.onField("station-name", value, station.id)} />
                     <IconButton aria-label={`Remover posto ${index + 1}`}
@@ -466,9 +519,17 @@ export class LineBalanceStudioElement extends HTMLElement {
               labels={tableLabels} layout="scroll" compact indexColumn={{ ariaLabel: "Índice da operação" }}
               columns={[
                 { key: "operation", header: "Operação", render: operation => (
-                  <CommitInput id={`name:${operation.id}`} value={operation.name} required aria-label={`Nome da operação ${operation.index + 1}`}
-                    onCommit={value => this.onField("operation-name", value, operation.id)} />
+                  <div className="op-cell">
+                    <CommitInput id={`name:${operation.id}`} value={operation.name} required aria-label={`Nome da operação ${operation.index + 1}`}
+                      onCommit={value => this.onField("operation-name", value, operation.id)} />
+                    {operation.reference && <small className="op-ref">{operation.reference}</small>}
+                  </div>
                 ) },
+                ...(observed ? [{ key: "origin", header: "Origem", render: (operation: typeof operationRows[number]) => (
+                  <StatusBadge classNames={badgeClasses}
+                    label={operation.origin === "OBSERVED" ? "Oficial" : operation.origin === "ADJUSTED" ? "Ajuste local" : "Local"}
+                    variant={operation.origin === "OBSERVED" ? "success" : operation.origin === "ADJUSTED" ? "warning" : "info"} />
+                ) }] : []),
                 { key: "duration", header: "Tempo (s)", render: operation => (
                   <CommitInput type="number" min={0} step="any" placeholder="Desconhecido" value={operation.durationSeconds ?? ""}
                     aria-label={`Tempo da operação ${operation.index + 1} em segundos`} onCommit={value => this.onField("duration", value, operation.id)} />

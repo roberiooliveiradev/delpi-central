@@ -15,17 +15,55 @@ export type ProductionConditionsInput = Readonly<{
 }>;
 
 export type ManualStudyInput = NamedItem & Readonly<{
+  source?: "MANUAL";
   operations: readonly ManualOperationInput[];
   stations: readonly Station[];
   scenarios: readonly ScenarioInput[];
   conditions?: ProductionConditionsInput;
 }>;
 
+/* --- Roteiro oficial observado — entrada aditiva --------------------- */
+
+/** Operação oficial do roteiro: identidade rastreável + proveniência OBSERVED. */
+export type ObservedOperationInput = NamedItem & Readonly<{
+  durationSeconds: number | null;
+  /** Referência oficial opcional (ex.: "OP 010 · CT 900 · RH-01") — rastreabilidade na UI. */
+  reference?: string;
+}>;
+
+/** Identidade do roteiro oficial observado pelo host. */
+export type RoutingContext = Readonly<{
+  productCode: string;
+  branchCode: string;
+  stageId: string;
+  stageLabel?: string;
+  routeCode?: string;
+  truncated?: boolean;
+}>;
+
+/** Estudo semeado a partir do roteiro oficial. Ajustes locais continuam DRAFT_LOCAL. */
+export type ObservedStudyInput = NamedItem & Readonly<{
+  source: "OBSERVED_ROUTING";
+  routing: RoutingContext;
+  operations: readonly ObservedOperationInput[];
+  stations: readonly Station[];
+  scenarios: readonly ScenarioInput[];
+  conditions?: ProductionConditionsInput;
+}>;
+
+/** União aceita pelo elemento: manual (existente) ou roteiro observado (aditivo). */
+export type StudioStudyInput = ManualStudyInput | ObservedStudyInput;
+
 type OperationTime =
   | Readonly<{ durationSeconds: number; provenance: "PROVIDED" }>
   | Readonly<{ durationSeconds: null; provenance: "UNKNOWN" }>;
 
+type ObservedOperationTime =
+  | Readonly<{ durationSeconds: number; provenance: "OBSERVED" }>
+  | Readonly<{ durationSeconds: null; provenance: "UNKNOWN" }>;
+
 export type ManualOperation = NamedItem & Readonly<{ time: OperationTime }>;
+export type ObservedOperation = NamedItem & Readonly<{ time: ObservedOperationTime; reference?: string }>;
 export type StudyScenario = ScenarioInput & Readonly<{ provenance: "SIMULATION" }>;
 
 export type ManualStudy = NamedItem & Readonly<{
@@ -36,6 +74,12 @@ export type ManualStudy = NamedItem & Readonly<{
   stations: readonly Station[];
   scenarios: readonly StudyScenario[];
   conditions?: ProductionConditionsInput & Readonly<{ summary: ShiftSummary }>;
+}>;
+
+export type ObservedStudy = Omit<ManualStudy, "operations" | "source"> & Readonly<{
+  source: "OBSERVED_ROUTING";
+  routing: RoutingContext;
+  operations: readonly ObservedOperation[];
 }>;
 
 function checkName(item: NamedItem, path: string, issues: ValidationIssue[]): void {
@@ -71,25 +115,24 @@ function copyShift(shift: ShiftInput): ShiftInput {
   };
 }
 
-export function createManualStudy(input: ManualStudyInput): ValidationResult<ManualStudy> {
+type StudyBuilderResult = {
+  ok: true;
+  issues: ValidationIssue[];
+  scenarios: StudyScenario[];
+  conditions: ManualStudy["conditions"];
+};
+
+function buildStudy<OpInput extends NamedItem & Readonly<{ durationSeconds: number | null }>, OpOutput>(
+  input: Omit<StudioStudyInput, "operations"> & Readonly<{ operations: readonly OpInput[] }>,
+  mapOperation: (operation: OpInput, index: number, issues: ValidationIssue[]) => OpOutput,
+): (StudyBuilderResult & { operations: OpOutput[] }) | { ok: false; issues: ValidationIssue[] } {
   const issues: ValidationIssue[] = [];
   checkName(input, "", issues);
   const operationIds = collectIds(input.operations, "operations", issues);
   const stationIds = collectIds(input.stations, "stations", issues);
   collectIds(input.scenarios, "scenarios", issues);
 
-  const operations = input.operations.map(({ id, name, durationSeconds }, index): ManualOperation => {
-    if (durationSeconds !== null && (!Number.isFinite(durationSeconds) || durationSeconds <= 0)) {
-      issues.push({ path: `operations[${index}].durationSeconds`, code: "INVALID_NUMBER" });
-    }
-    return {
-      id,
-      name,
-      time: durationSeconds === null
-        ? { durationSeconds, provenance: "UNKNOWN" }
-        : { durationSeconds, provenance: "PROVIDED" },
-    };
-  });
+  const operations = input.operations.map((operation, index) => mapOperation(operation, index, issues));
 
   const scenarios = input.scenarios.map(({ id, name, assignments }, index): StudyScenario => {
     const assigned = new Set<string>();
@@ -132,6 +175,26 @@ export function createManualStudy(input: ManualStudyInput): ValidationResult<Man
   }
 
   if (issues.length) return { ok: false, issues };
+  const result: StudyBuilderResult & { operations: OpOutput[] } = {
+    ok: true, issues, operations, scenarios, conditions,
+  };
+  return result;
+}
+
+export function createManualStudy(input: ManualStudyInput): ValidationResult<ManualStudy> {
+  const built = buildStudy(input, ({ id, name, durationSeconds }, index, issues): ManualOperation => {
+    if (durationSeconds !== null && (!Number.isFinite(durationSeconds) || durationSeconds <= 0)) {
+      issues.push({ path: `operations[${index}].durationSeconds`, code: "INVALID_NUMBER" });
+    }
+    return {
+      id,
+      name,
+      time: durationSeconds === null
+        ? { durationSeconds, provenance: "UNKNOWN" }
+        : { durationSeconds, provenance: "PROVIDED" },
+    };
+  });
+  if (!built.ok) return built;
   return {
     ok: true,
     value: {
@@ -140,10 +203,50 @@ export function createManualStudy(input: ManualStudyInput): ValidationResult<Man
       schemaVersion: 1,
       source: "MANUAL",
       status: "DRAFT_LOCAL",
-      operations,
+      operations: built.operations,
       stations: input.stations.map(({ id, name }) => ({ id, name })),
-      scenarios,
-      ...(conditions === undefined ? {} : { conditions }),
+      scenarios: built.scenarios,
+      ...(built.conditions === undefined ? {} : { conditions: built.conditions }),
+    },
+  };
+}
+
+export function createObservedStudy(input: ObservedStudyInput): ValidationResult<ObservedStudy> {
+  const issues: ValidationIssue[] = [];
+  const context = input.routing;
+  if (!context.productCode.trim()) issues.push({ path: "routing.productCode", code: "REQUIRED" });
+  if (!context.branchCode.trim()) issues.push({ path: "routing.branchCode", code: "REQUIRED" });
+  if (!context.stageId.trim()) issues.push({ path: "routing.stageId", code: "REQUIRED" });
+  const built = buildStudy<ObservedOperationInput, ObservedOperation>(input, ({ id, name, durationSeconds, reference }, index, opIssues): ObservedOperation => {
+    if (durationSeconds !== null && (!Number.isFinite(durationSeconds) || durationSeconds <= 0)) {
+      opIssues.push({ path: `operations[${index}].durationSeconds`, code: "INVALID_NUMBER" });
+    }
+    return {
+      id,
+      name,
+      ...(reference === undefined ? {} : { reference }),
+      time: durationSeconds === null
+        ? { durationSeconds, provenance: "UNKNOWN" }
+        : { durationSeconds, provenance: "OBSERVED" },
+    };
+  });
+  if (!built.ok) {
+    return { ok: false, issues: [...issues, ...built.issues] };
+  }
+  if (issues.length) return { ok: false, issues };
+  return {
+    ok: true,
+    value: {
+      id: input.id,
+      name: input.name,
+      schemaVersion: 1,
+      source: "OBSERVED_ROUTING",
+      status: "DRAFT_LOCAL",
+      routing: { ...context },
+      operations: built.operations,
+      stations: input.stations.map(({ id, name }) => ({ id, name })),
+      scenarios: built.scenarios,
+      ...(built.conditions === undefined ? {} : { conditions: built.conditions }),
     },
   };
 }

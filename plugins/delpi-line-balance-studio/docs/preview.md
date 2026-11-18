@@ -29,3 +29,7 @@ Inventário em `784d7047a6fb`, por busca literal de `FormSelectControl` em arqui
 A variante anterior continua disponível para esses consumidores. Sua retirada depende da migração dos usos diretos e da confirmação das superfícies que importam controles do kit por federação.
 
 A demo carrega `portal/src/theme-tokens.css`, a mesma fonte importada pelo Portal. O componente integrado herda os tokens do host, inclusive canvas, superfícies, controles, alertas e a paleta de séries.
+
+## Roteiro oficial observado (RQ-LBS-12)
+
+O elemento aceita `ObservedStudyInput` no mesmo setter `study`. Em modo `OBSERVED_ROUTING`, o cabeçalho exibe produto, filial, estágio e o badge `Roteiro oficial · OBSERVED` (com indicação de truncamento). A tabela de operações ganha a coluna Origem: `Oficial` (tempo do roteiro), `Ajuste local` (tempo alterado em relação ao observado) e `Local` (operação criada no rascunho). Cenários continuam `SIMULATION`; o estudo permanece `DRAFT_LOCAL` — nenhuma alteração escreve no roteiro oficial.

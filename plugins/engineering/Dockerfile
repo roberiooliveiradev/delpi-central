@@ -11,6 +11,8 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY engineering ./engineering
 COPY vite ./vite
+# Line Balance Studio — fonte compilada pelo vite do MFE (path aliases).
+COPY delpi-line-balance-studio ./delpi-line-balance-studio
 
 WORKDIR /app/engineering
 RUN npx vite build

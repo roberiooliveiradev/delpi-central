@@ -13,6 +13,7 @@ export function ProcessesFeature({
 }: {
   relativePath?: string;
   basePath?: string;
+  getAccessToken?: () => string | undefined;
 }) {
   const rest = (relativePath ?? "")
     .replace(/^processes\/?/, "")
@@ -22,7 +23,7 @@ export function ProcessesFeature({
     return <ProcessesPage basePath={basePath} />;
   }
   if (rest === "line-balancing") {
-    return <LineBalancingPage basePath={basePath} />;
+    return <LineBalancingPage />;
   }
   return (
     <EngineeringEmptyState message="Ferramenta de Processos não encontrada." />

@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const page = readFileSync(join(here, "LineBalancingPage.tsx"), "utf8");
+const adapter = readFileSync(join(here, "studioAdapter.ts"), "utf8");
+const mount = readFileSync(join(here, "LineBalanceStudio.tsx"), "utf8");
 const feature = readFileSync(join(here, "../ProcessesFeature.tsx"), "utf8");
 const hub = readFileSync(join(here, "../ProcessesPage.tsx"), "utf8");
 const routes = readFileSync(
@@ -92,41 +94,44 @@ describe("BFF contracts (PROC-04/06/07)", () => {
 describe("M1 reuse + catálogo (PROC-07/08)", () => {
   it("reutiliza o domínio via postProductLineBalance, sem recalcular", () => {
     expect(page).toContain("postProductLineBalance(");
-    expect(page).toContain("attachResult");
+    expect(page).toContain("deriveBalanceParams");
     expect(page).not.toContain("build_balance_result");
   });
 
-  it("seletor de método lista os seis métodos do catálogo", () => {
+  it("catálogo lista os seis métodos sem ação falsa", () => {
     expect(page).toContain("BALANCING_METHODS.map");
-    expect(page).toContain("setMethodId");
+    expect(page).toContain("METHOD_STATUS_BADGE_VARIANT");
   });
 });
 
-describe("Yamazumi (PROC-09..12)", () => {
-  it("configura postos via PostConfigurator e atribui só operações oficiais", () => {
-    expect(page).toContain("PostConfigurator");
-    expect(page).toContain("assignOperationToPost");
-    expect(page).toContain("unassignedOperations");
+describe("Studio mount (PROC-09..12)", () => {
+  it("monta o elemento do Line Balance Studio com o estudo semeado", () => {
+    expect(mount).toContain("delpi-line-balance-studio");
+    expect(mount).toContain("registerLineBalanceStudio");
+    expect(mount).toContain("study-change");
+    expect(page).toContain("LineBalanceStudioMount");
+    expect(page).toContain("onStudyChange");
   });
 
-  it("gráfico empilhado com linha de takt e chrome corporativo", () => {
-    expect(page).toContain("RoutingSeriesChart");
-    expect(page).toContain('"stacked_bar", "bar"');
-    expect(page).toContain("buildYamazumiChartSpec");
-    expect(page).toContain("Takt");
+  it("alimenta o Studio via entrada observada — nunca MANUAL para roteiro", () => {
+    expect(adapter).toContain("OBSERVED_ROUTING");
+    expect(adapter).toContain("buildObservedStudyInput");
+    expect(adapter).toContain("minutesToSeconds");
+    expect(adapter).toContain("Setup");
+    expect(page).toContain("buildObservedStudyInput");
   });
 
-  it("tempos desconhecidos e não atribuídas são explícitos", () => {
+  it("tempos desconhecidos seguem UNKNOWN e a fonte fica rastreável", () => {
+    expect(adapter).toContain("durationSeconds: minutesToSeconds(op.time_minutes_piece)");
     expect(page).toContain("UNKNOWN");
-    expect(page).toContain("não atribuída");
-    expect(page).toContain("AGGREGATE_TIME_CATEGORY");
+    expect(adapter).toContain("operationReference");
   });
 });
 
 describe("Persistência e cenários (PROC-13/14/15)", () => {
-  it("rascunho usa prefixo próprio do namespace Processos", () => {
-    expect(page).toContain("engineering:processes:line-balance");
-    expect(page).toContain("storagePrefix");
+  it("rascunho usa prefixo próprio do namespace Processos Studio", () => {
+    expect(adapter).toContain("engineering:processes:line-balance:studio:v1");
+    expect(adapter).toContain("studioDraftKey");
     expect(page).not.toContain("STUDY_STORAGE_PREFIX");
   });
 
@@ -134,28 +139,33 @@ describe("Persistência e cenários (PROC-13/14/15)", () => {
     expect(page).toContain("EngineeringConfirmDialog");
     expect(page).toContain("Limpar estudo");
     expect(page).toContain("confirmClear");
-    expect(page).toContain("rascunho da Ficha do Produto é alterado");
+    expect(page).toContain("clearStudioDraft");
+    expect(page).toContain("roteiro oficial consultado permanece intacto");
   });
 
-  it("cenários compartilham chips e o limite máximo do contrato", () => {
-    expect(page).toContain("EngineeringScopeChipBar");
-    expect(page).toContain("study.addScenario");
-    expect(page).toContain("study.maxScenarios");
+  it("restaura por fingerprint e descarta rascunho divergente (stale)", () => {
+    expect(adapter).toContain("computeSourceFingerprint");
+    expect(adapter).toContain('"stale"');
+    expect(page).toContain("staleNotice");
+    expect(adapter).toContain("migrateLegacyDraft");
   });
 });
 
 describe("Exports e segurança (PROC-16/19)", () => {
-  it("exportação inclui contexto, método, proveniência e limitação", () => {
-    expect(page).toContain("SIMULATION");
-    expect(page).toContain("proveniencia");
-    expect(page).toContain("limitacao");
-    expect(page).toContain("buildYamazumiExportPayload");
+  it("exportação inclui contexto, proveniência e limitação", () => {
+    expect(adapter).toContain("SIMULATION");
+    expect(adapter).toContain("proveniencia");
+    expect(adapter).toContain("limitacao");
+    expect(adapter).toContain("buildStudioExportPayload");
+    expect(page).toContain("TabularExportButtons");
+    expect(page).toContain("exportTableFormat");
   });
 
   it("não grava roteiro nem chama write endpoints", () => {
     expect(page).not.toContain("putProduct");
     expect(page).not.toContain("patchProduct");
     expect(page).not.toContain("deleteProduct");
+    expect(adapter).not.toContain("putProduct");
   });
 });
 
@@ -163,9 +173,6 @@ describe("Layout (PROC-17/18)", () => {
   it("classes de composição próprias existem no CSS do MFE", () => {
     for (const cls of [
       "engineering-processes__lookup",
-      "engineering-processes__yamazumi-grid",
-      "engineering-processes__yamazumi-legend",
-      "engineering-processes__unassigned",
       "engineering-processes__method-list",
     ]) {
       expect(css).toContain(`.${cls}`);

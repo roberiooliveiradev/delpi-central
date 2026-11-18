@@ -168,19 +168,24 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await expectNoFailures(pageErrors, forbiddenCalls);
   });
 
-  test("catálogo M1–M6, análise rápida e Yamazumi interativo", async ({
+  test("catálogo M1–M6, análise oficial e Yamazumi do Studio", async ({
     page,
   }) => {
     const pageErrors = trackPageErrors(page);
     await openToolAndLoadRouting(page);
+
+    /* Elemento do Line Balance Studio carregado com o estudo observado. */
     await expect(
-      page.getByRole("heading", { name: /Yamazumi/ }),
+      page.locator("delpi-line-balance-studio"),
+    ).toBeAttached({ timeout: 15_000 });
+    await expect(
+      page.getByText(/Roteiro oficial · OBSERVED/),
     ).toBeVisible({ timeout: 15_000 });
 
     /* Catálogo dos seis métodos com status honesto. */
     for (const label of ["M1", "M2", "M3", "M4", "M5", "M6"]) {
       await expect(
-        page.getByText(new RegExp(`${label} ·`)),
+        page.getByText(new RegExp(`${label} —`)),
       ).toBeVisible();
     }
     await expect(
@@ -188,66 +193,50 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     ).toBeVisible();
     await shot(page, "lb-method-catalog");
 
-    /* Parâmetros → análise rápida M1 via domínio. */
-    await page.locator("#lb-demand").fill("500");
-    await page.locator("#lb-shift").fill("480");
-    await page.locator("#lb-break").fill("60");
-    await chooseOption(page, "Método", /^M1\b/);
+    /* Condições no Studio → análise oficial M1 pelo contrato do domínio. */
     await page
-      .getByRole("button", { name: "Calcular análise rápida" })
+      .getByRole("button", { name: "Condições de produção" })
       .click();
-    await expect(page.getByText(/Resultados e cenários/)).toBeVisible({
+    await chooseOption(page, "Modo de turno", /^Minutos/);
+    await page.getByLabel(/Duração \(min\)/).fill("480");
+    await page.getByRole("button", { name: /Adicionar pausa/ }).click();
+    await page.getByLabel(/Pausa 1 \(min\)/).fill("60");
+    await page.getByLabel(/Demanda por turno/).fill("500");
+    await page
+      .getByRole("button", { name: "Executar análise oficial" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: /Análise oficial M1/ }),
+    ).toBeVisible();
+    await expect(page.getByText("Takt").first()).toBeVisible({
       timeout: 45_000,
     });
     await shot(page, "lb-m1-result");
 
     /* Yamazumi — postos e atribuição de operações oficiais. */
-    await chooseOption(page, "Método", /^M5\b/);
     await page
-      .getByRole("button", { name: "Adicionar posto" })
+      .getByRole("button", { name: /Adicionar posto/ })
       .click();
     await page
-      .getByRole("button", { name: "Adicionar posto" })
+      .getByRole("button", { name: /Adicionar posto/ })
       .click();
-    await expect(
-      page.getByRole("heading", { name: "Posto 01" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Posto 02" }),
-    ).toBeVisible();
+    await expect(page.getByText("Posto 1").first()).toBeVisible();
+    await expect(page.getByText("Posto 2").first()).toBeVisible();
 
-    /* Atribui operações não atribuídas ao Posto 01 (controle acessível). */
-    const assignTriggers = page.getByRole("button", {
-      name: "Atribuir a",
-      exact: true,
-    });
-    const count = await assignTriggers.count();
-    for (let i = 0; i < Math.min(count, 3); i += 1) {
-      await chooseOption(page, "Atribuir a", /^Posto/, 0);
-      await page.waitForTimeout(200);
-    }
+    /* Atribui operações ao Posto 1 via seletor acessível da tabela. */
+    await chooseOption(page, "Posto da operação 1", /^Posto 1/);
+    await chooseOption(page, "Posto da operação 2", /^Posto 1/);
     await shot(page, "lb-yamazumi-assigned");
-
-    /* Gráfico carga × takt empilhado + linha de referência. */
-    await expect(
-      page.getByText(/Carga × takt por posto/),
-    ).toBeVisible();
-    await expect(
-      page.locator(".delpi-ui-multi-type-series-chart").first(),
-    ).toBeVisible();
-    await shot(page, "lb-yamazumi-chart-dark");
 
     /* Reordenação por botão — alternativa acessível ao drag-and-drop. */
     await page
-      .getByRole("button", { name: /Mover Posto 02 para cima/ })
+      .getByRole("button", { name: /Mover Posto 2 para cima/ })
       .click();
     await shot(page, "lb-yamazumi-reordered");
 
     /* Cenário B preserva o estudo A. */
-    await page.getByRole("button", { name: "Novo cenário" }).click();
-    await expect(
-      page.getByRole("button", { name: "Cenário B" }),
-    ).toBeVisible();
+    await page.getByRole("button", { name: /Novo cenário/ }).click();
+    await expect(page.getByText("Cenário B").first()).toBeVisible();
     await shot(page, "lb-scenario-b");
 
     /* F5 → estudo restaurado no mesmo contexto (sessionStorage). */
@@ -258,22 +247,18 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.getByText(/Selecione a filial e o estágio produtivo/),
     ).toBeVisible({ timeout: 45_000 });
     await chooseOption(page, "Estágio produtivo", /^Estágio /);
-    await expect(
-      page.getByRole("button", { name: "Cenário B" }),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Cenário B").first()).toBeVisible({
+      timeout: 30_000,
+    });
     await shot(page, "lb-restored-after-f5");
 
     /* Limpar estudo → confirmação → rascunho removido. */
     await page.getByRole("button", { name: "Limpar estudo" }).click();
     await expect(
-      page.getByText(/Nenhum dado oficial ou rascunho da Ficha/),
+      page.getByText(/roteiro oficial consultado permanece intacto/),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Limpar rascunho" })
-      .click();
-    await expect(
-      page.getByRole("button", { name: "Cenário B" }),
-    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Limpar" }).click();
+    await expect(page.getByText("Cenário B")).toHaveCount(0);
     await shot(page, "lb-cleared");
 
     await setTheme(page, "light");
@@ -286,17 +271,11 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     const pageErrors = trackPageErrors(page);
     await openToolAndLoadRouting(page);
 
-    await page.getByRole("button", { name: "Adicionar posto" }).click();
-    const assignTriggers = page.getByRole("button", {
-      name: "Atribuir a",
-      exact: true,
-    });
-    if ((await assignTriggers.count()) > 0) {
-      await chooseOption(page, "Atribuir a", /^Posto/, 0);
-    }
+    await page.getByRole("button", { name: /Adicionar posto/ }).click();
+    await chooseOption(page, "Posto da operação 1", /^Posto 1/);
     await expect(
-      page.locator(".delpi-ui-multi-type-series-chart").first(),
-    ).toBeVisible({ timeout: 15_000 });
+      page.locator("delpi-line-balance-studio"),
+    ).toBeAttached({ timeout: 15_000 });
 
     /* CSV / Excel / PDF pelo padrão corporativo de exportação. */
     const csvBtn = page.getByRole("button", { name: /CSV/ }).first();
@@ -319,7 +298,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       .frameLocator("iframe[data-delpi-document-print-frame]")
       .first();
     await expect(
-      printFrame.getByText(/Yamazumi/i).first(),
+      printFrame.getByText(/Balanceamento de Linha/i).first(),
     ).toBeAttached({ timeout: 15_000 });
     await shot(page, "lb-exports");
 

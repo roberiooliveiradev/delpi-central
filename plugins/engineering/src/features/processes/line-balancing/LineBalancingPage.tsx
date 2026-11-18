@@ -1,30 +1,31 @@
-/** Processos > Balanceamento de Linha — workspace independente da
- * Ficha do Produto (plano V3, M5 Yamazumi como primeiro método
- * interativo). Consulta o roteiro oficial pelo contrato
- * `GET /v1/products/{code}/routing` e executa a análise determinística
- * M1 via `POST /v1/products/{code}/line-balance` — sem chamadas diretas
- * à API-DELPI e sem recalcular o domínio no frontend.
+/** Processos > Balanceamento de Linha — host do DELPI Line Balance
+ * Studio (`plugins/delpi-line-balance-studio`) na rota governada
+ * `/apps/engineering/processes/line-balancing`. O host mantém SSO,
+ * RBAC, client HTTP, filial, estágio, cancelamento, estados de erro e
+ * o contrato oficial M1 (`POST /v1/products/{code}/line-balance`). O
+ * Studio compõe o estudo (postos, cenários, condições, Yamazumi) como
+ * DRAFT_LOCAL — nunca escreve no roteiro oficial.
  *
- * Separação de proveniência preservada: roteiro OBSERVED, parâmetros
- * PROVIDED, métricas CALCULATED, organização de postos DRAFT_LOCAL e
- * distribuições SIMULATION — hipóteses nunca são apresentadas como
- * dimensionamento aprovado nem gravadas no roteiro oficial. */
+ * Proveniência: roteiro OBSERVED, parâmetros PROVIDED, métricas M1
+ * CALCULATED, organização de postos e cenários SIMULATION/DRAFT_LOCAL —
+ * hipóteses nunca são apresentadas como dimensionamento aprovado. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { TableExportPayload } from "@delpi/plugin-ui/index";
+import {
+  exportTableFormat,
+  TabularExportButtons,
+} from "@delpi/plugin-ui/index";
+import type { StudioStudyInput } from "@delpi/line-balance-studio";
 
 import { getCurrentAccessToken, HomeApiError } from "../../../api/httpClient";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
 import {
   EngineeringActionButton,
-  EngineeringChartCard,
-  EngineeringDetailCard,
   EngineeringEmptyState,
   EngineeringFilterSelect,
   EngineeringFormActions,
   EngineeringKpiCard,
   EngineeringLoadingActivityCard,
-  EngineeringScopeChipBar,
   EngineeringSectionCard,
   EngineeringStateBanner,
   EngineeringStatusBadge,
@@ -40,10 +41,6 @@ import type {
   ProductLineBalanceResult,
   ProductRoutingResult,
 } from "../../products/types";
-import { resolveChartTimeUnit, type ChartTimeUnit } from "../../products/routing/chartUnits";
-import { RoutingSeriesChart } from "../../products/routing/RoutingSeriesChart";
-import { PostConfigurator } from "../../products/routing/PostConfigurator";
-import { BalanceResultsSection } from "../../products/routing/BalanceResultsSection";
 import {
   formatHours,
   formatMinutes,
@@ -51,32 +48,39 @@ import {
   stageLabel,
   type RoutingOperationView,
 } from "../../products/routing/routingGrouping";
+import type { BalanceRunParams } from "../../products/routing/useRoutingStudyDraft";
+import { BALANCING_METHODS, METHOD_STATUS_BADGE_VARIANT } from "./methodCatalog";
+import { LineBalanceStudioMount } from "./LineBalanceStudio";
 import {
-  validateStudyInputs,
-  SAVE_STATUS_LABEL,
-} from "../../products/routing/studyInputs";
-import {
-  useRoutingStudyDraft,
-  type BalanceRunParams,
-} from "../../products/routing/useRoutingStudyDraft";
-import {
-  BALANCING_METHODS,
-  METHOD_STATUS_BADGE_VARIANT,
-  type MethodId,
-} from "./methodCatalog";
-import {
-  AGGREGATE_TIME_CATEGORY,
-  assignOperationToPost,
-  buildYamazumiChartSpec,
-  buildYamazumiExportRows,
-  computePostLoads,
-  unassignedOperations,
-} from "./yamazumi";
+  buildManualStudyInput,
+  buildObservedStudyInput,
+  buildStudioExportPayload,
+  clearStudioDraft,
+  deriveBalanceParams,
+  loadStudioDraft,
+  migrateLegacyDraft,
+  saveStudioDraft,
+  studioDraftContext,
+  studioDraftKey,
+  type StudioDraftContext,
+  type StudioDraftSave,
+} from "./studioAdapter";
+import { buildStorageKey, parseDraft } from "../../products/routing/routingStudyDraft";
 
-/** Namespace de rascunho isolado da Ficha do Produto — mesmo schema V2,
- * chave própria por identidade/produto/filial/estágio (contrato de
- * sessão). */
-const LINE_BALANCE_STORAGE_PREFIX = "engineering:processes:line-balance";
+const LEGACY_DRAFT_PREFIX = "engineering:processes:line-balance";
+const MANUAL_CONTEXT: StudioDraftContext = {
+  productCode: "manual",
+  branch: "",
+  stageKey: "manual",
+  sourceFingerprint: "manual",
+};
+
+const SAVE_LABEL: Record<StudioDraftSave, string> = {
+  saved: "Rascunho salvo",
+  unavailable: "Armazenamento indisponível",
+  quota: "Armazenamento cheio — rascunho não salvo",
+  error: "Falha ao salvar rascunho",
+};
 
 type RoutingData = ProductRoutingResult & { truncated?: boolean };
 
@@ -89,34 +93,15 @@ function isNotFound(error: unknown): boolean {
 }
 
 const OP_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
-  {
-    key: "op",
-    header: "Operação",
-    render: (op) => op.operation_code || "—",
-  },
-  {
-    key: "desc",
-    header: "Descrição",
-    render: (op) => op.operation_description ?? "—",
-  },
-  {
-    key: "ct",
-    header: "CT",
-    render: (op) => op.work_center ?? "—",
-  },
-  {
-    key: "resource",
-    header: "Recurso",
-    render: (op) => op.resource_code ?? "—",
-  },
+  { key: "op", header: "Operação", render: (op) => op.operation_code || "—" },
+  { key: "desc", header: "Descrição", render: (op) => op.operation_description ?? "—" },
+  { key: "ct", header: "CT", render: (op) => op.work_center ?? "—" },
+  { key: "resource", header: "Recurso", render: (op) => op.resource_code ?? "—" },
   {
     key: "time",
     header: "Tempo padrão (min/peça)",
     align: "right",
-    render: (op) =>
-      op.time_minutes_piece != null
-        ? formatMinutes(op.time_minutes_piece)
-        : "UNKNOWN",
+    render: (op) => (op.time_minutes_piece != null ? formatMinutes(op.time_minutes_piece) : "UNKNOWN"),
   },
   {
     key: "setup",
@@ -126,7 +111,7 @@ const OP_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
   },
 ];
 
-export function LineBalancingPage({ basePath }: { basePath?: string }) {
+export function LineBalancingPage() {
   const [productCode, setProductCode] = useState("");
   const [queriedCode, setQueriedCode] = useState("");
   const [branch, setBranch] = useState("");
@@ -135,30 +120,33 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
   const [routingError, setRoutingError] = useState<unknown>(null);
   const [routingLoading, setRoutingLoading] = useState(false);
   const [stageKey, setStageKey] = useState<string | null>(null);
+  const [studySeed, setStudySeed] = useState<StudioStudyInput | undefined>();
+  const [liveStudy, setLiveStudy] = useState<StudioStudyInput | undefined>();
+  const [staleNotice, setStaleNotice] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<StudioDraftSave | "idle">("idle");
   const [balanceRunning, setBalanceRunning] = useState(false);
   const [balanceError, setBalanceError] = useState<unknown>(null);
+  const [balanceResult, setBalanceResult] = useState<{
+    params: BalanceRunParams;
+    result: ProductLineBalanceResult;
+  } | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
   const [clearedNotice, setClearedNotice] = useState(false);
-  const [methodId, setMethodId] = useState<MethodId>("m5");
   const balanceAbort = useRef<AbortController | null>(null);
+  const liveStudyRef = useRef<StudioStudyInput | undefined>(undefined);
 
-  const identity = useMemo(
-    () => getSubjectFromAccessToken(getCurrentAccessToken()),
-    [],
-  );
+  const identity = useMemo(() => getSubjectFromAccessToken(getCurrentAccessToken()), []);
 
   /* Consulta oficial — só após "Buscar roteiro"; reconsulta quando a
-   * filial muda (contrato filtra server-side). */
+   * filial muda (contrato filtra server-side). Resposta atrasada ou
+   * negada nunca expõe dados de outro produto: o estado é por produto
+   * consultado e o abort descarta retornos fora de ordem. */
   useEffect(() => {
     if (!queriedCode) return undefined;
     const controller = new AbortController();
     setRoutingLoading(true);
     setRoutingError(null);
-    fetchProductRouting(
-      queriedCode,
-      { branch: branch || undefined },
-      controller.signal,
-    )
+    fetchProductRouting(queriedCode, { branch: branch || undefined }, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
         setRouting(result);
@@ -179,132 +167,95 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
     return () => controller.abort();
   }, [queriedCode, branch]);
 
-  const grouped = useMemo(
-    () => groupRoutingRows(routing?.items ?? []),
-    [routing],
-  );
+  const grouped = useMemo(() => groupRoutingRows(routing?.items ?? []), [routing]);
   useEffect(() => {
-    if (
-      grouped.stages.length &&
-      !grouped.stages.some((s) => s.key === stageKey)
-    ) {
+    if (grouped.stages.length && !grouped.stages.some((s) => s.key === stageKey)) {
       setStageKey(null);
     }
   }, [grouped, stageKey]);
-  /* Contexto exigido: o estágio só é assumido após seleção explícita
-   * do usuário — nunca automaticamente (contrato V3). */
-  const stage =
-    grouped.stages.find((s) => s.key === stageKey) ?? null;
+  /* Estágio só é assumido após seleção explícita — nunca automático. */
+  const stage = grouped.stages.find((s) => s.key === stageKey) ?? null;
 
-  const study = useRoutingStudyDraft({
-    identity,
-    productCode: queriedCode,
-    branch,
-    stage,
-    storagePrefix: LINE_BALANCE_STORAGE_PREFIX,
-  });
-  const active = study.active;
+  /* Seed do Studio: rascunho do mesmo contexto/fingerprint → seed
+   * OBSERVED do estágio; legado migrado; `stale` descarta e avisa. */
+  useEffect(() => {
+    if (!stage) {
+      setStudySeed(undefined);
+      setLiveStudy(undefined);
+      liveStudyRef.current = undefined;
+      return;
+    }
+    const ctx = studioDraftContext({ productCode: queriedCode, branch, stage });
+    const key = studioDraftKey(identity, ctx);
+    const loaded = loadStudioDraft(key, ctx);
+    if (loaded.status === "ok") {
+      setStudySeed(loaded.study);
+      setLiveStudy(loaded.study);
+      liveStudyRef.current = loaded.study;
+      setStaleNotice(null);
+      return;
+    }
+    if (loaded.status === "stale") {
+      setStaleNotice("O roteiro oficial mudou desde o rascunho salvo — as hipóteses antigas foram descartadas.");
+    }
+    /* Migração compatível: rascunho no formato anterior (postos) é
+     * convertido para o DTO do Studio preservando postos/atribuições
+     * que ainda existem no roteiro atual. */
+    const legacyKey = buildStorageKey(identity, ctx, LEGACY_DRAFT_PREFIX);
+    let migrated: StudioStudyInput | undefined;
+    const legacyParsed = parseDraft(safeRead(legacyKey), ctx);
+    if (legacyParsed.ok) {
+      migrated = migrateLegacyDraft(
+        legacyParsed.draft,
+        buildObservedStudyInput({ stage, productCode: queriedCode, branch }),
+      );
+      saveStudioDraft(key, ctx, migrated);
+    }
+    const seed = migrated ?? buildObservedStudyInput({
+      stage,
+      productCode: queriedCode,
+      branch,
+      stageName: stageLabel(stage),
+      truncated: routing?.truncated,
+    });
+    setStudySeed(seed);
+    setLiveStudy(seed);
+    liveStudyRef.current = seed;
+    if (loaded.status !== "stale") setStaleNotice(null);
+  }, [stage, queriedCode, branch, identity, routing?.truncated]);
 
-  const validation = useMemo(
-    () =>
-      validateStudyInputs(
-        active?.inputs ?? {
-          demand: "",
-          shiftMinutes: "",
-          breakMinutes: "",
-          batchSize: "",
-          numStations: "",
-        },
-        branch,
-      ),
-    [active?.inputs, branch],
-  );
+  const draftContext = useMemo<StudioDraftContext | null>(() => {
+    if (studySeed?.source === "OBSERVED_ROUTING" && stage) {
+      return studioDraftContext({ productCode: queriedCode, branch, stage });
+    }
+    if (studySeed && studySeed.source !== "OBSERVED_ROUTING") return MANUAL_CONTEXT;
+    return null;
+  }, [studySeed, stage, queriedCode, branch]);
 
-  const runBalance = useCallback(
-    (params: BalanceRunParams) => {
-      if (!study.activeScenarioId || !queriedCode) return;
-      const scenarioId = study.activeScenarioId;
-      balanceAbort.current?.abort();
-      const controller = new AbortController();
-      balanceAbort.current = controller;
-      setBalanceRunning(true);
-      setBalanceError(null);
-      postProductLineBalance(queriedCode, params, controller.signal)
-        .then((result) => {
-          if (controller.signal.aborted) return;
-          study.attachResult(scenarioId, params, result);
-        })
-        .catch((err) => {
-          if (!controller.signal.aborted) setBalanceError(err);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setBalanceRunning(false);
-        });
+  const onStudyChange = useCallback(
+    (study: StudioStudyInput) => {
+      liveStudyRef.current = study;
+      setLiveStudy(study);
+      if (!draftContext) return;
+      const outcome = saveStudioDraft(studioDraftKey(identity, draftContext), draftContext, study);
+      setSaveStatus(outcome);
     },
-    [queriedCode, study],
+    [draftContext, identity],
   );
 
-  const confirmClear = useCallback(() => {
-    const removed = study.clearStudy();
-    setClearOpen(false);
-    if (removed) setClearedNotice(true);
-  }, [study]);
+  /* Estudo manual — mesmo fluxo de rascunho, contexto neutro. */
+  const startManualStudy = useCallback(() => {
+    const restored = loadStudioDraft(studioDraftKey(identity, MANUAL_CONTEXT), MANUAL_CONTEXT);
+    const seed = restored.status === "ok" ? restored.study : buildManualStudyInput();
+    setStudySeed(seed);
+    setLiveStudy(seed);
+    liveStudyRef.current = seed;
+    setStaleNotice(null);
+    setBalanceResult(null);
+    setBalanceError(null);
+  }, [identity]);
 
-  /* --- Yamazumi (M5) --------------------------------------------------- */
-
-  const posts = active?.posts ?? [];
-  const operations = stage?.operations ?? [];
-  const loads = useMemo(
-    () => computePostLoads(posts, operations),
-    [posts, operations],
-  );
-  const unassigned = useMemo(
-    () => unassignedOperations(posts, operations),
-    [posts, operations],
-  );
-
-  const stageResult = useMemo(() => {
-    if (!active?.computed || !stage) return null;
-    return (
-      active.computed.result.stages.find(
-        (st) => `${st.product_code}#${st.bom_level}` === stage.key,
-      ) ?? null
-    );
-  }, [active?.computed, stage]);
-
-  /* Takt: CALCULATED do domínio quando há resultado; prévia aritmética
-   * dos inputs (providencial, não oficial) só como referência visual. */
-  const taktMinutes =
-    stageResult?.takt_minutes ?? validation.taktPreview;
-  const taktProvenance =
-    stageResult?.takt_minutes != null
-      ? "CALCULATED"
-      : taktMinutes != null
-        ? "PROVIDED (prévia)"
-        : null;
-
-  const autoUnit = useMemo(
-    () =>
-      resolveChartTimeUnit([
-        ...loads.map((l) => l.loadMinutes ?? 0),
-        ...(taktMinutes != null ? [taktMinutes] : []),
-      ]),
-    [loads, taktMinutes],
-  );
-
-  const chartSpec = useMemo(
-    () => buildYamazumiChartSpec(loads, taktMinutes),
-    [loads, taktMinutes],
-  );
-
-  const overTaktPosts = loads.filter(
-    (l) =>
-      l.loadMinutes != null &&
-      taktMinutes != null &&
-      l.loadMinutes > taktMinutes,
-  );
-  const unknownTimePosts = loads.filter((l) => l.unknownOps.length > 0);
-  const emptyPosts = loads.filter((l) => l.empty);
+  const showStudio = Boolean(studySeed) && (Boolean(stage) || Boolean(studySeed));
 
   const searchRouting = useCallback(() => {
     const code = productCode.trim();
@@ -314,18 +265,62 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
     setBranches([]);
     setStageKey(null);
     setBalanceError(null);
+    setBalanceResult(null);
     setClearedNotice(false);
+    setStaleNotice(null);
   }, [productCode]);
 
-  const assignToPost = useCallback(
-    (opKey: string, targetPostId: string) => {
-      if (!targetPostId) return;
-      for (const u of assignOperationToPost(posts, opKey, targetPostId)) {
-        study.patchPost(u.postId, u.patch);
-      }
-    },
-    [posts, study],
+  const confirmClear = useCallback(() => {
+    let removed = false;
+    if (draftContext) {
+      removed = clearStudioDraft(studioDraftKey(identity, draftContext));
+    }
+    setClearOpen(false);
+    const fresh = stage && studySeed?.source === "OBSERVED_ROUTING"
+      ? buildObservedStudyInput({ stage, productCode: queriedCode, branch, stageName: stageLabel(stage), truncated: routing?.truncated })
+      : buildManualStudyInput();
+    setStudySeed(fresh);
+    setLiveStudy(fresh);
+    liveStudyRef.current = fresh;
+    setBalanceResult(null);
+    if (removed) setClearedNotice(true);
+  }, [draftContext, identity, stage, queriedCode, branch, routing?.truncated]);
+
+  /* M1 — parâmetros derivados das condições do estudo; cálculo sempre
+   * pelo contrato oficial do domínio, nunca recalculado no host. */
+  const balanceParams = useMemo(
+    () => deriveBalanceParams(liveStudy ?? studySeed, branch),
+    [liveStudy, studySeed, branch],
   );
+
+  const runBalance = useCallback(() => {
+    if (!queriedCode || !balanceParams.ok) return;
+    const params = balanceParams.params;
+    balanceAbort.current?.abort();
+    const controller = new AbortController();
+    balanceAbort.current = controller;
+    setBalanceRunning(true);
+    setBalanceError(null);
+    postProductLineBalance(queriedCode, params, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setBalanceResult({ params, result });
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) setBalanceError(err);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBalanceRunning(false);
+      });
+  }, [queriedCode, balanceParams]);
+
+  const stageBalance = useMemo(() => {
+    if (!balanceResult || !stage) return null;
+    return (
+      balanceResult.result.stages.find(
+        (st) => `${st.product_code}#${st.bom_level}` === stage.key,
+      ) ?? null
+    );
+  }, [balanceResult, stage]);
 
   const branchOptions = useMemo(
     () => [
@@ -338,97 +333,35 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
   const stageOptions = useMemo(
     () => [
       { value: "", label: "Selecionar estágio…" },
-      ...grouped.stages.map((s) => ({
-        value: s.key,
-        label: stageLabel(s),
-      })),
+      ...grouped.stages.map((s) => ({ value: s.key, label: stageLabel(s) })),
     ],
     [grouped],
   );
 
-  const methodOptions = BALANCING_METHODS.map((m) => ({
-    value: m.id,
-    label: `${m.label} — ${m.name}`,
-  }));
-  const method = BALANCING_METHODS.find((m) => m.id === methodId)!;
-
-  const exportContext = (unit: ChartTimeUnit) => ({
-    produto: queriedCode,
-    filial: branch || "—",
-    estagio: stage ? stageLabel(stage) : "—",
-    cenario: active ? `Cenário ${active.label}` : "—",
-    unidade: unit.unit,
-  });
-
-  const buildYamazumiExportPayload = (
-    unit: ChartTimeUnit,
-  ): TableExportPayload => {
-    const ctx = exportContext(unit);
-    const rows = buildYamazumiExportRows(loads, unassigned);
-    return {
-      title: `Yamazumi — ${ctx.produto} (${ctx.unidade}) — SIMULATION`,
-      columns: [
-        { key: "produto", label: "Produto" },
-        { key: "filial", label: "Filial" },
-        { key: "estagio", label: "Estágio" },
-        { key: "cenario", label: "Cenário" },
-        { key: "metodo", label: "Método" },
-        { key: "demanda", label: "Demanda (peças)" },
-        { key: "tempo_produtivo", label: "Tempo produtivo (min)" },
-        { key: "lote", label: "Lote (peças)" },
-        { key: "posto", label: "Posto" },
-        { key: "ordem", label: "Ordem" },
-        { key: "operacao", label: "Operação" },
-        { key: "descricao", label: "Descrição" },
-        { key: "ct", label: "Centro de trabalho" },
-        { key: "recurso", label: "Recurso" },
-        { key: "tempo", label: `Tempo por peça (${ctx.unidade})` },
-        { key: "takt", label: `Takt (${ctx.unidade})` },
-        { key: "proveniencia", label: "Proveniência" },
-        { key: "limitacao", label: "Limitação" },
-      ],
-      rows: rows.map((r) => ({
-        ...ctx,
-        metodo: "M5 Yamazumi",
-        demanda: validation.params?.demand ?? "—",
-        tempo_produtivo: validation.params?.available_minutes ?? "—",
-        lote: validation.params?.batch_size ?? "—",
-        posto: r.post,
-        ordem: r.order,
-        operacao: r.operation_code,
-        descricao: r.operation_description,
-        ct: r.work_center || "—",
-        recurso: r.resource || "—",
-        tempo:
-          typeof r.time_minutes_piece === "number"
-            ? (r.time_minutes_piece * unit.factor).toLocaleString("pt-BR", {
-                maximumFractionDigits: unit.decimalPlaces,
-              })
-            : "UNKNOWN",
-        takt:
-          taktMinutes != null
-            ? (taktMinutes * unit.factor).toLocaleString("pt-BR", {
-                maximumFractionDigits: unit.decimalPlaces,
-              })
-            : "—",
-        proveniencia: r.provenance,
-        limitacao:
-          "Hipótese local — não é roteiro aprovado nem dimensionamento validado; sem precedência, simultaneidade ou viabilidade de recursos.",
-      })),
-    };
-  };
+  const exportStudy = useCallback(
+    (format: "csv" | "xlsx" | "pdf") => {
+      const study = liveStudyRef.current ?? studySeed;
+      if (!study) return;
+      exportTableFormat(
+        buildStudioExportPayload({
+          productCode: queriedCode,
+          branch,
+          stageLabel: stage ? stageLabel(stage) : study.source === "OBSERVED_ROUTING" ? study.routing.stageId : "Estudo manual",
+          study,
+        }),
+        format,
+      );
+    },
+    [queriedCode, branch, stage, studySeed],
+  );
 
   return (
     <>
       <EngineeringSectionCard
         title="Balanceamento de Linha"
-        subtitle="Consulte o roteiro de fabricação e construa estudos de balanceamento com diferentes métodos de Engenharia Industrial."
+        subtitle="Consulte o roteiro oficial de fabricação e construa estudos de balanceamento no Line Balance Studio — hipóteses locais nunca alteram o roteiro oficial."
       >
-        <div
-          className="engineering-processes__lookup"
-          role="group"
-          aria-label="Consulta do roteiro oficial"
-        >
+        <div className="engineering-processes__lookup" role="group" aria-label="Consulta do roteiro oficial">
           <EngineeringTextField
             id="lb-product-code"
             label="Código do produto"
@@ -460,426 +393,189 @@ export function LineBalancingPage({ basePath }: { basePath?: string }) {
               />
             </>
           ) : null}
+          <EngineeringActionButton variant="default" onClick={startManualStudy}>
+            Novo estudo manual
+          </EngineeringActionButton>
         </div>
       </EngineeringSectionCard>
 
-      {!queriedCode ? (
-        <EngineeringEmptyState message="Informe o código do produto e acione Buscar roteiro para consultar a fonte oficial." />
-      ) : routingLoading ? (
-        <EngineeringLoadingActivityCard description="Consultando o roteiro oficial…" />
-      ) : routingError ? (
+      {staleNotice ? <EngineeringStateBanner variant="default">{staleNotice}</EngineeringStateBanner> : null}
+      {clearedNotice ? (
+        <EngineeringStateBanner variant="default">Rascunho local do contexto atual limpo — o roteiro oficial permanece intacto.</EngineeringStateBanner>
+      ) : null}
+
+      {!queriedCode && !studySeed ? (
+        <EngineeringEmptyState message="Informe o código do produto e acione Buscar roteiro para consultar a fonte oficial — ou inicie um estudo manual." />
+      ) : queriedCode && routingLoading ? (
+        <EngineeringLoadingActivityCard title="Consultando" description="Consultando o roteiro oficial…" />
+      ) : queriedCode && routingError ? (
         isForbidden(routingError) ? (
           <EngineeringEmptyState message="Acesso negado pela fonte oficial — você não tem autorização para consultar o roteiro." />
         ) : isNotFound(routingError) ? (
           <EngineeringEmptyState message="Produto não encontrado ou sem roteiro na fonte oficial." />
         ) : (
           <EngineeringStateBanner variant="error">
-            {routingError instanceof HomeApiError
-              ? routingError.message
-              : "Fonte oficial de roteiro indisponível."}
+            {routingError instanceof HomeApiError ? routingError.message : "Fonte oficial de roteiro indisponível."}
           </EngineeringStateBanner>
         )
-      ) : !grouped.stages.length ? (
+      ) : queriedCode && !grouped.stages.length ? (
         <EngineeringEmptyState message="Roteiro oficial vazio para este contexto — nenhuma operação retornada." />
-      ) : !stage ? (
+      ) : null}
+
+      {queriedCode && !routingLoading && !routingError && grouped.stages.length > 0 && !stage && !studySeed ? (
         <EngineeringEmptyState message="Selecione a filial e o estágio produtivo para visualizar as operações oficiais e iniciar o estudo." />
-      ) : (
+      ) : null}
+
+      {stage && studySeed?.source === "OBSERVED_ROUTING" ? (
         <>
           <EngineeringSectionCard
             title="Operações oficiais do roteiro"
-            subtitle={`${queriedCode} · ${operations.length} operação(ões) deduplicada(s) por identidade de operação${routing?.truncated ? " · resultado truncado pela fonte" : ""}`}
+            subtitle={`${queriedCode} · ${stage.operations.length} operação(ões) deduplicada(s) por identidade de operação${routing?.truncated ? " · resultado truncado pela fonte" : ""}`}
           >
             {routing?.truncated ? (
               <EngineeringStateBanner variant="default">
-                A fonte retornou resultado paginado incompleto — o estudo
-                considera somente as operações efetivamente recebidas.
+                A fonte retornou resultado paginado incompleto — o estudo considera somente as operações efetivamente recebidas.
               </EngineeringStateBanner>
             ) : null}
             <DataTable
               columns={OP_COLUMNS}
-              rows={operations}
+              rows={stage.operations}
               rowKey={(op) => op.key}
               layout="embedded"
               compact
               emptyMessage="Nenhuma operação neste estágio."
             />
           </EngineeringSectionCard>
+        </>
+      ) : null}
 
-          <EngineeringSectionCard
-            title="Estudo de balanceamento"
-            subtitle="Parâmetros PROVIDED + hipóteses SIMULATION de organização da linha — cálculo sempre pelo domínio oficial."
-            actions={
-              study.status !== "idle" ? (
-                <EngineeringStatusBadge
-                  label={SAVE_STATUS_LABEL[study.status] ?? study.status}
-                  variant={
-                    study.status === "saved"
-                      ? "success"
-                      : study.status === "save_error" ||
-                          study.status === "storage_unavailable"
-                        ? "warning"
-                        : "neutral"
-                  }
-                />
-              ) : undefined
-            }
-          >
-            {study.notice === "stale_reference" ? (
-              <EngineeringStateBanner variant="default">
-                O roteiro oficial mudou desde o último estudo salvo —
-                operações referenciadas que não existem mais foram
-                desvinculadas (STALE).
-              </EngineeringStateBanner>
-            ) : null}
-            {clearedNotice ? (
-              <EngineeringStateBanner variant="default">
-                Rascunho local deste contexto limpo — nenhum dado oficial
-                foi alterado.
-              </EngineeringStateBanner>
-            ) : null}
-
-            {study.scenarios.length ? (
-              <EngineeringScopeChipBar
-                chips={study.scenarios.map((s) => ({
-                  id: s.clientId,
-                  label: `Cenário ${s.label}`,
-                  active: s.clientId === study.activeScenarioId,
-                  onSelect: () => study.selectScenario(s.clientId),
-                }))}
+      {showStudio ? (
+        <EngineeringSectionCard
+          title="Estudo de balanceamento"
+          subtitle="Line Balance Studio — organização DRAFT_LOCAL de postos e cenários SIMULATION sobre a fonte oficial ou entradas manuais."
+          actions={
+            saveStatus !== "idle" ? (
+              <EngineeringStatusBadge
+                label={SAVE_LABEL[saveStatus] ?? saveStatus}
+                variant={saveStatus === "saved" ? "success" : "warning"}
               />
-            ) : null}
+            ) : undefined
+          }
+        >
+          <LineBalanceStudioMount study={studySeed} onStudyChange={onStudyChange} />
+          <EngineeringFormActions>
+            <EngineeringActionButton variant="default" onClick={() => setClearOpen(true)}>
+              Limpar estudo
+            </EngineeringActionButton>
+            <TabularExportButtons onExport={exportStudy} />
+          </EngineeringFormActions>
+        </EngineeringSectionCard>
+      ) : null}
 
+      {queriedCode && stage && studySeed?.source === "OBSERVED_ROUTING" ? (
+        <EngineeringSectionCard
+          title="Análise oficial M1 — capacidade e takt"
+          subtitle="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED com os parâmetros PROVIDED das condições do estudo."
+        >
+          {!balanceParams.ok ? (
+            <ul className="engineering-routing__limitations" role="alert">
+              {balanceParams.issues.map((issue, i) => (
+                <li key={i}>{issue}</li>
+              ))}
+            </ul>
+          ) : null}
+          <EngineeringFormActions>
+            <EngineeringActionButton
+              variant="primary"
+              disabled={!balanceParams.ok || balanceRunning}
+              onClick={runBalance}
+            >
+              {balanceRunning ? "Calculando…" : "Executar análise oficial"}
+            </EngineeringActionButton>
+          </EngineeringFormActions>
+          {balanceError ? (
+            <EngineeringStateBanner variant="error">
+              {isForbidden(balanceError)
+                ? "Acesso negado pela análise oficial — autorização insuficiente."
+                : isNotFound(balanceError)
+                  ? "Produto ou estágio não encontrado pela análise oficial."
+                  : balanceError instanceof HomeApiError
+                    ? balanceError.message
+                    : "Serviço de análise oficial indisponível."}
+            </EngineeringStateBanner>
+          ) : null}
+          {stageBalance ? (
             <div className="engineering-routing__balance-grid">
-              <EngineeringDetailCard
-                title="Condições de produção"
-                titleHint="Parâmetros PROVIDED pelo usuário — o tempo produtivo é derivado de turno − pausas e enviado como available_minutes ao domínio EVA."
-              >
-                <div
-                  className="engineering-routing__form-grid"
-                  role="group"
-                  aria-label="Condições de produção"
-                >
-                  <EngineeringTextField
-                    id="lb-demand"
-                    label="Demanda por período (peças)"
-                    value={active?.inputs.demand ?? ""}
-                    onChange={(v) => study.updateInputs({ demand: v })}
-                    required
-                    hint="Peças a produzir no período analisado."
-                    disabled={balanceRunning}
-                  />
-                  <EngineeringTextField
-                    id="lb-shift"
-                    label="Duração do turno (min)"
-                    value={active?.inputs.shiftMinutes ?? ""}
-                    onChange={(v) => study.updateInputs({ shiftMinutes: v })}
-                    required
-                    hint="Minutos totais do período, antes das pausas."
-                    disabled={balanceRunning}
-                  />
-                  <EngineeringTextField
-                    id="lb-break"
-                    label="Pausas (min)"
-                    value={active?.inputs.breakMinutes ?? ""}
-                    onChange={(v) => study.updateInputs({ breakMinutes: v })}
-                    hint="Minutos não produtivos do turno — subtraídos do tempo disponível."
-                    disabled={balanceRunning}
-                  />
-                  <EngineeringTextField
-                    id="lb-batch"
-                    label="Tamanho do lote (peças)"
-                    value={active?.inputs.batchSize ?? ""}
-                    onChange={(v) => study.updateInputs({ batchSize: v })}
-                    hint="Opcional — só com lote explícito o setup é amortizado por peça."
-                    disabled={balanceRunning}
-                  />
-                  <EngineeringTextField
-                    id="lb-stations"
-                    label="Número de postos"
-                    value={active?.inputs.numStations ?? ""}
-                    onChange={(v) => study.updateInputs({ numStations: v })}
-                    hint="Opcional — verificação de viabilidade FFD do domínio."
-                    disabled={balanceRunning}
-                  />
-                </div>
-                <EngineeringKpiCard
-                  title="Prévia do takt"
-                  titleHint="Prévia aritmética de interface (disponível ÷ demanda) — o resultado oficial vem do domínio."
-                  value={
-                    validation.taktPreview !== null
-                      ? `${formatMinutes(validation.taktPreview)} / peça`
-                      : "—"
-                  }
-                />
-              </EngineeringDetailCard>
-
-              <EngineeringDetailCard
-                title="Método de balanceamento"
-                titleHint="Catálogo V3 — métodos sem suporte exibem requisitos, nunca um cálculo inerte."
-              >
-                <div className="engineering-routing__form-grid">
-                  <EngineeringFilterSelect
-                    label="Método"
-                    options={methodOptions}
-                    value={methodId}
-                    onChange={(v) => setMethodId(v as MethodId)}
-                  />
-                </div>
-                <div className="engineering-processes__method-list">
-                  {BALANCING_METHODS.map((m) => (
-                    <div
-                      key={m.id}
-                      className="engineering-processes__method-item"
-                    >
-                      <span className="engineering-processes__method-head">
-                        <strong>
-                          {m.label} · {m.name}
-                        </strong>
-                        <EngineeringStatusBadge
-                          label={m.statusLabel}
-                          variant={METHOD_STATUS_BADGE_VARIANT[m.status]}
-                        />
-                      </span>
-                      <p className="engineering-routing__muted">{m.summary}</p>
-                      {m.requirements?.length ? (
-                        <ul className="engineering-routing__limitations">
-                          {m.requirements.map((r, i) => (
-                            <li key={i}>{r}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-                {validation.errors.length ? (
-                  <ul className="engineering-routing__limitations" role="alert">
-                    {validation.errors.map((e, i) => (
-                      <li key={i}>{e}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </EngineeringDetailCard>
-            </div>
-
-            <EngineeringFormActions>
-              <EngineeringActionButton
-                variant="ghost"
-                disabled={
-                  balanceRunning ||
-                  study.scenarios.length >= study.maxScenarios
-                }
-                onClick={study.addScenario}
-              >
-                Novo cenário
-              </EngineeringActionButton>
-              <EngineeringActionButton
-                variant="default"
-                disabled={balanceRunning}
-                onClick={() => setClearOpen(true)}
-              >
-                Limpar estudo
-              </EngineeringActionButton>
-              {methodId === "m1" || methodId === "m2" ? (
-                <EngineeringActionButton
-                  variant="primary"
-                  disabled={validation.params === null || balanceRunning}
-                  onClick={() =>
-                    validation.params && runBalance(validation.params)
-                  }
-                >
-                  {balanceRunning ? "Calculando…" : "Calcular análise rápida"}
-                </EngineeringActionButton>
-              ) : null}
-            </EngineeringFormActions>
-
-            {balanceError ? (
-              <EngineeringStateBanner variant="error">
-                {balanceError instanceof HomeApiError
-                  ? balanceError.message
-                  : "Não foi possível executar o cálculo do domínio."}
-              </EngineeringStateBanner>
-            ) : null}
-          </EngineeringSectionCard>
-
-          {methodId === "m5" ? (
-            <EngineeringSectionCard
-              title="Yamazumi — organização hipotética da linha"
-              subtitle={`Configure postos DRAFT_LOCAL atribuindo operações oficiais e compare a carga ao takt. ${AGGREGATE_TIME_CATEGORY}.`}
-            >
-              <div className="engineering-processes__yamazumi-grid">
-                <div className="engineering-processes__yamazumi-posts">
-                  <PostConfigurator
-                    posts={posts}
-                    operations={operations}
-                    maxPosts={study.maxPosts}
-                    disabled={!study.ready || balanceRunning}
-                    onAdd={study.addPost}
-                    onPatch={study.patchPost}
-                    onMove={study.movePost}
-                    onRemove={study.removePost}
-                  />
-                  {unassigned.length ? (
-                    <EngineeringDetailCard
-                      title={`Operações não atribuídas (${unassigned.length})`}
-                      titleHint="Operações oficiais fora de qualquer posto hipotético — a carga não é contabilizada até a atribuição."
-                    >
-                      <ul className="engineering-processes__unassigned">
-                        {unassigned.map((op) => (
-                          <li
-                            key={op.key}
-                            className="engineering-processes__unassigned-item"
-                          >
-                            <span>
-                              {op.operation_code || "—"} —{" "}
-                              {op.operation_description ?? "—"}
-                              {op.time_minutes_piece == null
-                                ? " · tempo UNKNOWN"
-                                : ` · ${formatMinutes(op.time_minutes_piece)}`}
-                            </span>
-                            <EngineeringFilterSelect
-                              label="Atribuir a"
-                              options={[
-                                { value: "", label: "Selecionar posto…" },
-                                ...posts.map((p, i) => ({
-                                  value: p.clientId,
-                                  label:
-                                    p.name ||
-                                    `Posto ${String(i + 1).padStart(2, "0")}`,
-                                })),
-                              ]}
-                              value=""
-                              onChange={(v) => assignToPost(op.key, v)}
-                              disabled={!posts.length}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                      {!posts.length ? (
-                        <p className="engineering-routing__muted">
-                          Adicione um posto para atribuir operações.
-                        </p>
-                      ) : null}
-                    </EngineeringDetailCard>
-                  ) : null}
-                </div>
-
-                <div className="engineering-processes__yamazumi-chart">
-                  <EngineeringChartCard
-                    title="Carga × takt por posto"
-                    titleHint={`Cada segmento é uma operação OBSERVED atribuída ao posto (DRAFT_LOCAL); a linha é o takt ${taktProvenance ?? "—"}. Soma simples dos tempos por peça — sem precedência, simultaneidade ou viabilidade.`}
-                  >
-                    <div className="engineering-processes__yamazumi-legend">
-                      {taktProvenance ? (
-                        <EngineeringStatusBadge
-                          label={`Takt ${formatMinutes(taktMinutes ?? 0)} · ${taktProvenance}`}
-                          variant={overTaktPosts.length ? "warning" : "success"}
-                        />
-                      ) : (
-                        <EngineeringStatusBadge
-                          label="Takt não disponível — informe demanda e turno"
-                          variant="neutral"
-                        />
-                      )}
-                      {overTaktPosts.length ? (
-                        <EngineeringStatusBadge
-                          label={`Acima do takt: ${overTaktPosts.map((p) => p.postName).join(", ")}`}
-                          variant="warning"
-                        />
-                      ) : null}
-                      {unknownTimePosts.length ? (
-                        <EngineeringStatusBadge
-                          label={`Tempos UNKNOWN em: ${unknownTimePosts.map((p) => p.postName).join(", ")}`}
-                          variant="neutral"
-                        />
-                      ) : null}
-                      {emptyPosts.length ? (
-                        <EngineeringStatusBadge
-                          label={`Postos vazios: ${emptyPosts.map((p) => p.postName).join(", ")}`}
-                          variant="neutral"
-                        />
-                      ) : null}
-                      {unassigned.length ? (
-                        <EngineeringStatusBadge
-                          label={`${unassigned.length} operação(ões) não atribuída(s)`}
-                          variant="neutral"
-                        />
-                      ) : null}
-                    </div>
-                    {loads.length ? (
-                      <RoutingSeriesChart
-                        storageKey={`engineering:processes:line-balance:${queriedCode}:yamazumi`}
-                        idPrefix="en-lb-yamazumi"
-                        data={chartSpec.rows}
-                        series={chartSpec.series}
-                        autoUnit={autoUnit}
-                        allowedChartTypes={["stacked_bar", "bar"]}
-                        defaultChartType="stacked_bar"
-                        buildExportPayload={buildYamazumiExportPayload}
-                        emptyMessage="Atribua operações com tempo oficial para compor o Yamazumi."
-                      />
-                    ) : (
-                      <EngineeringEmptyState message="Adicione postos para compor o Yamazumi." />
-                    )}
-                    <p className="engineering-routing__muted">
-                      Instrumento analítico — a distribuição é hipótese local,
-                      não prova viabilidade física nem aprova o processo.
-                    </p>
-                  </EngineeringChartCard>
-                </div>
-              </div>
-            </EngineeringSectionCard>
-          ) : methodId === "m1" || methodId === "m2" ? (
-            <BalanceResultsSection
-              scenarios={study.scenarios}
-              stage={stage}
-              branch={branch}
-              active={active}
-            />
-          ) : (
-            <EngineeringSectionCard
-              title={`${method.label} · ${method.name}`}
-              subtitle={method.statusLabel}
-            >
-              <EngineeringEmptyState
-                message={`Método em planejamento — ${method.summary}`}
+              <EngineeringKpiCard title="Takt" value={formatMinutes(stageBalance.takt_minutes)} subtitle="min/peça — CALCULATED" />
+              <EngineeringKpiCard
+                title="Conteúdo de trabalho"
+                value={formatMinutes(stageBalance.work_content_minutes)}
+                subtitle="min — CALCULATED"
               />
-              {method.requirements?.length ? (
+              <EngineeringKpiCard
+                title="Mínimo teórico de postos"
+                value={stageBalance.theoretical_min_stations != null ? String(stageBalance.theoretical_min_stations) : "—"}
+                subtitle="CALCULATED"
+              />
+              <EngineeringKpiCard
+                title="Gargalo candidato"
+                value={stageBalance.bottleneck_candidate?.operation_code ?? "—"}
+                subtitle="CALCULATED"
+              />
+            </div>
+          ) : balanceResult ? (
+            <EngineeringEmptyState message="O resultado oficial não inclui o estágio selecionado." />
+          ) : null}
+          {stageBalance?.operations_missing_time?.length ? (
+            <EngineeringStateBanner variant="default">
+              {stageBalance.operations_missing_time.length} operação(ões) sem tempo oficial — UNKNOWN, nunca assumidas como zero.
+            </EngineeringStateBanner>
+          ) : null}
+        </EngineeringSectionCard>
+      ) : null}
+
+      <EngineeringSectionCard
+        title="Métodos de balanceamento"
+        subtitle="Catálogo M1–M6 — somente capacidades reais; métodos planejados mostram requisitos em vez de cálculo inerte."
+      >
+        <div className="engineering-processes__method-list">
+          {BALANCING_METHODS.map((m) => (
+            <div key={m.id} className="engineering-processes__method-item">
+              <span className="engineering-processes__method-head">
+                <strong>
+                  {m.label} — {m.name}
+                </strong>
+                <EngineeringStatusBadge label={m.statusLabel} variant={METHOD_STATUS_BADGE_VARIANT[m.status] ?? "neutral"} />
+              </span>
+              <p className="engineering-routing__muted">{m.summary}</p>
+              {m.requirements?.length ? (
                 <ul className="engineering-routing__limitations">
-                  {method.requirements.map((r, i) => (
+                  {m.requirements.map((r, i) => (
                     <li key={i}>{r}</li>
                   ))}
                 </ul>
               ) : null}
-            </EngineeringSectionCard>
-          )}
-
-          {methodId === "m5" && study.scenarios.some((s) => s.computed) ? (
-            <BalanceResultsSection
-              scenarios={study.scenarios}
-              stage={stage}
-              branch={branch}
-              active={active}
-            />
-          ) : null}
-        </>
-      )}
+            </div>
+          ))}
+        </div>
+      </EngineeringSectionCard>
 
       <EngineeringConfirmDialog
         open={clearOpen}
         title="Limpar estudo"
-        message={
-          <>
-            Remove apenas o rascunho local deste contexto (produto{" "}
-            {queriedCode}, filial {branch || "todas"}, estágio{" "}
-            {stage ? stageLabel(stage) : "—"}). Nenhum dado oficial ou
-            rascunho da Ficha do Produto é alterado.
-          </>
-        }
-        confirmLabel="Limpar rascunho"
-        variant="danger"
-        onConfirm={confirmClear}
+        message="Remove o rascunho local (postos, cenários e condições) do contexto atual. O roteiro oficial consultado permanece intacto. Continuar?"
+        confirmLabel="Limpar"
         onCancel={() => setClearOpen(false)}
+        onConfirm={confirmClear}
       />
     </>
   );
+}
+
+function safeRead(key: string): string | null {
+  try {
+    return globalThis.sessionStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
 }
