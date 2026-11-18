@@ -4,12 +4,12 @@
   --secundary: #003866;
   --bg: light-dark(#eef5fb, #061622);
   --demo-text: light-dark(var(--secundary), #eaf3fb);
+  --delpi-ui-surface: light-dark(#fff, #0a2438);
+  --delpi-ui-text: var(--demo-text);
+  --delpi-ui-border: light-dark(#d8e1e9, #284458);
   --demo-surface: color-mix(in srgb, var(--primary) 12%, var(--bg));
   font: 13px/1.4 system-ui, sans-serif;
 }
 .lbs-demo-page { margin: 0; background: var(--bg); }
 .demo-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 6px max(12px, calc((100% - 1220px) / 2)); background: var(--demo-surface); color: var(--demo-text); }
-.demo-bar div { display: flex; gap: 5px; }
-.demo-bar button { background: transparent; font: inherit; color: var(--demo-text); border: 1px solid color-mix(in srgb, var(--primary) 48%, var(--bg)); border-radius: 5px; padding: 4px 7px; cursor: pointer; }
-.demo-bar button:hover { background: color-mix(in srgb, var(--primary) 22%, var(--bg)); }
-.demo-bar button:focus-visible { outline: 2px solid var(--demo-text); }
+.demo-actions { display: flex; gap: 5px; }

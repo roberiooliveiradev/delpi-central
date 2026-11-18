@@ -10,7 +10,12 @@
   --lbs-text: var(--text, light-dark(#003866, #f4f8fc));
   --lbs-muted: var(--text-muted, light-dark(#52677b, #b8c9d9));
   --lbs-accent: light-dark(var(--lbs-brand), var(--lbs-primary));
-  --lbs-action: color-mix(in srgb, var(--lbs-brand) 72%, var(--lbs-primary));
+  --delpi-ui-surface: var(--lbs-surface);
+  --delpi-ui-text: var(--lbs-text);
+  --delpi-ui-text-muted: var(--lbs-muted);
+  --delpi-ui-border: var(--lbs-line);
+  --delpi-ui-accent: var(--lbs-primary);
+  --delpi-ui-on-accent: #061622;
   --lbs-alert: light-dark(#b42318, #ff9d9d);
   color: var(--lbs-text);
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -35,18 +40,8 @@ h1, h2, p { margin: 0; }
 h1 { font-size: clamp(24px, 4vw, 34px); letter-spacing: -.047em; line-height: 1.15; overflow-wrap: anywhere; }
 h2 { font-size: 19px; letter-spacing: -.025em; }
 .edit-name { display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--lbs-muted); font-size: 12px; }
-.edit-name input { width: min(230px, 52vw); padding: 3px 6px; }
+.scenario-control { min-width: 0; }
 .controls { flex-wrap: wrap; justify-content: flex-end; }
-button, input, select { font: inherit; }
-input, select { width: 100%; min-width: 0; background: var(--lbs-surface); color: var(--lbs-text); border: 1px solid var(--lbs-line); border-radius: 6px; padding: 7px 9px; }
-.controls select { width: auto; max-width: 100%; }
-button { cursor: pointer; }
-.button { background: var(--lbs-surface); color: var(--lbs-text); padding: 7px 11px; border: 1px solid var(--lbs-line); border-radius: 7px; font-weight: 600; white-space: nowrap; }
-.button:hover { border-color: var(--lbs-accent); color: var(--lbs-accent); }
-.button.primary { background: var(--lbs-action); color: white; border-color: var(--lbs-action); }
-.button.primary:hover { background: var(--lbs-brand); }
-.button.icon { line-height: 1; width: 29px; height: 29px; padding: 0; font-size: 17px; color: var(--lbs-muted); }
-:focus-visible { outline: 2px solid var(--lbs-accent); outline-offset: 2px; }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
 .metric, .panel { background: var(--lbs-surface); border: 1px solid var(--lbs-line); border-radius: 11px; }
 .metric { padding: 12px 14px; min-width: 0; }
@@ -66,14 +61,9 @@ button { cursor: pointer; }
 .station-chart { position: relative; z-index: 1; min-width: 0; display: grid; justify-items: center; align-content: start; gap: 8px; }
 .track { width: min(70%, 133px); height: var(--height); position: relative; }
 .stack { position: absolute; bottom: 0; width: 100%; display: flex; flex-direction: column-reverse; border-radius: 6px 6px 0 0; }
-.segment { width: 100%; color: #061622; border: 0; border-bottom: 1px solid #00386655; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 5px; font-size: 11px; font-weight: 670; cursor: grab; flex-basis: 0; min-height: 0; }
-.segment:last-child { border-radius: 6px 6px 0 0; }
-.segment:hover, .segment:focus-visible { filter: brightness(1.18); z-index: 3; }
 .load { position: absolute; left: 50%; transform: translate(-50%, -2px); white-space: nowrap; font-size: 12px; font-weight: 700; pointer-events: none; }
 .load.over { color: var(--lbs-alert); }
-.station-label { display: flex; align-items: center; gap: 4px; width: min(95%, 162px); }
-.station-label input { text-align: center; font-size: 12px; padding-inline: 4px; }
-.remove-station { flex-shrink: 0; }
+.station-label { display: flex; align-items: center; gap: 4px; width: min(95%, 190px); }
 .dragging .station-chart { background: color-mix(in srgb, var(--lbs-primary) 16%, transparent); outline: 1px dashed var(--lbs-accent); }
 .unassign-drop { display: none; }
 .dragging .unassign-drop { display: inline; border: 1px dashed var(--lbs-accent); padding: 2px 6px; border-radius: 4px; }
@@ -90,8 +80,6 @@ td:last-child { width: 38px; text-align: right; }
 .row-number i { display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 6px; }
 .fields { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; margin: 10px 0; }
 .field { display: grid; gap: 3px; color: var(--lbs-muted); font-size: 12px; }
-.field input, .field select { min-width: 120px; }
-.pause .button { margin-bottom: 3px; }
 .conditions .note, .warning { margin-top: 8px; }
 .warning { color: var(--lbs-alert); font-size: 13px; margin-bottom: 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -103,11 +91,8 @@ td:last-child { width: 38px; text-align: right; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .metric, .panel { padding: 10px; }
   .panel-heading p { font-size: 12px; }
-  .panel-heading .button { padding-inline: 7px; font-size: 12px; }
-  .chart { --height: 150px; --axis: 29px; grid-template-columns: repeat(var(--station-count), minmax(57px, 1fr)); min-width: calc(var(--axis) + var(--station-count) * 62px); }
+  .chart { --height: 150px; --axis: 29px; grid-template-columns: repeat(var(--station-count), minmax(108px, 1fr)); min-width: calc(var(--axis) + var(--station-count) * 110px); }
   .station-label { width: calc(100% - 4px); }
-  .station-label input { font-size: 11px; }
-  .station-label .button { width: 22px; }
   table, tbody { display: block; }
   thead, .row-number { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
   tbody tr { display: grid; grid-template-columns: minmax(85px, .8fr) minmax(0, 1.2fr) 29px; gap: 5px; padding: 7px 0; border-bottom: 1px solid var(--lbs-line); }

@@ -24,6 +24,11 @@ try {
   const host = page.locator("delpi-line-balance-studio");
   const metric = name => host.locator(".metric").filter({ hasText: name }).locator("strong");
   await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
+  const conditionsButton = host.getByRole("button", { name: "Condições de produção" });
+  assert.match(await conditionsButton.getAttribute("class"), /delpi-ui-action-btn/);
+  assert.match(await host.getByLabel("Cenário", { exact: true }).getAttribute("class"), /delpi-ui-native-control--select/);
+  assert.match(await host.getByLabel("Nome do estudo", { exact: true }).getAttribute("class"), /delpi-ui-native-control/);
+  assert.match(await page.locator("#new").getAttribute("class"), /delpi-ui-action-btn/);
   assert.equal(await metric("Takt de referência").textContent(), "70 s");
   assert.equal(await metric("Maior carga").textContent(), "84 s");
   assert.equal(await metric("Sem posto").textContent(), "1");
@@ -33,6 +38,7 @@ try {
     });
   });
   const segment = host.getByRole("button", { name: /Crimpar terminais, 48 segundos/ });
+  assert.match(await segment.getAttribute("class"), /delpi-ui-chart-segment-button/);
   const drop = host.locator('[data-drop="p3"] .track');
   await segment.dragTo(drop);
   assert.equal(await host.getAttribute("data-last-changed-study"), "demo");
@@ -44,7 +50,8 @@ try {
   assert.match(await host.locator(".chart-footer").textContent(), /Carga parcial/);
   await host.getByLabel("Cenário", { exact: true }).selectOption("b");
   assert.equal(await metric("Maior carga").textContent(), "70 s");
-  await host.getByRole("button", { name: "Condições de produção" }).click();
+  await conditionsButton.click();
+  assert.equal(await conditionsButton.getAttribute("aria-controls"), "conditions");
   await host.getByLabel("Demanda por turno").fill("300");
   await host.getByRole("button", { name: "+ Adicionar pausa", exact: true }).click();
   await host.getByText("Complete os horários do turno e das pausas.").waitFor();
@@ -59,15 +66,18 @@ try {
   await host.getByText("Adicione uma operação para começar.").waitFor();
   await host.getByRole("button", { name: "+ Adicionar operação", exact: true }).click();
   const name = host.getByLabel("Nome da operação 1", { exact: true });
+  await name.evaluate(element => {
+    if (element.getRootNode().activeElement !== element) throw new Error("O foco precisa ir para a nova operação");
+  });
   await name.fill("Peça <teste>");
   await host.getByRole("button", { name: "+ Adicionar posto", exact: true }).click();
   assert.equal(await name.inputValue(), "Peça <teste>");
-  await host.getByLabel("Tempo da operação 1 em segundos", { exact: true }).fill("42");
+  await host.getByLabel("Tempo da operação 1 em segundos", { exact: true }).fill("42.5");
   await host.getByLabel("Posto da operação 1", { exact: true }).focus();
   const select = host.getByLabel("Posto da operação 1", { exact: true });
   await select.press("ArrowDown");
   await select.press("Enter");
-  assert.equal(await metric("Maior carga").textContent(), "42 s");
+  assert.equal(await metric("Maior carga").textContent(), "42,5 s");
   assert.equal(await host.evaluate(el => el.study.operations[0].name), "Peça <teste>");
   await host.getByRole("button", { name: "Remover posto 1", exact: true }).click();
   assert.equal(await metric("Sem posto").textContent(), "1");
@@ -79,6 +89,7 @@ try {
   }
   await page.emulateMedia({ colorScheme: "dark" });
   assert.equal(await host.getByRole("heading", { name: "Yamazumi" }).isVisible(), true);
+  assert.equal(await conditionsButton.evaluate(element => getComputedStyle(element).minHeight), "44px");
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   console.log("PASS Chromium: drag and drop, atribuição por teclado, cenário, tempo desconhecido, pausas, novo estudo, 1440/1024/390/320, tema escuro, sem erros ou tráfego externo");

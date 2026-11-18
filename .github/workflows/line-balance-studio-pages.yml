@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'plugins/delpi-line-balance-studio/**'
+      - 'plugins/plugin-ui/**'
       - '.github/workflows/line-balance-studio-pages.yml'
   workflow_dispatch:
 

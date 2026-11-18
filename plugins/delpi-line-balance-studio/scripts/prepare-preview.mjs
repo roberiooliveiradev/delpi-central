@@ -1,16 +1,50 @@
-import { cpSync, mkdirSync, rmSync, copyFileSync } from "node:fs";
+import { mkdirSync, rmSync, copyFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 
 const root = new URL("../", import.meta.url);
-const path = (name) => new URL(name, root);
+const path = (name) => fileURLToPath(new URL(name, root));
+const controls = path("../plugin-ui/src/native-controls");
+const shared = {
+  bundle: true,
+  minify: true,
+  target: "es2022",
+  alias: {
+    "@delpi/plugin-ui/native-controls": controls + ".ts",
+    "@delpi/plugin-ui/native-controls.css": controls + ".css",
+  },
+  nodePaths: [path("node_modules")],
+  tsconfigRaw: { compilerOptions: { jsx: "react-jsx" } },
+  define: { "process.env.NODE_ENV": '"production"' },
+};
 
-copyFileSync(path("src/ui/studio.css"), path("dist/ui/studio.css"));
-if (!process.argv.includes("--assets")) {
+const buildCss = (source, outfile) => build({
+  ...shared,
+  stdin: {
+    contents: `@import "@delpi/plugin-ui/native-controls.css";\n@import "./${source}";`,
+    loader: "css",
+    resolveDir: path("."),
+  },
+  outfile: path(outfile),
+});
+
+if (process.argv.includes("--assets")) {
+  mkdirSync(path("dist/ui"), { recursive: true });
+  copyFileSync(path("dist/ui-types/delpi-line-balance-studio/src/ui/studio.d.ts"), path("dist/ui/studio.d.ts"));
+  rmSync(path("dist/ui-types"), { recursive: true, force: true });
+  await build({ ...shared, entryPoints: [path("src/ui/studio.tsx")], format: "esm", outfile: path("dist/ui/studio.js") });
+  await buildCss("src/ui/studio.css", "dist/ui/studio.css");
+} else {
   const output = path("preview-dist/");
   rmSync(output, { recursive: true, force: true });
   mkdirSync(output, { recursive: true });
-  cpSync(path("preview/"), output, { recursive: true });
-  cpSync(path("dist/"), path("preview-dist/studio/"), {
-    recursive: true,
-    filter: (source) => !source.endsWith(".d.ts"),
+  copyFileSync(path("preview/index.html"), path("preview-dist/index.html"));
+  copyFileSync(path("dist/ui/studio.css"), path("preview-dist/studio.css"));
+  await buildCss("preview/preview.css", "preview-dist/preview.css");
+  await build({
+    ...shared,
+    entryPoints: [path("preview/demo.tsx")],
+    format: "esm",
+    outfile: path("preview-dist/demo.js"),
   });
 }

@@ -10,7 +10,8 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noEmitOnError": true,
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+    "types": []
   },
   "include": ["src"],
   "exclude": ["src/ui"]

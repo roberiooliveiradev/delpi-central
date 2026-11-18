@@ -400,3 +400,5 @@ export {
   type ChartViewShellClassNames,
   type ChartViewShellProps,
 } from "./ChartViewShell";
+
+export { ChartSegmentButton, type ChartSegmentButtonProps } from "./ChartSegmentButton";

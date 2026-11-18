@@ -7,6 +7,8 @@ export type ActionButtonVariant = "default" | "primary" | "ghost" | "link";
 
 type ActionButtonBaseProps = {
   children: ReactNode;
+  id?: string;
+  "aria-controls"?: string;
   variant?: ActionButtonVariant;
   disabled?: boolean;
   /**
@@ -50,6 +52,8 @@ export type ActionButtonProps = ActionButtonBaseProps &
 export function ActionButton(props: ActionButtonProps) {
   const {
     children,
+    id,
+    "aria-controls": ariaControls,
     variant = "default",
     disabled = false,
     softDisabled = false,
@@ -74,6 +78,8 @@ export function ActionButton(props: ActionButtonProps) {
     const resolvedTitle = props.title.trim();
     return (
       <a
+        id={id}
+        aria-controls={ariaControls}
         className={rootClass}
         href={disabled ? undefined : safeHref}
         title={resolvedTitle}
@@ -107,6 +113,8 @@ export function ActionButton(props: ActionButtonProps) {
 
   return (
     <button
+      id={id}
+      aria-controls={ariaControls}
       type={buttonProps.type ?? "button"}
       className={rootClass}
       disabled={disabled && !soft}

@@ -26,7 +26,12 @@
     "test:preview": "node tests/preview-smoke.mjs"
   },
   "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "esbuild": "0.28.1",
     "playwright": "1.62.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "typescript": "5.9.3"
   }
 }

@@ -28,7 +28,7 @@ Construir **do zero** a ferramenta reutilizável `plugins/delpi-line-balance-stu
 ## Ciclo por task
 1. Identificar owner, RQ/AC, fonte, consumer, contrato, limites e postconditions.
 2. Aplicar **Abstraction Gate**; não criar novos bounded contexts/owners/sources of truth. Mudança desses boundaries exige `ARCHITECTURE_DECISION_REQUIRED` e Coordination.
-3. Implementar menor fatia original **somente no Studio**, mantendo Domain/Application livres de React, framework, HTTP, banco e provider SDK. Escolher distribuição bundled/remote com inventário antes de configuração.
+3. Implementar menor fatia original no Studio e manter os controles genéricos no Plugin UI, mantendo Domain/Application livres de React, framework, HTTP, banco e provider SDK. Escolher distribuição bundled/remote com inventário antes de configuração.
 4. Testar unit, component, contract, integração, segurança, E2E e visual conforme risco. Validar mobile/desktop, light/dark e teclado. Executar no SHA.
 5. **Não se autoverificar:** abrir pedido ao `delpi-verifier` em `<git-dir>/delpi-verifier/requests/`, chamar `python ~/.delpi-agent-kit/verify.py --request-file <arquivo>` segundo `agent-kit/verifier/project-contract.md`. Corrigir findings e repetir até 3 rodadas; `INCONCLUSIVE` não é `PASS`.
 6. Publicar a entrega e suas evidências no GitHub conforme [Entrega no GitHub](#entrega-no-github). Para deploy, seguir `AGENTS.md`, com HML antes de PROD quando aplicável, SSO live, smoke e rollback. Reportar `PENDING_USER_SMOKE` quando faltar principal produtivo.
@@ -38,6 +38,11 @@ Construir **do zero** a ferramenta reutilizável `plugins/delpi-line-balance-stu
 - No ChatGPT, usar o aplicativo GitHub para consultar o HEAD e publicar em `roberiooliveiradev/delpi-central`. No D20/Devin, usar o Git autenticado do repositório.
 - Após os gates aplicáveis de `AGENTS.md`, commitar apenas arquivos da tarefa e publicar diretamente em `main` por fast-forward. Se o HEAD mudar, reancorar e revalidar antes de tentar novamente.
 - Ler de volta o HEAD remoto e confirmar a presença do commit. Registrar no relatório o link do commit, SHA final, testes e veredito do Verify. Se o acesso ou uma regra de proteção impedir a publicação, registrar a causa e o estado real do remoto.
+
+## Componentes de interface
+- Inventariar os exports públicos de `@delpi/plugin-ui` antes de implementar telas. Compor o Studio e sua demo com os controles canônicos do kit para inputs, selects e botões. Reservar HTML nativo no Studio à estrutura semântica da página.
+- Quando um controle reutilizável faltar, implementar e testar o componente genérico em `plugins/plugin-ui`, expor sua API e seus estilos públicos e importar no Studio. Manter regras de estudo, estados e cálculos no Studio e no domínio competente.
+- Manter o CSS dos componentes no Plugin UI. No Studio, aplicar somente tokens de tema e layout de página. Validar a integração de fato, o teclado e os temas claro e escuro no navegador.
 
 ## Objetivos UX
 - Início simplificado: `Produto oficial`, `Novo processo manual`, `Importar` somente quando suportado.

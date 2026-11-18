@@ -1,6 +1,22 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"] },
-  "include": ["src/ui"],
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "exactOptionalPropertyTypes": false,
+    "rootDir": "..",
+    "outDir": "./dist/ui-types",
+    "emitDeclarationOnly": true,
+    "paths": {
+      "@delpi/plugin-ui/native-controls": ["../plugin-ui/src/native-controls.ts"],
+      "react": ["./node_modules/@types/react/index.d.ts"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom": ["./node_modules/@types/react-dom/index.d.ts"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"]
+    }
+  },
+  "include": ["src/ui", "preview/demo.tsx"],
   "exclude": []
 }

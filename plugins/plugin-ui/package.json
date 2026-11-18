@@ -8,7 +8,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./native-controls": "./src/native-controls.ts",
+    "./native-controls.css": "./src/native-controls.css"
   },
   "scripts": {
     "dev": "vite",

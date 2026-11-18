@@ -1,0 +1,25 @@
+.delpi-ui-chart-segment-button {
+  width: 100%;
+  min-height: 0;
+  flex-basis: 0;
+  padding: 0 5px;
+  overflow: hidden;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: var(--delpi-ui-chart-segment-fill, var(--primary, #089bdb));
+  color: var(--delpi-ui-chart-segment-ink, #061622);
+  font: 670 11px/1.35 system-ui, sans-serif;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.delpi-ui-chart-segment-button[draggable="true"] { cursor: grab; }
+.delpi-ui-chart-segment-button:last-child { border-radius: 6px 6px 0 0; }
+.delpi-ui-chart-segment-button:hover { filter: brightness(1.15); }
+.delpi-ui-chart-segment-button:focus-visible {
+  position: relative;
+  z-index: 3;
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
