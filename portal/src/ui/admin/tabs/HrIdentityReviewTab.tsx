@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Link2, RefreshCw, Search } from "lucide-react";
-import { createPortal } from "react-dom";
 
 import type {
   AdminUser,
@@ -8,7 +7,7 @@ import type {
   HrIdentityReviewMember,
 } from "../../../data/adminApi";
 import { useAdminApi } from "../../../hooks/useAdminApi";
-import { Modal } from "../../../components/Modal";
+import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { Alert, Button, Input, Spinner } from "../../../ui-kit";
 
 import "./HrIdentityReviewTab.css";
@@ -51,14 +50,6 @@ export function HrIdentityReviewTab() {
 
   const initialLoad = useRef(false);
   const searchSequence = useRef(0);
-
-  // O modal fica no <body>; travar somente a rolagem da página por trás.
-  useEffect(() => {
-    if (!activeMember) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, [activeMember]);
 
   const loadTeam = useCallback(async () => {
     const registration = managerRegistration.trim();
@@ -221,7 +212,7 @@ export function HrIdentityReviewTab() {
         </Button>
       </div>
 
-      {!activeMember && error ? <Alert tone="danger">{error}</Alert> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
       {notice ? <Alert tone="success">{notice}</Alert> : null}
       {loading ? <Spinner label="Carregando colaboradores…" /> : null}
 
@@ -298,154 +289,118 @@ export function HrIdentityReviewTab() {
         </>
       ) : null}
 
-      {activeMember ? createPortal(
-        <div
-          className="hr-identity-review__modal-root"
-          onKeyDown={(event) => {
-            if (event.key === "Escape" && !saving) {
+      {activeMember ? (
+        <section className="hr-identity-review__panel" aria-label="Vincular conta Minha Delpi">
+          <div className="hr-identity-review__heading">
+            <div>
+              <h3>{activeMember.fullName}</h3>
+              <p>Matrícula RH: <strong>{activeMember.registration}</strong></p>
+            </div>
+            <Button variant="ghost" onClick={closeMember} disabled={saving}>Fechar</Button>
+          </div>
+          <p className="hr-identity-review__helper">
+            Selecione a conta da Minha Delpi que pertence a esta pessoa.
+          </p>
+          <form
+            className="hr-identity-review__toolbar"
+            onSubmit={(event) => {
               event.preventDefault();
-              event.stopPropagation();
-              closeMember();
-            }
-          }}
-        >
-          <Modal
-            open
-            title={confirmOpen ? "Confirmar vínculo" : "Vincular cadastro"}
-            size="md"
-            onClose={() => { if (!saving) closeMember(); }}
-            footer={
-              <div className="hr-identity-review__actions">
-                <Button
-                  variant="secondary"
-                  disabled={saving}
-                  onClick={confirmOpen ? () => setConfirmOpen(false) : closeMember}
-                >
-                  {confirmOpen ? "Voltar" : "Cancelar"}
-                </Button>
-                <Button
-                  variant="primary"
-                  disabled={!selectedAccount || searching || saving}
-                  loading={saving}
-                  onClick={confirmOpen ? () => void linkAccount() : () => setConfirmOpen(true)}
-                  icon={<Link2 size={14} />}
-                >
-                  {confirmOpen ? "Sim, vincular" : "Vincular conta"}
-                </Button>
-              </div>
-            }
+              void fetchAccounts(accountQuery);
+            }}
           >
-            {error ? <Alert tone="danger">{error}</Alert> : null}
-            {confirmOpen ? (
-              <div className="hr-identity-review__modal-content">
-                <p className="hr-identity-review__helper">
-                  Confira se os cadastros abaixo pertencem à mesma pessoa.
-                </p>
-                <div className="hr-identity-review__confirmation">
-                  <div>
-                    <span>Colaborador RH</span>
-                    <strong>{activeMember.fullName}</strong>
-                    <small>Matrícula {activeMember.registration}</small>
-                  </div>
-                  <div>
-                    <span>Conta Minha Delpi</span>
-                    <strong>{selectedAccount?.name ?? "Conta não selecionada"}</strong>
-                    <small>{selectedAccount?.email ?? ""}</small>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="hr-identity-review__modal-content">
-                <div className="hr-identity-review__heading">
-                  <div>
-                    <h3>{activeMember.fullName}</h3>
-                    <p>Matrícula RH: <strong>{activeMember.registration}</strong></p>
-                  </div>
-                </div>
-                <p className="hr-identity-review__helper">
-                  Selecione a conta da Minha Delpi que pertence a esta pessoa.
-                </p>
-                <form
-                  className="hr-identity-review__toolbar"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void fetchAccounts(accountQuery);
-                  }}
-                >
-                  <Input
-                    autoFocus
-                    size="sm"
-                    placeholder="Buscar conta por nome ou e-mail"
-                    aria-label="Buscar conta por nome ou e-mail"
-                    value={accountQuery}
-                    disabled={saving}
-                    onChange={(event) => {
-                      searchSequence.current += 1;
-                      setAccountQuery(event.target.value);
-                      setSelectedAccount(null);
-                      setAccounts([]);
-                      setSearching(false);
-                    }}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={searching || saving || !accountQuery.trim()}
-                    loading={searching}
-                    icon={<Search size={14} />}
-                  >
-                    Buscar
-                  </Button>
-                </form>
+            <Input
+              size="sm"
+              placeholder="Buscar conta por nome ou e-mail"
+              aria-label="Buscar conta por nome ou e-mail"
+              value={accountQuery}
+              disabled={saving}
+              onChange={(event) => {
+                searchSequence.current += 1;
+                setAccountQuery(event.target.value);
+                setSelectedAccount(null);
+                setAccounts([]);
+                setSearching(false);
+              }}
+            />
+            <Button
+              type="submit"
+              disabled={searching || saving || !accountQuery.trim()}
+              loading={searching}
+              icon={<Search size={14} />}
+            >
+              Buscar
+            </Button>
+          </form>
 
-                {searching ? <Spinner label="Procurando contas…" /> : null}
-                {!searching && accounts.length === 0 ? (
-                  <p className="hr-identity-review__helper">
-                    Nenhuma conta encontrada nesta busca. Tente um nome menor ou e-mail.
-                  </p>
-                ) : null}
-                {!searching && accounts.length > 0 ? (
-                  <div
-                    className="hr-identity-review__accounts"
-                    role="radiogroup"
-                    aria-label="Conta da Minha Delpi"
-                  >
-                    {accounts.map((account) => (
-                      <label
-                        key={account.id}
-                        className={
-                          "hr-identity-review__account" +
-                          (selectedAccount?.id === account.id ? " hr-identity-review__account--selected" : "")
-                        }
-                      >
-                        <input
-                          type="radio"
-                          name="hr-selected-core-user"
-                          checked={selectedAccount?.id === account.id}
-                          onChange={() => setSelectedAccount(account)}
-                          disabled={saving}
-                        />
-                        <span>
-                          <strong>{account.name || "Usuário sem nome"}</strong>
-                          <small>{account.email}</small>
-                        </span>
-                        {activeMember.suggestedCoreUserId === account.id ? (
-                          <span className="hr-identity-review__tag">Sugerido</span>
-                        ) : null}
-                      </label>
-                    ))}
-                    {accounts.length === 20 ? (
-                      <p className="hr-identity-review__helper">
-                        Mostrando 20 contas. Refine a busca se necessário.
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </Modal>
-        </div>,
-        document.body,
+          {searching ? <Spinner label="Procurando contas…" /> : null}
+          {!searching && accounts.length === 0 ? (
+            <p className="hr-identity-review__helper">
+              Nenhuma conta encontrada nesta busca. Tente um nome menor ou e-mail.
+            </p>
+          ) : null}
+          {!searching && accounts.length > 0 ? (
+            <div className="hr-identity-review__accounts" role="radiogroup" aria-label="Conta da Minha Delpi">
+              {accounts.map((account) => (
+                <label
+                  key={account.id}
+                  className={
+                    "hr-identity-review__account" +
+                    (selectedAccount?.id === account.id ? " hr-identity-review__account--selected" : "")
+                  }
+                >
+                  <input
+                    type="radio"
+                    name="hr-selected-core-user"
+                    checked={selectedAccount?.id === account.id}
+                    onChange={() => setSelectedAccount(account)}
+                    disabled={saving}
+                  />
+                  <span>
+                    <strong>{account.name || "Usuário sem nome"}</strong>
+                    <small>{account.email}</small>
+                  </span>
+                  {activeMember.suggestedCoreUserId === account.id ? (
+                    <span className="hr-identity-review__tag">Sugerido</span>
+                  ) : null}
+                </label>
+              ))}
+              {accounts.length === 20 ? (
+                <p className="hr-identity-review__helper">Mostrando 20 contas. Refine a busca se necessário.</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="hr-identity-review__actions">
+            <Button variant="secondary" onClick={closeMember} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!selectedAccount || searching || saving}
+              loading={saving}
+              onClick={() => setConfirmOpen(true)}
+              icon={<Link2 size={14} />}
+            >
+              Vincular conta
+            </Button>
+          </div>
+        </section>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Vincular estes dois cadastros?"
+        message={
+          `RH: ${activeMember?.fullName ?? ""} (matrícula ${activeMember?.registration ?? ""}). ` +
+          `Minha Delpi: ${selectedAccount?.name ?? ""} (${selectedAccount?.email ?? ""}). ` +
+          "Confirme somente se pertencem à mesma pessoa. A associação ficará registrada."
+        }
+        confirmText="Sim, vincular"
+        danger={false}
+        loading={saving}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => void linkAccount()}
+      />
     </section>
   );
 }
