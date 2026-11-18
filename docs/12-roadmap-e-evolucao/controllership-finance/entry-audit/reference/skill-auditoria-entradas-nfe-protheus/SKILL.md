@@ -108,12 +108,14 @@ Para atualizar a cópia guardada: copie a skill para uma pasta gravável, rode `
 
 ## Como rodar
 
-1. Liste `/mnt/user-data/uploads` e identifique XML, SF1, SD1 e, se vier, SF4 (abra o cabeçalho se o nome não disser). Se vierem matriz e filial juntas, rode uma vez por unidade, cada SF1/SD1 com o ZIP do próprio CNPJ (confira o destinatário dos XML) e com `--cnpj`.
+1. Liste `/mnt/user-data/uploads` e identifique XML, SF1, SD1 e, se vierem, SF4 e SA1 (abra o cabeçalho se o nome não disser). Se vierem matriz e filial juntas, rode uma vez por unidade, cada SF1/SD1 com o ZIP do próprio CNPJ (confira o destinatário dos XML) e com `--cnpj`.
 2. Rode:
    ```bash
    cd <pasta desta skill>/scripts
-   python auditoria.py --xml <zip_ou_pasta> [--xml <zip_ou_pasta_CTe>] --sf1 <SF1> [--sd1 <SD1>] [--sf4 <SF4>] [--sft <SFT>] --out /mnt/user-data/outputs
+   python auditoria.py --xml <zip_ou_pasta> [--xml <zip_ou_pasta_CTe>] --sf1 <SF1> [--sd1 <SD1>] [--sf4 <SF4>] [--sft <SFT>] [--sa1 <SA1>] --tes-insumo 018,052,069,106,166,169,406 --out /mnt/user-data/outputs
    ```
+   - **Sempre** passe `--tes-insumo 018,052,069,106,166,169,406` (TES de insumo da Delpi, as mesmas do Portal): sem o parâmetro, a 052 e as demais voltam a gerar «Crédito de IPI em material de uso e consumo».
+   - Passe `--sa1` quando vier a SA1. Se a SF1 tiver notas com `Tipo da Nota` B ou D (beneficiamento, devolução) e a SA1 não veio, rode assim mesmo e peça ao usuário, uma vez, a SA1 exportada em Genéricos (colunas `Codigo`, `Loja`, `Nome`, `CNPJ`, `Estado`) para a próxima rodada; sem ela, o participante dessas notas fica sem nome, CNPJ e UF na planilha.
    - `--filial` só é necessário se a SF1 tiver mais de uma filial e a detecção automática (filial com mais chaves batendo com os XML) não servir.
    - `--cnpj` força o CNPJ da empresa; por padrão é o destinatário mais frequente dos XML. `--uf` força a UF da empresa.
    - `--tes-presumido` define a TES do crédito presumido de 7% de SC (padrão `004`).
