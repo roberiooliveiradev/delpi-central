@@ -51,6 +51,9 @@ from app.infrastructure.persistence.sqlalchemy.person_profile_repository import 
 from app.infrastructure.persistence.sqlalchemy.user_protheus_identity_repository import (
     SqlAlchemyUserProtheusIdentityRepository,
 )
+from app.infrastructure.persistence.sqlalchemy.user_hr_registration_repository import (
+    SqlAlchemyUserHrRegistrationRepository,
+)
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
@@ -129,6 +132,8 @@ class SqlAlchemyUnitOfWork:
         self.protheus_identities = SqlAlchemyUserProtheusIdentityRepository(
             self.session
         )
+        # Separate HR registration (never a SYS_USR identity).
+        self.hr_registrations = SqlAlchemyUserHrRegistrationRepository(self.session)
 
         # ======================================================
         # Aliases (compatibilidade com código antigo)

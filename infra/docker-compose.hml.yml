@@ -175,6 +175,10 @@ services:
     environment:
       API_DELPI_ENV: homologation
       DELPI_API_URL: http://api-delpi:8000
+      # Fail-closed: HML must never call production Portal RH by inheritance.
+      PORTAL_RH_API_URL: ""
+      PORTAL_RH_API_SERVICE_TOKEN: ""
+      CORE_ORGANIZATION_READ_SERVICE_TOKEN: ""
       NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED: "false"
       CORE_NOTIFICATION_MAIL_ENABLED: "false"
       GRAPH_REPORTS_TENANT_ID: ""

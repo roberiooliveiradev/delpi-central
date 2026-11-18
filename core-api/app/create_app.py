@@ -34,6 +34,10 @@ from app.interfaces.http.integrations_person_profiles_controller import (
 from app.interfaces.http.integrations_protheus_identities_controller import (
     integrations_protheus_identities_bp,
 )
+from app.interfaces.http.organization_controller import (
+    integrations_organization_bp,
+    admin_hr_identity_bp,
+)
 from app.interfaces.http.mcp_providers_controller import mcp_providers_bp
 from app.interfaces.http.integrations_mcp_providers_controller import (
     integrations_mcp_providers_bp,
@@ -115,6 +119,8 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(integrations_effective_access_bp)
     app.register_blueprint(integrations_person_profiles_bp)
     app.register_blueprint(integrations_protheus_identities_bp)
+    app.register_blueprint(integrations_organization_bp)
+    app.register_blueprint(admin_hr_identity_bp)
     app.register_blueprint(mcp_providers_bp)
     app.register_blueprint(integrations_mcp_providers_bp)
     app.register_blueprint(admin_presence_bp)

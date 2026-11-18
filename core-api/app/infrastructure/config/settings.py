@@ -34,6 +34,10 @@ class Config:
     CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN = os.getenv(
         "CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN", ""
     ).strip()
+    # GLPI #887: never reuse the generic integrations token for named team data.
+    CORE_ORGANIZATION_READ_SERVICE_TOKEN = os.getenv(
+        "CORE_ORGANIZATION_READ_SERVICE_TOKEN", ""
+    )
 
     NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED = _env_bool(
         "NOTIFICATIONS_DISPATCH_SCHEDULER_ENABLED",
