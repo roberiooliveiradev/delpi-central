@@ -11,11 +11,9 @@ import {
   Bell,
   BarChart3,
   ChevronDown,
-  Fingerprint,
 } from "lucide-react";
 
 import { RbacTab } from "./tabs/RbacTab";
-import { HrIdentityReviewTab } from "./tabs/HrIdentityReviewTab";
 import { RolesTab } from "./tabs/RolesTab";
 import { GroupsTab } from "./tabs/GroupsTab";
 import { PermissionsTab } from "./tabs/PermissionsTab";
@@ -28,7 +26,6 @@ export type AdminTab =
   | "stats"
   | "apps"
   | "users"
-  | "identity"
   | "roles"
   | "groups"
   | "permissions"
@@ -38,7 +35,6 @@ const ADMIN_TABS: AdminTab[] = [
   "stats",
   "apps",
   "users",
-  "identity",
   "roles",
   "groups",
   "permissions",
@@ -78,7 +74,6 @@ export const AdminPage = () => {
     () => [
       { key: "stats" as const, label: "Estatísticas", icon: BarChart3 },
       { key: "users" as const, label: "Usuários", icon: Users },
-      { key: "identity" as const, label: "Vincular cadastros", icon: Fingerprint },
       { key: "apps" as const, label: "Aplicações", icon: LayoutGrid },
       { key: "roles" as const, label: "Papéis", icon: Shield },
       { key: "groups" as const, label: "Grupos", icon: UsersRound },
@@ -151,7 +146,6 @@ export const AdminPage = () => {
         <div key={tab} className="admin-tab-panel">
           {tab === "stats" && <StatsTab onNavigateTab={selectTab} />}
           {tab === "users" && <RbacTab />}
-          {tab === "identity" && <HrIdentityReviewTab />}
           {tab === "apps" && <AppsTab />}
           {tab === "roles" && <RolesTab />}
           {tab === "groups" && <GroupsTab />}

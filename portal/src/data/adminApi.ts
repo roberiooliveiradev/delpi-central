@@ -45,44 +45,6 @@ export type ListAppsQueryOptions = ListQueryOptions & {
   type?: AppManifestType;
 };
 
-export type HrIdentityReviewStatus =
-  | "verified_mapping"
-  | "suggestion_by_name"
-  | "ambiguous_rh_name"
-  | "ambiguous_core_name"
-  | "already_assigned_to_other_registration"
-  | "no_exact_name_suggestion";
-
-export type HrIdentityReviewMember = {
-  registration: string;
-  fullName: string;
-  branchCode: string;
-  relationship: string;
-  status: HrIdentityReviewStatus;
-  mappedCoreUserId: string | null;
-  suggestedCoreUserId: string | null;
-  verified: boolean;
-};
-
-export type HrIdentityReview = {
-  managerRegistration: string;
-  teamCount: number;
-  verifiedCount: number;
-  suggestionCount: number;
-  statusCounts: Record<HrIdentityReviewStatus, number>;
-  readOnly: true;
-  automaticMappingsCreated: 0;
-  warning: string;
-  members?: HrIdentityReviewMember[];
-};
-
-export type HrIdentityMapping = {
-  userId: string;
-  registration: string;
-  verifiedAt: string | null;
-  verifiedByUserId: string | null;
-};
-
 export type AdminUser = {
   id: string;
   name: string;
@@ -623,36 +585,6 @@ export class AdminApi {
   /* =========================
      RBAC - Users
   ========================= */
-
-  // GLPI #887: consulta administrativa. Nunca inferir vínculo pelo nome.
-  getHrIdentityReview(managerRegistration: string, includeIndirect = true) {
-    const params = new URLSearchParams({
-      include_indirect: String(includeIndirect),
-      details: "true",
-    });
-    return this.client.get<HrIdentityReview>(
-      `/core-api/admin/organization/managers/${encodeURIComponent(managerRegistration)}/identity-review?${params}`,
-    );
-  }
-
-  getHrIdentityMapping(userId: string) {
-    return this.client.get<{ mapping: HrIdentityMapping | null }>(
-      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
-    );
-  }
-
-  confirmHrIdentityMapping(userId: string, registration: string, verificationReference?: string) {
-    return this.client.put<{ mapping: HrIdentityMapping }>(
-      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
-      {
-        registration,
-        confirmIdentity: true,
-        ...(verificationReference?.trim()
-          ? { verificationReference: verificationReference.trim() }
-          : {}),
-      },
-    );
-  }
 
   listUsers(options?: ListUsersQueryOptions) {
     const params = new URLSearchParams();

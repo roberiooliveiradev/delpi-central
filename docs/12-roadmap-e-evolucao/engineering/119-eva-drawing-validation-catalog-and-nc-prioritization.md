@@ -6862,4 +6862,12 @@ Análise do predicado `codes >= 2` por caminho:
 
 **Verificação independente (delpi-verifier, cursor/Composer, r1):** `ACCEPT_WITH_RESIDUAL` sobre `de1954a00c..12bc12535f`, zero OCs — 5/5 ACs PASS; residuais não-bloqueadores: byte-identical dos irmãos é evidência executor-side (verificador não reexecuta pipeline real) e premissa SLANet-intratabular documentada.
 
-**Estado:** código consolidado e verificado em `origin/main`. Gates de imagem/deploy em andamento; `DEPLOY_EXECUTED` e `CHATGPT_LIVE_VALIDATION` pendentes — `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`.
+**Deploy produtivo (srv-api, autorização DEPLOY-02 da Coordination, modo GATED_PRODUCTION_DEPLOY):**
+
+- **Baseline:** repo `6d39cda37f99`, imagem `sha256:aecbf6056c54`; rollback tagueado `infra-engineering-api:pre-deploy02-6d39cda-rollback`.
+- **Candidata:** `infra-engineering-api:deploy02-2872465309` → `latest`, digest `sha256:bb5d05c74c02`, fonte `2872465309` (ff-only; WIP prod preservado).
+- **Container:** `delpi-engineering-api` healthy no digest novo; código verificado in-container (`code_bearing_cols` presente); limits preservados (RLIMIT 16GB, CPU 900s, `ENG_DRAWING_OCR_MAX_CONCURRENCY=1`, isolation=subprocess); gateway `/apps/engineering-api/mcp` unauth → 401.
+- **Prova interna no container (pipeline isolado + understanding, PDF real SHA `9b64ae20…`):** 15 candidatos (p1: 10 — A3,A7,A1×2,A6×2,A2×2,AA,A5; p2: A8,AA,A9,A4 + E ambíguo); `60`/`LL` excluídos; líderes A3/A8 `CANDIDATE` (fix de borda ativo em produção), A2/A6 `AMBIGUOUS`, A5/A9/A4/E `NOT_FOUND` (limitação diagonal/leque documentada); tabela 10 linhas com códigos limpos; `balloon_table_validation.v1`: **14 BALLOON_LABEL_IDENTIFIED** + E `NOT_LOCATED`, `automatic_approval=false`, `review_required=true`.
+- **CHATGPT_LIVE_VALIDATION=PENDING_COORDINATION** — prova por identidade delegada cabe à Coordination.
+
+**Estado:** `DEPLOY02_PRODUCTION_EXPERIMENT_ACTIVE_LIVE_MCP_PENDING` — experimento operacional, não homologação; `GROUND_TRUTH_APPROVED=NO`, `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`. Issue #131 pendente (`gh` sem auth).

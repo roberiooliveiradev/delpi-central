@@ -12,11 +12,11 @@ class DocsConsistencyTests(unittest.TestCase):
         cls.manifest = yaml.safe_load(
             (MODULE / "contracts" / "module.yaml").read_text())
 
-    def test_no_candidate_source_created(self):
+    def test_candidate_source_is_only_dlp04i02(self):
         src = MODULE / "src"
-        self.assertFalse(any(p.suffix.upper() in (".PRW", ".TLPP")
-                             for p in src.rglob("*")),
-                         "G2-B is inventory-only — no .PRW allowed")
+        sources = [p.name for p in src.rglob("*")
+                   if p.suffix.upper() in (".PRW", ".TLPP")]
+        self.assertEqual(sources, ["DLP04I02.PRW"])
 
     def test_inventory_docs_exist(self):
         for doc in ("official-model-inventory.md", "sa5-field-matrix.md",
@@ -31,10 +31,12 @@ class DocsConsistencyTests(unittest.TestCase):
             ["A5_FILIAL", "A5_FORNECE", "A5_LOJA", "A5_PRODUTO",
              "A5_FABR", "A5_FALOJA", "A5_REFGRD"])
 
-    def test_decision_recorded_not_implemented(self):
+    def test_decision_and_candidate_state(self):
         self.assertEqual(self.manifest["architecture"]["decision"],
                          "DECISION_REQUIRED")
-        self.assertEqual(self.manifest["sources"], [])
+        self.assertEqual(self.manifest["sources"], ["DLP04I02.PRW"])
+        self.assertEqual(self.manifest["development_status"],
+                         "SOURCE_CANDIDATE")
 
     def test_delete_blocked_pending_semantics(self):
         ops = {o["op"]: o for o in self.manifest["operations"]["pending"]}

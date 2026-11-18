@@ -34,22 +34,8 @@ Os **22 campos** abaixo são **obrigatórios em POST e PUT**. Campo ausente,
 | B1_YHOHS | C | SUPPORTED | custom DELPI |
 | B1_TE / B1_TS | C | SUPPORTED | |
 | B1_TIPCONV / B1_TPMAT / B1_ESPECIE / B1_ORIGEM | C | SUPPORTED | |
-| B1_PICMRET | N | SUPPORTED | `N` nativo ou `C` estrita (ver regra numérica) |
+| B1_PICMRET | N | SUPPORTED | aceita `N` nativo ou `C` via `VAL()` |
 | B1_CONV | N | SUPPORTED | idem |
-
-## Regras de tipo (pós-hardening)
-
-- **Numérico** (`B1_PICMRET`, `B1_CONV`): aceita `N` nativo do JSON ou
-  string no formato `lIsNumStr` — sinal opcional **somente** na 1ª posição,
-  ≥1 dígito, ≤1 ponto decimal `.`, sem separador de milhar e sem espaços.
-  Rejeitados: `"abc"`, `"12x"`, `""`, `" "`, `"1,2,3"`, `null`, ausente.
-  `"0"` e `0` são valores válidos distintos de ausência.
-- **Caractere** (demais 20 campos): somente `ValType "C"` — objeto, array,
-  booleano e número são rejeitados; nenhuma conversão automática de tipo.
-- `null` ≡ ausente no `JsonObject` → ambos rejeitados (documentado).
-- Validação pertence à fachada ADVPL; regras finais de negócio permanecem
-  na MATA010. Rotas SQL de leitura da API DELPI **não** são contrato nem
-  caminho de implementação do `.PRW`.
 
 `SUPPORTED` = no contrato publicado e no fonte. Campos SB1 fora da lista =
 `NOT_SUPPORTED` nesta versão (expansão exige owner + validação TST01).

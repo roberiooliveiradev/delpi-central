@@ -35,10 +35,22 @@ reference_source:
   mirror_commit: be614649b7
 candidate_source:
   name: DLP04I02.PRW
-  status: PLANNED
-  name_availability: INCONCLUSIVE (sem colisao em delpi-central/espelho; repo ERP
-    inacessivel nesta sessao)
-development_status: PLANNED
+  status: SOURCE_CANDIDATE
+  path: src/DLP04I02.PRW
+  mechanism: FWLoadModel('DMATA061') — MPFormModel Model-2 oficial
+  operations:
+    CREATE: SOURCE_IMPLEMENTED
+    UPDATE: CONTRACT_CANDIDATE (Load da linha = VALIDAR NO TST01)
+    READ: TO_INVENTORY (GET retorna 501 explicito; leitura via api-delpi)
+    DELETE: BLOCKED (a060VldGrv ultimo vinculo; DELETE retorna 501)
+  provenance:
+    erp_repo: Delpi-ti/protheus-erp
+    erp_branch: master
+    erp_head: INCONCLUSIVE (nao revalidado; ultima ref 86616df50b17)
+    model_path: 73. CRM/Dmata061.prx
+    mirror_blob_sha: b45cc9333c410a58d5836f78b79a140c6056c9c6
+    mirror_commit: be614649b7
+development_status: SOURCE_CANDIDATE
 operations:
   known:
   - op: MODEL_INVENTORY
@@ -47,33 +59,35 @@ operations:
       7 campos/a060VldGrv/a060LinOk
   pending:
   - op: SA5_ADD
-    status: TO_INVENTORY
-    note: FWLoadModel('DMATA061') header+grid; ciclo/ativacao = VALIDAR NO TST01;
-      M-> em a060LinOk
+    status: SOURCE_IMPLEMENTED
+    note: POST /v1/ProdForn/incluir — header+AddLine+VldData+CommitData; M-> a060LinOk
+      = VALIDAR NO TST01
   - op: SA5_UPDATE
-    status: TO_INVENTORY
-    note: linha pela PK; identidade imutavel; semantica de omitidos = fail-closed
+    status: CONTRACT_CANDIDATE
+    note: PUT /v1/ProdForn/alterar — carga da linha pela PK = VALIDAR NO TST01
   - op: SA5_READ
-    status: DECISION_REQUIRED
-    note: fora do .PRW (api-delpi SQL estendida FABR/FALOJA/REFGRD) ou via modelo
+    status: TO_INVENTORY
+    note: GET 501; leitura segue fora do .PRW
   - op: SA5_REMOVE
     status: BLOCKED
-    note: a060VldGrv bloqueia excluir ultimo vinculo; semantica oficial + politica
-      pendentes
+    note: DELETE 501 — semantica pendente (a060VldGrv)
 dependencies: []
 rest_contracts:
-- id: facade proposta
+- id: DelpiProdForn (candidato)
   uris:
-  - POST/PUT/DELETE /integrations/protheus/products/{code}/suppliers
-  status: PLANNED
-  note: contrato candidato em contracts/crud-contract-candidate.md — identidade composta
-    fora de path unico
+  - POST /v1/ProdForn/incluir
+  - PUT /v1/ProdForn/alterar
+  - GET /v1/ProdForn/consultar (501)
+  - DELETE /v1/ProdForn/excluir (501)
+  status: CONTRACT_CANDIDATE
+  note: nomes/paths candidatos a ratificacao; sem compilacao
 restrictions:
   erp_write: proibida — decisao de arquitetura pendente de ratificacao (Integracoes
     TOTVS + ERP + Coordination)
   rpo_compile: exclusivo da equipe ERP
   direct_sql_reclock: FORBIDDEN
-sources: []
+sources:
+- DLP04I02.PRW
 architecture:
   recommendation: EXTEND
   decision: DECISION_REQUIRED

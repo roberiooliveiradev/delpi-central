@@ -829,7 +829,8 @@ def test_b1r1_enclosure_via_adapter_dict_shape():
 _B2_BALLOON = (100, 100, 160, 160)
 
 
-def _b2_u(h=None, v=None, rects=None, enc=None, extra_toks=None):
+def _b2_u(h=None, v=None, rects=None, enc=None, extra_toks=None,
+          segs=None):
     """Understanding com 1 balão A1 + primitivas geométricas B2."""
     tokens = [_tok("A1", 105, 110, 155, 150)] + list(extra_toks or [])
     prims = {
@@ -838,6 +839,7 @@ def _b2_u(h=None, v=None, rects=None, enc=None, extra_toks=None):
         "rects": rects or [],
         "h_lines": h or [],
         "v_lines": v or [],
+        "segments": segs or [],
     }
     return build_understanding(
         tokens, document_hash=SHA, page=1,
@@ -1135,3 +1137,92 @@ def test_b3_alternative_targets_carry_observations():
     assert all(a["observation"] is not None for a in alts)
     assert {a["observation"]["aspect_ratio"] for a in alts} == {
         16.0, 15.4}
+
+
+# ---------- E1/VAL-01 B2-R2 — líderes diagonais/segmentados/leque ----------
+
+def _seg(x1, y1, x2, y2):
+    return {
+        "points_px": [x1, y1, x2, y2],
+        "source": "hough_lines_p_residual",
+    }
+
+
+def test_b2r2_diagonal_leader_to_single_rect_target():
+    """RQ-B2R2-03/04: segmento diagonal anexado → caminho + destino.
+
+    A fusão do cluster não pode colapsar a diagonal para um eixo —
+    a extremidade real do traço é o endpoint (prova RED: o merge
+    eixo-alinhado deslocaria o endpoint para fora da linha)."""
+    u = _b2_u(
+        segs=[_seg(140, 160, 220, 260)],
+        rects=[[200, 250, 320, 290]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["endpoint_px"] == [220.0, 260.0]
+    assert ll["target_state"] == "SINGLE_REGION"
+    assert ll["target_region_px"] == [200, 250, 320, 290]
+
+
+def test_b2r2_parallel_diagonal_strokes_merge_one_leader():
+    """Traço espesso diagonal emite runs paralelos — fundem."""
+    u = _b2_u(
+        segs=[_seg(140, 160, 220, 260), _seg(142, 160, 222, 260),
+              _seg(141, 165, 218, 256)],
+        rects=[[200, 250, 320, 290]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2r2_fan_leader_multiple_branches_preserved():
+    """RQ-B2R2-05: leque — vários ramos anexados → AMBIGUOUS com a
+    multiplicidade preservada; nenhum ramo escolhido arbitrariamente."""
+    u = _b2_u(
+        segs=[_seg(140, 160, 220, 260),    # ramo 1 (~51°)
+              _seg(160, 140, 260, 180),    # ramo 2 (~22°)
+              _seg(130, 160, 150, 280)],   # ramo 3 (~81°)
+        rects=[[200, 250, 320, 290], [240, 160, 330, 200],
+               [130, 270, 220, 300]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "AMBIGUOUS"
+    assert len(ll["segments_px"]) == 3
+    assert ll["endpoint_px"] is None
+    assert ll["target_state"] is None
+
+
+def test_b2r2_bent_diagonal_leader_chained():
+    """Dobra diagonal→vertical encadeada por proximidade de ponta."""
+    u = _b2_u(
+        segs=[_seg(140, 160, 220, 260)],
+        v=[[220, 260, 220, 330]],
+        rects=[[200, 320, 320, 350]],
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert len(ll["segments_px"]) == 2
+    assert ll["endpoint_px"] == [220.0, 330.0]
+    assert ll["target_state"] == "SINGLE_REGION"
+
+
+def test_b2r2_diagonal_crossing_does_not_connect():
+    """Cruzamento sem contato de ponta não conecta segmentos."""
+    u = _b2_u(
+        segs=[_seg(140, 160, 220, 260),   # líder
+              _seg(120, 240, 260, 200)],  # cruza em (~188,220) no meio
+    )
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "CANDIDATE"
+    assert len(ll["segments_px"]) == 1
+    assert ll["endpoint_px"] == [220.0, 260.0]
+
+
+def test_b2r2_diagonal_near_balloon_not_attached():
+    """Diagonal próxima sem ponta na fronteira → NOT_FOUND."""
+    u = _b2_u(segs=[_seg(200, 200, 300, 300)])
+    ll = u["balloon_candidates"][0]["leader_line"]
+    assert ll["state"] == "NOT_FOUND"
+    assert ll["endpoint_px"] is None

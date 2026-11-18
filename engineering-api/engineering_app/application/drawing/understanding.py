@@ -2209,12 +2209,27 @@ def _merge_cluster(
     segs: list[tuple[float, float, float, float]],
     cl: list[int],
 ) -> tuple[float, float, float, float]:
-    xs = [segs[i][0] for i in cl] + [segs[i][2] for i in cl]
-    ys = [segs[i][1] for i in cl] + [segs[i][3] for i in cl]
-    ref = segs[cl[0]]
-    if abs(ref[2] - ref[0]) <= abs(ref[3] - ref[1]):
-        return (sum(xs) / len(xs), min(ys), sum(xs) / len(xs), max(ys))
-    return (min(xs), sum(ys) / len(ys), max(xs), sum(ys) / len(ys))
+    """Par de pontas mais distante do cluster (B2-R2).
+
+    Runs paralelos da mesma linha (espessura do traço) compartilham a
+    direção: a espinha é o par de extremidades mais afastado — correto
+    para segmentos eixo-alinhados E diagonais. O colapso anterior por
+    eixo dominante deslocava a extremidade de traços inclinados para
+    fora da linha (endpoint/encadeamento corrompidos)."""
+    pts = [
+        (segs[i][0], segs[i][1]) for i in cl
+    ] + [
+        (segs[i][2], segs[i][3]) for i in cl
+    ]
+    best = (pts[0], pts[-1])
+    best_d2 = -1.0
+    for a in pts:
+        for b in pts:
+            d2 = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+            if d2 > best_d2:
+                best_d2 = d2
+                best = (a, b)
+    return (best[0][0], best[0][1], best[1][0], best[1][1])
 
 
 def _target_regions(

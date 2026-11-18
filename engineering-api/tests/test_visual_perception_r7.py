@@ -537,3 +537,50 @@ async def test_official_bridge_visual_mode_same_hash():
     assert out["document"]["document_hash_sha256"] == hashlib.sha256(
         PDF_90264302
     ).hexdigest()
+
+
+@pytest.mark.skipif(not _has("cv2"), reason="opencv extras not installed")
+def test_detect_graphic_primitives_emits_diagonal_segments():
+    """B2-R2/RQ-03: o adapter emite ``segments`` para traços
+    arbitrários — o opening reto destrói diagonais; HoughLinesP no
+    residual as recupera sem duplicar o canal eixo-alinhado."""
+    import cv2
+    import numpy as np
+
+    from engineering_app.infrastructure.extraction.opencv_adapter import (
+        detect_graphic_primitives,
+    )
+
+    img = np.full((400, 600), 255, dtype=np.uint8)
+    cv2.line(img, (100, 300), (300, 100), 0, 2)     # diagonal ~45°
+    cv2.line(img, (50, 360), (560, 360), 0, 2)      # horizontal (canal h)
+    _, buf = cv2.imencode(".png", img)
+    prims = detect_graphic_primitives(buf.tobytes())
+    assert prims is not None
+    segs = prims.get("segments") or []
+    diag = [
+        s for s in segs
+        if abs(s["points_px"][2] - s["points_px"][0]) > 30
+        and abs(s["points_px"][3] - s["points_px"][1]) > 30
+    ]
+    assert diag, "nenhum segmento diagonal emitido"
+    assert all(s.get("source") == "hough_lines_p_residual" for s in segs)
+
+
+@pytest.mark.skipif(not _has("cv2"), reason="opencv extras not installed")
+def test_detect_graphic_primitives_no_segments_without_diagonals():
+    """Negativo: página sem traços inclinados → ``segments`` vazio
+    (HoughLinesP não inventa evidência)."""
+    import cv2
+    import numpy as np
+
+    from engineering_app.infrastructure.extraction.opencv_adapter import (
+        detect_graphic_primitives,
+    )
+
+    img = np.full((300, 400), 255, dtype=np.uint8)
+    cv2.rectangle(img, (50, 50), (350, 250), 0, 2)  # só eixo-alinhado
+    _, buf = cv2.imencode(".png", img)
+    prims = detect_graphic_primitives(buf.tobytes())
+    assert prims is not None
+    assert (prims.get("segments") or []) == []

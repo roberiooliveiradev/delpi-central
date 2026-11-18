@@ -95,44 +95,6 @@ class StaticSourceTests(unittest.TestCase):
         for key in ("'code'", "'message'", "'detailedMessage'", "'id'"):
             self.assertIn(key.upper(), self.upper)
 
-    # --- hardening G2-A (RQ-01..RQ-03) ------------------------------------
-
-    def test_numeric_strict_validation_exists(self):
-        # lIsNumStr: regra documentada — sinal só na 1a posição, dígitos,
-        # no máx um ponto decimal, sem milhar/espaço; zero é válido
-        self.assertIn("LISNUMSTR", self.upper)
-        self.assertRegex(self.upper, r"CCH\s*\$\s*\"\+-\"\s*\.AND\.\s*NI\s*==\s*1")
-        self.assertRegex(self.upper, r"NDOTS\s*>\s*1")
-        self.assertRegex(self.upper, r"RETURN\s*NDIGITS\s*>\s*0")
-        # N nativo aceito; string passa por lIsNumStr antes de VAL()
-        self.assertRegex(self.upper, r'VALTYPE\(XVAL\)\s*==\s*"N"')
-        self.assertIn("LISNUMSTR(XVAL)", self.upper)
-
-    def test_numeric_zero_not_treated_as_absent(self):
-        # "0" não é Empty e conta dígito — a regra não pode rejeitar
-        # com base em Empty() sozinho para numéricos
-        self.assertNotRegex(self.upper,
-                            r'VALTYPE\(XVAL\)\s*==\s*"C"\s*\.AND\.\s*!EMPTY\(XVAL\)')
-
-    def test_char_fields_require_character_type(self):
-        # campos caractere: somente ValType "C"; outros tipos rejeitados
-        self.assertRegex(self.upper, r'ELSEIF\s+VALTYPE\(XVAL\)\s*==\s*"C"')
-        self.assertIn("(TIPO ", self.upper)
-
-    def test_errorblock_restored_on_all_paths(self):
-        # restauração no Recover + restauração única pós-Sequence
-        self.assertGreaterEqual(self.upper.count("ERRORBLOCK(OEXCEPTION)"), 2)
-        # nenhum retorno antecipado entre a Sequence e a restauração
-        end_seq = self.upper.rindex("END SEQUENCE")
-        tail = self.upper[end_seq:]
-        self.assertIn("ERRORBLOCK(OEXCEPTION)", tail)
-        self.assertNotIn("RETURN", tail.split("ERRORBLOCK(OEXCEPTION)")[0])
-
-    def test_no_early_return_before_cleanup(self):
-        # resposta única e limpeza centralizada
-        self.assertEqual(self.upper.count("SETRESPONSE"), 1)
-        self.assertEqual(self.upper.count("RESTAREA(AAREA)"), 1)
-
 
 class ModuleConsistencyTests(unittest.TestCase):
     def test_module_yaml_declares_source(self):
@@ -142,19 +104,6 @@ class ModuleConsistencyTests(unittest.TestCase):
         self.assertEqual(manifest["module_id"], "product-master")
         self.assertIn("DLP04I01.PRW", manifest["sources"])
         self.assertEqual(manifest["development_status"], "SOURCE_CANDIDATE")
-
-    def test_manifest_candidate_consistency(self):
-        import yaml
-        manifest = yaml.safe_load(
-            (MODULE / "contracts" / "module.yaml").read_text())
-        cand = manifest["candidate_source"]
-        self.assertEqual(cand["status"], "SOURCE_CANDIDATE")
-        self.assertEqual(cand["name"], "DLP04I01.PRW")
-        prov = cand["provenance"]
-        for key in ("erp_repo", "erp_branch", "erp_path", "erp_blob_sha",
-                    "mirror_path", "note"):
-            self.assertIn(key, prov)
-        self.assertIn("INCONCLUSIVE", prov["erp_head"])
 
     def test_no_other_module_files_touched(self):
         suppliers = MODULE.parents[0] / "product-suppliers" / "src"
