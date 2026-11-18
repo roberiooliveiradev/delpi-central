@@ -34,6 +34,10 @@ from app.interfaces.http.integrations_person_profiles_controller import (
 from app.interfaces.http.integrations_protheus_identities_controller import (
     integrations_protheus_identities_bp,
 )
+from app.interfaces.http.organization_controller import (
+    integrations_organization_bp,
+    admin_hr_identity_bp,
+)
 from app.interfaces.http.mcp_providers_controller import mcp_providers_bp
 from app.interfaces.http.integrations_mcp_providers_controller import (
     integrations_mcp_providers_bp,
