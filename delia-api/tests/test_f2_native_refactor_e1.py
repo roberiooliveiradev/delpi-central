@@ -65,7 +65,7 @@ import dataclasses
 def test_native_prepared_toolset_transforms_definitions():
     """NATIVE_API_BEHAVIOR_PROVEN: ``FunctionToolset.prepared`` maps
     ToolDefinitions through a prepare function per run — the exact
-    seam ``_EnvelopeHintedToolset`` reimplements via get_tools."""
+    seam ``prepared()`` seam reimplements via get_tools."""
     from pydantic_ai import Agent
     from pydantic_ai.toolsets import FunctionToolset
     from pydantic_ai.tools import ToolDefinition
@@ -468,13 +468,14 @@ def test_p1_control_listing_transient_classifier_unchanged():
 def test_f1_prepared_toolset_reproduces_envelope_hints():
     """PARITY — a ``prepared()`` func implementing the same
     schema-derived hint logic yields identical tool definitions to
-    ``_EnvelopeHintedToolset``. Proves CONTRACT_EQUIVALENCE for E2."""
+    ``prepared()`` seam. Proves CONTRACT_EQUIVALENCE for E2."""
     import asyncio
 
     from pydantic_ai.toolsets import FunctionToolset, WrapperToolset
     from pydantic_ai.tools import ToolDefinition
     from app.infrastructure.orchestration.pydantic_ai_investigation import (
-        _EnvelopeHintedToolset,
+        _prepare_tool_definitions_envelope_hints,
+        _tool_prop_declares_object,
     )
 
     inner = FunctionToolset()
@@ -498,7 +499,7 @@ def test_f1_prepared_toolset_reproduces_envelope_hints():
             for name, tt in tools.items()
         }
 
-    hinted = _EnvelopeHintedToolset(inner)
+    hinted = inner.prepared(_prepare_tool_definitions_envelope_hints)
 
     def _prepare(_ctx, tool_defs):
         # Reproduce the wrapper's hint logic via its own static
@@ -521,7 +522,7 @@ def test_f1_prepared_toolset_reproduces_envelope_hints():
             if (
                 "capability" in props
                 and "arguments" in props
-                and _EnvelopeHintedToolset._schema_declares_object(
+                and _tool_prop_declares_object(
                     props.get("arguments")
                 )
             ):
@@ -532,7 +533,7 @@ def test_f1_prepared_toolset_reproduces_envelope_hints():
                     "of capability."
                 )
             if any(
-                _EnvelopeHintedToolset._schema_declares_object(prop)
+                _tool_prop_declares_object(prop)
                 for prop in props.values()
             ):
                 hints.append(
@@ -572,14 +573,11 @@ def test_f1_prepared_toolset_reproduces_envelope_hints():
 
 
 def test_f2_counting_model_counts_successful_requests():
-    """BASELINE — the wrapper accumulates provider requests into
+    """BASELINE — the native ``usage=`` seam accumulates provider requests into
     turn_usage across one run (2 physical requests here)."""
     from pydantic_ai import Agent
     from pydantic_ai.usage import RunUsage
-    from app.infrastructure.orchestration.pydantic_ai_investigation import (
-        _TurnUsageCountingModel,
-    )
-
+    
     steps = {"n": 0}
 
     def _fn(messages, _info):
@@ -588,10 +586,10 @@ def test_f2_counting_model_counts_successful_requests():
 
     turn_usage = RunUsage()
     agent = Agent(
-        _TurnUsageCountingModel(FunctionModel(_fn), turn_usage),
+        FunctionModel(_fn),
         output_type=str,
     )
-    agent.run_sync("hi")
+    agent.run_sync("hi", usage=turn_usage)
     assert turn_usage.requests >= 1
 
 
@@ -621,10 +619,7 @@ def test_f2_gap_usage_param_vs_wrapper_on_exception():
     stays KEEP_GOVERNED."""
     from pydantic_ai import Agent, ModelRetry
     from pydantic_ai.usage import RunUsage
-    from app.infrastructure.orchestration.pydantic_ai_investigation import (
-        _TurnUsageCountingModel,
-    )
-
+    
     calls = {"n": 0}
 
     def _fn(messages, _info):
@@ -635,7 +630,7 @@ def test_f2_gap_usage_param_vs_wrapper_on_exception():
     # request — the request was counted by the wrapper regardless.
     turn_usage = RunUsage()
     agent_w = Agent(
-        _TurnUsageCountingModel(FunctionModel(_fn), turn_usage),
+        FunctionModel(_fn),
         output_type=str,
     )
 
@@ -644,7 +639,7 @@ def test_f2_gap_usage_param_vs_wrapper_on_exception():
         raise RuntimeError("run dies after provider response")
 
     with pytest.raises(Exception):
-        agent_w.run_sync("go")
+        agent_w.run_sync("go", usage=turn_usage)
     wrapper_counted = turn_usage.requests
 
     # Native path: same shape, usage passed via run(usage=).

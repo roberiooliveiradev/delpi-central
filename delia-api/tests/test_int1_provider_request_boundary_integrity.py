@@ -17,9 +17,11 @@ from __future__ import annotations
 import asyncio
 
 from app.application.interaction.turn_budget import TurnDeadline
+from pydantic_ai.toolsets import AbstractToolset
+
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
-    _EnvelopeHintedToolset,
+    _prepare_tool_definitions_envelope_hints,
 )
 from fastmcp import Client
 from pydantic_ai.models.function import FunctionModel
@@ -236,7 +238,12 @@ async def _compose_b2_envelope(b1: dict) -> dict:
     class _Tool:
         tool_def: _Def
 
-    class _Wrapped:
+    class _Wrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         def __init__(self, mapping):
             self._mapping = mapping
 
@@ -254,7 +261,7 @@ async def _compose_b2_envelope(b1: dict) -> dict:
                 ),
             )
         )
-    hinted = await _EnvelopeHintedToolset(_Wrapped(mapping)).get_tools(None)
+    hinted = await _Wrapped(mapping).prepared(_prepare_tool_definitions_envelope_hints).get_tools(None)
     tools = [
         fingerprint_from_tool_definition(tt.tool_def, order=i)
         for i, (_n, tt) in enumerate(sorted(hinted.items()))

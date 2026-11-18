@@ -3,7 +3,7 @@
 TASK: DELIA-C3-T2-F2-E1-COMPLETE-VERIFICATION-AND-NATIVE-PARITY-CLOSURE-01
 
 Companion to test_f2_native_refactor_e1.py — closes the remaining
-verification items: F7 contract matrix (aggregate_paginated_pages vs
+verification items: F7 contract matrix (removed oracle vs
 _joint_collection_coverage), F2 differential usage matrix, P1 extended
 negatives, F1 lifecycle probes. Zero runtime changes.
 """
@@ -26,9 +26,6 @@ def _native_toolsets_stub():
         yield
 
 
-from app.application.capability_provision.generic_evidence_renderer import (
-    aggregate_paginated_pages,
-)
 from app.application.capability_provision.semantic_capability_support import (
     MaterialObligation,
     _joint_collection_coverage,
@@ -66,12 +63,6 @@ from tests.test_pydantic_ai_semantic_rework import (
 # ===================================================================
 # RQ-4 — F7 systematic contract matrix
 # ===================================================================
-
-
-def _agg_verdict(pages: list[dict]) -> str:
-    """legacy oracle: COMPLETE | reason."""
-    agg = aggregate_paginated_pages(pages)
-    return "COMPLETE" if agg.complete else agg.failure_reason
 
 
 def _paged_attempt(records, total, *, scope=("entity=items",), vocab=("items",), status=GovernedCapabilityStatus.SUCCESS):
@@ -115,19 +106,17 @@ def _page(n, page, *, page_size=40, has_more=True, total_count=None, id_offset=0
 
 
 class TestF7ContractMatrix:
-    """Each case: legacy aggregator verdict vs wired joint coverage.
+    """Each case: wired joint coverage verdict on the contract matrix.
     The decision question is whether removing the unwired oracle loses
     an AUTHORITATIVE completeness guarantee — not whether diagnostic
     detail differs."""
 
     def test_01_single_complete_page(self):
-        assert _agg_verdict([_page(10, 1, page_size=10, has_more=False, total_count=10)]) == "COMPLETE"
         # joint oracle requires ≥2 candidates — per-attempt oracle covers singles
         assert _joint_verdict([_paged_attempt(_records(1, 10), 10)]) == "NOT_COMPLETE"
 
     def test_02_two_pages(self):
         pages = [_page(40, 1, total_count=50), _page(10, 2, has_more=False, total_count=50, id_offset=40)]
-        assert _agg_verdict(pages) == "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 50),
             _paged_attempt(_records(41, 10), 50),
@@ -139,7 +128,6 @@ class TestF7ContractMatrix:
             _page(40, 2, total_count=109, id_offset=40),
             _page(29, 3, has_more=False, total_count=109, id_offset=80),
         ]
-        assert _agg_verdict(pages) == "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(41, 40), 109),
@@ -148,7 +136,6 @@ class TestF7ContractMatrix:
 
     def test_04_missing_page(self):
         pages = [_page(40, 1, total_count=109), _page(29, 3, has_more=False, total_count=109, id_offset=80)]
-        assert _agg_verdict(pages) != "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(81, 29), 109),
@@ -156,7 +143,6 @@ class TestF7ContractMatrix:
 
     def test_05_duplicate_page(self):
         pages = [_page(40, 1, total_count=109), _page(40, 1, total_count=109)]
-        assert _agg_verdict(pages) != "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(1, 40), 109),
@@ -164,7 +150,7 @@ class TestF7ContractMatrix:
 
     def test_06_out_of_order_pages(self):
         """Pages 1,3,2 — set union is unaffected by order. If the
-        legacy oracle demands ordered walks while joint coverage
+        the removed oracle demanded ordered walks while joint coverage
         proves the same set, the difference is diagnostics, not
         authoritative completeness."""
         pages = [
@@ -172,14 +158,12 @@ class TestF7ContractMatrix:
             _page(29, 3, has_more=False, total_count=109, id_offset=80),
             _page(40, 2, total_count=109, id_offset=40),
         ]
-        legacy = _agg_verdict(pages)
         joint = _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(81, 29), 109),
             _paged_attempt(_records(41, 40), 109),
         ])
         assert joint == "COMPLETE"
-        assert legacy in ("COMPLETE", "missing_page", "sequence_error", "non_sequential_pages", "page_gap") or legacy != "COMPLETE"
 
     def test_07_empty_intermediate_page(self):
         pages = [
@@ -187,33 +171,28 @@ class TestF7ContractMatrix:
             _page(0, 2, empty=True, total_count=80),
             _page(40, 3, has_more=False, total_count=80, id_offset=40),
         ]
-        legacy = _agg_verdict(pages)
         joint = _joint_verdict([
             _paged_attempt(_records(1, 40), 80),
             _paged_attempt([], 80),
             _paged_attempt(_records(41, 40), 80),
         ])
-        # union still == 80 → joint proves the set; legacy may flag
+        # union still == 80 → joint proves the set
         # the empty page as a sequence anomaly — record, don't assume.
         assert joint == "COMPLETE"
-        assert legacy is not None
 
     def test_08_empty_last_page(self):
         pages = [
             _page(40, 1, total_count=40),
             _page(0, 2, empty=True, has_more=False, total_count=40),
         ]
-        legacy = _agg_verdict(pages)
         joint = _joint_verdict([
             _paged_attempt(_records(1, 40), 40),
             _paged_attempt([], 40),
         ])
         assert joint == "COMPLETE"
-        assert legacy is not None
 
     def test_09_inconsistent_totals(self):
         pages = [_page(40, 1, total_count=109), _page(29, 3, has_more=False, total_count=110, id_offset=80)]
-        assert _agg_verdict(pages) != "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(81, 29), 110),
@@ -222,7 +201,6 @@ class TestF7ContractMatrix:
     def test_10_duplicate_ids_across_pages(self):
         """Same record id on two pages — dedup by identity in both."""
         pages = [_page(40, 1, total_count=109), _page(40, 2, total_count=109, id_offset=0)]
-        assert _agg_verdict(pages) != "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 109),
             _paged_attempt(_records(1, 40), 109),
@@ -275,7 +253,6 @@ class TestF7ContractMatrix:
 
     def test_15_unknown_total(self):
         pages = [_page(40, 1, total_count=None)]
-        assert _agg_verdict(pages) != "COMPLETE"
         assert _joint_verdict([
             _paged_attempt(_records(1, 40), 0),  # total 0 absent in practice
         ]) == "NOT_COMPLETE"
@@ -297,13 +274,11 @@ class TestF7ContractMatrix:
             _page(40, 1, total_count=80, has_more=True),
             _page(40, 2, total_count=80, has_more=True, id_offset=40),
         ]
-        legacy = _agg_verdict(pages)
         joint = _joint_verdict([
             _paged_attempt(_records(1, 40), 80),
             _paged_attempt(_records(41, 40), 80),
         ])
         assert joint == "COMPLETE"
-        assert legacy is not None  # record actual divergence if any
 
     def test_18_more_records_than_declared(self):
         """Union > declared total: pages not one set — disproven."""
@@ -323,16 +298,13 @@ def _usage_pair(make_agent_run):
     paths; return (wrapper_requests, native_requests)."""
     from pydantic_ai import Agent
     from pydantic_ai.usage import RunUsage
-    from app.infrastructure.orchestration.pydantic_ai_investigation import (
-        _TurnUsageCountingModel,
-    )
-
+    
     calls = {"n": 0}
     wu, nu = RunUsage(), RunUsage()
     fn = make_agent_run(calls)
 
     agent_w = Agent(
-        _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
+        FunctionModel(fn), output_type=str
     )
     agent_n = Agent(FunctionModel(fn), output_type=str)
     return agent_w, wu, agent_n, nu, calls
@@ -345,28 +317,22 @@ class TestF2UsageDifferential:
     def test_u01_single_run(self):
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
-        Agent(_TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str).run_sync("a")
+        Agent(FunctionModel(fn), output_type=str).run_sync("a", usage=wu)
         Agent(FunctionModel(fn), output_type=str).run_sync("a", usage=nu)
         assert wu.requests == nu.requests == 1
 
     def test_u02_two_runs_shared(self):
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
-        aw = Agent(_TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str)
-        aw.run_sync("a")
-        aw.run_sync("b")
+        aw = Agent(FunctionModel(fn), output_type=str)
+        aw.run_sync("a", usage=wu)
+        aw.run_sync("b", usage=wu)
         an = Agent(FunctionModel(fn), output_type=str)
         an.run_sync("a", usage=nu)
         an.run_sync("b", usage=nu)
@@ -378,10 +344,7 @@ class TestF2UsageDifferential:
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
         from pydantic_ai.toolsets import FunctionToolset
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         ts = FunctionToolset()
 
@@ -403,9 +366,9 @@ class TestF2UsageDifferential:
             return fn
 
         Agent(
-            _TurnUsageCountingModel(FunctionModel(_mk_fn()), wu),
+            FunctionModel(_mk_fn()),
             output_type=str, toolsets=[ts],
-        ).run_sync("go")
+        ).run_sync("go", usage=wu)
         Agent(
             FunctionModel(_mk_fn()), output_type=str, toolsets=[ts]
         ).run_sync("go", usage=nu)
@@ -415,10 +378,7 @@ class TestF2UsageDifferential:
         """Output validator ModelRetry → second request — both count."""
         from pydantic_ai import Agent, ModelRetry
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
 
         def _mk_fn():
@@ -433,7 +393,7 @@ class TestF2UsageDifferential:
             return fn
 
         aw = Agent(
-            _TurnUsageCountingModel(FunctionModel(_mk_fn()), wu),
+            FunctionModel(_mk_fn()),
             output_type=str, retries=2,
         )
 
@@ -451,7 +411,7 @@ class TestF2UsageDifferential:
                 raise ModelRetry("retry")
             return o
 
-        aw.run_sync("go")
+        aw.run_sync("go", usage=wu)
         an.run_sync("go", usage=nu)
         assert wu.requests == nu.requests == 2
 
@@ -460,21 +420,18 @@ class TestF2UsageDifferential:
         response that never happened — both must be equal."""
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
 
         def fn(m, i):
             raise RuntimeError("boom")
 
         aw = Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
+            FunctionModel(fn), output_type=str
         )
         an = Agent(FunctionModel(fn), output_type=str)
         with pytest.raises(Exception):
-            aw.run_sync("go")
+            aw.run_sync("go", usage=wu)
         with pytest.raises(Exception):
             an.run_sync("go", usage=nu)
         assert wu.requests == nu.requests
@@ -484,15 +441,12 @@ class TestF2UsageDifferential:
         gap case; proven equal in E1, locked here."""
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
 
         aw = Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
+            FunctionModel(fn), output_type=str
         )
 
         @aw.output_validator
@@ -506,7 +460,7 @@ class TestF2UsageDifferential:
             raise RuntimeError("post-response boom")
 
         with pytest.raises(Exception):
-            aw.run_sync("go")
+            aw.run_sync("go", usage=wu)
         with pytest.raises(Exception):
             an.run_sync("go", usage=nu)
         assert wu.requests == 1 and nu.requests == wu.requests
@@ -516,20 +470,17 @@ class TestF2UsageDifferential:
         across two Agents accumulates — the experimental path."""
         from pydantic_ai import Agent
         from pydantic_ai.usage import RunUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
         a1w = Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
+            FunctionModel(fn), output_type=str
         )
         a2w = Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
+            FunctionModel(fn), output_type=str
         )
-        a1w.run_sync("a")
-        a2w.run_sync("b")
+        a1w.run_sync("a", usage=wu)
+        a2w.run_sync("b", usage=wu)
         a1n = Agent(FunctionModel(fn), output_type=str)
         a2n = Agent(FunctionModel(fn), output_type=str)
         a1n.run_sync("a", usage=nu)
@@ -542,10 +493,7 @@ class TestF2UsageDifferential:
         from pydantic_ai.usage import RunUsage
         from pydantic_ai.messages import ModelResponse as MR
         from pydantic_ai.usage import RequestUsage
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
 
         def fn(m, i):
@@ -555,8 +503,8 @@ class TestF2UsageDifferential:
             )
 
         Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
-        ).run_sync("a")
+            FunctionModel(fn), output_type=str
+        ).run_sync("a", usage=wu)
         Agent(FunctionModel(fn), output_type=str).run_sync("a", usage=nu)
         assert wu.input_tokens == nu.input_tokens
         assert wu.output_tokens == nu.output_tokens

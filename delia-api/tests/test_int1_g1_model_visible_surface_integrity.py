@@ -3,7 +3,7 @@
 Proves composition boundaries that forensics need before attributing
 first-tool choice to the external model:
 
-1. TEO process-WBS clarification survives ``_EnvelopeHintedToolset``.
+1. TEO process-WBS clarification survives ``_prepare_tool_definitions_envelope_hints``.
 2. Catalog snapshot capture no longer hard-slices descriptions to 500.
 3. No specialist routing keywords are injected by composition.
 
@@ -16,8 +16,10 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 
+from pydantic_ai.toolsets import AbstractToolset
+
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
-    _EnvelopeHintedToolset,
+    _prepare_tool_definitions_envelope_hints,
 )
 from scripts.int1_openrouter_qwen14b_instrumented_eval import _catalog_snapshot
 from scripts.int1_secure_decision_trace import sanitize_mapping
@@ -41,6 +43,7 @@ _TEO_READ_DESC = (
 
 @dataclasses.dataclass
 class _FakeDef:
+    name: str
     description: str
     parameters_json_schema: dict
 
@@ -55,12 +58,17 @@ def test_envelope_hint_preserves_teo_process_wbs_clarification() -> None:
     assert "bill-of-materials" in _TEO_READ_DESC
     assert len(_TEO_READ_DESC) > 500
 
-    class _Wrapped:
+    class _Wrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         async def get_tools(self, ctx):
             return {
                 "teo.read": _FakeTool(
                     _FakeDef(
-                        _TEO_READ_DESC,
+                                                "teo.read", _TEO_READ_DESC,
                         {
                             "type": "object",
                             "properties": {
@@ -73,7 +81,7 @@ def test_envelope_hint_preserves_teo_process_wbs_clarification() -> None:
                 )
             }
 
-    tools = asyncio.run(_EnvelopeHintedToolset(_Wrapped()).get_tools(None))
+    tools = asyncio.run(_Wrapped().prepared(_prepare_tool_definitions_envelope_hints).get_tools(None))
     desc = tools["teo.read"].tool_def.description or ""
     assert "process WBS" in desc
     assert "processo_id" in desc

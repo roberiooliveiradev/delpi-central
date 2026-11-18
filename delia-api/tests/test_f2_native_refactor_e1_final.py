@@ -26,9 +26,6 @@ def _native_toolsets_stub():
         yield
 
 
-from app.application.capability_provision.generic_evidence_renderer import (
-    aggregate_paginated_pages,
-)
 from app.application.capability_provision.semantic_capability_support import (
     MaterialObligation,
     _joint_collection_coverage,
@@ -62,23 +59,18 @@ class TestStreamingUsageParity:
         """Full stream: wrapper counts via request_stream finally +
         stream.usage(); native path must equal it."""
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
         aw = Agent(
-            _TurnUsageCountingModel(
-                FunctionModel(fn, stream_function=_stream_fn()), wu
-            ),
+            FunctionModel(fn, stream_function=_stream_fn()),
             output_type=str,
         )
         an = Agent(
             FunctionModel(fn, stream_function=_stream_fn()),
             output_type=str,
         )
-        with aw.run_stream_sync("go") as res_w:
+        with aw.run_stream_sync("go", usage=wu) as res_w:
             res_w.get_output()
         with an.run_stream_sync("go", usage=nu) as res_n:
             res_n.get_output()
@@ -89,23 +81,18 @@ class TestStreamingUsageParity:
         """Stream context exited without consuming output: wrapper's
         finally still counts; native must match."""
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
         aw = Agent(
-            _TurnUsageCountingModel(
-                FunctionModel(fn, stream_function=_stream_fn()), wu
-            ),
+            FunctionModel(fn, stream_function=_stream_fn()),
             output_type=str,
         )
         an = Agent(
             FunctionModel(fn, stream_function=_stream_fn()),
             output_type=str,
         )
-        with aw.run_stream_sync("go"):
+        with aw.run_stream_sync("go", usage=wu):
             pass  # abandon without get_output
         with an.run_stream_sync("go", usage=nu):
             pass
@@ -115,10 +102,7 @@ class TestStreamingUsageParity:
     def test_s03_stream_model_raises_midway(self):
         """Stream function raising after partial output."""
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         async def _bad_stream(messages, _info):
             yield "partial"
             raise RuntimeError("stream boom")
@@ -126,9 +110,7 @@ class TestStreamingUsageParity:
         wu, nu = RunUsage(), RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
         aw = Agent(
-            _TurnUsageCountingModel(
-                FunctionModel(fn, stream_function=_bad_stream), wu
-            ),
+            FunctionModel(fn, stream_function=_bad_stream),
             output_type=str,
         )
         an = Agent(
@@ -136,7 +118,7 @@ class TestStreamingUsageParity:
             output_type=str,
         )
         try:
-            with aw.run_stream_sync("go") as r:
+            with aw.run_stream_sync("go", usage=wu) as r:
                 r.get_output()
         except Exception:
             pass
@@ -156,10 +138,7 @@ class TestCancellationUsageParity:
         request counts 0; native must equal (0 or equal — never more)."""
         import asyncio
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         async def _slow(m, i):
             await asyncio.sleep(5)
             return ModelResponse(parts=[TextPart("ok")])
@@ -167,7 +146,7 @@ class TestCancellationUsageParity:
         async def _run():
             wu, nu = RunUsage(), RunUsage()
             aw = Agent(
-                _TurnUsageCountingModel(FunctionModel(_slow), wu),
+                FunctionModel(_slow),
                 output_type=str,
             )
             an = Agent(FunctionModel(_slow), output_type=str)
@@ -190,10 +169,7 @@ class TestCancellationUsageParity:
         """Provider reports tokens only on completion: both paths
         record identical token fields."""
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         wu, nu = RunUsage(), RunUsage()
 
         def fn(m, i):
@@ -203,8 +179,8 @@ class TestCancellationUsageParity:
             )
 
         Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), wu), output_type=str
-        ).run_sync("a")
+            FunctionModel(fn), output_type=str
+        ).run_sync("a", usage=wu)
         Agent(FunctionModel(fn), output_type=str).run_sync("a", usage=nu)
         assert (wu.requests, wu.input_tokens, wu.output_tokens) == (
             nu.requests,
@@ -216,21 +192,17 @@ class TestCancellationUsageParity:
         """Wrapper + usage= together must not double-count if both are
         ever wired simultaneously during E2 migration (defensive)."""
         from pydantic_ai import Agent
-        from app.infrastructure.orchestration.pydantic_ai_investigation import (
-            _TurnUsageCountingModel,
-        )
-
+        
         shared = RunUsage()
         fn = lambda m, i: ModelResponse(parts=[TextPart("ok")])
         agent = Agent(
-            _TurnUsageCountingModel(FunctionModel(fn), shared),
+            FunctionModel(fn),
             output_type=str,
         )
         agent.run_sync("a", usage=shared)
-        # DOCUMENTED: both mechanisms count → 2 for one request.
-        # E2 must remove the wrapper in the SAME change that adds
-        # usage= — never run both. This test pins the hazard.
-        assert shared.requests == 2
+        # POST-E2: the counting wrapper is gone — a single request must
+        # be counted exactly once via the native usage= seam.
+        assert shared.requests == 1
 
 
 # ===================================================================
@@ -361,23 +333,23 @@ class TestHasMoreContract:
             ),
         ) is False
 
-    def test_legacy_order_sensitivity_is_diagnostic_only(self):
-        """Documents the verdict: legacy oracle rejects a reordered
-        COMPLETE set (missing_intermediate_page) — an internal
-        sequence check, not an authoritative owner guarantee."""
-        def _p(n, page, off, total=109, has_more=True):
-            return {
-                "items": [{"id": off + i + 1} for i in range(n)],
-                "page": page,
-                "total_count": total,
-                "has_more": has_more,
-            }
-
-        legacy = aggregate_paginated_pages(
-            [_p(40, 1, 0), _p(29, 3, 80, has_more=False), _p(40, 2, 40)]
+    def test_reordered_complete_set_stays_complete(self):
+        """Post-E2 lock: page ORDER carries no authority — a reordered
+        set whose record union equals the declared total is complete
+        under the wired evaluator (the retired oracle's sequence check
+        was diagnostics only)."""
+        from tests.test_f2_native_refactor_e1 import (
+            _paged_attempt,
         )
-        assert legacy.complete is False
-        assert legacy.failure_reason == "missing_intermediate_page"
+
+        assert _joint_collection_coverage(
+            _obl(),
+            (
+                _paged_attempt([{"id": i} for i in range(1, 41)], 109),
+                _paged_attempt([{"id": i} for i in range(81, 110)], 109),
+                _paged_attempt([{"id": i} for i in range(41, 81)], 109),
+            ),
+        )
 
 
 # ===================================================================
@@ -444,7 +416,8 @@ def test_p1_e2_contract_terms_unchanged():
         _SAME,
     )
 
-    # Current behavior (pre-fix): 1 call. These assert the CURRENT
-    # contract — the RED inversions live in the e1 file.
+    # Post-E2 behavior: terminal stays fail-closed (1 call), a
+    # transient failure permits exactly one identical re-invocation
+    # (2 calls — the second reaches the owner again).
     assert len(_p1_engine([_terminal_attempt()] * 2, [_SAME] * 2)) == 1
-    assert len(_p1_engine([_transient_attempt()] * 2, [_SAME] * 2)) == 1
+    assert len(_p1_engine([_transient_attempt()] * 2, [_SAME] * 2)) == 2

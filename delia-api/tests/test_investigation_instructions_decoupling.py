@@ -11,8 +11,10 @@ import asyncio
 import re
 from pathlib import Path
 
+from pydantic_ai.toolsets import AbstractToolset
+
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
-    _EnvelopeHintedToolset,
+    _prepare_tool_definitions_envelope_hints,
     _INVESTIGATION_INSTRUCTION_VERSION,
     _INVESTIGATION_INSTRUCTIONS,
 )
@@ -30,7 +32,7 @@ _PROVIDER_SPECIFIC_PATTERNS = (
 
 # Universal "every MCP needs candidate_token / discover→execute"
 # workflows are forbidden in general instructions. Schema-local
-# mentions inside _EnvelopeHintedToolset remain allowed.
+# mentions inside _prepare_tool_definitions_envelope_hints remain allowed.
 _UNIVERSAL_ENVELOPE_COUPLING = re.compile(
     r"When a tool's schema declares\s+``candidate_token``|"
     r"you MUST first call the sibling discovery tool|"
@@ -90,6 +92,7 @@ def test_envelope_hint_is_schema_derived_not_owner_hardcoded() -> None:
 
     @dataclass
     class _FakeDef:
+        name: str
         description: str
         parameters_json_schema: dict
 
@@ -97,12 +100,17 @@ def test_envelope_hint_is_schema_derived_not_owner_hardcoded() -> None:
     class _FakeTool:
         tool_def: _FakeDef
 
-    class _FakeWrapped:
+    class _FakeWrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         async def get_tools(self, ctx):
             return {
                 "owner.read": _FakeTool(
                     _FakeDef(
-                        "Read data",
+                                                "owner.read", "Read data",
                         {
                             "type": "object",
                             "properties": {
@@ -114,7 +122,7 @@ def test_envelope_hint_is_schema_derived_not_owner_hardcoded() -> None:
                 ),
                 "owner.execute": _FakeTool(
                     _FakeDef(
-                        "Execute candidate",
+                                                "owner.execute", "Execute candidate",
                         {
                             "type": "object",
                             "properties": {
@@ -132,7 +140,12 @@ def test_envelope_hint_is_schema_derived_not_owner_hardcoded() -> None:
         async def __aexit__(self, *args):
             return None
 
-    hinted = _EnvelopeHintedToolset(_FakeWrapped())
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
+    hinted = _FakeWrapped().prepared(_prepare_tool_definitions_envelope_hints)
     tools = asyncio.run(hinted.get_tools(None))
     read_desc = tools["owner.read"].tool_def.description
     exec_desc = tools["owner.execute"].tool_def.description
