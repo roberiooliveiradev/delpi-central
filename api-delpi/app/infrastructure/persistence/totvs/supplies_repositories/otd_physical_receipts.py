@@ -19,6 +19,8 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 _DEFAULT_URL = "http://controllership-finance-api:8000"
 _MAX_ROWS = 10000
+# O schema operacional LNF nasceu em 2026; períodos anteriores usam ERP.
+_LNF_MIN_DATE = "2026-01-01"
 
 
 class PhysicalOtdSourceUnavailable(RuntimeError):
@@ -207,9 +209,22 @@ def resolve_physical_source(
         raise PhysicalOtdSourceUnavailable("Token de integração LNF não configurado")
     # Buscar as duas origens temporais para incluir viradas de mês. Na consulta
     # efetiva o período é novamente filtrado APÓS a substituição da data.
+    physical_start = max(
+        _iso(start_date, default=_LNF_MIN_DATE), _LNF_MIN_DATE
+    )
+    physical_end = _iso(end_date, default=date.today().isoformat())
+    if physical_end < physical_start:
+        # Período anterior à existência do LNF, ou janela futura ainda vazia.
+        # O SQL continua apurando o universo fiscal, sem chamadas desnecessárias.
+        source = build_physical_source(
+            [], start_date=start_date, end_date=end_date
+        )
+        repository._physical_otd_source_key = key
+        repository._physical_otd_source_value = source
+        return source
     params = {
-        "start_date": _iso(start_date, default="1900-01-01"),
-        "end_date": _iso(end_date, default="9999-12-31"),
+        "start_date": physical_start,
+        "end_date": physical_end,
     }
     if branch:
         params["branch"] = branch

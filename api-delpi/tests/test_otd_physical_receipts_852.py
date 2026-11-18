@@ -81,6 +81,40 @@ def test_feature_gate_never_calls_remote_when_off(monkeypatch):
     ) is None
 
 
+def test_unbounded_period_uses_lnf_start_and_today_not_unbounded_year_9999(monkeypatch):
+    monkeypatch.setenv("OTD_PHYSICAL_RECEIPTS_ENABLED", "true")
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "test")
+    seen = {}
+    class Response:
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"complete": True, "items": []}
+    def remote(_url, **kwargs):
+        seen.update(kwargs["params"])
+        return Response()
+    monkeypatch.setattr(physical.requests, "get", remote)
+    physical.resolve_physical_source(
+        SimpleNamespace(), branch="01", start_date=None, end_date=None
+    )
+    assert seen["start_date"] == "2026-01-01"
+    assert seen["end_date"] == physical.date.today().isoformat()
+
+
+def test_legacy_period_before_lnf_bypasses_unnecessary_remote_read(monkeypatch):
+    monkeypatch.setenv("OTD_PHYSICAL_RECEIPTS_ENABLED", "true")
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "test")
+    monkeypatch.setattr(
+        physical.requests, "get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("not called"))
+    )
+    source = physical.resolve_physical_source(
+        SimpleNamespace(), branch="01",
+        start_date="2025-01-01", end_date="2025-12-31",
+    )
+    assert source is not None and source.params[0] == "[]"
+
+
 def test_enabled_feed_failure_does_not_silently_use_erp_date(monkeypatch):
     monkeypatch.setenv("OTD_PHYSICAL_RECEIPTS_ENABLED", "true")
     monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "test")

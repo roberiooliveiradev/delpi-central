@@ -127,3 +127,5 @@ fallback somente por ausência de correspondência, erros de dependência
 explícitos, data de competência corrigida, sem duplicação, todos os
 consumidores do OTD canônico consistentes, e evidências reais aprovadas
 pelo responsável de Suprimentos antes de solucionar #852.
+
+**Regra para consultas sem datas:** feed LNF limitado desde 01/01/2026 até hoje; períodos anteriores à implantação da coleta física permanecem com fallback ERP, sem varredura ilimitada nem erro de janela inválida.
