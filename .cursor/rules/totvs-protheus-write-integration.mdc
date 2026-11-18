@@ -116,3 +116,12 @@ Item faltante = trabalho incompleto, não "opcional".
 ## Local de desenvolvimento de novos fontes — decisão PO
 
 Para novos fontes candidatos de integrações DELPI, desenvolver **somente** em `api-delpi/integrations/protheus-advpl/modules/<capability>/src/`, com contrato/testes no módulo conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` continua fonte de consulta de versões upstream (`master`@SHA), **não destino de commits**. Não alterar o espelho `docs/13-fontes-totvs-protheus/`. Handoff ZIP gerado por SHA aprovado, sem publicações ERP/compilação/deploy nesta fase.
+
+## Separacao mandataria — READ por SQL versus implementacao ADVPL
+
+**O projeto usa rotas Python/SQL de leitura para consultar dados e entender tabelas. Elas NAO sao autoridade nem modelo de implementacao das novas rotas ADVPL.** Para qualquer `.PRW`/`.TLPP`, derivar cada operacao de rotina padrao TOTVS ou customizacao demonstrada em `Delpi-ti/protheus-erp` no SHA fixado. MATA010/ExecAuto e MATA061/MVC tem contratos diferentes. Sem contrato suportado comprovado, marcar `TO_INVENTORY` e nao implementar operacao funcional.
+
+- SQL/SX3/ODBC e endpoints de leitura existentes: **somente inventario de campos, schema, diagnostico e eventual corroboracao externa em superficie governada**. Nao converter queries/joins/filtros dos repositorios da `api-delpi` em fonte/algoritmo ADVPL nem fazer READ de Protheus por transplante de SQL da API.
+- Proibido implementar CREATE/UPDATE/DELETE usando DML direto ou `RecLock`; proibido preencher payload faltante consultando SQL da API DELPI, inferir obrigatoriedade de SX3 isolado ou replicar triggers e validacoes oficiais em Python/ADVPL.
+- Um endpoint READ SQL pode continuar existindo para seus consumidores legitimos; sua existencia nao autoriza nem especifica `WSMETHOD GET` no novo PRW. Um GET ADVPL requer contrato oficial proprio.
+- Pre-revisao obrigatoria: `OFFICIAL_ROUTINE + SOURCE_REPO/COMMIT/PATH + MECHANISM + SQL_AUXILIARY_ONLY + GAPS/TO_INVENTORY`. Toda dependencia funcional em query SQL para gerar `.PRW` e violacao bloqueante.
