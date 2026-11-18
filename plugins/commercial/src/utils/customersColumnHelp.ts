@@ -132,6 +132,7 @@ export const ANALYTICS_COLLABORATOR_SUMMARY_COLUMN_HELP: Record<string, string> 
 
 export const PROPOSALS_DOCUMENTS_COLUMN_HELP: Record<string, string> = {
   ov: CM_HELP.proposals.columns.ov,
+  data: CM_HELP.proposals.columns.data,
 };
 
 export const PROPOSAL_DETAIL_ITEMS_COLUMN_HELP: Record<string, string> = {

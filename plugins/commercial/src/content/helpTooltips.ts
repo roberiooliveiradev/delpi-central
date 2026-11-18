@@ -891,6 +891,7 @@ export const CM_HELP = {
       "Ajusta descrição, ICMS, PIS/COFINS e frete só neste PDF. O ícone de editar no bloco Condições não grava a proposta.",
     columns: {
       ov: "Número da oportunidade de venda vinculada à proposta-documento.",
+      data: "Data da proposta no Protheus (ADY_DATA). Não representa a última alteração: revisões podem ocorrer sem que essa data mude.",
       item: "Sequência do item na proposta-documento.",
       produto: "Código do produto do item na proposta.",
       desc: "Descrição comercial do item na proposta-documento.",
