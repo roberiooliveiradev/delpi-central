@@ -120,8 +120,45 @@
 ## 9. Pendências de aceite (não são gaps de implementação)
 
 - `TEST_PRODUCTION` autenticado por capability — aguarda sessão ChatGPT.
-- `NEGATIVE_AUTHZ` com segunda identidade real — `PENDING_SECOND_USER_AUTHZ`.
+- `NEGATIVE_AUTHZ` com segunda identidade real — RESOLVIDO em DEV
+  (ti_delpi full / e2e-delia view-only / devin-smoke-evo zero-SI).
 - `CHATGPT_ACCEPTANCE` W015 delete — depende do refresh do catálogo do
   provider (reconnect/re-add do connector + nova sessão; ver relatório
   de execução da task `DAVI-SI-W015-DELETE-DISCOVERY-RECOVERY-AND-
   W016-READINESS-01`, seção PROVIDER_RECONNECT_PROCEDURE).
+
+## 10. Validação DEV end-to-end (W016 closure — task DAVI-SI-W016-…-01)
+
+Executada contra o stack DEV real (MCP streamable-HTTP + OAuth Keycloak
++ owner SI + PostgreSQL), com três identidades reais de teste e fixtures
+`w016-*` criadas e removidas via capabilities governadas.
+
+| Grupo | Resultado DEV |
+|---|---|
+| 6 tools MCP (`tools/list`) | PASS — incl. `delete` com annotations destrutivas |
+| 20 reads si.* | PASS — payloads tipados, filtros, paginação |
+| 24 execute caps | PASS — PREPARE→DIFF→CONFIRM→ACT→audit→read-back |
+| 3 delete caps | PASS — cascata, irreversibilidade, replay, nonexistent |
+| bulk (create/duplicate/fill) | PASS — contagens exatas |
+| import merge + replace | PASS — merge idempotente, replace com remoções reais + restore |
+| cache refresh/invalidate + tree_load | PASS — job status real consultável |
+| AuthZ 3 identidades | PASS — view-only 403 write; zero-SI 403 tudo; cross-user proposal rejeitada |
+| OCC/xmin drift | PASS — proposal_stale |
+| negatives (cross-family, http.post, legacy import, schema fechado, confirm=false) | PASS |
+
+Bugs reais encontrados e corrigidos nesta validação (detalhes no doc 04):
+
+1. `ck_si_settings_audit_event_type` não admitia event types admin
+   (department.*/department_indicator.*/indicator_goal.deleted) —
+   corrigido via migration V037.
+2. `si.config.import_replace` selava body wrapped `{"bundle":…}` —
+   owner espera `ImportAdminConfigBodySchema` flat; capability
+   inutilizável end-to-end até a correção.
+3. `si.config.import_replace` — `export_digest` incluía `exported_at`
+   volátil (ACT sempre `proposal_stale`) e verify comparava
+   `module_settings` por contagem — ambos corrigidos.
+
+Resíduo: 3 falhas pré-existentes na suite SI (comercial/dashboard) —
+assertions stale vs semântica consolidada pós-V034 (`value=None` por
+design em itens consolidados; `department_id=None` no cache global).
+Fora do escopo DAVI; requer manutenção de testes no owner SI.

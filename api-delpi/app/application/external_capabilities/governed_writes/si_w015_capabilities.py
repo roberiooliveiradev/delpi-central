@@ -97,6 +97,15 @@ def _canonical_bundle_digest(bundle: Any) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _export_state_digest(export: Any) -> str:
+    # ``exported_at`` is a per-response timestamp — including it in the
+    # fingerprint makes every ACT-time recompute diverge and the proposal
+    # can never execute. Digest only the catalog state.
+    if isinstance(export, dict):
+        export = {k: v for k, v in export.items() if k != "exported_at"}
+    return _canonical_bundle_digest(export)
+
+
 class SiW015WriteStack:
     """PREPARE/re-fingerprint/ACT/verify for the W015 destructive set."""
 
@@ -435,7 +444,12 @@ class SiW015WriteStack:
 
         sealed_body = dict(bundle)
         sealed_body["mode"] = "replace"
-        body = {"bundle": sealed_body, "mode": "replace"}
+        # The owner ``/admin/config/import/*`` contract is the flat
+        # ``ImportAdminConfigBodySchema`` (schema_version / departments /
+        # department_indicators / indicator_goals / module_settings /
+        # include_goals / mode at body top level). Wrapping the payload in
+        # ``{"bundle": ...}`` makes the owner reject every PREPARE and ACT.
+        body = sealed_body
         preview = self._client.preview_user_admin_config_import(
             authorization=authorization, body=body
         )
@@ -451,7 +465,7 @@ class SiW015WriteStack:
         # invalidates the proposal; the payload stays in exact_change so
         # the sealed proposal itself carries the pre-state for restore.
         export = self._export(authorization)
-        export_digest = _canonical_bundle_digest(export)
+        export_digest = _export_state_digest(export)
 
         exact_change = {
             "body": body,
@@ -509,7 +523,8 @@ class SiW015WriteStack:
                 "catalog_counts": {
                     k: v.get("insert")
                     for k, v in planned.items()
-                    if isinstance(v, dict) and v.get("insert") is not None
+                    if k in ("departments", "department_indicators", "indicator_goals")
+                    and isinstance(v, dict) and v.get("insert") is not None
                 },
             },
         }
@@ -610,7 +625,7 @@ class SiW015WriteStack:
             )
         if capability == CAP_CONFIG_IMPORT_REPLACE:
             export = self._export(authorization)
-            export_digest = _canonical_bundle_digest(export)
+            export_digest = _export_state_digest(export)
             return fingerprint(
                 {
                     "capability": CAP_CONFIG_IMPORT_REPLACE,
@@ -769,6 +784,14 @@ class SiW015WriteStack:
                 if expected.get(k) is not None
                 and actual.get(k) != expected.get(k)
             }
+            sealed_settings = (ec.get("body") or {}).get("module_settings") or {}
+            if (export.get("module_settings") or {}) != sealed_settings:
+                mismatched["module_settings"] = {
+                    "expected": _canonical_bundle_digest(sealed_settings),
+                    "actual": _canonical_bundle_digest(
+                        export.get("module_settings") or {}
+                    ),
+                }
             if mismatched:
                 raise _err(
                     f"Postcondition failed: catalog counts diverge {mismatched}.",

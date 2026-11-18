@@ -108,7 +108,12 @@ class FakeSiClient:
 
     def export_user_admin_config(self, *, authorization: str):
         self._check(authorization)
+        # Owner export carries a per-response ``exported_at`` timestamp —
+        # the sealed fingerprint must ignore it or ACT can never pass.
+        self._export_seq = getattr(self, "_export_seq", 0) + 1
         return {
+            "schema_version": 1,
+            "exported_at": f"2099-01-01T00:00:{self._export_seq:02d}Z",
             "departments": [
                 {k: v for k, v in d.items() if k != "row_xmin"}
                 for d in self.departments
@@ -219,7 +224,9 @@ class FakeSiClient:
         self, *, authorization: str, body
     ):
         self._check(authorization)
-        bundle = (body or {}).get("bundle") or {}
+        # Owner contract: flat ImportAdminConfigBodySchema (bundle fields
+        # at body top level). A ``{"bundle": ...}`` wrapper is a 422.
+        bundle = dict(body or {})
         if "departments" not in bundle:
             return {"valid": False, "errors": ["departments ausente"],
                     "current_counts": {}, "planned": {}}
@@ -250,7 +257,8 @@ class FakeSiClient:
         expected_counts=None, write_origin=None, correlation_id=None,
     ):
         self._check(authorization)
-        bundle = (body or {}).get("bundle") or {}
+        # Owner contract: flat ImportAdminConfigBodySchema (see preview).
+        bundle = dict(body or {})
         current = {
             "departments": len(self.departments),
             "department_indicators": len(self.indicators),
@@ -558,6 +566,10 @@ def test_import_replace_prepare_seals_export_and_planned(client, orch) -> None:
     assert impact["planned"]["departments"]["delete"] == 1
     ec = prepared["exact_change"]
     assert ec["body"]["mode"] == "replace"
+    # Owner contract is the flat ImportAdminConfigBodySchema — bundle
+    # fields at body top level, never wrapped in {"bundle": ...}.
+    assert "bundle" not in ec["body"]
+    assert ec["body"]["departments"][0]["department_id"] == "com"
     # recovery artifact sealed: pre-state export present in the proposal
     assert ec["recovery_export"]["departments"][0]["department_id"] == "fin"
     assert len(ec["recovery_export"]["indicator_goals"]) == 1
