@@ -1,0 +1,87 @@
+#!/bin/sh
+# ATLAS HML stage 72: REVIEW ONLY. Read-only evidence, NOT an installation script.
+# Never auto-run; owner must separately authorize this host observation.
+# Intended host: srv-api. No sudo, no writes, no redirections to evidence files.
+set -u
+
+repo=/home/operador/projetos/delpi-central
+export GIT_OPTIONAL_LOCKS=0
+
+printf '\n=== ATLAS STAGE72: HOST / OS ===\n'
+hostname -s
+date -Is
+uname -sr
+grep -E '^(ID|VERSION_ID)=' /etc/os-release 2>/dev/null || :
+
+printf '\n=== ATLAS STAGE72: GIT SNAPSHOT (NO FETCH/PULL) ===\n'
+git -C "$repo" branch --show-current 2>&1 || :
+git -C "$repo" rev-parse HEAD 2>&1 || :
+git -C "$repo" rev-parse origin/main 2>&1 || :
+git -C "$repo" status --porcelain=v1 2>&1 || :
+git -C "$repo" diff --summary 2>&1 || :
+git -C "$repo" diff --check 2>&1 || :
+git -C "$repo" worktree list 2>&1 || :
+
+printf '\n=== ATLAS STAGE72: IDENTITY (NO USER/GROUP CREATION) ===\n'
+for name in atlas-hml atlas-hml-bridge atlas-hml-signer; do
+  id "$name" 2>&1 || :
+  getent group "$name" 2>&1 || :
+done
+getent group docker | cut -d: -f1,3 || :
+
+printf '\n=== ATLAS STAGE72: DIRECTORY DAC (NO CHMOD/CHOWN) ===\n'
+for path in \
+  /run/atlas-hml-readonly \
+  /run/atlas-hml-signer \
+  /run/atlas-hml-signer-socket \
+  /var/lib/atlas-hml-signer-state \
+  /var/lib/atlas-hml-signer-keys; do
+  if [ -e "$path" ]; then
+    stat -c '%n|%U:%G|%a|%F' "$path" 2>&1 || :
+    if command -v getfacl >/dev/null 2>&1; then
+      getfacl -cp "$path" 2>&1 || :
+    else
+      printf 'ACL_UNVERIFIED:%s\n' "$path"
+    fi
+  else
+    printf 'ABSENT:%s\n' "$path"
+  fi
+done
+
+printf '\n=== ATLAS STAGE72: SYSTEMD (NO ENABLE/START) ===\n'
+systemctl is-active docker.service containerd.service 2>&1 || :
+systemctl list-unit-files --all 'atlas-hml*' --no-pager 2>&1 || :
+systemctl list-units --all 'atlas-hml*' --no-pager 2>&1 || :
+systemctl show docker.service -p FragmentPath -p DropInPaths -p ExecStart 2>&1 || :
+
+printf '\n=== ATLAS STAGE72: DOCKER SOCKET (NO ENGINE CONTROL) ===\n'
+stat -c '%n|%U:%G|%a|%F' /run/docker.sock /var/run/docker.sock 2>&1 || :
+if command -v getfacl >/dev/null 2>&1; then
+  getfacl -cp /run/docker.sock 2>&1 || :
+else
+  printf 'DOCKER_SOCKET_ACL_UNVERIFIED\n'
+fi
+
+printf '\n=== ATLAS STAGE72: CONTAINER METADATA ONLY ===\n'
+if command -v docker >/dev/null 2>&1; then
+  docker inspect --type container \
+    --format 'NAME={{.Name}} RUNNING={{.State.Running}} STATUS={{.State.Status}} HEALTH={{with index .State "Health"}}{{index . "Status"}}{{else}}sem-healthcheck{{end}} IMAGE={{.Image}} PROJECT={{index .Config.Labels "com.docker.compose.project"}} SERVICE={{index .Config.Labels "com.docker.compose.service"}}' \
+    delpi-hml-public-hub delpi-public-hub 2>&1 || :
+else
+  printf 'DOCKER_CLIENT_UNAVAILABLE\n'
+fi
+
+printf '\n=== ATLAS STAGE72: APPARMOR / TCP DEFAULT PORTS ===\n'
+cat /sys/module/apparmor/parameters/enabled 2>&1 || :
+if command -v ss >/dev/null 2>&1; then
+  ss -ltn 2>&1 | grep -E ':(2375|2376)[[:space:]]' || printf 'DEFAULT_DOCKER_TCP_PORTS_NOT_SEEN\n'
+else
+  printf 'LISTENING_TCP_NOT_OBSERVED\n'
+fi
+
+printf '\n=== ATLAS STAGE72: LIMITS ===\n'
+printf '%s\n' 'RESULT=OPERATOR_SELF_OBSERVATION_ONLY'
+printf '%s\n' 'HOST_ATTESTED=false SEC_01_TO_10=PENDING'
+printf '%s\n' 'DOCKER_ALT_ENDPOINTS=UNVERIFIED APPARMOR_EFFECTIVE_PROFILE=UNVERIFIED'
+printf '%s\n' 'PROD_APPLICATION_HEALTH=UNVERIFIED'
+printf '%s\n' 'PREPARE=false ACT=false NO_DEPLOY_NO_MUTATION'
