@@ -2129,7 +2129,8 @@ def _leader_roots(
     """Índices dos segmentos anexados à fronteira do balão.
 
     Exatamente uma ponta deve estar na faixa de fronteira (dentro da
-    caixa expandida, fora da caixa estrita) e a outra fora da caixa
+    caixa expandida, fora do interior da caixa — a faixa de borda de
+    _LEADER_EDGE_INSET_PX conta como anexo) e a outra fora da caixa
     expandida. Segmentos dentro de caixas de cota não são líderes.
     """
     def _attach(px: float, py: float) -> bool:
@@ -4199,7 +4200,9 @@ def rows_from_native_cells(
             if _CODE_RE.search(_norm(str(cell.get("text") or ""))):
                 bucket["codes"] += 1
     for col, bucket in content_counts.items():
-        if bucket["total"] and bucket["codes"] / bucket["total"] >= 0.5:
+        # Mesma regra de _structure_table (COMP-01): uma única
+        # célula-código não é evidência de coluna.
+        if bucket["codes"] >= 2 and bucket["codes"] / bucket["total"] >= 0.5:
             col_types[col] = "component_code"
     # Bandas-X por papel funcional — conteúdo primeiro, posição como
     # salvaguarda contra papel certo na posição errada.
