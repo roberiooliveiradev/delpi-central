@@ -14,6 +14,7 @@ from uuid import UUID
 import httpx
 
 from helpdesk_app.config import settings
+from helpdesk_app.application.followup_ticket_notification_service import FollowupTicketNotice
 
 logger = logging.getLogger("helpdesk.solved_notifications")
 DeliveryResult = Literal["sent", "ignored", "retry"]
@@ -86,7 +87,7 @@ class CoreHelpdeskNotificationGateway:
         self.timeout = timeout
         self._http_post = http_post or httpx.post
 
-    def send(self, notice: SolvedTicketNotice) -> DeliveryResult:
+    def send(self, notice: SolvedTicketNotice | "FollowupTicketNotice") -> DeliveryResult:
         if not self.service_token:
             logger.warning("helpdesk_solved_notifications_missing_core_token")
             return "retry"

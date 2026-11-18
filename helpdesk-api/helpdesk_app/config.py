@@ -53,6 +53,12 @@ class Settings:
         in {"1", "true", "yes", "on"}
     )
 
+    # #1618: seguimento do sininho com interruptor independente da solução.
+    HELPDESK_FOLLOWUP_NOTIFICATIONS_ENABLED: bool = (
+        str(_get_env("HELPDESK_FOLLOWUP_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+
     GLPI_BASE_URL: str = _get_env(
         "GLPI_BASE_URL", default="https://helpdesk.centraldelpi.com.br"
     )

@@ -13,6 +13,7 @@ from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.profile_sync_service import ProfileSyncService
 from helpdesk_app.application.ticket_service import TicketService
 from helpdesk_app.application.solved_ticket_notification_service import CoreHelpdeskNotificationGateway
+from helpdesk_app.infrastructure.persistence.followup_ticket_notification_outbox import PostgresFollowupTicketNotificationOutbox
 from helpdesk_app.config import settings
 from helpdesk_app.domain.errors import HelpdeskError
 from helpdesk_app.infrastructure.core_directory_service import CoreDirectoryService
@@ -80,6 +81,10 @@ def build_runtime():
             PostgresSolvedTicketNotificationOutbox()
             if settings.HELPDESK_SOLVED_NOTIFICATIONS_ENABLED else None
         ),
+        followup_notifications=(
+            PostgresFollowupTicketNotificationOutbox()
+            if settings.HELPDESK_FOLLOWUP_NOTIFICATIONS_ENABLED else None
+        ),
     )
     # IDENTITY-002A: technical writer only when flag+pair are complete —
     # otherwise reconcile stays in deferred_write_authority semantics (001B).
@@ -92,7 +97,10 @@ def build_runtime():
     return oauth, tickets, profile_sync
 
 
-async def dispatch_solved_ticket_notifications(outbox: PostgresSolvedTicketNotificationOutbox) -> None:
+async def dispatch_solved_ticket_notifications(
+    outbox: PostgresSolvedTicketNotificationOutbox | None,
+    followup_outbox: PostgresFollowupTicketNotificationOutbox | None = None,
+) -> None:
     """Entrega assíncrona com reenvio de falhas; 1+ réplicas usam row locking."""
     gateway = CoreHelpdeskNotificationGateway()
     if not gateway.service_token:
@@ -102,7 +110,9 @@ async def dispatch_solved_ticket_notifications(outbox: PostgresSolvedTicketNotif
     while True:
         try:
             if gateway.service_token:
-                await asyncio.to_thread(outbox.process_due, gateway)
+                for active_outbox in (outbox, followup_outbox):
+                    if active_outbox is not None:
+                        await asyncio.to_thread(active_outbox.process_due, gateway)
         except Exception:
             logging.getLogger("helpdesk.notifications").exception(
                 "helpdesk_solved_notification_worker_failed"
@@ -120,9 +130,11 @@ async def lifespan(app: FastAPI):
     app.state.profile_sync = profile_sync
     app.state.public_base_url = settings.PUBLIC_BASE_URL
     worker = None
-    if settings.HELPDESK_SOLVED_NOTIFICATIONS_ENABLED:
+    if settings.HELPDESK_SOLVED_NOTIFICATIONS_ENABLED or settings.HELPDESK_FOLLOWUP_NOTIFICATIONS_ENABLED:
         worker = asyncio.create_task(
-            dispatch_solved_ticket_notifications(tickets._solved_notifications)
+            dispatch_solved_ticket_notifications(
+                tickets._solved_notifications, tickets._followup_notifications,
+            )
         )
     try:
         yield
