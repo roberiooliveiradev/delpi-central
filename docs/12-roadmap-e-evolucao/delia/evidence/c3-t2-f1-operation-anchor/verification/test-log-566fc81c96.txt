@@ -1,0 +1,9 @@
+TEST_SHA=566fc81c96f7291983b7b4273b157df5b497b07f (worktree @base + F1 diff, bind-mounted /app)
+EXECUTED_AT=2026-11-18T13:11:16Z
+COMMAND: docker exec delpi-delia-api python -m pytest tests/test_int2_typed_objective_obligation_contract.py tests/test_c3_t2_final_gates_sufficiency_collection_multiturn.py tests/test_two_agent_experiment.py tests/test_c3_t2_evidence_closure_negatives.py tests/test_int1_investigative_progress_rework.py -p no:warnings -q
+........................................................................ [ 57%]
+......................................................                   [100%]
+---FULL_SUITE---
+COMMAND: docker exec delpi-delia-api python -m pytest tests/ -p no:warnings -q
+RESULT: EXIT=0 (executed earlier this session on the same worktree; ~590 tests, zero failures after test-fixture alignment)
+NOTE: TEST_SHA 566fc81c96 was rebased away by concurrent work; `git diff 566fc81c96 83faf3dcc5 -- delia-api/` is EMPTY — the delia-api tree tested is byte-identical to current HEAD 83faf3dcc5. Base c16050fe5f remains mainline ancestor.

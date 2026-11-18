@@ -7404,3 +7404,52 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **RESIDUAIS INALTERADOS:** T2-COMPREHENSION-OPERATION-ANCHOR PARTIAL_REMEDIATED/OPEN_LOW; INT3-OBLIGATION-DEMONSTRATION-DEPTH OPEN_LOW; R2-CONTINUITY-PAGINATION convergence OPEN_LOW; T2-B-COMPREHENSION-AGENT-ERROR (flake); R4-AUTHZ-DENY-IDENTITY PENDING; R6-N6/N7 PENDING; VISTA TO_INVENTORY; CI/verifier residual. Histórico do ledger mantido.
 - **NEXT CANDIDATO (F1):** COORDINATION_C3_T2_COMPREHENSION_OPERATION_ANCHOR_AND_HANDOFF_RELIABILITY_GATE. Diagnosticar first divergent boundary; corrigir SOMENTE defeito reproduzido. Sem iniciar F2–F5 como implementação automática e sem substituir NEXT de authorities congeladas.
 - **EXECUTION GATES:** HEAD/status+authorities+CP/RQ; EXISTING_EQUIVALENT/REUSE_DECISION; RED→menor diff→GREEN/regressão→real A/B+generalization+safety+business outcome no SHA/config→delpi-verifier (RQ/AC numerados; até 3 rodadas)→coordenação. Documentação não comprova runtime. **PRODUCTION_DEPLOY=NOT_AUTHORIZED; TWO_AGENT_PROMOTION=NOT_AUTHORIZED; INT3_INT4_AGENT_IMPLEMENTATION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.** Policy de deploy geral em AGENTS.md requer tratamento explícito de conflito antes de publicação, nunca deploy implícito.
+
+## COORDINATION_C3_T2_COMPREHENSION_OPERATION_ANCHOR_AND_HANDOFF_RELIABILITY_GATE (F1)
+
+- **BASE:** c16050fe5f (re-anchor) → worktree sobre 566fc81c96 nos testes
+  (commit concorrente DAVI, sem overlap com delia-api).
+- **RED PROVEN (3):** acceptor aceitava `operation` sob `aggregation`
+  (test_aggregation_operation_restriction_rejects_plan,
+  test_aggregation_read_operation_also_rejects,
+  test_aggregation_operation_gets_named_feedback_and_recovers) — mecanismo
+  do residual OPEN_LOW confirmado: classe declarada virava required_scope
+  e bloqueava agregado autoritativo de outra consultation-class.
+- **FIX (menor diff, acceptor boundary — Suficiência intacta):**
+  `_normalize_obligation_tuple(delivery=)` rejeita operation sob
+  aggregation; `non_material_operations`+`operation_guidance` no
+  INVALID_GOAL; v4 instructions (v1–v3 preservadas); observabilidade T2-B
+  `comprehension_agent_error:<ExcClass>`. 8 fixtures de teste atualizadas
+  (remover operation=read sob aggregation — contrato corrigido, asserções
+  preservadas); site enumeration mantém operation.
+- **TESTES:** targeted 126 PASS (5 arquivos); suíte delia-api EXIT=0
+  (~590); audits phase3/guardrails/docs/rules=0 — log
+  verification/test-log-566fc81c96.txt.
+- **REAL A/B (qwen3-14b, INT2, 9 cenários/arm):** arm B 6/9 (baseline
+  6/9; G2 recover [F,F,T] com gate ao vivo; ops=[None] em aggregation;
+  enumeration/record_detail mantêm read; zero handoff_error).
+  arm A ×2: 4/9 e 5/9 (baseline 6/9) — recover imperfeito sob violações
+  encadeadas no single-agent; flake de aderência, rejeições corretas.
+- **SAFETY:** FALSE_SATISFIED 0 · FALSE_COMPLETE 0 · FILTER_DRIFT 0 ·
+  CROSS_OWNER_MERGE 0 · AUTHZ_BYPASS 0 · WRITES 0 · UNBOUNDED_RETRY 0.
+- **T2-B:** upstream/transporte (requests=0); observabilidade mínima
+  aplicada; n=0 recorrências.
+- **HANDOFF:** plano aceito ecoado verbatim; budget subtrativo; zero
+  owner calls sem plano aceito.
+- **RESIDUAL:** recover multi-violação single-agent (OPEN_LOW);
+  accepted-plan sem required_args → owner_path_unbound (candidato
+  futuro); T2-B aguardando próxima ocorrência classificável.
+- **EVIDENCE:** docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-f1-operation-anchor/
+- **VERIFIER (delpi-verifier, motor cursor/Composer, 2 rodadas):**
+  r1 REWORK — OC-1 evidência factual (manifest alegava "zero calls" em
+  INT2_F arm A e "multipage incompleteness" em R5; traces mostram
+  READ-only plan+1× MCP:read e plan=None+owner_path_unbound) +
+  observações texto duplicado/comentário drift — todas corrigidas.
+  r2 **ACCEPT_WITH_RESIDUAL** — reports preservados sem edição em
+  verification/. Residuais: pytest vivo TEST_NOT_RUN pelo motor (log
+  versionado + identidade de árvore delia-api 566fc81c96↔83faf3dcc5),
+  recover multi-violação single-agent OPEN_LOW, accepted-plan sem
+  required_args → owner_path_unbound (candidato futuro), T2-B
+  ExcClass unexercised (n=0 no arm B), CI remota não revalidada.
+- **ESTADO:** DEPLOY=NOT_RUN; TWO_AGENT_PROMOTION=NOT_AUTHORIZED;
+  PHASE_ADVANCEMENT=NO.

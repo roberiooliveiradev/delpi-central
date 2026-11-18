@@ -632,6 +632,33 @@ def test_int2b_filtered_read_does_not_satisfy_unfiltered_count():
     assert coverage[obligation.description] != OBLIGATION_SATISFIED
 
 
+def test_aggregation_business_anchor_operation_still_binding_when_declared():
+    """T2-COMPREHENSION-OPERATION-ANCHOR invariant: the acceptor gate
+    prevents operation restrictions from REACHING aggregation plans —
+    it does not relax sufficiency. An obligation that still carries a
+    declared operation (legacy/direct path) keeps strict class
+    matching: a business-anchored READ attempt does NOT demonstrate a
+    declared analysis obligation under aggregation."""
+    obligation = _agg_ob(
+        source="process",
+        operation="analysis",
+        required_args={"entity": "process", "params": {}},
+    )
+    attempt = _teo_process_page(total=109, args={"entity": "process", "params": {}})
+    coverage = _coverage((obligation,), (attempt,), delivery="aggregation")
+    assert coverage[obligation.description] != OBLIGATION_SATISFIED
+    # Sibling: the same obligation demonstrated by the matching class.
+    analysis_attempt = _teo_process_page(
+        total=109,
+        args={"entity": "process", "params": {}},
+        operation_class="ANALYSIS",
+    )
+    coverage2 = _coverage(
+        (obligation,), (analysis_attempt,), delivery="aggregation"
+    )
+    assert coverage2[obligation.description] == OBLIGATION_SATISFIED
+
+
 def test_int2b_declared_view_scope_still_binding():
     """No sufficiency relaxation: a declared ``view=summary`` scope on
     a business-anchored obligation is still unechoable by a READ —
