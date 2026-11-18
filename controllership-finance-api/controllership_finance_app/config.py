@@ -176,6 +176,7 @@ class Settings:
     ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED: bool = str(
         _get_env("ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED", default="false")
     ).lower() in {"1", "true", "yes"}
+    ENTRY_AUDIT_INPUT_TES: str = _get_env("ENTRY_AUDIT_INPUT_TES", default="")
 
 
 settings = Settings()

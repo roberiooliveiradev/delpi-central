@@ -584,11 +584,13 @@ def _internal(result, row, xml_item, reference, check_cst, company_state, tes, b
         _hit(hits, row, document, "coherence.cfop_vs_state", f"CFOP de entrada incompatível com a UF do {who}", "Alta", "CFOP", row["cfop"], "UF " + row["state"], f'{who.capitalize()} em {row["state"]} pede CFOP iniciado em {_state_digit(row["state"], company_state)}.', item=row["item"])
     line = book.item(row)
     consumption = bool(record and record.consumption_material == "Sim") or suffix in CONSUMPTION_OR_ASSET[:3]
-    if line is not None:
-        if consumption and line["ipi"] > settings.tolerance:
-            _hit(hits, row, document, "coherence.ipi_on_consumption", "Crédito de IPI em material de uso e consumo", "Alta", "IPI", round(line["ipi"], 2), 0.0, f'O livro fiscal (SFT) traz R$ {_brl(line["ipi"])} de IPI creditado em material de consumo (TES {row["tes"]}, CFOP {row["cfop"]}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.', item=row["item"])
-    elif record and _credits_ipi(record) and record.consumption_material == "Sim" and row["ipi"] > settings.tolerance:
-        _hit(hits, row, document, "coherence.ipi_on_consumption", "Crédito de IPI em material de uso e consumo", "Alta", "IPI", row["ipi"], 0.0, f"TES {row['tes']} ({record.description}) é de material de consumo e credita IPI (livro {record.ipi_book}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.", item=row["item"])
+    input_tes = {code.strip() for code in settings.input_tes.split(",") if code.strip()}
+    if row["tes"] not in input_tes:
+        if line is not None:
+            if consumption and line["ipi"] > settings.tolerance:
+                _hit(hits, row, document, "coherence.ipi_on_consumption", "Crédito de IPI em material de uso e consumo", "Alta", "IPI", round(line["ipi"], 2), 0.0, f'O livro fiscal (SFT) traz R$ {_brl(line["ipi"])} de IPI creditado em material de consumo (TES {row["tes"]}, CFOP {row["cfop"]}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.', item=row["item"])
+        elif record and _credits_ipi(record) and record.consumption_material == "Sim" and row["ipi"] > settings.tolerance:
+            _hit(hits, row, document, "coherence.ipi_on_consumption", "Crédito de IPI em material de uso e consumo", "Alta", "IPI", row["ipi"], 0.0, f"TES {row['tes']} ({record.description}) é de material de consumo e credita IPI (livro {record.ipi_book}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.", item=row["item"])
     if suffix in {"556", "407"} and row["icms"] > settings.tolerance:
         _depend(result, hits, row, document, row["item"], "coherence.icms_on_consumption_cfop", "ICMS calculado em CFOP de uso e consumo", "ICMS", row["icms"], reference, f'CFOP {row["cfop"]} é uso e consumo, que não dá crédito.', tes, book, {}, item_scope=True, boosted=boosted)
     if check_cst and row["cst"][-2:] in {"40", "41", "50", "60", "61"} and row["icms"] > settings.tolerance and suffix not in {"556", "407"}:

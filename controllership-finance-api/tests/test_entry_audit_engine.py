@@ -291,3 +291,74 @@ def test_seen_heuristic_does_not_mix_customer_and_supplier_with_same_code() -> N
         },
     )
     assert [row for row in result.occurrences if row.rule_id == "key.supplier_mismatch" and row.document_number == "1213"] == []
+
+
+INPUT_TES = TesRecord("052", "Material de consumo", "Sim", "Sim", "Tributado", "Sim", "Sim", "Tributado", "Sim", "Entrada", "101")
+INCOHERENT_INPUT_TES = TesRecord("069", "Insumo livro incoerente", "Sim", "Sim", "Tributado", "Sim", "Nao", "Tributado", "Sim", "Entrada", "101")
+
+
+def _run_input_tes(tes_code, ipi, xml_ipi, *, input_tes="052,069", record=INPUT_TES, cfop="1101", book=None):
+    key = _key("55", 1301)
+    header = _header(1301, key, 100, 100, 12)
+    item = _item(1301, "1", 100, 12, tes=tes_code)
+    xml = XmlDocument(
+        access_key=key, model="55", number=1301, series="1", issued_at=WHEN,
+        issuer_tax_id=SUPPLIER, issuer_name="Fornecedor Sintetico", issuer_state="SC",
+        recipient_tax_id=COMPANY, direction="Saída", crt="3", goods_amount=100, freight_amount=0,
+        discount_amount=0, other_amount=0, icms_base=100, icms_amount=12, st_amount=0,
+        ipi_amount=xml_ipi, total_amount=100, status_code="100",
+        items=(XmlItem(
+            number=1, product_code="P1", description="Peca 1", ncm="84818099", cfop="5101",
+            amount=100, origin="0", cst="00", csosn="", icms_base=100, icms_rate=12, icms_amount=12,
+            ipi_amount=xml_ipi, ipi_base=100, ipi_rate=xml_ipi, st_amount=0,
+        ),),
+    )
+    item_row = ProtheusItem(
+        branch="01", number="1301", series="1", supplier_code="000001", supplier_store="01",
+        item="1", product_code="P1", cfop=cfop, tax_situation="000", tes=tes_code, total_amount=100,
+        icms_base=100, icms_rate=12, icms_amount=12, ipi_base=100, ipi_rate=ipi, ipi_amount=ipi,
+        st_amount=0,
+    )
+    return audit(
+        branch="01", company_tax_id=COMPANY, company_state="SC", headers=[header], items=[item_row],
+        tes_records=TES + [record, INCOHERENT_INPUT_TES], invoices={key: xml}, ctes={},
+        config=AuditConfig(improvements_enabled=False, input_tes=input_tes), fiscal_book=book,
+    )
+
+
+def test_input_tes_drops_ipi_on_consumption_but_keeps_other_ipi_rules() -> None:
+    result = _run_input_tes("052", 5, 5)
+    assert [row for row in result.occurrences if row.rule_id == "coherence.ipi_on_consumption"] == []
+    baseline = _run_input_tes("052", 5, 5, input_tes="")
+    assert [row for row in baseline.occurrences if row.rule_id == "coherence.ipi_on_consumption"] != []
+
+
+def test_input_tes_keeps_ipi_above_xml_and_posted_without_highlight() -> None:
+    above = _run_input_tes("052", 8, 5)
+    hits = {row.rule_id: row for row in above.occurrences}
+    assert "item.ipi_credit_mismatch" in hits
+    assert hits["item.ipi_credit_mismatch"].title == "Crédito de IPI acima do XML"
+    assert "coherence.ipi_on_consumption" not in hits
+    posted = _run_input_tes("069", 5, 0, record=INCOHERENT_INPUT_TES)
+    hits = {row.rule_id: row for row in posted.occurrences}
+    assert "item.ipi_without_tes_decision" in hits
+    assert hits["item.ipi_without_tes_decision"].title == "IPI escriturado sem destaque no XML"
+    assert "coherence.ipi_on_consumption" not in hits
+
+
+def test_consumption_tes_outside_the_input_list_still_flags_ipi_on_consumption() -> None:
+    result = _run_input_tes("052", 5, 5, input_tes="018,406")
+    assert [row for row in result.occurrences if row.rule_id == "coherence.ipi_on_consumption"] != []
+
+
+def test_input_tes_also_drops_the_book_path_of_ipi_on_consumption() -> None:
+    from controllership_finance_app.domain.entry_audit.models import FiscalBookLine
+
+    book = [FiscalBookLine(
+        number="1301", series="1", supplier_code="000001", supplier_store="01",
+        item="1", ipi_amount=5, branch="01",
+    )]
+    result = _run_input_tes("052", 5, 5, book=book)
+    assert [row for row in result.occurrences if row.rule_id == "coherence.ipi_on_consumption"] == []
+    baseline = _run_input_tes("052", 5, 5, input_tes="", book=book)
+    assert [row for row in baseline.occurrences if row.rule_id == "coherence.ipi_on_consumption"] != []

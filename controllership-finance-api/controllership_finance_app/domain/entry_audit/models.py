@@ -152,6 +152,8 @@ class AuditConfig:
     period_end: date | None = None
     # FA-1/FA-2 (onda 1): com a flag, o participante vem de participant_* — SA1 nas notas tipo B/D.
     participant_by_type_enabled: bool = False
+    # FA-3 (onda 1): TES de insumo fora de «Crédito de IPI em uso e consumo»; vazio = regra para todas.
+    input_tes: str = ""
 
 
 @dataclass(frozen=True)

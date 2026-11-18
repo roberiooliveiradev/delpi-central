@@ -795,6 +795,7 @@ def _snapshot(config: AuditConfig, lookback_days: int) -> dict:
         "unmatched_grace_days": config.unmatched_grace_days,
         "tolerance": config.tolerance,
         "participant_by_type_enabled": config.participant_by_type_enabled,
+        "input_tes": config.input_tes,
     }
 
 
@@ -806,6 +807,7 @@ def _config_from(snapshot: dict) -> AuditConfig:
         unmatched_grace_days=int(snapshot.get("unmatched_grace_days") or 3),
         improvements_enabled=True,
         participant_by_type_enabled=bool(snapshot.get("participant_by_type_enabled")),
+        input_tes=str(snapshot.get("input_tes") or ""),
     )
 
 
