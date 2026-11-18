@@ -422,6 +422,7 @@ export function PrcCasePage({ requestId, onBack }: Props) {
                   }
                   baselineLinks={detail.officialBaseline?.links || null}
                   baselineFields={detail.officialBaseline?.fields || null}
+                  requestStatus={detail.status || null}
                 />
 
                 {attachments.length || canUpload ? (

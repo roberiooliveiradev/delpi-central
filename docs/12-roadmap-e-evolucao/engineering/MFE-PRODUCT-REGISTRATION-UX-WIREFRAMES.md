@@ -801,3 +801,19 @@ Mudanca de **frontend/UX**, nao de contrato/backend. Deploy autorizado: **HML ap
 **Geometria AFTER (HML, 1440x900):** room 544→776px; msgs 408→640px; dock bottom 635→867 (vazio residual = 20px de padding do body). **Compacto intacto**: frame 544px/room 542px (min(34rem,70vh)), msgs scrollHeight 1665 vs clientHeight 406 (scroll real).
 
 **Testes:** contrato CSS `conversationPanelExpandedFill.contract.test.ts` (3 casos) + E2E HML 25/25 rerun no build corrigido (expand/collapse, draft, realtime F-01, Escape, foco, viewports).
+
+### EVA-PRC-REQUESTED-CHANGES-UX — resumo consolidado de alteracoes (UPDATE)
+
+**Defeito:** o card `Alterações solicitadas` exibia `Nenhuma alteração de campo registrada.` sempre que `changedPaths` vinha vazio, mesmo com `supplierLinkChanges` validas logo abaixo (card `Fornecedores` separado) — contradicao: titulo afirmava alteracoes e o corpo negava.
+
+**Correcao** (`PrcTechnicalSheetView.tsx`, unico owner render-only — Engineering e My Requests consomem o mesmo componente; nenhuma duplicacao criada):
+
+- Card unico `Alterações solicitadas` com resumo consolidado no topo: `N alterações cadastrais solicitadas` + uma linha por operacao (`N fornecedor(es) a adicionar` / `N vínculo(s) a alterar` / `N vínculo(s) a remover`).
+- Somente fornecedor: resumo + `Nenhuma alteração cadastral solicitada.` + subsecao `Fornecedores` com as operacoes (tag add/update/remove, identidade codigo/loja/nome, PN, catalogo, justificativa, antes x solicitado em update).
+- Somente campos: resumo + comparacao Antes x Solicitado; nenhuma subsecao de fornecedores vazia.
+- Ambos: resumo conjunto + as duas categorias.
+- Nenhuma alteracao (sem escalares e sem ops): mensagem unica `Nenhuma alteração solicitada.`
+- `suppliersHeaderActions` (ex.: `Editar ficha`) migra para o header do card consolidado, visivel quando ha qualquer alteracao.
+- Nova prop `requestStatus`: em `completed`, a nota de remocao vira registro historico (`Remoção registrada nesta solicitação.`), sem sugerir pendencia/acao; fora de `completed` preserva `pendente de efetivação no cadastro oficial.` Nenhuma afirmacao de efetivacao no TOTVS — so a Engineering API e o cadastro oficial detem essa verdade.
+
+**Sem mudanca de contrato/backend/AuthZ/RBAC/TOTVS.** Testes: +5 casos em `PrcTechnicalSheetView.test.tsx` (supplier-only, scalar-only, mixed, empty, completed) — 26/26 no arquivo; suites plugin-ui 2797, engineering 264, my-requests 21.

@@ -111,6 +111,7 @@ function PrcTechnicalSheetRead({
           | undefined) || null
       }
       baselineLinks={detail.officialBaseline?.links || null}
+      requestStatus={detail.status || null}
       specNotes={Object.fromEntries(
         Array.from(specByPath, ([p, s]) => [p, s.note]),
       )}

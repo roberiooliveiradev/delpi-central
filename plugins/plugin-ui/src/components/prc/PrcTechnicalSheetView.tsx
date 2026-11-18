@@ -69,6 +69,9 @@ export type PrcTechnicalSheetViewProps = {
   /** Operações de vínculo solicitadas (UPDATE) — fonte única da seção
    * de fornecedores; ausência de ops oculta o card por completo. */
   supplierLinkChanges?: PrcSheetLinkOp[] | null;
+  /** Status do caso (UPDATE) — em casos concluídos, a nota de remoção
+   * vira registro histórico e não sugere pendência/ação. */
+  requestStatus?: string | null;
   /** Vínculos oficiais do baseline (UPDATE) — identidade e «antes»
    * das operações remove/update. */
   baselineLinks?: PrcSheetBaselineLink[] | null;
@@ -118,6 +121,20 @@ const SUPPLIER_OP_LABELS: Record<PrcSheetLinkOp["operation"], string> = {
   add: "Adicionar fornecedor",
   remove: "Remover vínculo",
   update: "Alterar vínculo",
+};
+
+/* EVA-PRC-REQUESTED-CHANGES-UX — resumo consolidado por operação de
+ * vínculo (a seção representa TODAS as alterações, não só escalares). */
+const SUPPLIER_OP_SUMMARY: Record<
+  PrcSheetLinkOp["operation"],
+  (count: number) => string
+> = {
+  add: (n) =>
+    n === 1 ? "1 fornecedor a adicionar" : `${n} fornecedores a adicionar`,
+  update: (n) =>
+    n === 1 ? "1 vínculo a alterar" : `${n} vínculos a alterar`,
+  remove: (n) =>
+    n === 1 ? "1 vínculo a remover" : `${n} vínculos a remover`,
 };
 
 const LINK_ATTRS = ["partNumber", "catalogNumber"] as const;
@@ -176,6 +193,7 @@ function UpdateChangesSheet({
   fieldAdornment,
   supplierAdornment,
   officialCode: officialCodeProp,
+  requestStatus,
 }: Props) {
   const data = draft || {};
   const officialCode = scalarText(
@@ -185,6 +203,12 @@ function UpdateChangesSheet({
     (c) => !NON_SCALAR_CHANGE_PATHS.has(c.path),
   );
   const ops = supplierLinkChanges || [];
+  const opCounts = ops.reduce<Map<PrcSheetLinkOp["operation"], number>>(
+    (acc, op) => acc.set(op.operation, (acc.get(op.operation) || 0) + 1),
+    new Map(),
+  );
+  const hasChanges = scalarChanges.length > 0 || ops.length > 0;
+  const caseCompleted = requestStatus === "completed";
   const baselineByKey = new Map(
     (baselineLinks || []).map((l) => [
       linkKeyOf(l.supplierCode, l.store),
@@ -223,8 +247,32 @@ function UpdateChangesSheet({
         </div>
       </PrcSheetCard>
 
-      <PrcSheetCard title="Alterações solicitadas">
-        {scalarChanges.length ? (
+      {/* EVA-PRC-REQUESTED-CHANGES-UX — card único: resumo cobre campos
+       * cadastrais E operações de fornecedor; nunca «nenhuma alteração»
+       * enquanto existirem ops abaixo. */}
+      <PrcSheetCard
+        title="Alterações solicitadas"
+        headerActions={hasChanges ? suppliersHeaderActions : undefined}
+      >
+        {!hasChanges ? (
+          <p className="delpi-prc__muted">Nenhuma alteração solicitada.</p>
+        ) : (
+          <>
+            <ul className="delpi-prc__change-summary">
+              {scalarChanges.length ? (
+                <li>
+                  {scalarChanges.length === 1
+                    ? "1 alteração cadastral solicitada"
+                    : `${scalarChanges.length} alterações cadastrais solicitadas`}
+                </li>
+              ) : null}
+              {(["add", "update", "remove"] as const).map((op) =>
+                opCounts.get(op) ? (
+                  <li key={op}>{SUPPLIER_OP_SUMMARY[op](opCounts.get(op)!)}</li>
+                ) : null,
+              )}
+            </ul>
+            {scalarChanges.length ? (
           <div className="delpi-prc__change-list">
             {scalarChanges.map((c) => {
               const label = fieldLabel(c.path);
@@ -270,19 +318,19 @@ function UpdateChangesSheet({
               );
             })}
           </div>
-        ) : (
-          <p className="delpi-prc__muted">
-            Nenhuma alteração de campo registrada.
-          </p>
-        )}
-      </PrcSheetCard>
+            ) : (
+              <p className="delpi-prc__muted">
+                Nenhuma alteração cadastral solicitada.
+              </p>
+            )}
 
-      {ops.length ? (
-        <PrcSheetCard
-          title="Fornecedores"
-          headerActions={suppliersHeaderActions}
-        >
-          <div className="delpi-prc__change-list">
+            {ops.length ? (
+              <section
+                className="delpi-prc__change-suppliers"
+                aria-label="Fornecedores"
+              >
+                <h3 className="delpi-prc__change-subtitle">Fornecedores</h3>
+                <div className="delpi-prc__change-list">
             {ops.map((op, i) => {
               const base = baselineByKey.get(
                 linkKeyOf(op.key.supplierCode, op.key.store),
@@ -321,8 +369,9 @@ function UpdateChangesSheet({
                   ) : null}
                   {op.operation === "remove" ? (
                     <p className="delpi-prc__muted">
-                      Remoção solicitada — pendente de efetivação no
-                      cadastro oficial.
+                      {caseCompleted
+                        ? "Remoção registrada nesta solicitação."
+                        : "Remoção solicitada — pendente de efetivação no cadastro oficial."}
                     </p>
                   ) : null}
                   {attrRows.length ? (
@@ -376,9 +425,12 @@ function UpdateChangesSheet({
                 </div>
               );
             })}
-          </div>
-        </PrcSheetCard>
-      ) : null}
+                </div>
+              </section>
+            ) : null}
+          </>
+        )}
+      </PrcSheetCard>
     </>
   );
 }

@@ -401,4 +401,123 @@ describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () 
     );
     expect(document.getElementById("prc-field-unit")).toBeTruthy();
   });
+
+  it("somente fornecedor: resumo registra a operação, sem contradição de «nenhuma alteração»", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[
+          {
+            operation: "add",
+            key: { supplierCode: "000006", store: "01" },
+            fields: { partNumber: "30051236" },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("1 fornecedor a adicionar")).toBeTruthy();
+    expect(
+      screen.getByText("Nenhuma alteração cadastral solicitada."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Nenhuma alteração de campo registrada."),
+    ).toBeNull();
+    expect(screen.queryByText("Nenhuma alteração solicitada.")).toBeNull();
+    expect(screen.getByText("Adicionar fornecedor")).toBeTruthy();
+    expect(screen.getByText("30051236")).toBeTruthy();
+  });
+
+  it("somente campos: resumo cadastral e nenhuma subseção de fornecedores", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[{ path: "description", reason: "" }]}
+        baselineFields={{ description: "Terminal olhal M6 estanhado" }}
+      />,
+    );
+    expect(
+      screen.getByText("1 alteração cadastral solicitada"),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Nenhuma alteração cadastral solicitada."),
+    ).toBeNull();
+    expect(screen.queryByText("Fornecedores")).toBeNull();
+  });
+
+  it("campos + fornecedores: resumo conjunto e as duas categorias", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[
+          { path: "description", reason: "Padronização" },
+          { path: "unit", reason: "" },
+        ]}
+        baselineFields={{ description: "Antes X", unit: "UN" }}
+        supplierLinkChanges={[
+          {
+            operation: "add",
+            key: { supplierCode: "000006", store: "01" },
+            fields: { partNumber: "PN-1" },
+          },
+          {
+            operation: "remove",
+            key: { supplierCode: "000987", store: "02" },
+            reason: "Descontinuado",
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByText("2 alterações cadastrais solicitadas"),
+    ).toBeTruthy();
+    expect(screen.getByText("1 fornecedor a adicionar")).toBeTruthy();
+    expect(screen.getByText("1 vínculo a remover")).toBeTruthy();
+    expect(screen.getByText("Fornecedores")).toBeTruthy();
+    expect(screen.getByText("Justificativa: Descontinuado")).toBeTruthy();
+  });
+
+  it("sem alterações cadastrais nem de fornecedor: mensagem única", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[]}
+      />,
+    );
+    expect(screen.getByText("Nenhuma alteração solicitada.")).toBeTruthy();
+    expect(
+      screen.queryByText("Nenhuma alteração de campo registrada."),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Nenhuma alteração cadastral solicitada."),
+    ).toBeNull();
+    expect(screen.queryByText("Fornecedores")).toBeNull();
+  });
+
+  it("solicitação concluída: remoção vira registro histórico, sem pendência", () => {
+    render(
+      <PrcTechnicalSheetView
+        requestType="update"
+        requestStatus="completed"
+        draft={UPDATE_DRAFT}
+        changedPaths={[]}
+        supplierLinkChanges={[
+          {
+            operation: "remove",
+            key: { supplierCode: "000987", store: "02" },
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByText("Remoção registrada nesta solicitação."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/pendente de efetivação/)).toBeNull();
+    expect(screen.getByText("1 vínculo a remover")).toBeTruthy();
+  });
 });

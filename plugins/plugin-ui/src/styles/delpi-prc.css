@@ -907,3 +907,26 @@
 .delpi-prc__sheet--compact .delpi-prc__sheet-table td {
   padding: 4px 8px;
 }
+
+/* EVA-PRC-REQUESTED-CHANGES-UX — resumo consolidado e subseção de
+ * fornecedores dentro do card «Alterações solicitadas». */
+.delpi-prc__change-summary {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-prc__change-summary li + li {
+  margin-top: 0.125rem;
+}
+
+.delpi-prc__change-subtitle {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+}
