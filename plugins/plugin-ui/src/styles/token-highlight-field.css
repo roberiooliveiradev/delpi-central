@@ -1,0 +1,154 @@
+/**
+ * TokenHighlightField — campo nativo (input/textarea .delpi-ui-native-control)
+ * com camada de destaque atrás do texto. O backdrop desenha o fundo do campo
+ * (normal/desabilitado/somente-leitura) com os mesmos tokens de
+ * native-controls.css; o controle fica com fundo transparente e mantém
+ * borda, foco, texto, caret e seleção por cima da camada.
+ *
+ * Tokens: --delpi-ui-token-highlight-* com fallback ao acento do portal.
+ * Seletores sempre escopados à classe do componente — sem :root global, sem
+ * !important. Tema escuro só reescreve os tokens de cor (zero geometria).
+ */
+
+.delpi-ui-token-highlight-field {
+  --delpi-ui-token-highlight-bg: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+  --delpi-ui-token-highlight-border: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 42%,
+    transparent
+  );
+}
+
+:root[data-theme="dark"] .delpi-ui-token-highlight-field,
+.theme-dark .delpi-ui-token-highlight-field {
+  --delpi-ui-token-highlight-bg: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #66c7f4)) 28%,
+    transparent
+  );
+  --delpi-ui-token-highlight-border: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #66c7f4)) 58%,
+    transparent
+  );
+}
+
+.delpi-ui-token-highlight-field__stack {
+  /* Re-declara a resolução dos tokens de native-controls.css no escopo do
+   * componente para o backdrop enxergar os mesmos valores do controle
+   * (o controle re-declara os mesmos nomes no próprio elemento). */
+  --delpi-ui-control-bg: var(--delpi-ui-field-bg, var(--delpi-ui-surface, var(--surface, #ffffff)));
+  --delpi-ui-control-border: var(--delpi-ui-field-border, var(--delpi-ui-border, var(--border, #d0d7de)));
+  --delpi-ui-control-radius: 10px;
+  --delpi-ui-control-pad-y: 8px;
+  --delpi-ui-control-pad-x: 12px;
+  --delpi-ui-control-font-size: 13px;
+  --delpi-ui-control-line-height: 1.35;
+
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+/* Fundo do campo — mesmas cores/estados de native-controls.css. Clipa o
+ * espelho na caixa arredondada do campo (a borda opaca do controle cobre a
+ * faixa de 1px sob ela). */
+.delpi-ui-token-highlight-field__backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: var(--delpi-ui-control-radius, 10px);
+  background-color: var(--delpi-ui-control-bg);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.delpi-ui-token-highlight-field__stack[data-disabled] .delpi-ui-token-highlight-field__backdrop {
+  background-color: color-mix(
+    in srgb,
+    var(--delpi-ui-control-bg) 88%,
+    var(--delpi-ui-control-border)
+  );
+  opacity: 0.55;
+}
+
+.delpi-ui-token-highlight-field__stack[data-readonly] .delpi-ui-token-highlight-field__backdrop {
+  background-color: color-mix(
+    in srgb,
+    var(--delpi-ui-control-bg) 92%,
+    var(--delpi-ui-control-border)
+  );
+}
+
+/* Espelho: mesma caixa de conteúdo do controle. Métricas (fonte, padding,
+ * borda, largura) são copiadas do computed style do controle em JS — os
+ * valores aqui são fallback de primeiro paint e de ambientes sem layout. */
+.delpi-ui-token-highlight-field__mirror {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  box-sizing: border-box;
+  padding: var(--delpi-ui-control-pad-y) var(--delpi-ui-control-pad-x);
+  font: inherit;
+  font-size: var(--delpi-ui-control-font-size);
+  line-height: var(--delpi-ui-control-line-height);
+  color: transparent;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+
+.delpi-ui-token-highlight-field__stack[data-multiline] .delpi-ui-token-highlight-field__mirror {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.delpi-ui-token-highlight-field__mark {
+  color: transparent;
+  background-color: var(--delpi-ui-token-highlight-bg);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px var(--delpi-ui-token-highlight-border);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@media (forced-colors: active) {
+  .delpi-ui-token-highlight-field__mark {
+    background-color: transparent;
+    box-shadow: none;
+    outline: 1px solid MarkText;
+  }
+}
+
+/* O controle nativo fica transparente e por cima da camada: texto, caret,
+ * seleção, borda e anel de foco são dele. position:relative é o que garante
+ * a ordem de pintura acima do backdrop posicionado. */
+input.delpi-ui-native-control.delpi-ui-token-highlight-field__control,
+textarea.delpi-ui-native-control.delpi-ui-token-highlight-field__control {
+  position: relative;
+  display: block;
+  background-color: transparent;
+}
+
+input.delpi-ui-native-control.delpi-ui-token-highlight-field__control:disabled,
+textarea.delpi-ui-native-control.delpi-ui-token-highlight-field__control:disabled,
+input.delpi-ui-native-control.delpi-ui-token-highlight-field__control[readonly],
+textarea.delpi-ui-native-control.delpi-ui-token-highlight-field__control[readonly] {
+  background-color: transparent;
+}
+
+/* Erro — mesmo padrão do kit: classe de perigo + role="alert" + aria-* */
+.delpi-ui-token-highlight-field__error {
+  display: block;
+  margin: 4px 2px 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+}

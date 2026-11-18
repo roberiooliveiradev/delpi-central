@@ -13,6 +13,8 @@ import {
   SelectField,
   selectControlBemClasses,
   selectFieldPacClasses,
+  TokenHighlightField,
+  tokenHighlightFieldBemClasses,
 } from "../../components/forms";
 import type { CatalogEntryDraft } from "../types";
 
@@ -21,6 +23,9 @@ const selectPac = selectFieldPacClasses(PUC_PREFIX);
 const multiCn = multiSelectBemClasses(PUC_PREFIX);
 const readOnlyCn = readOnlyFieldPacBemClasses(PUC_PREFIX);
 const dropzoneCn = fileDropzoneBemClasses(PUC_PREFIX);
+const tokenHighlightCn = tokenHighlightFieldBemClasses(PUC_PREFIX);
+
+const TOKEN_DEMO_TOKENS = ["{cliente}", "{data}", "{link}"];
 
 const SELECT_OPTIONS = [
   { value: "sc", label: "Filial SC" },
@@ -102,6 +107,28 @@ export const formsCatalogEntries: CatalogEntryDraft[] = [
             }}
           />
         ),
+      },
+    ],
+  },
+  {
+    id: "forms.TokenHighlightField",
+    family: "forms",
+    exportName: "TokenHighlightField",
+    title: "TokenHighlightField",
+    description:
+      "Campo nativo com ocorrências exatas de marcadores destacadas numa camada atrás do texto.",
+    docAnchor: "tokenhighlightfield",
+    propsSummary: ["label", "tokens", "value", "onChange", "multiline"],
+    demos: [
+      {
+        id: "single-line",
+        label: "Uma linha",
+        render: () => <TokenHighlightSingleDemo />,
+      },
+      {
+        id: "multiline",
+        label: "Várias linhas",
+        render: () => <TokenHighlightMultiDemo />,
       },
     ],
   },
@@ -205,5 +232,42 @@ function FileDropzoneDemo() {
         <p className="puc-muted">Selecionados: {names.join(", ")}</p>
       ) : null}
     </div>
+  );
+}
+
+function TokenHighlightSingleDemo() {
+  const [value, setValue] = useState("Visita {cliente} em {data} — confirme {data}");
+
+  return (
+    <TokenHighlightField
+      id="puc-thf-subject"
+      label="Assunto"
+      hint="Marcadores exatos são destacados"
+      value={value}
+      onChange={setValue}
+      tokens={TOKEN_DEMO_TOKENS}
+      classNames={tokenHighlightCn}
+      placeholder="Escreva o assunto"
+    />
+  );
+}
+
+function TokenHighlightMultiDemo() {
+  const [value, setValue] = useState(
+    "Olá {cliente},\n\nsua visita está marcada para {data}.\nAcesse {link} para confirmar.\nUm marcador parcial {client} não é destacado.",
+  );
+
+  return (
+    <TokenHighlightField
+      id="puc-thf-body"
+      label="Mensagem"
+      value={value}
+      onChange={setValue}
+      tokens={TOKEN_DEMO_TOKENS}
+      multiline
+      rows={7}
+      fullWidth
+      classNames={tokenHighlightCn}
+    />
   );
 }

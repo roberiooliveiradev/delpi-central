@@ -389,6 +389,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "DateField"),
   vc("forms", "TextField"),
   vc("forms", "TextAreaField"),
+  vc("forms", "TokenHighlightField", {
+    addedAt: "2026-11-18",
+    description:
+      "Campo nativo (1 ou várias linhas) que destaca ocorrências exatas de marcadores numa camada atrás do texto.",
+  }),
   vc("forms", "MultiSelectField"),
   vc("forms", "ReadOnlyField"),
   vc("forms", "FileDropzone"),

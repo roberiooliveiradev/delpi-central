@@ -127,6 +127,16 @@ export {
   type TextAreaFieldClassNames,
   type TextAreaFieldProps,
 } from "./TextAreaField";
+export {
+  TokenHighlightField,
+  createDashboardTokenHighlightField,
+  splitTokenHighlightSegments,
+  tokenHighlightFieldBemClasses,
+  type DashboardTokenHighlightFieldProps,
+  type TokenHighlightFieldClassNames,
+  type TokenHighlightFieldProps,
+  type TokenHighlightSegment,
+} from "./TokenHighlightField";
 
 export {
   FilterCheckboxField,

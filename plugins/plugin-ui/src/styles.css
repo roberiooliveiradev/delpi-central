@@ -23,6 +23,7 @@
 @import "./styles/display-format.css";
 @import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
+@import "./styles/token-highlight-field.css";
 @import "./styles/chart-segment-button.css";
 @import "./styles/stacked-column-chart.css";
 @import "./styles/select-control.css";
