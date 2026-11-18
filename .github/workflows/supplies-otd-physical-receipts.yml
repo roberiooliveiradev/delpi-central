@@ -1,0 +1,115 @@
+name: Supplies | OTD physical receipts 852
+
+on:
+  pull_request:
+    paths:
+      - "api-delpi/app/**/otd*"
+      - "api-delpi/app/application/services/supplies/physical_otd_gate.py"
+      - "api-delpi/tests/test_otd*"
+      - "api-delpi/tests/test_purchase_order_otd*"
+      - "controllership-finance-api/controllership_finance_app/**/otd_receipts_routes.py"
+      - "controllership-finance-api/tests/test_lnf_otd_receipts_852.py"
+      - "controllership-finance-api/controllership_finance_app/main.py"
+      - "supplies-api/app/application/services/late_deliveries_composition_service.py"
+      - "plugins/supplies/src/features/deliveries/**"
+      - ".github/workflows/supplies-otd-physical-receipts.yml"
+  push:
+    branches: [main]
+    paths:
+      - "api-delpi/app/**/otd*"
+      - "api-delpi/tests/test_otd_physical_receipts_852.py"
+      - "controllership-finance-api/controllership_finance_app/**/otd_receipts_routes.py"
+      - "plugins/supplies/src/features/deliveries/**"
+      - ".github/workflows/supplies-otd-physical-receipts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  otd-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r api-delpi/requirements.txt
+      - name: Test physical OTD and pre-existing contracts
+        working-directory: api-delpi
+        run: |
+          PYTHONPATH=. pytest -q \
+            tests/test_otd_physical_receipts_852.py \
+            tests/test_otd_query_repository_sql.py \
+            tests/test_purchase_order_otd_sql.py \
+            tests/test_purchase_order_otd_routes_smoke.py
+
+  otd-invoice-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: controllership-finance-api/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install -e './shared[fastapi]'
+          pip install -r controllership-finance-api/requirements.txt
+      - name: Test S2S route and snapshot
+        working-directory: controllership-finance-api
+        run: PYTHONPATH=. pytest -q tests/test_lnf_otd_receipts_852.py
+
+  otd-supplies-bff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: supplies-api/requirements.txt
+      - name: Install BFF dependencies
+        run: |
+          pip install -e './shared[flask]'
+          pip install -r supplies-api/requirements.txt
+      - name: Test the consumer contract and page composition
+        working-directory: supplies-api
+        run: |
+          PYTHONPATH=. pytest -q \
+            tests/application/test_late_deliveries_composition.py \
+            tests/interface/http/test_deliveries_bff.py
+
+  otd-supplies-mfe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: plugins/supplies/package-lock.json
+      - name: Install shared frontend
+        run: npm ci --prefix plugins/plugin-ui
+      - name: Install supplies frontend
+        run: npm ci --prefix plugins/supplies
+      - name: Test deliveries UI
+        working-directory: plugins/supplies
+        run: npx vitest run src/features/deliveries
+      - name: Lint changed UI
+        working-directory: plugins/supplies
+        run: |
+          npx eslint \
+            src/features/deliveries/types.ts \
+            src/features/deliveries/query.ts \
+            src/features/deliveries/deliveriesTableConfig.ts \
+            src/features/deliveries/DeliveriesListTable.tsx \
+            src/features/deliveries/content.ts
+      - name: Build deployable MFE
+        working-directory: plugins/supplies
+        run: npx vite build

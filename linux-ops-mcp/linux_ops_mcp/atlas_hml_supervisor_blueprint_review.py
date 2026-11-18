@@ -14,8 +14,13 @@ from pathlib import Path
 
 _DIR = Path(__file__).resolve().parents[1] / "review-only"
 _SENTINEL = "/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE"
+_SIGNER_SENTINEL = "/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE"
 _UNIT = {
     "ConditionPathExists": _SENTINEL,
+    "RefuseManualStart": "yes",
+}
+_SIGNER_UNIT = {
+    "ConditionPathExists": _SIGNER_SENTINEL,
     "RefuseManualStart": "yes",
 }
 _HARDENED = {
@@ -72,6 +77,40 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
             "Persistent": "no",
         },
     },
+    "atlas-hml-local-signer.service.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML LOCAL SIGNER REVIEW ONLY",
+        },
+        "Service": {
+            **_HARDENED, "Type": "simple", "User": "atlas-hml-signer",
+            "Group": "atlas-hml-signer", "SupplementaryGroups": "",
+            "ExecStart": "/usr/bin/false",
+            "InaccessiblePaths": "/run/docker.sock /var/run/docker.sock",
+            "ReadOnlyPaths": "/run/atlas-hml-signer",
+            "ReadWritePaths": "/run/atlas-hml-signer-socket /var/lib/atlas-hml-signer-state",
+        },
+    },
+    "atlas-hml-nonroot-bridge.service.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML NONROOT BRIDGE REVIEW ONLY",
+        },
+        "Service": {
+            **_HARDENED, "Type": "oneshot", "User": "atlas-hml-bridge",
+            "Group": "atlas-hml-bridge",
+            "SupplementaryGroups": "atlas-hml",
+            "ExecStart": "/usr/bin/false",
+            "InaccessiblePaths": "/run/docker.sock /var/run/docker.sock",
+            "ReadOnlyPaths": "/run/atlas-hml-readonly",
+        },
+    },
+    "atlas-hml-local-signer.socket.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML SIGNER SOCKET ACTIVATION SUPERSEDED REVIEW ONLY",
+        },
+    },
 }
 _TMPFILES = "d /run/atlas-hml-readonly 0750 root atlas-hml -"
 _TMPFILES_NAME = "atlas-hml-runtime-dir.tmpfiles.review"
@@ -82,6 +121,7 @@ _ALWAYS_BLOCKS = (
     "SYSTEMD_HOST_SANDBOX_NOT_ATTESTED",
     "ROOT_PRODUCER_DOCKER_PRIVILEGE_UNREVIEWED",
     "SOCKET_PARENT_OWNER_NOT_ATTESTED",
+    "ROOT_PREBOUND_SIGNER_SOCKET_REJECTED",
     "RAW_DOCKER_ALIASES_AND_FDS_NOT_EXHAUSTIVELY_ATTESTED",
     "SNAPSHOT_ORIGIN_AND_REPLAY_NOT_ATTESTED",
     "INDEPENDENT_SECURITY_REVIEW_REQUIRED",
@@ -103,7 +143,7 @@ class HMLSupervisorBlueprintError(Exception):
 class HMLSupervisorBlueprintReview:
     status: str = "blocked"
     scope: str = "hml/public-hub"
-    files_reviewed: int = 5
+    files_reviewed: int = 8
     systemd_units_installed: bool = False
     docker_privilege_attested: bool = False
     presenter_isolation_attested: bool = False
@@ -157,7 +197,14 @@ def review_blueprint_sources(sources: dict[str, str]) -> HMLSupervisorBlueprintR
             raise HMLSupervisorBlueprintError("HML_BLUEPRINT_POLICY_DRIFT")
         # Intentionally different extensions and the false ExecStart/condition
         # must remain; review templates must never be runtime-ready.
-        if "Install" in actual or actual["Unit"].get("ConditionPathExists") != _SENTINEL:
+        expected_sentinel = (
+            _SIGNER_SENTINEL if name.startswith(("atlas-hml-local-signer.", "atlas-hml-nonroot-bridge."))
+            else _SENTINEL
+        )
+        if (
+            "Install" in actual
+            or actual["Unit"].get("ConditionPathExists") != expected_sentinel
+        ):
             raise HMLSupervisorBlueprintError("HML_BLUEPRINT_POLICY_DRIFT")
     return HMLSupervisorBlueprintReview()
 

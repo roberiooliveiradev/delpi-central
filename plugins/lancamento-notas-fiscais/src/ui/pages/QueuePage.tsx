@@ -94,6 +94,7 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
         ...filters,
         supplier: filters.supplier?.trim() || undefined,
         document: filters.document?.trim() || undefined,
+        product_code: filters.product_code?.trim() || undefined,
       });
     }, 350);
     return () => window.clearTimeout(timer);

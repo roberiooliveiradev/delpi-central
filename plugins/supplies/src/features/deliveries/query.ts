@@ -20,6 +20,7 @@ export const DELIVERIES_SORTABLE_COLUMNS = {
   quantity: "quantity",
   expected_delivery_date: "expected_delivery_date",
   receipt_entry_date: "receipt_entry_date",
+  receipt_effective_date: "receipt_effective_date",
   days_diff: "days_diff",
   status: "status",
 } as const;
@@ -38,6 +39,9 @@ export function createDefaultQuery(
   _branches: readonly string[] = [],
   now: Date = new Date(),
 ): DeliveriesQuery {
+  // Argumento mantido no contrato de chamada legado; filtro de unidades
+  // aplicável somente na autorização e não altera período padrão.
+  void _branches;
   const month = currentMonthRange(now);
   return {
     branches: [],

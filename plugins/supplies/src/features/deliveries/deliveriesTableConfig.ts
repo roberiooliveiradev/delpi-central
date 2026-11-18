@@ -9,6 +9,7 @@ export type DeliveryTableColumnKey =
   | "quantity"
   | "expected_delivery_date"
   | "receipt_entry_date"
+  | "receipt_effective_date"
   | "days_diff"
   | "status";
 
@@ -31,6 +32,7 @@ export const DELIVERIES_TABLE_COLUMNS: readonly DeliveryTableColumnDef[] = [
   { key: "quantity", label: C.colQty },
   { key: "expected_delivery_date", label: C.colPromised },
   { key: "receipt_entry_date", label: C.colEntry },
+  { key: "receipt_effective_date", label: C.colEffective },
   { key: "days_diff", label: C.colDays },
   { key: "status", label: C.colStatus },
 ];

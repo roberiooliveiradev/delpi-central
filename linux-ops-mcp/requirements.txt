@@ -3,4 +3,7 @@ fastapi>=0.110,<1.0
 uvicorn[standard]>=0.29,<1.0
 httpx>=0.27,<1.0
 mcp>=2,<3
+# Ed25519 envelope verification for architecture B snapshot trust (presenter
+# public-key path). Private keys must never be committed to Git.
+cryptography>=41,<46
 # Shared delpi_auth and delpi_mcp are installed from canonical repo packages.

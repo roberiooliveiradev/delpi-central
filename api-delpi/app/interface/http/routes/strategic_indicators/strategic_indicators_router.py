@@ -21,6 +21,7 @@ from app.application.security.api_delpi_permissions import (
     STRATEGIC_INDICATORS_TRENDS_VIEW,
     STRATEGIC_INDICATORS_VIEW,
 )
+from app.interface.http.pagination_query import LIMIT_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.application.services.strategic_indicators.si_client_error_policy import (
     is_si_not_found_error,
@@ -594,9 +595,7 @@ def get_si_settings(
 def list_si_settings_audit(
     request: Request,
     service: StrategicIndicatorsUserParityService = Depends(_si_user_parity_service),
-    limit: int | None = Query(
-        default=None, ge=1, le=200, description="Max audit rows (owner default: 20)."
-    ),
+    limit: int | None = LIMIT_QUERY("limit_optional_200", description="Max audit rows (owner default: 20)."),
     entity_key: str | None = Query(
         default=None, description="Optional audit entity key filter."
     ),
@@ -620,9 +619,7 @@ def list_si_settings_audit(
 def list_si_change_requests(
     request: Request,
     service: StrategicIndicatorsUserParityService = Depends(_si_user_parity_service),
-    limit: int | None = Query(
-        default=None, ge=1, le=200, description="Max rows (owner default: 100)."
-    ),
+    limit: int | None = LIMIT_QUERY("limit_optional_200", description="Max rows (owner default: 100)."),
     offset: int | None = Query(
         default=None, ge=0, description="Pagination offset."
     ),
@@ -646,9 +643,7 @@ def list_si_change_requests(
 def list_si_admin_departments(
     request: Request,
     service: StrategicIndicatorsUserParityService = Depends(_si_user_parity_service),
-    limit: int | None = Query(
-        default=None, ge=1, le=200, description="Max rows (BFF-side pagination)."
-    ),
+    limit: int | None = LIMIT_QUERY("limit_optional_200", description="Max rows (BFF-side pagination)."),
     offset: int | None = Query(
         default=None, ge=0, description="Pagination offset (BFF-side)."
     ),
@@ -673,9 +668,7 @@ def list_si_admin_department_indicators(
     request: Request,
     department_id: str,
     service: StrategicIndicatorsUserParityService = Depends(_si_user_parity_service),
-    limit: int | None = Query(
-        default=None, ge=1, le=200, description="Max rows (BFF-side pagination)."
-    ),
+    limit: int | None = LIMIT_QUERY("limit_optional_200", description="Max rows (BFF-side pagination)."),
     offset: int | None = Query(
         default=None, ge=0, description="Pagination offset (BFF-side)."
     ),
@@ -702,9 +695,7 @@ def list_si_admin_department_indicators(
 def list_si_goal_years_overview(
     request: Request,
     service: StrategicIndicatorsUserParityService = Depends(_si_user_parity_service),
-    limit: int | None = Query(
-        default=None, ge=1, le=200, description="Max rows (BFF-side pagination)."
-    ),
+    limit: int | None = LIMIT_QUERY("limit_optional_200", description="Max rows (BFF-side pagination)."),
     offset: int | None = Query(
         default=None, ge=0, description="Pagination offset (BFF-side)."
     ),

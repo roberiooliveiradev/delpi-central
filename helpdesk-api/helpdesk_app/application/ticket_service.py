@@ -73,12 +73,16 @@ class TicketService:
         idempotency: IdempotencyStore,
         directory=None,
         person_profiles=None,
+        solved_notifications=None,
+        followup_notifications=None,
     ):
         self._glpi = glpi
         self._oauth = oauth
         self._idempotency = idempotency
         self._directory = directory
         self._person_profiles = person_profiles
+        self._solved_notifications = solved_notifications
+        self._followup_notifications = followup_notifications
 
     def categories(self, subject: str):
         return self._glpi.list_categories(self._token(subject))
@@ -1116,6 +1120,9 @@ class TicketService:
                 return stored
             stored = StoredResponse(status_code=201, body={"id": followup_id})
             self._idempotency.save(subject, operation, key, stored)
+            # Somente após confirmação de criação. Nunca no replay/idempotência
+            # e nunca por alterações no retorno ou no status do chamado.
+            self._enqueue_followup_notification(token, ticket_id, followup_id)
             return stored
 
         except _PRE_WRITE_ONLY_ERRORS:
@@ -1126,6 +1133,62 @@ class TicketService:
             # persisted and a blind retry could duplicate it.
             self._idempotency.release(subject, operation, key)
             raise
+    def _enqueue_followup_notification(
+        self, token: str, ticket_id: int, followup_id: int
+    ) -> None:
+        """Falha fechada: autor comprovado, solicitante distinto, retorno público."""
+        if self._followup_notifications is None or not followup_id:
+            return
+        try:
+            actor_user_id = self._glpi.session_user_id(token)
+            if not actor_user_id or int(actor_user_id) <= 0:
+                logger.info("helpdesk_followup_notification_actor_unverified ticket_id=%s", ticket_id)
+                return
+            refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email="")
+            requester_user_id = refreshed.requester_identity.user_id
+            if not requester_user_id or int(requester_user_id) <= 0:
+                return
+            if int(requester_user_id) == int(actor_user_id):
+                # O solicitante não recebe avisos de seus próprios retornos.
+                return
+            # Timeline HLAPI exclui entradas privadas. Atribuição deve
+            # corresponder ao autor da sessão, nunca a um usuário inferido.
+            followup = next(
+                (
+                    row for row in refreshed.timeline
+                    if row.kind == "followup"
+                    and int(row.id) == int(followup_id)
+                    and row.author_identity.user_id == int(actor_user_id)
+                ),
+                None,
+            )
+            if followup is None:
+                logger.info("helpdesk_followup_notification_readback_unverified ticket_id=%s", ticket_id)
+                return
+            user_ids = self._directory_ids_for_glpi_users(token, [int(requester_user_id)])
+            recipient = user_ids.get(int(requester_user_id))
+            if not recipient:
+                logger.info("helpdesk_followup_notification_requester_unresolved ticket_id=%s", ticket_id)
+                return
+
+            from helpdesk_app.application.followup_ticket_notification_service import (
+                FollowupTicketNotice,
+                preview_from_html,
+            )
+
+            self._followup_notifications.enqueue(
+                FollowupTicketNotice(
+                    ticket_id=int(ticket_id),
+                    followup_id=int(followup_id),
+                    recipient_user_id=recipient,
+                    ticket_title=refreshed.title,
+                    preview=preview_from_html(followup.content_html or followup.content),
+                )
+            )
+        except Exception:
+            # A criação do retorno já foi confirmada e não deve ser revertida.
+            logger.exception("helpdesk_followup_notification_enqueue_failed ticket_id=%s", ticket_id)
+
     def update_followup(
         self,
         subject: str,
@@ -1402,6 +1465,39 @@ class TicketService:
                 body={"id": solution_id, "status_id": refreshed.status_id},
             )
             self._idempotency.save(subject, operation, key, stored)
+            # #1616: nunca notificar antes do read-back GLPI, nem em edição
+            # posterior de um chamado que já estava solucionado. A resolução
+            # do destinatário é baseada no SOLICITANTE do chamado, não no ator.
+            if detail.status_id != 5 and refreshed.status_id == 5 and self._solved_notifications:
+                try:
+                    glpi_requester = refreshed.requester_identity.user_id
+                    recipients = (
+                        self._directory_ids_for_glpi_users(token, [int(glpi_requester)])
+                        if glpi_requester and int(glpi_requester) > 0
+                        else {}
+                    )
+                    portal_recipient = recipients.get(int(glpi_requester)) if glpi_requester else None
+                    if portal_recipient:
+                        from helpdesk_app.application.solved_ticket_notification_service import (
+                            SolvedTicketNotice,
+                        )
+                        self._solved_notifications.enqueue(
+                            SolvedTicketNotice(
+                                ticket_id=int(ticket_id),
+                                solution_id=int(solution_id),
+                                recipient_user_id=portal_recipient,
+                                ticket_title=refreshed.title,
+                            )
+                        )
+                    else:
+                        logger.warning(
+                            "helpdesk_solved_notification_requester_unresolved ticket_id=%s",
+                            ticket_id,
+                        )
+                except Exception:
+                    # A solução já foi persistida e confirmada no GLPI; uma
+                    # indisponibilidade na notificação nunca deve falsear a resposta.
+                    logger.exception("helpdesk_solved_notification_enqueue_failed ticket_id=%s", ticket_id)
             logger.info(
                 "helpdesk_create_solution ticket_id=%s solution_id=%s status_id=%s",
                 ticket_id,

@@ -678,3 +678,104 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - `P2_DEPLOY_CONTRACT=DOCUMENTED_IN_PR`.
 - `P2_POLICY_CODE=NOT_IMPLEMENTED`, `P2_APPROVAL=NOT_IMPLEMENTED`, `P3_HOST_EXECUTOR=NOT_IMPLEMENTED`, `P4_PROD_DEPLOY=NOT_AUTHORIZED_OR_EXECUTED`.
 - Futuras operacoes exigem identificacao do servico piloto/health, conferencias CI/revisao e executor contido antes de qualquer ACT. A branch/documento nao representa deploy de codigo em runtime.
+
+## Etapa 58 | 17/11/2026 | Arquitetura B: evidência de processo e continuidade offline (PR em revisão)
+
+- **Issue #232; source-only.** Analisadores puros adicionais: observação declarativa e não confiável da identidade do processo Linux (UID/GID, grupos, capabilities, NNP, seccomp, LSM, namespace, FD e aliases Docker); continuidade in-memory que rejeita timestamp regressivo, mesmo instante/replay, payload divergente e troca de container/image.
+- Cobertura de testes positivos e adversariais integrada ao workflow Linux/Docker descartável. Uma declaração de processo íntegro, referência SHA-256 e histórico em memória **não provam** host real, autenticação do produtor, ausência de endpoints alternativos, nem impedem replay após reinício.
+- Sem entrada operacional, instalação systemd, ferramenta MCP adicional, alteração Docker, acesso a servidor, migrações, PREPARE/ACT ou deploy. O protocolo permanece **BLOCKED**; SEC-01 a SEC-10 e revisão humana independente ainda abertos.
+- Próximo marco: avaliar resultados CI, revisão DELPI Verifier única ao fim do pacote, posterior plano de atestação Linux real sob mudança operacional expressamente autorizada. **Progresso geral: 52%; não executar pull/deploy no srv-api.**
+
+## Etapa 59 | 17/11/2026 | Guarda de processo real no CI e sessão de snapshots via FD
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 50](./50-atlas-hml-b-preflight-e-sessao-failstop.md). **Status:** Draft PR / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Guarda reutilizável do próprio subprocesso Linux lê /proc/self/status e FDs; verifica UID/GID efetivos, salvos e de filesystem, grupos, capacidades, descritor prebound e variáveis de transporte Docker. Teste de subprocesso descartável usa a guarda e falha antes de atender ao receber FD Docker herdado; não é mais apenas asserção duplicada no harness.
+- Leitor root:grupo/0640 via descritor mantém API anterior e agora expõe registro **interno** com bytes e fingerprint do inode para testar continuidade; sem redução de verificações ACL, symlink, TOCTOU ou TTL.
+- Sessão source-only fail-stop aceita GETs repetidos sobre o mesmo arquivo imutável, recusa substituição suspeita, timestamp regressivo, identity change, falha de produtor/publicação e shutdown. Sem persistência, sem autenticação do produtor, sem autorização para retomar após falha.
+- Workflow de testes Linux e Docker descartável ampliado e cenários adversariais adicionados. Revisão independente do código apenas **uma vez** após CI da PR consolidada, conforme contrato; não equivale a SEC-01 humana.
+- Continuam pendentes: evidência do PID real em `srv-api`, isolamento Docker por todos os caminhos, origem criptograficamente atestada, replay após restart, privilégio do produtor root, ACL/LSM reais, rollback testado, SEC-01..10 e change-control.
+- **Progresso 52% conservador.** Quatro MCP READ, PREPARE/ACT OFF. Sem deploy, systemd, Docker/Compose PROD, contas, grupo, socket, filesystem `/run`, migração ou alterações operacionais.
+
+## Etapa 60 | 17/11/2026 | Envelope Ed25519, continuidade persistente, lifecycle e rollback tipado
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 51](./51-atlas-hml-b-signed-envelope-lifecycle-rollback.md). **Status:** Draft PR #261 / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Envelope versionado com geração, alvo HML, digest e recusa de JSON legado como autenticado; trust Ed25519 com keyring público, rotação/revogação; assinatura bem-sucedida permanece no domínio de confiança do produtor root (sem autenticidade independente cross-domain).
+- Store de continuidade fail-closed em diretórios descartáveis (atomic+fsync): replay entre reinícios simulados, regressão/gap de contador e corrupção.
+- Biblioteca de lifecycle (init→available→failed/recovery_blocked) com backpressure/timeouts e latch de integridade sem fallback Docker/PROD/PREPARE/ACT.
+- Produtor assinado source-only (claim+envelope+handoff atômico), baseline tipada de rollback com simulação só em fixture, matriz SEC-01..10 referenciada sem atestar, E2E descartável positivo/negativo/adversarial.
+- Guarda do presenter reforçada (inventário de FDs, sockets inesperados, `LISTEN_*`). CI Linux/Docker atualizado; `cryptography` apenas para verificação Ed25519.
+- **Pendentes:** SEC-01..10, parecer humano, isolamento host real, segregação de chave fora do host do produtor, instalação autorizada.
+- **Progresso 55%.** Quatro MCP READ, PREPARE/ACT OFF. **Sem pull/deploy.**
+
+
+## Etapa 61 | 17/11/2026 | Continuidade FD-safe transacional e signer boundary source-only
+
+- **Issue:** [#232](https://github.com/roberiooliveiradev/delpi-central/issues/232). Referência técnica: [runbook 52](./52-atlas-hml-b-state-lock-keyless-intent-listen-audit.md). Entrega em uma única Draft PR com código e testes; **source-only**.
+- `atlas_hml_b_continuity_store.py`: leitura estrita por FD e verificação DAC/ACL/inode, recusa symlink, hardlink, FIFO, troca TOCTOU; transação `read -> check -> atomic write/fsync` sob lock de diretório fail-closed (`flock`). Estado removido na mesma instância e falhas de fsync travam a sessão; processos ignorando lock/root e bootstrap em novo processo ainda não podem ser atestados.
+- `atlas_hml_b_presenter_process_guard.py`: validação rigorosa de LISTEN_PID/FDS/FDNAMES, negação de valores parciais, campos extras, nomes/path e FD diferente de 3; teste adversarial dedicado.
+- `atlas_hml_b_external_signing_intent.py`: pedido canônico de assinatura para produtor sem chave privada, validação signer-side de escopo/tempo/contador declarado e montagem/validação de envelope Ed25519 com chave pública. Teste CI cria chave só em subprocesso descartável; **não há signer operacional, chave externa atestada ou identidade de processo independente**.
+- `atlas_hml_b_snapshot_trust.py`: vinculação obrigatória entre `key_id` e a chave pública realmente fornecida; recusa keyring com identidade inconsistente.
+- CI Linux/Docker descartável ampliado; DELPI Verifier uma vez ao fim; SEC-01..10, revisão humana e change-control pendentes. Quatro MCP READ, PREPARE/ACT OFF, sem host/deploy. **Progresso global: 55%.**
+
+## Etapa 62 | 17/11/2026 | Assinador local Ed25519, ciclo de chaves e prontidão do piloto HML
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 53](./53-atlas-hml-b-local-signer-key-lifecycle-pilot.md). **Status:** Draft PR / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Decisões do responsável preservadas: governança própria, risco root+Docker aceito, Ed25519 local no `srv-api`, chave no host (root pode comprometê-la), assinador externo futuro, GLPI como cofre de cópia PKCS#8 (`ATLAS-HML-ED25519-PRIVATE-V1`), arquitetura B. Aceite ≠ parecer SEC-01 independente; exceção de governança permanece pendente se a política exigir independência.
+- `atlas_hml_b_key_lifecycle.py`: geração efêmera, fingerprint, PKCS#8 criptografado, DAC 0700/0600, rotação/revogação; nenhuma chave real no Git.
+- `atlas_hml_b_local_signer.py`: assinador local (sem Docker) com peer UID, anti-replay de geração, UDS one-shot, recusa de API genérica; chave privada nunca retornada.
+- `atlas_hml_b_local_signed_pipeline.py`: cadeia claim→intent→sign→seal→publish→verify→continuity integrada em fixtures.
+- `atlas_hml_b_pilot_readiness.py` + blueprints `.review` do signer; matriz do que é CI vs host vs autorização.
+- CI ampliado; DELPI Verifier uma vez ao fim. Quatro MCP READ, PREPARE/ACT OFF. **Progresso 58%. Sem pull/deploy.**
+
+
+## Etapa 63 | 17/11/2026 | Ponte não-root e continuidade segura do assinador para o piloto HML
+
+**Referências:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 54](./54-atlas-hml-b-etapa63-ponte-nonroot-retomada.md). **SOURCE-ONLY, NÃO OPERACIONAL; progresso de referência 58%.**
+
+- O produtor one-shot root continua com Docker compartilhado e gera unicamente o snapshot allowlisted HML. Nova **ponte não-root** recebe bytes de claim por leitura FD-check, revalida escopo/freshness, compõe intenção canônica, autentica o UID do signer via SO_PEERCRED no AF_UNIX e verifica a assinatura retornada antes de selar envelope. Nunca recebe chave privada, token GLPI ou acesso Docker.
+- Assinador local aceita **somente UID cliente não-root**. Persistência opcional (para arquitetura B candidata) via `HMLContinuityStore` isolado do consumidor: reserva de geração monotônica com flock/rename/fsync **antes** de retornar a assinatura; novo processo retoma exatamente de `last_generation+1`; checkpoint ausente/corrupto bloqueia a inicialização. Bootstrap geração 1 explicitamente **só em fixture descartável**; bootstrap operacional exige rito separado e aprovação.
+- Blueprints de bridge `.review` não instaláveis; signer socket agora prevê grupo dedicado `atlas-hml-bridge`, sem conceder ao bridge permissões sobre a chave privada `atlas-hml-signer`. Revisor lexical fail-closed e testes de drift ampliados.
+- Testes E2E de processo/socket/UID real do runner descartável, reboot simulado, replay, concorrência, falha de persistência, alvo PROD, claim stale e policy de peer; workflow Linux/Docker estendido. **CI não atesta systemd/UID real de `srv-api`, root pode comprometer chave e dados do mesmo host.**
+- Pendem SEC-01 ou exceção formal compatível com política, SEC-02..10 no host, bootstrap comprovado, autorização de key-generation e GLPI, diretórios/contas/unidades reais, rollback e janela operacional específica. Quatro MCP READ, PREPARE/ACT OFF, status blocked. **Não fazer pull/deploy, não instalar, não alterar Docker/host ou criar chave real.**
+
+## Etapa 64 | 17/11/2026 | Pré-ativação HML: contrato offline, bootstrap e rollback sob revisão
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 55](./55-atlas-hml-b-etapa64-preflight-operacional.md). **SOURCE-ONLY, BLOCKED**.
+- PR #270 da Etapa 63 mesclada (`cca1732ff0e916d1d8b4fa8b4d3aac780d43123e`); DELPI Verifier `ACCEPT_WITH_RESIDUAL`, independente OK, 1 rodada, nenhuma OC, registrado na issue.
+- Validador puro `atlas_hml_b_stage64_review.py` exige 13 classes de evidência HML e recusa campos extras, PROD, root bridge/signer, expansão MCP, flags de ativação e alteração de identidade. Evidência autodeclarada nunca vira atestação de host nem autorização.
+- Runbook 55 define modelo UID/DAC/UDS e revisão de systemd não instalável, plano de bootstrap com âncora externa e bloqueio em rollback, baseline somente leitura, condições STOP e rollback estritamente limitado a ATLAS; inclui ressalva do risco root no mesmo host.
+- `AGENTS.md` passa a distinguir explicitamente a governança ATLAS de branch/PR/manual merge/sem deploy automático. CI Linux/Docker inclui testes negativos do contrato offline; DELPI Verifier específico da Etapa 64 após CI.
+- Nenhuma chave, conta, checkpoint ou serviço real criado; nenhuma operação Docker/host; SEC-01..10, aceite operacional, perímetro real e rollback ensaiado pendentes. Quatro MCP READ, PREPARE/ACT OFF. **Progresso conservador 58%; não executar pull/deploy.**
+
+## Etapa 65 | 17/11/2026 | Correção SO_PEERCRED signer-owned + CI com UIDs distintos
+
+**Fonte:** issue #232 e [runbook 56](./56-atlas-hml-b-etapa65-signersocket-peer-real.md). **SOURCE-ONLY; status BLOCKED; progresso de referência 58%.**
+- Etapa 64 mesclada na main, PR #272; DELPI Verifier ACCEPT_WITH_RESIDUAL sem ordens de correção.
+- Linux AF_UNIX SO_PEERCRED pode refletir o UID root que chamou listen(), mesmo que o serviço herde o FD sob UID de signer. Fica **rejeitado** o uso de socket activation root para o signer; não permitir root como cliente nem enfraquecer peer verification.
+- Blueprints .review: signer.socket sem seção Socket; signer.service mantém ExecStart=/usr/bin/false e condição impossível; planejamento de socket parent signer:bridge 02750 e arquivo 0660, com chave e store isolados.
+- Novo teste Linux elevado no runner GitHub CI descarta UID idêntico: processos UID 61021 (signer) e UID 61022 (bridge), SO_PEERCRED, chaves/Docker negados à bridge e gerações 1->2 após restart. Nunca cria usuários nem toca srv-api.
+- Exigem-se gates reais: SEC-01/exceção, SEC-02..10, unidades operacionais revisadas, primeiro checkpoint com âncora externa, autorização de chave/GLPI e instalação HML, baseline PROD e rollback. Quatro MCP READ, PREPARE/ACT OFF. **NÃO executar pull/deploy.**
+
+## Etapa 66–69 | 18/11/2026 | Pacote consolidado de pré-ativação HML
+
+**Fonte:** issue #232 e [runbook 57](./57-atlas-hml-b-etapas-66-69-preactivation-bundle.md). **SOURCE-ONLY; status BLOCKED.**
+- Base: merge Etapa 65 `8db122c0a50196d9124c936645f46cd912ade164` (PR #274); Verifier `ACCEPT_WITH_RESIDUAL`.
+- **66:** cadeia claim→bridge→signer→envelope→signed presenter; `atlas_hml_b_signer_listen` (bind após non-root); `atlas_hml_b_signed_presenter`; orchestrator disposable.
+- **67:** `atlas_hml_b_bootstrap_control` (ausência≠genesis + âncora externa); `atlas_hml_b_counter_recovery` (piso monotônico); ciclo de chaves efêmeras / PKCS#8 / id GLPI documentado.
+- **68:** `linux-ops-mcp/candidate-units/*.candidate` separado de `review-only/`; revisor anti-`[Install]`; hardening AF_UNIX; ExecStart permanece `/usr/bin/false`.
+- **69:** preflight estruturado sanitizado; handoff checklist; runbook de instalação futura 12 passos; rollback só ATLAS.
+- CI paths/pytest ampliados; quatro MCP READ; PREPARE/ACT OFF. Sem pull/deploy/chave real/users no host.
+- **Progresso conservador 60%** (dev pré-ativação integrado); atestação srv-api, SEC-01..10, bootstrap operacional e install systemd permanecem pendentes.
+
+
+## Etapa 70 | 18/11/2026 | Baseline no srv-api e endurecimento do socket signer:bridge
+
+**Fonte:** issue #232 e runbook 58 (./58-atlas-hml-b-etapa70-baseline-socket-dac.md). **SOURCE-ONLY; status BLOCKED**.
+- Baseline do operador: Ubuntu 24.04, Docker/containerd ativos; HML running+healthy; PROD running **sem healthcheck** (nao declarar healthy); socket Docker root:docker 0660 com ACL basica; usuario atlas-hml presente, bridge e signer ausentes; sem units/diretorios ATLAS; LSM carregados, mas perfis nao atestados.
+- Repositorio no host encontrava-se em bff9f1e (origin/main local igual); alteracoes locais preservadas: somente modo executavel do script up-hml-sequential.sh e linha gerada em SOURCES.txt. Nenhum pull, stash, reset ou deploy.
+- Falha no design corrigida: parent candidato do socket passou de 0750 a **02750** signer:bridge, herdando GID do grupo sem chown; bind exige UID/GID/mode exatos e recusa ACL, symlink, caminho existente ou troca de inode. Nao aceita GID primario como fallback.
+- Revisor lexical de tmpfiles exige estritamente as cinco entradas conhecidas; CI testa drift de modo/GID, preexistencia, ACL, symlink, e ponte real sob UIDs diferentes no runner descartavel.
+- PREPARE/ACT OFF; quatro MCP READ; SEC-01..10, auditoria host, chave real, bootstrap e install permanecem pendentes. **Progresso conservador 60%; sem pull/deploy**.

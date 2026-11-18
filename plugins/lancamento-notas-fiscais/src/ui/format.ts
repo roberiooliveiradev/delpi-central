@@ -51,6 +51,7 @@ export function hasActiveFilters(
       statusDiffers ||
       (filters.supplier && filters.supplier.trim()) ||
       (filters.document && filters.document.trim()) ||
+      (filters.product_code && filters.product_code.trim()) ||
       filters.issued_from ||
       filters.issued_to ||
       filters.received_from ||

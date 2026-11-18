@@ -1,0 +1,8 @@
+# ATLAS HML STAGE 65 - LEGACY ROOT-PREBOUND SIGNER SOCKET SUPERSEDED.
+# Root calling listen(2) can make SO_PEERCRED appear UID 0 to bridge.
+# No Socket section or Install section; impossible sentinel: NEVER INSTALL.
+# Signer must bind/listen as its own nonroot UID in future reviewed service.
+[Unit]
+Description=ATLAS HML SIGNER SOCKET ACTIVATION SUPERSEDED REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes

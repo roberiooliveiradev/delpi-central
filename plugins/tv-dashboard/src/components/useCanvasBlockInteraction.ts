@@ -292,7 +292,7 @@ export function useCanvasBlockInteraction({
 
   const pointerListenersRef = useRef({
     onPointerMove: (_event: PointerEvent) => {},
-    onPointerUp: () => {},
+    onPointerUp: (_event: PointerEvent) => {},
     onPendingMove: (_event: PointerEvent) => {},
     onPendingUp: (_event: PointerEvent) => {},
   });

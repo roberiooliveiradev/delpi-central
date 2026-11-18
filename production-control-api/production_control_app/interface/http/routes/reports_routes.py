@@ -37,6 +37,27 @@ def get_reports_catalog(
     return ok(data)
 
 
+@router.get("/reports/product-sales", operation_id="get_pcp_product_sales_report")
+def get_product_sales_report(
+    request: Request,
+    branch: str = Query(..., pattern=r"^(01|02)$"),
+    productCode: str = Query(..., min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$"),
+    months: int = Query(12, ge=12, le=36),
+):
+    user = resolve_user(request)
+    try:
+        data = build_reports_service().product_sales(
+            user, branch=branch, product_code=productCode, months=months
+        )
+    except (InvalidBranch, ValueError) as exc:
+        return fail(str(exc), 422)
+    except (BranchAccessDenied, PermissionError) as exc:
+        return fail(str(exc), 403)
+    except DelpiGatewayError as exc:
+        return fail(str(exc), status_from_gateway_error(exc))
+    return ok(data)
+
+
 @router.get("/reports/stock-balances")
 def get_stock_balances_report(
     request: Request,

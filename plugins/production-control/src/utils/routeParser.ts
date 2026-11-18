@@ -54,7 +54,8 @@ export type PpcRoute = {
 const DEMAND_STATUSES = new Set(["late", "at_risk", "covered_by_order", "covered_by_stock"]);
 const MATERIALS_ISSUES = new Set(["excess", "shortage", "pa-shortage"]);
 const MATERIALS_SET_STATUSES = new Set(["shortage", "no_commitment", "ok", "all"]);
-const REPORT_IDS = new Set(["stock-balances", "production-orders"]);
+/** IDs aceitos nos links de Relatórios; mesma fonte usada no catálogo visual. */
+export const REPORT_IDS = new Set(["stock-balances", "production-orders", "product-sales"]);
 /** Situações do material na bancada — espelham o contrato do BFF. */
 const LINE_FEEDER_STATUSES = new Set(["covered", "to_pick", "at_risk", "unknown"]);
 

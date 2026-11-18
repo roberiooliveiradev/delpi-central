@@ -21,7 +21,7 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
     report = review.review_blueprint_sources(files)
     assert report.status == "blocked"
     assert report.scope == "hml/public-hub"
-    assert report.files_reviewed == 5
+    assert report.files_reviewed == 8
     for name, value in asdict(report).items():
         if name.endswith("_attested") or name.endswith("_approved") or name in (
             "systemd_units_installed", "prepare_eligible", "can_execute",
@@ -32,6 +32,9 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
     assert "PREPARE_DISABLED" in report.blocks
     assert "ACT_DISABLED" in report.blocks
     assert all(path.endswith(".review") for path in files)
+    assert "[Socket]" not in files["atlas-hml-local-signer.socket.review"]
+    assert "[Install]" not in files["atlas-hml-local-signer.socket.review"]
+    assert "ROOT_PREBOUND_SIGNER_SOCKET_REJECTED" in report.blocks
 
 
 @pytest.mark.parametrize("file_name,old,new", [
@@ -45,6 +48,20 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
      "User=atlas-hml", "User=root"),
     ("atlas-hml-snapshot-presenter.service.review",
      "Group=atlas-hml", "Group=docker"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "User=atlas-hml-bridge", "User=root"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "SupplementaryGroups=atlas-hml", "SupplementaryGroups=atlas-hml docker"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "ExecStart=/usr/bin/false", "ExecStart=/usr/bin/python3 /opt/atlas/bridge.py"),
+    ("atlas-hml-local-signer.socket.review",
+     "Description=ATLAS HML SIGNER SOCKET ACTIVATION SUPERSEDED REVIEW ONLY",
+     "Description=ATLAS HML LOCAL SIGNER SOCKET REVIEW ONLY"),
+    ("atlas-hml-local-signer.service.review",
+     "ReadWritePaths=/run/atlas-hml-signer-socket /var/lib/atlas-hml-signer-state",
+     "ReadWritePaths=/run/docker.sock"),
+    ("atlas-hml-local-signer.service.review",
+     "SupplementaryGroups=", "SupplementaryGroups=docker"),
     ("atlas-hml-snapshot-presenter.service.review",
      "SupplementaryGroups=", "SupplementaryGroups=docker"),
     ("atlas-hml-snapshot-presenter.service.review",
@@ -111,6 +128,17 @@ def test_hidden_or_added_privileged_directives_are_denied(files, new_line):
         review.review_blueprint_sources({**files, file_name: source})
 
 
+def test_legacy_signer_socket_cannot_regain_a_listener(files):
+    name = "atlas-hml-local-signer.socket.review"
+    changed = files[name] + (
+        "\n[Socket]\nListenStream=/run/atlas-hml-signer/sign.sock\n"
+        "SocketUser=root\nSocketGroup=atlas-hml-bridge\nSocketMode=0660\n"
+    )
+    with pytest.raises(review.HMLSupervisorBlueprintError,
+                       match="HML_BLUEPRINT_POLICY_DRIFT"):
+        review.review_blueprint_sources({**files, name: changed})
+
+
 def test_no_service_template_may_gain_an_install_section(files):
     name = "atlas-hml-snapshot-producer.service.review"
     with pytest.raises(
@@ -125,10 +153,14 @@ def test_runtime_activation_guard_cannot_be_removed(files):
     for name, source in files.items():
         if name.endswith("tmpfiles.review"):
             continue
-        changed = source.replace(
+        changed = source
+        for sentinel in (
             "ConditionPathExists=/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE",
-            "ConditionPathExists=/etc/os-release",
-        )
+            "ConditionPathExists=/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE",
+        ):
+            changed = changed.replace(
+                sentinel, "ConditionPathExists=/etc/os-release",
+            )
         with pytest.raises(
             review.HMLSupervisorBlueprintError, match="HML_BLUEPRINT_POLICY_DRIFT",
         ):

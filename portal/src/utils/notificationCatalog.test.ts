@@ -57,6 +57,17 @@ describe("resolveNotificationPreferenceDisplay", () => {
     assert.equal(posting.applicationName, "Lançamento de Notas Fiscais");
   });
 
+  it("Helpdesk: categoria de solução e ícone do manifesto", () => {
+    const display = resolveNotificationPreferenceDisplay(
+      "helpdesk_ticket_solved",
+      FALLBACK_NOTIFICATION_CATALOG,
+      [{ id: "helpdesk", name: "Helpdesk", icon: "headset" }],
+    );
+    assert.equal(display.notificationName, "Soluções dos meus chamados");
+    assert.equal(display.applicationName, "Helpdesk");
+    assert.equal(display.iconName, "headset");
+  });
+
   it("portal RH: pluginId rhdelpi casa com o app publicado no Admin", () => {
     const display = resolveNotificationPreferenceDisplay(
       "portal_rh",

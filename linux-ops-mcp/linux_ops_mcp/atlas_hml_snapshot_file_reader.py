@@ -12,6 +12,7 @@ from __future__ import annotations
 import grp
 import os
 import stat
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -40,6 +41,17 @@ class HMLSnapshotFileError(Exception):
         super().__init__(code)
 
 
+@dataclass(frozen=True, slots=True)
+class HMLSnapshotFileRecord:
+    """Internal FD-checked record. The raw bytes remain UNTRUSTED."""
+    raw: bytes
+    diagnostic: SnapshotDiagnostic
+    device: int
+    inode: int
+    mtime_ns: int
+    ctime_ns: int
+
+
 def _metadata_signature(value: os.stat_result) -> tuple[int, ...]:
     return (
         value.st_dev, value.st_ino, value.st_uid, value.st_gid,
@@ -58,12 +70,12 @@ def _read_bounded(fd: int, expected_size: int) -> bytes:
     return data
 
 
-def _review_from_directory(
+def _read_record_from_directory(
     directory: Path, *,
     owner_uid: int,
     expected_gid: int,
     now: datetime,
-) -> SnapshotDiagnostic:
+) -> HMLSnapshotFileRecord:
     """Internal fixture-capable read. Never an MCP/CLI/HTTP entrypoint.
 
     Production callers MUST use read_fixed_hml_snapshot() rather than
@@ -140,7 +152,12 @@ def _review_from_directory(
             raise HMLSnapshotFileError("HML_SNAPSHOT_FILE_ACL_UNTRUSTED")
 
         try:
-            return review_untrusted_snapshot(raw, now=now)
+            diagnostic = review_untrusted_snapshot(raw, now=now)
+            return HMLSnapshotFileRecord(
+                raw=raw, diagnostic=diagnostic, device=before.st_dev,
+                inode=before.st_ino, mtime_ns=before.st_mtime_ns,
+                ctime_ns=before.st_ctime_ns,
+            )
         except SnapshotContractError as exc:
             raise HMLSnapshotFileError(exc.code) from None
     except FileNotFoundError:
@@ -154,6 +171,15 @@ def _review_from_directory(
             os.close(file_fd)
         if directory_fd >= 0:
             os.close(directory_fd)
+
+
+def _review_from_directory(
+    directory: Path, *, owner_uid: int, expected_gid: int, now: datetime,
+) -> SnapshotDiagnostic:
+    """Preserve original review API; record access remains internal to tests."""
+    return _read_record_from_directory(
+        directory, owner_uid=owner_uid, expected_gid=expected_gid, now=now,
+    ).diagnostic
 
 
 def read_fixed_hml_snapshot(*, now: datetime) -> SnapshotDiagnostic:

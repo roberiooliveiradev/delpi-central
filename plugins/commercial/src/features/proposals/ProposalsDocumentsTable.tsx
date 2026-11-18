@@ -75,7 +75,7 @@ function buildColumns(
     { key: "versao", sortable: true, header: "Versão", render: (row) => row.versao || "—" },
     {
       key: "data", sortable: true,
-      header: "Data",
+      header: "Data da proposta",
       render: (row) => formatDisplayDate(row.data),
     },
     {
@@ -253,7 +253,7 @@ export function ProposalsDocumentsTable({
                   },
                   {
                     id: "data",
-                    label: "Data",
+                    label: "Data da proposta",
                     valueTone: "meta",
                     value: formatDisplayDate(row.data),
                   },

@@ -344,7 +344,7 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
                 { label: "Nº OV", value: displayValue(data.cabecalho.numero_ov) },
                 { label: "Proposta interna", value: displayValue(data.cabecalho.proposta_interna) },
                 { label: "Cliente", value: displayValue(data.cliente.nome) },
-                { label: "Data", value: displayValue(data.cabecalho.data) },
+                { label: "Data da proposta", value: displayValue(data.cabecalho.data) },
                 { label: "Versão", value: displayValue(data.cabecalho.versao) },
                 { label: "Status", value: displayValue(data.cabecalho.status) },
                 {
