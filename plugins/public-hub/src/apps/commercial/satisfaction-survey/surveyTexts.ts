@@ -21,7 +21,7 @@ export const SURVEY_TEXTS: GuidedQuestionnaireTexts = {
   submit: "Enviar respostas",
   submitting: "Enviando…",
   requiredLabel: "obrigatória",
-  optionalLabel: "opcional",
+  optionalLabel: "(opcional)",
   scaleError: "Selecione uma nota.",
   scaleErrorWithNa: 'Selecione uma nota ou "Não se aplica".',
   textError: "Escreva sua resposta.",

@@ -107,6 +107,16 @@
     gap: 16px;
     margin: -160px auto 40px;
   }
+
+  /* R21: a variante tall herda a mesma faixa/sobreposição do media —
+     o seletor de duas classes fora do media vencia o de uma classe. */
+  .delpi-ui-form-page--band-tall .delpi-ui-form-page__band {
+    height: 220px;
+  }
+
+  .delpi-ui-form-page--band-tall .delpi-ui-form-page__column {
+    margin-top: -160px;
+  }
 }
 
 /* --- Cartão base (FormCard) ----------------------------------------------- */
@@ -372,7 +382,11 @@
 
 /* --- Pergunta (QuestionCard) ----------------------------------------------- */
 
+/* R22: legend flutuado é renderizado DENTRO do box do fieldset em vez de
+   cavalgar a borda superior (sem "entalhe"); como ocupa 100% da largura,
+   o conteúdo anônimo seguinte cai abaixo dele. */
 .delpi-ui-form-question__legend {
+  float: left;
   display: flex;
   flex-direction: column;
   gap: 12px;

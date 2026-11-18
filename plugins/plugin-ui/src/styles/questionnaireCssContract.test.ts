@@ -253,4 +253,32 @@ describe("questionnaire.css — contrato de tokens e escopo", () => {
     );
     expect(stackMedia).toBeTruthy();
   });
+
+  it("P6.1 R22: legend da pergunta flutua para dentro do cartão (sem entalhe na borda)", () => {
+    const legendBlock = declarationBlock(
+      /\.delpi-ui-form-question__legend\s*\{([^}]*)\}/,
+    );
+    expect(normalize(legendBlock)).toContain("float: left");
+    expect(normalize(legendBlock)).toContain("width: 100%");
+    expect(normalize(legendBlock)).toContain("padding: 0");
+  });
+
+  it("P6.1 R21: variante tall ≥600 px usa faixa 220 e sobreposição 160 (sem !important)", () => {
+    const media = css.match(
+      /@media\s*\(min-width:\s*600px\)\s*\{([\s\S]*?)\n\}/,
+    );
+    expect(media, "bloco @media 600px").toBeTruthy();
+    const inner = media![1];
+    const tallBand = inner.match(
+      /\.delpi-ui-form-page--band-tall\s+\.delpi-ui-form-page__band\s*\{([^}]*)\}/,
+    );
+    expect(tallBand, "faixa tall dentro do media").toBeTruthy();
+    expect(normalize(tallBand![1])).toContain("height: 220px");
+    const tallColumn = inner.match(
+      /\.delpi-ui-form-page--band-tall\s+\.delpi-ui-form-page__column\s*\{([^}]*)\}/,
+    );
+    expect(tallColumn, "coluna tall dentro do media").toBeTruthy();
+    expect(normalize(tallColumn![1])).toContain("margin-top: -160px");
+    expect(inner).not.toContain("!important");
+  });
 });
