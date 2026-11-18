@@ -85,7 +85,7 @@ def _run(recipients, monkeypatch):
     }
     repo.list_active_recipients.return_value = recipients
     repo.create_run.return_value = {"id": "run-id"}
-    repo.finish_run.return_value = {"id": "run-id", "status": "succeeded"}
+    repo.finish_run.side_effect = lambda **kwargs: {"id": "run-id", "status": kwargs["status"]}
     repo.create_delivery.return_value = {"id": "delivery-id"}
     repo.list_deliveries_for_run.return_value = []
 
@@ -107,7 +107,7 @@ def test_wrong_recipient_never_receives_email_or_artifact(monkeypatch):
         [{"userId": str(uuid4()), "email": "outro@delpi.com.br"}],
         monkeypatch,
     )
-    assert result["status"] == "succeeded" or result.get("status") in ("failed", "error")
+    assert result["status"] == "failed"
     assert repo.finish_run.call_args.kwargs["status"] == "failed"
     mail.send_mail_to.assert_not_called()
     artifacts.save_html.assert_not_called()
