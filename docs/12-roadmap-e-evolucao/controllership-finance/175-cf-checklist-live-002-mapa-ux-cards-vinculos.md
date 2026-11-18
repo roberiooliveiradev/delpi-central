@@ -142,9 +142,9 @@ Histórico ▸ revisão 7 — "retirada EXT-BNB-CC" por @user
 
 ## 8.2 Exigência retirada e reativada (visualização)
 
-Item `CANCELLED` por `catalog_retire` aparece em **seção "Retiradas"** colapsável com contador — fora da lista ativa mas com histórico completo: nome, data/motivo da retirada (`state_reason` + evento), documento anexado navegável no detalhe, decisões e mensagens preservadas. Nada é apagado; o arquivo anexado **não** é cancelado (retirada da exigência ≠ cancelamento do documento — doc 174 §3).
+Item `CANCELLED` aparece em **seção "Retiradas"** colapsável com contador — fora da lista ativa mas com histórico completo: nome, data/motivo do cancelamento (`state_reason` + evento), documento anexado navegável no detalhe, decisões e mensagens preservadas. A origem do cancelamento é distinguível: retirada do catálogo (`catalog_retire`) × cancelamento manual × outra/ausente — só a primeira é reativável pelo sync (doc 174 §3.1). Nada é apagado; o arquivo anexado **não** é cancelado (retirada da exigência ≠ cancelamento do documento — doc 174 §3).
 
-**Reativação (DECIDED_BY_PO):** exigência reativada volta ao conjunto ativo como card `EXPECTED` normal (restore do mesmo item — doc 174 §3.1); a evidência histórica permanece acessível no detalhe. Correções/pendências encerradas por retirada **não** reabrem visualmente. **Nova** exigência (`ADD`) é card novo sem herdar histórico de item homônimo — nunca exibe "documento já anexado" de outro item.
+**Reativação (DECIDED_BY_PO):** exigência retirada do catálogo, quando reativada, volta ao conjunto ativo como card `EXPECTED` normal (restore do mesmo item — doc 174 §3.1); item cancelado manualmente **nunca** retorna automaticamente. A evidência histórica permanece acessível no detalhe, **mas não é considerada automaticamente válida** — o card volta `EXPECTED` aguardando revalidação governada, salvo prova de validade (D8). Correções/pendências encerradas por retirada **não** reabrem visualmente e são rotuladas como **encerramento administrativo** (`requirement_retired`/`catalog_retire`) — nunca como rejeitada por pessoa nem como resolvida por execução. **Nova** exigência (`ADD`) é card novo sem herdar histórico de item homônimo — nunca exibe "documento já anexado" de outro item.
 
 ## 9. O que NÃO mudar
 

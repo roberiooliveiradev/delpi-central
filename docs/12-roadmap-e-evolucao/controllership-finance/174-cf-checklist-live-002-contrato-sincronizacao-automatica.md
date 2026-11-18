@@ -1,6 +1,6 @@
 # CF-CHECKLIST-LIVE-002 — Entregável 2: Contrato de Sincronização Automática de Exigências Documentais
 
-- **Status:** `PROPOSED` (Gate 1 — R3, aguardando revisão arquitetural final)
+- **Status:** `PROPOSED` (Gate 1 — R5 incorporada, aguardando revisão arquitetural final)
 - **Depende de:** ADR-005 (identidade de sequência + revisões internas)
 - **Base técnica:** HEAD `917e5c764c`+ (evidências revalidadas; enums e consumers conferidos no código)
 
@@ -46,11 +46,12 @@
 syncable(competence c) ⇔
       c.status = 'OPEN'
   AND c.first_completed_at IS NULL          -- nunca concluída (§2.2)
-  AND c.completion_record != 'UNEVALUATED'  -- legado indeterminado bloqueia
+  AND c.completion_record = 'NEVER'         -- avaliação positiva obrigatória (§2.2)
   AND derive_closing_state(c.period).state = 'PENDING'
+  AND business_guards_pass(c)               -- registro existe, competência não excluída, dados determinados
 ```
 
-Recomputado **dentro** da transação de aplicação, sob `FOR UPDATE` na competência. **Fail-closed:** leitura indeterminada ou `UNEVALUATED` → `SKIPPED`/`FAILED`, nunca mutação presumida — ausência de evidência não é ausência de conclusão.
+Recomputado **dentro** da transação de aplicação, sob `FOR UPDATE` na competência. A condição é uma **lista positiva**: `completion_record` precisa valer `NEVER` comprovadamente — `COMPLETED`, `UNEVALUATED`, valor desconhecido ao enum ou ausência de registro bloqueiam; não basta "diferente de `UNEVALUATED`". **Fail-closed:** leitura indeterminada, valor fora do enum, inconsistência entre `first_completed_at` e `completion_record`, falha na derivação do estado ou na consulta → `SKIPPED`/`FAILED`, nunca mutação presumida — ausência de evidência não é ausência de conclusão. Valores futuros do enum entram no predicado somente por revisão explícita deste contrato.
 
 ### 2.4 Exclusão no nível do item (item-locked)
 
@@ -64,17 +65,22 @@ Item locked ≠ bloqueio do run: vira `skipped` com razão tipada (§5).
 
 ### 2.5 Cenários de conclusão — resolução do predicado
 
-| Cenário | `first_completed_at` | derive atual | Sync? |
-|---|---|---|---|
-| Nunca concluído | NULL | PENDING | ✅ |
-| Concluído e estável | SET | COMPLETED | ❌ |
-| Concluído, depois reaberto (pacote/clarification/complemento) | **SET** | PENDING | ❌ — marcador vence o estado derivado |
-| Rejeitado terminalmente | NULL/SET | TERMINALLY_REJECTED | ❌ |
-| Legado sem avaliação (`UNEVALUATED`) | NULL | qualquer | ❌ — bloqueado até reconciliação governada |
-| Excluído (competence deletada) | — | — | n/a — eventos órfãos ignorados |
-| Recriado para o mesmo período | NULL (novo `competence_id`) | PENDING | ✅ — identidade nova, fotografia do vigente |
-| Conclusão simultânea ao apply | lock serializa; quem commita primeiro vence | — | marker set → `SKIPPED` |
-| Falha na leitura de histórico | indeterminado | — | ❌ fail-closed |
+| Cenário | `first_completed_at` | `completion_record` | `derive_closing_state` | Elegível? |
+|---|---|---|---|---|
+| `NEVER` + nunca concluído (caso normal) | NULL | `NEVER` | PENDING | ✅ |
+| `NEVER` + concluído (derivação COMPLETED) | NULL | `NEVER` | MONTHLY_CLOSING_COMPLETED | ❌ — incoerência record×derivada → `FAILED` investigável, não `SKIPPED` silencioso |
+| `NEVER` + rejeitado | NULL | `NEVER` | TERMINALLY_REJECTED | ❌ |
+| `COMPLETED` + qualquer estado derivado | SET | `COMPLETED` | qualquer | ❌ — marcador vence |
+| Concluído, depois reaberto (pacote/clarification/complemento) | **SET** | `COMPLETED` | PENDING | ❌ — marcador vence o estado derivado |
+| `UNEVALUATED` + qualquer estado | NULL | `UNEVALUATED` | qualquer | ❌ — bloqueado até reconciliação governada certificar `NEVER` |
+| Timestamp presente × record `NEVER` | **SET** | `NEVER` | qualquer | ❌ — inconsistente → `FAILED` |
+| Timestamp ausente × record `COMPLETED` | NULL | `COMPLETED` | qualquer | ❌ — inconsistente → `FAILED` |
+| `completion_record` fora do enum (corrupção/importação) | qualquer | desconhecido | qualquer | ❌ — fail-closed `FAILED` |
+| Registro de competência inexistente | — | — | — | n/a — eventos órfãos ignorados |
+| Excluído (competence deletada) | — | — | — | n/a — eventos órfãos ignorados |
+| Recriado para o mesmo período | NULL (novo `competence_id`) | `NEVER` (nova avaliação) | PENDING | ✅ — identidade nova, fotografia do vigente |
+| Conclusão simultânea ao apply | lock serializa; quem commita primeiro vence | marker set | — | ❌ `SKIPPED` |
+| Falha na leitura de histórico | indeterminado | indeterminado | — | ❌ `FAILED` fail-closed |
 
 ## 3. Semântica de sincronização — matriz única
 
@@ -84,7 +90,7 @@ Item locked ≠ bloqueio do run: vira `skipped` com razão tipada (§5).
 - `closing_document.state`: `ATTACHED | SUPERSEDED | CANCELLED` (V003:41).
 - `evidence_decision.decision`: `ACCEPTED | REJECTED | REVERSED` (V005:72) — a "situação de validação" do item é derivada da decisão vigente, não de coluna no item.
 - `item_correction.status`: `PENDING | APPROVED | REJECTED` (V005:116).
-- `closing_pendency.state`: `OPEN | IN_ANALYSIS | WAITING_EXTERNAL | RESOLVED` (V006:25).
+- `closing_pendency.state`: `OPEN | IN_ANALYSIS | WAITING_EXTERNAL | RESOLVED | DISMISSED` (V006:25-30) — `DISMISSED` + `dismiss_justification` (V006:42) separam «encerrada por perda de aplicabilidade» de «resolvida por execução».
 - `closing_package_version.status`: `DRAFT | FINALIZED | SUBMITTED` (+ complemento encadeado).
 
 **Dimensões separadas (regra estrutural):** "exigência ativa" (item `state`) × "histórico operacional" (documentos, decisões, correções, pendências, pacotes). A retirada só toca a primeira; o histórico é intocável.
@@ -97,8 +103,8 @@ Item locked ≠ bloqueio do run: vira `skipped` com razão tipada (§5).
 | `RETIRE` sem arquivo | `EXPECTED`/`NOT_APPLICABLE` | nenhuma | `CANCELLED` + `state_reason='catalog_retire'` + ref. revisão |
 | `RETIRE` com arquivo não validado | `EXPECTED` | doc `ATTACHED`, sem decisão | item `CANCELLED`; documento **permanece `ATTACHED`** e navegável no histórico |
 | `RETIRE` com arquivo validado | `ACCEPTED` | decisão vigente | `skipped` `item_terminal` — item já fora do conjunto de demanda e registro aprovado preservado |
-| `RETIRE` com correção `PENDING` | `EXPECTED` | `item_correction` aberta **do item retirado** | item `CANCELLED`; correção encerrada `status='REJECTED'` + `review_reason='requirement_retired'` + `reviewed_by`=autor da revisão (D6 **DECIDED_BY_PO**; campos livres — sem migration de enum; só a correção do item, nunca alheias) |
-| `RETIRE` com pendência aberta | qualquer elegível | `closing_pendency` aberta **do item retirado** | pendência `state='RESOLVED'` + `resolution_notes`/`classification_reason='catalog_retire'` (D6 **DECIDED_BY_PO**; somente pendências diretamente vinculadas via `snapshot_item_id`) |
+| `RETIRE` com correção `PENDING` | `EXPECTED` | `item_correction` aberta **do item retirado** | item `CANCELLED`; correção **encerrada administrativamente** com motivo tipado `requirement_retired` + `closed_by`=autor da revisão — **nunca** `status='REJECTED'` (reservado à rejeição humana; contrato de encerramento em §3.2). Só a correção do item, nunca alheias |
+| `RETIRE` com pendência aberta | qualquer elegível | `closing_pendency` aberta **do item retirado** | pendência `state='DISMISSED'` + `dismiss_justification='catalog_retire'` (D6 **DECIDED_BY_PO**; `DISMISSED` já existe no CHECK V006 — "encerrada por perda de aplicabilidade" ≠ "resolvida por execução"; somente pendências diretamente vinculadas via `snapshot_item_id`) |
 | `RETIRE` item em pacote `SUBMITTED`/`FINALIZED` | qualquer | pacote vigente | `skipped` `item_locked_by_submitted_package` |
 | `RETIRE` item `exceptional` | qualquer | — | nunca tocado (não pertence ao catálogo) |
 | `REORDER` | `EXPECTED`/`NOT_APPLICABLE` | — | `UPDATE sort_order` |
@@ -111,25 +117,64 @@ Item locked ≠ bloqueio do run: vira `skipped` com razão tipada (§5).
 
 ### 3.1 Reativação e nova exigência — regra inversa (DECIDED_BY_PO)
 
-Retirada e reativação são **simétricas quanto à propagação automática, nunca quanto à destruição do histórico**. Distinção obrigatória:
+Retirada e reativação são **simétricas quanto à propagação automática, nunca quanto à destruição do histórico**. Regra geral: **itens `CANCELLED` permanecem protegidos contra alterações automáticas** — `CANCELLED` é terminal e nunca revertido pelo sync **salvo a exceção estrita abaixo**.
 
-- **`REACTIVATE`:** retorno do **mesmo** requisito — mesma identidade estável (`item_id`/`source_template_item_id`), semanticamente equivalente. No snapshot: item `CANCELLED` por `catalog_retire` volta a `EXPECTED` (restore, não novo item).
-- **`ADD`:** **nova** exigência com identidade própria — novo `item_id`. **Nunca** vincula evidências de outro item apenas por semelhança de nome; novo item no snapshot nasce `EXPECTED` sem herdar histórico de terceiros.
+**Origem do cancelamento — inventário (R5, PROVEN no HEAD):** `state` CHECK admite `EXPECTED|ACCEPTED|NOT_APPLICABLE|CANCELLED` (V005:33-35); `state_reason TEXT` é **livre** — hoje carrega a justificativa humana de `ITEM_CANCELLED`/`ITEM_NOT_APPLICABLE` (`_transition_item`, `closing_validation_repository.py:717-798`); **não existe** campo tipado de origem. Identificação segura da origem passa a ser **dupla e obrigatória**: (a) `state_reason` com convenção `'catalog_retire'` + referência da revisão (texto de exibição); (b) **`closing_audit_event.detail->>'reason_code' = 'catalog_retire'` no evento `ITEM_CANCELLED` do próprio item** — JSONB tipado, append-only, é a prova canônica da origem; sem esse evento tipado a exceção não se aplica.
 
-Matriz obrigatória (`estado anterior → operação → exigência → evidências → validação → pendências → resultado`):
+Distinção obrigatória de operação:
 
-| Anterior | Operação | Exigência ativa | Evidências existentes | Resultado |
-|---|---|---|---|---|
-| retirado sem evidência | REACTIVATE | `EXPECTED` (restore) | nenhuma | aguarda documento |
-| retirado, evidência anexada não validada | REACTIVATE | `EXPECTED` | `closing_document ATTACHED` preservado | **reavaliação governada**: evidência pré-existente permanece vinculada ao item (mesmo `snapshot_item_id`); validação exige decisão nova/verificação conforme regra vigente — a "validade da evidência" reaprovada automaticamente é `DECISION_REQUIRED` (D8) se depender de conceito de validade temporal ainda inexistente |
-| retirado, evidência ACCEPTED | REACTIVATE | `EXPECTED`→reavaliado | documento + decisão `ACCEPTED` preservados | item volta como já atendido **somente se** a regra de negócio comprovar equivalência — caso contrário `EXPECTED` aguardando; decisão histórica nunca reescrita (D8 se sem definição de validade) |
-| retirado com correção encerrada por `requirement_retired` | REACTIVATE | `EXPECTED` | correção **permanece encerrada** | nenhuma reabertura automática; nova correção só se houver condição atual que a exija |
-| retirado com pendência encerrada por `catalog_retire` | REACTIVATE | `EXPECTED` | pendência **permanece encerrada** | idem |
-| — | ADD (nova identidade) | `EXPECTED` novo item | evidências de item homônimo **não** vinculadas | novo item aguarda documento; sem apropriação de histórico |
-| item locked por pacote SUBMITTED | REACTIVATE/ADD | — | — | `skipped` `item_locked_by_submitted_package` |
-| competência `first_completed_at`/`UNEVALUATED` | qualquer | — | — | run `SKIPPED` — histórico intocável |
+- **`REACTIVATE`:** retorno do **mesmo** requisito — mesma identidade estável (`item_id`/`source_template_item_id`), nova revisão do catálogo. No snapshot: item `CANCELLED` **comprovadamente por `catalog_retire`** volta a `EXPECTED` (restore, não novo item).
+- **`ADD`:** **nova** exigência com identidade própria — novo `item_id`. **Nunca** vincula evidências de outro item apenas por semelhança de nome; novo item no snapshot nasce `EXPECTED` sem herdar histórico de terceiros; `item_key` de item cancelado não é reaproveitado por ADD.
 
-Regras transversais: reativação **reavalia o estado atual** (não o do momento da retirada); correções/pendências históricas encerradas **ficam** encerradas; nenhum histórico apagado ou reescrito; o card reaparece na lista ativa (doc 175).
+**Exceção estrita — `CANCELLED → EXPECTED` somente quando TODOS os guards passarem:**
+
+1. competência sincronizável (predicado §2.3, incluindo `completion_record='NEVER'`);
+2. cancelamento do item comprovadamente por retirada anterior do catálogo — `state_reason='catalog_retire'` **e** `ITEM_CANCELLED` com `detail.reason_code='catalog_retire'` na trilha do `snapshot_item_id`;
+3. identidade do requisito inalterada — mesmo `source_template_item_id`/`item_id` e mesmo `item_key`;
+4. item não coberto por pacote `SUBMITTED`/`FINALIZED` vigente;
+5. nenhuma decisão operacional posterior incompatível (validação/correção/pendência nova após o cancelamento);
+6. trilha do cancelamento preservada e auditável (evento de reativação §3.3);
+7. operação idempotente (dedupe por `item_id`+revisão; replay = no-op);
+8. OCC e locks do apply (§4.2/§5) respeitados.
+
+Matriz de transições (anterior × origem × operação → resultado):
+
+| Estado anterior | Origem do cancelamento | Operação | Resultado esperado |
+|---|---|---|---|
+| `CANCELLED` | `catalog_retire` (provado pela origem dupla — guard 2) | `REACTIVATE` | `EXPECTED` — restore do mesmo item, guards 1–8 |
+| `CANCELLED` | cancelamento manual (`ITEM_CANCELLED` sem `reason_code='catalog_retire'`) | `REACTIVATE` | **não restaura** — `skipped` `cancel_not_catalog_origin` tipado; exige reversão humana governada |
+| `CANCELLED` | origem desconhecida/ausente | `REACTIVATE` | **bloquear e registrar** — `skipped` `cancel_origin_unknown` + alerta; fail-closed |
+| `EXPECTED` | — | `REACTIVATE` | no-op idempotente (item já ativo) |
+| `ACCEPTED` | — | `REACTIVATE` | **não sobrescrever decisão** — item preservado |
+| `NOT_APPLICABLE` | — | `REACTIVATE` | decisão vigente preservada; reavaliação só por operação humana |
+| item inexistente | — | `ADD` | novo snapshot `EXPECTED`, identidade nova |
+| item locked por pacote `SUBMITTED`/`FINALIZED` | qualquer | `REACTIVATE`/`ADD` | `skipped` `item_locked_by_submitted_package` |
+
+Matriz de evidências na reativação (retirado por `catalog_retire` → `REACTIVATE`):
+
+| Evidências existentes | Resultado |
+|---|---|
+| nenhuma | `EXPECTED` aguarda documento |
+| `closing_document ATTACHED` não validado | preservado e vinculado ao item; **não satisfaz automaticamente** — exige decisão nova/verificação conforme regra vigente (validade temporal = `DECISION_REQUIRED` D8) |
+| documento + decisão `ACCEPTED` | preservados; item volta como atendido **somente se** regra de negócio comprovar validade — caso contrário `EXPECTED` aguardando; decisão histórica nunca reescrita (D8) |
+| correção encerrada por `requirement_retired` | **permanece encerrada** — nenhuma reabertura automática; nova correção só por condição atual |
+| pendência `DISMISSED` por `catalog_retire` | **permanece encerrada** — idem |
+| — `ADD` (nova identidade) | evidências de item homônimo **não** vinculadas; novo item aguarda documento |
+| competência `first_completed_at`/`UNEVALUATED`/`COMPLETED` | run `SKIPPED` — histórico intocável |
+
+**Regra de evidências anteriores (conservadora, vigente até regra específica):** preservar arquivos/versões, decisões humanas, validações e mensagens; correções e pendências históricas encerradas **ficam** encerradas; **nenhuma validação histórica é reutilizada automaticamente** para satisfazer a exigência reativada — a situação documental é reavaliada; nova pendência/correção só se a regra vigente exigir; registro histórico encerrado nunca reabre por mero reaparecimento do requisito. Se a validade temporal da evidência não puder ser comprovada, a exigência permanece `EXPECTED`.
+
+### 3.2 Encerramento administrativo × decisão humana (R5 — semântica única)
+
+`item_correction.status` CHECK admite `PENDING|APPROVED|REJECTED` (V005:116) e `REJECTED` só é escrito por `review_correction` (decisão humana, `CORRECTION_REJECTED`). Usá-lo para encerramento automático por retirada **confundiria** rejeição humana com encerramento administrativo em listagens (`list_item_corrections`, CLARA `_correction_state`, manifesto de exclusão). Contrato de encerramento (D6 **DECIDED_BY_PO** — o PO decidiu *que* encerra, a representação é decisão técnica):
+
+- **Correção:** novo estado terminal **`CLOSED_REQUIREMENT_RETIRED`** (alternativa A — CHECK V031+) com `closure_reason='requirement_retired'` + `closed_by`=autor da revisão + `closed_at` + audit `CORRECTION_CLOSED_REQUIREMENT_RETIRED`. `REJECTED` permanece exclusivo de rejeição humana. Aplicado somente às correções `PENDING` do item retirado; correções `APPROVED`/`REJECTED` ficam como estão.
+- **Pendência:** `state='DISMISSED'` + `dismiss_justification='catalog_retire'` + `resolution_notes` com referência da revisão — `DISMISSED` já existe no CHECK (V006) e separa "encerrada por perda de aplicabilidade" de "resolvida por execução" (`RESOLVED`); nunca apresentada como documento entregue/validado.
+- **Preservação obrigatória:** identidade, origem, histórico, datas, vínculo com item, eventos anteriores, relação com documentos e motivo do encerramento — nada é apagado.
+
+### 3.3 Evento de auditoria da reativação
+
+Cada restore `CANCELLED→EXPECTED` por `catalog_retire` grava `closing_audit_event` com `competence_id`, `snapshot_item_id`, `source_template_item_id`, `catalog_revision`, `from_state`, `to_state`, `previous_cancel_reason_code`, `revision_actor` (autor da mudança de catálogo), `created_at` e `idempotency_key`. O evento `ITEM_CANCELLED` anterior **nunca** é apagado ou alterado.
 
 ## 4. Propagação — outbox transacional + consumidor durável canônico
 
@@ -228,7 +273,7 @@ Lock-order canônica proposta: `checklist_template` → `monthly_competence` (pe
 ## 7. Histórico na interface
 
 - Itens `CANCELLED` por `catalog_retire` aparecem como cards de histórico ("Exigência retirada pelo checklist em {data}") colapsáveis — documentos/decisões/mensagens permanecem navegáveis no detalhe.
-- Correções/pendências encerradas por retirada mostram resolução `requirement_retired` — nunca órfãs silenciosas.
+- Correções encerradas por retirada mostram resolução `requirement_retired` e estado de encerramento administrativo — **nunca** exibidas como "rejeitadas"; pendências aparecem `DISMISSED`/`catalog_retire` — nunca órfãs silenciosas nem apresentadas como resolvidas por execução.
 - Badge "sincronizando/sincronizado/falhou" a partir de `checklist-sync-status` (doc 175).
 
 ## 8. Segurança
@@ -246,10 +291,70 @@ Lock-order canônica proposta: `checklist_template` → `monthly_competence` (pe
 - AC-S6 replay/retry → sem efeito duplicado.
 - AC-S7 sucesso declarado **somente** `APPLIED`/`APPLIED_WITH_EXCLUSIONS` + diff vazio.
 - AC-S8 eventos fora de ordem → convergência ao catálogo vigente, trilha completa.
-- AC-S9 correção/pendência aberta em item retirado → encerrada com `resolution` tipada, nunca órfã.
+- AC-S9 correção/pendência aberta em item retirado → encerramento administrativo tipado (`CLOSED_REQUIREMENT_RETIRED`/`DISMISSED`+`catalog_retire`), nunca `REJECTED` humano, nunca órfã.
+- AC-S10 elegibilidade: `OPEN ∧ completion_record='NEVER' ∧ first_completed_at IS NULL ∧ PENDING` → sincroniza; `COMPLETED`/`UNEVALUATED`/desconhecido/ausente → bloqueado fail-closed.
+- AC-S11 reativação: `CANCELLED` por `catalog_retire` provado (state_reason + `ITEM_CANCELLED` com `reason_code` tipado) + guards → `EXPECTED` restore; cancelamento manual/desconhecido → `skipped` tipado, zero mutação.
+- AC-S12 evidência histórica em item reativado → visível e preservada, não satisfaz automaticamente a exigência (sem prova de validade → permanece `EXPECTED`).
+
+## 9.1 Matriz de testes contratuais (mapeada — **TEST_NOT_RUN**, nenhum teste de runtime neste gate)
+
+Formato: `ID | Pré-condição | Operação | Resultado esperado | Contrato | Teste | Classificação`. Todos os testes são **novos** (Gate 2) e **TEST_NOT_RUN** — este gate é documental.
+
+### T1 — Elegibilidade
+
+| ID | Pré-condição | Operação | Resultado esperado | Contrato | Teste | Classificação |
+|---|---|---|---|---|---|---|
+| T1-1 | `OPEN`, `first_completed_at` NULL, `NEVER`, derivada `PENDING` | apply sync | itens aplicados, `CHECKLIST_SYNCED`, `APPLIED` com read-back diff vazio | §2.3 | novo | TEST_NOT_RUN |
+| T1-2 | `COMPLETED` + `PENDING` regredido (reaberto) | apply sync | `SKIPPED` `competence_completed`, zero mutação | §2.3/§2.5 | novo | TEST_NOT_RUN |
+| T1-3 | `UNEVALUATED` + qualquer derivada | apply sync | `SKIPPED`/`FAILED` tipado, zero mutação | §2.3 | novo | TEST_NOT_RUN |
+| T1-4 | `first_completed_at` SET × `completion_record='NEVER'` | apply sync | `FAILED` inconsistente, zero mutação | §2.5 | novo | TEST_NOT_RUN |
+| T1-5 | `first_completed_at` NULL × `completion_record='COMPLETED'` | apply sync | `FAILED`/`SKIPPED`, zero mutação | §2.5 | novo | TEST_NOT_RUN |
+| T1-6 | `completion_record` fora do enum (corrupção) | apply sync | `FAILED` fail-closed | §2.5 | novo | TEST_NOT_RUN |
+| T1-7 | `derive_closing_state`=`COMPLETED`/`TERMINALLY_REJECTED` | apply sync | `SKIPPED`, zero mutação | §2.5 | novo | TEST_NOT_RUN |
+| T1-8 | erro de consulta ao marcador/derivada | apply sync | `FAILED`, retry, zero mutação presumida | §4.4 | novo | TEST_NOT_RUN |
+| T1-9 | competência excluída e recriada (novo `competence_id`) | apply sync | avaliação nova, identidade nova, fotografia do vigente | §2.2/§2.5 | novo | TEST_NOT_RUN |
+
+### T2 — Reativação
+
+| ID | Pré-condição | Operação | Resultado esperado | Contrato | Teste | Classificação |
+|---|---|---|---|---|---|---|
+| T2-1 | `CANCELLED` + `state_reason='catalog_retire'` + `ITEM_CANCELLED` com `reason_code='catalog_retire'` | `REACTIVATE` | restore `EXPECTED`, mesmo `snapshot_item_id`, audit de reativação | §3.1/§3.3 | novo | TEST_NOT_RUN |
+| T2-2 | `CANCELLED` manual (sem `reason_code`) | `REACTIVATE` | `skipped` `cancel_not_catalog_origin`, zero mutação | §3.1 | novo | TEST_NOT_RUN |
+| T2-3 | `CANCELLED` com origem ausente/desconhecida | `REACTIVATE` | `skipped` `cancel_origin_unknown` + alerta, zero mutação | §3.1 | novo | TEST_NOT_RUN |
+| T2-4 | `EXPECTED` | `REACTIVATE` | no-op idempotente | §3.1 | novo | TEST_NOT_RUN |
+| T2-5 | `ACCEPTED` / `NOT_APPLICABLE` | `REACTIVATE` | decisão preservada, sem sobrescrita | §3.1 | novo | TEST_NOT_RUN |
+| T2-6 | item inexistente no snapshot | `ADD` | novo item `EXPECTED`, identidade nova, sem herança | §3.1 | novo | TEST_NOT_RUN |
+| T2-7 | `ADD` com `item_key` homônimo de item cancelado | `ADD` | nova identidade, evidências não vinculadas | §3.1 | novo | TEST_NOT_RUN |
+| T2-8 | item reativado com evidência `ATTACHED` | `REACTIVATE` | evidência preservada e visível; item permanece `EXPECTED` sem validade automática | §3.1 | novo | TEST_NOT_RUN |
+| T2-9 | correção/pendência encerrada por retirada | `REACTIVATE` | permanece encerrada — nunca reabre | §3.1 | novo | TEST_NOT_RUN |
+| T2-10 | pacote `SUBMITTED` cobrindo o item | `REACTIVATE`/`ADD` | `skipped` `item_locked_by_submitted_package` | §3.1 | novo | TEST_NOT_RUN |
+| T2-11 | replay do mesmo `REACTIVATE` (idempotency key) | `REACTIVATE` | no-op, sem efeito duplicado | §3.1/§4 | novo | TEST_NOT_RUN |
+| T2-12 | reativação concorrente a upload | `REACTIVATE` × upload | lock serializa; um vence, outro reavalia — sem estado intermediário | §5 | novo | TEST_NOT_RUN |
+
+### T3 — Correções
+
+| ID | Pré-condição | Operação | Resultado esperado | Contrato | Teste | Classificação |
+|---|---|---|---|---|---|---|
+| T3-1 | correção `PENDING` do item | `RETIRE` | `CLOSED_REQUIREMENT_RETIRED`+`closure_reason`+`closed_by`+audit | §3.2 | novo | TEST_NOT_RUN |
+| T3-2 | correção `APPROVED`/`REJECTED` do item | `RETIRE` | inalterada | §3.2 | novo | TEST_NOT_RUN |
+| T3-3 | correção `PENDING` de **outro** item | `RETIRE` | inalterada — nunca alheia | §3.2 | novo | TEST_NOT_RUN |
+| T3-4 | `list_item_corrections`/CLARA `_correction_state` | consulta pós-retirada | encerramento administrativo distinguível de `REJECTED` | §3.2 | novo | TEST_NOT_RUN |
+| T3-5 | retirada concorrente a decisão humana | `RETIRE` × review | lock serializa, sem estado intermediário, audit completa | §5 | novo | TEST_NOT_RUN |
+| T3-6 | replay da retirada | `RETIRE` | idempotente, sem duplo encerramento | §4 | novo | TEST_NOT_RUN |
+
+### T4 — Pendências
+
+| ID | Pré-condição | Operação | Resultado esperado | Contrato | Teste | Classificação |
+|---|---|---|---|---|---|---|
+| T4-1 | pendência `OPEN`/`IN_ANALYSIS`/`WAITING_EXTERNAL` do item | `RETIRE` | `DISMISSED`+`dismiss_justification='catalog_retire'`+nota da revisão | §3.2 | novo | TEST_NOT_RUN |
+| T4-2 | pendência `RESOLVED`/`DISMISSED` | `RETIRE` | inalterada | §3.2 | novo | TEST_NOT_RUN |
+| T4-3 | pendência vinculada a outro item | `RETIRE` | inalterada | §3.2 | novo | TEST_NOT_RUN |
+| T4-4 | pendência `DISMISSED`/`catalog_retire` | `REACTIVATE` | permanece encerrada | §3.1 | novo | TEST_NOT_RUN |
+| T4-5 | cockpit/listagem pós-retirada | consulta | pendência exibida como encerrada por retirada, **nunca** como resolvida por execução | §3.2/doc 175 | novo | TEST_NOT_RUN |
+| T4-6 | replay da retirada | `RETIRE` | idempotente | §4 | novo | TEST_NOT_RUN |
 
 ## 10. DECISION_REQUIRED remanescentes
 
 1. **D8 — Validade temporal da evidência na reativação:** evidência anexada/aceita antes da retirada conta para a exigência reativada? Exige definição de "validade" (data, versão do requisito, conteúdo) ainda inexistente — sem decisão, o default conservador é: evidência permanece visível no histórico do item, mas a exigência reativada volta `EXPECTED` aguardando reavaliação humana ou nova decisão governada.
 2. **`first_completed_at`/`completion_record` — momento de escrita:** em toda escrita completadora (proposto — mais forte) vs apenas no consumidor + reconciliador (menos invasivo; recomendado o proposto).
-3. **Status de encerramento de correção:** `REJECTED`+`review_reason` (sem migration — proposto) vs novo valor `CANCELLED` no CHECK de `item_correction.status` (semântica mais precisa, exige migration de constraint). Decisão técnica fina no Gate 2.
+3. **Status de encerramento de correção — RESOLVIDO (R5):** `REJECTED` fica exclusivo de rejeição humana; encerramento por retirada usa estado tipado novo `CLOSED_REQUIREMENT_RETIRED` + `closure_reason` (§3.2) — migration de CHECK no Gate 2. Pendência usa `DISMISSED`+`catalog_retire` (valor já existente, sem migration).

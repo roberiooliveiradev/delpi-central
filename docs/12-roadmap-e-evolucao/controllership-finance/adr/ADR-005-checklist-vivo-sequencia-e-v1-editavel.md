@@ -168,7 +168,7 @@ Cada operação: lock → replay por `idempotency_key` → OCC `expected_revisio
 | `stale_revision` (OCC) | mantido — âncora passa a ser `version.revision` |
 | `catalog_draft_conflict` | **mantido** — edição in-place só em PUBLISHED da série ativa; DRAFT/REVIEW coexistem pelo fluxo legado de baseline |
 | `retroactive_effective_period` | **mantido** para `effective_from` de itens (exceção: operação governada de migração, §8) |
-| `window_covers_open_competence` | **substituído pela sincronização automática** — a divergência deixa de ser proibida e passa a ser propagada; elegibilidade pelo predicado `OPEN ∧ first_completed_at IS NULL ∧ PENDING` (doc 174 §2) — competência historicamente concluída nunca sincroniza |
+| `window_covers_open_competence` | **substituído pela sincronização automática** — a divergência deixa de ser proibida e passa a ser propagada; elegibilidade pelo predicado `OPEN ∧ first_completed_at IS NULL ∧ completion_record='NEVER' ∧ PENDING` — **lista positiva fail-closed**, `COMPLETED`/`UNEVALUATED`/valor desconhecido bloqueiam (doc 174 §2.3) — competência historicamente concluída nunca sincroniza |
 | `empty_resulting_checklist` | mantido — retirar o último item exige `allow_empty` explícito |
 | `WindowCoversOpenCompetence` no `publish_version`/`inactivate_version` legados | mantido — fluxo de nova versão numerada segue prospectivo |
 
@@ -232,7 +232,7 @@ Ordem transacional proposta (operação governada única, dry-run obrigatório a
 3. **D3 — `effective_until` retroativo** — direção: **manter guard conservador** até existir política temporal comprovada. *Fechável tecnicamente.*
 4. **D4 — Four-eyes em `start_checklist_sequence`** — **DECIDED_BY_PO**: aprovação única com `manage` efetivo, sem duplo aprovador; confirmação explícita + `reason` + OCC + idempotência + auditoria + read-back (§5.2). A decisão de autorização não autoriza executar a migração agora.
 5. **D5 — Outbox vs síncrono** — resolvido por evidência: padrão outbox+poller durável já é canônico na BFF (doc 174 §4.1). *Fechado tecnicamente.*
-6. **D6 — Correção/pendência aberta em item retirado** — **DECIDED_BY_PO**: encerramento automático, restrito ao requisito retirado — correção `status='REJECTED'`+`review_reason='requirement_retired'`; pendência `RESOLVED`+`catalog_retire` (doc 174 §3). Reativação é simétrica na propagação, nunca na destruição do histórico (doc 174 §3.1).
+6. **D6 — Correção/pendência aberta em item retirado** — **DECIDED_BY_PO**: encerramento automático, restrito ao requisito retirado — correção com **encerramento administrativo** `CLOSED_REQUIREMENT_RETIRED`+`closure_reason='requirement_retired'`+`closed_by`=autor da revisão — `REJECTED` permanece exclusivo de rejeição humana (novo valor de CHECK, migration no Gate 2 — doc 174 §3.2); pendência `DISMISSED`+`dismiss_justification='catalog_retire'` — «perda de aplicabilidade» ≠ «resolvida por execução» (doc 174 §3). Reativação é simétrica na propagação, nunca na destruição do histórico, e **só** se aplica a item `CANCELLED` comprovadamente por `catalog_retire` — cancelamento manual ou de origem desconhecida nunca é revertido pelo sync (doc 174 §3.1).
 7. **D7 — `reason` obrigatório** — resolvido por direção (§5.5).
 8. **D8 — Validade da evidência na reativação** — `DECISION_REQUIRED` (PO): evidência pré-retirada conta para a exigência reativada? Default conservador até decisão: exigência volta `EXPECTED` e evidência fica visível no histórico (doc 174 §10).
 
