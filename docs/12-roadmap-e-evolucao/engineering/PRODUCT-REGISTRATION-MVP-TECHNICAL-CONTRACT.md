@@ -907,3 +907,30 @@ Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fon
 **Estado RQ/AC:** AC-F01 `PASS` (matriz integral), AC-F02 `PASS` (22 campos reconciliados POST/PUT + efeito `VAL()`/representação completa documentado), AC-F03 `PASS` (matriz oficial×read×write×PRC×UI no playbook), AC-F04 `PARTIAL/TO_INVENTORY` (owners propostos por classe no playbook §10; ratificação por campo pendente — flag SX3 inconclusiva), AC-F05 `PASS` (schema v2 proposto em anéis, não implementado), AC-F06 `PLANNED` (estratégia v1→v2 sem backfill destrutivo), AC-F07 `PASS parcial` (read-back disponível via products.detail; `CONTRACT_GAP` em SA5 write e B1_CONTA materialização), AC-F08 `PENDING` (aguarda aceite PO desta matriz).
 
 **Próximo passo recomendado:** aceite PO da matriz → ensaio TST01 governado (CREATE mínimo + SA5 write + read-back) → ratificação do schema v2 → só então rotas/frontend.
+
+#### 10.7 G0-B executado — inventário RESTALL autenticado e contratos (19/11/2026)
+
+**TASK_ID:** `EVA-PRC-TOTVS-RESTALL-ROUTE-DISCOVERY-AND-CONTRACT-RATIFICATION-01`  
+**Estado:** `PROVEN_LIVE_CATALOG / DOCUMENTED / NO_CODE / NO_ERP_WRITE / NO_DEPLOY`  
+**Artefato:** playbook canônico §12 — mesma fonte do G0-A.
+
+**Descoberta (catálogo vivo, login de serviço governado):**
+
+| Ambiente | Catálogo | Classes | Relevantes a produto |
+|---|---|---|---|
+| PRD `192.168.1.231:8061` | `POST /restall` | 527 | todas abaixo |
+| TST01 `192.168.1.233:8701` | `POST /rest` | 526 | idênticas (delta: só `ESTABLISHMENT` em PRD) |
+
+**Confirmadas:** `DELPIPRODUTO` custom (POST incluir + PUT alterar — **sem excluir**, corrigindo referência anterior), `MRPPRODUCT`/`MRPPRODUCTINDICATOR` nativas (GET+POST upsert+DELETE, subconjunto MRP), `TSIITEM` nativa (CRUD EAI item — schema `TO_INVENTORY`), `GETITEMSINFORMATION` (READ EAI), `CUSTOMERVENDOR` (CRUD SA1/SA2), `ACCOUNTINGITEMS` (candidata à dimensão contábil — `B1_CONTA` `TO_INVENTORY`).
+
+**Não encontradas:** nenhuma classe SA5/vínculo produto×fornecedor em nenhum ambiente → SA5 ADD/UPDATE/REMOVE = `PROVEN_NOT_PUBLISHED`, exige capacidade nova (rotina oficial .PRW + publicação + façade + gates).
+
+**Recomendações de reuso (sem implementação):** CREATE SB1 → **reuse** `DELPIPRODUTO` POST existente + **nova façade** api-delpi (rota DELPI, não TOTVS); UPDATE → reuse existente; SA5 → **create** (decisão arquitetural pendente); read-back → reuse ODBC api-delpi; `B1_CONTA` → ensaiar `ACCOUNTINGITEMS` antes de propor handler novo; `MRPPRODUCT`/`TSIITEM` → candidatos complementares a campos fora do array de 22, schemas `TO_INVENTORY`.
+
+**Pendentes de contrato:** obrigatórios reais MATA010 op3; schema `TSIITEM`/`ACCOUNTINGITEMS`; rotina oficial SA5; semântica `MRPPRODUCT` (upsert sem PUT).
+
+**Impacto PRC v2/Engineering API:** CREATE não exige handler TOTVS novo — exige façade + contrato de obrigatórios; SA5 é o único gap que impõe rotina Protheus nova.
+
+**Critérios de aceite do próximo gate:** ensaios TST01 conforme protocolo §12.5 do playbook (CREATE mínimo, campo-a-campo, representação completa, B1_CONTA, SA5 pós-decisão, negativos) — `TEST_NOT_RUN` até autorização TST01 explícita com identidade/massa/rollback.
+
+**Próximo gate autorizado:** decisão arquitetural SA5 + autorização de ensaios TST01 → depois façade CREATE api-delpi.

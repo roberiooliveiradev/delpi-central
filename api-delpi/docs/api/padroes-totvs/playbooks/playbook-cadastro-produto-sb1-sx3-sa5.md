@@ -568,3 +568,70 @@ Dependências: catálogo versionado com `official_field`+`source`; migração/ba
 - Versão do `.PRW` compilada não comprovada por este inventário (`/restall` listing é `PROVEN_DOCUMENTED` de 17/11; refazer listing autenticado ao iniciar a fase de implementação).
 - `X3_OBRIGAT`, `X3_CBOX`, defaults `X3_RELACAO` e `X3_VALID` estão extraídos mas **não interpretados** campo a campo — obrigatoriedade real sai de rotina+ensaio, não do flag.
 - Nenhuma escrita executada; nenhum endpoint novo criado.
+
+---
+
+## 12. Inventário RESTALL autenticado (G0-B — 19/11/2026)
+
+Catálogo vivo consultado por **login de formulário** (`POST {restall} __USER/__PSW`) com a conta de serviço `USR_PROTHEUS` resolvida de `PARAMETROS_MINHADELPI` — mesmo mecanismo governado que a api-delpi usa. Somente GET/POST de catálogo; **zero chamada de negócio, zero escrita**.
+
+| Ambiente | URL_REST | Catálogo | Classes | Evidência |
+|---|---|---|---|---|
+| amb=1 (PRD) | `http://192.168.1.231:8061` | `POST /restall` | **527** | HTML ~1,9 MB |
+| amb=2 (TST01) | `http://192.168.1.233:8701/rest` | `POST /rest` | **526** | HTML ~1,9 MB |
+
+**Delta PRD×TST01:** única classe — `ESTABLISHMENT` presente só em PRD. Todas as classes relevantes a produto/fornecedor existem **nos dois** ambientes (ensaios TST01 são representativos).
+
+### 12.1 Rotas relevantes publicadas (confirmadas em ambos)
+
+| Classe | URI oficial | Métodos | Semântica | Leitura/Escrita |
+|---|---|---|---|---|
+| `DELPIPRODUTO` (custom) | `/v1/IncProduto/incluir` `…/alterar` | POST, PUT | Insere / altera produto via `MATA010`+`MSExecAuto` (DLP04I01.PRW) | WRITE custom |
+| `MRPPRODUCT` (nativa) | `api/pcp/v1/mrpproduct` | GET, GET `/{branchId}/{product}`, POST (inclui **ou atualiza**), POST `/sync`, DELETE | "Produto MRP" — dados MRP do produto (subconjunto planejamento; escopo de campos B1 `TO_INVENTORY`) | READ + WRITE nativa |
+| `MRPPRODUCTINDICATOR` (nativa) | `api/pcp/v1/mrpproductindicator` | idem | Indicadores MRP do produto | READ + WRITE nativa |
+| `TSIITEM` (nativa) | `/tsiitem` | GET, POST, PUT, DELETE | "Api de persistência ao produto" (EAI/TSI) — schema de payload `TO_INVENTORY` | READ + WRITE nativa |
+| `GETITEMSINFORMATION` (nativa) | `/getitemsinformation` | GET (params obrigatórios: `sourceapp,companyid,branchid,initialiteminternalid,finishiteminternalid`) | Info de produtos p/ integração EAI | READ nativa |
+| `CUSTOMERVENDOR` (nativa) | `/api/crm/v1/customerVendor` | GET(all/byType/byId), POST, PUT `/{Type}/{id}`, DELETE `/{Type}/{id}` | Cadastro **SA1/SA2** (cliente/fornecedor) — **não** é vínculo produto×fornecedor | READ + WRITE nativa |
+| `ACCOUNTINGITEMS` (nativa) | `/api/ctb/v1/AccountingItems` | GET, POST, PUT, DELETE por `InternalId` | "Item Contábil" (contexto CTB) — **candidata** a cobrir dimensão contábil de itens (`B1_CONTA`?) `TO_INVENTORY` | READ + WRITE nativa |
+| `MRPBILLOFMATERIAL` (nativa) | `api/pcp/v1/mrpbillofmaterial` | GET/POST/DELETE (+component/alternative) | Estrutura SG1 — fora do escopo PRC cadastro | referência |
+
+**Correção ao playbook de write-integration:** `delpiproduto` publica somente `POST_INCPROD`+`PUT_INCPROD` — **não existe `excluir` publicado** em nenhum ambiente (confirma o alerta já registrado no G0-A).
+
+### 12.2 SA5 — veredito do catálogo vivo
+
+`PROVEN_NOT_PUBLISHED`: nenhuma classe nas 527/526 publicadas manipula amarração produto×fornecedor (MATA061/SA5). `CUSTOMERVENDOR` cobre SA1/SA2; `TOTVSEAI` é serviço genérico de orquestração EAI (não é contrato de SA5). Toda capacidade SA5 (ADD/UPDATE/REMOVE/read-back) exige **capacidade nova** — rotina oficial em .PRW + publicação + façade + gate.
+
+### 12.3 Matriz necessidade PRC × rota existente
+
+| Necessidade PRC | Equivalente TOTVS | Publicada | api-delpi expõe | Decisão proposta |
+|---|---|---|---|---|
+| Consultar produto | `GETITEMSINFORMATION`, `MRPPRODUCT` GET | SIM | SIM (ODBC `products.detail`) | REUSE api-delpi atual |
+| Consultar vínculos SA5 | — (não há classe SA5) | NÃO | SIM (ODBC `products.suppliers`) | REUSE api-delpi atual |
+| Criar produto SB1 | `DELPIPRODUTO` POST (custom, 22 campos); `TSIITEM` POST; `MRPPRODUCT` POST (subconjunto) | SIM | **NÃO** | REUSE custom existente → criar **façade** api-delpi (nova rota DELPI, não TOTVS) |
+| Alterar produto SB1 | `DELPIPRODUTO` PUT (22 campos); `TSIITEM` PUT; `MRPPRODUCT` POST | SIM | SIM (`PUT /integrations/protheus/products/{code}`) | REUSE existente |
+| `B1_CONTA` | fora do array delpiproduto; `ACCOUNTINGITEMS` candidata | SIM | NÃO | `TO_INVENTORY` — validar se AccountingItems grava dimensão SB1 antes de propor |
+| SA5 ADD/UPDATE/REMOVE | **nenhuma** | NÃO | NÃO | **CREATE** — decisão arquitetural (rotina oficial MATA061 via execauto ou recno-write governado) |
+| Read-back pós-escrita | `MRPPRODUCT` GET, `GETITEMSINFORMATION`, `CUSTOMERVENDOR` GET | SIM | SIM (ODBC) | REUSE api-delpi ODBC (grão SB1/SA5 real) |
+
+### 12.4 Achados de contrato
+
+- **CREATE SB1:** rota custom já publicada em ambos os ambientes; payload = os mesmos 22 campos do UPDATE (§4). Obrigatórios reais de `MATA010` op3 **não** comprovados — `TO_INVENTORY` (ensaio TST01). `B1_COD`: passado no array (código manual); geração automática via semáforo `SXE/SXF` não comprovada no handler.
+- **UPDATE SB1:** 22 campos idênticos ao CREATE; façade já impõe representação completa (lição `VAL()` documentada). Cobertura = 22/313 campos de negócio.
+- **`B1_CONTA`:** rastreado pelo PRC sem caminho de write no handler. Alternativa `ACCOUNTINGITEMS` publicada — schema/semântica `TO_INVENTORY`; **não presumir** que grava `SB1.B1_CONTA` sem homologação.
+- **SA5:** gap total — ver §12.2.
+- **MRPPRODUCT:** POST é **upsert** ("Inclui ou atualiza"); provavelmente subconjunto MRP/planejamento de SB1 — candidato complementar para campos de planejamento (B1_LE/B1_RE/B1_CC etc.) — escopo `TO_INVENTORY`.
+- **TSIITEM:** CRUD completo "persistência ao produto" via TSI/EAI — contrato de payload não exposto no catálogo; `TO_INVENTORY` antes de qualquer uso.
+- **GETITEMSINFORMATION:** leitura EAI com params obrigatórios pesados — read-back preferencial continua sendo ODBC api-delpi.
+
+### 12.5 Protocolo de ensaios TST01 (proposto — `TEST_NOT_RUN`)
+
+| Ensaio | Massa | Critério | Rollback |
+|---|---|---|---|
+| CREATE mínimo | produto `TESTEPRC` filial 01, grupo existente, tipo `PA` | campos mínimos aceitos, read-back ODBC, obrigatórios reais mapeados | delete governado ou flag de teste |
+| CREATE/UPDATE campo-a-campo | mesmo produto | cada um dos 22 campos persiste; campos fora do array preservados | snapshot SB1 anterior |
+| UPDATE representação | produto de teste | PUT com 21 campos + path; read-back confirma não-destruição | restore snapshot |
+| `B1_CONTA` via `ACCOUNTINGITEMS` | produto de teste | comprova/elimina a hipótese de gravação em SB1 | restore |
+| SA5 | vínculo `TESTEPRC`×fornecedor de teste | exige capacidade nova — **bloqueado até decisão arquitetural** | — |
+| Negativos | permissão insuficiente, payload inválido, obrigatório ausente, código duplicado, timeout | recusa determinística, `UNKNOWN` sinalizado | — |
+
+Execução depende de **autorização explícita TST01** com identidade, dados e rollback definidos — `TEST_NOT_RUN` nesta fase.

@@ -37,7 +37,8 @@ Duas famílias de portas no REST do Protheus:
 
 1. **Rotas custom Delpi** (fontes `DLP*.PRW` no repositório/deploy):
    - `delpi/api/v1/suppliers` — fornecedor (POST/PUT; aceita `codusr`)
-   - `delpiproduto/v1/IncProduto/{incluir,alterar,excluir}` — produto via `MATA010`/`MSExecAuto`
+   - `delpiproduto/v1/IncProduto/{incluir,alterar}` — produto via `MATA010`/`MSExecAuto`
+     (catálogo vivo 19/11: somente `POST_INCPROD`+`PUT_INCPROD`; sem `excluir`)
 2. **APIs nativas TOTVS** — ~527 classes publicadas (confirmado via
    `/restall` autenticado com a conta de serviço): `CUSTOMERVENDOR` (CRUD
    cliente+fornecedor), `COSTCENTERS`, `BRANCHES`, `MRPPRODUCT`,
