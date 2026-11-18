@@ -709,3 +709,82 @@ Autorização técnica pendente: decisão entre EAI/MATI060 vs .PRW-modelo → `
 | E9 | UNKNOWN | timeout induzido | sem retry, estado investigável | reconciliação manual |
 
 Gates do protocolo: identidade de serviço autorizada, `PROTHEUS_REST_EXPECTED_BASE_URL` pinado TST01 (`233:8701`), `AMBIENTE=2`, snapshot pré-ensaio, zero escrita fora dos objetos `TESTEPRC*`, confirmação de PRD intacto ao final.
+
+---
+
+## 14. G0-C — Verificação live MATI060/TOTVSEAI e decisão candidata SA5 (19/11/2026)
+
+Investigação autenticada live (OAuth de serviço governado; **somente GETs de catálogo/monitor/configurador — zero chamada de negócio**).
+
+### 14.1 TOTVSEAI — contrato real publicado
+
+`PROVEN_LIVE` — a classe é o **admin/monitor/configurador** do EAI, não o endpoint de ingestão de mensagens de negócio. Métodos (PRD e TST01 idênticos):
+
+- `GET configurator/v1/apps` — apps registrados
+- `GET configurator/v1/apps/{appId}/transactions` — adapters/transações por app
+- `GET configurator/v1/integrations` — integrações cadastradas
+- `GET monitor/v1/msgs/{…}` — mensagens/logs/conteúdo
+- `GET monitor/v1/msgs/summary/*` — sumários por transação/app/contexto
+- `GET standardmessage/v1/contents/{transactionID}` — estrutura de um adapter
+- `GET monitor/v1/mappings/*` — de-para
+- `configurator` e `standardmessage/transactions` têm POST/PUT/DELETE de **administração EAI** (criar app/integração/rota/filtro, validar comunicação) — **nenhum endpoint de envio de mensagem de negócio** no catálogo.
+
+Classes auxiliares publicadas: `EAIADAPTERSREST` (POST config), `EAIDEPARAREST` (POST), `EAICONFIGPARAMS` (GET/POST params), `EAIGROUPCOMPANYREST` (GET), `EAIADAPTERTESTREST` (GET simulação — requer params), `EAISCHEDULE` (CRUD de schedules EAI).
+
+### 14.2 Estado real do EAI nos ambientes — `PROVEN_LIVE`
+
+| Probe | TST01 (`API01@PROTHEUS`) | PRD (`DELPI01@PROTHEUS`) |
+|---|---|---|
+| `configurator/v1/apps` | 1 app host | 1 app host |
+| `configurator/v1/integrations` | **`{"items":[]}` — zero integrações** | **idem** |
+| `monitor/v1/apps/{host}/transactions` | **só `whois`** (handshake) | **só `whois`** |
+| `msgs/summary/transactions` | **zero mensagens** | **zero** |
+
+**Veredito MATI060:** `PROVEN_SOURCE` (adapter referenciado por `IntegDef` do DMATA061) + **`PROVEN_LIVE: NOT_CONFIGURED`** — nenhuma transação de negócio registrada, nenhuma integração, nenhum tráfego de mensagens em ambos ambientes. Além disso o catálogo TOTVSEAI **não expõe endpoint de ingestão** (a recepção de mensagens EAI em Protheus ocorre por `EAIRecebe`/scheduler, não por REST publicado aqui).
+
+**Custo real do caminho EAI:** registrar app externo + integração + adapter MATI060 + canal de recepção + monitoramento = projeto de infraestrutura EAI completo, não "reuse". Descartado como menor caminho.
+
+### 14.3 Identidade SA5 e read-back — lacuna confirmada
+
+- Chave oficial (modelo MATA061): `A5_FILIAL+A5_FORNECE+A5_LOJA+A5_PRODUTO+A5_FABR+A5_FALOJA+A5_REFGRD`.
+- Read-back atual (`products.suppliers` ODBC): projeta `FORNECE,LOJA,CODPRF,CODPRCA,CODBAR,LEAD_T` — **`A5_FABR`, `A5_FALOJA`, `A5_REFGRD` não retornados** → `IDENTITY_GAP`: confirmação inequívoca exige estender a projeção (ou assumir `FABR/FALOJA/REFGRD=∅`, hipótese válida hoje mas frágil).
+- Obrigatórios efetivos (SX3 `X3_OBRIGAT='x'` + modelo): `FILIAL, FORNECE, LOJA, NOMEFOR, PRODUTO, CODPRF, REFGRD, DESCPRF`. `NOMEFOR`/`NOMPROD` são denormalizados — a rotina oficial preenche; façade não deve exigir do consumidor.
+
+### 14.4 Alternativa `.PRW` modelo-oficial (RQ-05) — `PROVEN_SOURCE` viável
+
+Padrão para rotinas MVC sem ExecAuto: handler `WSRESTFUL` instancia `FWLoadModel('MATA061')`/`DMATA061`, preenche `SetValue` nos submodelos (header+grid), executa `VldActivate`/`Commit` do modelo — **as validações, pontos de entrada e regras do cadastro oficial são preservadas** (diferente de RecLock/SQL, que permanece proibido). Erros capturados pelo próprio modelo + `ErrorBlock`. Identidade do operador via `__cUserId`/contexto da sessão REST. `TO_INVENTORY`: assinatura exata de ativação do modelo DMATA061 (Model-2 header+grid) — confirmar contra fonte/RPO no TST01.
+
+### 14.5 Matriz comparativa — MATI060 × .PRW-modelo
+
+| Critério | MATI060 / TOTVSEAI | .PRW / Modelo MVC |
+|---|---|---|
+| Existência | fonte (adapter) | proposta |
+| Disponibilidade live | **NOT_CONFIGURED** (ambos ambientes — prova live) | não implementada |
+| Canal REST p/ mensagem | **inexistente** no catálogo | WSRESTFUL (padrão já usado) |
+| Rotina oficial | MATA061 via adapter | MATA061 via modelo |
+| ADD/UPDATE/REMOVE | adapter suporta (fonte) — indisponível | viável via modelo (VALIDAR TST01) |
+| Validações oficiais | modelo (via adapter) | modelo direto |
+| Autorização/gate | exigiria config EAI + identidade | padrão DELPI (gate+pin+codusr Core) |
+| Identidade SA5 completa | contrato EAI (de-para) | chave nativa do modelo |
+| Idempotência | framework EAI | implementar na façade (ledger+read-back) |
+| Auditoria | monitor EAI | ledger api-delpi + log REST |
+| Read-back | ODBC SA5 (com gap de identidade) | idem |
+| Custo | **alto** (infra EAI do zero) | **médio** (sibling do delpiproduto) |
+| Risco | config EAI não governada | replicar padrão conhecido; complexidade Model-2 |
+
+**Recomendação (`EXTEND` — decisão candidata, não final):** desenvolver `delpisa5` (ou método novo no `delpiproduto`) como `WSRESTFUL` que invoca o **modelo oficial MATA061/DMATA061** para ADD/UPDATE/REMOVE; fachada api-delpi `POST/PUT/DELETE /integrations/protheus/products/{code}/suppliers` no mesmo padrão de gate+pin+ledger+identity já estabelecido. MATI060 fica como alternativa futura caso a DELPI adote EAI corporativamente.
+
+### 14.6 RQ-07 — rotas complementares (leitura apenas)
+
+| Rota | Estado |
+|---|---|
+| `DELPIPRODUTO` POST/PUT | PROVEN_LIVE publicado ambos ambientes |
+| `MRPPRODUCT` | PROVEN_LIVE — upsert subconjunto MRP; candidato futuro a campos de planejamento |
+| `ACCOUNTINGITEMS` | PROVEN_LIVE-ish — sem evidência de `SB1.B1_CONTA`; `TO_INVENTORY` |
+| `TSIITEM` | publicada; URI efetiva não alcançada (`404`) — `TO_INVENTORY` |
+| SA5 read oficial REST | inexistente → read-back permanece ODBC api-delpi |
+| `EAIADAPTERTESTREST` | GET simulação — não executado (semântica de efeito colateral não comprovada) |
+
+### 14.7 Protocolo TST01 — SA5 (proposto, `TEST_NOT_RUN`)
+
+Depende da decisão de caminho. Se `.PRW`-modelo: (1) massa `TESTEPRC`×fornecedor `000006`/`01` em TST01; (2) ADD com chave completa → read-back ODBC; (3) UPDATE `CODPRF/CODPRCA` → read-back; (4) REMOVE → verificar `D_E_L_E_T_`; (5) negativos: fornecedor inexistente, produto inexistente, duplicidade de chave, payload inválido; (6) `UNKNOWN` timeout; (7) snapshot SA5 + restauração; (8) confirmação PRD intacto. Requer nova autorização TST01 + publicação do `.PRW` em TST01 (passo que envolve owner ERP/compilação).

@@ -946,3 +946,17 @@ Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fon
 **P2 — verifier + CREATE:** `devin` CLI instalado, **não autenticado** — bloqueio ambiental requer login interativo do operador (sem credencial improvisada); verificação permanece `INCONCLUSIVE`, pedidos preservados. CREATE: handler encaminha 22 campos incondicionalmente a `MATA010` op3; `B1_COD` manual (sem SXE no handler; geração execauto = `TO_INVENTORY`); mínimos por tipo = `TO_INVENTORY`. Probes TST01 read-only: `MRPPRODUCT` viva (upsert, subconjunto MRP), `ACCOUNTINGITEMS` viva-ish sem evidência de `B1_CONTA`, `TSIITEM` publicada mas path não alcançado. Protocolo de ensaios E1–E9 no playbook §13.4 — `TEST_NOT_RUN`.
 
 **Próximo gate:** decisão SA5 (EAI vs .PRW-modelo) + autorização TST01 com identidade/massa/rollback + login do verificador.
+
+#### 10.9 G0-C — verificação live MATI060/TOTVSEAI (19/11/2026)
+
+**TASK_ID:** `EVA-PRC-G0C-RESTALL-MATI060-SA5-LIVE-CONTRACT-VALIDATION-01` — artefato: playbook §14.
+
+**Prova live (ambos ambientes, GETs read-only):** EAI **não configurado para negócio** — `configurator/v1/integrations` vazio, transações do app host = só `whois`, zero mensagens em TST01 e PRD. `TOTVSEAI` = admin/monitor; catálogo não expõe ingestão de mensagens (recepção EAI é `EAIRecebe`/scheduler, fora do REST publicado). MATI060 = `PROVEN_SOURCE` apenas.
+
+**Decisão candidata SA5:** `EXTEND` — `.PRW` (`delpisa5`/novo método) instanciando o **modelo oficial MATA061** (preserva validações/PEs) + façade api-delpi no padrão gate+pin+ledger+identity. MATI060 descartado como menor caminho (exigiria infra EAI completa). Ratificação pendente: Integrações TOTVS + ERP + Coordination.
+
+**Lacuna nova:** identidade SA5 oficial = `FILIAL+FORNECE+LOJA+PRODUTO+FABR+FALOJA+REFGRD`; read-back ODBC não projeta os 3 últimos → estender `products.suppliers` ou documentar premissa `REFGRD=∅` quando o contrato for ratificado.
+
+**Não comprovados:** ativação exata do modelo Model-2 (`VALIDAR TST01`); URI `TSIITEM`; relação `ACCOUNTINGITEMS↔B1_CONTA`; semântica de `EAIADAPTERTESTREST` (não executada — efeito colateral não comprovado).
+
+**Próximo gate:** ratificação da decisão candidata + autorização TST01 (ensaios §13.4/§14.7) → só então `.PRW` + façade.
