@@ -185,7 +185,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     /* Catálogo dos seis métodos com status honesto. */
     for (const label of ["M1", "M2", "M3", "M4", "M5", "M6"]) {
       await expect(
-        page.getByText(new RegExp(`${label} —`)),
+        page.getByText(new RegExp(`^${label} —`)),
       ).toBeVisible();
     }
     await expect(
