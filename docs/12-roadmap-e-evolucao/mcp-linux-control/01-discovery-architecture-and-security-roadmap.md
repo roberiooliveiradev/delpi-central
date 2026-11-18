@@ -718,3 +718,14 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - `atlas_hml_b_external_signing_intent.py`: pedido canônico de assinatura para produtor sem chave privada, validação signer-side de escopo/tempo/contador declarado e montagem/validação de envelope Ed25519 com chave pública. Teste CI cria chave só em subprocesso descartável; **não há signer operacional, chave externa atestada ou identidade de processo independente**.
 - `atlas_hml_b_snapshot_trust.py`: vinculação obrigatória entre `key_id` e a chave pública realmente fornecida; recusa keyring com identidade inconsistente.
 - CI Linux/Docker descartável ampliado; DELPI Verifier uma vez ao fim; SEC-01..10, revisão humana e change-control pendentes. Quatro MCP READ, PREPARE/ACT OFF, sem host/deploy. **Progresso global: 55%.**
+
+## Etapa 62 | 17/11/2026 | Assinador local Ed25519, ciclo de chaves e prontidão do piloto HML
+
+**Fonte:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 53](./53-atlas-hml-b-local-signer-key-lifecycle-pilot.md). **Status:** Draft PR / SOURCE-ONLY / NÃO OPERACIONAL.
+
+- Decisões do responsável preservadas: governança própria, risco root+Docker aceito, Ed25519 local no `srv-api`, chave no host (root pode comprometê-la), assinador externo futuro, GLPI como cofre de cópia PKCS#8 (`ATLAS-HML-ED25519-PRIVATE-V1`), arquitetura B. Aceite ≠ parecer SEC-01 independente; exceção de governança permanece pendente se a política exigir independência.
+- `atlas_hml_b_key_lifecycle.py`: geração efêmera, fingerprint, PKCS#8 criptografado, DAC 0700/0600, rotação/revogação; nenhuma chave real no Git.
+- `atlas_hml_b_local_signer.py`: assinador local (sem Docker) com peer UID, anti-replay de geração, UDS one-shot, recusa de API genérica; chave privada nunca retornada.
+- `atlas_hml_b_local_signed_pipeline.py`: cadeia claim→intent→sign→seal→publish→verify→continuity integrada em fixtures.
+- `atlas_hml_b_pilot_readiness.py` + blueprints `.review` do signer; matriz do que é CI vs host vs autorização.
+- CI ampliado; DELPI Verifier uma vez ao fim. Quatro MCP READ, PREPARE/ACT OFF. **Progresso 58%. Sem pull/deploy.**

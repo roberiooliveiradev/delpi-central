@@ -14,8 +14,13 @@ from pathlib import Path
 
 _DIR = Path(__file__).resolve().parents[1] / "review-only"
 _SENTINEL = "/run/atlas-hml-readonly/REVIEW-ONLY-NEVER-CREATE"
+_SIGNER_SENTINEL = "/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE"
 _UNIT = {
     "ConditionPathExists": _SENTINEL,
+    "RefuseManualStart": "yes",
+}
+_SIGNER_UNIT = {
+    "ConditionPathExists": _SIGNER_SENTINEL,
     "RefuseManualStart": "yes",
 }
 _HARDENED = {
@@ -72,6 +77,30 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
             "Persistent": "no",
         },
     },
+    "atlas-hml-local-signer.service.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML LOCAL SIGNER REVIEW ONLY",
+        },
+        "Service": {
+            **_HARDENED, "Type": "simple", "User": "atlas-hml-signer",
+            "Group": "atlas-hml-signer", "SupplementaryGroups": "",
+            "ExecStart": "/usr/bin/false",
+            "InaccessiblePaths": "/run/docker.sock /var/run/docker.sock",
+            "ReadOnlyPaths": "/run/atlas-hml-signer",
+        },
+    },
+    "atlas-hml-local-signer.socket.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML LOCAL SIGNER SOCKET REVIEW ONLY",
+        },
+        "Socket": {
+            "ListenStream": "/run/atlas-hml-signer/sign.sock",
+            "SocketUser": "root", "SocketGroup": "atlas-hml-signer",
+            "SocketMode": "0660", "Accept": "no",
+        },
+    },
 }
 _TMPFILES = "d /run/atlas-hml-readonly 0750 root atlas-hml -"
 _TMPFILES_NAME = "atlas-hml-runtime-dir.tmpfiles.review"
@@ -103,7 +132,7 @@ class HMLSupervisorBlueprintError(Exception):
 class HMLSupervisorBlueprintReview:
     status: str = "blocked"
     scope: str = "hml/public-hub"
-    files_reviewed: int = 5
+    files_reviewed: int = 7
     systemd_units_installed: bool = False
     docker_privilege_attested: bool = False
     presenter_isolation_attested: bool = False
@@ -157,7 +186,14 @@ def review_blueprint_sources(sources: dict[str, str]) -> HMLSupervisorBlueprintR
             raise HMLSupervisorBlueprintError("HML_BLUEPRINT_POLICY_DRIFT")
         # Intentionally different extensions and the false ExecStart/condition
         # must remain; review templates must never be runtime-ready.
-        if "Install" in actual or actual["Unit"].get("ConditionPathExists") != _SENTINEL:
+        expected_sentinel = (
+            _SIGNER_SENTINEL if name.startswith("atlas-hml-local-signer.")
+            else _SENTINEL
+        )
+        if (
+            "Install" in actual
+            or actual["Unit"].get("ConditionPathExists") != expected_sentinel
+        ):
             raise HMLSupervisorBlueprintError("HML_BLUEPRINT_POLICY_DRIFT")
     return HMLSupervisorBlueprintReview()
 
