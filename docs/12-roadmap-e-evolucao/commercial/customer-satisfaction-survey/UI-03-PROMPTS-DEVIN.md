@@ -15,6 +15,7 @@
 | **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
 | **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **ACEITO COM RESÍDUOS** (código restaurado pelo P6-R; ver §16) — aguarda o H8 do solicitante |
 | **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **ACEITO** — commit `c51e18890e`, HML em 18/11/2026 (ver §16) |
+| **P6.1** | 7 | Correções visuais da conferência em HML (R21–R24) | PluginUI → PROD; `public-hub` → **somente HML** | **PRONTO PARA EXECUÇÃO** (§17–§18) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -745,3 +746,49 @@ HEAD inicial/final · prova do §15.4.3 · testes · veredito do verificador sem
 | R19 | `plugins/public-hub/README.md` ainda cita o `form.css` antigo | Ajuste de documentação no próximo pacote que tocar o `public-hub` |
 | R20 | O checkout de PROD já contém a página nova; um rebuild do `public-hub` em PROD por outra frente passará a servi-la. Exposição funcional **nula** enquanto `COMMERCIAL_SATISFACTION_SURVEY_ENABLED=false` | Registrado para o owner; tratar no plano de implantação em PROD |
 | H8 | Envio real pelo solicitante (link do participante DRIVES ITAJAI, pendente) | **Solicitante** |
+
+---
+
+## 17. Conferência visual do coordenador em HML (18/11/2026)
+
+Feita no navegador, no link do participante pendente (sem envio), em 1280 px (claro) e 375 px (claro e escuro), comparando com a [referência visual](./UI-03-REFERENCIA-VISUAL.html).
+
+**Conforme:** abertura com título fixo, empresa, itens e prazo sem hora; logo carregando (D3 resolvido); tema escuro ao abrir com o aparelho escuro (selo branco no logo, texto escuro no botão primário); cabeçalho com etapa e progresso; escala 1–5 com a legenda logo abaixo dos números e “Não se aplica” à direita no computador / abaixo no celular (R8 ok); pendências com erro por pergunta; satisfação geral sem N/A; recomendação 0–10 com legenda acima, numa linha no computador e 6+5 no celular; campo de texto; rodapé fixo no celular.
+
+| Resíduo | Problema observado | Causa (conferida no código) |
+|---|---|---|
+| **R22** | **Rótulo do tema e enunciado fora do cartão.** “QUALIDADE”, “SUPORTE TÉCNICO” etc. aparecem acima do cartão e o enunciado fica **em cima da borda superior**, que aparece cortada atrás do texto (pior no celular, onde o enunciado ocupa duas linhas) | `legend` nativo de `fieldset` sem flutuação é desenhado sobre a borda (comportamento padrão do navegador). A orientação do §4.7 item 1 (“sem flutuação”) **foi um erro do coordenador** |
+| **R21** | Na abertura (e no resultado), em tela ≥ 600 px a faixa fica com 168 px e a sobreposição com 112 px — o esperado é 220 px e 160 px | `.delpi-ui-form-page--band-tall .delpi-ui-form-page__band` / `__column` (duas classes) vence a regra de `@media (min-width: 600px)` (uma classe) |
+| **R23** | Perguntas abertas mostram “opcional” sem parênteses; a UI-03 §3.4/§3.6 pede “(opcional)” | Texto em `surveyTexts.ts` |
+| **R24** | No primeiro acesso do navegador de teste, a página ficou parada em “Carregando” e só abriu ao recarregar | **Não reproduzido** de novo; investigar (pode ser do ambiente de teste) |
+| — | Não conferidos pelo coordenador: revisão, resultado e troca de tema no meio do fluxo (ficam no H8 do solicitante) | — |
+
+## 18. Pacote P6.1 — Correções da conferência em HML
+
+**Pré-requisito:** P6/P6-R aceitos. **Escopo pequeno.**
+
+### 18.1 Escopo permitido
+
+- **PluginUI:** `plugins/plugin-ui/src/components/forms/questionnaire/QuestionCard.tsx` (só se indispensável), `FormCard`/`QuestionCard` tests, `plugins/plugin-ui/src/styles/questionnaire.css`, `questionnaireCssContract.test.ts`.
+- **public-hub:** `plugins/public-hub/src/apps/commercial/satisfaction-survey/surveyTexts.ts` (+ teste), `plugins/public-hub/README.md` (R19).
+- Nada mais.
+
+### 18.2 Entregáveis
+
+1. **R22:** rótulo do tema e enunciado **dentro** do cartão, com a borda superior inteira, como na referência — mantendo `fieldset` + `legend` (nome acessível do grupo). Técnica sugerida: `legend` com `float: left; width: 100%; padding: 0` e o conteúdo seguinte com `clear: both`, ou borda/fundo do cartão num elemento interno. Teste de contrato que impeça a volta do “entalhe” (ex.: `legend` com `float` declarado) + capturas.
+2. **R21:** a partir de 600 px, a variante `tall` usa faixa de 220 px e sobreposição de 160 px — ajustar a especificidade dentro da `@media`, sem `!important`; teste de contrato.
+3. **R23:** “(opcional)” com parênteses nas três perguntas abertas.
+4. **R19:** remover do `README.md` do `public-hub` a menção ao `form.css` antigo.
+5. **R24 (só diagnóstico):** tentar reproduzir o carregamento parado em navegador limpo (sem cache) em HML; registrar no relatório se reproduziu e a causa provável, **sem** mudar código.
+
+### 18.3 Aceite e deploy
+
+| # | Critério | Evidência |
+|---|---|---|
+| H-a | Rótulo do tema e enunciado dentro do cartão, borda inteira, em 360/375/1280 px, claro e escuro, na página pública de HML | Capturas lado a lado com a referência |
+| H-b | Abertura em 1280 px com faixa 220 px e cartão sobreposto 160 px | Medição |
+| H-c | “(opcional)” nas abertas | Captura |
+| H-d | Leitor de tela continua anunciando o grupo com tema + enunciado | Teste |
+| H-e | Testes, build, `verify-host-exports`, auditorias, verificador | Saídas |
+
+Deploy: `plugin-ui` em **PROD e HML** (kit genérico); `public-hub` **somente em HML**. Reconferir após o push que os arquivos continuam em `main` (R18).
