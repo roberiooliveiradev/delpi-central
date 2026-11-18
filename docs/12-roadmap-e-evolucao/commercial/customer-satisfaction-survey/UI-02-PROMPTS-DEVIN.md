@@ -8,8 +8,8 @@
 
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
-| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **Declaração aprovada com ajustes** em 18/11/2026 (ver §2.8 e §3) — em execução |
-| P2 | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | A gerar — depende do aceite do P1 e da UI-02 vigente |
+| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
+| **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **A executar** (ver §5) |
 | P3 | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | **Somente HML** | A gerar |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
 | P5 | 5 | Detalhe do participante (4, 16) | **Somente HML** | A gerar |
@@ -243,3 +243,128 @@ A declaração foi aprovada. Os ajustes abaixo fazem parte do pacote.
 | I6 | `questionnaire_version` = `delpi.commercial.satisfaction-survey.canonical-15@2026-11-11` | D2 fechado: mostrar “Questionário oficial — versão de 11/11/2026”, extraindo a data do sufixo `@AAAA-MM-DD`. Sem sufixo válido, mostrar “Questionário oficial” sem data. O identificador técnico não aparece na tela |
 | I7 | Serviço `commercial` (MFE). Deploy de outra frente reconstrói o MFE em PROD | Risco igual ao R20 da UI-03, mitigado pelo gate `COMMERCIAL_SATISFACTION_SURVEY_ENABLED=false`. Registrar em cada relatório do P2 ao P6 |
 | I8 | `TextField`/`TextAreaField` não repassam `aria-*` nem `ref` (R7). `NativeText*Control` repassam | O componente novo deve repassar. No P4, o `CampaignMessageTab` passa a usar `inputRef` no lugar de `document.getElementById` |
+
+---
+
+## 4. Revisão do relatório do P1 (18/11/2026)
+
+**Veredito:** ACCEPT_WITH_RESIDUAL.
+
+**Conferido no repositório pelo coordenador:**
+
+- O commit `52eecc38e0` é ancestral de `origin/main` e contém exatamente os 9 arquivos do §2.4 (945 inserções).
+- `TextField`, `TextAreaField`, `FormFieldShell`, `Native*` e o Comercial não têm alteração.
+- As seções §2.8 e §3 deste arquivo estão íntegras no HEAD. A versão local sem elas, na pasta de trabalho do executor, não foi publicada.
+
+**Ajustes da §2.8 no código:**
+
+| # | Ajuste | Situação | Evidência no código |
+|---|---|---|---|
+| 1 | Estados do campo | OK | A camada desenha o fundo normal, desabilitado (88% e `.55`) e somente leitura (92%) com as mesmas fórmulas de `native-controls.css:79,84`. Foco e erro não mudam o fundo do controle nativo: só borda e sombra, que continuam com o controle. Seletores escopados, sem `!important` |
+| 2 | Espelho tipográfico | OK | Métricas copiadas do estilo computado do controle (fonte, espaçamentos, `tab-size`, quebra, `box-sizing`, paddings, bordas). Linha única com `pre`, várias linhas com `pre-wrap`. Espaço final após quebra de linha |
+| 3 | Sem `ResizeObserver` | OK | Sincroniza em `useLayoutEffect`, `onScroll`, `onPointerUp` (cobre arrastar a alça do `textarea`) e `resize` da janela |
+| 4 | Placeholder | OK | O controle é transparente e continua por cima |
+| 5 | Alto contraste | OK | `forced-colors` usa `outline: MarkText` |
+| 6 | Ordem das camadas | OK | Camada com `pointer-events: none` e `user-select: none`; controle com `position: relative` por cima |
+| 7 | Erro | OK | `aria-invalid`, `aria-describedby` e `role="alert"`. O kit não tem classe única de erro de campo (cada componente tem a sua, ex.: `audio-recorder__error`). A classe própria só usa `--delpi-ui-danger` |
+| 8 | R7 | OK | Fora do escopo; não alterado |
+| 9 | Captura do cursor | Parcial | O navegador sem tela não desenha o cursor. A posição foi comprovada por `selectionEnd` medido e por capturas de seleção |
+
+O tema escuro segue o padrão do kit (`:root[data-theme="dark"] .delpi-ui-…`, 23 arquivos) e só troca cores.
+
+**Resíduos:**
+
+| ID | Resíduo | Tratamento |
+|---|---|---|
+| R1 | `__stack` redeclara as métricas de `native-controls.css` (13 px, 8/12 px, raio 10 px) como valor de primeiro desenho. Se `native-controls.css` mudar, o primeiro desenho diverge até a sincronização por JS | Baixo. Corrigir se um pacote futuro tocar o componente |
+| R2 | Verificação r3 dispensada pelo solicitante (AC-15, só documental) | Registrado. Os ACs de código passaram na r2 |
+| R3 | Cursor não capturado em imagem (limitação do navegador sem tela) | Conferir visualmente no uso real, no P4 (Mensagem padrão em HML) |
+| R4 | O catálogo `plugin-ui` não está registrado nos apps de HML (problema anterior a este pacote) | Acompanhar o componente no catálogo de PROD (`/apps/plugin-ui`) |
+| R5 | A pasta de trabalho do executor tem versões locais de `UI-02-PROMPTS-DEVIN.md` e `README.md` diferentes do HEAD | Nunca publicar. Cada pacote confere `git diff --cached --stat` antes do commit |
+| R6 | **Ocorrido:** o commit `40caeb143` (outra frente, TOTVS G2-B2) publicou a versão local antiga do `README.md` desta pasta e desfez a linha do plano da UI-02 | Linha restaurada pela coordenação em 18/11/2026. Outras frentes afetadas por esse commit não foram tocadas e devem ser avisadas ao solicitante |
+
+---
+
+## 5. Pacote P2 — Lista de campanhas (ajustes 1–5)
+
+**Fase do plano:** 2. **Pré-requisitos:** P1 aceito; [UI-02 vigente](./UI-02-CONFIGURACAO-PESQUISAS.md) de 18/11/2026. **Especificação desta tela:** UI-02 §3.1, §5, §6 (só as chaves da lista) e §7. **Maquete:** telas 1 (tabela) e 2 (cards).
+
+### 5.1 Objetivo
+
+Refazer a composição da página `SatisfactionSurveysPage` para ficar igual às telas 1 e 2 da maquete, nos temas claro e escuro.
+
+- Comportamento, API, filtros, criação de campanha e navegação ficam iguais.
+- Detalhe da campanha e participante ficam para o P3 em diante.
+
+### 5.2 Entregáveis
+
+1. **Bloco de título** (UI-02 §3.1 item 2):
+   - etiqueta `eyebrow` “MARKETING · PESQUISA DE SATISFAÇÃO”, título e descrição atuais;
+   - em `actions`, “Atualizado em dd/mm/aaaa, hh:mm” (com “· Atualizando…” durante a recarga, `aria-live="polite"`), Atualizar e Nova campanha;
+   - os filtros continuam no corpo do bloco.
+
+   **“Atualizado em”** (conclusão do I2): é a hora da última carga com sucesso da lista.
+   - Compor com o que já existe, sem CSS novo de texto. Primeiro tentar uma tipografia ou componente de texto secundário que o kit ou o `commercialUi` já tenha.
+   - Se só for possível copiando a regra de `customers.css:248`, **parar e declarar** antes de copiar. A alternativa seria mover a regra para um utilitário compartilhado de página do Comercial, e isso toca Clientes.
+2. **Sem o aviso “Escopo parcial”** na lista.
+   - Remover o `CommercialStateBanner` da lista.
+   - **Não remover** a chave `list.partialScope` ainda, porque o detalhe da campanha a usa. Ela sai no P3.
+3. **Ordenação na tabela:** todas as colunas com `sortable` (ajuste 5).
+
+   | Coluna | Critério |
+   |---|---|
+   | Campanha / período | Nome, com `localeCompare` em `pt-BR` |
+   | Situação | Ordem do ciclo: Agendada → Aberta → Encerrada |
+   | Participantes, Respostas | Valor numérico |
+   | Taxa de resposta | Valor numérico, com vazio sempre no fim |
+
+   - Sem ordenação escolhida, a ordem é a que a API devolve (a de hoje).
+   - A ordenação se aplica sobre o resultado dos filtros, com a paginação atual.
+4. **Visão em cards:**
+   - barra **“Ordenar por”** com `CommercialDataCardsSortBar` + `CommercialSelectField` + direção, copiando o molde de `features/customers/components/CustomersTable.tsx:441`, com os mesmos critérios e o mesmo estado da tabela (trocar de visão mantém a ordenação);
+   - no card: nome como título, selo de situação no topo, campo **“Período”** (hoje o rótulo repete “Campanha / período”, ajuste 1) e os três números.
+5. **Textos** em `content/satisfactionSurveysContent.ts` (UI-02 §6): `list.eyebrow`, `updatedAt(data)` (ou nome equivalente, sem texto fixo no componente), `list.cardPeriod`, `list.sortBy` e os rótulos de direção, se o molde de Clientes usar. As dicas novas vão em `CM_HELP.satisfactionSurveys` (`helpTooltips.ts`), no padrão das existentes.
+6. **Taxa de resposta** sem mudança de formato (UI-02 §3.1).
+
+### 5.3 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/commercial/src/features/satisfaction-surveys/SatisfactionSurveysPage.tsx` | Composição |
+| `plugins/commercial/src/features/satisfaction-surveys/satisfactionFilters.ts` ou um arquivo novo `satisfactionSort.ts` na mesma pasta | Ordenação pura e testável |
+| `plugins/commercial/src/features/satisfaction-surveys/satisfactionDates.ts` | Formatação de “Atualizado em”, se não houver utilitário compartilhado do Comercial para reaproveitar |
+| `plugins/commercial/src/content/satisfactionSurveysContent.ts`, `plugins/commercial/src/content/helpTooltips.ts` | Textos e dicas |
+| `plugins/commercial/src/features/satisfaction-surveys/satisfactionSurveys.test.ts`, `satisfactionSurveys.structural.test.mjs` | Testes |
+| `plugins/commercial/src/styles/satisfaction.css` | Só se faltar layout de página; sem cor literal |
+
+Qualquer outro arquivo, inclusive no PluginUI e em Clientes, está fora do escopo e exige parar e declarar.
+
+### 5.4 Invariantes
+
+- Mesmas chamadas de API, filtros, preferências de tabela (`viewLayoutPreferencesKey`, `columnPreferencesKey`, `fontSizePreferencesKey` sem mudar de nome), diálogo Nova campanha e navegação para a campanha.
+- Nenhuma alteração em outras páginas do Comercial nem no PluginUI.
+- Sem cor literal nova; troca de tema muda só cores.
+- Sem “Ver resultados” nem “Respostas por empresa” (Q24).
+
+### 5.5 Testes mínimos
+
+1. A ordenação pura ordena cada coluna nos dois sentidos, com a regra de Situação, `pt-BR` no nome e vazio no fim na taxa. Sem chave, a ordem fica intacta.
+2. A página renderiza a etiqueta e o título.
+3. O aviso de escopo parcial não aparece na lista.
+4. “Atualizado em” aparece depois da carga e “Atualizando…” durante a recarga.
+5. Todas as colunas são ordenáveis; trocar de tabela para cards mantém a ordenação.
+6. O card tem o nome como título e o rótulo “Período”.
+7. Os testes existentes da Pesquisa continuam verdes sem afrouxar asserções.
+8. O teste estrutural confirma que não há cor literal nova em `satisfaction.css`.
+
+### 5.6 Critérios de aceite
+
+| # | Critério | Evidência esperada |
+|---|---|---|
+| A1 | Telas 1 e 2 da maquete reproduzidas em 1280 px, 768 px e 360 px, nos temas claro e escuro | Capturas em HML no relatório |
+| A2 | Ajustes 1–5 do plano entregues | Testes 2–6 + capturas |
+| A3 | Comportamento preservado: filtros, criação de campanha, abertura da campanha, preferências | Testes existentes verdes + roteiro manual em HML (sem criar dados além de uma campanha de teste, se precisar) |
+| A4 | Escopo respeitado e commit só dos arquivos do §5.3 (`git diff --cached --stat` no relatório) | Diff |
+| A5 | Auditorias de §1.3 sem item novo; lint, testes e build do Comercial verdes | Saídas |
+| A6 | Deploy **somente HML** do serviço `commercial`; risco de PROD do I7 registrado | Comando e resultado |
+| A7 | Verificador independente aprovado | Veredito sem edição |

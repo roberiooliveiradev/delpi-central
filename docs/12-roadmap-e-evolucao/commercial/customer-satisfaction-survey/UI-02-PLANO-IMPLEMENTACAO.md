@@ -2,7 +2,7 @@
 
 > **Estado:** PLANO APROVADO em 18/11/2026 (D1–D3 aprovadas pelo solicitante). Pedidos de execução: [UI-02-PROMPTS-DEVIN.md](./UI-02-PROMPTS-DEVIN.md). Criado em 18/11/2026 sobre `main` em `f58b66022`; **revalidar HEAD, branch e working tree no início de cada fase.**
 > **Referência visual aprovada como base:** maquete *Pesquisa de Satisfação — páginas internas do Portal (proposta)*, seis telas, tema escuro — <https://claude.ai/artifact/7sw5awGxjUydGU7MhzuRUk>.
-> **Especificação que este plano implementa:** [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md). Ela será **reescrita como especificação vigente** na fase 0, antes de qualquer código; o histórico de decisões vai para o [BUSINESS-DECISIONS](./BUSINESS-DECISIONS.md).
+> **Especificação que este plano implementa:** [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md). Reescrita como especificação vigente em 18/11/2026 (fase 0); histórico na [Q24](./BUSINESS-DECISIONS.md#q24--novo-visual-das-páginas-internas-18112026).
 > **Ambientes:** desenvolvimento em DEV; testes e homologação em HML; **nada da Pesquisa em PROD** sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).
 
 ## 1. Objetivo e resultado esperado
@@ -66,6 +66,8 @@ O estado atual foi lido no código em 18/11/2026. O estado novo é o da maquete.
 Cada fase é um pedido de execução delimitado, com commit próprio, verificação independente (`AGENTS.md`, ciclo delpi-verifier) e relatório. **Não juntar fases num único diff.** Os pedidos de execução ficarão em `UI-02-PROMPTS-DEVIN.md`, no mesmo protocolo da UI-03.
 
 ### Fase 0 — Especificação vigente e inventário (coordenação, sem código de produto)
+
+> **CONCLUÍDA em 18/11/2026:** UI-02 reescrita como especificação vigente; histórico na [Q24](./BUSINESS-DECISIONS.md#q24--novo-visual-das-páginas-internas-18112026); inventário I1–I8 no [P1](./UI-02-PROMPTS-DEVIN.md#3-revisão-da-declaração-do-p1-e-conclusões-do-inventário-18112026).
 
 - Reescrever a [UI-02](./UI-02-CONFIGURACAO-PESQUISAS.md) como especificação vigente, no formato da UI-03: princípios, estrutura de cada tela, componentes usados, textos, estados, acessibilidade e critérios de aceite. Hoje ela tem cerca de 106 KB de decisões acumuladas e ainda diz “NÃO IMPLEMENTADO”, mas as páginas já existem em HML.
 - Mover o histórico datado para o [BUSINESS-DECISIONS](./BUSINESS-DECISIONS.md).

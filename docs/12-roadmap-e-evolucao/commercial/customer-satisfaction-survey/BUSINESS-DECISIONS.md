@@ -254,6 +254,25 @@ A primeira entrega deverá permitir **criação de campanhas, escolha de partici
 
 **Estado:** decisão **APROVADA**; implementação **PENDENTE**.
 
+### Q24 — Novo visual das páginas internas (18/11/2026)
+
+**Decisão do solicitante (16–18/11/2026):** as três páginas internas da Pesquisa no Portal Comercial (lista de campanhas, detalhe da campanha com três abas e detalhe do participante) passam a seguir um **padrão visual moderno, igual ao restante do Portal Comercial**. A base é a maquete aprovada em 18/11/2026 (<https://claude.ai/artifact/7sw5awGxjUydGU7MhzuRUk>).
+
+- **Especificação vigente:** [UI-02-CONFIGURACAO-PESQUISAS.md](./UI-02-CONFIGURACAO-PESQUISAS.md), reescrita em 18/11/2026. Ela substitui o texto anterior com decisões datadas de 11 a 13/11/2026, cujo texto integral fica no histórico do repositório (commit `ed4ededc6`). As regras funcionais daquele texto continuam valendo e estão na §4 da especificação.
+- **Superado pelo novo visual:**
+  - o aviso “Escopo parcial”;
+  - os números da campanha dentro da aba (agora ficam no bloco de título);
+  - o botão “Copiar prévia”;
+  - o identificador técnico do questionário na tela;
+  - os botões “Ver resultados” e “Respostas por empresa” no bloco de título, que **voltam com as páginas de resultados** (UI-01, UI-05, UI-06).
+- **D1:** a aba aberta da campanha fica no endereço (`?tab=`).
+- **D2:** a aba Dados mostra só “Questionário oficial” e a versão como data (“Versão de 11/11/2026”), sem mudar o backend.
+- **D3:** `{nome_empresa}` e `{link_pesquisa}` aparecem destacados no editor, com um componente genérico novo no PluginUI (`TokenHighlightField`, pacote P1, commit `52eecc38e0`).
+- Tudo com componentes do PluginUI e do Comercial, nos temas claro e escuro, e trocar de tema muda só cores (mesma regra da Q23).
+- **Plano:** [UI-02-PLANO-IMPLEMENTACAO.md](./UI-02-PLANO-IMPLEMENTACAO.md). **Pedidos de execução:** [UI-02-PROMPTS-DEVIN.md](./UI-02-PROMPTS-DEVIN.md).
+
+**Estado:** decisão **APROVADA**; implementação **EM ANDAMENTO** (P1 aceito em 18/11/2026). Somente HML.
+
 ## Já definido pelas fontes — não perguntar novamente sem necessidade
 
 - Periodicidade desejada: duas campanhas por ano, janelas maio/junho e novembro/dezembro.
