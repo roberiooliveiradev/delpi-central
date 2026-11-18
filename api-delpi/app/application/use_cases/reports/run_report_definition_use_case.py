@@ -12,6 +12,10 @@ from app.config import settings
 from app.domain.services.reports.report_follow_up_portal_url import (
     build_follow_up_portal_url,
 )
+from app.domain.services.reports.direct_weekly_team_delivery_policy import (
+    DIRECT_WEEKLY_PROVIDER_KEY,
+    ensure_manager_is_sole_recipient,
+)
 from app.domain.services.reports.report_types import ReportDataset
 from app.domain.services.reports.safety_stock_shortage_30d_rules import PROVIDER_KEY
 from app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_client import (
@@ -114,6 +118,15 @@ class RunReportDefinitionUseCase:
         params: Mapping[str, Any] = definition.get("params") or {}
         provider = self._registry.require(provider_key)
 
+        # A schedule or manual run cannot bypass the supervisor-report gate.
+        if (
+            provider_key == DIRECT_WEEKLY_PROVIDER_KEY
+            and not settings.REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED
+        ):
+            raise ValueError(
+                "Envio semanal por gestor desabilitado até aprovação de destinatários e finalidade."
+            )
+
         run = self._repository.create_run(
             definition_id=definition_id,
             trigger=normalized_trigger,
@@ -141,6 +154,11 @@ class RunReportDefinitionUseCase:
                 dataset,
                 definition_id=definition_id,
             )
+            if provider_key == DIRECT_WEEKLY_PROVIDER_KEY:
+                ensure_manager_is_sole_recipient(
+                    recipients=recipients,
+                    dataset=dataset,
+                )
             email_payload = provider.render_email(dataset)
             artifact_path = self._artifacts.save_html(
                 run_id=run_id,
