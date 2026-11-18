@@ -21,6 +21,10 @@
 }
 :host-context([data-theme="light"]) { color-scheme: light; }
 :host-context([data-theme="dark"]) { color-scheme: dark; }
+/* O cabeçalho operacional da tabela usa --delpi-ui-title como brand navy em
+   qualquer tema; hosts podem redefinir esse token como cor de texto, então o
+   valor é fixado localmente para não herdar a semântica do host. */
+table.delpi-ui-table th { --delpi-ui-title: var(--secundary, #003866); }
 *, *::before, *::after { box-sizing: border-box; }
 .studio { background: var(--app-canvas, Canvas); min-width: 0; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px max(18px, calc((100% - 1220px) / 2)); background: var(--surface-2, Canvas); color: var(--text, CanvasText); }
