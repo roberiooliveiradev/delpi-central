@@ -78,6 +78,11 @@ on:
       - "linux-ops-mcp/candidate-units/**"
       - "linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_stage70_socket_dac.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_readonly_preflight.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_provisioning_review.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_git_reconcile.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/59-atlas-hml-b-etapa71-preflight-provisionamento.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py"
@@ -214,6 +219,11 @@ on:
       - "linux-ops-mcp/candidate-units/**"
       - "linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_stage70_socket_dac.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_readonly_preflight.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_provisioning_review.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_stage71_git_reconcile.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/59-atlas-hml-b-etapa71-preflight-provisionamento.md"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py"
@@ -392,6 +402,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py \
             linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage70_socket_dac.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_stage71_preparation.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage64_review.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py \
