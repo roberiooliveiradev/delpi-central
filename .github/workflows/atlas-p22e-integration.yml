@@ -67,6 +67,17 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_external_signing_intent.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_key_lifecycle.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_signer_listen.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_signed_presenter.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_chain_orchestrator.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_bootstrap_control.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_counter_recovery.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_candidate_unit_review.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_preflight_bundle.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_handoff_checklist.py"
+      - "linux-ops-mcp/candidate-units/**"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/54-atlas-hml-b-etapa63-ponte-nonroot-retomada.md"
@@ -191,6 +202,17 @@ on:
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_external_signing_intent.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_key_lifecycle.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_local_signer.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_signer_listen.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_signed_presenter.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_chain_orchestrator.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_bootstrap_control.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_counter_recovery.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_candidate_unit_review.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_preflight_bundle.py"
+      - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_handoff_checklist.py"
+      - "linux-ops-mcp/candidate-units/**"
+      - "linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py"
+      - "docs/12-roadmap-e-evolucao/mcp-linux-control/57-atlas-hml-b-etapas-66-69-preactivation-bundle.md"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_b_nonroot_sign_bridge.py"
       - "linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py"
       - "docs/12-roadmap-e-evolucao/mcp-linux-control/54-atlas-hml-b-etapa63-ponte-nonroot-retomada.md"
@@ -366,6 +388,7 @@ jobs:
             linux-ops-mcp/tests/test_atlas_hml_b_key_lifecycle.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signer.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_handoff_restart.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_bundle_66_69.py \
             linux-ops-mcp/tests/test_atlas_hml_b_stage64_review.py \
             linux-ops-mcp/tests/test_atlas_hml_b_local_signed_pipeline.py \
             linux-ops-mcp/tests/test_atlas_hml_b_pilot_readiness.py \

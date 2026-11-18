@@ -1,0 +1,9 @@
+[Unit]
+Description=ATLAS HML SNAPSHOT PRODUCER TIMER CANDIDATE
+ConditionPathExists=/run/atlas-hml-candidate/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Timer]
+OnUnitActiveSec=30s
+Unit=atlas-hml-snapshot-producer.service
+Persistent=no

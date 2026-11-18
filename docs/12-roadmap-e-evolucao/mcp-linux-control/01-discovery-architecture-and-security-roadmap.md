@@ -758,3 +758,14 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Blueprints .review: signer.socket sem seção Socket; signer.service mantém ExecStart=/usr/bin/false e condição impossível; planejamento de socket parent signer:bridge 02750 e arquivo 0660, com chave e store isolados.
 - Novo teste Linux elevado no runner GitHub CI descarta UID idêntico: processos UID 61021 (signer) e UID 61022 (bridge), SO_PEERCRED, chaves/Docker negados à bridge e gerações 1->2 após restart. Nunca cria usuários nem toca srv-api.
 - Exigem-se gates reais: SEC-01/exceção, SEC-02..10, unidades operacionais revisadas, primeiro checkpoint com âncora externa, autorização de chave/GLPI e instalação HML, baseline PROD e rollback. Quatro MCP READ, PREPARE/ACT OFF. **NÃO executar pull/deploy.**
+
+## Etapa 66–69 | 18/11/2026 | Pacote consolidado de pré-ativação HML
+
+**Fonte:** issue #232 e [runbook 57](./57-atlas-hml-b-etapas-66-69-preactivation-bundle.md). **SOURCE-ONLY; status BLOCKED.**
+- Base: merge Etapa 65 `8db122c0a50196d9124c936645f46cd912ade164` (PR #274); Verifier `ACCEPT_WITH_RESIDUAL`.
+- **66:** cadeia claim→bridge→signer→envelope→signed presenter; `atlas_hml_b_signer_listen` (bind após non-root); `atlas_hml_b_signed_presenter`; orchestrator disposable.
+- **67:** `atlas_hml_b_bootstrap_control` (ausência≠genesis + âncora externa); `atlas_hml_b_counter_recovery` (piso monotônico); ciclo de chaves efêmeras / PKCS#8 / id GLPI documentado.
+- **68:** `linux-ops-mcp/candidate-units/*.candidate` separado de `review-only/`; revisor anti-`[Install]`; hardening AF_UNIX; ExecStart permanece `/usr/bin/false`.
+- **69:** preflight estruturado sanitizado; handoff checklist; runbook de instalação futura 12 passos; rollback só ATLAS.
+- CI paths/pytest ampliados; quatro MCP READ; PREPARE/ACT OFF. Sem pull/deploy/chave real/users no host.
+- **Progresso conservador 60%** (dev pré-ativação integrado); atestação srv-api, SEC-01..10, bootstrap operacional e install systemd permanecem pendentes.
