@@ -6948,3 +6948,37 @@ Invariantes: 15 candidatos / 9 excluídos / 10 linhas de tabela; `balloon_table_
 **B3/B1/tabela:** contagens baseline preservadas; nenhuma promoção de confiança.
 
 **Estado:** correção local verificada + deploy canônico conforme AGENTS.md; verificação independente `INCONCLUSIVE` por indisponibilidade ambiental (documentada, exceção owner reutilizada da B2-R2); `LIVE_MCP_VALIDATION` pela Coordination; pacote de revisão visual (overlays `/tmp/val02_*`, SHA `9b64ae20…`) para GT owner — `HUMAN_DRAFT_OBSERVATION`, não homologado.
+
+### 94.42.18 E1/VAL-01 — VAL-03: Independent Verification and Dot/Endpoint Evidence
+
+**TASK_ID:** `EVA-E1-VAL01-VAL03-B2-INDEPENDENT-VERIFICATION-DOT-ENDPOINT-EVIDENCE-AND-GEOMETRIC-VALIDATION-01`
+
+**Reancoragem:** HEAD `45884cc440` (commits alheios posteriores à VAL-02; `61fa461be0`/`45811bb4cf` ancestors confirmados), WIP alheio preservado, digest prod `80fad8fc12c6` ⊃ VAL-02.
+
+**RQ-VAL03-02 — verificação retroativa (motor cursor, composer-2.5):** re-executada em 18/11/2026 — `ActionRequiredError: usage limit … reset 12/2/2026`. Motor `devin` indisponível e não-independent (mesmo modelo do executor). Veredito `INCONCLUSIVE` r2 registrado (`val03-retro-b2r2-val02-r2.md`); **não promovido** — bloqueio ambiental comprovado, não aprovação.
+
+**RQ-VAL03-03/05 — spike de dots (DEVIN_VISUAL_OBSERVATION):** os terminadores são discos verde-puro (RGB≈0,255,0) ~10–26px, detectáveis pela **mesma máscara de saturação** de `enclosures` + opening morfológico (kernel 5×5 > espessura de linha ~3px). Resultado: p1 16 blobs / p2 4 blobs, **zero falsos positivos** no desenho; cada endpoint CANDIDATE coincide com um dot a 1–6px.
+
+**Matriz endpoint × dot (sem threshold arbitrário — distâncias observadas):**
+
+| Balão | Estado | Endpoint/ponta | Dot real | Dist | Veredito |
+|---|---|---|---|---|---|
+| A8 p2 | CANDIDATE | (1045,1107) | (1045,1108) | 1.0px | MATCH |
+| A4 p2 | CANDIDATE | (1990,1103) | (2000,1113) | ~rim | MATCH (líder entra no dot) |
+| AA p2 | CANDIDATE | (1597,1065) | (1597,1069) | 4.0px | MATCH |
+| AA p1 | CANDIDATE | (1843,711) | cluster (1839,710) | 4.1px | MATCH |
+| A1 p1 ×2 | CANDIDATE | eps → dots (646,565)/(891,1337) | — | 4–6px | MATCH |
+| A9 p2 | AMBIGUOUS | tips → dot (2003,1087) | — | 5–19px | dot confirma o ramo; E converge ao mesmo dot → ambiguidade real |
+| A3 p1 | AMBIGUOUS | tip (148,599) | (149,595) | 4.1px | líder real confirmado; raízes extras = tinta cruzada |
+| A5 p1 | AMBIGUOUS | 4 raízes | 3 dots (2005,803)(1928,828)(2008,874) | ver análise | leque 3 ramos→3 dots; raiz do meio **overshoot** 61px além do dot |
+| E p2 | AMBIGUOUS | tips → dot (2003,1087) | — | 5–17px | ambiguidade justificada (raízes convergentes) |
+
+**RQ-VAL03-06 — topologia A5 revisada:** 3 ramos reais → 3 dots. EVA emite 4 raízes: ramo esquerdo fragmentado em 2 raízes, ramo direito → rim do dot, ramo do meio **atravessa o dot** e termina em vértice da peça 61px adiante. Dots como evidência de terminador permitiriam ancorar os 3 destinos reais sem escolha arbitrária — mas não identificam componente (nível `DOT_CANDIDATE`, não `COMPONENT_IDENTITY`).
+
+**Abstraction Gate (RQ-VAL03-04):** NECESSITY=terminador geométrico do próprio desenho; OWNER=opencv_adapter→graphic_primitives→Understanding; EXISTING_EQUIVALENT=nenhum (`circles`/HoughCircles não detecta discos pequenos preenchidos; `enclosures`=regiões livres, semântica distinta); REUSE_DECISION=**EXTEND** — canal aditivo `dots` derivado do canal de cor existente (sem detector paralelo); CONTRACT_IMPACT=chave aditiva retrocompatível; AUTHORITY_IMPACT=nenhum; ROLLBACK=trivial (consumidores ignoram chave desconhecida). **Decisão:** extensão válida em evidência, mas **implementação retida** — §15 VAL-03 proíbe push que dispare deploy com verificação `INCONCLUSIVE` e sem exceção específica. Pendente: Coordination decide promoção (EXTEND contrato) + verificador disponível.
+
+**Sem alteração de código nesta task** — runtime inalterado, nenhum deploy. `ENGINEERING_GT_APPROVED=NO`, anotações `DEVIN_VISUAL_OBSERVATION`/`HUMAN_DRAFT`.
+
+**Pacote de revisão Engenharia:** overlays `/tmp/val03_overlay_{a5,a3,a9a4e,a8}_*.png` (magenta=balão EVA, laranja=raízes, vermelho=caminho CANDIDATE, azul=endpoint, ciano=dot detectado), matriz endpoint×dot acima, zooms `/tmp/val03_a4a9_zoom.png` e `/tmp/val03_a5fan_zoom.png`, PDF SHA `9b64ae20…`. Perguntas ao reviewer por ocorrência: `BALLOON_LABEL_CORRECT? LEADER_PATH_CORRECT? ENDPOINT_CORRECT? TARGET_REGION_CORRECT? COMPONENT_ASSOCIATION_CORRECT?`
+
+**Estado:** `VAL03_INCONCLUSIVE_VERIFIER_UNAVAILABLE` — spike de dots validado como evidência (não GT); decisão de EXTEND pendente de Coordination; verificação retroativa reagendada para motor disponível (reset cursor 02/12/2026 ou `devin auth login` por identidade distinta do executor).
