@@ -25,6 +25,8 @@ export default defineConfig({
         "./styles": "./src/styles-entry.ts",
         /** Controles nativos consumidos por bibliotecas hospedeiras (ex.: Line Balance Studio). */
         "./native-controls": "./src/native-controls.ts",
+        /** Reusable workspace kit with selected origin cards and tool rail. */
+        "./workspace-controls": "./src/workspace-controls.ts",
         "./App": "./src/app/bootstrap.tsx",
       },
       shared: { ...FEDERATION_SHARED_REACT, ...FEDERATION_SHARED_XYFLOW },
