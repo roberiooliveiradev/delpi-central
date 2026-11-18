@@ -16,6 +16,9 @@ from app.application.services.organization_identity_review_service import (
     OrganizationIdentityReviewService,
 )
 from app.application.services.organization_team_service import OrganizationTeamService
+from app.application.services.organization_weekly_usage_service import (
+    OrganizationWeeklyUsageService,
+)
 from app.extensions.integration_rate_limit import integration_rate_limit
 from app.infrastructure.gateways.portal_rh_organization_gateway import (
     PortalRhManagerNotFound,
@@ -23,6 +26,9 @@ from app.infrastructure.gateways.portal_rh_organization_gateway import (
     PortalRhOrganizationGateway,
     PortalRhOrganizationUnauthorized,
     PortalRhOrganizationUnavailable,
+)
+from app.infrastructure.persistence.sqlalchemy.organization_weekly_usage_repository import (
+    SqlAlchemyOrganizationWeeklyUsageRepository,
 )
 from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.http.security.authorization import require_all_permissions
@@ -271,3 +277,50 @@ def get_manager_identity_review(registration: str):
     except Exception:
         logger.exception("organization_identity_review_failed")
         return api_error("internal_error", "Falha na prévia de identidade.", status=500)
+
+
+@admin_hr_identity_bp.route(
+    "/managers/<registration>/weekly-app-opens", methods=["GET"]
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+@integration_rate_limit(max_requests=10, per_seconds=60, key_prefix="org-weekly-opens")
+def get_manager_weekly_app_opens(registration: str):
+    """GLPI #887: admin-only view of one completed week, no sending/scheduling."""
+    try:
+        registration = PortalRhOrganizationGateway.validate_registration(registration)
+        include_indirect = _bool_query("include_indirect", default=True)
+        details = _bool_query("details", default=False)
+        week_start = request.args.get("week_start")
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            report = OrganizationWeeklyUsageService(
+                OrganizationTeamService(PortalRhOrganizationGateway(), uow.hr_registrations),
+                SqlAlchemyOrganizationWeeklyUsageRepository(uow.session),
+            ).get_weekly_report(
+                registration,
+                week_start=week_start,
+                include_indirect=include_indirect,
+                details=details,
+            )
+        logger.info(
+            "organization_weekly_app_opens team=%s mapped=%s consented=%s details=%s",
+            report["teamCount"], report["verifiedMapped"],
+            report["consentGranted"], details,
+        )
+        return jsonify(report), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except PortalRhManagerNotFound:
+        return api_error("manager_not_found", "Gestor não localizado no RH.", status=404)
+    except PortalRhOrganizationUnauthorized:
+        return api_error("rh_unavailable", "Credencial RH inválida.", status=503)
+    except PortalRhOrganizationContractError:
+        return api_error("rh_contract_error", "Contrato RH inválido.", status=502)
+    except PortalRhOrganizationUnavailable:
+        return api_error("rh_unavailable", "Portal RH indisponível.", status=503)
+    except Exception:
+        logger.exception("organization_weekly_app_opens_failed")
+        return api_error("internal_error", "Falha na apuração semanal.", status=500)
