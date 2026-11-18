@@ -382,6 +382,20 @@ def test_auth_negatives_for_multiread(monkeypatch):
     asyncio.run(scenario())
 
 
+def _windows_service(name: str, *, criticality: str = "normal", state: str = "running"):
+    return {
+        "service_key": name.lower(),
+        "name": name,
+        "display_name": name,
+        "state": state,
+        "start_mode": "auto",
+        "is_favorite": criticality in {"high", "critical"},
+        "criticality": criticality,
+        "is_present": True,
+        "observed_at": "2026-11-18T12:00:00Z",
+    }
+
+
 def test_server_services_windows_and_linux():
     linux_id, windows_id = str(uuid4()), str(uuid4())
 
@@ -409,17 +423,7 @@ def test_server_services_windows_and_linux():
             )))
         if path.endswith(f"/servers/{windows_id}/host-services"):
             return httpx.Response(200, json=_envelope({
-                "items": [{
-                    "service_key": "sql",
-                    "name": "SQLSERVER",
-                    "display_name": "SQL Server",
-                    "state": "stopped",
-                    "start_mode": "auto",
-                    "is_favorite": True,
-                    "criticality": "critical",
-                    "is_present": True,
-                    "observed_at": "2026-11-18T12:00:00Z",
-                }],
+                "items": [_windows_service("SQLSERVER", criticality="critical", state="stopped")],
                 "total": 1,
                 "page": 1,
                 "page_size": 25,
@@ -439,6 +443,142 @@ def test_server_services_windows_and_linux():
         )
         assert windows["service_source"] == "it-portal-host-services"
         assert windows["attention_items"][0]["criticality"] == "critical"
+
+    asyncio.run(scenario())
+
+
+def test_windows_critical_only_filters_before_pagination_across_pages():
+    """critical_only must scan inventory first; page 1 alone can have zero critical rows."""
+    windows_id = str(uuid4())
+    # 30 normal services on pages 1 (25) and start of page 2; criticals only later.
+    inventory = [
+        _windows_service(f"NORMAL-{i:03d}", criticality="normal")
+        for i in range(30)
+    ]
+    inventory.extend([
+        _windows_service("CRIT-ALPHA", criticality="critical", state="stopped"),
+        _windows_service("HIGH-BETA", criticality="high", state="running"),
+        _windows_service("CRIT-GAMMA", criticality="critical", state="running"),
+    ])
+    # Fill remaining so page 2 also has a non-critical stretch after criticals if needed.
+    inventory.extend([
+        _windows_service(f"NORMAL-TAIL-{i:03d}", criticality="normal")
+        for i in range(10)
+    ])
+    assert len(inventory) == 43
+
+    calls: list[tuple[int, int]] = []
+
+    def respond(request: httpx.Request):
+        path = request.url.path
+        if path.endswith(f"/servers/{windows_id}"):
+            return httpx.Response(200, json=_envelope(_server(
+                windows_id, "srv-win-multi", operating_system="Windows Server 2022",
+            )))
+        if path.endswith(f"/servers/{windows_id}/host-services"):
+            page = int(request.url.params.get("page", "1"))
+            page_size = int(request.url.params.get("page_size", "25"))
+            calls.append((page, page_size))
+            start = (page - 1) * page_size
+            end = start + page_size
+            return httpx.Response(200, json=_envelope({
+                "items": inventory[start:end],
+                "total": len(inventory),
+                "page": page,
+                "page_size": page_size,
+                "favorites_count": 3,
+            }))
+        return httpx.Response(404)
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+
+        # Regression: paginating upstream first would return empty critical page 1.
+        broken_style_page1 = inventory[0:25]
+        assert not any(
+            item["criticality"] in {"high", "critical"} for item in broken_style_page1
+        )
+
+        page1 = await get_server_services(
+            reader,
+            "Bearer test-user-token",
+            server_id=windows_id,
+            critical_only=True,
+            page=1,
+            page_size=2,
+        )
+        assert page1["total"] == 3
+        assert [item["name"] for item in page1["items"]] == ["CRIT-ALPHA", "HIGH-BETA"]
+        assert page1["filtered_client_side"] is True
+        assert page1["inventory_scanned"] == 43
+        assert any(page_size == 100 for _, page_size in calls)
+
+        page2 = await get_server_services(
+            reader,
+            "Bearer test-user-token",
+            server_id=windows_id,
+            critical_only=True,
+            page=2,
+            page_size=2,
+        )
+        assert page2["total"] == 3
+        assert [item["name"] for item in page2["items"]] == ["CRIT-GAMMA"]
+        assert page2["attention_items"][0]["name"] == "CRIT-ALPHA"
+
+        empty_page = await get_server_services(
+            reader,
+            "Bearer test-user-token",
+            server_id=windows_id,
+            critical_only=True,
+            page=9,
+            page_size=2,
+        )
+        assert empty_page["total"] == 3
+        assert empty_page["items"] == []
+
+    asyncio.run(scenario())
+
+
+def test_windows_critical_only_negative_keeps_upstream_pagination():
+    windows_id = str(uuid4())
+    inventory = [_windows_service(f"SVC-{i:03d}") for i in range(40)]
+    calls: list[tuple[int, int]] = []
+
+    def respond(request: httpx.Request):
+        if request.url.path.endswith(f"/servers/{windows_id}"):
+            return httpx.Response(200, json=_envelope(_server(
+                windows_id, "srv-win-neg", operating_system="Windows Server 2022",
+            )))
+        if request.url.path.endswith(f"/servers/{windows_id}/host-services"):
+            page = int(request.url.params.get("page", "1"))
+            page_size = int(request.url.params.get("page_size", "25"))
+            calls.append((page, page_size))
+            start = (page - 1) * page_size
+            end = start + page_size
+            return httpx.Response(200, json=_envelope({
+                "items": inventory[start:end],
+                "total": len(inventory),
+                "page": page,
+                "page_size": page_size,
+                "favorites_count": 0,
+            }))
+        return httpx.Response(404)
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+        page2 = await get_server_services(
+            reader,
+            "Bearer test-user-token",
+            server_id=windows_id,
+            critical_only=False,
+            page=2,
+            page_size=10,
+        )
+        assert page2["total"] == 40
+        assert len(page2["items"]) == 10
+        assert page2["items"][0]["name"] == "SVC-010"
+        assert "filtered_client_side" not in page2
+        assert calls == [(2, 10)]
 
     asyncio.run(scenario())
 

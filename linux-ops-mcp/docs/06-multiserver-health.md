@@ -21,7 +21,7 @@ O Portal de TI continua sendo a unica fonte de inventario e observacoes. Novos s
 | `list_servers` | filtros + paginacao | `GET /servers` |
 | `get_server_health` | `server_id` ou `hostname` | inventario + `GET /servers/{id}/observations/latest` |
 | `get_infrastructure_health` | filtros de escopo + paginacao | inventario + latest por servidor (concorrente) |
-| `get_server_services` | servidor + filtros | Windows: `/host-services` (+ opcional dashboard); Linux: systemd allowlist da observacao |
+| `get_server_services` | servidor + filtros | Windows: `/host-services` (+ opcional dashboard); Linux: systemd allowlist da observacao. Com `critical_only`, a filtragem ocorre sobre o inventario varrido (limite seguro) **antes** da paginacao local. |
 
 As quatro tools legadas (`get_host_health`, `list_managed_services`, `get_service_health`, `get_deployment_revision`) permanecem e continuam ancoradas em `LINUX_OPS_SERVER_ID` com contrato Linux-only.
 

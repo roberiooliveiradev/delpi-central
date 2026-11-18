@@ -465,6 +465,124 @@ async def get_infrastructure_health(
     }
 
 
+# Bound how many Windows inventory rows we walk when client-side filters need
+# the full set (e.g. critical_only). Upstream page_size max is 100.
+_MAX_WINDOWS_SERVICE_SCAN = 2_000
+_WINDOWS_CRITICALITY = frozenset(("high", "critical"))
+
+
+def _is_windows_critical(item: dict[str, Any]) -> bool:
+    return item.get("criticality") in _WINDOWS_CRITICALITY
+
+
+async def _collect_windows_host_services(
+    reader: ItPortalReader,
+    authorization: str,
+    server_id: str,
+    *,
+    q: str | None = None,
+    state: str | None = None,
+    favorites_only: bool = False,
+    critical_only: bool = False,
+    page: int = 1,
+    page_size: int = 25,
+) -> dict[str, Any]:
+    """List Windows host services with correct totals for client-side filters.
+
+    Upstream pagination is authoritative when no client-side filter is needed.
+    For ``critical_only``, scan the inventory (bounded), filter, then paginate.
+    """
+    page = max(1, min(int(page), 10_000))
+    page_size = max(1, min(int(page_size), 100))
+
+    if not critical_only:
+        listing = await reader.list_host_services(
+            authorization,
+            server_id,
+            q=q,
+            state=state,
+            favorites_only=favorites_only,
+            page=page,
+            page_size=page_size,
+        )
+        items = listing["items"]
+        attention = [
+            item for item in items
+            if item.get("state") != "running" and (
+                _is_windows_critical(item) or item.get("is_favorite")
+            )
+        ]
+        return {
+            "items": items,
+            "total": listing["total"],
+            "page": listing["page"],
+            "page_size": listing["page_size"],
+            "favorites_count": listing.get("favorites_count"),
+            "attention_items": attention[:50],
+            "filtered_client_side": False,
+            "inventory_scanned": None,
+            "bounded_by_max_scan": False,
+        }
+
+    collected: list[dict[str, Any]] = []
+    scanned = 0
+    upstream_page = 1
+    upstream_total: int | None = None
+    favorites_count = None
+    max_scan = min(_MAX_WINDOWS_SERVICE_SCAN, max(100, reader.settings.infra_max_servers * 4))
+
+    while scanned < max_scan:
+        batch = await reader.list_host_services(
+            authorization,
+            server_id,
+            q=q,
+            state=state,
+            favorites_only=favorites_only,
+            page=upstream_page,
+            page_size=100,
+        )
+        if favorites_count is None:
+            favorites_count = batch.get("favorites_count")
+        upstream_total = batch["total"]
+        batch_items = batch["items"]
+        if not batch_items:
+            break
+        for item in batch_items:
+            scanned += 1
+            if _is_windows_critical(item):
+                collected.append(item)
+            if scanned >= max_scan:
+                break
+        fetched = upstream_page * 100
+        if fetched >= (upstream_total or 0):
+            break
+        upstream_page += 1
+        if upstream_page > 100:
+            break
+
+    total = len(collected)
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_items = collected[start:end]
+    attention = [
+        item for item in collected
+        if item.get("state") != "running" and (
+            _is_windows_critical(item) or item.get("is_favorite")
+        )
+    ]
+    return {
+        "items": page_items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "favorites_count": favorites_count,
+        "attention_items": attention[:50],
+        "filtered_client_side": True,
+        "inventory_scanned": scanned if upstream_total is None else min(scanned, upstream_total),
+        "bounded_by_max_scan": scanned >= max_scan and (upstream_total or 0) > scanned,
+    }
+
+
 async def get_server_services(
     reader: ItPortalReader,
     authorization: str,
@@ -501,33 +619,31 @@ async def get_server_services(
     }
 
     if os_family == "windows" or (os_family is None and include_windows_dashboard):
-        listing = await reader.list_host_services(
+        listing = await _collect_windows_host_services(
+            reader,
             authorization,
             resolved["id"],
             q=q,
             state=state,
             favorites_only=favorites_only,
+            critical_only=critical_only,
             page=page,
             page_size=page_size,
         )
-        items = listing["items"]
-        if critical_only:
-            items = [item for item in items if item.get("criticality") in {"high", "critical"}]
-        attention = [
-            item for item in items
-            if item.get("state") != "running" and (
-                item.get("criticality") in {"high", "critical"} or item.get("is_favorite")
-            )
-        ]
         result.update({
             "service_source": "it-portal-host-services",
-            "items": items,
-            "total": listing["total"] if not critical_only else len(items),
+            "items": listing["items"],
+            "total": listing["total"],
             "page": listing["page"],
             "page_size": listing["page_size"],
             "favorites_count": listing.get("favorites_count"),
-            "attention_items": attention[:50],
+            "attention_items": listing["attention_items"],
         })
+        if listing.get("filtered_client_side"):
+            result["filtered_client_side"] = True
+            result["inventory_scanned"] = listing.get("inventory_scanned")
+            if listing.get("bounded_by_max_scan"):
+                result["bounded_by_max_scan"] = True
         if include_windows_dashboard:
             result["windows_dashboard"] = await reader.windows_services_health(authorization)
         return result
