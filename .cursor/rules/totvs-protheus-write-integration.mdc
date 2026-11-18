@@ -112,3 +112,7 @@ OPERAÇÃO | ROTINA OFICIAL | CONTRATO (confirmado/por validar) | GATE+PIN | IDE
 ```
 
 Item faltante = trabalho incompleto, não "opcional".
+
+## Local de desenvolvimento de novos fontes — decisão PO
+
+Para novos fontes candidatos de integrações DELPI, desenvolver **somente** em `api-delpi/integrations/protheus-advpl/modules/<capability>/src/`, com contrato/testes no módulo conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` continua fonte de consulta de versões upstream (`master`@SHA), **não destino de commits**. Não alterar o espelho `docs/13-fontes-totvs-protheus/`. Handoff ZIP gerado por SHA aprovado, sem publicações ERP/compilação/deploy nesta fase.
