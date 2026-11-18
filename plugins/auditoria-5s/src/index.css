@@ -3297,3 +3297,33 @@ button.a5s-criterion-photo__thumb:focus-visible{
     align-items: stretch;
   }
 }
+
+/* GLPI #847 — seletor acessivel de nivel de area no card de notas 5S */
+.a5s-area-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--a5s-border);
+  border-radius: 8px;
+  background: var(--a5s-surface);
+}
+.a5s-area-view-switch__button {
+  border: 0;
+  border-radius: 5px;
+  padding: 5px 9px;
+  background: transparent;
+  color: var(--a5s-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.a5s-area-view-switch__button.is-active {
+  background: var(--a5s-primary, #0284c7);
+  color: #fff;
+}
+.a5s-area-view-switch__button:focus-visible {
+  outline: 2px solid var(--a5s-primary, #0284c7);
+  outline-offset: 2px;
+}
