@@ -110,6 +110,26 @@ class OrganizationWeeklyUsageService:
             until=until,
         ) if eligible_ids else []
 
+        # Session durations are separate from open events. Query only for
+        # consented verified identities and only when nominal detail is asked.
+        durations_by_user_app = {}
+        if details and eligible_ids:
+            for item in self.usage_repository.app_session_durations(
+                user_ids=eligible_ids, since=since, until=until,
+            ):
+                user_id = UUID(str(item["userId"]))
+                if user_id not in eligible_ids:
+                    raise ValueError("Duração retornada para usuário não autorizado.")
+                app_id = str(item["appId"])
+                count = int(item["sessionCount"])
+                seconds = int(item["totalDurationSeconds"])
+                if not app_id or count <= 0 or seconds < count:
+                    raise ValueError("Métricas de duração inválidas.")
+                key = (user_id, app_id)
+                if key in durations_by_user_app:
+                    raise ValueError("Sessões de aplicativo duplicadas.")
+                durations_by_user_app[key] = (count, seconds)
+
         opens_by_user = defaultdict(list)
         for item in grouped_opens:
             user_id = UUID(str(item["userId"]))
@@ -149,6 +169,28 @@ class OrganizationWeeklyUsageService:
                     opens_by_user[uid],
                     key=lambda x: (-x["recordedOpens"], x["appName"], x["appId"]),
                 )
+                if details:
+                    apps = [
+                        {
+                            **app,
+                            "recordedSessions": durations_by_user_app.get(
+                                (uid, app["appId"]), (0, 0)
+                            )[0],
+                            "totalDurationSeconds": durations_by_user_app.get(
+                                (uid, app["appId"]), (0, 0)
+                            )[1],
+                            # No persisted sessions => unavailable, NEVER zero.
+                            "avgSessionSeconds": (
+                                round(
+                                    durations_by_user_app[(uid, app["appId"])][1]
+                                    / durations_by_user_app[(uid, app["appId"])][0]
+                                )
+                                if (uid, app["appId"]) in durations_by_user_app
+                                else None
+                            ),
+                        }
+                        for app in apps
+                    ]
                 opens = sum(item["recordedOpens"] for item in apps)
                 if opens:
                     status = "recorded_opens"
