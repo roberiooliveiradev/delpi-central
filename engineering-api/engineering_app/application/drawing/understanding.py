@@ -1953,7 +1953,7 @@ def _detect_balloon_candidates(
             continue
         raw = (a.get("text") or "").strip()
         # B1-R2: o contorno do balão sangra para o token OCR como
-        # '(' / ')' / '[' / ')' — ex.: ``a6)``, ``(a2)``. A sangria
+        # '(' / ')' / '[' / ']' — ex.: ``a6)``, ``(a2)``. A sangria
         # é artefato do contorno, não do rótulo: só colchetes nas
         # pontas são removidos; pontuação interna ('a-1') continua
         # invalidando o rótulo.
