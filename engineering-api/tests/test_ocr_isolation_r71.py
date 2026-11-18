@@ -110,6 +110,17 @@ def test_subprocess_simulated_failure_honest(monkeypatch):
     assert "simulated_failure" in str(rec.get("error"))
 
 
+def test_subprocess_stdout_noise_does_not_corrupt_protocol(monkeypatch):
+    """Third-party stdout noise (paddlex banners/progress) must not
+    produce worker_bad_response — stdout is the JSON protocol channel."""
+    _simulate_env(monkeypatch, "stdout_noise:PADDLEX_FAKE_PROGRESS")
+    rec = run_pipeline_isolated(
+        _PDF, pipeline_id="pdfium_render_paddleocr", timeout_s=60
+    )
+    assert "worker_bad_response" not in str(rec.get("error"))
+    assert "worker_no_output" not in str(rec.get("error"))
+
+
 def test_subprocess_concurrency_semaphore(monkeypatch):
     """Max concorrência=1 → segunda chamada satura honestamente."""
     monkeypatch.setenv("ENG_DRAWING_OCR_MAX_CONCURRENCY", "1")

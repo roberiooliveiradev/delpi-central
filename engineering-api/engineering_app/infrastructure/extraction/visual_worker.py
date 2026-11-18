@@ -43,6 +43,29 @@ def _simulate(hook: str) -> None:
         time.sleep(0.2)
     elif hook.startswith("fail:"):
         raise RuntimeError(f"simulated_failure:{hook.split(':', 1)[1]}")
+    elif hook.startswith("stdout_noise:"):
+        print(hook.split(":", 1)[1])
+
+
+def _run_quiet(fn):
+    """Run ``fn`` with OS-level stdout redirected to stderr.
+
+    stdout is the JSON protocol channel; third-party progress output
+    (paddlex/paddle model banners, download progress) must never
+    corrupt it — otherwise the parent sees ``worker_bad_response``
+    even when the pipeline completed (rc=0).
+    """
+    sys.stdout.flush()
+    saved = os.dup(sys.stdout.fileno())
+    try:
+        os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+        try:
+            return fn()
+        finally:
+            sys.stdout.flush()
+            os.dup2(saved, sys.stdout.fileno())
+    finally:
+        os.close(saved)
 
 
 def main() -> int:
@@ -67,18 +90,6 @@ def main() -> int:
         )
         return 2
     hook = os.environ.get("VISUAL_WORKER_SIMULATE", "").strip()
-    if hook:
-        try:
-            _simulate(hook)
-        except Exception as exc:
-            _emit(
-                {
-                    "schema_version": _RESPONSE_SCHEMA,
-                    "status": "error",
-                    "error": str(exc),
-                }
-            )
-            return 3
     try:
         pdf_bytes = base64.b64decode(request.get("pdf_b64") or "")
     except Exception:
@@ -113,16 +124,32 @@ def main() -> int:
         dpi = int(request.get("dpi") or 200)
     except Exception:
         dpi = 200
-    records = run_visual_benchmark(
-        pdf_bytes,
-        pipelines=[pipeline_id],
-        corpus_id=str(request.get("corpus_id") or "isolated"),
-        environment=str(request.get("environment") or "subprocess"),
-        dpi=dpi,
-        isolation="inprocess",
-        page_start=request.get("page_start"),
-        page_end=request.get("page_end"),
-    )
+
+    def _execute() -> list:
+        if hook:
+            _simulate(hook)
+        return run_visual_benchmark(
+            pdf_bytes,
+            pipelines=[pipeline_id],
+            corpus_id=str(request.get("corpus_id") or "isolated"),
+            environment=str(request.get("environment") or "subprocess"),
+            dpi=dpi,
+            isolation="inprocess",
+            page_start=request.get("page_start"),
+            page_end=request.get("page_end"),
+        )
+
+    try:
+        records = _run_quiet(_execute)
+    except Exception as exc:
+        _emit(
+            {
+                "schema_version": _RESPONSE_SCHEMA,
+                "status": "error",
+                "error": str(exc),
+            }
+        )
+        return 3
     _emit(
         {
             "schema_version": _RESPONSE_SCHEMA,
