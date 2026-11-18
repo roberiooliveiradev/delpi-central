@@ -77,7 +77,7 @@ export function NavigationCard({
   description,
   meta,
   disabled = false,
-  selected = false,
+  selected,
   orientation = "vertical",
   density = "default",
   className,
