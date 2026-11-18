@@ -658,3 +658,89 @@ Alteração de matéria-prima
 **Wireframe após fechamento:** se o caso gerou V1/Vn+1 validada, mostrar um bloco contextual `Revisão técnica gerada: Vn` com link autorizado à versão do produto e reciprocar `Solicitação de origem #...` no produto. Se fechou com no-op, apresentar `Concluída sem nova revisão técnica` (somente se o backend informar outcome); jamais mostrar a revisão preexistente como criada pelo caso. Histórico e Verificação TOTVS permanecem fontes de evidência e rastreabilidade.
 
 **Estado:** `PO_APPROVED / IMPLEMENTED_AND_PROVEN_HML (impl 4788a1efa6, 14/11/2026) / PRD_NOT_AUTHORIZED`. Implementado conforme esta seção J: hero sem chip Rn, popover sem revisão, `Versão interna do atendimento` rotulada como controle técnico, chip `Revisão técnica gerada: Vn` (link para aba Revisões) ou `Concluída sem nova revisão técnica` apenas em caso concluído, e coluna `Solicitação de origem` com deep-link na aba Revisões. Esta seção J prevalece sobre as alternativas `Revisão base Rn` do PRC-REF-024 e PRC-REF-025.
+
+
+---
+
+## PRC-UX-DETAIL-THREE-TABS-STACKED-CONVERSATION-01 — Decisao PO (2026-11-17)
+
+**TASK_ID:** \`EVA-PRC-DETAIL-THREE-TABS-CONVERSATION-TIMELINE-HML-01\`  
+**Status:** \`PO_APPROVED / TARGET / IMPLEMENTATION_PENDING / HML_ACCEPTANCE_PENDING\`  
+**Supercessao restrita:** esta decisao visual substitui, **apenas no detalhe de solicitacao PRC do Portal Engenharia**, os wireframes e referencias anteriores que colocavam "Historico" como quarta aba. Outros fluxos, especialmente My Requests, nao sao alterados automaticamente. Este documento especifica UX, nao comprova runtime nem autoriza PRD.
+
+### Objetivo e justificativa
+
+Evitar que a conversa e a rastreabilidade do caso fiquem escondidas atras da aba "Historico". O PO confirmou o arranjo com **tres abas** e, na "Ficha tecnica", **Conversa sobre a solicitacao** e **Historico da solicitacao** empilhados verticalmente, ambos em largura total. Nao usar colunas lado a lado.
+
+### Navegacao alvo
+
+\`\`\`text
+[ Ficha tecnica (default) ] [ Verificacao TOTVS ] [ Revisoes ]
+\`\`\`
+
+Remover **Historico** da tablist e do conteudo exclusivo de aba. Manter "Verificacao TOTVS" e "Revisoes" com comportamento existente. A rota de detalhe e o requestId nao mudam. A URL legada \`?tab=history\` deve abrir a **Ficha tecnica** (e idealmente canonicalizar a URL sem historico), sem erro, tela vazia, redirect externo ou perda do requestId. Atualizar \`PrcTabKey\`, \`PRC_TAB_KEYS\`, \`parsePrcTab\`, links internos e testes, com compatibilidade para favoritos antigos.
+
+### Wireframe aprovado — largura total, fluxo vertical
+
+\`\`\`text
+Portal Engenharia > Controle e Cadastro de Produtos > Solicitação PRC
+[ Hero atual: identificador, status, workflow e acoes autorizadas ]
+
+[ Ficha tecnica ] [ Verificacao TOTVS ] [ Revisoes ]
+--------------------------------------------------------------------
++------------------------------------------------------------------+
+| Acompanhamento tecnico / bandeiras (comportamento atual)         |
++------------------------------------------------------------------+
+| Identificacao e classificacao                                    |
++------------------------------------------------------------------+
+| Estoque e contabilidade                                          |
++------------------------------------------------------------------+
+| Fornecedores                                                     |
++------------------------------------------------------------------+
+| Dados anexados                                                   |
+| Anexos oficiais e documentos de apoio existentes                 |
++------------------------------------------------------------------+
+| Conversa sobre a solicitacao                  (100% da largura)  |
+| [ fio de mensagens, autores, datas, imagens e anexos ]           |
+| [ editor, formatacao, anexar e enviar, quando permitido ]        |
++------------------------------------------------------------------+
+| Historico da solicitacao                      (100% da largura)  |
+| [ trocas estruturadas de informacao, quando existentes ]         |
+| [ timeline/auditoria: evento, ator, data, transicao e detalhes ] |
++------------------------------------------------------------------+
+\`\`\`
+
+O bloco **Dados anexados** corresponde ao \`PrcAttachmentsSection\` atual; nao inventar nova sessao de armazenamento. A ficha existente \`PrcTechnicalSheet\` ja organiza seus grupos, incluindo identificacao, estoque e fornecedores: preservar sua estrutura e logica. A conversa fica **abaixo de todos os dados e anexos da ficha**; o historico vem **imediatamente depois da conversa**, em sua propria secao vertical.
+
+### Mapeamento de componentes existentes
+
+- \`plugins/engineering/src/features/product-registration/pages/PrcDetailPage.tsx\`: na renderizacao \`tab === "draft"\`, manter \`PrcTechnicalSheet\` e \`PrcAttachmentsSection\`; depois montar \`ConversationPanel\` e a secao de historico.
+- \`ConversationPanel\` de \`@delpi/plugin-ui/index\`: preservar \`requestId={detail.id}\`, \`api={prcConversationApi}\`, \`refreshKey={conversationRefreshKey}\` (F-01), \`canComment\`, \`conversationFrozen\`, \`loadAvatar\`, identidade, anexos, idempotencia e autorizacao no backend. Nao duplicar UI.
+- \`PrcInformationExchangePanel\`: hoje vive na antiga aba Historico; **nao remover** o fluxo estruturado de perguntas/devolucoes. Reposicionar junto da area **Historico da solicitacao**, mantendo \`onChanged\`, \`allowedActions\`, status e dados ja contratados; validar a ordem visual sem confundir mensagens livres com resposta formal de correcao.
+- \`PrcTimelineSection\`: manter todos os eventos atuais, metadados e avatares sob o titulo **Historico da solicitacao**; sem criar timeline paralela nem transformar mensagens em transicoes do workflow.
+- \`plugins/engineering/src/features/product-registration/prcNavigate.ts\`: remover \`history\` da lista de abas publicas; resolver a rota legada \`?tab=history\` para \`draft\`. Identificar consumidores antes do diff.
+- CSS e testes: reutilizar container/cards/tokens atuais; layout **uma coluna** inclusive em desktop, mobile e zoom de 200%. Preservar semantica \`tablist\`/\`tabpanel\`, hierarquia de headings e foco.
+
+### Requisitos e aceite
+
+| ID | Requisito / criterio |
+| --- | --- |
+| RQ-01 | Exibir exatamente tres abas: Ficha tecnica, Verificacao TOTVS, Revisoes. |
+| RQ-02 | Na Ficha tecnica, ordem: identificacao e classificacao → estoque e contabilidade → fornecedores → dados anexados → conversa → historico. |
+| RQ-03 | Conversa e historico sao secoes de largura total, **empilhadas**; nao usar grid de duas colunas. |
+| RQ-04 | Preservar funcionalidades de \`ConversationPanel\`, \`PrcInformationExchangePanel\`, \`PrcTimelineSection\`, anexos e ficha, sem mudar API ou ownership. |
+| RQ-05 | \`?tab=history\` legado abre Ficha tecnica, mantendo contexto do caso. |
+| AC-01 | Tres abas visiveis, sem aba Historico e sem conteudo perdido. |
+| AC-02 | Ordem e espacamento comprovados por screenshots reais em HML (320/390/768/1440 px e zoom 200%). |
+| AC-03 | Conversa e historico em dois cards sequenciais full-width; nenhuma apresentacao lado a lado. |
+| AC-04 | Abrir Ficha tecnica mostra conversa, editor e timeline com o mesmo caso; fluxo estruturado continua acessivel. |
+| AC-05 | Criar mensagem A→B e B→A atualiza thread aberta (F-01) sem remount/reload, sem duplicacao; permissao permanece backend-first. |
+| AC-06 | Anexos, identidade/avatares, eventos, estados terminais e edicao autorizada nao regridem. |
+| AC-07 | Aba Verificacao TOTVS e aba Revisoes funcionam; link legado \`?tab=history\` resolve para Ficha tecnica. |
+| AC-08 | HML serve o SHA exato testado, com rollback de imagem; PRD inalterado. |
+
+### Limites e evidencias
+
+Mudanca de **composicao e navegacao de frontend**, nao de contrato, backend, migration, RBAC, workflow, EVA ou source of truth. O deploy autorizado para a tarefa subsequente e **HML apenas**; PRD depende de decisao posterior. Exigir G0 HEAD/git status e protecao de WIP alheio, testes no SHA, smoke autenticado com dois atores HML quando disponiveis, evidencias visuais e relatorio. \`TEST_NOT_RUN\`/\`INCONCLUSIVE\` nao podem virar \`PASS\`.
+
+**Fontes de referencia:** screenshots apresentados pelo PO na conversa de 17/11/2026; implementacao corrente de \`PrcDetailPage.tsx\`, \`prcNavigate.ts\`; Issue #207; documento 130 (release de conversa); fix F-01 \`82561bf9ed\` (evidencia HML reportada). A decisao de layout e \`TARGET\` ate implementacao e teste no SHA efetivo.
