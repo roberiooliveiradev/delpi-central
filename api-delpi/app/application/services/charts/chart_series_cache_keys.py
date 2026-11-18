@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.infrastructure.persistence.totvs.supplies_repositories.otd_physical_receipts import physical_receipts_enabled
+from app.application.services.supplies.physical_otd_gate import physical_receipts_enabled
 from app.application.dto.commercial.commercial_rol_series_request import (
     CommercialRolSeriesRequest,
 )

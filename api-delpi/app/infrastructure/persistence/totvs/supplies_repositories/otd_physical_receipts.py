@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from app.application.services.supplies.physical_otd_gate import physical_receipts_enabled
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
@@ -16,7 +17,6 @@ import requests
 
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
-_ENABLED = {"1", "true", "yes", "on"}
 _DEFAULT_URL = "http://controllership-finance-api:8000"
 _MAX_ROWS = 10000
 
@@ -32,10 +32,6 @@ class PhysicalOtdSource:
 
     def inject(self, query: str) -> str:
         return "WITH " + self.cte + "\n" + query
-
-
-def physical_receipts_enabled() -> bool:
-    return os.getenv("OTD_PHYSICAL_RECEIPTS_ENABLED", "false").lower().strip() in _ENABLED
 
 
 def _iso(value: str | None, *, default: str) -> str:
