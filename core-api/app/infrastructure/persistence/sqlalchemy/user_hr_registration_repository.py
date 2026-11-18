@@ -62,6 +62,17 @@ class SqlAlchemyUserHrRegistrationRepository:
         )
         return {registration: str(user_id) for registration, user_id in rows}
 
+    def get_allocated_registrations(self, user_ids: set[UUID]) -> dict[str, str]:
+        """Read registered RH identities for Core users; also block suggestions to occupied users."""
+        if not user_ids:
+            return {}
+        rows = (
+            self.session.query(UserHrRegistration.user_id, UserHrRegistration.registration)
+            .filter(UserHrRegistration.user_id.in_(user_ids))
+            .all()
+        )
+        return {str(user_id): registration for user_id, registration in rows}
+
     def upsert(
         self, *, user_id: UUID, registration: str, verified_by_user_id: UUID
     ) -> UserHrRegistration:
