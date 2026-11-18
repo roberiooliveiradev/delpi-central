@@ -95,14 +95,14 @@ def build_runtime():
 async def dispatch_solved_ticket_notifications(outbox: PostgresSolvedTicketNotificationOutbox) -> None:
     """Entrega assíncrona com reenvio de falhas; 1+ réplicas usam row locking."""
     gateway = CoreHelpdeskNotificationGateway()
+    if not gateway.service_token:
+        logging.getLogger("helpdesk.notifications").warning(
+            "helpdesk_solved_notifications_disabled_missing_service_token"
+        )
     while True:
         try:
             if gateway.service_token:
                 await asyncio.to_thread(outbox.process_due, gateway)
-            else:
-                logging.getLogger("helpdesk.notifications").warning(
-                    "helpdesk_solved_notifications_disabled_missing_service_token"
-                )
         except Exception:
             logging.getLogger("helpdesk.notifications").exception(
                 "helpdesk_solved_notification_worker_failed"
