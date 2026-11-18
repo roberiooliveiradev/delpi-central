@@ -8,7 +8,7 @@
 
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
-| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **A executar** (ver §2) |
+| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **Declaração aprovada com ajustes** em 18/11/2026 (ver §2.8 e §3) — em execução |
 | P2 | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | A gerar — depende do aceite do P1 e da UI-02 vigente |
 | P3 | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | **Somente HML** | A gerar |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
@@ -205,3 +205,41 @@ Qualquer outro arquivo, inclusive no Comercial, está fora do escopo.
 | A6 | Build do remote e `verify-host-exports` ok; catálogo abre em PROD e HML em `/apps/plugin-ui` sem erro | Saída do build + verificação pós-deploy |
 | A7 | Nenhuma regressão em MFE existente | Conferência de pelo menos um MFE após o deploy |
 | A8 | Verificador independente aprovado | Veredito sem edição |
+
+### 2.8 Ajustes obrigatórios da revisão da declaração (18/11/2026)
+
+A declaração foi aprovada. Os ajustes abaixo fazem parte do pacote.
+
+1. **O controle transparente não pode perder estados.** Ao deixar o fundo do campo nativo transparente, a camada de trás passa a desenhar o fundo dos estados normal, foco, desabilitado e erro, com os mesmos tokens de `native-controls.css`. O seletor deve ser escopado à classe do componente novo, com especificidade suficiente e sem `!important`. O campo desabilitado precisa ficar visualmente igual a um `TextAreaField` desabilitado.
+2. **Espelho tipográfico completo.** A camada copia do controle `font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing`, `text-transform`, `tab-size`, `word-spacing`, `box-sizing`, as bordas internas e as regras de quebra:
+   - várias linhas: `white-space: pre-wrap` e `overflow-wrap: break-word`, igual ao `textarea`;
+   - uma linha: `white-space: pre`, com rolagem horizontal sincronizada.
+
+   Quando o texto termina em quebra de linha, a camada recebe um espaço final, para a última linha não perder altura.
+3. **Sem `ResizeObserver` ou `matchMedia`** (ambiente de teste e navegadores antigos), o componente funciona sem quebrar. O alinhamento por rolagem continua, e o redimensionamento é recalculado em `onScroll`, `onInput` e `resize` da janela.
+4. **`placeholder`** continua visível com o campo vazio, sem ficar escondido pela camada.
+5. **Modo de alto contraste** (`@media (forced-colors: active)`): o destaque usa contorno (`outline`) em vez de fundo, para não sumir.
+6. **Ordem da camada:** o texto real e o cursor ficam sempre por cima. Nenhum clique ou seleção pode cair na camada (`pointer-events: none`), inclusive com zoom de 200%.
+7. **Mesma interface de erro dos campos existentes.** Se `TextField`/`TextAreaField` não têm `error`, o `error?` do componente novo segue o padrão já usado no kit para mensagem de erro de campo: `aria-invalid`, `aria-describedby` e a classe de perigo existente. Não inventar estilo novo.
+8. **R7 (falta de repasse de `aria-*` em `TextField`/`TextAreaField`) continua fora deste pacote.** Não alterar esses componentes.
+9. **No relatório, uma captura com zoom** mostrando o cursor posicionado logo depois de um marcador destacado, em uma linha e em várias linhas, nos dois temas.
+
+---
+
+## 3. Revisão da declaração do P1 e conclusões do inventário (18/11/2026)
+
+**Veredito da declaração:** ACCEPT_WITH_ADJUSTMENTS. O escopo e o desenho estão corretos e seguem o plano: campo nativo, camada `aria-hidden`, `<mark>` sem largura extra, segmentação pura, `inputRef`. Os ajustes estão em §2.8.
+
+**Reancoragem:** HEAD inicial `69e6bc7f0c`. O working tree principal tem alterações de terceiros; elas devem ficar intocadas, e o commit leva só o escopo. O arquivo `119-eva-…` foi conferido byte a byte com o remoto (sha256 idêntico) e não deve entrar no commit.
+
+**Conclusões do inventário para os próximos pacotes:**
+
+| # | Fato confirmado | Consequência |
+|---|---|---|
+| I2 | “Atualizado em” de Clientes é composição da página (`CustomersPage.tsx:389–391`, cerca de 6 linhas em `customers.css:248`, `formatUpdatedAt` local). Não existe no kit | P2: reaproveitar como composição. Se a mesma regra de CSS for copiada para a Pesquisa, ela passa a existir em dois lugares: decidir no P2 entre um utilitário de página compartilhado do Comercial e uma peça do kit |
+| I3 | Todas as colunas podem ser ordenáveis (`sortable` por coluna). `CommercialDataCardsSortBar` já existe e não é usado | P2: ligar a barra “Ordenar por” na visão em cards com ela, sem componente novo |
+| I4 | `highlights` do `PageHero` usa grade de 3 colunas (`page-hero.css:112`): **4 números ficam 3 + 1** no computador | **Ponto a decidir no P3:** a maquete mostra os 4 números numa linha. É preciso ajustar o kit para a grade acompanhar a quantidade de números, sem mudar páginas com 3 números, como Minha Carteira |
+| I5 | Padrão `parse…DeepLink`/`build…Search` + `navigatePluginPath` com `pushState`/`replaceState` | P3: `?tab=` nesse molde; trocar de aba usa `pushState`, para o voltar do navegador funcionar |
+| I6 | `questionnaire_version` = `delpi.commercial.satisfaction-survey.canonical-15@2026-11-11` | D2 fechado: mostrar “Questionário oficial — versão de 11/11/2026”, extraindo a data do sufixo `@AAAA-MM-DD`. Sem sufixo válido, mostrar “Questionário oficial” sem data. O identificador técnico não aparece na tela |
+| I7 | Serviço `commercial` (MFE). Deploy de outra frente reconstrói o MFE em PROD | Risco igual ao R20 da UI-03, mitigado pelo gate `COMMERCIAL_SATISFACTION_SURVEY_ENABLED=false`. Registrar em cada relatório do P2 ao P6 |
+| I8 | `TextField`/`TextAreaField` não repassam `aria-*` nem `ref` (R7). `NativeText*Control` repassam | O componente novo deve repassar. No P4, o `CampaignMessageTab` passa a usar `inputRef` no lugar de `document.getElementById` |
