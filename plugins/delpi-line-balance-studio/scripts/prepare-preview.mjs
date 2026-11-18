@@ -1,14 +1,38 @@
 import { mkdirSync, rmSync, copyFileSync } from "node:fs";
+import nodePath from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
 const root = new URL("../", import.meta.url);
 const path = (name) => fileURLToPath(new URL(name, root));
 const controls = path("../plugin-ui/src/native-controls");
+/* `x.css?inline` retorna o CSS processado (com @import resolvido) como
+ * texto — mesmo contrato do Vite para injeção em shadow DOM. */
+const cssInlinePlugin = {
+  name: "css-inline",
+  setup(api) {
+    api.onResolve({ filter: /\.css\?inline$/ }, args => ({
+      path: nodePath.resolve(args.resolveDir, args.path.slice(0, -"?inline".length)),
+      namespace: "css-inline",
+    }));
+    api.onLoad({ filter: /.*/, namespace: "css-inline" }, async args => {
+      const result = await build({
+        ...shared,
+        entryPoints: [args.path],
+        write: false,
+        outdir: "out",
+      });
+      const css = result.outputFiles.find(file => file.path.endsWith(".css"))?.text ?? "";
+      return { contents: `export default ${JSON.stringify(css)};`, loader: "js" };
+    });
+  },
+};
+
 const shared = {
   bundle: true,
   minify: true,
   target: "es2022",
+  plugins: [cssInlinePlugin],
   alias: {
     "@delpi/plugin-ui/native-controls": controls + ".ts",
     "@delpi/plugin-ui/native-controls.css": controls + ".css",
@@ -33,7 +57,8 @@ if (process.argv.includes("--assets")) {
   copyFileSync(path("dist/ui-types/delpi-line-balance-studio/src/ui/studio.d.ts"), path("dist/ui/studio.d.ts"));
   rmSync(path("dist/ui-types"), { recursive: true, force: true });
   await build({ ...shared, entryPoints: [path("src/ui/studio.tsx")], format: "esm", outfile: path("dist/ui/studio.js") });
-  await buildCss("src/ui/studio.css", "dist/ui/studio.css");
+  /* studio.css já importa native-controls.css — bundle direto, sem wrapper. */
+  await build({ ...shared, entryPoints: [path("src/ui/studio.css")], outfile: path("dist/ui/studio.css") });
 } else {
   const output = path("preview-dist/");
   rmSync(output, { recursive: true, force: true });

@@ -1,3 +1,4 @@
+@import "@delpi/plugin-ui/native-controls.css";
 :host {
   display: block;
   color-scheme: inherit;

@@ -40,6 +40,10 @@ export default defineConfig(({ mode }) => {
           replacement: path.resolve(__dirname, "../delpi-line-balance-studio/src/ui/studio.tsx"),
         },
         {
+          find: /^@delpi\/plugin-ui\/native-controls\.css$/,
+          replacement: path.resolve(__dirname, "../plugin-ui/src/native-controls.css"),
+        },
+        {
           find: /^@delpi\/line-balance-studio$/,
           replacement: path.resolve(__dirname, "../delpi-line-balance-studio/src/index.ts"),
         },

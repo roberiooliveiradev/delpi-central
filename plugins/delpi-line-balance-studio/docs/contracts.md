@@ -20,6 +20,10 @@ O Studio compõe estudos de Engenharia de Processos. O Portal Engenharia é o pr
 - O catálogo expõe somente identificação, nome e disponibilidade. Esta versão não calcula takt, capacidade, precedência ou viabilidade. Resumos de turno são aritmética de calendário da simulação local.
 - AuthN, AuthZ e auditoria do host são aplicáveis quando houver integração oficial. Aqui a biblioteca não recebe credenciais, não registra dados e não abre rede. O consumidor pode apresentar códigos de validação sem registrar o conteúdo do estudo.
 
+## Folha de estilo do elemento
+
+- `src/ui/studio.css` é a folha única do elemento: importa `@delpi/plugin-ui/native-controls.css` (estilos canônicos dos controles do kit) e declara apenas o layout do Studio. O elemento injeta o CSS processado via `<style>` no próprio shadow root — os hosts precisam resolver `*.css?inline` no bundler (Vite nativo; esbuild via plugin do `prepare-preview.mjs`) e o alias do especificador `@delpi/plugin-ui/native-controls.css`. Nenhum pedido de rede é feito para CSS e nenhum host deve fornecer uma folha paralela.
+
 ## Abstraction Gate
 
 A API pública resolve o consumo do mesmo estado por futuros editores e portais. As únicas divisões são estudo manual, horário do turno e catálogo. Integrações de dados oficiais, persistência, métodos computacionais e UI serão contratados à medida que houver consumidores e requisitos concretos. A remoção do pacote é suficiente para reverter este incremento enquanto nenhum portal o importar.

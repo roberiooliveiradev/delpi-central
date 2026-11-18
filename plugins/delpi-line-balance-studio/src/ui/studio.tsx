@@ -23,6 +23,7 @@ import {
   type NativeTextControlProps,
 } from "@delpi/plugin-ui/native-controls";
 import { createManualStudy, createObservedStudy, summarizeShift } from "../index.js";
+import studioStyles from "./studio.css?inline";
 import type { ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
 
 const pageHeaderClasses = pageHeaderTitleRowBemClasses("lbs");
@@ -82,9 +83,8 @@ export class LineBalanceStudioElement extends HTMLElement {
   constructor() {
     super();
     const root = this.attachShadow({ mode: "open" });
-    const stylesheet = document.createElement("link");
-    stylesheet.rel = "stylesheet";
-    stylesheet.href = new URL("./studio.css", import.meta.url).href;
+    const stylesheet = document.createElement("style");
+    stylesheet.textContent = studioStyles;
     root.append(stylesheet, this.surface);
     this.surface.addEventListener("dragover", this.onDragOver);
     this.surface.addEventListener("drop", this.onDrop);
