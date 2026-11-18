@@ -6836,3 +6836,7 @@ TECHNICAL_HOMOLOGATION=PENDING
 **Métricas exploratórias (denominador = inventário Devin DRAFT, não GT homologado):** líderes detectados 9/14→12/14 ocorrências reais (2 = limitação diagonal/leque documentada); associação tabela 13/14→14/14.
 
 **Estado:** `COMP01_FIX_VERIFIED_RELEASE_PENDING` — sem deploy; anotações permanecem DRAFT/OWNER_BLOCKED; validação Live MCP e revisão da Engenharia pendentes. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`.
+
+**Verificação independente (delpi-verifier, cursor/Composer):** rodada 1 `ACCEPT_WITH_RESIDUAL` sobre `9e43df9611..172eae0553` — zero OCs; residuais: prova em registro real/cross-drawing não reproduzível pelo verificador (container/SSH proibidos ao verificador — evidência executor-side), tipagem irmã sem `>=2` em `rows_from_native_cells`.
+
+**Sibling fix (`2615738f98` + `596cf9e916`):** a regra `codes >= 2` foi estendida a `rows_from_native_cells` (mesma classe, caminho de células nativas) e a docstring de `_leader_roots` corrigida para refletir a faixa de borda. Nota de processo: `2615738f98` carregou indevidamente WIP staged alheio (docs satisfaction-survey, versões anteriores ao HEAD remoto) — revertido integralmente por `596cf9e916`; net efetivo do par = somente `understanding.py` (+5/-2); WIP do owner preservado no index local. Verificação do delta `172eae0553..596cf9e916`: `ACCEPT_WITH_RESIDUAL` r1, zero OCs; residual = sem teste dedicado do caminho nativo e prova live fora do contrato do verificador.
