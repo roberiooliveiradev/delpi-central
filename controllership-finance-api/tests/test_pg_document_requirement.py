@@ -618,10 +618,13 @@ class TestDiscardDraftVersion:
     def test_discard_unblocks_document_operation(
         self, migrated, repo
     ):
-        """Após o descarte, o comando documental opera com
-        base_version=0 — fluxo do PO desbloqueado."""
+        """Após o descarte, o comando documental opera desbloqueado.
+        Alta-marca monotônica (ADR-005): o número de uma versão
+        descartada nunca é reutilizado dentro da mesma série —
+        reinício em V1 só ocorre via nova série."""
         tid = _new_template()
         draft = self._draft(repo, tid)
+        assert draft["version"] == 1
         repo.discard_draft_version(
             tid, draft["version"], expected_revision=1, actor=ADMIN
         )
@@ -630,7 +633,7 @@ class TestDiscardDraftVersion:
         )
         assert result["replayed"] is False
         assert [v["version"]
-                for v in result["published_versions"]] == [1]
+                for v in result["published_versions"]] == [2]
 
     def test_discard_published_rejected(self, migrated, repo):
         tid = _new_template()

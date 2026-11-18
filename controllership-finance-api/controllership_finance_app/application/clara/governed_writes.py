@@ -797,7 +797,15 @@ class ClaraGovernedWrites:
                 """,
                 (str(correction_id), period),
             ).fetchone()
-        return {"status": row[0] if row else None}
+        status = row[0] if row else None
+        return {
+            "status": status,
+            "status_class": (
+                ClosingValidationRepository._correction_status_class(
+                    status
+                )
+            ),
+        }
 
     def _request_state(self, period: str, request_id: Any) -> dict:
         with plugins_db_connect() as conn:
