@@ -8,7 +8,7 @@
 
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
-| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **Declaração aprovada com ajustes** em 18/11/2026 (ver §2.8 e §3) — em execução |
+| **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
 | P2 | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | A gerar — depende do aceite do P1 e da UI-02 vigente |
 | P3 | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | **Somente HML** | A gerar |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
@@ -243,3 +243,41 @@ A declaração foi aprovada. Os ajustes abaixo fazem parte do pacote.
 | I6 | `questionnaire_version` = `delpi.commercial.satisfaction-survey.canonical-15@2026-11-11` | D2 fechado: mostrar “Questionário oficial — versão de 11/11/2026”, extraindo a data do sufixo `@AAAA-MM-DD`. Sem sufixo válido, mostrar “Questionário oficial” sem data. O identificador técnico não aparece na tela |
 | I7 | Serviço `commercial` (MFE). Deploy de outra frente reconstrói o MFE em PROD | Risco igual ao R20 da UI-03, mitigado pelo gate `COMMERCIAL_SATISFACTION_SURVEY_ENABLED=false`. Registrar em cada relatório do P2 ao P6 |
 | I8 | `TextField`/`TextAreaField` não repassam `aria-*` nem `ref` (R7). `NativeText*Control` repassam | O componente novo deve repassar. No P4, o `CampaignMessageTab` passa a usar `inputRef` no lugar de `document.getElementById` |
+
+---
+
+## 4. Revisão do relatório do P1 (18/11/2026)
+
+**Veredito:** ACCEPT_WITH_RESIDUAL.
+
+**Conferido no repositório pelo coordenador:**
+
+- O commit `52eecc38e0` é ancestral de `origin/main` e contém exatamente os 9 arquivos do §2.4 (945 inserções).
+- `TextField`, `TextAreaField`, `FormFieldShell`, `Native*` e o Comercial não têm alteração.
+- As seções §2.8 e §3 deste arquivo estão íntegras no HEAD. A versão local sem elas, na pasta de trabalho do executor, não foi publicada.
+
+**Ajustes da §2.8 no código:**
+
+| # | Ajuste | Situação | Evidência no código |
+|---|---|---|---|
+| 1 | Estados do campo | OK | A camada desenha o fundo normal, desabilitado (88% e `.55`) e somente leitura (92%) com as mesmas fórmulas de `native-controls.css:79,84`. Foco e erro não mudam o fundo do controle nativo: só borda e sombra, que continuam com o controle. Seletores escopados, sem `!important` |
+| 2 | Espelho tipográfico | OK | Métricas copiadas do estilo computado do controle (fonte, espaçamentos, `tab-size`, quebra, `box-sizing`, paddings, bordas). Linha única com `pre`, várias linhas com `pre-wrap`. Espaço final após quebra de linha |
+| 3 | Sem `ResizeObserver` | OK | Sincroniza em `useLayoutEffect`, `onScroll`, `onPointerUp` (cobre arrastar a alça do `textarea`) e `resize` da janela |
+| 4 | Placeholder | OK | O controle é transparente e continua por cima |
+| 5 | Alto contraste | OK | `forced-colors` usa `outline: MarkText` |
+| 6 | Ordem das camadas | OK | Camada com `pointer-events: none` e `user-select: none`; controle com `position: relative` por cima |
+| 7 | Erro | OK | `aria-invalid`, `aria-describedby` e `role="alert"`. O kit não tem classe única de erro de campo (cada componente tem a sua, ex.: `audio-recorder__error`). A classe própria só usa `--delpi-ui-danger` |
+| 8 | R7 | OK | Fora do escopo; não alterado |
+| 9 | Captura do cursor | Parcial | O navegador sem tela não desenha o cursor. A posição foi comprovada por `selectionEnd` medido e por capturas de seleção |
+
+O tema escuro segue o padrão do kit (`:root[data-theme="dark"] .delpi-ui-…`, 23 arquivos) e só troca cores.
+
+**Resíduos:**
+
+| ID | Resíduo | Tratamento |
+|---|---|---|
+| R1 | `__stack` redeclara as métricas de `native-controls.css` (13 px, 8/12 px, raio 10 px) como valor de primeiro desenho. Se `native-controls.css` mudar, o primeiro desenho diverge até a sincronização por JS | Baixo. Corrigir se um pacote futuro tocar o componente |
+| R2 | Verificação r3 dispensada pelo solicitante (AC-15, só documental) | Registrado. Os ACs de código passaram na r2 |
+| R3 | Cursor não capturado em imagem (limitação do navegador sem tela) | Conferir visualmente no uso real, no P4 (Mensagem padrão em HML) |
+| R4 | O catálogo `plugin-ui` não está registrado nos apps de HML (problema anterior a este pacote) | Acompanhar o componente no catálogo de PROD (`/apps/plugin-ui`) |
+| R5 | A pasta de trabalho do executor tem versões locais de `UI-02-PROMPTS-DEVIN.md` e `README.md` diferentes do HEAD | Nunca publicar. Cada pacote confere `git diff --cached --stat` antes do commit |
