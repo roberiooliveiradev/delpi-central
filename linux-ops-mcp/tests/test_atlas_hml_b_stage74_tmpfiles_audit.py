@@ -62,23 +62,26 @@ def test_conflicting_exact_target_is_detected(tmp_path):
     assert not result.can_execute
 
 
-@pytest.mark.parametrize("content,code", [
+@pytest.mark.parametrize("content,code,classification", [
     ("z /run/atlas-hml-signer-keys 0777 root root -\n",
-     "TMPFILES_ATLAS_PATH_ALREADY_DECLARED"),
+     "TMPFILES_ATLAS_PATH_ALREADY_DECLARED", "critical"),
     ("a+ /run/atlas-hml-* - - - - user:1000:rwx\n",
-     "TMPFILES_DYNAMIC_RULE_REQUIRES_REVIEW"),
+     "TMPFILES_DYNAMIC_ATLAS_AMBIGUOUS", "critical"),
     ("R /run/atlas-hml-* - - - -\n",
-     "TMPFILES_DYNAMIC_RULE_REQUIRES_REVIEW"),
+     "TMPFILES_DYNAMIC_ATLAS_AMBIGUOUS", "critical"),
     ("Z /var/lib - - - -\n",
-     "TMPFILES_PARENT_RULE_REQUIRES_REVIEW"),
+     "TMPFILES_RECURSIVE_PARENT_CONFLICT", "critical"),
     ("d /run 0755 root root -\n",
-     "TMPFILES_PARENT_RULE_REQUIRES_REVIEW"),
+     "TMPFILES_OS_PARENT_NONRECURSIVE_INFO", "info"),
     ("d /%T/atlas-hml-signer - - - -\n",
-     "TMPFILES_DYNAMIC_RULE_REQUIRES_REVIEW"),
+     "TMPFILES_DYNAMIC_ATLAS_AMBIGUOUS", "critical"),
 ])
-def test_config_can_collide_even_without_same_basename(tmp_path, content, code):
+def test_config_classification_by_semantics(tmp_path, content, code, classification):
     conf(tmp_path, content)
-    assert code in report(tmp_path).finding_codes
+    result = report(tmp_path)
+    assert code in result.finding_codes
+    matched = [f for f in result.findings if f.code == code]
+    assert matched and matched[0].classification == classification
 
 
 def test_unrelated_config_is_counted_without_false_atlas_target(tmp_path):
@@ -93,12 +96,14 @@ def test_our_conf_basename_is_reserved_even_if_content_harmless(tmp_path):
     assert "ATLAS_TMPFILES_CONF_NAME_ALREADY_PRESENT" in report(tmp_path).finding_codes
 
 
-def test_same_basename_multiple_search_paths_requires_review(tmp_path):
+def test_same_basename_without_atlas_is_info_not_critical(tmp_path):
     conf(tmp_path, "d /run/other-app - - - -\n", directory="etc/tmpfiles.d")
     conf(tmp_path, "d /run/other-app - - - -\n", directory="usr/lib/tmpfiles.d")
     result = report(tmp_path)
     assert result.config_files_scanned == 2
-    assert "TMPFILES_BASENAME_PRECEDENCE_REVIEW" in result.finding_codes
+    assert "TMPFILES_BASENAME_PRECEDENCE_INFO" in result.finding_codes
+    assert "TMPFILES_BASENAME_PRECEDENCE_INFO" in result.info_codes
+    assert "TMPFILES_BASENAME_PRECEDENCE_INFO" not in result.critical_codes
 
 
 def test_symlink_config_does_not_get_followed(tmp_path):
@@ -134,7 +139,8 @@ def test_cli_requires_explicit_scope_and_reports_only_blocked(tmp_path, capsys):
     assert exc.value.code == 2
     assert stage74.main(["--fixture-root", str(tmp_path)]) == 0
     result = json.loads(capsys.readouterr().out)
-    assert result["schema"] == "atlas.hml.stage74.boot-audit.v1"
+    assert result["schema"] == "atlas.hml.stage74.boot-audit.v2"
+    assert "findings" in result and "critical_codes" in result
     assert result["status"] == "blocked"
     assert result["observation_kind"] == "operator_self_observation"
     assert result["candidate_no_clobber"] is True
@@ -187,3 +193,64 @@ def test_systemd_tmpfiles_create_only_cannot_silently_repair_preexisting_drift(t
     assert stat.S_IMODE(actual.stat().st_mode) == 0o777
     # This MUST fail subsequent policy verification rather than auto-correct.
     assert stage74.audit_stage74_boot_config(root=root).status == "blocked"
+
+
+def test_ubuntu_2404_baseline_alerts_are_classified(tmp_path):
+    """Examples matching srv-api audit noise without ATLAS exclusive conflicts."""
+    conf(
+        tmp_path,
+        "h /var/log/journal/%m - - - - +C\n"
+        "h /var/log/journal/%m/%m@* - - - - +C\n",
+        name="journal-nocow.conf",
+    )
+    conf(
+        tmp_path,
+        "d /tmp 1777 root root 10d\n"
+        "d /var/tmp 1777 root root 30d\n"
+        "d /var/lib/systemd/coredump 0755 root root 30d\n",
+        name="systemd-tmp.conf",
+    )
+    conf(
+        tmp_path,
+        "z /var/log/journal 2755 root systemd-journal -\n"
+        "a+ /var/log/journal - - - - d:group::r-x,d:group:adm:r-x\n",
+        name="systemd.conf",
+    )
+    conf(
+        tmp_path,
+        "d /var/run/screen 0775 root root -\n",
+        directory="etc/tmpfiles.d",
+        name="screen-cleanup.conf",
+    )
+    conf(
+        tmp_path,
+        "d /var/run/screen 0775 root root -\n",
+        directory="usr/lib/tmpfiles.d",
+        name="screen-cleanup.conf",
+    )
+    conf(
+        tmp_path,
+        "q /var 0755 - - -\n"
+        "d /var/lib 0755 - - -\n",
+        name="var.conf",
+    )
+    result = report(tmp_path)
+    assert result.status == "blocked"
+    assert "TMPFILES_OS_DYNAMIC_OUT_OF_SCOPE_INFO" in result.info_codes
+    assert "TMPFILES_OS_PARENT_NONRECURSIVE_INFO" in result.info_codes
+    assert "TMPFILES_BASENAME_PRECEDENCE_INFO" in result.info_codes
+    # Non-recursive /var/lib must NOT be a critical ATLAS conflict.
+    assert "TMPFILES_RECURSIVE_PARENT_CONFLICT" not in result.critical_codes
+    assert "TMPFILES_ATLAS_PATH_ALREADY_DECLARED" not in result.critical_codes
+    # Structured findings expose source/line/rationale.
+    infos = [f for f in result.findings if f.classification == "info"]
+    assert infos and all(f.source_file and f.rationale for f in infos)
+
+
+def test_recursive_parent_on_var_lib_remains_critical(tmp_path):
+    conf(tmp_path, "Z /var/lib - - - -\n", name="danger.conf")
+    result = report(tmp_path)
+    assert "TMPFILES_RECURSIVE_PARENT_CONFLICT" in result.critical_codes
+    finding = next(f for f in result.findings if f.code == "TMPFILES_RECURSIVE_PARENT_CONFLICT")
+    assert finding.human_review_required is True
+    assert finding.line_number == 1

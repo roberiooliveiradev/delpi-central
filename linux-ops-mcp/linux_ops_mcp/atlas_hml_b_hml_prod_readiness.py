@@ -62,3 +62,42 @@ def build_readiness_matrix() -> HMLReadinessMatrix:
         stop_conditions=_STOP,
         prod_gates=_PROD_GATES,
     )
+
+
+
+def build_hml_preflight_procedure() -> dict[str, object]:
+    """Technical package for a future authorized HML window (always blocked)."""
+    return {
+        "schema": "atlas.hml.b.hml-preflight-procedure.v1",
+        "status": "blocked",
+        "prepare_eligible": False,
+        "can_execute": False,
+        "read_only_steps": [
+            "stage74_tmpfiles_audit_fixture_then_host_readonly",
+            "stage75_boot_activation_gate_post_create",
+            "stage71_identity_and_directory_observation",
+            "stage73_package_and_identity_review",
+            "docker_endpoint_and_fd_observation",
+            "signer_bridge_isolation_candidate_review",
+        ],
+        "stop_conditions": list(_STOP),
+        "acceptance_criteria": [
+            "NO_CRITICAL_TMPFILES_CONFLICT",
+            "POST_CREATE_DAC_POLICY_MATCH",
+            "ATLAS_UNITS_ABSENT_UNTIL_AUTHORIZED",
+            "SIGNER_BRIDGE_CANDIDATES_NON_INSTALLABLE",
+            "MCP_READ_TOOLS_EQUAL_4",
+            "OWNER_WINDOW_DOCUMENTED",
+        ],
+        "prod_baseline": [
+            "record_prod_service_health_before",
+            "record_prod_service_health_after_read_only_observation",
+            "forbid_prod_mutation_from_hml_window",
+        ],
+        "rollback": [
+            "remove_only_atlas_only_components",
+            "never_touch_shared_docker_or_non_atlas_units",
+        ],
+        "blocks": list(_BLOCKS),
+        "installation_authorized": False,
+    }

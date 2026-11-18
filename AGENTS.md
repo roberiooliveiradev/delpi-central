@@ -35,6 +35,15 @@
   interromper a publicação e reportar o risco ao owner.** Escopo
   desta exceção: Pesquisa de Satisfação; outras aplicações mantêm
   sua política própria até decisão específica.
+- **Exceção explícita — ATLAS / DCMCP Linux Etapa 76 (issue #232):**
+  por decisão expressa do owner neste pacote, a execução obrigatória do
+  DELPI Verifier está **dispensada somente para a Etapa 76**. Continuam
+  obrigatórios testes automatizados, GitHub Actions, revisão de segurança
+  do código e aprovação de merge pelo owner. A dispensa **não** autoriza
+  instalação no host, PREPARE/ACT, deploy em srv-api nem aprovação de
+  segurança SEC-01..10. Não declara ACCEPT/ACCEPT_WITH_RESIDUAL sem
+  execução real do Verifier. Pacotes ATLAS posteriores voltam ao ciclo
+  completo do Verifier salvo nova decisão explícita do owner.
 - Regras canônicas de engenharia: `.cursor/rules/` (ver
   `development-standards-index.mdc` e `delia-execution-protocol.mdc`
   para tasks DÉLIA).
