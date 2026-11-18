@@ -136,3 +136,28 @@ def test_manager_only_delivery_sends_once(monkeypatch):
         "gestor@delpi.com.br"
     ]
     assert repo.finish_run.call_args.kwargs["status"] == "succeeded"
+    artifacts.save_html.assert_not_called()
+
+
+def test_scheduled_direct_report_rejects_pinned_historical_week(monkeypatch):
+    monkeypatch.setattr(
+        runs_module.settings, "REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED", True,
+    )
+    repo = MagicMock()
+    repo.get_definition.return_value = {
+        "active": True,
+        "providerKey": PROVIDER_KEY,
+        "params": {
+            "managerRegistration": "20001",
+            "weekStart": "2026-11-09",
+        },
+    }
+    repo.list_active_recipients.return_value = [
+        {"userId": MANAGER_ID, "email": "gestor@delpi.com.br"}
+    ]
+    mail = MagicMock()
+    use_case = RunReportDefinitionUseCase(repo, MagicMock(), mail)
+    with pytest.raises(ValueError, match="última semana concluída"):
+        use_case.execute(definition_id="def", trigger="schedule")
+    repo.create_run.assert_not_called()
+    mail.send_mail_to.assert_not_called()
