@@ -1,5 +1,8 @@
 # 130 — PRC Conversation — Controlled Production Release Evidence
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** Este Doc 130 documenta o release inicial de 17/11 no SHA `372b69d118` e **nao deve ser sobrescrito com digests posteriores**. O fechamento do recorte visual/funcional de conversa e UPDATE, incluindo F-01, tres abas, modal e fix do texto, esta no documento consolidado. Residual de avatar descrito aqui e historico; pipeline Core de avatares foi reportado posteriormente nos MFEs, sem afirmar foto sempre disponivel. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 **TASK_ID:** `EVA-PRC-CONVERSATION-CONTROLLED-PRODUCTION-RELEASE-01`
 **Data:** 2026-11-17
 **Tracker:** GitHub Issue #207
