@@ -113,7 +113,8 @@ on:
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_candidate.py"
       - "linux-ops-mcp/tests/test_atlas_hml_one_shot_real_engine_ci.py"
       - "linux-ops-mcp/tests/test_atlas_hml_os_boundary_real_ci.py"
-      - "linux-ops-mcp/tests/test_atlas_hml_presenter_process_boundary_real_ci.py"
+      - "linux-ops-mcp/tests/test_atlas_hml_presenter_process_boundary_real_ci.py \
+            linux-ops-mcp/tests/test_atlas_hml_b_distinct_uid_real_ci.py"
       - "linux-ops-mcp/linux_ops_mcp/atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/tests/test_atlas_hml_supervisor_blueprint_review.py"
       - "linux-ops-mcp/review-only/**"

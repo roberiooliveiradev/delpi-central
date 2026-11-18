@@ -1,3 +1,7 @@
+# STAGE 65: signer must bind/listen AF_UNIX AFTER dropping privileges;
+# root/systemd-prebound socket activation makes SO_PEERCRED report root.
+# Future socket parent: signer:bridge 02750; file signer:bridge 0660.
+# Key and signer continuity state must be isolated from bridge.
 # ATLAS HML - DESIGN REVIEW ONLY. NOT AN INSTALLABLE SYSTEMD UNIT.
 # Local Ed25519 signer: no Docker Engine access; private key path review-only.
 # Owner-accepted residual: root on the same host can still read the key file.
@@ -30,4 +34,5 @@ SystemCallArchitectures=native
 RestrictAddressFamilies=AF_UNIX
 InaccessiblePaths=/run/docker.sock /var/run/docker.sock
 ReadOnlyPaths=/run/atlas-hml-signer
+ReadWritePaths=/run/atlas-hml-signer-socket /var/lib/atlas-hml-signer-state
 UMask=0077
