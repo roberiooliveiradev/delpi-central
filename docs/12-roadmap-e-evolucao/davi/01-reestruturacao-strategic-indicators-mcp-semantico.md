@@ -1,10 +1,17 @@
 # DAVI V2 — Plano mestre de evolução do MCP semântico e integração de fontes
 
-> **Status:** PRODUCT_DIRECTION_ACCEPTED / IMPLEMENTATION_PENDING. Revisão consolidada em 2026-11-06.
+> **Status atual (2026-11-18):** **STRATEGIC_INDICATORS_PARITY_IMPLEMENTED / W016_DEV_ACCEPTED / PRODUCTION_DEPLOYED_WITH_RESIDUALS / DELIVERY_CLOSED_BY_COORDINATION**. O restante deste documento conserva decisões e snapshots históricos de 2026-11-06; enunciados de FUTURO/PLANNED/TO_INVENTORY abaixo não descrevem o runtime SI atual. Fontes finais: `../strategic-indicators/01-davi-mcp-full-portal-parity-plan.md` e `../strategic-indicators/03-w016-portal-parity-matrix.md`.
 > **Documento único de execução/decisão desta iniciativa.** Atualizar este arquivo nas próximas fases em vez de criar planos paralelos; histórico recuperável por Git.
 > **Direção corrigida:** DAVI **permanece no contexto técnico `api-delpi`** e no MCP/resource atuais. Prioridade 1 = padronizar as tools semânticas sem regressão. Prioridade 2 = permitir consumo governado de Strategic Indicators, quando houver contratos e segurança aprovados. **Não transferir o DAVI para Strategic Indicators nem criar container, MCP ou BFF SQL novo nesta fase.**
 > **Authority:** `docs/12-roadmap-e-evolucao/davi/README.md`, regras `.cursor`, contratos dos owners, Core API/governança, evidências runtime. Documento de plano não é prova de deploy e não autoriza implementação antes dos gates.
 > **Snapshot:** repositório/documentação consultados em 2026-11-06; HEAD local, working tree, code-path e SHA de deploy ainda exigem validação no Cursor antes de código.
+
+
+## Fechamento da frente Strategic Indicators — 2026-11-18
+
+Por decisão da DAVI Architecture / Coordination, as entregas de paridade SI foram **encerradas por ora como implementadas**, com 50/50 ações elegíveis cobertas, seis ferramentas MCP (incluindo `execute` e `delete`), homologação E2E em DEV com três identidades, 510 testes aplicáveis PASS e zero falhas, verificação independente `ACCEPT_WITH_RESIDUAL` (zero ordens) e deploy produtivo reportado com migração V037 e smoke não mutante PASS. Evidências versionadas nas waves W012–W016; fechamento documental W016 em `c13c36e22c`.
+
+**Limites de aceite:** ACT destrutivo real em produção não foi executado nem é requerido para esta conclusão; segunda identidade negativa foi provada em DEV e não nesta sessão produtiva; 17 skips e 40 falhas ambientais fora do escopo SI-DAVI aplicável permanecem resíduos a rastrear separadamente. Não afirmar `ALL_GREEN` de todo o repositório. A arquitetura e owner AuthZ permanecem inalterados. Nenhuma nova implementação ou deploy está autorizado por este registro de encerramento.
 
 ## 1. Decisões congeladas nesta revisão
 
