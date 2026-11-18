@@ -1,7 +1,7 @@
 import { createManualStudy, summarizeShift } from "../index.js";
 import type { ManualStudyInput, ProductionConditionsInput, ScenarioInput, ShiftInput } from "../index.js";
 
-const colors = ["#2e8f78", "#68bda4", "#437b9e", "#abcb78", "#9169b2", "#d5a24b"];
+const colors = ["#089bdb", "#73c9ef", "#61a8e1", "#a6dff5", "#7a9de0", "#b2c7ed"];
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 const format = (value: number) => numberFormat.format(value);
 const escapeText = (value: string) => value.replace(/[&<>"']/g, char =>
