@@ -1,0 +1,27 @@
+# Registro de entrega — um arquivo por entrega
+# Estados: PREPARED -> SENT -> RECEIVED -> COMPILED -> TESTED -> APPROVED
+
+delivery:
+  package_id: ""                 # ex.: DELPI-ADVPL-SB1-SA5-TST01-v0.1.0
+  package_version: ""
+  zip_sha256: ""                 # autoridade do artefato (nome é só rótulo)
+  source_repository: "roberiooliveiradev/delpi-central"
+  source_commit: ""              # SHA do commit aprovado
+  modules: []                    # ex.: [product-master, product-suppliers]
+  target_environment: ""         # TST01 | PRD — atributo da entrega, não variante do fonte
+
+tracking:
+  status: PREPARED
+  events:
+    - state: PREPARED
+      at: ""
+      by: ""
+      note: ""
+    # - state: SENT / RECEIVED / COMPILED / TESTED / APPROVED ...
+
+references:
+  manifest_path: ""              # packaging/out/<pkg>.manifest.json (não commitado)
+  erp_source_refs: []            # [{repo: Delpi-ti/protheus-erp, branch: master, sha, path, blob_sha}]
+  compilation_checklist: ""      # checklist preenchido pela equipe ERP
+
+sensitive: "NUNCA registrar credenciais, tokens ou URIs com segredos neste arquivo."

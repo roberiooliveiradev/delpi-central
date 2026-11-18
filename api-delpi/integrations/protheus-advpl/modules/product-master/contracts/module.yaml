@@ -1,0 +1,47 @@
+module_id: product-master
+package_tag: SB1
+name: "Product Master — SB1"
+responsibility: "Integração de escrita do cadastro de produtos (SB1) via MATA010/MSExecAuto."
+owners:
+  technical: "DELPI Integrações (api-delpi)"
+  erp: "Equipe Protheus (Delpi-ti)"
+entities: [SB1]
+official_routines:
+  - id: MATA010
+    mechanism: MSExecAuto
+    status: PROVEN_SOURCE
+reference_source:
+  repo: "Delpi-ti/protheus-erp"
+  branch: master
+  path: "04. Estoque/DLP04I01.PRW"
+  upstream_sha: INCONCLUSIVE
+  mirror_path: "docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW"
+  mirror_blob_sha: "cdb68b0487222823a96162c0e493e442648e21f7"
+  mirror_commit: "be614649b7"
+candidate_source:
+  name: "DLP04I01.PRW"
+  status: PLANNED
+development_status: PLANNED
+operations:
+  known:
+    - op: CREATE
+      status: PROVEN_SOURCE
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO POST PROVEN_RUNTIME"
+    - op: UPDATE
+      status: PROVEN_SOURCE
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (22 campos B1_*)"
+  pending:
+    - op: READ
+      note: "avaliar reaproveitamento da API DELPI existente"
+    - op: DELETE
+      note: "contrato e política pendentes; proibido sem semântica ERP aprovada"
+dependencies: []
+rest_contracts:
+  - id: DELPIPRODUTO
+    uris: ["POST /v1/IncProduto/incluir", "PUT /v1/IncProduto/alterar"]
+    status: PROVEN_RUNTIME
+restrictions:
+  erp_write: "proibida fora de gate+pin (default OFF) — ver protheus-write-integration-playbook.md"
+  rpo_compile: "exclusivo da equipe ERP; nunca por efeito colateral de commit"
+  direct_sql_reclock: FORBIDDEN
+sources: []

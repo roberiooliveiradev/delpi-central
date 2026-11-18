@@ -10,6 +10,7 @@ Esta pasta é a **biblioteca canônica** de padrões do produto.
 | Camada | Documento | Conteúdo |
 |--------|-----------|----------|
 | **Negócio / SQL de domínio** | **Esta biblioteca** (`padroes-totvs/`) | Armazém, filial, custo, cadastro, unidades + playbooks |
+| **Fontes ADVPL/TLPP (entrega DELPI)** | [api-delpi/integrations/protheus-advpl/](../../../integrations/protheus-advpl/README.md) | Workspace de fontes candidatos: módulos, `module.yaml`, packaging determinístico e handoffs de compilação |
 | **Infra / Docker / datasource** | [integracao-totvs.md](../../../../docs/07-api-delpi/integracao-totvs.md) | Compose, variáveis `TOTVS_*`, papel da api-delpi |
 | **Ops / CI / console** | `api-delpi/docs/roadmaps/` | Coverage HTTP, console API, PAC, LMP settings (não domínio produto) |
 
