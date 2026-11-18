@@ -51,6 +51,9 @@ from app.infrastructure.persistence.sqlalchemy.person_profile_repository import 
 from app.infrastructure.persistence.sqlalchemy.user_protheus_identity_repository import (
     SqlAlchemyUserProtheusIdentityRepository,
 )
+from app.infrastructure.persistence.sqlalchemy.user_hr_registration_repository import (
+    SqlAlchemyUserHrRegistrationRepository,
+)
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
