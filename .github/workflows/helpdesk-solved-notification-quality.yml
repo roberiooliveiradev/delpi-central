@@ -36,11 +36,8 @@ jobs:
           python -m pip install -r helpdesk-api/requirements.txt
       - name: Testes Helpdesk
         working-directory: helpdesk-api
-        run: python -m pytest \
-            tests/test_solved_ticket_notifications.py \
-            tests/test_helpdesk_api.py \
-            tests/test_idempotency_claims.py \
-            tests/test_ticket_create_etapa1.py -q
+        run: |
+          python -m pytest tests/test_solved_ticket_notifications.py tests/test_helpdesk_api.py tests/test_idempotency_claims.py tests/test_ticket_create_etapa1.py -q
 
   notification-catalog:
     name: Minha Delpi - catálogo do sino
