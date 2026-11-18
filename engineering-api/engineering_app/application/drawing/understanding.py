@@ -2993,6 +2993,22 @@ def build_understanding(
     return out
 
 
+def _int_page_keyed(by_page: dict | None) -> dict[int, Any]:
+    """Normaliza chaves de mapas «por página» para ``int``.
+
+    Registros vindos do worker isolado passam por JSON, que converte
+    chaves inteiras em string — sem a coerção, o lookup por número de
+    página falha em silêncio e a evidência visual da página é perdida.
+    Chaves não inteiros/não numéricas são descartadas."""
+    out: dict[int, Any] = {}
+    for k, v in (by_page or {}).items():
+        try:
+            out[int(k)] = v
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
 def build_document_understanding(
     tokens: list[dict],
     *,
@@ -3009,6 +3025,8 @@ def build_document_understanding(
     são conceitos por página — e consolida num payload
     ``drawing_understanding.v1`` compatível, com proveniência de página
     em cada linha/região e resumo de cobertura por página."""
+    render_size_by_page = _int_page_keyed(render_size_by_page)
+    graphic_primitives_by_page = _int_page_keyed(graphic_primitives_by_page)
     by_page: dict[int, list[dict]] = {}
     for t in tokens:
         p = int(t.get("page") or 1)

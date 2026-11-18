@@ -5,6 +5,8 @@ drawing_area), guards de falso balão, associação candidata por rótulo,
 multiplicidade legítima, estados MATCH_CANDIDATE/AMBIGUOUS/NOT_LOCATED/
 NOT_COMPARABLE e a seção aditiva ``balloon_table_validation``.
 """
+import json
+
 from engineering_app.application.drawing.drawing_investigation import (
     build_balloon_table_validation,
     identify_balloon_candidates,
@@ -240,6 +242,40 @@ def test_b1_document_level_merges_pages():
     labels = {(b["normalized_label"], b["page"])
               for b in u["balloon_candidates"]}
     assert labels == {("A1", 1), ("B", 2)}
+
+
+def test_b1_document_level_str_page_keys_from_json():
+    """DRIFT-01: chaves «por página» chegam como string após o round-trip
+    JSON do worker isolado — primitivas não podem ser perdidas no lookup."""
+    tokens = [
+        _tok("A1", 600, 400, 630, 430, page=1),
+        _tok("B", 700, 500, 720, 530, page=2),
+    ]
+    prims = {
+        1: {"circles": [_circle(595, 395, 635, 435)]},
+        2: {"circles": [_circle(695, 495, 725, 535)]},
+    }
+    render = {1: (1000, 700), 2: (1000, 700)}
+    u = build_document_understanding(
+        tokens, document_hash=SHA,
+        render_size_by_page=json.loads(json.dumps(render)),
+        graphic_primitives_by_page=json.loads(json.dumps(prims)),
+    )
+    labels = {(b["normalized_label"], b["page"])
+              for b in u["balloon_candidates"]}
+    assert labels == {("A1", 1), ("B", 2)}
+
+
+def test_b1_document_level_missing_page_primitives_abstains():
+    """Página sem primitivas mapeadas continua abstendo — não fabrica."""
+    tokens = [_tok("A1", 600, 400, 630, 430, page=1)]
+    u = build_document_understanding(
+        tokens, document_hash=SHA,
+        render_size_by_page={"1": [1000, 700]},
+        graphic_primitives_by_page={
+            "2": {"circles": [_circle(595, 395, 635, 435)]}},
+    )
+    assert u["balloon_candidates"] == []
 
 
 def test_b1_legacy_dict_and_list_primitive_shapes():

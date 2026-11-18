@@ -6720,3 +6720,36 @@ Sintético: 2/2 `TRUE_CONFLICT` (valida a maquinaria do avaliador, não detecç�
 - Isto é **experimento operacional**, não homologação: `GROUND_TRUTH_APPROVED=NO`, `BALLOON_SWAP_DETECTION=NOT_PROVEN`, thresholds GT-01 não aprovados.
 - `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `DRAWING_PUBLICATION=false`.
 - Issue #131: pendente (`gh` sem auth).
+
+### 94.42.12 E1/VAL-01 — DRIFT-01: Paridade entre Pipeline Produtivo e ChatGPT MCP
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-DRIFT01-LIVE-MCP-VISUAL-PARITY-AND-FIRST-LOSS-RECOVERY-01`
+
+**Classificação inicial (§3 da task):**
+
+```text
+EXECUTION_DRIFT=CONFIRMED
+LIVE_MCP_ACCESS=PASS
+LIVE_OCR_EXECUTION=PASS
+LIVE_BALLOON_DETECTION=FAIL
+LIVE_B2_TARGET_ASSOCIATION=NOT_CHECKED
+LIVE_B3_COMPONENT_CONSISTENCY=NOT_CHECKED
+PRODUCTION_EXPERIMENTAL_RELEASE=ACTIVE_REPORTED
+TECHNICAL_HOMOLOGATION=PENDING
+```
+
+**Evidência do drift:** mesmo documento (`90480120.pdf`, SHA `9b64ae20…555cd8`, 2 páginas, 316317 bytes): execução interna → 7 candidatos de balão / 6 leaders / 6 MATCH_CANDIDATE / 5 ambíguas; execução ChatGPT MCP (`aj-29cf8e83acc04fb5`) → `COMPLETED`, `page_coverage=FULL`, 207 tokens, 0 balões, 0 `geometry_regions`, `balloon_detection_unavailable`.
+
+**Primeiro ponto de perda (comprovado):** `build_document_understanding` em `engineering_app/application/drawing/understanding.py` — lookup `(graphic_primitives_by_page or {}).get(p)` com `p` inteiro. `_graphic_primitives_by_page` é construído com chaves `int` em `visual_benchmark.py`, mas o caminho MCP/jobs executa via `run_pipeline_isolated` (subprocess → stdout JSON → `json.loads`), que converte chaves para `str`. `.get(1)` em `{"1": …}` → `None` → `_detect_balloon_candidates` sem primitivas circulares → `([], [])` → zero `BALLOON` no `DrawingObjectSet` → `balloon_detection_unavailable`. O mesmo mecanismo esvazia `geometry_regions` (também derivadas de primitivas), explicando a assinatura exata: tokens/render/tabela (listas e dicts construídos in-process no bridge com `int(_p)`) funcionaram; tudo derivado de primitivas zerou.
+
+**Prova no container produtivo (digest `2066695be758`):** `run_pipeline_isolated` no 90480120 real → `gp_key_types={'str'}`, primitivas presentes (35+23 enclosures, 200 círculos/página), 207 tokens → `build_document_understanding` → **0 balões / 0 geom_regions** — reprodução exata do sintoma MCP, descartando perda no worker, no fetch, no OpenCV ou na serialização de tokens.
+
+**Causa raiz:** contrato `graphic_primitives_by_page: dict[int, dict]` violado silenciosamente pelo round-trip JSON do isolamento subprocess — boundary de desserialização não restaurava o tipo de chave que o consumidor assume.
+
+**Fix:** normalização `_int_page_keyed` na entrada de `build_document_understanding` (aplicada a `render_size_by_page` e `graphic_primitives_by_page`) — menor boundary canônico: a função dona do contrato «por página» coage chaves para `int`, cobrindo todos os consumidores (MCP, jobs, futuros produtores serializados) sem lógica MCP-específica, sem hardcode de documento/página/SHA. Semântica de abstinência preservada: página sem primitivas mapeadas continua sem candidatos.
+
+**Testes (test_balloon_b1.py):** `test_b1_document_level_str_page_keys_from_json` (regressão exata do drift via `json.loads(json.dumps(...))` — falharia no código anterior), `test_b1_document_level_missing_page_primitives_abstains` (negativo). Suíte engineering-api: **1688 pass / 21 skip**, zero regressões.
+
+**Prova pós-fix (registro real do worker isolado do 90480120):** `build_document_understanding` corrigido → `A2, A7, A3, A1, AA, A5, A1` na pág. 1 (paridade com o baseline interno) + candidatos pág. 2 (`AA, 60, LL, E`), 8 excluídos, `geometry_regions` restaurada. Baseline interno é referência de comparação, não ground truth.
+
+**Estado:** `ROOT_CAUSE_PROVEN / FIX_VERIFIED_LOCAL / RELEASE_PENDING_AUTHORIZATION`. Deploy do fix exige autorização operacional específica (§16 da task); validação final pelo caminho oficial ChatGPT MCP (`aj-*` novo) exige identidade delegada da Coordination. `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`, `ENGINEERING_APPROVAL=DRAFT/CANDIDATE`, `GT-01` continua `OWNER_BLOCKED` — sem alegação de homologação.
