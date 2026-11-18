@@ -683,7 +683,7 @@ O Portal só pode ser considerado pronto quando:
 
 ## ADENDO — Product Registration & Control / Integração incremental (2026-11-06)
 
-> **Status:** `PLANNED / ARCHITECTURE_DECISION_RECORDED / CONTRACT_AND_AUTHZ_PENDING`. Novo direcionamento do Product Owner nesta data, **não representa código implementado nem deploy**. Este adendo é o **plano mestre** do vertical na frente Portal Engenharia. Os registros anteriores D-07, RQ-07, E10.S1, `engineering/README.md` e `controle-mp/EVOLUCAO.md` refletem uma **decisão anterior** (Portal apenas deep-link para `my-requests`); onde divergirem sobre a **primeira superfície de atendimento**, prevalece este adendo **após review dos boundaries**. Não apagar o histórico ou desativar `my-requests`.
+> **Status:** `PLANNED / ARCHITECTURE_DECISION_RECORDED / CONTRACT_AND_AUTHZ_PENDING`. Novo direcionamento do Product Owner nesta data, **não representa código implementado nem deploy**. Este adendo é o **plano mestre** do vertical na frente Portal Engenharia. Os registros anteriores D-07, RQ-07, E10.S1, `engineering/README.md` e `engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md` (antigo `controle-mp/EVOLUCAO.md` em histórico Git) refletem uma **decisão anterior** (Portal apenas deep-link para `my-requests`); onde divergirem sobre a **primeira superfície de atendimento**, prevalece este adendo **após review dos boundaries**. Não apagar o histórico ou desativar `my-requests`.
 
 ### 1. Produto e semântica de nomenclatura
 
@@ -713,7 +713,7 @@ Future governed cutover --> approved owner requests-api / my-requests (separate 
 ### 3. Descobertas comprovadas / restrições de coexistência
 
 - Repositório `roberiooliveiradev/controle_mp`: Flask/PostgreSQL/Socket.IO + React/Vite, solicitações `CRIAR/ALTERAR`, papéis `ADMIN/ANALYST/USER`, status `CRIADO / EM PROCESSO / DEVOLVIDO / FINALIZADO / REJEITADO / FRACASSADO`, chat/anexos, read-only de TOTVS; SSO embedded existente é prova de autenticação, **não** contrato BFF ou delegação de write.
-- `controle-mp/EVOLUCAO.md` (2026-09-11) já planejava migração nativa para `my-requests` e descrevia paridade, `raw-material-creation/update`, ETL e cutover; essa **continua sendo a direção futura a reconciliar**, mas não a superfície inicial de analista escolhida agora.
+- `engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md` (antigo `controle-mp/EVOLUCAO.md` em histórico Git) (2026-09-11) já planejava migração nativa para `my-requests` e descrevia paridade, `raw-material-creation/update`, ETL e cutover; essa **continua sendo a direção futura a reconciliar**, mas não a superfície inicial de analista escolhida agora.
 - `plugins/my-requests` e `requests-api` possuem motor transversal, mas seed `V007 raw-material-creation` tem só `description/unit/notes` e `destination_config.adapter=none`; **não equivale ao processo real**. Não trocar a fonte prematuramente.
 - `plugins/engineering/engineering.manifest.json` existe no Git (v0.2.0); inventariar seu router e os endpoints reais da `engineering-api` antes de implementar. A documentação histórica que os declara inexistentes está **STALE_EVIDENCE**.
 - TÉO `PROC-0078` confirma processo de negócio Solicitação, Análise e Cadastro de Matérias-Primas, ainda com owner formal de Engenharia pendente. GLPI #1272 registra necessidade de comentários de solicitante após correção; validar paridade na nova experiência.
