@@ -1,5 +1,7 @@
 # Portal Engenharia MFE — Plano incremental de refinamentos pós-redesign
 
+> **PRC_DOC_REANCHOR_2026_11_18 — atualizacao de precedencia:** Os itens originais de refinamento mantem rastreabilidade, mas o recorte de conversa PRC, tres abas, modal expandido e resumo de alteracoes UPDATE foi implementado e teve deploy PRD reportado; PO confirmou correcao final em 18/11. Qualquer contradicao com `PRODUCTION_DEPLOY_SUSPENDED`/`IMPLEMENTATION_PENDING` para este recorte esta superada pelo fechamento consolidado. [Fechamento consolidado PRC](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Estados legados permanecem para auditoria, nao como estado corrente deste recorte.
+
 > **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV` (AuthZ solicitante sem `engineering.access` = `PENDING_OWNER`).
 
 > **Status:** `PO_REFINEMENT_APPROVED / IMPLEMENTATION_PENDING / OPEN_FOR_MORE_FEEDBACK` · **Registrado:** 2026-11-07.
