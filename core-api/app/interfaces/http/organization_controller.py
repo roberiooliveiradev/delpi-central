@@ -12,6 +12,9 @@ from uuid import UUID
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
+from app.application.services.organization_identity_review_service import (
+    OrganizationIdentityReviewService,
+)
 from app.application.services.organization_team_service import OrganizationTeamService
 from app.extensions.integration_rate_limit import integration_rate_limit
 from app.infrastructure.gateways.portal_rh_organization_gateway import (
@@ -225,3 +228,46 @@ def delete_user_hr_registration(user_id: str):
     except Exception:
         logger.exception("hr_registration_delete_failed")
         return api_error("internal_error", "Falha ao remover vínculo RH.", status=500)
+
+
+@admin_hr_identity_bp.route(
+    "/managers/<registration>/identity-review", methods=["GET"]
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+@integration_rate_limit(max_requests=10, per_seconds=60, key_prefix="org-identity-review")
+def get_manager_identity_review(registration: str):
+    """Administrative, read-only identity suggestions. Not an identity verification."""
+    try:
+        registration = PortalRhOrganizationGateway.validate_registration(registration)
+        include_indirect = _bool_query("include_indirect", default=True)
+        details = _bool_query("details", default=False)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            review = OrganizationIdentityReviewService(
+                OrganizationTeamService(PortalRhOrganizationGateway(), uow.hr_registrations),
+                uow.users,
+                uow.hr_registrations,
+            ).get_review(
+                registration, include_indirect=include_indirect, details=details
+            )
+        logger.info(
+            "organization_identity_review team=%s verified=%s suggestions=%s details=%s",
+            review["teamCount"], review["verifiedCount"], review["suggestionCount"], details,
+        )
+        return jsonify(review), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except PortalRhManagerNotFound:
+        return api_error("manager_not_found", "Gestor não localizado no RH.", status=404)
+    except PortalRhOrganizationUnauthorized:
+        return api_error("rh_unavailable", "Credencial RH inválida.", status=503)
+    except PortalRhOrganizationContractError:
+        return api_error("rh_contract_error", "Contrato RH inválido.", status=502)
+    except PortalRhOrganizationUnavailable:
+        return api_error("rh_unavailable", "Portal RH indisponível.", status=503)
+    except Exception:
+        logger.exception("organization_identity_review_failed")
+        return api_error("internal_error", "Falha na prévia de identidade.", status=500)
