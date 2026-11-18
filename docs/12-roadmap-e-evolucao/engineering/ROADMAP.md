@@ -1,5 +1,8 @@
 # Portal de Engenharia — roadmap de implementação
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** As passagens legadas de 07/11 que suspendem globalmente o deploy do redesign PRC nao descrevem mais o estado do recorte de **conversa PRC/3 abas/modal/resumo UPDATE**: houve release PRD reportado e aceite visual posterior do PO. A suspensao historica NAO deve ser usada para bloquear retroativamente esse recorte, nem seu encerramento autoriza releases de outras frentes. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 > **Status:** planejamento oficial.  
 > **Data:** 2026-09-11.  
 > **Implementação:** não autorizada por este documento. Cada etapa deve ser revalidada pelo Cursor contra regras, código, contratos e testes vigentes antes de execução.
