@@ -15,7 +15,7 @@
 | **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
 | **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **ACEITO COM RESÍDUOS** (código restaurado pelo P6-R; ver §16) — aguarda o H8 do solicitante |
 | **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **ACEITO** — commit `c51e18890e`, HML em 18/11/2026 (ver §16) |
-| **P6.1** | 7 | Correções visuais da conferência em HML (R21–R24) | PluginUI → PROD; `public-hub` → **somente HML** | **PRONTO PARA EXECUÇÃO** (§17–§18) |
+| **P6.1** | 7 | Correções visuais da conferência em HML (R21–R24) | PluginUI → PROD; `public-hub` → **somente HML** | **ACEITO** — commit `570119b9d5`, 18/11/2026 (ver §19) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -792,3 +792,11 @@ Feita no navegador, no link do participante pendente (sem envio), em 1280 px (cl
 | H-e | Testes, build, `verify-host-exports`, auditorias, verificador | Saídas |
 
 Deploy: `plugin-ui` em **PROD e HML** (kit genérico); `public-hub` **somente em HML**. Reconferir após o push que os arquivos continuam em `main` (R18).
+
+---
+
+## 19. Revisão do P6.1 (18/11/2026)
+
+**Veredito do coordenador:** `ACCEPT`. Conferido: commit `570119b9d5` em `main`, 4 arquivos do §18.1 (`QuestionCard.tsx` intocado); `legend` com `float: left` e variante `tall` ajustada dentro da `@media`, ambos protegidos por teste de contrato. **Conferência visual em HML (375 px, claro):** rótulo do tema e enunciado dentro do cartão, borda superior inteira — igual à referência. R19, R21, R22 e R23 fechados; R24 não reproduzido em 5 carregamentos limpos (encerrado como ocorrência do ambiente de teste). Deploy: `plugin-ui` PROD e HML; `public-hub` só HML.
+
+**Pendente para fechar a UI-03 em HML:** H8 — envio real pelo solicitante e conferência de “Respondida” no Portal.
