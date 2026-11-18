@@ -708,3 +708,13 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - Guarda do presenter reforçada (inventário de FDs, sockets inesperados, `LISTEN_*`). CI Linux/Docker atualizado; `cryptography` apenas para verificação Ed25519.
 - **Pendentes:** SEC-01..10, parecer humano, isolamento host real, segregação de chave fora do host do produtor, instalação autorizada.
 - **Progresso 55%.** Quatro MCP READ, PREPARE/ACT OFF. **Sem pull/deploy.**
+
+
+## Etapa 61 | 17/11/2026 | Continuidade FD-safe transacional e signer boundary source-only
+
+- **Issue:** [#232](https://github.com/roberiooliveiradev/delpi-central/issues/232). Referência técnica: [runbook 52](./52-atlas-hml-b-state-lock-keyless-intent-listen-audit.md). Entrega em uma única Draft PR com código e testes; **source-only**.
+- `atlas_hml_b_continuity_store.py`: leitura estrita por FD e verificação DAC/ACL/inode, recusa symlink, hardlink, FIFO, troca TOCTOU; transação `read -> check -> atomic write/fsync` sob lock de diretório fail-closed (`flock`). Estado removido na mesma instância e falhas de fsync travam a sessão; processos ignorando lock/root e bootstrap em novo processo ainda não podem ser atestados.
+- `atlas_hml_b_presenter_process_guard.py`: validação rigorosa de LISTEN_PID/FDS/FDNAMES, negação de valores parciais, campos extras, nomes/path e FD diferente de 3; teste adversarial dedicado.
+- `atlas_hml_b_external_signing_intent.py`: pedido canônico de assinatura para produtor sem chave privada, validação signer-side de escopo/tempo/contador declarado e montagem/validação de envelope Ed25519 com chave pública. Teste CI cria chave só em subprocesso descartável; **não há signer operacional, chave externa atestada ou identidade de processo independente**.
+- `atlas_hml_b_snapshot_trust.py`: vinculação obrigatória entre `key_id` e a chave pública realmente fornecida; recusa keyring com identidade inconsistente.
+- CI Linux/Docker descartável ampliado; DELPI Verifier uma vez ao fim; SEC-01..10, revisão humana e change-control pendentes. Quatro MCP READ, PREPARE/ACT OFF, sem host/deploy. **Progresso global: 55%.**
