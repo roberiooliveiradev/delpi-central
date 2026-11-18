@@ -60,6 +60,13 @@
 .delpi-ui-conversation-panel--expanded {
   flex: 1;
   min-height: 0;
+  /* FIX-01 — o clamp de embed do RoomPanel (min(34rem, 70vh)) clamava o
+   * flex do frame e deixava ~230px de vazio sob o composer no modal.
+   * As vars do RoomPanel existem para override de embed; no expandido o
+   * painel acompanha a altura do frame (msgs flex + dock no rodapé). */
+  --delpi-ui-room-panel-min-height: 0;
+  --delpi-ui-room-panel-height: auto;
+  --delpi-ui-room-panel-max-height: none;
 }
 
 .delpi-ui-conversation-panel--expanded .delpi-ui-conversation-panel__frame {
