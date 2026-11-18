@@ -10,6 +10,9 @@ from app.domain.ports.supplies.purchase_order_otd_repository_port import (
 from app.domain.totvs.protheus_product_types import PRODUCT_TYPE_RAW_MATERIAL
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.supplies_repositories.otd_physical_receipts import (
+    resolve_physical_source,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_order_otd_sql import (
     build_purchase_order_otd_filters,
     build_purchase_order_otd_lines_count_sql,
@@ -25,10 +28,19 @@ class PurchaseOrderOtdRepository(BaseRepository, PurchaseOrderOtdRepositoryPort)
             start_date=request.start_date,
             end_date=request.end_date,
         )
-        sql = build_purchase_order_otd_sql(where_clause=where_clause)
+        physical = resolve_physical_source(
+            self, branch=request.branch,
+            start_date=request.start_date, end_date=request.end_date,
+        )
+        source_params = physical.params if physical else ()
+        sql = build_purchase_order_otd_sql(
+            where_clause=where_clause,
+            source_cte=physical.cte if physical else "",
+            source_table="OTD_EFFECTIVE" if physical else "VW_PONTUALIDADE_FORNECEDORES",
+        )
 
         with self:
-            row = self.execute_one(sql, where_params)
+            row = self.execute_one(sql, source_params + where_params)
 
         if row:
             return PurchaseOrderOtd(
@@ -65,19 +77,32 @@ class PurchaseOrderOtdRepository(BaseRepository, PurchaseOrderOtdRepositoryPort)
             table_alias="V",
         )
 
+        physical = resolve_physical_source(
+            self, branch=request.branch,
+            start_date=request.start_date, end_date=request.end_date,
+        )
+        source_params = physical.params if physical else ()
+        source_kwargs = {
+            "source_cte": physical.cte if physical else "",
+            "source_table": "OTD_EFFECTIVE" if physical else "VW_PONTUALIDADE_FORNECEDORES",
+        }
         count_sql = build_purchase_order_otd_lines_count_sql(
             where_clause=where_clause,
             status=request.status,
+            **source_kwargs,
         )
         list_sql = build_purchase_order_otd_lines_list_sql(
             where_clause=where_clause,
             request=request,
+            **source_kwargs,
         )
 
-        list_params = tuple(where_params) + (paging["offset"], paging["page_size"])
+        list_params = source_params + tuple(where_params) + (
+            paging["offset"], paging["page_size"]
+        )
 
         with self:
-            total_row = self.execute_one(count_sql, where_params)
+            total_row = self.execute_one(count_sql, source_params + where_params)
             total = int(total_row.get("total") or 0) if total_row else 0
             rows = self.execute_query(list_sql, list_params) or []
 

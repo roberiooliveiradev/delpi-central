@@ -35,12 +35,14 @@ _LIST_LINES_CTE = """
             V.QUANTIDADE AS quantity,
             CONVERT(VARCHAR(10), V.DT_EMISSAO_PC, 23) AS purchase_order_issue_date,
             CONVERT(VARCHAR(10), V.DT_ENTREGA, 23) AS expected_delivery_date,
-            CONVERT(VARCHAR(10), V.DT_DIGITACAO, 23) AS receipt_entry_date,
+            CONVERT(VARCHAR(10), {entry_date_col}, 23) AS receipt_entry_date,
+            CONVERT(VARCHAR(10), V.DT_DIGITACAO, 23) AS receipt_effective_date,
+            {receipt_source_col} AS receipt_source,
             CONVERT(VARCHAR(10), V.DT_EMISSAO_NF, 23) AS invoice_issue_date,
             V.DIAS AS days_diff,
             CASE WHEN V.DIAS >= 0 THEN 1 ELSE 0 END AS is_on_time,
             CASE WHEN V.DIAS >= 0 THEN 'on_time' ELSE 'late' END AS status
-        FROM {view} V WITH (NOLOCK)
+        FROM {view} V{lock_hint}
         LEFT JOIN SA2010 SA2 WITH (NOLOCK)
             ON SA2.D_E_L_E_T_ = ''
            AND RTRIM(LTRIM(SA2.A2_COD)) = RTRIM(LTRIM(V.FORNECEDOR))
@@ -70,8 +72,12 @@ def build_purchase_order_otd_filters(
     return qb.build()
 
 
-def build_purchase_order_otd_sql(*, where_clause: str) -> str:
-    return f"""
+def build_purchase_order_otd_sql(
+    *, where_clause: str, source_cte: str = "", source_table: str = _VIEW
+) -> str:
+    prefix = "WITH " + source_cte if source_cte else ""
+    lock_hint = "" if source_cte else " WITH (NOLOCK)"
+    return f"""{prefix}
         SELECT
             COUNT(*) AS total_lines,
             SUM(CASE WHEN DIAS >= 0 THEN 1 ELSE 0 END) AS on_time_lines,
@@ -82,7 +88,7 @@ def build_purchase_order_otd_sql(*, where_clause: str) -> str:
                     ELSE SUM(CASE WHEN DIAS >= 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
                 END
             AS DECIMAL(10, 2)) AS purchase_order_otd_pct
-        FROM {_VIEW} WITH (NOLOCK)
+        FROM {source_table}{lock_hint}
         WHERE {where_clause}
     """
 
@@ -136,19 +142,34 @@ def _list_order_clause(request: GetPurchaseOrderOtdPanelRequest) -> str:
     """
 
 
-def _list_cte_sql(*, where_clause: str) -> str:
-    return _LIST_LINES_CTE.format(view=_VIEW, where_clause=where_clause)
+def _list_cte_sql(
+    *, where_clause: str, source_table: str = _VIEW, physical: bool = False
+) -> str:
+    return _LIST_LINES_CTE.format(
+        view=source_table,
+        where_clause=where_clause,
+        lock_hint="" if physical else " WITH (NOLOCK)",
+        entry_date_col="V.DT_DIGITACAO_ERP" if physical else "V.DT_DIGITACAO",
+        receipt_source_col="V.RECEIPT_SOURCE" if physical else "'erp_digitacao'",
+    )
 
 
 def build_purchase_order_otd_lines_count_sql(
     *,
     where_clause: str,
     status: Optional[str],
+    source_cte: str = "",
+    source_table: str = _VIEW,
 ) -> str:
     status_clause = _status_filter_clause(status)
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(
+        where_clause=where_clause,
+        source_table=source_table,
+        physical=bool(source_cte),
+    )
+    prefix = source_cte + "," if source_cte else ""
     return f"""
-        WITH {list_cte}
+        WITH {prefix} {list_cte}
         SELECT COUNT(*) AS total
         FROM LINHAS_ELEGIVEIS
         {status_clause}
@@ -159,12 +180,19 @@ def build_purchase_order_otd_lines_list_sql(
     *,
     where_clause: str,
     request: GetPurchaseOrderOtdPanelRequest,
+    source_cte: str = "",
+    source_table: str = _VIEW,
 ) -> str:
     status_clause = _status_filter_clause(request.status)
     order_clause = _list_order_clause(request)
-    list_cte = _list_cte_sql(where_clause=where_clause)
+    list_cte = _list_cte_sql(
+        where_clause=where_clause,
+        source_table=source_table,
+        physical=bool(source_cte),
+    )
+    prefix = source_cte + "," if source_cte else ""
     return f"""
-        WITH {list_cte}
+        WITH {prefix} {list_cte}
         SELECT *
         FROM LINHAS_ELEGIVEIS
         {status_clause}
