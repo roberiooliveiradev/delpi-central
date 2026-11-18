@@ -1,5 +1,8 @@
 # MFE Portal Engenharia — Controle e Cadastro de Produtos: UX, wireframes e fluxo visual
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** Os wireframes de quatro abas e estados `IMPLEMENTATION_PENDING`/`PRODUCTION_DEPLOY_SUSPENDED` na introducao sao historicos. Para detalhe PRC atual, valem tres abas, conversa + historico empilhados, modal expansivel corrigido e resumo UPDATE sem a mensagem negativa supplier-only. A lista antiga que ainda descreve `Nenhuma alteração cadastral solicitada.` foi **SUPERSEDED** pelo fix `784d7047a6`. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 > **Decisão funcional superveniente PRC-REF-022 (2026-11-10):** fluxo único Enviada → Em atendimento ⇄ Devolvida para correção → Concluída, editor compartilhado create/read/edit. O adendo REF-022 ao final deste documento prevalece sobre fluxos legados contraditórios. `IMPLEMENTED_DEV`.
 
 > **Estado:** `TARGET / UX_CONTRACT_SPECIFIED / IMPLEMENTATION_PENDING / VISUAL_QA_NOT_RUN` · **Decisão do Product Owner:** redesign completo antes de deploy de produção (2026-11-07).
