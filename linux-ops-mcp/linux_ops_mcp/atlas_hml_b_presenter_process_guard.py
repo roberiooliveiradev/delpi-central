@@ -128,27 +128,32 @@ def _fd_set() -> tuple[tuple[int, bool], ...]:
 
 
 def _socket_activation_consistent(listener_fd: int) -> bool:
-    """Refuse inherited systemd activation unless it names exactly this FD."""
-    present = _SOCKET_ACTIVATION_ENV & set(os.environ)
-    if not present:
-        return True
-    if present != _SOCKET_ACTIVATION_ENV:
-        return False
-    try:
-        listen_pid = int(os.environ["LISTEN_PID"])
-        listen_fds = int(os.environ["LISTEN_FDS"])
-    except (KeyError, TypeError, ValueError):
-        return False
-    if listen_pid != os.getpid() or listen_fds != 1:
-        return False
-    # systemd passes activated sockets starting at FD 3.
-    if listener_fd != 3:
-        return False
-    names = os.environ.get("LISTEN_FDNAMES", "")
-    if type(names) is not str or not 1 <= len(names) <= 64 or "/" in names:
-        return False
-    return True
+    """Parse one exact systemd activation tuple; deny partial or extra keys.
 
+    This review never proves that systemd owns the FD, nor the server PID.
+    Calling os.getenv on key names is not evidence of process isolation.
+    """
+    keys = {key for key in os.environ if key.startswith("LISTEN_")}
+    if not keys:
+        return True  # disposable prebound CI fixture without socket activation
+    if keys != _SOCKET_ACTIVATION_ENV:
+        return False
+    pid = os.environ.get("LISTEN_PID")
+    fds = os.environ.get("LISTEN_FDS")
+    names = os.environ.get("LISTEN_FDNAMES")
+    if (
+        type(pid) is not str or pid != str(os.getpid())
+        or type(fds) is not str or fds != "1"
+        or type(listener_fd) is not int or listener_fd != 3
+        or type(names) is not str or not 1 <= len(names) <= 32
+        or not names.isascii()
+        or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789._-" for char in names)
+        or names[0] not in "abcdefghijklmnopqrstuvwxyz"
+    ):
+        return False
+    # A single allowed FD name must not embed the systemd colon separator,
+    # whitespace, a path, shell control characters or an alternate endpoint.
+    return True
 
 def _review_prebound_process_fixture(
     listener: socket.socket, *, expected_uid: int, expected_gid: int,

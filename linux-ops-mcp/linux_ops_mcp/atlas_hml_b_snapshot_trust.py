@@ -68,6 +68,8 @@ class HMLTrustKeyring:
             raise HMLSnapshotTrustError("HML_TRUST_KEY_REVOKED")
         if type(record.public_key) is not bytes or len(record.public_key) != 32:
             raise HMLSnapshotTrustError("HML_TRUST_KEY_INVALID")
+        if key_id_for_public_key(record.public_key) != key_id:
+            raise HMLSnapshotTrustError("HML_TRUST_KEY_INVALID")
         return record.public_key
 
 
@@ -106,6 +108,7 @@ def build_keyring(
         if (
             type(key_id) is not str or _KEY_ID.fullmatch(key_id) is None
             or type(public_key) is not bytes or len(public_key) != 32
+            or key_id_for_public_key(public_key) != key_id
             or key_id in seen
         ):
             raise HMLSnapshotTrustError("HML_TRUST_KEYRING_INVALID")
