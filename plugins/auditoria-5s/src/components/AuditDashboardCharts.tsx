@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -46,8 +46,6 @@ export function AuditDashboardCharts({
   filteredSensoName,
 }: Props) {
   const [areaView, setAreaView] = useState<"macro" | "leaf">("macro");
-  // Reseta a preferencia quando o usuario troca de filial.
-  useEffect(() => setAreaView("macro"), [branch]);
   const macroRows = charts.score_by_macro_area ?? charts.score_by_area.filter(
     (item) => (item as typeof item & { aggregation?: string }).aggregation === "mean_of_means",
   );
