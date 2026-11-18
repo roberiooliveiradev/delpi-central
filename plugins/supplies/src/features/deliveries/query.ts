@@ -39,6 +39,9 @@ export function createDefaultQuery(
   _branches: readonly string[] = [],
   now: Date = new Date(),
 ): DeliveriesQuery {
+  // Argumento mantido no contrato de chamada legado; filtro de unidades
+  // aplicável somente na autorização e não altera período padrão.
+  void _branches;
   const month = currentMonthRange(now);
   return {
     branches: [],

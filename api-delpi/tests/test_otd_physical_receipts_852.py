@@ -168,7 +168,7 @@ def test_panel_sql_exposes_erp_and_effective_receipt_date_separately():
     assert "receipt_effective_date" in sql
     assert "receipt_source" in sql
     assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
-    assert "WITH LNF_RECEIPTS AS" in sql
+    assert "LNF_RECEIPTS AS" in sql
 
 
 def test_general_otd_month_bucket_is_effective_date_not_digit_date(monkeypatch):

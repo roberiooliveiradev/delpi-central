@@ -150,7 +150,7 @@ export function DeliveriesListTable({
           },
         };
       });
-  }, [columnPrefs.visibleKeys]);
+  }, [columnPrefs.visibleKeys, basePath]);
 
   const visibleColumnCount = columns.length;
 
