@@ -187,7 +187,7 @@ class Livro:
 
 def _ufdig(uf, uf_emp): return '3' if uf == 'EX' else ('1' if uf == uf_emp else '2')
 
-def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumido=None, sft=None, ctes=None, cfop_frete='352'):
+def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumido=None, sft=None, ctes=None, cfop_frete='352', sa1=None, tes_insumo=''):
     log = []; ctes = ctes or {}
     sup = collections.Counter()   # o que deixou de ser apontado por regra do usuário (vai no Resumo)
     # ---------- empresa
@@ -197,6 +197,7 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
     uf_emp = uf or (ufs.most_common(1)[0][0] if ufs else '')
     TESP = tes_presumido or PRESUMIDO['tes']
     pres_on = uf_emp == PRESUMIDO['uf']
+    insumo = {t.strip() for t in txt(tes_insumo).split(',') if t.strip()}
     def elegivel(emit_uf, crt, cfop):
         return pres_on and emit_uf == PRESUMIDO['uf'] and crt == '1' and cfop[:1] == '5' and cfop[1:] in IND
     # ---------- SF1
@@ -229,6 +230,21 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
     sf1['danfe'] = sf1['Chave NFe'].map(lambda c: len(c) == 44 and c[20:22] == '55')
     sf1['cte'] = sf1['Chave NFe'].map(lambda c: len(c) == 44 and c[20:22] in ('57', '67'))
     sf1_all = sf1
+    col_cnpj = next((c_ for c_ in sf1_all.columns if _norm(c_) in ('cnpj', 'cnpjcpf', 'cpfcnpj', 'cgc', 'cgccpf', 'cnpjforn', 'cnpjfornecedor', 'cnpjcpfforn')), None)
+    # FA-1/FA-2: nota tipo B/D tem o participante no cadastro de clientes (SA1); demais tipos, fornecedor (SA2).
+    sa1_map = {}
+    if sa1 is not None:
+        for _, a_ in sa1.iterrows():
+            sa1_map[(txt(a_.get('Codigo', '')), txt(a_.get('Loja', '')))] = a_
+    def _part(r):
+        if txt(r['Tipo da Nota']) in ('B', 'D'):
+            a_ = sa1_map.get((r['Fornecedor'], r['Loja']))
+            if a_ is None:
+                return 'customer', '', '', ''
+            return 'customer', txt(a_.get('Nome', '')), ''.join(x for x in txt(a_.get('CNPJ', '')) if x.isdigit()), txt(a_.get('Estado', ''))
+        cnpj_ = ''.join(x for x in txt(r[col_cnpj]) if x.isdigit()) if col_cnpj else ''
+        return 'supplier', txt(r['Nome Forn.']), cnpj_, txt(r['Estado'])
+    sf1_all[['p_kind', 'p_nome', 'p_cnpj', 'p_uf']] = pd.DataFrame([_part(r) for _, r in sf1_all.iterrows()], index=sf1_all.index)
     sf1 = sf1[sf1['danfe']].copy()
     ini, fim = sf1_all['dRec'].min(), sf1_all['dRec'].max()
     log.append(f'Filial {filial}; CNPJ {cnpj}/{uf_emp}; SF1 {len(sf1)} DANFE de {len(sf1_all)} notas; recebimento {ini:%d/%m/%Y} a {fim:%d/%m/%Y}')
@@ -242,7 +258,7 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
         for c in ('Documento', 'Serie', 'Forn/Cliente', 'Loja', 'Cod. Fiscal', 'Sit.Tribut.', 'Tipo Entrada', 'Item NF', 'Produto'):
             sd1[c] = sd1[c].map(txt) if c in sd1.columns else ''
         sd1['k'] = filial + '|' + sd1['Documento'] + '|' + sd1['Serie'] + '|' + sd1['Forn/Cliente'] + '|' + sd1['Loja']
-        sd1 = sd1.merge(sf1_all[['k', 'Chave NFe', 'Nome Forn.', 'Estado', 'Tipo da Nota', 'Form. Prop.', 'Espec.Docum.', 'danfe']], on='k', how='left')
+        sd1 = sd1.merge(sf1_all[['k', 'Chave NFe', 'Nome Forn.', 'Estado', 'Tipo da Nota', 'Form. Prop.', 'Espec.Docum.', 'danfe', 'p_kind', 'p_nome', 'p_cnpj', 'p_uf']], on='k', how='left')
         sd1['danfe'] = sd1['danfe'].fillna(False).astype(bool)
         TESN = sd1.groupby('k')['Tipo Entrada'].apply(lambda s: ', '.join(sorted(set(s)))).to_dict()
         log.append(f'SD1 {len(sd1)} itens; DANFE {int(sd1["danfe"].sum())}')
@@ -264,7 +280,7 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
     # ================================================= cabeçalho
     div, comp = [], []
     def addh(r, n, sev, tipo, campo, vp, vx, acao):
-        if n is None: n = dict(emit=r['Nome Forn.'], emit_uf=r['Estado'], emissao=r['dEmi'], crt='', csts='', cfops='')
+        if n is None: n = dict(emit=r['p_nome'] or r['Nome Forn.'], emit_uf=r['p_uf'] or r['Estado'], emissao=r['dEmi'], crt='', csts='', cfops='')
         if sev == 'Depende da TES':
             cr = note_cred(r['k']); tl = TESN.get(r['k'], '')
             lv = livro.doc(r['k']); fonte = f"Livro fiscal (SFT) com R$ {brl(lv['valicm'])} de ICMS" if lv is not None else f'TES {tl}'
@@ -448,22 +464,22 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
     mapa = collections.defaultdict(collections.Counter)
     for _, r in sf1_all.iterrows():
         d_ = docs.get(r['Chave NFe'])
-        if d_ and d_['emit_cnpj'] and d_['emit_cnpj'] != cnpj and txt(r['Form. Prop.']) != 'S': mapa[(r['Fornecedor'], r['Loja'])][d_['emit_cnpj']] += 1
-    col_cnpj = next((c_ for c_ in sf1_all.columns if _norm(c_) in ('cnpj', 'cnpjcpf', 'cpfcnpj', 'cgc', 'cgccpf', 'cnpjforn', 'cnpjfornecedor', 'cnpjcpfforn')), None)
+        if d_ and d_['emit_cnpj'] and d_['emit_cnpj'] != cnpj and txt(r['Form. Prop.']) != 'S': mapa[(r['p_kind'], r['Fornecedor'], r['Loja'])][d_['emit_cnpj']] += 1
     for _, r in sf1_all.iterrows():
         ch = r['Chave NFe']; d_ = docs.get(ch)
         emit = d_['emit_cnpj'] if d_ else (ch[6:20] if dv_ok(ch) else '')
         if not emit or emit == cnpj or txt(r['Form. Prop.']) == 'S': continue
-        lanc = ''.join(x for x in txt(r[col_cnpj]) if x.isdigit()) if col_cnpj else ''
-        if not col_cnpj:
-            cnt_ = mapa.get((r['Fornecedor'], r['Loja']))
+        lanc = r['p_cnpj']
+        if not lanc:
+            cnt_ = mapa.get((r['p_kind'], r['Fornecedor'], r['Loja']))
             if cnt_:
                 top, nt = cnt_.most_common(1)[0]
                 if top != emit and nt >= 2 and nt > cnt_.get(emit, 0): lanc = top
         if lanc and lanc != emit:
-            addh(r, d_, 'Alta', 'Fornecedor do lançamento com CNPJ diferente do emitente', 'CNPJ', fcnpj(lanc), fcnpj(emit),
-                 f"Lançada no fornecedor {r['Fornecedor']}/{r['Loja']} ({r['Nome Forn.']}), que é o CNPJ {fcnpj(lanc)}; o emitente {'do XML' if d_ else 'na chave'} é o CNPJ {fcnpj(emit)}"
-                 + (f" ({d_['emit']})" if d_ else '') + '. Escriturar no código/loja do CNPJ certo: o SPED leva o participante errado (0150) e o título fica no fornecedor errado.')
+            party = 'cliente' if r['p_kind'] == 'customer' else 'fornecedor'
+            addh(r, d_, 'Alta', ('Cliente' if party == 'cliente' else 'Fornecedor') + ' do lançamento com CNPJ diferente do emitente', 'CNPJ', fcnpj(lanc), fcnpj(emit),
+                 f"Lançada no {party} {r['Fornecedor']}/{r['Loja']} ({r['p_nome'] or r['Nome Forn.']}), que é o CNPJ {fcnpj(lanc)}; o emitente {'do XML' if d_ else 'na chave'} é o CNPJ {fcnpj(emit)}"
+                 + (f" ({d_['emit']})" if d_ else '') + f'. Escriturar no código/loja do CNPJ certo: o SPED leva o participante errado (0150) e o título fica no {party} errado.')
     div.sort(key=lambda d: (SEVO[d['sev']], d['tipo'], d['forn'], d['nf']))
 
     # ---------- só XML / só SF1
@@ -533,20 +549,20 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
                     else: sup['ICMS calculado em TES sem crédito (não vai para o SPED)'] += 1; return
                 elif tes.incoerente_icms(t):
                     acao += f" TES {t} com crédito e livro desencontrados ({'; '.join(tes.incoerencias(t))}): só a SFT diz se foi para a apuração."
-            idiv.append(dict(sev=sev, tipo=tipo, nf=r['Documento'], serie=r['Serie'], forn=txt(r['Nome Forn.']), uf=txt(r['Estado']), item=r['Item NF'],
+            idiv.append(dict(sev=sev, tipo=tipo, nf=r['Documento'], serie=r['Serie'], forn=txt(r['p_nome']) or txt(r['Nome Forn.']), uf=txt(r['p_uf']) or txt(r['Estado']), item=r['Item NF'],
                              nitem=z['nItem'] if z else None, prod=r['Produto'], desc=z['xprod'] if z else '', campo=campo, vp=vp, vx=vx,
                              cfop_p=r['Cod. Fiscal'], cfop_x=z['cfop'] if z else '', cst_p=r['Sit.Tribut.'], cst_x=(z['orig'] + (z['cst'] or z['csosn'])) if z else '',
                              tes=r['Tipo Entrada'], acao=acao, chave=r['Chave NFe']))
         def internal(r, z, ref=0.0, cstchk=True):
             cf = r['Cod. Fiscal']; suf = cf[1:]; ic = r['Vlr.ICMS']; cst = r['Sit.Tribut.'][-2:]; t = r['Tipo Entrada']
-            if txt(r['Form. Prop.']) != 'S' and cf and txt(r['Estado']) and cf[0] != _ufdig(txt(r['Estado']), uf_emp):
-                add(r, z, 'Alta', 'CFOP de entrada incompatível com a UF do fornecedor', 'CFOP', cf, 'UF ' + txt(r['Estado']), f'Fornecedor em {r["Estado"]} pede CFOP iniciado em {_ufdig(txt(r["Estado"]), uf_emp)}.')
+            if txt(r['Form. Prop.']) != 'S' and cf and txt(r['p_uf']) and cf[0] != _ufdig(txt(r['p_uf']), uf_emp):
+                add(r, z, 'Alta', 'CFOP de entrada incompatível com a UF do participante', 'CFOP', cf, 'UF ' + txt(r['p_uf']), f'Participante em {r["p_uf"]} pede CFOP iniciado em {_ufdig(txt(r["p_uf"]), uf_emp)}.')
             lvi = livro.item(r); consumo = tes.g(t, 'Mat.Consumo') == 'Sim' or suf in CONSUMO_ATIVO[:3]
             if lvi is not None:
-                if consumo and lvi['valipi'] > TOL:
+                if consumo and t not in insumo and lvi['valipi'] > TOL:
                     add(r, z, 'Alta', 'Crédito de IPI em material de uso e consumo', 'IPI', round(lvi['valipi'], 2), 0.0,
                         f"O livro fiscal (SFT) traz R$ {brl(lvi['valipi'])} de IPI creditado em material de consumo (TES {t}, CFOP {cf}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.")
-            elif tes.ok and tes.credita_ipi(t) and tes.g(t, 'Mat.Consumo') == 'Sim' and r['Vlr.IPI'] > TOL:
+            elif tes.ok and t not in insumo and tes.credita_ipi(t) and tes.g(t, 'Mat.Consumo') == 'Sim' and r['Vlr.IPI'] > TOL:
                 add(r, z, 'Alta', 'Crédito de IPI em material de uso e consumo', 'IPI', r['Vlr.IPI'], 0.0,
                     f"TES {t} ({tes.g(t,'Txt Padrao')}) é de material de consumo e credita IPI (livro {tes.g(t,'L.Fiscal IPI')}). IPI só gera crédito em MP, PI e embalagem: estornar e ajustar a TES.")
             if suf in ('556', '407') and ic > TOL:
@@ -602,7 +618,7 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
                 else:
                     add(r, z, 'Média', 'CST diverge do documento', 'CST', cstp, z['orig'] + z['cst'], 'Tributação lançada diferente da nota do fornecedor. Rever a TES.')
             refa = z['pcredsn'] if sn else z['picms']; p = r['Vlr.ICMS']; okic = abs(p - ref) <= TOL
-            eleg = elegivel(txt(r['Estado']), z['crt'], cx)
+            eleg = elegivel(txt(r['p_uf']), z['crt'], cx)
             if eleg:
                 base = round(z['vprod'] - z['vdesc'], 2); esp = round(base * PRESUMIDO['pct'], 2)
                 teto, rbt = sn_faixa(z['pcredsn'], 'II') if z['pcredsn'] > 0 else (None, 0)
@@ -656,7 +672,7 @@ def analisar(notas, sf1, sd1, sf4, filial=None, cnpj=None, uf=None, tes_presumid
             icomp.append(dict(sev=sevmin([d['sev'] for d in idiv[n0:]]), n=len(idiv) - n0, r=r, z=z, ref=ref, refa=refa, regime=CRTN.get(z['crt'], z['crt'])))
         for ch, g, xi in unpaired:
             for _, r in g.iterrows(): internal(r, None)
-            agr.append(dict(nf=g['Documento'].iloc[0], forn=txt(g['Nome Forn.'].iloc[0]), uf=txt(g['Estado'].iloc[0]), nsd1=len(g), nxml=len(xi),
+            agr.append(dict(nf=g['Documento'].iloc[0], forn=txt(g['p_nome'].iloc[0]) or txt(g['Nome Forn.'].iloc[0]), uf=txt(g['p_uf'].iloc[0]) or txt(g['Estado'].iloc[0]), nsd1=len(g), nxml=len(xi),
                             vsd1=float(g['Vlr.Total'].sum()), vxml=sum(z['vprod'] for z in xi), isd1=float(g['Vlr.ICMS'].sum()),
                             ixml=sum(z['vcredsn'] if z['crt'] in '14' else z['vicms'] for z in xi), ipis=float(g['Vlr.IPI'].sum()), ipix=sum(z['vipi'] for z in xi),
                             cfp=', '.join(sorted(set(g['Cod. Fiscal']))), cfx=', '.join(sorted({z['cfop'] for z in xi})),

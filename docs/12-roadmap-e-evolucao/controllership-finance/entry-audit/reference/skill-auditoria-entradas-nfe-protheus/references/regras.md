@@ -62,8 +62,8 @@ Pareamento: mesma quantidade de itens → pela ordem (`Item NF` × `nItem`); se 
 ### Coerência interna (vale também para itens sem XML)
 | Ocorrência | Regra | Sev. |
 |---|---|---|
-| CFOP × UF do fornecedor | 1 = mesma UF da empresa, 2 = outra UF, 3 = EX (exceto formulário próprio) | Alta |
-| Crédito de IPI em material de uso e consumo | TES com `Mat.Consumo` = Sim e `Credita IPI?` = Sim, item com IPI | Alta |
+| CFOP × UF do participante | 1 = mesma UF da empresa, 2 = outra UF, 3 = EX (exceto formulário próprio); UF do fornecedor (SA2) ou do cliente (SA1) nas notas tipo B/D | Alta |
+| Crédito de IPI em material de uso e consumo | TES com `Mat.Consumo` = Sim e `Credita IPI?` = Sim, item com IPI; exclui as TES de `--tes-insumo` | Alta |
 | ICMS calculado em CFOP de uso e consumo | x556/x407 com `D1_VALICM` > 0 | Depende da TES |
 | ICMS calculado com CST sem tributação | CST 40/41/50/60/61 com ICMS > 0 | Depende da TES |
 
@@ -127,4 +127,4 @@ Direito ao crédito pelo `infDoc`: NF-e com a raiz do CNPJ da empresa na chave (
 | Chave de acesso não confere com o número do documento | sem XML: nNF da chave (posições 26–34) ≠ número | Alta |
 | Série divergente da chave de acesso | sem XML: série da chave (23–25) ≠ série | Média |
 | Espécie do documento incompatível com a chave | modelo da chave (21–22) × espécie: 55 SPED, 57 CTE, 67 CTEOS, 66 NF3E, 62 NFCOM, 65 NFCE | Média |
-| Fornecedor do lançamento com CNPJ diferente do emitente | coluna CNPJ da SF1, se houver; senão, o código/loja tem outro CNPJ em ≥ 2 notas do mês e em mais notas que o emitente desta (CNPJ do XML, ou o da chave sem XML) | Alta |
+| Fornecedor do lançamento com CNPJ diferente do emitente | coluna CNPJ da SF1, se houver; senão, o código/loja tem outro CNPJ em ≥ 2 notas do mês e em mais notas que o emitente desta (CNPJ do XML, ou o da chave sem XML). Nota tipo B/D: compara o CNPJ da SA1 e sai como «Cliente do lançamento…» | Alta |

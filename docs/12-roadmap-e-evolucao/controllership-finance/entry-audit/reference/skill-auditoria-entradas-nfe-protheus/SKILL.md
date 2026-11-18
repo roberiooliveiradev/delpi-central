@@ -47,10 +47,23 @@ Continua apontando quando a TES está errada: TES que credita onde não devia (i
 | SD1 (itens das entradas) | recomendado | colunas `Item NF`, `Cod. Fiscal`, `Sit.Tribut.`, `Tipo Entrada` |
 | SF4 (cadastro de TES) | não (já vem guardada na skill) | colunas `Cod. do Tipo`, `Cred. ICMS ?`, `L.Fisc. ICMS`, `Credita IPI?` |
 | SFT (livro fiscal por item) | opcional | colunas de documento, série, cli/for, loja, item e `Valor ICMS` (ou nomes técnicos `FT_NFISCAL`, `FT_ITEM`, `FT_VALICM`…) |
+| SA1 (cadastro de clientes) | opcional (`--sa1`) | colunas `Codigo`, `Loja`, `Nome`, `CNPJ`, `Estado`; resolve o participante das notas tipo B/D |
 
 Os relatórios do Protheus costumam vir em xlsx "Strict OOXML", que o pandas não abre; o script converte sozinho com o LibreOffice. Os nomes dos arquivos não importam: identifique cada um pelas colunas (o script também valida e avisa se trocar a ordem). A SF4 vai inteira, sem filtro.
 
 Se faltar a SD1, o cruzamento fica só no cabeçalho (sem CFOP, CST e itens).
+
+## Participante: fornecedor × cliente (SA1)
+
+Notas de entrada com `Tipo da Nota` **B ou D** na SF1 não são compra de fornecedor: o código/loja aponta para o cadastro de **clientes (SA1)**. Com `--sa1`, a skill usa `Codigo`+`Loja` da SA1 para nome, CNPJ e UF do participante; sem a SA1, esses campos ficam vazios nas notas B/D (e a heurística de CNPJ pelas outras notas do mês continua valendo, separada por tipo de participante). Efeitos:
+
+- «Fornecedor do lançamento com CNPJ diferente do emitente» vira **«Cliente do lançamento…»** e compara o CNPJ da SA1 (não o da coluna CNPJ da SF1, que é SA2).
+- «CFOP × UF» usa a **UF do participante** (SA1 nas B/D, SA2 nas demais) — o título sai como «CFOP de entrada incompatível com a UF do participante».
+- Nas demais telas/textos a nota B/D aparece com o nome do cliente.
+
+## TES de insumo fora de «Crédito de IPI em uso e consumo»
+
+`--tes-insumo 052,069,...` exclui as TES listadas da ocorrência «Crédito de IPI em material de uso e consumo» (nos dois caminhos: livro fiscal e TES). As demais regras de IPI (acima/abaixo do XML, sem destaque, base divergente) **não** são afetadas. Sem o parâmetro, todas as TES entram na regra, como antes.
 
 ## Crédito: TES × livro fiscal (SFT)
 

@@ -8,21 +8,24 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from tests.test_entry_audit_engine import (
     COMPANY,
+    INPUT_TES,
     SUPPLIER,
+    TES,
     _header,
     _invoice,
     _item,
     _key,
-    _run,
     _xml_item,
 )
-from controllership_finance_app.domain.entry_audit.models import XmlDocument
+from controllership_finance_app.domain.entry_audit.engine import audit
+from controllership_finance_app.domain.entry_audit.models import AuditConfig, TesRecord, XmlDocument
 from controllership_finance_app.infrastructure.entry_audit.xml_reader import read_xml_paths
 
 SKILL = (
@@ -31,6 +34,10 @@ SKILL = (
 )
 NS = "http://www.portalfiscal.inf.br/nfe"
 CT = "http://www.portalfiscal.inf.br/cte"
+THIRD = "33333333000133"
+FOURTH = "44444444000144"
+INPUT_TES_CODES = "018,052,069,106,166,169,406"
+CONSUMPTION_TES = TesRecord("070", "Material de consumo", "Sim", "Sim", "Tributado", "Sim", "Sim", "Tributado", "Sim", "Entrada", "101")
 
 
 def _skill_python() -> str:
@@ -50,26 +57,31 @@ def _require_skill():
         pytest.skip("pandas, lxml e openpyxl são necessários só para rodar a skill de referência")
 
 
-def _xml_item_text(number: int, amount: float, icms: float, origin: str) -> str:
+def _xml_item_text(number: int, amount: float, icms: float, origin: str, ipi: float = 0) -> str:
+    ipi_group = (
+        f'<IPI><cEnq>999</cEnq><IPITrib><CST>00</CST><vBC>{amount:.2f}</vBC><pIPI>5.00</pIPI><vIPI>{ipi:.2f}</vIPI></IPITrib></IPI>'
+        if ipi
+        else '<IPI><cEnq>999</cEnq><IPINT><CST>53</CST></IPINT></IPI>'
+    )
     return (
         f'<det nItem="{number}"><prod><cProd>P{number}</cProd><xProd>Peca {number}</xProd><NCM>84818099</NCM>'
         f'<CFOP>5101</CFOP><qCom>1.0000</qCom><vUnCom>{amount:.4f}</vUnCom><vProd>{amount:.2f}</vProd></prod>'
         f'<imposto><ICMS><ICMS00><orig>{origin}</orig><CST>00</CST><modBC>3</modBC>'
         f'<vBC>{amount:.2f}</vBC><pICMS>12.00</pICMS><vICMS>{icms:.2f}</vICMS></ICMS00></ICMS>'
-        f'<IPI><cEnq>999</cEnq><IPINT><CST>53</CST></IPINT></IPI></imposto></det>'
+        f'{ipi_group}</imposto></det>'
     )
 
 
-def _nfe(access_key: str, number: int, items: str, goods: float, icms: float, total: float) -> str:
+def _nfe(access_key: str, number: int, items: str, goods: float, icms: float, total: float, cnpj: str = SUPPLIER, ipi: float = 0) -> str:
     return (
         f'<?xml version="1.0" encoding="UTF-8"?><nfeProc xmlns="{NS}" versao="4.00"><NFe>'
         f'<infNFe Id="NFe{access_key}" versao="4.00"><ide><cUF>42</cUF><mod>55</mod><serie>1</serie>'
         f'<nNF>{number}</nNF><dhEmi>2026-11-12T10:00:00-03:00</dhEmi><tpNF>1</tpNF><natOp>Venda</natOp></ide>'
-        f'<emit><CNPJ>{SUPPLIER}</CNPJ><xNome>Fornecedor Sintetico</xNome><enderEmit><UF>SC</UF></enderEmit><CRT>3</CRT></emit>'
+        f'<emit><CNPJ>{cnpj}</CNPJ><xNome>Emitente Sintetico</xNome><enderEmit><UF>SC</UF></enderEmit><CRT>3</CRT></emit>'
         f'<dest><CNPJ>{COMPANY}</CNPJ><xNome>Empresa Sintetica</xNome><enderDest><UF>SC</UF></enderDest></dest>'
         f'{items}<total><ICMSTot><vBC>{goods:.2f}</vBC><vICMS>{icms:.2f}</vICMS><vICMSDeson>0.00</vICMSDeson>'
         f'<vBCST>0.00</vBCST><vST>0.00</vST><vProd>{goods:.2f}</vProd><vFrete>0.00</vFrete><vSeg>0.00</vSeg>'
-        f'<vDesc>0.00</vDesc><vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.00</vPIS>'
+        f'<vDesc>0.00</vDesc><vII>0.00</vII><vIPI>{ipi:.2f}</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.00</vPIS>'
         f'<vCOFINS>0.00</vCOFINS><vOutro>0.00</vOutro><vNF>{total:.2f}</vNF></ICMSTot></total>'
         f'</infNFe></NFe><protNFe><infProt><chNFe>{access_key}</chNFe><cStat>100</cStat></infProt></protNFe></nfeProc>'
     )
@@ -84,6 +96,9 @@ def _write_fixture(root: Path) -> dict[str, str]:
         "total": _key("55", 1006),
         "cst": _key("55", 1007),
         "cte": _key("57", 2001),
+        "customer": _key("55", 1008, cnpj=THIRD),
+        "customer_mismatch": _key("55", 1010, cnpj=FOURTH),
+        "input_tes": _key("55", 1009),
     }
     xml_dir = root / "xml"
     xml_dir.mkdir()
@@ -93,6 +108,10 @@ def _write_fixture(root: Path) -> dict[str, str]:
     (xml_dir / "xml-only.xml").write_text(_nfe(keys["xml_only"], 1003, _xml_item_text(1, 50, 6, "0"), 50, 6, 50))
     (xml_dir / "total.xml").write_text(_nfe(keys["total"], 1006, _xml_item_text(1, 70, 8.4, "0"), 70, 8.4, 70))
     (xml_dir / "cst.xml").write_text(_nfe(keys["cst"], 1007, _xml_item_text(1, 40, 4.8, "0"), 40, 4.8, 40))
+    (xml_dir / "customer.xml").write_text(_nfe(keys["customer"], 1008, _xml_item_text(1, 100, 12, "0"), 100, 12, 100, cnpj=THIRD))
+    (xml_dir / "customer-mismatch.xml").write_text(_nfe(keys["customer_mismatch"], 1010, _xml_item_text(1, 60, 7.2, "0"), 60, 7.2, 60, cnpj=FOURTH))
+    input_items = _xml_item_text(1, 100, 12, "0", ipi=5) + _xml_item_text(2, 100, 12, "0", ipi=5)
+    (xml_dir / "input-tes.xml").write_text(_nfe(keys["input_tes"], 1009, input_items, 200, 24, 200, ipi=10))
     (xml_dir / "cte.xml").write_text(
         f'<?xml version="1.0" encoding="UTF-8"?><cteProc xmlns="{CT}" versao="4.00"><CTe><infCte Id="CTe{keys["cte"]}" versao="4.00">'
         f'<ide><mod>57</mod><serie>1</serie><nCT>2001</nCT><dhEmi>2026-11-12T11:00:00-03:00</dhEmi><CFOP>5352</CFOP>'
@@ -113,7 +132,15 @@ def _write_fixture(root: Path) -> dict[str, str]:
             _sf1(1006, "SPED", keys["total"], "90", "70", "8.4", "70"),
             _sf1(1007, "SPED", keys["cst"], "40", "40", "0", "0"),
             _sf1(2001, "CTE", keys["cte"], "50", "50", "6", "50"),
+            _sf1(1008, "SPED", keys["customer"], "100", "100", "12", "100", tipo="B", code="C0051", store="02", state="", name="", cnpj=""),
+            _sf1(1010, "SPED", keys["customer_mismatch"], "60", "60", "7.2", "60", tipo="B", code="C0051", store="02", state="", name="", cnpj=""),
+            _sf1(1009, "SPED", keys["input_tes"], "200", "200", "24", "200"),
         ],
+    )
+    _csv(
+        root / "sa1.csv",
+        ["Filial", "Codigo", "Loja", "Nome", "CNPJ", "Estado"],
+        [["01", "C0051", "02", "Cliente Sintetico", THIRD, "SC"]],
     )
     _csv(
         root / "sd1.csv",
@@ -127,6 +154,10 @@ def _write_fixture(root: Path) -> dict[str, str]:
             _sd1(1006, 1, "001", "1101", "000", "70", "8.4"),
             _sd1(1007, 1, "002", "1101", "090", "40", "0"),
             _sd1(2001, 1, "036", "1352", "000", "50", "6"),
+            _sd1(1008, 1, "001", "1101", "000", "100", "12", code="C0051", store="02"),
+            _sd1(1010, 1, "001", "1101", "000", "60", "7.2", code="C0051", store="02"),
+            _sd1(1009, 1, "052", "1101", "000", "100", "12", ipi="5"),
+            _sd1(1009, 2, "070", "1101", "000", "100", "12", ipi="5"),
         ],
     )
     _csv(
@@ -136,19 +167,23 @@ def _write_fixture(root: Path) -> dict[str, str]:
             ["01", "001", "Compra com credito", "Sim", "Sim", "Tributado", "Nao", "Nao", "Outros", "Nao", "Entrada", "101"],
             ["01", "002", "Compra sem credito", "Sim", "Nao", "Outros", "Nao", "Nao", "Outros", "Nao", "Entrada", "101"],
             ["01", "036", "Frete com credito", "Sim", "Sim", "Tributado", "Nao", "Nao", "Outros", "Nao", "Entrada", "352"],
+            ["01", "052", "Material de consumo", "Sim", "Sim", "Tributado", "Sim", "Sim", "Tributado", "Sim", "Entrada", "551"],
+            ["01", "070", "Material de consumo", "Sim", "Sim", "Tributado", "Sim", "Sim", "Tributado", "Sim", "Entrada", "551"],
         ],
     )
     return keys
 
 
-def _sf1(number, species, access_key, gross, goods, icms, base):
-    return ["01", str(number), "1", "000001", "01", "SC", "Fornecedor Sintetico", SUPPLIER, "N", "N", species, access_key, "12/11/2026", "12/11/2026", "0", "0", base, icms, "0", "0", goods, gross, "0", "0", "0", "0"]
+def _sf1(number, species, access_key, gross, goods, icms, base, *, tipo="N", code="000001", store="01", state="SC", name="Fornecedor Sintetico", cnpj=SUPPLIER):
+    return ["01", str(number), "1", code, store, state, name, cnpj, tipo, "N", species, access_key, "12/11/2026", "12/11/2026", "0", "0", base, icms, "0", "0", goods, gross, "0", "0", "0", "0"]
 
 
-def _sd1(number, item, tes, cfop, cst, total, icms):
+def _sd1(number, item, tes, cfop, cst, total, icms, *, code="000001", store="01", ipi="0"):
     rate = "12" if float(icms) else "0"
     base = total if float(icms) else "0"
-    return ["01", str(number), "1", "000001", "01", cfop, cst, tes, str(item), f"P{item}", "1", total, total, base, rate, icms, "0", "0", "0", "0", "0", "12/11/2026"]
+    ipi_base = total if float(ipi) else "0"
+    ipi_rate = "5" if float(ipi) else "0"
+    return ["01", str(number), "1", code, store, cfop, cst, tes, str(item), f"P{item}", "1", total, total, base, rate, icms, ipi_base, ipi_rate, ipi, "0", "0", "12/11/2026"]
 
 
 def _csv(path: Path, header: list[str], rows: list[list[str]]) -> None:
@@ -178,7 +213,8 @@ notas, ign, ctes = read_xmls([sys.argv[2]])
 sf1 = read_protheus(sys.argv[3], SF1_NUM)
 sd1 = read_protheus(sys.argv[4], SD1_NUM)
 sf4 = read_protheus(sys.argv[5])
-R = analisar(notas, sf1, sd1, sf4, filial="01", cnpj=sys.argv[6], uf="SC", ctes=ctes)
+sa1 = read_protheus(sys.argv[7]) if sys.argv[7] != "-" else None
+R = analisar(notas, sf1, sd1, sf4, filial="01", cnpj=sys.argv[6], uf="SC", ctes=ctes, sa1=sa1, tes_insumo=sys.argv[8])
 for kind, rows in (("H", R["div"]), ("I", R["idiv"])):
     for row in rows:
         item = row.get("item", "")
@@ -194,6 +230,7 @@ for name, count in R["sup"].items():
         [
             _skill_python(), "-c", script, str(SKILL.parent), str(root / "xml"),
             str(root / "sf1.csv"), str(root / "sd1.csv"), str(root / "sf4.csv"), COMPANY,
+            str(root / "sa1.csv") if (root / "sa1.csv").exists() else "-", INPUT_TES_CODES,
         ],
         capture_output=True, text=True, check=False,
     )
@@ -215,7 +252,7 @@ def test_reader_sees_the_same_documents_the_skill_reads(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
     invoices, ctes, ignored = read_xml_paths([tmp_path / "xml"])
     assert ignored == 0
-    assert len(invoices) == 5
+    assert len(invoices) == 8
     assert len(ctes) == 1
     origin = next(doc for doc in invoices.values() if doc.number == 1002)
     assert [item.origin for item in origin.items] == ["1", "1", "1"]
@@ -227,6 +264,11 @@ def test_constructed_parity_matches_the_skill(tmp_path: Path) -> None:
     keys = _write_fixture(tmp_path)
     skill_occ, skill_unm, skill_sup = _skill_signatures(tmp_path)
     invoices, ctes, _ignored = read_xml_paths([tmp_path / "xml"])
+    customer = dict(
+        supplier_code="C0051", supplier_store="02", supplier_name="", supplier_state="", supplier_tax_id="",
+        invoice_type="B", participant_kind="customer", participant_name="Cliente Sintetico",
+        participant_tax_id=THIRD, participant_state="SC",
+    )
     headers = [
         _header(1001, keys["clean"], 100, 100, 12),
         _header(1002, keys["origin"], 90, 90, 10.8),
@@ -234,6 +276,9 @@ def test_constructed_parity_matches_the_skill(tmp_path: Path) -> None:
         _header(1006, keys["total"], 90, 70, 8.4),
         _header(1007, keys["cst"], 40, 40, 0),
         _header(2001, keys["cte"], 50, 50, 6, species="CTE"),
+        replace(_header(1008, keys["customer"], 100, 100, 12), **customer),
+        replace(_header(1010, keys["customer_mismatch"], 60, 60, 7.2), **customer),
+        replace(_header(1009, keys["input_tes"], 200, 200, 24), ipi_amount=10, ipi_base=200),
     ]
     items = [
         _item(1001, "1", 100, 12),
@@ -242,10 +287,18 @@ def test_constructed_parity_matches_the_skill(tmp_path: Path) -> None:
         _item(1006, "1", 70, 8.4),
         _item(1007, "1", 40, 0, cst="090", tes="002", rate=0),
         _item(2001, "1", 50, 6, cfop="1352", tes="036"),
+        replace(_item(1008, "1", 100, 12), supplier_code="C0051", supplier_store="02"),
+        replace(_item(1010, "1", 60, 7.2), supplier_code="C0051", supplier_store="02"),
+        replace(_item(1009, "1", 100, 12, tes="052"), ipi_amount=5, ipi_base=100, ipi_rate=5),
+        replace(_item(1009, "2", 100, 12, tes="070"), ipi_amount=5, ipi_base=100, ipi_rate=5),
     ]
     # The reader is the XML source. Rebuild is unnecessary when the files were just parsed.
     assert isinstance(next(iter(invoices.values())), XmlDocument)
-    result = _run(headers, items, invoices, ctes)
+    result = audit(
+        branch="01", company_tax_id=COMPANY, company_state="SC", headers=headers, items=items,
+        tes_records=TES + [INPUT_TES, CONSUMPTION_TES], invoices=invoices, ctes=ctes,
+        config=AuditConfig(improvements_enabled=False, participant_by_type_enabled=True, input_tes=INPUT_TES_CODES),
+    )
     engine_occ = {
         (row.document_number, row.item, row.title, row.field, row.severity, _norm(row.protheus_value), _norm(row.xml_value))
         for row in result.occurrences

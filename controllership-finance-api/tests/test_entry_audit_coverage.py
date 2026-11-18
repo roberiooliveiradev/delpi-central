@@ -62,7 +62,8 @@ def test_every_rule_has_a_positive_case_and_matches_the_skill(tmp_path: Path) ->
         skill = _skill(folder, with_items=items, with_book=book)
         result = audit(
             branch="01", company_tax_id=COMPANY, company_state="SC", headers=headers, items=item_rows,
-            tes_records=TES, invoices=invoices, ctes=ctes, config=AuditConfig(),
+            tes_records=TES, invoices=invoices, ctes=ctes,
+            config=AuditConfig(participant_by_type_enabled=True),
             fiscal_book=book_lines() if book else None,
         )
         engine = _engine_signature(result)
@@ -201,6 +202,7 @@ def _rule(title: str) -> str:
         "Alíquota de ICMS divergente (valor confere)": "item.rate_or_base_mismatch",
         "Produto lançado com natureza de CFOP diferente do usual": "item.unusual_cfop_nature",
         "CFOP de entrada incompatível com a UF do fornecedor": "coherence.cfop_vs_state",
+        "CFOP de entrada incompatível com a UF do participante": "coherence.cfop_vs_state",
         "Crédito de IPI em material de uso e consumo": "coherence.ipi_on_consumption",
         "ICMS calculado em CFOP de uso e consumo": "coherence.icms_on_consumption_cfop",
         "Crédito de ICMS em CFOP de uso e consumo": "coherence.icms_on_consumption_cfop",
@@ -236,6 +238,7 @@ def _rule(title: str) -> str:
         "Série divergente da chave de acesso": "key.series_mismatch",
         "Espécie do documento incompatível com a chave": "key.species_mismatch",
         "Fornecedor do lançamento com CNPJ diferente do emitente": "key.supplier_mismatch",
+        "Cliente do lançamento com CNPJ diferente do emitente": "key.supplier_mismatch",
     }
     if title not in table:
         raise AssertionError(f"título sem rule_id: {title}")

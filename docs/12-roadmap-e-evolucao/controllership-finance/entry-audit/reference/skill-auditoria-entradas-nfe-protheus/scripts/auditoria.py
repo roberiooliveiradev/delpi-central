@@ -23,6 +23,8 @@ ap.add_argument('--xml', action='append', required=True)
 ap.add_argument('--sf1', required=True); ap.add_argument('--sd1'); ap.add_argument('--sf4')
 ap.add_argument('--sft', help='livro fiscal por item (SFT): decide o crédito pelo que foi de fato para o livro/SPED')
 ap.add_argument('--sem-sf4', action='store_true', help='ignora a SF4 guardada na skill (aba TES a confirmar)')
+ap.add_argument('--sa1', help='cadastro de clientes (SA1): resolve o participante das notas tipo B/D — colunas Codigo, Loja, Nome, CNPJ, Estado')
+ap.add_argument('--tes-insumo', default='', help='TES de insumo separadas por vírgula que ficam fora de «Crédito de IPI em material de uso e consumo»')
 ap.add_argument('--filial'); ap.add_argument('--uf', help='força a UF da empresa'); ap.add_argument('--tes-presumido', default='004', help='TES do crédito presumido de 7%% de SC (padrão 004)'); ap.add_argument('--cfop-frete', default='352', help='final do CFOP de entrada do CT-e (padrão 352: estabelecimento industrial)'); ap.add_argument('--cnpj'); ap.add_argument('--out', default='/mnt/user-data/outputs')
 a = ap.parse_args()
 
@@ -58,7 +60,13 @@ if a.sft:
     if sd1 is None: sys.exit('A SFT só é usada com a SD1 (--sd1).')
     sft_fonte = f'Crédito decidido pelo livro fiscal (SFT: {os.path.basename(a.sft)})'
 
-R = analisar(notas, sf1, sd1, sf4, filial=a.filial, cnpj=a.cnpj, uf=a.uf, tes_presumido=a.tes_presumido, sft=sft, ctes=ctes, cfop_frete=a.cfop_frete)
+sa1, sa1_fonte = None, 'SA1 não informada: participante das notas B/D não resolvido'
+if a.sa1:
+    sa1 = read_protheus(a.sa1)
+    if 'Codigo' not in sa1.columns or 'Loja' not in sa1.columns: sys.exit('O arquivo informado em --sa1 não parece ser a SA1 (faltam as colunas "Codigo" e "Loja").')
+    sa1_fonte = f'Participante das notas B/D resolvido pela SA1 ({os.path.basename(a.sa1)})'
+
+R = analisar(notas, sf1, sd1, sf4, filial=a.filial, cnpj=a.cnpj, uf=a.uf, tes_presumido=a.tes_presumido, sft=sft, ctes=ctes, cfop_frete=a.cfop_frete, sa1=sa1, tes_insumo=a.tes_insumo)
 R['sft_fonte'] = sft_fonte + '.'
 
 
@@ -79,7 +87,7 @@ per = f"{MESES[R['ini'].month-1]}{R['ini'].year}"
 out = os.path.join(a.out, f"cruzamento_entradas_filial{R['filial']}_{per}.xlsx")
 gerar(R, out)
 for line in R['log']: print(line)
-print(sf4_fonte); print(sft_fonte)
+print(sf4_fonte); print(sft_fonte); print(sa1_fonte)
 for w in sf4_avisos: print('AVISO SF4:', w)
 print(f'XML NF-e lidos: {len(notas)} | CT-e: {len(ctes)} (ignorados: {ign}) | NF-e casadas: {R["nm"]} | CT-e casados: {R["nctm"]} | só XML: {len(R["sox"])} | só SF1: {len(R["sos"])}')
 if R['sup']: print('Não apontado (regra do usuário):', dict(R['sup']))
