@@ -142,6 +142,13 @@ def test_admin_review_requires_authentication_and_both_permissions(client, app):
         assert client.get(path).status_code == 403
 
 
+def test_generic_s2s_token_cannot_open_admin_review(client, monkeypatch):
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "shared")
+    path = "/admin/organization/managers/20001/identity-review"
+    response = client.get(path, headers={"X-Delpi-Service-Token": "shared"})
+    assert response.status_code == 401
+
+
 @patch("app.interfaces.http.organization_controller.OrganizationIdentityReviewService")
 @patch("app.interfaces.http.organization_controller.SqlAlchemyUnitOfWork")
 def test_authorized_admin_review_defaults_to_aggregates_only(
