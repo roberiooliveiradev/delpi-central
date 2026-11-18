@@ -16,6 +16,7 @@ from strategic_indicators_client import StrategicIndicatorsApiError
 from app.application.external_capabilities.governed_writes.errors import (
     CAPABILITY_NOT_ALLOWED,
     CONFIRMATION_REQUIRED,
+    INTERNAL,
     NOT_FOUND,
     PROPOSAL_ACTOR_MISMATCH,
     PROPOSAL_NOT_FOUND,
@@ -692,3 +693,80 @@ def test_denied_actor_blocked_at_prepare(orch) -> None:
             allowed=DELETE_CAPABILITIES,
         )
     assert exc.value.code == "forbidden"
+
+
+# ---------------------------------------------------- row_xmin fail-closed
+
+
+def test_goal_delete_prepare_fails_closed_when_xmin_missing(
+    client, orch,
+) -> None:
+    """row_xmin=None must abort PREPARE — no sealed proposal, no delete.
+
+    An unresolvable OCC precondition can never seal expected_xmin=None;
+    a missing precondition is not an implicit authorization.
+    """
+    client.goals = [_goal(id="g-1", row_xmin=None)]
+    with pytest.raises(GovernedWriteError) as exc:
+        _prepare(orch, "si.goal.delete", {"goal_id": "g-1"})
+    assert exc.value.code == INTERNAL
+    assert client.goals  # nothing deleted
+    assert client.delete_calls == []
+
+
+def test_indicator_delete_prepare_fails_closed_when_xmin_missing(
+    client, orch,
+) -> None:
+    client.indicators[0]["row_xmin"] = None
+    with pytest.raises(GovernedWriteError) as exc:
+        _prepare(orch, "si.indicator.delete", {"indicator_id": "ind-1"})
+    assert exc.value.code == INTERNAL
+    assert client.indicators and client.delete_calls == []
+
+
+def test_department_delete_prepare_fails_closed_when_xmin_missing(
+    client, orch,
+) -> None:
+    client.departments[0]["row_xmin"] = None
+    with pytest.raises(GovernedWriteError) as exc:
+        _prepare(orch, "si.department.delete", {"department_id": "fin"})
+    assert exc.value.code == INTERNAL
+    assert client.departments and client.delete_calls == []
+
+
+def test_goal_delete_act_stale_when_xmin_becomes_unavailable(
+    client, orch,
+) -> None:
+    """If xmin disappears between PREPARE and ACT the fingerprint no
+    longer matches — the proposal goes stale and never reaches owner."""
+    client.goals = [_goal(id="g-1")]
+    prepared = _prepare(orch, "si.goal.delete", {"goal_id": "g-1"})
+    client.goals[0]["row_xmin"] = None
+    with pytest.raises(GovernedWriteError) as exc:
+        _act(orch, "si.goal.delete", prepared)
+    assert exc.value.code == PROPOSAL_STALE
+    assert client.goals and client.delete_calls == []
+
+
+def test_indicator_delete_act_stale_when_xmin_becomes_unavailable(
+    client, orch,
+) -> None:
+    prepared = _prepare(orch, "si.indicator.delete",
+                        {"indicator_id": "ind-1"})
+    client.indicators[0]["row_xmin"] = None
+    with pytest.raises(GovernedWriteError) as exc:
+        _act(orch, "si.indicator.delete", prepared)
+    assert exc.value.code == PROPOSAL_STALE
+    assert client.indicators and client.delete_calls == []
+
+
+def test_department_delete_act_stale_when_xmin_becomes_unavailable(
+    client, orch,
+) -> None:
+    prepared = _prepare(orch, "si.department.delete",
+                        {"department_id": "fin"})
+    client.departments[0]["row_xmin"] = None
+    with pytest.raises(GovernedWriteError) as exc:
+        _act(orch, "si.department.delete", prepared)
+    assert exc.value.code == PROPOSAL_STALE
+    assert client.departments and client.delete_calls == []
