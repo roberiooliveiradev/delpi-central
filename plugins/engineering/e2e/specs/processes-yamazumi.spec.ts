@@ -207,9 +207,14 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page.getByRole("button", { name: /Adicionar pausa/ }).click();
     await page.getByLabel(/Pausa 1 \(min\)/).fill("60");
     await page.getByLabel(/Demanda por turno/).fill("500");
-    await page
-      .getByRole("button", { name: "Executar análise oficial" })
-      .click();
+    /* CommitInput do Studio confirma no blur — Tab garante o commit e o
+     * study-change antes do clique (botão desabilitado até params.ok). */
+    await page.getByLabel(/Demanda por turno/).press("Tab");
+    const runBtn = page.getByRole("button", {
+      name: "Executar análise oficial",
+    });
+    await expect(runBtn).toBeEnabled({ timeout: 10_000 });
+    await runBtn.click();
     await expect(
       page.getByRole("heading", { name: /Análise oficial M1/ }),
     ).toBeVisible();
