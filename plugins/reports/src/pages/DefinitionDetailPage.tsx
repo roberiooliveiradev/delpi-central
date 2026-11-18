@@ -44,6 +44,8 @@ type Props = {
   definitionId: string;
 };
 
+const DIRECT_WEEKLY_KEY = "team_direct_app_opens_weekly";
+
 const WEEKDAY_OPTIONS = [
   { value: 0, label: "Segunda" },
   { value: 1, label: "Terça" },
@@ -76,6 +78,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   const [horizonDays, setHorizonDays] = useState(30);
   const [customerLimit, setCustomerLimit] = useState(20);
   const [asOfDate, setAsOfDate] = useState("");
+  const [managerRegistration, setManagerRegistration] = useState("");
   const [active, setActive] = useState(true);
 
   const [scheduleKind, setScheduleKind] = useState<
@@ -106,6 +109,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
         setHorizonDays(Number(definition.params.horizonDays ?? 30));
         setCustomerLimit(Number(definition.params.customerLimit ?? 20));
         setAsOfDate(String(definition.params.asOfDate ?? ""));
+        setManagerRegistration(String(definition.params.managerRegistration ?? ""));
         setActive(definition.active);
         setRecipients(
           recipientsPayload.items.map((r) => ({
@@ -115,6 +119,11 @@ export function DefinitionDetailPage({ definitionId }: Props) {
           })),
         );
         setSchedule(schedulePayload);
+        if (!schedulePayload && definition.providerKey === DIRECT_WEEKLY_KEY) {
+          setScheduleKind("weekly");
+          setWeekday(0);
+          setScheduleEnabled(false);
+        }
         if (schedulePayload) {
           const kind = schedulePayload.scheduleKind;
           setScheduleKind(
@@ -162,12 +171,14 @@ export function DefinitionDetailPage({ definitionId }: Props) {
       const updated = await updateReportDefinition(definitionId, {
         name: name.trim(),
         params:
-          item?.providerKey === "management_revenue_monthly"
-            ? {
-                customerLimit,
-                ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
-              }
-            : { branch, horizonDays },
+          item?.providerKey === DIRECT_WEEKLY_KEY
+            ? { managerRegistration: managerRegistration.trim() }
+            : item?.providerKey === "management_revenue_monthly"
+              ? {
+                  customerLimit,
+                  ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
+                }
+              : { branch, horizonDays },
         active,
       });
       setItem(updated);
@@ -180,6 +191,10 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   }
 
   async function saveRecipients() {
+    if (item?.providerKey === DIRECT_WEEKLY_KEY && recipients.length !== 1) {
+      setError("Selecione somente a conta do gestor como destinatário.");
+      return;
+    }
     setBusy(true);
     setStatusMsg(null);
     setError(null);
@@ -199,6 +214,10 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   }
 
   async function saveSchedule() {
+    if (item?.providerKey === DIRECT_WEEKLY_KEY && (scheduleKind !== "weekly" || weekday !== 0)) {
+      setError("A agenda desse relatório deve ser semanal, às segundas-feiras.");
+      return;
+    }
     setBusy(true);
     setStatusMsg(null);
     setError(null);
@@ -226,9 +245,11 @@ export function DefinitionDetailPage({ definitionId }: Props) {
     setError(null);
     try {
       if (recipients.length === 0) {
-        setError(
-          "Inclua ao menos um destinatário com e-mail antes de enviar.",
-        );
+        setError("Inclua o destinatário antes de enviar.");
+        return;
+      }
+      if (item?.providerKey === DIRECT_WEEKLY_KEY && recipients.length !== 1) {
+        setError("Apenas o gestor poderá receber este relatório.");
         return;
       }
       await replaceReportRecipients(
@@ -324,14 +345,18 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                   <Settings2 size={14} aria-hidden />
                   <span>
                     <strong>
-                      {item.providerKey === "management_revenue_monthly"
-                        ? "Top clientes"
-                        : "Unidade"}
+                      {item.providerKey === DIRECT_WEEKLY_KEY
+                        ? "Gestor RH"
+                        : item.providerKey === "management_revenue_monthly"
+                          ? "Top clientes"
+                          : "Unidade"}
                     </strong>
                     <em>
-                      {item.providerKey === "management_revenue_monthly"
-                        ? String(customerLimit)
-                        : formatBranchUnitLabel(branch)}
+                      {item.providerKey === DIRECT_WEEKLY_KEY
+                        ? managerRegistration
+                        : item.providerKey === "management_revenue_monthly"
+                          ? String(customerLimit)
+                          : formatBranchUnitLabel(branch)}
                     </em>
                   </span>
                 </div>
@@ -417,7 +442,24 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       maxLength={200}
                     />
                   </label>
-                  {item.providerKey === "management_revenue_monthly" ? (
+                  {item.providerKey === DIRECT_WEEKLY_KEY ? (
+                    <>
+                      <label className="rp-field rp-field--full">
+                        <span>Matrícula RH do gestor</span>
+                        <input
+                          value={managerRegistration}
+                          onChange={(e) => setManagerRegistration(e.target.value)}
+                          maxLength={30}
+                          placeholder="Ex.: 20001"
+                          required
+                        />
+                      </label>
+                      <p className="rp-inline-note rp-field--full">
+                        Somente subordinados diretos ativos. A equipe indireta
+                        não entra no relatório.
+                      </p>
+                    </>
+                  ) : item.providerKey === "management_revenue_monthly" ? (
                     <>
                       <label className="rp-field">
                         <span>Top clientes</span>
@@ -503,6 +545,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                     <span>Frequência</span>
                     <select
                       value={scheduleKind}
+                      disabled={item.providerKey === DIRECT_WEEKLY_KEY}
                       onChange={(e) =>
                         setScheduleKind(
                           e.target.value as
@@ -513,10 +556,14 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                         )
                       }
                     >
-                      <option value="daily">Diário (todos os dias)</option>
-                      <option value="weekdays">Dias úteis (seg–sex)</option>
+                      {item.providerKey !== DIRECT_WEEKLY_KEY ? (
+                        <>
+                          <option value="daily">Diário (todos os dias)</option>
+                          <option value="weekdays">Dias úteis (seg–sex)</option>
+                          <option value="monthly">Mensal (dia do mês)</option>
+                        </>
+                      ) : null}
                       <option value="weekly">Semanal</option>
-                      <option value="monthly">Mensal (dia do mês)</option>
                     </select>
                   </label>
                   {scheduleKind === "weekly" ? (
@@ -524,6 +571,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       <span>Dia da semana</span>
                       <select
                         value={weekday}
+                        disabled={item.providerKey === DIRECT_WEEKLY_KEY}
                         onChange={(e) => setWeekday(Number(e.target.value))}
                       >
                         {WEEKDAY_OPTIONS.map((opt) => (
@@ -611,7 +659,9 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                     Destinatários
                   </h2>
                   <p className="rp-card__hint">
-                    Colaboradores do diretório que receberão o e-mail.
+                    {item.providerKey === DIRECT_WEEKLY_KEY
+                      ? "Selecione somente o gestor. Outros destinatários são bloqueados."
+                      : "Colaboradores do diretório que receberão o e-mail."}
                   </p>
                 </div>
                 <button
@@ -626,7 +676,14 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               </div>
               <UserDirectoryPicker
                 value={recipients}
-                onChange={setRecipients}
+                onChange={(next) => {
+                  if (item.providerKey === DIRECT_WEEKLY_KEY && next.length > 1) {
+                    setError("Apenas uma conta: a do próprio gestor.");
+                    return;
+                  }
+                  setError(null);
+                  setRecipients(next);
+                }}
                 searchUsers={searchDirectoryUsers}
                 showSelectedList
                 labels={{
@@ -642,6 +699,8 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               ) : null}
             </section>
 
+            {item.providerKey !== DIRECT_WEEKLY_KEY ? (
+              <>
             <ShortageItemNotesSection
               definitionId={definitionId}
               branch={branch}
@@ -660,6 +719,13 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               Tela operacional (link do e-mail):{" "}
               <a href={followUpPath(definitionId)}>{followUpPath(definitionId)}</a>
             </p>
+              </>
+            ) : (
+              <p className="rp-inline-note">
+                Exclusivo para o gestor e seus subordinados diretos.
+                A liberação do envio será feita separadamente pela administração.
+              </p>
+            )}
 
             <section className="rp-card">
               <div className="rp-card__header">

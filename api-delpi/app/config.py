@@ -439,6 +439,14 @@ class Settings:
         "GRAPH_HTTP_TIMEOUT_SECONDS",
         default="15",
     )
+    # GLPI #887: OFF until recipients, purpose and S2S credentials are approved.
+    CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN: str | None = _get_env(
+        "CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN", default=None
+    )
+    REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED: bool = (
+        str(_get_env("REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED", default="false")).lower()
+        in ("true", "1", "yes", "on")
+    )
     REPORTS_MAIL_BATCH_SIZE: int = int(
         _get_env("REPORTS_MAIL_BATCH_SIZE", default="40") or "40"
     )

@@ -50,7 +50,17 @@ def build_report_provider_registry() -> ReportProviderRegistry:
         FinancialRepository,
     )
 
+    from app.domain.services.reports.providers.team_direct_app_opens_weekly_provider import (
+        DirectTeamUsageWeeklyProvider,
+    )
+
     registry = ReportProviderRegistry()
+    registry.register(
+        DirectTeamUsageWeeklyProvider(
+            core_base_url=settings.CORE_API_BASE_URL or "",
+            service_token=settings.CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN or "",
+        )
+    )
     aggregation = SafetyStockShortage30dAggregationService(
         SafetyStockQueryRepository()
     )
