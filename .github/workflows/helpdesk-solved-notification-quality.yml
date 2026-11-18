@@ -1,0 +1,50 @@
+name: Helpdesk solved notification quality
+
+on:
+  pull_request:
+    paths:
+      - "helpdesk-api/**"
+      - "core-api/app/content/notification_catalog.json"
+      - "portal/src/utils/notificationCatalog.ts"
+      - "portal/src/utils/notificationCatalog.test.ts"
+      - ".github/workflows/helpdesk-solved-notification-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "helpdesk-api/**"
+      - "core-api/app/content/notification_catalog.json"
+      - "portal/src/utils/notificationCatalog.ts"
+      - ".github/workflows/helpdesk-solved-notification-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  helpdesk-solved:
+    name: Helpdesk API - solução e notificações
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: helpdesk-api/requirements.txt
+      - name: Instalar dependências
+        run: |
+          python -m pip install -e './shared[fastapi]'
+          python -m pip install -r helpdesk-api/requirements.txt
+      - name: Testes Helpdesk
+        working-directory: helpdesk-api
+        run: python -m pytest tests -q
+
+  notification-catalog:
+    name: Minha Delpi - catálogo do sino
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validar catálogo Core e fallback Portal
+        run: python core-api/scripts/check_notification_catalog.py --check
