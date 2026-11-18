@@ -3,22 +3,25 @@ import type { ReactNode } from "react";
 import { ChartCard as PluginChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
 
 const A5S_CHART_CARD_CLASSES = chartCardBemClasses("a5s", {
+  headerLayout: "titleRow",
   withHeading: false,
-  withActions: false,
+  withActions: true,
   cardModifier: "chart-card",
 });
 
 type Props = {
   title: string;
   subtitle?: string;
+  actions?: ReactNode;
   children: ReactNode;
 };
 
-export function ChartCard({ title, subtitle, children }: Props) {
+export function ChartCard({ title, subtitle, actions, children }: Props) {
   return (
     <PluginChartCard
       title={title}
       hint={subtitle}
+      headerActions={actions}
       titleLevel={3}
       classNames={A5S_CHART_CARD_CLASSES}
     >

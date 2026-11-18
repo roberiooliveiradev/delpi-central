@@ -123,3 +123,72 @@ def test_dashboard_request_dates_forwarded() -> None:
     assert request.date_end == date(2026, 9, 22)
     assert request.area_id == "area-1"
     assert request.shift == "TURNO_1"
+
+
+def test_dashboard_exposes_separate_macro_and_leaf_scores() -> None:
+    """A API preserva o campo legado e publica as duas visoes do card."""
+    repository = MagicMock()
+    payload = _repo_dashboard_payload()
+    leaf = {
+        "area_id": "sub-1",
+        "area_name": "Subarea A",
+        "average_score_pct": 82.0,
+        "audit_count": 2,
+    }
+    macro = {
+        "area_id": "macro-1",
+        "area_name": "Macroarea A",
+        "average_score_pct": 82.0,
+        "audit_count": 2,
+        "aggregation": "mean_of_means",
+    }
+    payload["charts"]["score_by_area"] = [leaf, macro]
+    payload["charts"]["score_by_leaf_area"] = [leaf]
+    payload["charts"]["score_by_macro_area"] = [macro]
+    repository.get_dashboard.return_value = payload
+
+    result = GetAudit5sDashboardUseCase(repository).execute(
+        branch_code="02",
+        date_start="2026-09-01",
+        date_end="2026-09-30",
+    )
+    charts = result.to_dict()["charts"]
+    assert charts["score_by_area"] == [leaf, macro]
+    assert charts["score_by_leaf_area"] == [leaf]
+    assert charts["score_by_macro_area"] == [macro]
+
+
+def test_macro_chart_keeps_aggregators_outside_mixed_top_twenty() -> None:
+    """Visao macro nao depende da colocacao das folhas no top-20 misto."""
+    from app.infrastructure.persistence.plugins.repositories.audit_5s.postgres_audit_5s_repository import (
+        PostgresAudit5sRepository,
+    )
+
+    repository = object.__new__(PostgresAudit5sRepository)
+    repository.fetch_all = MagicMock(return_value=[
+        {"area_id": "macro-1", "area_name": "Macroarea A", "child_ids": ["leaf-1", "leaf-2"]},
+        {"area_id": "macro-2", "area_name": "Macroarea B", "child_ids": ["leaf-3"]},
+    ])
+    repository._leaf_area_scores_for_ids = MagicMock(
+        side_effect=[
+            [{"area_id": "leaf-2", "average_score_pct": 60, "audit_count": 1}],
+            [{"area_id": "leaf-3", "average_score_pct": 95, "audit_count": 1}],
+        ]
+    )
+
+    rows = repository._merge_aggregator_score_by_area(
+        [{"area_id": "leaf-1", "area_name": "Sub A", "average_score_pct": 80, "audit_count": 2}],
+        branch_code="02",
+        date_start="2026-09-01",
+        date_end="2026-09-30",
+        shift=None,
+        audit_status=None,
+        senso_order=None,
+        filter_area_id=None,
+    )
+    macro_rows = [row for row in rows if row.get("aggregation") == "mean_of_means"]
+    assert len(macro_rows) == 2
+    assert {row["area_id"] for row in macro_rows} == {"macro-1", "macro-2"}
+    a = next(row for row in macro_rows if row["area_id"] == "macro-1")
+    assert a["average_score_pct"] == 70
+    assert a["audit_count"] == 3

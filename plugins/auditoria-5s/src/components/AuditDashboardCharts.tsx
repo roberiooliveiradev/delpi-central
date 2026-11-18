@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -30,6 +30,7 @@ import { ChartCard } from "./ChartCard";
 
 type Props = {
   charts: AuditDashboardCharts;
+  branch?: string;
   filteredSensoOrder?: number | null;
   filteredSensoName?: string | null;
 };
@@ -40,9 +41,20 @@ function EmptyChart({ message }: { message: string }) {
 
 export function AuditDashboardCharts({
   charts,
+  branch,
   filteredSensoOrder,
   filteredSensoName,
 }: Props) {
+  const [areaView, setAreaView] = useState<"macro" | "leaf">("macro");
+  const macroRows = charts.score_by_macro_area ?? charts.score_by_area.filter(
+    (item) => (item as typeof item & { aggregation?: string }).aggregation === "mean_of_means",
+  );
+  const leafRows = charts.score_by_leaf_area ?? charts.score_by_area.filter(
+    (item) => (item as typeof item & { aggregation?: string }).aggregation !== "mean_of_means",
+  );
+  const hasMacroView = branch === "02" && macroRows.length > 0;
+  const activeAreaView = hasMacroView ? areaView : "leaf";
+  const areaRows = activeAreaView === "macro" ? macroRows : leafRows;
   const sensoLabel =
     filteredSensoOrder != null
       ? sensoName(filteredSensoOrder, filteredSensoName ?? undefined)
@@ -53,8 +65,14 @@ export function AuditDashboardCharts({
   const evolutionSubtitle = sensoLabel
     ? `Percentual do senso por período`
     : "Percentual geral por período";
-  const areaTitle = sensoLabel ? `Nota por área — ${sensoLabel}` : "Nota média por área";
-  const areaSubtitle = sensoLabel ? "Média do senso selecionado" : "Top áreas auditadas";
+  const areaTitle = sensoLabel
+    ? `Nota por ${activeAreaView === "macro" ? "macroárea" : "área"} — ${sensoLabel}`
+    : `Nota média por ${activeAreaView === "macro" ? "macroárea" : "área"}`;
+  const areaSubtitle = sensoLabel
+    ? "Média do senso selecionado"
+    : activeAreaView === "macro"
+      ? "Média das subáreas auditadas"
+      : "Top áreas auditadas";
   const sensoChartTitle = sensoLabel ? `Senso selecionado — ${sensoLabel}` : "Nota média por senso";
   const sensoChartSubtitle = sensoLabel
     ? "Média consolidada no período"
@@ -106,12 +124,35 @@ export function AuditDashboardCharts({
       </div>
 
       <div className="a5s-analytics-charts__row a5s-analytics-charts__row--triple">
-        <ChartCard title={areaTitle} subtitle={areaSubtitle}>
-          {charts.score_by_area.length === 0 ? (
+        <ChartCard
+          title={areaTitle}
+          subtitle={areaSubtitle}
+          actions={hasMacroView ? (
+            <div className="a5s-area-view-switch" role="group" aria-label="Visualização das notas por área">
+              <button
+                type="button"
+                className={`a5s-area-view-switch__button${activeAreaView === "macro" ? " is-active" : ""}`}
+                aria-pressed={activeAreaView === "macro"}
+                onClick={() => setAreaView("macro")}
+              >
+                Macroáreas
+              </button>
+              <button
+                type="button"
+                className={`a5s-area-view-switch__button${activeAreaView === "leaf" ? " is-active" : ""}`}
+                aria-pressed={activeAreaView === "leaf"}
+                onClick={() => setAreaView("leaf")}
+              >
+                Subáreas
+              </button>
+            </div>
+          ) : undefined}
+        >
+          {areaRows.length === 0 ? (
             <EmptyChart message="Sem dados por área." />
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={charts.score_by_area} layout="vertical" margin={{ left: 8 }}>
+              <BarChart data={areaRows} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis type="number" domain={[0, 100]} tick={AXIS_TICK} unit="%" />
                 <YAxis

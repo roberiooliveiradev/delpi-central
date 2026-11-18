@@ -69,6 +69,8 @@ export function AuditDashboardPage({ branch, areas, audits, onOpenItem }: Props)
           ) : (
             <>
               <AuditDashboardCharts
+                key={branch}
+                branch={branch}
                 charts={data.charts}
                 filteredSensoOrder={data.summary.filtered_senso_order}
                 filteredSensoName={data.summary.filtered_senso_name}

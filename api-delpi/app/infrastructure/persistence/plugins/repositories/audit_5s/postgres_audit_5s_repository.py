@@ -3127,8 +3127,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 tuple(params),
             )
 
-        score_by_area = self._merge_aggregator_score_by_area(
-            score_by_area,
+        # Manter o contrato antigo (mistura top-20) e expor as duas visoes
+        # separadas, sem perder macroareas que ficaram fora do top-20 misto.
+        leaf_score_by_area = score_by_area
+        merged_score_by_area = self._merge_aggregator_score_by_area(
+            leaf_score_by_area,
             branch_code=request.branch_code,
             date_start=request.date_start.isoformat(),
             date_end=request.date_end.isoformat(),
@@ -3137,6 +3140,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             senso_order=senso_order,
             filter_area_id=request.area_id,
         )
+        macro_score_by_area = [
+            row for row in merged_score_by_area
+            if row.get("aggregation") == "mean_of_means"
+        ][:20]
+        score_by_area = merged_score_by_area[:20]
 
         score_by_senso_where = (
             f"{where_sql} AND a.status != 'draft'"
@@ -3255,6 +3263,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             "charts": {
                 "score_by_period": [self._serialize_chart_row(row) for row in score_by_period],
                 "score_by_area": [self._serialize_chart_row(row) for row in score_by_area],
+                "score_by_leaf_area": [self._serialize_chart_row(row) for row in leaf_score_by_area],
+                "score_by_macro_area": [self._serialize_chart_row(row) for row in macro_score_by_area],
                 "score_by_senso": [self._serialize_chart_row(row) for row in score_by_senso],
                 "nc_by_status": [self._serialize_chart_row(row) for row in nc_by_status],
             },
@@ -3797,6 +3807,10 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         merged = [dict(row) for row in leaf_rows]
         for agg in aggregators:
             child_ids = list(agg.get("child_ids") or [])
+            # Filtro em uma folha: nota da macroarea reflete apenas a
+            # folha filtrada, nao as irmas fora do recorte solicitado.
+            if filter_area_id and filter_area_id in child_ids:
+                child_ids = [filter_area_id]
             child_means: list[float] = []
             audit_count = 0
             missing = [cid for cid in child_ids if cid not in leaf_by_id]
@@ -3841,7 +3855,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 str(row.get("area_name") or ""),
             )
         )
-        return merged[:20]
+        return merged
 
     def _leaf_area_scores_for_ids(
         self,

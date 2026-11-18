@@ -55,6 +55,8 @@ A área auditada **não** é texto livre na hora da auditoria. O fluxo é:
 
 **Média da agregadora (dashboard):** média aritmética das médias das subáreas no período filtrado (cada subárea pesa igual; subárea sem auditoria com nota no período não entra no denominador).
 
+**Gráfico de notas por área (GLPI #847):** na filial 02, quando há macroáreas com notas no recorte, o card inicia em **Macroáreas**, com alternância local para **Subáreas**; não altera os filtros globais. A visão macro usa a média aritmética das médias das folhas auditadas, preservando o filtro de período, turno, status, senso e área. A visão de subáreas exibe as folhas individuais (inclui áreas não agrupadas). Na filial 01, ou na ausência de macroárea com nota, exibe apenas a visão de áreas, sem alternador. O endpoint `analytics/dashboard` mantém `charts.score_by_area` para compatibilidade e adiciona `charts.score_by_macro_area` e `charts.score_by_leaf_area`. Não há migração nem alteração no cadastro de áreas/auditorias.
+
 ### 2.3 Modelo
 
 Tabela `audit_5s_areas`:
