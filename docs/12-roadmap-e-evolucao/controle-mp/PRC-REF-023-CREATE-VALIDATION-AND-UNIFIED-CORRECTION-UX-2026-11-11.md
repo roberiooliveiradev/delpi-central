@@ -3,7 +3,7 @@
 > **Decisão funcional do owner — 11/11/2026** · **Status: TARGET / implementação pendente**.
 > **Issue canônica:** [delpi-central#154](https://github.com/roberiooliveiradev/delpi-central/issues/154).
 > **Escopo:** Engineering API, \`@delpi/plugin-ui\`, Portal Engenharia e Minhas Solicitações. **Sem** segundo chamado, API paralela, papéis novos ou escrita TOTVS.
-> **Nota de precedência:** este documento registra as decisões atuais do fluxo PRC Engineering API × dois MFEs. O planejamento de migração legado em \`EVOLUCAO.md\` descreve proposta histórica/futura e não autoriza substituir esta autoridade vigente por \`requests-api\`.
+> **Nota de precedência:** este documento registra as decisões atuais do fluxo PRC Engineering API × dois MFEs. O planejamento de migração legado em \`EVOLUCAO.md\` (removido; histórico Git; plano atual: \`engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md\`) descreve proposta histórica/futura e não autoriza substituir esta autoridade vigente por \`requests-api\`.
 
 ## 1. Situação verificada vs. decisão
 
