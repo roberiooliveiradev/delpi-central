@@ -365,6 +365,17 @@
         "purchase-requests"
       ],
       "pluginId": "purchase-requests"
+    },
+    "helpdesk_ticket_followup": {
+      "label": "Helpdesk",
+      "notificationLabel": "Novos retornos dos meus chamados",
+      "icon": "message-square",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "helpdesk"
+      ],
+      "pluginId": "helpdesk"
     }
   },
   "legacyCategoryAliases": {
