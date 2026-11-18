@@ -77,7 +77,7 @@ def test_gateway_paginates_and_preserves_hierarchy():
     gateway = PortalRhOrganizationGateway(
         base_url="https://rh.example.test",
         service_token="rh-only",
-        client=httpx.Client(transport=httpx.MockTransport(respond)),
+        client=httpx.Client(timeout=5.0, transport=httpx.MockTransport(respond)),
     )
     result = gateway.get_team("00001", include_indirect=True)
     assert [item["registration"] for item in result["members"]] == [
@@ -91,7 +91,7 @@ def test_gateway_404_and_401_are_typed_and_never_echo_token():
         (404, PortalRhManagerNotFound),
         (401, PortalRhOrganizationUnauthorized),
     ]:
-        client = httpx.Client(
+        client = httpx.Client(timeout=5.0, 
             transport=httpx.MockTransport(
                 lambda request: httpx.Response(status, json={"error": "upstream"})
             )
@@ -112,7 +112,7 @@ def test_gateway_rejects_mismatched_manager_and_duplicate_registration():
         "members": [],
         "has_next": False,
     }
-    client = httpx.Client(transport=httpx.MockTransport(
+    client = httpx.Client(timeout=5.0, transport=httpx.MockTransport(
         lambda request: httpx.Response(200, json=payload)
     ))
     gateway = PortalRhOrganizationGateway(
