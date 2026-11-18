@@ -28,18 +28,19 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 | `api-delpi/docs/integrations/protheus-write-integration-playbook.md` | Topologia, superfície api-delpi, rastreio, homologação live, pins por ambiente |
 | `api-delpi/docs/integrations/evidence/protheus-rest-product-update-ledger.md` | Template de evidência live + prova do primeiro write homologado |
 | `api-delpi/docs/api/padroes-totvs/` (hub + seções) | Convenções de negócio TOTVS/DELPI (tabelas, campos, regras) |
-| `docs/13-fontes-totvs-protheus/` | Fontes ADVPL/TLPP reais — ground truth de rotinas, PEs e serviços REST |
+| `Delpi-ti/protheus-erp` (`master`@SHA) | Fonte primária de versões de ADVPL/TLPP; histórico de commits e alterações de fonte |
+| `docs/13-fontes-totvs-protheus/` | Espelho/referência no delpi-central; comparar blob SHA antes de usar |
 
-Hierarquia: **fonte `.PRW` compilado vence documentação**; documentação vence memória/inferência.
+**Hierarquia de evidência:** RPO compilado e evidência de deploy/inspeção do ambiente demonstram runtime; `Delpi-ti/protheus-erp` prova fonte versionado, NÃO compilação; espelho local é secundário. Capturar `repo/branch/commit/path/blob SHA`, ambiente e timestamp; não promover fonte GitHub a prova de execução.
 
 ## Pipeline obrigatório — antes de implementar
 
 ```text
 1. Qual operação de negócio? (cadastro, faturamento, título, estoque…)
-2. Qual rotina oficial a executa? (fontes DELPI → TDN → /restall → POC TST01)
-3. Existe endpoint já publicado? (/restall: aba ADVPL **e** aba TLPP — catálogo ~2.100)
-4. Se nativo existe → consumir; se não → .PRW WSRESTFUL + MSExecAuto (guia §2–§3)
-5. Contrato ExecAuto: cada campo CONFIRMADO (fonte/TDN) ou marcado `VALIDAR NO TST01`
+2. Qual rotina oficial? (`Delpi-ti/protheus-erp` master@SHA → espelho local → TDN/SX3 → RESTALL/TST01)
+3. Existe endpoint publicado e operacional? Descobrir métodos/paths no RESTALL live em cada ambiente, sem supor contagem fixa nem funcionamento pela presença no catálogo
+4. REUSE antes de EXTEND/NEW; `MSExecAuto` só quando a rotina oferecer esse contrato; MATA061/SA5 é MVC Model-2 e requer estratégia oficial validada
+5. Cada campo/execução: `PROVEN_SOURCE`, `PROVEN_RUNTIME` ou `TO_INVENTORY` e plano TST01
 6. Superfície api-delpi: seguir o playbook §4 — mesma receita do sibling (products/suppliers)
 ```
 
@@ -47,13 +48,13 @@ Hierarquia: **fonte `.PRW` compilado vence documentação**; documentação venc
 
 ### No `.PRW` (lado Protheus)
 
-- [ ] `WSRESTFUL`/`WSMETHOD`/`WSRECEIVE` no padrão do `DLP04I01` — compilado = publicado
-- [ ] `MSExecAuto` para **qualquer** escrita — nunca `RecLock`/`INSERT`/`UPDATE` direto em tabela `S*`
-- [ ] `PRIVATE lMsErroAuto := .F.` (não `LOCAL`) + `lMsHelpAuto`/`lAutoErrNoFile` antes do ExecAuto
+- [ ] `WSRESTFUL`/`WSMETHOD`/`WSRECEIVE` quando REST custom realmente necessário; compilação não equivale a rota operacional comprovada
+- [ ] Escrita apenas por rotina oficial suportada: MATA010 via `MSExecAuto`; MATA061/SA5 via modelo MVC oficial sob contrato aprovado e teste TST01. Nunca `RecLock`/SQL direto em `S*`
+- [ ] Para `MSExecAuto`: `PRIVATE lMsErroAuto := .F.` (não `LOCAL`) + `lMsHelpAuto`/`lAutoErrNoFile`. MVC exige tratamento próprio comprovado
 - [ ] `ErrorBlock`+`Begin Sequence/Recover` cobrindo o handler inteiro
-- [ ] Arrays de triplas `{CAMPO, valor, Nil}`; **representação completa** em rotinas de cadastro
+- [ ] Somente para ExecAuto: arrays de triplas `{CAMPO, valor, Nil}`; representação completa quando contrato exigir
       (campo omitido pode ser zerado — bug real do `delpiproduto`)
-- [ ] Erro oficial: `GetAutoGrLog()` completo → `RETOBJ` padronizado `{code,status,message,idtoken}`
+- [ ] Para ExecAuto: `GetAutoGrLog()`; para MVC: erros/validações do modelo; respostas normalizadas sem mascarar falhas
 - [ ] `FreeObj` em todo `JsonObject`; `RestArea` no fim; `Return .T.`
 - [ ] Hipóteses de contrato marcadas `VALIDAR NO TST01` — nunca precisão fingida
 
@@ -94,7 +95,7 @@ Hierarquia: **fonte `.PRW` compilado vence documentação**; documentação venc
 
 | Anti-padrão | Correto |
 |---|---|
-| `UPDATE SB1 SET ...` / `RecLock` direto | `MSExecAuto` na rotina oficial |
+| `UPDATE SB1 SET ...` / `RecLock` direto | Rotina oficial comprovada: MATA010/ExecAuto, MATA061/MVC quando homologado |
 | PUT parcial em cadastro | representação completa (risco de zerar campos) |
 | `codusr` vindo do request | resolvido via Core a partir do `sub` do JWT |
 | Retry automático após timeout de escrita | `UNKNOWN` + investigação manual |
@@ -104,7 +105,7 @@ Hierarquia: **fonte `.PRW` compilado vence documentação**; documentação venc
 
 ## Saída esperada do especialista
 
-Toda entrega/revisão de integração TOTVS termina declarando:
+Toda entrega/revisão registra `SOURCE_REPO/BRANCH/SHA/PATH`, paridade do espelho e evidência separada do RPO; termina declarando:
 
 ```text
 OPERAÇÃO | ROTINA OFICIAL | CONTRATO (confirmado/por validar) | GATE+PIN | IDENTIDADE | RASTREIO | EVIDÊNCIA
