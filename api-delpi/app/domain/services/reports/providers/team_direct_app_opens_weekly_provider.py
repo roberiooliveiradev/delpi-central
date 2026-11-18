@@ -175,6 +175,7 @@ class DirectTeamUsageWeeklyProvider:
             apps = item.get("apps")
             if not isinstance(apps, list):
                 raise ValueError("Lista de aplicativos inválida.")
+            app_details = []
             if status in {"unmapped", "consent_not_granted"}:
                 if recorded is not None or apps:
                     raise ValueError("Dados de uso não autorizados em membro sem cobertura.")
@@ -201,6 +202,34 @@ class DirectTeamUsageWeeklyProvider:
                         raise ValueError("Aberturas inválidas.")
                     summed += count
                     checked_apps.append(f"{app_name}: {count}")
+                    sessions = app.get("recordedSessions", 0)
+                    duration = app.get("totalDurationSeconds", 0)
+                    mean = app.get("avgSessionSeconds")
+                    if (
+                        isinstance(sessions, bool)
+                        or not isinstance(sessions, int)
+                        or sessions < 0
+                        or isinstance(duration, bool)
+                        or not isinstance(duration, int)
+                        or duration < 0
+                    ):
+                        raise ValueError("Duração registrada inválida.")
+                    if sessions == 0:
+                        if duration != 0 or mean is not None:
+                            raise ValueError("Média sem sessões registradas.")
+                    elif (
+                        duration < sessions
+                        or isinstance(mean, bool)
+                        or not isinstance(mean, int)
+                        or mean != round(duration / sessions)
+                    ):
+                        raise ValueError("Média de sessão inconsistente.")
+                    app_details.append({
+                        "name": app_name.strip(),
+                        "recordedOpens": count,
+                        "recordedSessions": sessions,
+                        "avgSessionSeconds": mean,
+                    })
                 if summed != total:
                     raise ValueError("Total de aberturas divergente.")
                 apps_description = "; ".join(checked_apps) if total else "Sem abertura registrada"
@@ -210,6 +239,7 @@ class DirectTeamUsageWeeklyProvider:
                 "collaborator": name.strip(),
                 "recordedOpens": total,
                 "applications": apps_description,
+                "appDetails": app_details,
             })
 
         monday = data.get("weekStart")
@@ -242,38 +272,108 @@ class DirectTeamUsageWeeklyProvider:
             },
         )
 
+    @staticmethod
+    def _format_session_time(seconds: int | None) -> str:
+        """Elapsed session estimate, not foreground interaction duration."""
+        if seconds is None:
+            return "Não medido"
+        if seconds < 60:
+            return f"{seconds} s"
+        minutes, rest = divmod(seconds, 60)
+        if minutes < 60:
+            return f"{minutes} min" if rest == 0 else f"{minutes} min {rest} s"
+        hours, minutes = divmod(minutes, 60)
+        return f"{hours} h" if minutes == 0 else f"{hours} h {minutes} min"
+
     def render_email(self, dataset: ReportDataset) -> EmailPayload:
         if dataset.provider_key != self.key or dataset.meta.get("directOnly") is not True:
             raise ValueError("Somente relatório direto pode ser enviado.")
         monday = date.fromisoformat(str(dataset.meta["weekStart"]))
         sunday = monday + timedelta(days=6)
         period = f"{monday:%d/%m/%Y} a {sunday:%d/%m/%Y}"
-
-        cells = []
-        for row in dataset.rows:
-            count = row["recordedOpens"]
-            cells.append([
-                str(row["collaborator"]),
-                "Indisponível" if count is None else str(count),
-                str(row["applications"]),
-            ])
+        total_opens = sum(
+            int(row["recordedOpens"])
+            for row in dataset.rows
+            if row["recordedOpens"] is not None
+        )
+        formatted_opens = f"{total_opens:,}".replace(",", ".")
         body = (
             '<p style="margin:0 0 14px;font-size:14px;">'
-            'Resumo dos <strong>subordinados diretos</strong> da sua equipe '
+            'Acessos semanais dos <strong>subordinados diretos</strong> '
             f'no período <strong>{html.escape(period)}</strong>.</p>'
+            '<p style="margin:0 0 22px;color:#475569;font-size:13px;">'
+            f'<strong>{dataset.row_count}</strong> colaboradores da equipe direta '
+            f'&nbsp;|&nbsp; <strong>{formatted_opens}</strong> aberturas registradas'
+            '</p>'
         )
-        if cells:
-            body += ReportEmailBrandLayoutService.data_table_html(
-                headers=["Colaborador", "Aberturas registradas", "Ferramentas"],
-                rows=cells,
-            )
-        else:
+
+        if not dataset.rows:
             body += "<p>Não há subordinados diretos ativos nesta equipe.</p>"
+
+        for row in dataset.rows:
+            employee = html.escape(str(row["collaborator"]))
+            opens = row["recordedOpens"]
+            if opens is None:
+                total_label = "Dados indisponíveis"
+                contents = (
+                    '<p style="color:#64748b;font-size:12px;margin:10px 0;">'
+                    'Dados de uso indisponíveis para apresentação.</p>'
+                )
+            elif opens == 0:
+                total_label = "0 aberturas"
+                contents = (
+                    '<p style="color:#64748b;font-size:12px;margin:10px 0;">'
+                    'Sem abertura registrada nesta semana.</p>'
+                )
+            else:
+                total_label = f"{opens} aberturas"
+                apps = row.get("appDetails") or []
+                if not apps:
+                    raise ValueError("Aplicativos do colaborador ausentes no relatório.")
+                contents = ReportEmailBrandLayoutService.data_table_html(
+                    headers=[
+                        "Aplicativo",
+                        "Aberturas registradas",
+                        "Tempo médio por sessão*",
+                    ],
+                    rows=[
+                        [
+                            str(app["name"]),
+                            str(app["recordedOpens"]),
+                            self._format_session_time(app["avgSessionSeconds"]),
+                        ]
+                        for app in apps
+                    ],
+                    column_styles=[
+                        "width:52%;", "width:20%;text-align:right;",
+                        "width:28%;text-align:right;",
+                    ],
+                )
+            body += (
+                '<table role="presentation" width="100%" cellspacing="0" '
+                'cellpadding="0" border="0" style="margin:0 0 18px 0;'
+                'border:1px solid #E2E8F0;border-radius:10px;'
+                'border-collapse:separate;font-family:Arial,Helvetica,sans-serif;">'
+                '<tr><td style="background:#F8FAFC;padding:12px 14px;'
+                'border-bottom:1px solid #E2E8F0;">'
+                '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
+                '<tr><td style="font-size:15px;color:#013866;font-weight:700;">'
+                f'{employee}</td><td align="right" style="white-space:nowrap;'
+                'font-size:12px;color:#475569;">'
+                f'{html.escape(total_label)}</td></tr></table>'
+                '</td></tr>'
+                '<tr><td style="padding:12px 14px;">'
+                f'{contents}</td></tr></table>'
+            )
+
         body += (
-            f'<p style="font-size:12px;color:{GRAY_600};margin-top:14px;">'
-            "Aberturas são eventos registrados, não tempo de uso ou presença. "
-            "“Indisponível” significa que não há dados autorizados para apresentação; "
-            "zero evento não comprova ausência de acesso.</p>"
+            f'<p style="font-size:12px;color:{GRAY_600};margin-top:16px;">'
+            "* Tempo médio estimado por sessão de aplicativo registrada; "
+            "não mede interação ativa ou produtividade. "
+            "Sessões sem duração registrada aparecem como “Não medido”. "
+            "Aberturas são eventos registrados, não sessões únicas. "
+            "Dados indisponíveis não significam falta de acesso, e zero "
+            "evento não comprova ausência de uso.</p>"
         )
         return EmailPayload(
             subject=f"Minha Delpi | Acessos semanais da equipe direta | {period}",
