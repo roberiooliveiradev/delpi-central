@@ -274,7 +274,7 @@ def test_hr_mapping_rejects_bad_evidence_reference_before_db(client, app):
             json={
                 "registration": "00001",
                 "confirmIdentity": True,
-                "verificationReference": "invalid\\nline",
+                "verificationReference": "invalid" + chr(10) + "line",
             },
         )
     assert response.status_code == 422
