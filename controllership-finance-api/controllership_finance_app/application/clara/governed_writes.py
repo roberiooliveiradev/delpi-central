@@ -2382,6 +2382,177 @@ class ClaraGovernedWrites:
                 "verify": lambda p, result: bool(result),
                 "postcondition": lambda p, result, actor: bool(result),
             },
+            # -- Checklist vivo (CF-CHECKLIST-LIVE-004, paridade PO) --
+            "checklist.series_start": {
+                "gate": "manage",
+                "resource_type": "checklist_template_series",
+                "resource_key": lambda p: str(
+                    _require(p, "template_id")
+                ),
+                "required_params": (
+                    "template_id", "reason", "confirmation",
+                    "idempotency_key",
+                ),
+                "describe": lambda p: (
+                    f"iniciar nova sequência de checklist do template "
+                    f"{p.get('template_id')} (operação excepcional)"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.start_checklist_sequence(
+                        str(p["template_id"]), actor,
+                        reason=p["reason"],
+                        confirmation=p["confirmation"],
+                        idempotency_key=p["idempotency_key"],
+                    )
+                ),
+                "verify": lambda p, result: bool(
+                    result.get("series_id")
+                ),
+                "postcondition": lambda p, result, actor: bool(
+                    result.get("series_id")
+                ),
+            },
+            "checklist.catalog_initialize": {
+                "gate": "manage",
+                "resource_type": "checklist_template_version",
+                "resource_key": lambda p: str(
+                    _require(p, "version_id")
+                ),
+                "required_params": (
+                    "version_id", "reason", "items", "idempotency_key",
+                ),
+                "describe": lambda p: (
+                    f"inicializar catálogo da versão "
+                    f"{p.get('version_id')} com "
+                    f"{len(p.get('items') or [])} itens"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.initialize_checklist_catalog(
+                        str(p["version_id"]), actor,
+                        reason=p["reason"],
+                        items=list(p["items"]),
+                        idempotency_key=p["idempotency_key"],
+                    )
+                ),
+                "verify": lambda p, result: bool(
+                    result.get("items_created")
+                ),
+                "postcondition": lambda p, result, actor: bool(
+                    result.get("fingerprint")
+                ),
+            },
+            "checklist.revision_apply": {
+                "gate": "manage",
+                "resource_type": "checklist_version_revision",
+                "resource_key": lambda p: str(
+                    _require(p, "version_id")
+                ),
+                "required_params": (
+                    "version_id", "reason", "expected_revision",
+                    "changes", "idempotency_key",
+                ),
+                "describe": lambda p: (
+                    f"aplicar revisão em lote com "
+                    f"{len(p.get('changes') or [])} alterações na "
+                    f"versão {p.get('version_id')}"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.apply_revision(
+                        str(p["version_id"]), actor,
+                        reason=p["reason"],
+                        expected_revision=int(p["expected_revision"]),
+                        changes=list(p["changes"]),
+                        idempotency_key=p["idempotency_key"],
+                    )
+                ),
+                "verify": lambda p, result: bool(
+                    result.get("revision_id")
+                ),
+                "postcondition": lambda p, result, actor: bool(
+                    result.get("sync_event_id")
+                ),
+            },
+            "checklist.revision_revert": {
+                "gate": "manage",
+                "resource_type": "checklist_version_revision",
+                "resource_key": lambda p: str(
+                    _require(p, "revision_id")
+                ),
+                "required_params": (
+                    "revision_id", "reason", "expected_revision",
+                    "idempotency_key",
+                ),
+                "describe": lambda p: (
+                    f"reverter a revisão {p.get('revision_id')} por "
+                    f"revisão compensatória"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.revert_revision(
+                        str(p["revision_id"]), actor,
+                        reason=p["reason"],
+                        expected_revision=int(p["expected_revision"]),
+                        idempotency_key=p["idempotency_key"],
+                    )
+                ),
+                "verify": lambda p, result: bool(
+                    result.get("revision_id")
+                ),
+                "postcondition": lambda p, result, actor: bool(
+                    result.get("replayed", False) or result.get("revision_id")
+                ),
+            },
+            "checklist.sync_retry": {
+                "gate": "manage",
+                "resource_type": "checklist_sync_event",
+                "resource_key": lambda p: str(
+                    _require(p, "event_id")
+                ),
+                "required_params": ("event_id",),
+                "describe": lambda p: (
+                    f"reprocessar falhas do evento de sincronização "
+                    f"{p.get('event_id')}"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.retry_sync_event(
+                        str(p["event_id"]), actor
+                    )
+                ),
+                "verify": lambda p, result: (
+                    result.get("runs_reopened", 0) >= 1
+                ),
+                "postcondition": lambda p, result, actor: True,
+            },
+            "checklist.completion_assess": {
+                "gate": "manage",
+                "resource_type": "monthly_competence",
+                "resource_key": lambda p: str(
+                    _require(p, "competence_id")
+                ),
+                "required_params": (
+                    "competence_id", "reason", "completion_record",
+                    "evidence_summary",
+                ),
+                "describe": lambda p: (
+                    f"reconciliar histórico da competência "
+                    f"{p.get('competence_id')} para "
+                    f"{p.get('completion_record')}"
+                ),
+                "execute": lambda p, actor, groups: (
+                    self._checklist.assess_completion(
+                        str(p["competence_id"]), actor,
+                        reason=p["reason"],
+                        completion_record=p["completion_record"],
+                        evidence_summary=p["evidence_summary"],
+                    )
+                ),
+                "verify": lambda p, result: (
+                    result.get("completion_record")
+                    in ("NEVER", "COMPLETED")
+                ),
+                "postcondition": lambda p, result, actor: (
+                    result.get("completion_basis") == "GOVERNED"
+                ),
+            },
         }
         table.update(build_lnf_capability_table(require=_require))
         if settings.ENTRY_AUDIT_ENABLED:

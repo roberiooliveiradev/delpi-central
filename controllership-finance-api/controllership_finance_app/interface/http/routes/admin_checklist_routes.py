@@ -498,3 +498,258 @@ def delete_checklist_template_version(
         ),
         operation_id="delete_checklist_template_version",
     )
+
+
+# ================= Checklist vivo (CF-CHECKLIST-LIVE-004) ==============
+# Séries, inicialização excepcional, revisões internas e sync.
+
+
+class StartSeriesRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    confirmation: str = Field(min_length=1, max_length=40)
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+class InitializeCatalogRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    items: list[dict[str, Any]] = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+class RevisionChangeInput(BaseModel):
+    op: str = Field(pattern="^(ADD|UPDATE|RETIRE|REORDER|REACTIVATE)$")
+    item_key: str = Field(min_length=1, max_length=32)
+    payload: dict[str, Any] | None = None
+
+
+class ApplyRevisionRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    expected_revision: int = Field(ge=1)
+    changes: list[RevisionChangeInput] = Field(min_length=1)
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+class RevertRevisionRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    expected_revision: int = Field(ge=1)
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+class PreviewRevisionRequest(BaseModel):
+    changes: list[RevisionChangeInput] = Field(min_length=1)
+
+
+@router.get("/{template_id}/series", operation_id="list_checklist_series")
+def list_checklist_series(request: Request, template_id: str):
+    authorized_admin(request)
+    try:
+        series = _repository().list_series(template_id)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_checklist_series")
+    return ok({"series": series}, operation_id="list_checklist_series")
+
+
+@router.get(
+    "/{template_id}/series/active",
+    operation_id="get_active_checklist_series",
+)
+def get_active_checklist_series(request: Request, template_id: str):
+    authorized_admin(request)
+    try:
+        series = _repository().get_active_series(template_id)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "get_active_checklist_series")
+    return ok(series, operation_id="get_active_checklist_series")
+
+
+@router.post("/{template_id}/series", operation_id="start_checklist_sequence")
+def start_checklist_sequence(
+    request: Request, template_id: str, body: StartSeriesRequest
+):
+    user = authorized_admin(request)
+    try:
+        series = _repository().start_checklist_sequence(
+            template_id,
+            actor=actor_subject(user),
+            reason=body.reason,
+            confirmation=body.confirmation,
+            idempotency_key=body.idempotency_key,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "start_checklist_sequence")
+    return ok(
+        series,
+        message="Nova sequência iniciada.",
+        status_code=201,
+        operation_id="start_checklist_sequence",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version_id}/items:initialize",
+    operation_id="initialize_checklist_catalog",
+)
+def initialize_checklist_catalog(
+    request: Request, template_id: str, version_id: str,
+    body: InitializeCatalogRequest,
+):
+    user = authorized_admin(request)
+    try:
+        result = _repository().initialize_checklist_catalog(
+            version_id,
+            actor=actor_subject(user),
+            reason=body.reason,
+            items=body.items,
+            idempotency_key=body.idempotency_key,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "initialize_checklist_catalog")
+    return ok(
+        result,
+        message="Catálogo inicializado.",
+        status_code=201,
+        operation_id="initialize_checklist_catalog",
+    )
+
+
+@router.get(
+    "/{template_id}/versions/{version_id}/revisions",
+    operation_id="list_checklist_version_revisions",
+)
+def list_checklist_version_revisions(
+    request: Request, template_id: str, version_id: str
+):
+    authorized_admin(request)
+    try:
+        revisions = _repository().list_revisions(version_id)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_checklist_version_revisions")
+    return ok(
+        {"revisions": revisions},
+        operation_id="list_checklist_version_revisions",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version_id}/revisions",
+    operation_id="apply_checklist_revision",
+)
+def apply_checklist_revision(
+    request: Request, template_id: str, version_id: str,
+    body: ApplyRevisionRequest,
+):
+    user = authorized_admin(request)
+    try:
+        revision = _repository().apply_revision(
+            version_id,
+            actor=actor_subject(user),
+            reason=body.reason,
+            expected_revision=body.expected_revision,
+            changes=[c.model_dump() for c in body.changes],
+            idempotency_key=body.idempotency_key,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "apply_checklist_revision")
+    return ok(
+        revision,
+        message="Revisão aplicada.",
+        status_code=201,
+        operation_id="apply_checklist_revision",
+    )
+
+
+@router.get(
+    "/{template_id}/versions/{version_id}/revisions/{revision_id}",
+    operation_id="get_checklist_version_revision",
+)
+def get_checklist_version_revision(
+    request: Request, template_id: str, version_id: str, revision_id: str
+):
+    authorized_admin(request)
+    try:
+        revision = _repository().get_revision(revision_id)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "get_checklist_version_revision")
+    return ok(revision, operation_id="get_checklist_version_revision")
+
+
+@router.post(
+    "/{template_id}/versions/{version_id}/revisions/{revision_id}/revert",
+    operation_id="revert_checklist_revision",
+)
+def revert_checklist_revision(
+    request: Request, template_id: str, version_id: str, revision_id: str,
+    body: RevertRevisionRequest,
+):
+    user = authorized_admin(request)
+    try:
+        revision = _repository().revert_revision(
+            revision_id,
+            actor=actor_subject(user),
+            reason=body.reason,
+            expected_revision=body.expected_revision,
+            idempotency_key=body.idempotency_key,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "revert_checklist_revision")
+    return ok(
+        revision,
+        message="Revisão compensatória aplicada.",
+        status_code=201,
+        operation_id="revert_checklist_revision",
+    )
+
+
+@router.post(
+    "/{template_id}/versions/{version_id}/impact-preview",
+    operation_id="preview_checklist_revision",
+)
+def preview_checklist_revision(
+    request: Request, template_id: str, version_id: str,
+    body: PreviewRevisionRequest,
+):
+    authorized_admin(request)
+    try:
+        preview = _repository().preview_revision(
+            version_id, [c.model_dump() for c in body.changes]
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "preview_checklist_revision")
+    return ok(preview, operation_id="preview_checklist_revision")
+
+
+@router.get(
+    "/{template_id}/sync-runs",
+    operation_id="list_checklist_sync_runs",
+)
+def list_checklist_sync_runs(
+    request: Request, template_id: str,
+    revision_id: str | None = Query(default=None),
+):
+    authorized_admin(request)
+    try:
+        runs = _repository().list_sync_runs(template_id, revision_id)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "list_checklist_sync_runs")
+    return ok({"runs": runs}, operation_id="list_checklist_sync_runs")
+
+
+@router.post(
+    "/{template_id}/sync-events/{event_id}:retry",
+    operation_id="retry_checklist_sync_event",
+)
+def retry_checklist_sync_event(
+    request: Request, template_id: str, event_id: str
+):
+    user = authorized_admin(request)
+    try:
+        result = _repository().retry_sync_event(
+            event_id, actor=actor_subject(user)
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "retry_checklist_sync_event")
+    return ok(
+        result,
+        status_code=202,
+        operation_id="retry_checklist_sync_event",
+    )

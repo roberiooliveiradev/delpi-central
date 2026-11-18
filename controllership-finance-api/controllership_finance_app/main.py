@@ -153,6 +153,19 @@ async def lifespan(_app: FastAPI):
                 run_closing_notification_dispatch_loop()
             )
         )
+    if settings.CF_CHECKLIST_SYNC_DISPATCH_ENABLED not in ("0", "false"):
+        # CF-CHECKLIST-LIVE-004: consumidor durável da outbox de sync —
+        # reconciliação idempotente por competência, convergência por
+        # read-back, dead-letter observável.
+        from controllership_finance_app.startup.checklist_sync_dispatch_job import (
+            run_checklist_sync_dispatch_loop,
+        )
+
+        pollers.append(
+            asyncio.create_task(
+                run_checklist_sync_dispatch_loop()
+            )
+        )
     if settings.ENTRY_AUDIT_ENABLED:
         from controllership_finance_app.application.entry_audit.composer import (
             build_entry_audit_service,

@@ -1243,6 +1243,82 @@ def tool_get_checklist_template_version(
     )
 
 
+
+
+def tool_checklist_list_series(template_id: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.list_checklist_series, request,
+        template_id=template_id,
+    )
+
+
+def tool_checklist_get_active_series(template_id: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.get_active_checklist_series, request,
+        template_id=template_id,
+    )
+
+
+def tool_checklist_list_revisions(
+    template_id: str, version_id: str
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.list_checklist_version_revisions, request,
+        template_id=template_id, version_id=version_id,
+    )
+
+
+def tool_checklist_get_revision(
+    template_id: str, version_id: str, revision_id: str
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.get_checklist_version_revision, request,
+        template_id=template_id, version_id=version_id,
+        revision_id=revision_id,
+    )
+
+
+def tool_checklist_preview_revision(
+    template_id: str, version_id: str, changes: list
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    from controllership_finance_app.interface.http.routes import (
+        admin_checklist_routes as _r,
+    )
+
+    body = _r.PreviewRevisionRequest(changes=list(changes or []))
+    return _call_route(
+        admin_checklist_routes.preview_checklist_revision, request,
+        template_id=template_id, version_id=version_id, body=body,
+    )
+
+
+def tool_checklist_list_sync_runs(
+    template_id: str, revision_id: str | None = None
+) -> CallToolResult:
+    request, _user = _user_and_access()
+    return _call_route(
+        admin_checklist_routes.list_checklist_sync_runs, request,
+        template_id=template_id, revision_id=revision_id,
+    )
+
+
+def tool_checklist_get_sync_status(period: str) -> CallToolResult:
+    request, _user = _user_and_access()
+    from controllership_finance_app.interface.http.routes import (
+        competences_routes,
+    )
+
+    return _call_route(
+        competences_routes.get_competence_sync_status, request,
+        period=period,
+    )
+
+
 def tool_list_received_deliveries() -> CallToolResult:
     request, _user = _user_and_access()
     return _call_route(
@@ -1688,6 +1764,13 @@ __all__ = [
     "tool_execute_batch",
     "tool_get_batch_status",
     "tool_prepare_batch",
+    "tool_checklist_get_active_series",
+    "tool_checklist_get_revision",
+    "tool_checklist_get_sync_status",
+    "tool_checklist_list_revisions",
+    "tool_checklist_list_series",
+    "tool_checklist_list_sync_runs",
+    "tool_checklist_preview_revision",
     "tool_get_catalog",
     "tool_get_checklist_item",
     "tool_get_checklist_items",

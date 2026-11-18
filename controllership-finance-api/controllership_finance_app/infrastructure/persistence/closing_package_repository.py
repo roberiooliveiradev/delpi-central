@@ -916,6 +916,7 @@ class ClosingPackageRepository:
                     package = self._package_rows(cur, competence_id)[
                         version["recipient_area"]
                     ]
+                    self._refresh_completion_marker(cur, period)
                     return self._package_view(
                         cur,
                         competence_id,
@@ -979,6 +980,7 @@ class ClosingPackageRepository:
                     package = self._package_rows(cur, competence_id)[
                         version["recipient_area"]
                     ]
+                    self._refresh_completion_marker(cur, period)
                     return self._package_view(
                         cur,
                         competence_id,
@@ -1150,6 +1152,7 @@ class ClosingPackageRepository:
                     package = self._package_rows(cur, competence_id)[
                         version["recipient_area"]
                     ]
+                    self._refresh_completion_marker(cur, period)
                     return self._package_view(
                         cur,
                         competence_id,
@@ -1529,6 +1532,7 @@ class ClosingPackageRepository:
                             "matched_eligibility_groups": sorted(matched),
                         },
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     def open_clarification(
@@ -1696,6 +1700,7 @@ class ClosingPackageRepository:
                         },
                         actor=actor,
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     # -- rejeição terminal (DEC-01/02) -------------------------------------
@@ -1847,101 +1852,117 @@ class ClosingPackageRepository:
                         payload={"period": period},
                         actor=actor,
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     # -- conclusão mensal C2 (derivada — nunca forçável) -------------------
 
-    def derive_closing_state(self, period: str) -> dict[str, Any]:
-        """C2 aprovado + controle P3 oficial:
 
-        ALL_APPLICABLE_PACKAGES SUBMITTED
-        AND per-package: required_areas non-empty, cada área com aceite
-        humano real na versão vigente, zero clarification OPEN
-        AND zero rejeição terminal ACTIVE
-        AND todo domínio P3 aplicável com proveniência OFFICIAL
-        => MONTHLY_CLOSING_COMPLETED (senão PENDING com motivos).
+    def _refresh_completion_marker(self, cur, period: str) -> None:
+        """Marcador de conclusão NA MESMA transação do writer (RQ-10
+        §6.2): lock + rederivação sobre o mesmo cursor — commit
+        atômico com o efeito que zerou o último blocker."""
+        from controllership_finance_app.infrastructure.persistence\
+            .closing_checklist_repository import (
+                ClosingChecklistRepository,
+            )
+        competence_id = self._competence_id(cur, period)
+        ClosingChecklistRepository().refresh_completion_marker_locked(
+            cur, competence_id
+        )
+
+    def derive_closing_state(self, period: str) -> dict[str, Any]:
+        """Deriva o fechamento mensal (C2) — nunca aceita conclusão
+        forçada. PENDING ou MONTHLY_CLOSING_COMPLETED com blockers.
         """
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
-            competence_id = self._competence_id(cur, period)
-            blocking: list[str] = []
-            rejection = self._terminal_rejection(cur, competence_id)
-            if rejection and rejection["state"] == "ACTIVE":
-                return {
-                    "period": period,
-                    "state": "TERMINALLY_REJECTED",
-                    "terminal_rejection": rejection,
-                    "blocking_reasons": ["terminal_rejection_active"],
-                    "packages": [],
-                }
-            areas = self._applicable_areas(cur, competence_id)
-            if not areas:
-                # Vacuidade nunca conclui: competência sem nenhum
-                # pacote aplicável não fecha por ausência de bloqueios.
-                blocking.append("no_applicable_packages")
-            packages = self._package_rows(cur, competence_id)
-            package_states: list[dict[str, Any]] = []
-            for area in areas:
-                package = packages.get(area)
-                view = self._package_view(
-                    cur, competence_id, package, area
-                )
-                package_states.append(view)
-                latest = view["current_version"]
-                if latest is None or latest["status"] != "SUBMITTED":
-                    blocking.append(f"package_not_submitted:{area}")
-                    continue
-                required = latest.get("required_areas") or []
-                decisions = view["area_decisions"]
-                clarif_open = view["open_clarifications"]
-                if not required:
-                    blocking.append(
-                        f"no_required_areas:{area}"
-                    )
-                for req in required:
-                    d = decisions.get(req)
-                    if d is None:
-                        blocking.append(
-                            f"area_not_reviewed:{area}:{req}"
-                        )
-                    elif d["outcome"] != "ACCEPTED":
-                        blocking.append(
-                            f"area_not_accepted:{area}:{req}"
-                        )
-                if clarif_open:
-                    blocking.append(
-                        f"open_clarification:{area}"
-                    )
-            # Controle B/C: conclusão exige P3 vigente E oficial.
-            # `blockers` do P3 cobrem cutoff, revalidação vigente
-            # (fingerprint), disponibilidade de fonte e divergência
-            # monetária — `STOCK_CLOSED` canônico não mascara inputs
-            # alterados/indisponíveis (estado de estoque != conclusão).
-            # `provenance_kind` separa conciliação registrada de
-            # resultado oficial comprovado.
-            p3_state = ClosingP3Repository().get_p3_state(period)
-            for p3_blocker in p3_state["blockers"]:
-                blocking.append(f"p3_{p3_blocker}")
-            for recon in p3_state["reconciliations"]:
-                kind = recon.get("provenance_kind")
-                if kind is None:
-                    blocking.append(
-                        f"p3_reconciliation_missing:{recon['domain']}"
-                    )
-                elif kind != "OFFICIAL":
-                    blocking.append(
-                        f"p3_declared_only:{recon['domain']}"
-                    )
+            return self._derive_closing_state(cur, period)
+
+    def _derive_closing_state(
+        self, cur, period: str
+    ) -> dict[str, Any]:
+        """Derivação sobre cursor compartilhado — enxerga writes
+        não commitados da transação do caller (RQ-10 §6.2)."""
+        competence_id = self._competence_id(cur, period)
+        blocking: list[str] = []
+        rejection = self._terminal_rejection(cur, competence_id)
+        if rejection and rejection["state"] == "ACTIVE":
             return {
                 "period": period,
-                "state": (
-                    "MONTHLY_CLOSING_COMPLETED"
-                    if not blocking
-                    else "PENDING"
-                ),
-                "blocking_reasons": blocking,
-                "packages": package_states,
-                "terminal_rejection": None,
+                "state": "TERMINALLY_REJECTED",
+                "terminal_rejection": rejection,
+                "blocking_reasons": ["terminal_rejection_active"],
+                "packages": [],
             }
+        areas = self._applicable_areas(cur, competence_id)
+        if not areas:
+            # Vacuidade nunca conclui: competência sem nenhum
+            # pacote aplicável não fecha por ausência de bloqueios.
+            blocking.append("no_applicable_packages")
+        packages = self._package_rows(cur, competence_id)
+        package_states: list[dict[str, Any]] = []
+        for area in areas:
+            package = packages.get(area)
+            view = self._package_view(
+                cur, competence_id, package, area
+            )
+            package_states.append(view)
+            latest = view["current_version"]
+            if latest is None or latest["status"] != "SUBMITTED":
+                blocking.append(f"package_not_submitted:{area}")
+                continue
+            required = latest.get("required_areas") or []
+            decisions = view["area_decisions"]
+            clarif_open = view["open_clarifications"]
+            if not required:
+                blocking.append(
+                    f"no_required_areas:{area}"
+                )
+            for req in required:
+                d = decisions.get(req)
+                if d is None:
+                    blocking.append(
+                        f"area_not_reviewed:{area}:{req}"
+                    )
+                elif d["outcome"] != "ACCEPTED":
+                    blocking.append(
+                        f"area_not_accepted:{area}:{req}"
+                    )
+            if clarif_open:
+                blocking.append(
+                    f"open_clarification:{area}"
+                )
+        # Controle B/C: conclusão exige P3 vigente E oficial.
+        # `blockers` do P3 cobrem cutoff, revalidação vigente
+        # (fingerprint), disponibilidade de fonte e divergência
+        # monetária — `STOCK_CLOSED` canônico não mascara inputs
+        # alterados/indisponíveis (estado de estoque != conclusão).
+        # `provenance_kind` separa conciliação registrada de
+        # resultado oficial comprovado.
+        p3_state = ClosingP3Repository()._p3_state(cur, period)
+        for p3_blocker in p3_state["blockers"]:
+            blocking.append(f"p3_{p3_blocker}")
+        for recon in p3_state["reconciliations"]:
+            kind = recon.get("provenance_kind")
+            if kind is None:
+                blocking.append(
+                    f"p3_reconciliation_missing:{recon['domain']}"
+                )
+            elif kind != "OFFICIAL":
+                blocking.append(
+                    f"p3_declared_only:{recon['domain']}"
+                )
+        return {
+            "period": period,
+            "state": (
+                "MONTHLY_CLOSING_COMPLETED"
+                if not blocking
+                else "PENDING"
+            ),
+            "blocking_reasons": blocking,
+            "packages": package_states,
+            "terminal_rejection": None,
+        }
 
     # -- cockpit agregado (C4) ----------------------------------------------
 

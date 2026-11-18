@@ -23,6 +23,8 @@ const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const discardMock = vi.fn();
 const listEventsMock = vi.fn();
+const listRevisionsMock = vi.fn();
+const listSyncRunsMock = vi.fn();
 const diagnoseDeleteMock = vi.fn();
 const deleteMock = vi.fn();
 
@@ -43,6 +45,10 @@ vi.mock("../../api/adminApi", () => ({
     diagnoseDeleteMock(...args),
   deleteTemplateVersion: (...args: unknown[]) => deleteMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
+  listVersionRevisions: (...args: unknown[]) =>
+    listRevisionsMock(...args),
+  listChecklistSyncRuns: (...args: unknown[]) =>
+    listSyncRunsMock(...args),
 }));
 
 import { ChecklistVersionPage } from "./ChecklistVersionPage";
@@ -102,6 +108,8 @@ const REVIEW_DETAIL = {
 
 function setupHappy() {
   listTemplatesMock.mockResolvedValue([TEMPLATE]);
+  listRevisionsMock.mockResolvedValue([]);
+  listSyncRunsMock.mockResolvedValue([]);
 }
 
 describe("ChecklistVersionPage", () => {

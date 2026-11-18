@@ -366,6 +366,39 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         ref_param="template_id",
         required=("template_id", "version"),
     ),
+    ("checklist", "series"): _read_spec(
+        bridge.tool_checklist_list_series,
+        required=("template_id",),
+    ),
+    ("checklist", "series_active"): _read_spec(
+        bridge.tool_checklist_get_active_series,
+        required=("template_id",),
+    ),
+    ("checklist", "revisions"): _read_spec(
+        bridge.tool_checklist_list_revisions,
+        ref_param="template_id",
+        required=("template_id", "version_id"),
+    ),
+    ("checklist", "revision"): _read_spec(
+        bridge.tool_checklist_get_revision,
+        ref_param="template_id",
+        required=("template_id", "version_id", "revision_id"),
+    ),
+    ("checklist", "revision_preview"): _read_spec(
+        bridge.tool_checklist_preview_revision,
+        ref_param="template_id",
+        required=("template_id", "version_id", "changes"),
+    ),
+    ("checklist", "sync_runs"): _read_spec(
+        bridge.tool_checklist_list_sync_runs,
+        ref_param="template_id",
+        required=("template_id",),
+        allowed=("revision_id",),
+    ),
+    ("competence", "sync_status"): _read_spec(
+        bridge.tool_checklist_get_sync_status,
+        required=("period",),
+    ),
     ("received", "deliveries"): _read_spec(
         bridge.tool_list_received_deliveries
     ),

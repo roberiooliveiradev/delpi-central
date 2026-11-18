@@ -482,3 +482,56 @@ class VersionDeleteUnavailable(VersionDeleteError):
 class VersionDeleteInvalid(VersionDeleteError):
     code = "version_delete_invalid"
     status = 422
+
+
+# -- Checklist vivo: séries, revisões, sincronização (LIVE-004) ---------
+
+
+class SeriesNotFound(ChecklistDomainError):
+    code = "series_not_found"
+    status = 404
+
+
+class SeriesConfirmationRequired(ChecklistDomainError):
+    code = "series_confirmation_required"
+    status = 422
+
+
+class RevisionNotFound(ChecklistDomainError):
+    code = "revision_not_found"
+    status = 404
+
+
+class ItemRetired(ChecklistDomainError):
+    code = "item_retired"
+    status = 409
+
+
+class UnknownCancelOrigin(ChecklistDomainError):
+    code = "unknown_cancel_origin"
+    status = 409
+
+
+class CatalogNotEmpty(ChecklistDomainError):
+    code = "catalog_not_empty"
+    status = 409
+
+
+class SyncEventNotFound(ChecklistDomainError):
+    code = "sync_event_not_found"
+    status = 404
+
+
+class SyncRetryNotAllowed(ChecklistDomainError):
+    code = "sync_retry_not_allowed"
+    status = 409
+
+
+class CompletionReconciliationError(ChecklistDomainError):
+    code = "completion_reconciliation_error"
+    status = 409
+
+
+class OperationNotRepeatable(ChecklistDomainError):
+    code = "operation_repeated"
+    status = 409

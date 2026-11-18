@@ -319,6 +319,22 @@ export const CF_HELP = {
         "Estado do item nesta competência: Esperado, Aceito, Não aplicável ou Cancelado.",
     },
   },
+  checklistLive: {
+    series:
+      "Sequências (séries) do checklist vivo — cada sequência numera suas próprias versões começando em V1 e preserva integralmente as anteriores. Iniciar nova sequência é uma ação excepcional que encerra a sequência vigente e exige confirmação digitada START_NEW_SEQUENCE; séries encerradas permanecem consultáveis e seu histórico nunca é reescrito.",
+    seriesNo:
+      "Número ordinal da sequência — S1 é a sequência original; cada nova sequência incrementa o contador.",
+    revisions:
+      "Revisões internas append-only da versão publicada — cada alteração do catálogo (incluir, editar, retirar, reativar ou reordenar documento) é registrada como uma revisão nova, sem reescrever o histórico. A aplicação exige a revisão esperada (controle de concorrência) e emite automaticamente o evento de sincronização para as competências abertas elegíveis.",
+    revert:
+      "Reversão compensatória: não apaga a revisão original — aplica uma nova revisão que desfaz seus efeitos, preservando a cadeia auditável completa.",
+    sync:
+      "Execuções da sincronização automática do checklist — cada revisão aplicada gera um evento durável que o processador reconcilia em cada competência aberta, uma transação por competência. Competências concluídas ou encerradas nunca são alteradas retroativamente.",
+    syncExclusions:
+      "Motivo de exclusão de um item da sincronização — itens com decisão humana registrada (documento avaliado, cancelamento manual ou correção em andamento) são preservados e listados como exclusões em vez de sobrescritos.",
+    syncRetry:
+      "Reabre os runs falhos/parciais do evento para nova tentativa — seguro e idempotente; a reconciliação só repete o que ainda diverge.",
+  },
   admin: {
     page:
       "Administração do checklist mestre — exige permissão de gestão (controllership-finance.manage). Todo ciclo é versionado: criar rascunho, editar itens, publicar com vigência prospectiva e inativar. Competências já abertas nunca mudam — elas guardam um snapshot próprio. Usuários e permissões não são administrados aqui: pertencem ao Core.",

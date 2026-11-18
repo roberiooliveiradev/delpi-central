@@ -26,6 +26,7 @@ const returnDraftMock = vi.fn();
 const inactivateMock = vi.fn();
 const discardMock = vi.fn();
 const listEventsMock = vi.fn();
+const listSeriesMock = vi.fn();
 const diagnoseDeleteMock = vi.fn();
 const deleteMock = vi.fn();
 
@@ -49,6 +50,7 @@ vi.mock("../../api/adminApi", () => ({
     diagnoseDeleteMock(...args),
   deleteTemplateVersion: (...args: unknown[]) => deleteMock(...args),
   listTemplateEvents: (...args: unknown[]) => listEventsMock(...args),
+  listChecklistSeries: (...args: unknown[]) => listSeriesMock(...args),
 }));
 
 import { ChecklistAdminPage } from "./ChecklistAdminPage";
@@ -88,6 +90,7 @@ function setupHappy() {
     VERSION_PUBLISHED,
     VERSION_DRAFT,
   ]);
+  listSeriesMock.mockResolvedValue([]);
 }
 
 /** Escopo da listagem — o hero exibe a última versão (`v2`), então
@@ -236,7 +239,10 @@ describe("ChecklistAdminPage", () => {
     setupHappy();
     render(<ChecklistAdminPage basePath={BASE} />);
     await screen.findByText("v1");
-    fireEvent.click(screen.getByRole("button", { name: "Cards" }));
+    const toolbar = screen.getByTestId("admin-listing-toolbar");
+    fireEvent.click(
+      within(toolbar).getByRole("button", { name: "Cards" }),
+    );
     const card = await screen.findByRole("link", {
       name: "Abrir versão 1",
     });

@@ -248,7 +248,15 @@ def _delete_locked(
     cur.execute(
         f"""
         DELETE FROM {SCHEMA_NAME}.checklist_template_version
-         WHERE template_id = %s AND version = %s AND revision = %s
+         WHERE version_id = (
+            SELECT v2.version_id
+              FROM {SCHEMA_NAME}.checklist_template_version v2
+              JOIN {SCHEMA_NAME}.checklist_template_series s2
+                ON s2.series_id = v2.series_id
+             WHERE v2.template_id = %s AND v2.version = %s
+             ORDER BY s2.series_no DESC LIMIT 1
+        )
+           AND revision = %s
         """,
         (template_id, version, expected_revision),
     )
@@ -290,7 +298,7 @@ def _delete_locked(
             "A auditoria da exclusão não pôde ser registrada.",
             details={"outcome": "unavailable"},
         )
-    _assert_absent(cur, template_id, version)
+    _assert_absent(cur, str(current_id))
     return {
         "version_id": current_id,
         "template_id": template_id,
@@ -488,10 +496,13 @@ def _version_row(
 ) -> dict[str, Any] | None:
     cur.execute(
         f"""
-        SELECT version_id, template_id, version, status, revision,
-               effective_from_period
-          FROM {SCHEMA_NAME}.checklist_template_version
-         WHERE template_id = %s AND version = %s
+        SELECT v.version_id, v.template_id, v.version, v.status,
+               v.revision, v.effective_from_period
+          FROM {SCHEMA_NAME}.checklist_template_version v
+          JOIN {SCHEMA_NAME}.checklist_template_series s
+            ON s.series_id = v.series_id
+         WHERE v.template_id = %s AND v.version = %s
+         ORDER BY s.series_no DESC LIMIT 1
            FOR {mode}
         """,
         (template_id, version),
@@ -551,14 +562,14 @@ def _success(prior: dict[str, Any], *, replayed: bool) -> dict[str, Any]:
     }
 
 
-def _assert_absent(cur, template_id: str, version: int) -> None:
+def _assert_absent(cur, version_id: str) -> None:
     cur.execute(
         f"""
         SELECT 1
           FROM {SCHEMA_NAME}.checklist_template_version
-         WHERE template_id = %s AND version = %s
+         WHERE version_id = %s
         """,
-        (template_id, version),
+        (version_id,),
     )
     if cur.fetchone() is not None:
         raise VersionDeleteUnavailable(

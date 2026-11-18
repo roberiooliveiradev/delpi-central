@@ -213,3 +213,51 @@ def get_closing_competence_item(
     except ChecklistDomainError as exc:
         return _domain_fail(exc, "get_closing_competence_item")
     return ok(item, operation_id="get_closing_competence_item")
+
+
+# -- Checklist vivo: sync status + reconciliação (CF-CHECKLIST-LIVE-004)
+
+
+@router.get(
+    "/{period}/sync-status",
+    operation_id="get_competence_sync_status",
+)
+def get_competence_sync_status(
+    request: Request,
+    period: str = Path(pattern=PERIOD_PATTERN),
+):
+    authorized_user(request)
+    try:
+        status = _repository().get_sync_status(period)
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "get_competence_sync_status")
+    return ok(status, operation_id="get_competence_sync_status")
+
+
+class CompletionAssessmentRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    completion_record: str = Field(pattern="^(NEVER|COMPLETED)$")
+    evidence_summary: str = Field(min_length=1, max_length=2000)
+
+
+@router.post(
+    "/{competence_id}/completion-assessment",
+    operation_id="assess_competence_completion",
+)
+def assess_competence_completion(
+    request: Request,
+    competence_id: str,
+    body: CompletionAssessmentRequest,
+):
+    user = authorized_admin(request)
+    try:
+        result = _repository().assess_completion(
+            competence_id,
+            actor=actor_subject(user),
+            reason=body.reason,
+            completion_record=body.completion_record,
+            evidence_summary=body.evidence_summary,
+        )
+    except ChecklistDomainError as exc:
+        return _domain_fail(exc, "assess_competence_completion")
+    return ok(result, operation_id="assess_competence_completion")

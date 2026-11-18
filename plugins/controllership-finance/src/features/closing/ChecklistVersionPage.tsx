@@ -68,6 +68,10 @@ import {
   type EditableItem,
   type QueryError,
 } from "./checklistAdminShared";
+import {
+  ChecklistRevisionsSection,
+  ChecklistSyncSection,
+} from "./ChecklistLivePanel";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
 
@@ -726,6 +730,19 @@ export function ChecklistVersionPage({
                 }
               />
             </div>
+            {detailData.status === "PUBLISHED" ? (
+              <>
+                <ChecklistRevisionsSection
+                  templateId={template!.template_id}
+                  versionId={detailData.version_id}
+                  currentRevision={detailData.revision}
+                  onChanged={reload}
+                />
+                <ChecklistSyncSection
+                  templateId={template!.template_id}
+                />
+              </>
+            ) : null}
           </>
         ) : null}
       </div>

@@ -62,6 +62,7 @@ import {
   useChecklistVersionActions,
   type QueryError,
 } from "./checklistAdminShared";
+import { ChecklistSeriesSection } from "./ChecklistLivePanel";
 import { CF_HELP } from "../../content/helpTooltips";
 import { formatDateTime } from "../../utils/formatters";
 
@@ -415,6 +416,10 @@ export function ChecklistAdminPage({ basePath }: { basePath: string }) {
               toolbarPortalTarget={toolbarHost}
               tableLayout="scroll"
               searchHint={CF_HELP.admin.search}
+            />
+            <ChecklistSeriesSection
+              templateId={template.template_id}
+              onChanged={reload}
             />
           </div>
         ) : null}

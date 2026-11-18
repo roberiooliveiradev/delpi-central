@@ -205,9 +205,27 @@ class ClosingP3Repository:
             Decimal("0.01")
         )
 
+    def _refresh_completion_marker(self, cur, period: str) -> None:
+        """Marcador de conclusão na mesma transação do writer P3
+        (RQ-10 §6.2)."""
+        from controllership_finance_app.infrastructure.persistence\
+            .closing_checklist_repository import (
+                ClosingChecklistRepository,
+            )
+        competence_id = self._competence_id(cur, period)
+        ClosingChecklistRepository().refresh_completion_marker_locked(
+            cur, competence_id
+        )
+
     def get_p3_state(self, period: str) -> dict[str, Any]:
         """Readiness derivada — nunca persistida como verdade única."""
         with self._conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+            return self._p3_state(cur, period)
+
+    def _p3_state(self, cur, period: str) -> dict[str, Any]:
+        """Mesma derivação sobre cursor compartilhado — usada pelo
+        marcador de conclusão in-tx (RQ-10)."""
+        if True:
             competence_id = self._competence_id(cur, period)
             cutoff = self._cutoff(cur, competence_id)
             recons = self._reconciliations(cur, competence_id)
@@ -312,6 +330,7 @@ class ClosingP3Repository:
                         actor=actor,
                         detail={"period": period, "notes": notes},
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     def upsert_reconciliation(
@@ -485,6 +504,7 @@ class ClosingP3Repository:
                             ),
                         },
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     def revalidate(
@@ -544,6 +564,7 @@ class ClosingP3Repository:
                             "notes": notes,
                         },
                     )
+                    self._refresh_completion_marker(cur, period)
                     return row
 
     def list_p3_events(
