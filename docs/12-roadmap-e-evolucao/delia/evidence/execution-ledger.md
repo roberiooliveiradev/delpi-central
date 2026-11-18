@@ -7386,6 +7386,10 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   GROUNDED/SATISFIED (109) nos dois arms.
 - **DR-1 resolvida:** escopo estreito (arquivos delia + pacote de
   evidência), sem atribuir commits concorrentes à task.
-- **VERIFIER:** r1 REWORK (OC-1 docs/ledger, OC-2 evidência de teste);
-  rodadas seguintes em verification/ do pacote.
+- **VERIFIER (cursor/Composer, 2 rodadas):** r1 REWORK (OC-1 docs/
+  ledger, OC-2 evidência de teste versionada) → r2
+  **ACCEPT_WITH_RESIDUAL** — reports em verification/ do pacote.
+  Residuais declarados: pytest TEST_NOT_RUN p/ o motor (log versionado
+  cobre), CI remota não verificada, HEAD avança com commits concorrentes
+  fora da atribuição DR-1(a).
 - **ESTADO:** DEPLOY=NOT_RUN; PROMOTION/PHASE=NOT_AUTHORIZED.

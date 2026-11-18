@@ -103,7 +103,7 @@ TASK: COORDINATION_C3_T2_ANCHOR_RECOVERY_DELIVERED_SHA_RECONCILIATION_AND_INDEPE
 | 7726124ebe | 2c53237f93 | REVERTIDO ("reverte WIP delia indevido") |
 | 8095ee540f (declarado final anterior) | 2c53237f93 | AUSENTE — push sem o fix |
 | 9665f42e7f (filho de 8095ee540f) | 752b9e3e0d | REINTEGRADO byte-idêntico |
-| 43e8422906 / HEAD | 752b9e3e0d | presente |
+| 43e8422906 … HEAD | 752b9e3e0d | presente (ininterrupto desde 9665f42e7f) |
 
 Os 5 arquivos da task em HEAD = blobs de 3f1d7ab46f (byte-idênticos):
 semantic_capability_support.py 752b9e3e0d · pydantic_ai_investigation.py
@@ -141,6 +141,7 @@ binding). Nenhuma representação nova criada; Suficiência não relaxada.
 
 ## Verificador
 
-request-sha-reconciliation-r1.md + report-sha-reconciliation-r1.md em
-verification/ deste pacote. Veredito anterior r2 (7726124ebe) NÃO é
-transferível — revalidado aqui no HEAD efetivo.
+request/report sha-reconciliation-r1 + report-sha-reconciliation-r2
+em verification/ deste pacote — veredito final ACCEPT_WITH_RESIDUAL r2.
+Veredito anterior r2 (7726124ebe) NÃO foi transferível — revalidado no
+HEAD efetivo.
