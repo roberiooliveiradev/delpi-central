@@ -1,5 +1,8 @@
 # PRC — Conversa da solicitação: plano sequencial Backend → EVA → Frontends
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** O cabeçalho `TARGET / PLANNED` refere-se ao plano de 16/11, nao ao estado atual. A conversa P1/P2/P3 foi entregue e o recorte UX posterior foi consolidado em PRD conforme relatorios; PO confirmou resolucao em 18/11. As seis tools e a autoridade Engineering API permanecem. Smoke automatizado PRD autenticado continua `TEST_NOT_RUN` nos relatórios. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 **TASK_ID:** EVA-PRC-CONVERSATION-BACKEND-EVA-PLUGIN-UI-PHASED-PLAN-01  
 **Data:** 2026-11-16  
 **Status:** TARGET / PLANNED — planejamento aprovado pelo PO, nenhuma etapa executada por este documento.  
