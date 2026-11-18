@@ -8,7 +8,7 @@ Vertical de **cadastro/alteração de matéria-prima** na Minha DELPI.
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [EVOLUCAO.md](./EVOLUCAO.md) | Objetivo, evidência, arquitetura alvo, fases, proibições, cutover |
+| [Plano mestre atual — Portal Engenharia](../engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md) | Objetivo, evidência, arquitetura alvo, fases, proibições, cutover |
 
 ## Relacionados
 
@@ -21,7 +21,7 @@ Vertical de **cadastro/alteração de matéria-prima** na Minha DELPI.
 
 ## PRC-REF-023 — decisão atual (11/11/2026)
 
-> **IMPORTANTE:** O texto histórico de `EVOLUCAO.md` apresenta um alvo antigo de integração com `requests-api`. Para o PRC-REF-023 vigente, preserva-se **Engineering API como autoridade oficial do caso**, **Portal Engenharia como atendimento** e **Minhas Solicitações como entrada/consulta/correção**; não criar caso paralelo.
+> **IMPORTANTE:** O texto histórico do arquivo removido `EVOLUCAO.md` (histórico Git) apresenta um alvo antigo de integração com `requests-api`. Para o PRC-REF-023 vigente, preserva-se **Engineering API como autoridade oficial do caso**, **Portal Engenharia como atendimento** e **Minhas Solicitações como entrada/consulta/correção**; não criar caso paralelo.
 
 - [PRC-REF-023 — Validação CREATE e UX unificada de devolução/correção](./PRC-REF-023-CREATE-VALIDATION-AND-UNIFIED-CORRECTION-UX-2026-11-11.md) — decisão funcional atual, wireframes completos do modal e card, regras CREATE × UPDATE, campos vazios, tabelas/atributos e critérios de aceite. **TARGET** até implementação validada.
 - [Issue canônica #154](https://github.com/roberiooliveiradev/delpi-central/issues/154) — acompanhamento de execução e evidências.
