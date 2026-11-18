@@ -22,14 +22,14 @@ try {
   page.on("request", request => { if (!request.url().startsWith(origin)) external.push(request.url()); });
   await page.goto(origin);
   const host = page.locator("delpi-line-balance-studio");
-  const metric = name => host.locator(".metric").filter({ hasText: name }).locator("strong");
-  const selectTrigger = name => host.getByRole("button", { name, exact: true });
+  const metric = name => host.locator(".delpi-ui-kpi-card").filter({ hasText: name }).locator("strong");
+  const selectTrigger = name => host.getByRole("combobox", { name, exact: true });
   const options = host.getByRole("listbox");
   const choose = async (name, option) => {
     const trigger = selectTrigger(name);
     await trigger.click();
     assert.equal(await trigger.getAttribute("aria-expanded"), "true");
-    await options.getByRole("button", { name: option, exact: true }).click();
+    await options.getByRole("option", { name: option, exact: true }).click();
     await options.waitFor({ state: "hidden" });
     assert.equal((await trigger.textContent()).trim(), option);
   };
@@ -38,9 +38,16 @@ try {
   assert.match(await conditionsButton.getAttribute("class"), /delpi-ui-action-btn/);
   assert.match(await selectTrigger("Cenário").getAttribute("class"), /delpi-ui-select__trigger/);
   assert.equal(await host.locator("select").count(), 0);
+  assert.equal(await host.locator(".delpi-ui-section-card").count(), 2);
+  assert.equal(await host.locator(".delpi-ui-table").count(), 1);
+  assert.equal(await host.locator(".delpi-ui-stacked-column-chart").count(), 1);
+  assert.equal(await host.locator(".delpi-ui-status-badge").count(), 1);
   await selectTrigger("Cenário").click();
   await options.waitFor();
   assert.equal(await options.evaluate(list => list.getRootNode() instanceof ShadowRoot), true);
+  const selectedScenario = options.getByRole("option", { name: "Cenário A · Inicial" });
+  assert.equal(await selectedScenario.getAttribute("aria-selected"), "true");
+  assert.equal(await selectedScenario.locator("svg").count(), 1);
   await host.getByRole("heading", { name: "Yamazumi" }).click();
   await options.waitFor({ state: "hidden" });
   assert.match(await host.getByLabel("Nome do estudo", { exact: true }).getAttribute("class"), /delpi-ui-native-control/);
@@ -53,9 +60,9 @@ try {
       element.dataset.lastChangedStudy = event.detail.study.id;
     });
   });
-  const segment = host.getByRole("button", { name: /Crimpar terminais, 48 segundos/ });
+  const segment = host.getByRole("button", { name: /Crimpar terminais, 48 s/ });
   assert.match(await segment.getAttribute("class"), /delpi-ui-chart-segment-button/);
-  const drop = host.locator('[data-drop="p3"] .track');
+  const drop = host.locator('[data-drop="p3"] .delpi-ui-stacked-column-chart__track');
   await segment.dragTo(drop);
   assert.equal(await host.getAttribute("data-last-changed-study"), "demo");
   assert.equal((await selectTrigger("Posto da operação 4").textContent()).trim(), "Montagem");
@@ -63,7 +70,7 @@ try {
   await choose("Posto da operação 4", "Crimpagem");
   assert.equal(await metric("Maior carga").textContent(), "84 s");
   await choose("Posto da operação 8", "Inspeção");
-  assert.match(await host.locator(".chart-footer").textContent(), /Carga parcial/);
+  assert.match(await host.locator(".delpi-ui-stacked-column-chart__footer").textContent(), /Carga parcial/);
   await choose("Cenário", "Cenário B · Alternativo");
   assert.equal(await metric("Maior carga").textContent(), "70 s");
   await conditionsButton.click();
@@ -91,11 +98,11 @@ try {
   await host.getByLabel("Tempo da operação 1 em segundos", { exact: true }).fill("42.5");
   const select = selectTrigger("Posto da operação 1");
   await select.press("ArrowDown");
-  const firstOption = options.getByRole("button", { name: "Sem posto", exact: true });
+  const firstOption = options.getByRole("option", { name: "Sem posto", exact: true });
   await firstOption.waitFor();
   await page.waitForFunction(() => document.querySelector("delpi-line-balance-studio").shadowRoot.activeElement?.textContent.trim() === "Sem posto");
   await firstOption.press("ArrowDown");
-  await options.getByRole("button", { name: "Posto 1", exact: true }).press("Enter");
+  await options.getByRole("option", { name: "Posto 1", exact: true }).press("Enter");
   await options.waitFor({ state: "hidden" });
   assert.equal(await metric("Maior carga").textContent(), "42,5 s");
   assert.equal(await host.evaluate(el => el.study.operations[0].name), "Peça <teste>");
@@ -112,7 +119,7 @@ try {
   await selectTrigger("Cenário").click();
   await options.waitFor();
   assert.match(await options.evaluate(list => getComputedStyle(list.closest(".delpi-ui-select__panel")).backgroundColor), /rgb\(10, 36, 56\)/);
-  await options.getByRole("button").first().press("Escape");
+  await options.getByRole("option").first().press("Escape");
   await options.waitFor({ state: "hidden" });
   assert.equal(await conditionsButton.evaluate(element => getComputedStyle(element).minHeight), "44px");
   assert.deepEqual(errors, []);

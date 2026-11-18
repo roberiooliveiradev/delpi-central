@@ -1,0 +1,27 @@
+/* Minha DELPI form style: compact 8px trigger and an explicit selected option. */
+.delpi-ui-select--portal-style .delpi-ui-select__trigger {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.delpi-ui-select__panel--portal-style { padding: 6px; }
+.delpi-ui-select__panel--portal-style .delpi-ui-select__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.delpi-ui-select__panel--portal-style .delpi-ui-select__option[aria-selected="true"] {
+  background: color-mix(in srgb, var(--delpi-ui-select-accent) 12%, var(--delpi-ui-select-bg));
+  color: var(--delpi-ui-select-text);
+  font-weight: 600;
+}
+.delpi-ui-select__check {
+  display: inline-flex;
+  flex: 0 0 14px;
+  color: var(--delpi-ui-select-accent);
+}

@@ -402,3 +402,5 @@ export {
 } from "./ChartViewShell";
 
 export { ChartSegmentButton, type ChartSegmentButtonProps } from "./ChartSegmentButton";
+
+export { StackedColumnChart, type StackedColumnChartProps } from "./StackedColumnChart";

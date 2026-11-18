@@ -178,6 +178,7 @@ export {
   DEFAULT_FORM_SELECT_LABELS,
   FORM_SELECT_PREFIX,
   FormSelectControl,
+  ModernSelectControl,
   selectControlFormBemClasses,
 } from "./FormSelectControl";
 

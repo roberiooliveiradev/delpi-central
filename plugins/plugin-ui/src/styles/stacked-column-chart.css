@@ -1,0 +1,21 @@
+.delpi-ui-stacked-column-chart__scroll { overflow: auto; }
+.delpi-ui-stacked-column-chart__grid { --axis: 35px; --height: 190px; position: relative; display: grid; grid-template-columns: repeat(var(--column-count), minmax(80px, 1fr)); padding-left: var(--axis); min-width: calc(var(--axis) + var(--column-count) * 86px); padding-top: 14px; }
+.delpi-ui-stacked-column-chart__plot { position: absolute; top: 14px; left: var(--axis); right: 0; height: var(--height); pointer-events: none; }
+.delpi-ui-stacked-column-chart__gridline, .delpi-ui-stacked-column-chart__reference { position: absolute; width: 100%; border-top: 1px solid var(--delpi-ui-border, var(--border, #d8e1e9)); }
+.delpi-ui-stacked-column-chart__gridline > span { position: absolute; right: calc(100% + 8px); top: -8px; color: var(--delpi-ui-text-muted, var(--text-muted, #52677b)); font-size: 10px; font-variant-numeric: tabular-nums; }
+.delpi-ui-stacked-column-chart__reference { z-index: 2; border-top: 2px dashed light-dark(#ab5126, #f1a978); }
+.delpi-ui-stacked-column-chart__reference > span { position: absolute; top: -20px; right: 0; font-size: 11px; color: light-dark(#913b19, #ffc19b); background: var(--delpi-ui-surface, var(--surface, #fff)); padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+.delpi-ui-stacked-column-chart__column { position: relative; z-index: 1; min-width: 0; display: grid; justify-items: center; align-content: start; gap: 8px; }
+.delpi-ui-stacked-column-chart__track { width: min(70%, 133px); height: var(--height); position: relative; }
+.delpi-ui-stacked-column-chart__stack { position: absolute; bottom: 0; width: 100%; display: flex; flex-direction: column-reverse; border-radius: 6px 6px 0 0; }
+.delpi-ui-stacked-column-chart__value { position: absolute; left: 50%; transform: translate(-50%, -2px); white-space: nowrap; font-size: 12px; font-weight: 700; pointer-events: none; }
+.delpi-ui-stacked-column-chart__value.is-over { color: var(--delpi-ui-danger, #b42318); }
+.delpi-ui-stacked-column-chart__column-footer { display: flex; align-items: center; gap: 4px; width: min(95%, 190px); }
+[data-delpi-ui-chart-dragging="true"] .delpi-ui-stacked-column-chart__column { background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, transparent); outline: 1px dashed var(--delpi-ui-accent, #089bdb); }
+.delpi-ui-stacked-column-chart__unassign { display: none; }
+[data-delpi-ui-chart-dragging="true"] .delpi-ui-stacked-column-chart__unassign { display: inline; border: 1px dashed var(--delpi-ui-accent, #089bdb); padding: 2px 6px; border-radius: 4px; }
+.delpi-ui-stacked-column-chart__footer { display: flex; flex-wrap: wrap; gap: 7px 16px; color: var(--delpi-ui-text-muted, var(--text-muted, #52677b)); font-size: 11px; margin-top: 12px; }
+@media (max-width: 650px) {
+  .delpi-ui-stacked-column-chart__grid { --height: 150px; --axis: 29px; grid-template-columns: repeat(var(--column-count), minmax(108px, 1fr)); min-width: calc(var(--axis) + var(--column-count) * 110px); }
+  .delpi-ui-stacked-column-chart__column-footer { width: calc(100% - 4px); }
+}

@@ -24,7 +24,9 @@
 @import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
 @import "./styles/chart-segment-button.css";
+@import "./styles/stacked-column-chart.css";
 @import "./styles/select-control.css";
+@import "./styles/modern-select.css";
 @import "./styles/multi-select.css";
 @import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";

@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
@@ -47,6 +47,8 @@ export type SelectControlProps = {
   portalScopeClassName?: string;
   /** Render the dropdown within the anchor’s shadow tree when embedded as a custom element. */
   portalWithinShadowRoot?: boolean;
+  /** Shared Minha DELPI form styling and selection indicators. */
+  appearance?: "portal";
   /**
    * Quando definido (ex.: `data-delpi-preserve-text-edit`), aplica no trigger e
    * nas opções — evita blur do contentEditable da ribbon tipográfica.
@@ -94,6 +96,7 @@ export function SelectControl({
   className,
   portalScopeClassName,
   portalWithinShadowRoot,
+  appearance,
   preserveTextEditFocusAttr,
   classNames,
   labels,
@@ -132,18 +135,20 @@ export function SelectControl({
   const selectedLabel =
     selectedOption?.label ?? (allowEmpty && !value ? emptyLabel : placeholder);
 
-  const rootClass = [open ? classNames.rootOpen : classNames.root, className]
+  const portalAppearance = appearance === "portal";
+  const rootClass = [open ? classNames.rootOpen : classNames.root, portalAppearance && "delpi-ui-select--portal-style", className]
     .filter(Boolean)
     .join(" ");
 
   // Espelha `--portal` em cada token (prefix + delpi-ui), não só no último token da string.
   const panelClassName = [
     classNames.panel,
+    portalAppearance && "delpi-ui-select__panel--portal-style",
     ...classNames.panel
       .split(/\s+/)
       .filter(Boolean)
       .map((token) => `${token}--portal`),
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
   const closePanel = () => {
     setOpen(false);
@@ -234,6 +239,7 @@ export function SelectControl({
         id={fieldId}
         type="button"
         className={classNames.trigger}
+        role={portalAppearance ? "combobox" : undefined}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={listId}
@@ -286,6 +292,8 @@ export function SelectControl({
             <li key="__empty">
               <button
                 type="button"
+                role={portalAppearance ? "option" : undefined}
+                aria-selected={portalAppearance ? !value : undefined}
                 className={!value ? classNames.optionActive : classNames.option}
                 {...preserveAttrProps}
                 onMouseDown={(event) => {
@@ -294,6 +302,7 @@ export function SelectControl({
                 onKeyDown={onOptionKeyDown}
                 onClick={() => onOptionClick("")}
               >
+                {portalAppearance && <span className="delpi-ui-select__check" aria-hidden="true">{!value && <Check size={14} />}</span>}
                 {emptyLabel}
               </button>
             </li>
@@ -307,6 +316,8 @@ export function SelectControl({
               <li key={option.value || `__opt-${option.label}`}>
                 <button
                   type="button"
+                  role={portalAppearance ? "option" : undefined}
+                  aria-selected={portalAppearance ? option.value === value : undefined}
                   className={
                     option.value === value ? classNames.optionActive : classNames.option
                   }
@@ -318,6 +329,7 @@ export function SelectControl({
                   onKeyDown={onOptionKeyDown}
                   onClick={() => onOptionClick(option.value)}
                 >
+                  {portalAppearance && <span className="delpi-ui-select__check" aria-hidden="true">{option.value === value && <Check size={14} />}</span>}
                   {option.label}
                 </button>
               </li>

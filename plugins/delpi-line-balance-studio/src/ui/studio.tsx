@@ -1,17 +1,44 @@
-import { useState, type CSSProperties, type DragEvent as ReactDragEvent, type ReactNode } from "react";
+import { Timer, Clock3, ChartColumn, CircleDashed } from "lucide-react";
+import { useState, type DragEvent as ReactDragEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import {
   ActionButton,
-  ChartSegmentButton,
+  BrandMark,
+  PageHeader,
+  pageHeaderTitleRowBemClasses,
+  DataTable,
+  dataTableBemClasses,
+  SectionCard,
+  sectionCardKaizenBemClasses,
+  SimpleKpiCard,
+  simpleKpiCardBemClasses,
+  StackedColumnChart,
+  StateBox,
+  StatusBadge,
+  statusBadgeBemClasses,
   IconButton,
-  FormSelectControl,
+  ModernSelectControl,
   NativeTextControl,
   NATIVE_CONTROL_COMPACT_CLASS,
   type NativeTextControlProps,
 } from "@delpi/plugin-ui/native-controls";
 import { createManualStudy, summarizeShift } from "../index.js";
 import type { ManualStudyInput, ProductionConditionsInput, ScenarioInput, ShiftInput } from "../index.js";
+
+const pageHeaderClasses = pageHeaderTitleRowBemClasses("lbs");
+const pageHeaderLabels = { refresh: "Atualizar", refreshing: "Atualizando" };
+const sectionClasses = sectionCardKaizenBemClasses("lbs");
+const sectionLabels = { titleHelpAriaLabel: (title: string) => `Ajuda: ${title}` };
+const kpiClasses = simpleKpiCardBemClasses("lbs", "kpi", { withBody: true, withSubtitle: true });
+const badgeClasses = statusBadgeBemClasses("lbs");
+const tableClasses = dataTableBemClasses("lbs");
+const tableLabels = {
+  emptyMessage: "Adicione uma operação para começar.",
+  loadingMessage: "Carregando operações…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+};
 
 const colors = ["#089bdb", "#73c9ef", "#61a8e1", "#a6dff5", "#7a9de0", "#b2c7ed"];
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
@@ -258,7 +285,7 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.draggedOperation = operationId;
     event.dataTransfer.setData("text/plain", this.draggedOperation);
     event.dataTransfer.effectAllowed = "move";
-    this.surface.classList.add("dragging");
+    this.surface.dataset.delpiUiChartDragging = "true";
   };
 
   private readonly onDragOver = (event: DragEvent): void => {
@@ -278,7 +305,7 @@ export class LineBalanceStudioElement extends HTMLElement {
 
   private readonly clearDrag = (): void => {
     this.draggedOperation = undefined;
-    this.surface.classList.remove("dragging");
+    delete this.surface.dataset.delpiUiChartDragging;
   };
 
   private renderConditions(conditions: ProductionConditionsInput): ReactNode {
@@ -307,12 +334,11 @@ export class LineBalanceStudioElement extends HTMLElement {
       INVALID_NUMBER: "Use durações inteiras válidas.", NO_PRODUCTIVE_TIME: "Reserve tempo produtivo no turno.",
     };
     return (
-      <section className="panel conditions" id="conditions" aria-labelledby="conditions-title">
-        <h2 id="conditions-title">Condições de produção</h2>
+      <div id="conditions"><SectionCard title="Condições de produção" classNames={sectionClasses} labels={sectionLabels}>
         <div className="fields" key={shift.mode}>
           <div className="field">
             <label htmlFor="shift-mode">Modo de turno</label>
-            <FormSelectControl id="shift-mode" ariaLabel="Modo de turno" portalWithinShadowRoot value={shift.mode}
+            <ModernSelectControl id="shift-mode" ariaLabel="Modo de turno" portalWithinShadowRoot value={shift.mode}
               options={[{ value: "CLOCK", label: "Horários" }, { value: "MINUTES", label: "Minutos" }]}
               onChange={value => this.onField("mode", value)} />
           </div>
@@ -328,13 +354,13 @@ export class LineBalanceStudioElement extends HTMLElement {
         ))}
         <ActionButton id="add-break" onClick={() => this.onAction("add-break")}>+ Adicionar pausa</ActionButton>
         {demandUnitsPerShift !== undefined && (!Number.isSafeInteger(demandUnitsPerShift) || demandUnitsPerShift < 1)
-          && <p className="warning" role="status">Informe uma demanda inteira positiva.</p>}
+          && <StateBox variant="warning" dismissible={false}>Informe uma demanda inteira positiva.</StateBox>}
         {batchUnits !== undefined && (!Number.isSafeInteger(batchUnits) || batchUnits < 1)
-          && <p className="warning" role="status">Informe um tamanho de lote inteiro positivo.</p>}
+          && <StateBox variant="warning" dismissible={false}>Informe um tamanho de lote inteiro positivo.</StateBox>}
         {summary.ok
-          ? <p className="note">{format(summary.value.grossMinutes)} min brutos · {format(summary.value.breakMinutes)} min de pausa</p>
-          : <p className="warning" role="status">{[...new Set(summary.issues.map(issue => labels[issue.code] ?? "Revise as condições do turno."))].join(" ")}</p>}
-      </section>
+          ? <StateBox>{format(summary.value.grossMinutes)} min brutos · {format(summary.value.breakMinutes)} min de pausa</StateBox>
+          : <StateBox variant="warning" dismissible={false}>{[...new Set(summary.issues.map(issue => labels[issue.code] ?? "Revise as condições do turno."))].join(" ")}</StateBox>}
+      </SectionCard></div>
     );
   }
 
@@ -363,126 +389,99 @@ export class LineBalanceStudioElement extends HTMLElement {
     const incomplete = stations.some(station => station.unknown > 0);
     const validation = createManualStudy(study);
     const invalidOperations = !validation.ok && validation.issues.some(issue => issue.path.startsWith("operations") || issue.path.startsWith("stations"));
-    const metric = (label: string, value: string, detail: string) => (
-      <div className="metric"><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
-    );
-    const axisValues = Array.from({ length: 5 }, (_, i) => scale * i / 4);
     const stationOptions = stations.map(station => ({ value: station.id, label: station.name }));
-
+    const operationRows = operations.map((operation, index) => ({ ...operation, index }));
     this.reactRoot?.render(
       <div className="studio" key={this.studyRevision}>
         <header className="top">
-          <div className="brand"><span className="brand-icon" aria-hidden="true"><i /><i /><i /></span>
+          <div className="brand"><BrandMark className="brand-mark" />
             <div><strong>Line Balance Studio</strong><small>DELPI · Engenharia de Processos</small></div>
           </div>
-          <span className="draft">Rascunho manual</span>
+          <StatusBadge classNames={badgeClasses} label="Rascunho manual" variant="info" />
         </header>
         <div className="workspace">
-          <section className="study-header" aria-label="Estudo">
-            <div className="study-title"><h1>{study.name}</h1>
-              <label className="edit-name">Nome do estudo
-                <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
-              </label>
-            </div>
-            <div className="controls">
+          <PageHeader layout="titleRow" title={study.name} classNames={pageHeaderClasses} labels={pageHeaderLabels}
+            subtitle={<label className="edit-name">Nome do estudo
+              <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
+            </label>}
+            actions={<>
               {study.scenarios.length > 1 && (
                 <div className="scenario-control">
-                  <FormSelectControl ariaLabel="Cenário" portalWithinShadowRoot
+                  <ModernSelectControl ariaLabel="Cenário" portalWithinShadowRoot
                     value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
                     onChange={value => this.onField("scenario", value)} />
                 </div>
               )}
               <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
                 onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
-            </div>
-          </section>
+            </>} />
           {this.showConditions && this.renderConditions(conditions)}
           <section className="metrics" aria-label="Indicadores" aria-live="polite">
-            {metric("Takt de referência", takt === null ? "—" : `${format(takt)} s`, "por unidade")}
-            {metric("Tempo produtivo", productive === null ? "—" : `${format(productive)} min`, "por turno")}
-            {metric("Maior carga", stations.length ? `${format(maxLoad)} s` : "—", incomplete ? "carga conhecida · parcial" : "por posto")}
-            {metric("Sem posto", String(unassigned), `de ${operations.length} operações`)}
+            <SimpleKpiCard classNames={kpiClasses} title="Takt de referência" valueTag="strong" icon={<Timer size={18} />}
+              value={takt === null ? "—" : `${format(takt)} s`} subtitle="por unidade" />
+            <SimpleKpiCard classNames={kpiClasses} title="Tempo produtivo" valueTag="strong" icon={<Clock3 size={18} />}
+              value={productive === null ? "—" : `${format(productive)} min`} subtitle="por turno" />
+            <SimpleKpiCard classNames={kpiClasses} title="Maior carga" valueTag="strong" icon={<ChartColumn size={18} />}
+              value={stations.length ? `${format(maxLoad)} s` : "—"} subtitle={incomplete ? "carga conhecida · parcial" : "por posto"} />
+            <SimpleKpiCard classNames={kpiClasses} title="Sem posto" valueTag="strong" icon={<CircleDashed size={18} />}
+              value={String(unassigned)} subtitle={`de ${operations.length} operações`} />
           </section>
-          <section className="panel" aria-labelledby="chart-title">
-            <div className="panel-heading">
-              <div><h2 id="chart-title">Yamazumi</h2><p>Carga por posto · segundos</p></div>
-              <ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>
-            </div>
+          <SectionCard title="Yamazumi" subtitle="Carga por posto · segundos" classNames={sectionClasses} labels={sectionLabels}
+            actions={<ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>}>
             {stations.length > 0 ? (
-              <div className="chart-scroll">
-                <div className="chart" style={{ "--station-count": stations.length } as CSSProperties}>
-                  <div className="plot">
-                    {axisValues.map(value => (
-                      <div className="gridline" key={value} style={{ bottom: `${value / scale * 100}%` }}><span>{format(value)}</span></div>
-                    ))}
-                    {takt !== null && <div className="takt" style={{ bottom: `${takt / scale * 100}%` }}><span>Takt {format(takt)} s</span></div>}
-                  </div>
-                  {stations.map((station, i) => {
-                    const height = `${station.load / scale * 100}%`;
-                    const over = takt !== null && station.load > takt;
-                    return (
-                      <div className="station-chart" key={station.id} data-drop={station.id}>
-                        <div className="track" aria-label={`${station.name}, ${format(station.load)} segundos conhecidos`}>
-                          <div className="stack" style={{ height }}>
-                            {station.items.filter(item => item.seconds !== null).map(item => (
-                              <ChartSegmentButton key={item.id} draggable
-                                style={{ flexGrow: item.seconds ?? 0, "--delpi-ui-chart-segment-fill": item.color } as CSSProperties}
-                                title={`${item.name} · ${format(item.seconds ?? 0)} s`}
-                                aria-label={`${item.name}, ${format(item.seconds ?? 0)} segundos. Ir para a operação.`}
-                                onClick={() => this.onAction("operation-details", item.id)}
-                                onDragStart={event => this.onDragStart(event, item.id)}
-                                onDragEnd={this.clearDrag}>{item.name}</ChartSegmentButton>
-                            ))}
-                          </div>
-                          <span className={over ? "load over" : "load"} style={{ bottom: height }}>
-                            {format(station.load)} s{station.unknown ? "*" : ""}
-                            {over && <span title="Acima do takt" aria-label="Acima do takt"> ↑</span>}
-                          </span>
-                        </div>
-                        <div className="station-label">
-                          <CommitInput value={station.name} aria-label={`Nome do posto ${i + 1}`}
-                            onCommit={value => this.onField("station-name", value, station.id)} />
-                          <IconButton aria-label={`Remover posto ${i + 1}`} onClick={() => this.onAction("remove-station", station.id)}>×</IconButton>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : <p className="note">Adicione um posto para montar o gráfico.</p>}
-            <div className="chart-footer">
-              <span>Arraste um bloco para outro posto ou use a tabela.</span>
-              <span className="unassign-drop" data-drop="">Solte aqui para desatribuir</span>
-              {incomplete && <span>* Carga parcial por tempo desconhecido.</span>}
-            </div>
-          </section>
-          <section className="panel" aria-labelledby="table-title">
-            <div className="panel-heading">
-              <div><h2 id="table-title">Operações</h2><p>Edite os tempos e atribua um posto a cada operação.</p></div>
-              <ActionButton id="add-operation" variant="primary" onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>
-            </div>
-            {invalidOperations && <p className="warning" role="status">Revise os nomes e os tempos. Use um valor positivo ou deixe o tempo em branco.</p>}
-            {operations.length > 0 ? (
-              <div className="table-scroll"><table>
-                <thead><tr><th scope="col">#</th><th scope="col">Operação</th><th scope="col">Tempo (s)</th>
-                  <th scope="col">Posto</th><th scope="col"><span className="sr-only">Remover</span></th>
-                </tr></thead>
-                <tbody>{operations.map((operation, i) => (
-                  <tr key={operation.id}>
-                    <td className="row-number"><i style={{ background: operation.color }} />{String(i + 1).padStart(2, "0")}</td>
-                    <td><CommitInput id={`name:${operation.id}`} value={operation.name} required aria-label={`Nome da operação ${i + 1}`}
-                      onCommit={value => this.onField("operation-name", value, operation.id)} /></td>
-                    <td><CommitInput type="number" min={0} step="any" placeholder="Desconhecido" value={operation.durationSeconds ?? ""}
-                      aria-label={`Tempo da operação ${i + 1} em segundos`} onCommit={value => this.onField("duration", value, operation.id)} /></td>
-                    <td><FormSelectControl portalWithinShadowRoot allowEmpty emptyLabel="Sem posto"
-                      ariaLabel={`Posto da operação ${i + 1}`} value={assignment.get(operation.id) ?? ""} options={stationOptions}
-                      onChange={value => this.onField("station", value, operation.id)} /></td>
-                    <td><IconButton aria-label={`Remover operação ${i + 1}`} onClick={() => this.onAction("remove-operation", operation.id)}>×</IconButton></td>
-                  </tr>
-                ))}</tbody>
-              </table></div>
-            ) : <p className="note">Adicione uma operação para começar.</p>}
-          </section>
+              <StackedColumnChart
+                columns={stations.map((station, index) => ({
+                  id: station.id, label: station.name, value: station.load, partial: station.unknown > 0,
+                  segments: station.items.flatMap(item => item.seconds === null ? [] : [{
+                    id: item.id, label: item.name, value: item.seconds, color: item.color,
+                  }]),
+                  footer: <>
+                    <CommitInput value={station.name} aria-label={`Nome do posto ${index + 1}`}
+                      onCommit={value => this.onField("station-name", value, station.id)} />
+                    <IconButton aria-label={`Remover posto ${index + 1}`}
+                      onClick={() => this.onAction("remove-station", station.id)}>×</IconButton>
+                  </>,
+                }))}
+                scale={scale} reference={takt} referenceLabel="Takt" referenceExceededLabel="Acima do takt"
+                formatAxis={format} formatValue={value => `${format(value)} s`}
+                segmentActionLabel="Ir para a operação." onSelectSegment={id => this.onAction("operation-details", id)}
+                onDragSegment={this.onDragStart} onDragEnd={this.clearDrag}
+                unassignLabel="Solte aqui para desatribuir"
+                footer={<>
+                  <span>Arraste um bloco para outro posto ou use a tabela.</span>
+                  {incomplete && <span>* Carga parcial por tempo desconhecido.</span>}
+                </>}
+              />
+            ) : <StateBox>Adicione um posto para montar o gráfico.</StateBox>}
+          </SectionCard>
+          <SectionCard title="Operações" subtitle="Edite os tempos e atribua um posto a cada operação."
+            classNames={sectionClasses} labels={sectionLabels}
+            actions={<ActionButton id="add-operation" variant="primary"
+              onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>}>
+            {invalidOperations && <StateBox variant="warning" dismissible={false}>Revise os nomes e os tempos. Use um valor positivo ou deixe o tempo em branco.</StateBox>}
+            <DataTable rows={operationRows} rowKey={operation => operation.id} classNames={tableClasses}
+              labels={tableLabels} layout="scroll" compact indexColumn={{ ariaLabel: "Índice da operação" }}
+              columns={[
+                { key: "operation", header: "Operação", render: operation => (
+                  <CommitInput id={`name:${operation.id}`} value={operation.name} required aria-label={`Nome da operação ${operation.index + 1}`}
+                    onCommit={value => this.onField("operation-name", value, operation.id)} />
+                ) },
+                { key: "duration", header: "Tempo (s)", render: operation => (
+                  <CommitInput type="number" min={0} step="any" placeholder="Desconhecido" value={operation.durationSeconds ?? ""}
+                    aria-label={`Tempo da operação ${operation.index + 1} em segundos`} onCommit={value => this.onField("duration", value, operation.id)} />
+                ) },
+                { key: "station", header: "Posto", render: operation => (
+                  <ModernSelectControl portalWithinShadowRoot allowEmpty emptyLabel="Sem posto"
+                    ariaLabel={`Posto da operação ${operation.index + 1}`} value={assignment.get(operation.id) ?? ""} options={stationOptions}
+                    onChange={value => this.onField("station", value, operation.id)} />
+                ) },
+                { key: "actions", header: "Ações", align: "center", render: operation => (
+                  <IconButton aria-label={`Remover operação ${operation.index + 1}`}
+                    onClick={() => this.onAction("remove-operation", operation.id)}>×</IconButton>
+                ) },
+              ]}
+            />
+          </SectionCard>
         </div>
       </div>,
     );

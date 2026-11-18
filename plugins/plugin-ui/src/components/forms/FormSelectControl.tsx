@@ -26,3 +26,8 @@ export const FormSelectControl = createDashboardSelectControl({
   control: selectControlFormBemClasses(),
   labels: DEFAULT_FORM_SELECT_LABELS,
 });
+
+/** Select with the Minha DELPI form appearance, sharing the existing form-select behavior. */
+export function ModernSelectControl(props: Omit<Parameters<typeof FormSelectControl>[0], "appearance">) {
+  return <FormSelectControl {...props} appearance="portal" />;
+}
