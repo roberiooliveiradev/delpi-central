@@ -643,6 +643,30 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             digits = "".join(ch for ch in str(filters["document"]) if ch.isdigit())
             pattern = f"%{digits or filters['document']}%"
             params.extend([pattern, pattern])
+        if filters.get("product_code"):
+            # Escopo/filial/proprietário continuam aplicados à solicitação.
+            # Fonte 1: itens da NF-e indexados após mapeamento validado.
+            # Fonte 2: itens específicos do pedido de compra amarrado.
+            where.append(
+                f"""(
+                    EXISTS (
+                        SELECT 1
+                          FROM {SCHEMA}.invoice_posting_request_products ip
+                         WHERE ip.request_id = invoice_posting_requests.id
+                           AND upper(btrim(ip.internal_product_code)) = upper(%s)
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                          FROM {SCHEMA}.invoice_posting_request_linked_pos lp
+                          JOIN {SCHEMA}.invoice_posting_request_linked_po_lines ll
+                            ON ll.linked_po_id = lp.id
+                         WHERE lp.request_id = invoice_posting_requests.id
+                           AND upper(btrim(ll.product_code)) = upper(%s)
+                    )
+                )"""
+            )
+            code = str(filters["product_code"]).strip()
+            params.extend([code, code])
         if filters.get("issued_from"):
             where.append("issue_date >= %s")
             params.append(filters["issued_from"])
@@ -1138,6 +1162,43 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         except Exception:
             self.rollback()
             raise
+
+    def replace_indexed_nfe_product_rows(self, rows: list[dict[str, Any]]) -> int:
+        """Indexa os produtos da NF-e autenticada, sem alterar ERP/solicitação.
+
+        Substituição por request_id garante idempotência em reprocessamentos.
+        """
+        if not rows:
+            return 0
+        request_id = str(rows[0]["request_id"])
+        params = [
+            (
+                request_id,
+                int(row["item_position"]),
+                row.get("supplier_product_code"),
+                row.get("internal_product_code"),
+                row["mapping_status"],
+            )
+            for row in rows
+        ]
+        with self.db() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"DELETE FROM {SCHEMA}.invoice_posting_request_products "
+                    "WHERE request_id = %s::uuid",
+                    (request_id,),
+                )
+                cursor.executemany(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_posting_request_products
+                        (request_id, item_position, supplier_product_code,
+                         internal_product_code, mapping_status)
+                    VALUES (%s::uuid, %s, %s, %s, %s)
+                    """,
+                    params,
+                )
+            connection.commit()
+        return len(rows)
 
     def insert_unmapped_supplier_products(self, rows: list[dict[str, Any]]) -> int:
         if not rows:

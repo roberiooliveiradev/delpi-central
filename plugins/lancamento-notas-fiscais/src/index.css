@@ -351,6 +351,10 @@
   gap: 10px;
 }
 
+.lnf-filters__row--primary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .lnf-filters__chevron--closed {
   transform: rotate(-90deg);
 }
@@ -1614,7 +1618,8 @@
 }
 
 @media (max-width: 960px) {
-  .lnf-filters__row {
+  .lnf-filters__row,
+  .lnf-filters__row--primary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1669,6 +1674,7 @@
   }
 
   .lnf-filters__row,
+  .lnf-filters__row--primary,
   .lnf-form-grid,
   .lnf-detail-summary__facts,
   .lnf-dl--dense {

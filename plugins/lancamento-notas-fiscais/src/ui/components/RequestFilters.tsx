@@ -74,7 +74,7 @@ export function RequestFilters({
 
       {open ? (
         <div className="lnf-filters__body">
-          <div className="lnf-filters__row" data-testid="filters-primary">
+          <div className="lnf-filters__row lnf-filters__row--primary" data-testid="filters-primary">
             <label className="lnf-field">
               Filial
               {lockedBranch ? (
@@ -123,6 +123,23 @@ export function RequestFilters({
                 value={value.supplier ?? ""}
                 placeholder="Código ou nome"
                 onChange={(e) => set({ supplier: e.target.value })}
+              />
+            </label>
+            <label className="lnf-field">
+              Código do produto Delpi
+              <input
+                type="search"
+                aria-label="Código do produto Delpi"
+                maxLength={40}
+                value={value.product_code ?? ""}
+                placeholder="Código interno exato"
+                onChange={(e) =>
+                  set({
+                    product_code: e.target.value,
+                    // A consulta por material também deve encontrar notas já lançadas.
+                    status: value.status === "open" ? undefined : value.status,
+                  })
+                }
               />
             </label>
             <label className="lnf-field">

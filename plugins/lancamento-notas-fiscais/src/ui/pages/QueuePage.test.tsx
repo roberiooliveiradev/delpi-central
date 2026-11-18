@@ -383,4 +383,33 @@ describe("QueuePage", () => {
     });
     expect(screen.getByTestId("queue-row-b").className).not.toContain("lnf-row--aging");
   });
+  it("busca pelo produto Delpi em todos os status e envia ao servidor antes da paginação", async () => {
+    vi.mocked(api.listRequests).mockResolvedValue({
+      items: [{ ...sample, status: "posted" }],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      total_pages: 1,
+    });
+    renderQueue("01");
+    await waitFor(() => expect(api.listRequests).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText("Código do produto Delpi"), {
+      target: { value: "90264242" },
+    });
+    await waitFor(() => {
+      expect(api.listRequests).toHaveBeenCalledWith(
+        expect.objectContaining({
+          branch: "01",
+          product_code: "90264242",
+          status: undefined,
+          page: 1,
+        }),
+        expect.anything(),
+      );
+    });
+    expect(screen.getByTestId("filters-active")).toBeTruthy();
+    expect(screen.getByLabelText("Status")).toHaveProperty("value", "");
+    expect(screen.getByTestId("queue-row-req-1")).toBeTruthy();
+  });
+
 });
