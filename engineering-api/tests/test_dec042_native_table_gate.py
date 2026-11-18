@@ -220,3 +220,88 @@ def test_negative_always_use_native_is_not_the_policy():
     )
     assert apply is False
     assert reason == "structure_incomplete"
+
+
+# DEPLOY-02 / RQ-DEPLOY02-02 — tabela legítima de um único item no
+# caminho nativo: célula SLANet é intratabular por construção; a
+# proteção COMP-01 (codes>=2) contra códigos extratabulares não se
+# aplica à grade. Evidência estrutural suficiente = a coluna ser a
+# ÚNICA portadora de códigos da tabela; duas+ colunas com códigos
+# permanecem ambíguas e abstêm.
+
+
+def test_single_item_native_table_sole_code_column():
+    """T1/T5 — grade nativa de 1 item sem cabeçalho confiável:
+    a única coluna com código tipifica component_code."""
+    cells = [
+        _cell(0, 0, "A5", x0=370, y0=1570, x1=400, y1=1590),
+        _cell(0, 1, "1", x0=420, y0=1570, x1=450, y1=1590),
+        _cell(0, 2, "10081809", x0=480, y0=1570, x1=560, y1=1590),
+        _cell(
+            0, 3, "INSERTO BIPOLAR 10MM",
+            x0=600, y0=1570, x1=1200, y1=1590,
+        ),
+    ]
+    rows, col_types = rows_from_native_cells(cells, page=1)
+    assert col_types.get("2") == "component_code"
+    assert rows[0]["component_code"] == "10081809"
+
+
+def test_single_item_native_table_with_header():
+    """Invariante — com cabeçalho 'Código' a tipagem já era por
+    header; single-item continua tipado."""
+    cells = [
+        _cell(0, 0, "Item", x0=370, y0=1540, x1=400, y1=1560),
+        _cell(0, 1, "Código", x0=480, y0=1540, x1=560, y1=1560),
+        _cell(0, 2, "Descrição", x0=600, y0=1540, x1=1200, y1=1560),
+        _cell(1, 0, "A5", x0=370, y0=1570, x1=400, y1=1590),
+        _cell(1, 1, "10081809", x0=480, y0=1570, x1=560, y1=1590),
+        _cell(
+            1, 2, "INSERTO BIPOLAR 10MM",
+            x0=600, y0=1570, x1=1200, y1=1590,
+        ),
+    ]
+    rows, col_types = rows_from_native_cells(cells, page=1)
+    assert col_types.get("1") == "component_code"
+    assert rows[0]["component_code"] == "10081809"
+
+
+def test_sparse_native_code_column_sole_bearing():
+    """Sibling — 2 linhas, código só numa delas, coluna única
+    portadora → tipifica; o código não é descartado."""
+    cells = [
+        _cell(0, 0, "A1", x0=370, y0=1570, x1=400, y1=1590),
+        _cell(0, 1, "1", x0=420, y0=1570, x1=450, y1=1590),
+        _cell(0, 2, "10081809", x0=480, y0=1570, x1=560, y1=1590),
+        _cell(
+            0, 3, "INSERTO BIPOLAR 10MM",
+            x0=600, y0=1570, x1=1200, y1=1590,
+        ),
+        _cell(1, 0, "A2", x0=370, y0=1600, x1=400, y1=1620),
+        _cell(1, 1, "1", x0=420, y0=1600, x1=450, y1=1620),
+        _cell(1, 2, "-", x0=480, y0=1600, x1=560, y1=1620),
+        _cell(
+            1, 3, "TERMINAL SEM CODIGO",
+            x0=600, y0=1600, x1=1200, y1=1620,
+        ),
+    ]
+    rows, col_types = rows_from_native_cells(cells, page=1)
+    assert col_types.get("2") == "component_code"
+    assert rows[0]["component_code"] == "10081809"
+
+
+def test_single_item_native_two_code_columns_abstains():
+    """Negativo — 1 item mas DUAS colunas com células-código e sem
+    cabeçalho: evidência ambígua, nenhuma tipifica."""
+    cells = [
+        _cell(0, 0, "A5", x0=370, y0=1570, x1=400, y1=1590),
+        _cell(0, 1, "90480120", x0=420, y0=1570, x1=470, y1=1590),
+        _cell(0, 2, "10081809", x0=480, y0=1570, x1=560, y1=1590),
+        _cell(
+            0, 3, "INSERTO BIPOLAR 10MM",
+            x0=600, y0=1570, x1=1200, y1=1590,
+        ),
+    ]
+    rows, col_types = rows_from_native_cells(cells, page=1)
+    assert col_types.get("1") != "component_code"
+    assert col_types.get("2") != "component_code"

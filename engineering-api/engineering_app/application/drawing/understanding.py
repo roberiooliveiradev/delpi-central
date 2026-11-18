@@ -4199,10 +4199,23 @@ def rows_from_native_cells(
             bucket["total"] += 1
             if _CODE_RE.search(_norm(str(cell.get("text") or ""))):
                 bucket["codes"] += 1
+    # Regra irmã de _structure_table (COMP-01) com evidência
+    # estrutural da grade: célula nativa é intratabular por
+    # construção — a contaminação por código extratabular que
+    # motivou ``codes >= 2`` no caminho de tokens não se aplica.
+    # codes >= 2 tipifica por pluralidade de células; uma única
+    # célula-código tipifica apenas quando a coluna é a ÚNICA
+    # portadora de códigos da tabela (tabela de item único ou
+    # coluna esparsa legítima). Duas+ colunas com códigos e uma
+    # célula cada permanecem ambíguas e abstêm.
+    code_bearing_cols = sum(
+        1 for b in content_counts.values() if b["codes"]
+    )
     for col, bucket in content_counts.items():
-        # Mesma regra de _structure_table (COMP-01): uma única
-        # célula-código não é evidência de coluna.
-        if bucket["codes"] >= 2 and bucket["codes"] / bucket["total"] >= 0.5:
+        if (
+            bucket["codes"] / bucket["total"] >= 0.5
+            and (bucket["codes"] >= 2 or code_bearing_cols == 1)
+        ):
             col_types[col] = "component_code"
     # Bandas-X por papel funcional — conteúdo primeiro, posição como
     # salvaguarda contra papel certo na posição errada.
