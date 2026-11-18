@@ -159,7 +159,7 @@ export function HrIdentityReviewTab() {
       setSelectedUser(null);
       setConfirmedEvidence(false);
       setTypedRegistration("");
-    setVerificationReference("");
+      setVerificationReference("");
       setNotice("Associação da matrícula " + registered + " registrada com auditoria.");
       await load();
     } catch (err) {
