@@ -60,8 +60,8 @@ class PostgresSolvedTicketNotificationOutbox:
                     FROM helpdesk.solved_ticket_notification_outbox
                     WHERE status = 'pending' AND next_attempt_at <= NOW()
                     ORDER BY created_at, event_key
-                    FOR UPDATE SKIP LOCKED
                     LIMIT %s
+                    FOR UPDATE SKIP LOCKED
                     """,
                     (max(1, min(limit, 50)),),
                 )
