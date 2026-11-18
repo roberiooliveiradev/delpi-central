@@ -31,6 +31,8 @@
 @import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";
 @import "./styles/number-stepper.css";
+@import "./styles/navigation-card.css";
+@import "./styles/collapsible-tool-rail.css";
 @import "./styles/range-field.css";
 @import "./styles/kpi-card.css";
 @import "./styles/card-shell.css";
