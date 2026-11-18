@@ -66,7 +66,7 @@ _SHA = "8db122c0a50196d9124c936645f46cd912ade164"
 def test_signer_binds_after_nonroot_and_rejects_existing_path(tmp_path):
     parent = tmp_path / "signer-sock"
     parent.mkdir()
-    os.chmod(parent, 0o750)
+    os.chmod(parent, 0o2750)
     path = parent / "sign.sock"
     keys = generate_ephemeral_keypair()
     signer = HMLLocalSigner(
@@ -97,7 +97,7 @@ def test_signer_binds_after_nonroot_and_rejects_existing_path(tmp_path):
 def test_signer_listen_bind_and_signed_presenter(tmp_path):
     parent = tmp_path / "sock"
     parent.mkdir()
-    os.chmod(parent, 0o750)
+    os.chmod(parent, 0o2750)
     path = parent / "sign.sock"
     keys = generate_ephemeral_keypair()
     ring = build_keyring(active=((keys.key_id, keys.public_key),))
