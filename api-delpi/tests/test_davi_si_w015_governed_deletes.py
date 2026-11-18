@@ -38,6 +38,7 @@ from app.application.external_capabilities.governed_writes.si_w015_capabilities 
     SI_W015_DELETE_CAPABILITIES,
     SI_W015_WRITE_CAPABILITIES,
     SiW015WriteStack,
+    _export_state_digest,
 )
 
 AUTH_OK = "Bearer user-a"
@@ -782,3 +783,25 @@ def test_department_delete_act_stale_when_xmin_becomes_unavailable(
         _act(orch, "si.department.delete", prepared)
     assert exc.value.code == PROPOSAL_STALE
     assert client.departments and client.delete_calls == []
+
+
+def test_export_state_digest_ignores_volatile_exported_at() -> None:
+    base = {
+        "schema_version": 1,
+        "exported_at": "2026-11-18T10:00:00Z",
+        "departments": [{"department_id": "d1"}],
+        "department_indicators": [],
+        "indicator_goals": [],
+        "module_settings": {"a": 1},
+    }
+    later = dict(base, exported_at="2026-11-18T12:34:56Z")
+    assert _export_state_digest(base) == _export_state_digest(later)
+
+
+def test_export_state_digest_changes_on_real_state_mutation() -> None:
+    base = {
+        "exported_at": "2026-11-18T10:00:00Z",
+        "departments": [{"department_id": "d1"}],
+    }
+    mutated = dict(base, departments=[{"department_id": "d2"}])
+    assert _export_state_digest(base) != _export_state_digest(mutated)

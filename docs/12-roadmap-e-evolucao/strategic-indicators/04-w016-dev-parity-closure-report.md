@@ -41,9 +41,8 @@ POSTCONDITION_RESULT: PASS — postcondition real pegou no-op semântico
   (goal_value ignorado em modo monthly_curve)
 PERFORMANCE_RESULT: dentro dos limites MCP observados (sem SLO formal —
   NEEDS_POLICY_DECISION para thresholds)
-REGRESSION_RESULT: 195 testes DAVI+SI-owner verdes; 3 falhas SI
-  pré-existentes = assertions stale vs semântica pós-V034
-  (value=None consolidado por design; global-cache department_id=None)
+REGRESSION_RESULT: suite SI 378/378 + DAVI 132/132 — ZERO RED
+  após reconciliação das 3 assertions stale (RESOLVIDO, ver RESIDUALS)
 
 VERIFIER: (ver rodada delpi-verifier desta entrega)
 DOCUMENTATION_UPDATED: este doc + matriz W016 (§10) + parity plan (W016 wave); inventário W013 já estava correto (sem diff necessário)
@@ -53,9 +52,12 @@ PRODUCTION_ACCEPTANCE_STATUS: PENDENTE — nenhum teste destrutivo em prod;
   drift de produção exposto por esta validação (ver RESIDUALS)
 
 RESIDUALS:
-- 3 falhas pré-existentes em suite SI (comercial/dashboard) — assertions
-  stale vs semântica consolidada V034; fora do escopo DAVI, requer task
-  de manutenção de testes no owner SI.
+- (ENCERRADO — task ZERO-RED-RECONCILIATION) as 3 falhas SI eram
+  STALE_TEST_EXPECTATION vs contrato V034: provider emite value=None+
+  unit_values no consolidado e o calculator aplica branch_value_
+  aggregation (currency→sum, %→average) downstream; snapshot de
+  departamento computa cache global (department_id=None) por design.
+  Assertions e nomes corrigidos; suite SI 378/378.
 - Descoberto e CORRIGIDO nesta wave: ck_si_settings_audit_event_type sem
   event types administrativos (migration V037) — drift existia também em
   prod (nunca disparado porque nenhum ACT admin rodou lá).

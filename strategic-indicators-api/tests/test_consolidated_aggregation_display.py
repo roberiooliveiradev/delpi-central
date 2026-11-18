@@ -151,7 +151,7 @@ def test_commercial_provider_exposes_branch_unit_values_on_branch_view() -> None
     assert rol["value"] == 80.0
 
 
-def test_commercial_provider_consolidated_rol_value_is_sum() -> None:
+def test_commercial_provider_consolidated_rol_defers_aggregation() -> None:
     service = MagicMock()
     service.get_snapshot.return_value = CommercialMetricsSnapshot(
         start_date="01-04-2026",
@@ -178,7 +178,8 @@ def test_commercial_provider_consolidated_rol_value_is_sum() -> None:
     )
 
     rol = next(item for item in result["items"] if item["indicator_id"] == "commercial-rol")
-    assert rol["value"] == 3_955_965.36
+    assert rol["value"] is None
+    assert rol["unit_values"] == {"01": 665_029.86, "02": 3_290_935.50}
 
 
 def test_commercial_provider_consolidated_view_lists_both_units() -> None:
@@ -287,7 +288,7 @@ def test_commercial_provider_exposes_weg_and_new_business_rol_measurements() -> 
         if item["indicator_id"] == "commercial-rol-new-business"
     )
 
-    assert weg["value"] == 110.0
+    assert weg["value"] is None
     assert weg["unit_values"] == {"01": 60.0, "02": 50.0}
-    assert new_business["value"] == 70.0
+    assert new_business["value"] is None
     assert new_business["unit_values"] == {"01": 40.0, "02": 30.0}

@@ -111,10 +111,12 @@
   bloqueado por policy, não por lacuna).
 - Rotas owner sem ação de portal: 1 (/health).
 - Funcionalidades ausentes no owner: nenhuma identificada no inventário.
-- Funcionalidades implementadas mas não descobertas: 0 conhecidas
-  (get_context publica as três famílias; ver gate de discovery ChatGPT).
-- Funcionalidades sem teste em produção autenticada: todas — pendente
-  gate ChatGPT (TEST_PRODUCTION/CHATGPT_ACCEPTANCE por linha).
+- Funcionalidades implementadas mas não descobertas: 0 — as três
+  famílias foram publicadas e a tool `delete` já foi invocada em sessão
+  autenticada ChatGPT (aceite de discovery, não de ACT produtivo).
+- Funcionalidades sem teste de mutação em produção: todas as writes —
+  ACTs produtivos não foram executados, por decisão da Coordination;
+  a prova funcional integral é a de DEV (§10).
 - Funcionalidades pendentes de decisão: nenhuma neste inventário.
 
 ## 9. Pendências de aceite (não são gaps de implementação)
@@ -122,10 +124,11 @@
 - `TEST_PRODUCTION` autenticado por capability — aguarda sessão ChatGPT.
 - `NEGATIVE_AUTHZ` com segunda identidade real — RESOLVIDO em DEV
   (ti_delpi full / e2e-delia view-only / devin-smoke-evo zero-SI).
-- `CHATGPT_ACCEPTANCE` W015 delete — depende do refresh do catálogo do
-  provider (reconnect/re-add do connector + nova sessão; ver relatório
-  de execução da task `DAVI-SI-W015-DELETE-DISCOVERY-RECOVERY-AND-
-  W016-READINESS-01`, seção PROVIDER_RECONNECT_PROCEDURE).
+- `CHATGPT_ACCEPTANCE` W015 delete — RESOLVIDO: `delete` comprovada
+  invocável diretamente em sessão autenticada do ChatGPT, incluindo
+  rejeição de capabilities proibidas na família errada. Este aceite é
+  de discovery/invocação — ACTs destrutivos não foram executados em
+  produção, por decisão da Coordination.
 
 ## 10. Validação DEV end-to-end (W016 closure — task DAVI-SI-W016-…-01)
 

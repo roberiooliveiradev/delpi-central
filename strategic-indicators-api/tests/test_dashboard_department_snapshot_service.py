@@ -62,7 +62,7 @@ def test_dashboard_department_snapshot_uses_global_cache_when_available() -> Non
     service.get_period_snapshot.assert_not_called()
 
 
-def test_dashboard_department_snapshot_computes_scoped_on_cache_miss() -> None:
+def test_dashboard_department_snapshot_computes_global_on_cache_miss() -> None:
     period = resolve_period(
         competence="2026-07",
         start_date="01-07-2026",
@@ -96,7 +96,7 @@ def test_dashboard_department_snapshot_computes_scoped_on_cache_miss() -> None:
         competence=period.competence,
         start_date=period.start_date,
         end_date=period.end_date,
-        department_id="engineering",
+        department_id=None,
         branch=None,
         force_compute=True,
     )
