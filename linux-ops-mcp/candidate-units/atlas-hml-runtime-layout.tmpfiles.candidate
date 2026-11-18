@@ -1,0 +1,7 @@
+# ATLAS HML runtime layout candidate — NOT installed by deploy
+# Sentinel reference: /run/atlas-hml-candidate/REVIEW-ONLY-NEVER-CREATE
+d /run/atlas-hml-readonly 0750 root atlas-hml -
+d /run/atlas-hml-signer 0750 atlas-hml-signer atlas-hml-signer -
+d /run/atlas-hml-signer-socket 0750 atlas-hml-signer atlas-hml-bridge -
+d /var/lib/atlas-hml-signer-state 0750 atlas-hml-signer atlas-hml-signer -
+d /var/lib/atlas-hml-signer-keys 0700 atlas-hml-signer atlas-hml-signer -

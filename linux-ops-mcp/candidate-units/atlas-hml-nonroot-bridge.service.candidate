@@ -1,0 +1,20 @@
+[Unit]
+Description=ATLAS HML NONROOT BRIDGE CANDIDATE
+ConditionPathExists=/run/atlas-hml-candidate/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Service]
+Type=oneshot
+User=atlas-hml-bridge
+Group=atlas-hml-bridge
+ExecStart=/usr/bin/false
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+UMask=0077
+SupplementaryGroups=atlas-hml
+InaccessiblePaths=/run/docker.sock /var/run/docker.sock
+ReadOnlyPaths=/run/atlas-hml-readonly

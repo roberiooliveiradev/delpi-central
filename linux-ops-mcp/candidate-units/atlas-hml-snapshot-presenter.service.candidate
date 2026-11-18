@@ -1,0 +1,20 @@
+[Unit]
+Description=ATLAS HML SNAPSHOT PRESENTER CANDIDATE
+ConditionPathExists=/run/atlas-hml-candidate/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Service]
+Type=simple
+User=atlas-hml
+Group=atlas-hml
+ExecStart=/usr/bin/false
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+UMask=0077
+SupplementaryGroups=
+InaccessiblePaths=/run/docker.sock /var/run/docker.sock
+ReadOnlyPaths=/run/atlas-hml-readonly
