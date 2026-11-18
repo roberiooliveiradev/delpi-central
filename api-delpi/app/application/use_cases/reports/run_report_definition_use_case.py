@@ -127,6 +127,15 @@ class RunReportDefinitionUseCase:
                 "Envio semanal por gestor desabilitado até aprovação de destinatários e finalidade."
             )
 
+        if (
+            provider_key == DIRECT_WEEKLY_PROVIDER_KEY
+            and normalized_trigger == "schedule"
+            and "weekStart" in params
+        ):
+            raise ValueError(
+                "Agenda semanal não pode fixar weekStart: deve apurar a última semana concluída."
+            )
+
         run = self._repository.create_run(
             definition_id=definition_id,
             trigger=normalized_trigger,
@@ -160,10 +169,13 @@ class RunReportDefinitionUseCase:
                     dataset=dataset,
                 )
             email_payload = provider.render_email(dataset)
-            artifact_path = self._artifacts.save_html(
-                run_id=run_id,
-                html_body=email_payload.html_body,
-            )
+            # Nominal employee activity must not persist as an HTML artifact.
+            # Keep only execution and delivery metadata for this provider.
+            if provider_key != DIRECT_WEEKLY_PROVIDER_KEY:
+                artifact_path = self._artifacts.save_html(
+                    run_id=run_id,
+                    html_body=email_payload.html_body,
+                )
             attachments = [
                 {
                     "name": att.name,
