@@ -123,3 +123,36 @@ def test_dashboard_request_dates_forwarded() -> None:
     assert request.date_end == date(2026, 9, 22)
     assert request.area_id == "area-1"
     assert request.shift == "TURNO_1"
+
+
+def test_dashboard_exposes_separate_macro_and_leaf_scores() -> None:
+    """A API preserva o campo legado e publica as duas visoes do card."""
+    repository = MagicMock()
+    payload = _repo_dashboard_payload()
+    leaf = {
+        "area_id": "sub-1",
+        "area_name": "Subarea A",
+        "average_score_pct": 82.0,
+        "audit_count": 2,
+    }
+    macro = {
+        "area_id": "macro-1",
+        "area_name": "Macroarea A",
+        "average_score_pct": 82.0,
+        "audit_count": 2,
+        "aggregation": "mean_of_means",
+    }
+    payload["charts"]["score_by_area"] = [leaf, macro]
+    payload["charts"]["score_by_leaf_area"] = [leaf]
+    payload["charts"]["score_by_macro_area"] = [macro]
+    repository.get_dashboard.return_value = payload
+
+    result = GetAudit5sDashboardUseCase(repository).execute(
+        branch_code="02",
+        date_start="2026-09-01",
+        date_end="2026-09-30",
+    )
+    charts = result.to_dict()["charts"]
+    assert charts["score_by_area"] == [leaf, macro]
+    assert charts["score_by_leaf_area"] == [leaf]
+    assert charts["score_by_macro_area"] == [macro]
