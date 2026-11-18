@@ -98,9 +98,15 @@
 
 ## 8. Resumo quantitativo
 
-- Portal user-actions inventariadas: **45** (telas públicas + admin).
-- Cobertas por capability DAVI: **45/45** (read 18 semânticas + ~50
-  meta/realized por indicador; execute 24; delete 3).
+- Rotas owner em `strategic_indicators_routes.py`: **50** (49 de negócio
+  + 1 `/health` ops). Rotas de integração por indicador
+  (meta/realized) somam-se a essas.
+- Linhas de user-action na matriz: **51** — 50 IMPLEMENTED +
+  1 BLOCKED_BY_DESIGN. As 49 rotas de negócio expandem para 51 ações
+  porque `import/apply` cobre duas ações de portal (merge e replace) e
+  `import/preview` é exposto como fase PREPARE governada.
+- Cobertas por capability DAVI: **50/50** ações elegíveis (read 18
+  semânticas + ~50 meta/realized por indicador; execute 24; delete 3).
 - Diferenças semânticas intencionais: 2 (preview↔PREPARE; import legado
   bloqueado por policy, não por lacuna).
 - Rotas owner sem ação de portal: 1 (/health).
@@ -116,4 +122,6 @@
 - `TEST_PRODUCTION` autenticado por capability — aguarda sessão ChatGPT.
 - `NEGATIVE_AUTHZ` com segunda identidade real — `PENDING_SECOND_USER_AUTHZ`.
 - `CHATGPT_ACCEPTANCE` W015 delete — depende do refresh do catálogo do
-  provider (procedimento documentado no relatório W015-discovery).
+  provider (reconnect/re-add do connector + nova sessão; ver relatório
+  de execução da task `DAVI-SI-W015-DELETE-DISCOVERY-RECOVERY-AND-
+  W016-READINESS-01`, seção PROVIDER_RECONNECT_PROCEDURE).
