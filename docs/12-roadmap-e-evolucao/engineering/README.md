@@ -89,7 +89,7 @@ Portal de Engenharia
 - `plugins/dashboard-lmps` existe e publica `dashboard-lmps.view` e `dashboard-lmps.nc.write`.
 - `api-delpi` possui contratos de Engenharia/LMP e Produtos.
 - Strategic Indicators possui os IDs canônicos `engineering-projects-on-time` e `engineering-transforma-plus` e trata Engenharia como departamento consolidado.
-- `docs/12-roadmap-e-evolucao/controle-mp/EVOLUCAO.md` direciona Controle de MP para `my-requests`/`requests-api`.
+- Plano mestre PRC vigente: [`PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md`](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md), capítulo de automação TOTVS e similaridade. O antigo `controle-mp/EVOLUCAO.md` é histórico (Git), não authority de runtime.
 - Portal Comercial possui Sala de interação madura e serve como referência de UX/realtime, sem ser dependência runtime do Portal Engenharia.
 - A biblioteca de desenhos já é exposta read-only por backend; não deve haver path físico no frontend.
 
