@@ -43,6 +43,13 @@ describe("NavigationCard", () => {
     expect(button?.className).not.toContain("--horizontal");
   });
 
+  it("expõe seleção acessível sem alterar a API dos consumidores antigos", () => {
+    const { rerender } = render(<NavigationCard classNames={navigationCardBemClasses("t")} title="Origem oficial" density="featured" selected onClick={() => undefined} />);
+    expect(screen.getByRole("button", { name: "Origem oficial" }).getAttribute("aria-pressed")).toBe("true");
+    rerender(<NavigationCard classNames={navigationCardBemClasses("t")} title="Origem oficial" density="featured" onClick={() => undefined} />);
+    expect(screen.getByRole("button", { name: "Origem oficial" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
   it("combina featured com orientation horizontal", () => {
     const { container } = render(
       <NavigationCard
