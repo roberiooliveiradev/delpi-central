@@ -1,4 +1,13 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { delpiUiClass } from "../../../utils/delpiUiClass";
 import {
@@ -21,6 +30,17 @@ const QuestionnaireColorSchemeContext =
   createContext<QuestionnaireColorSchemeState | null>(null);
 
 const noopToggle = () => {};
+
+/** Duração da transição de cores da troca de tema (R26). */
+export const THEME_TRANSITION_MS = 220;
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches === true
+  );
+}
 
 /**
  * Estado de tema do escopo de questionário mais próximo (ex.: botão
@@ -83,9 +103,38 @@ export function QuestionnaireThemeScope({
     .filter(Boolean)
     .join(" ");
 
+  /*
+   * R26 — troca suave só durante a mudança: quando `resolved` muda (toggle
+   * ou aparelho), o atributo `data-theme-transition` é ligado no mesmo
+   * commit visual da troca (useLayoutEffect roda antes do paint — a
+   * transição declarada no CSS pós-mudança anima as cores) e removido
+   * ~220 ms depois (THEME_TRANSITION_MS). No carregamento não há mudança: atributo ausente.
+   * prefers-reduced-motion: troca imediata, atributo nunca ligado.
+   */
+  const [transitioning, setTransitioning] = useState(false);
+  const appliedRef = useRef(resolved);
+  useLayoutEffect(() => {
+    if (appliedRef.current === resolved) return;
+    appliedRef.current = resolved;
+    if (prefersReducedMotion()) return;
+    setTransitioning(true);
+  }, [resolved]);
+  useEffect(() => {
+    if (!transitioning) return;
+    const timer = window.setTimeout(
+      () => setTransitioning(false),
+      THEME_TRANSITION_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [transitioning]);
+
   return (
     <QuestionnaireColorSchemeContext.Provider value={contextValue}>
-      <div className={rootClass} data-color-scheme={resolved}>
+      <div
+        className={rootClass}
+        data-color-scheme={resolved}
+        data-theme-transition={transitioning ? "" : undefined}
+      >
         {children}
       </div>
     </QuestionnaireColorSchemeContext.Provider>

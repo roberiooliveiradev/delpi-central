@@ -1342,6 +1342,8 @@ import {
 
 Renderiza `<div class="{prefix}-form-root delpi-ui-form-root" data-color-scheme="light|dark">` e provê contexto. Tokens de tema vivem em `styles/questionnaire.css` (bloco claro na raiz, escuro em `[data-color-scheme="dark"]`) — nunca duplicar no consumidor.
 
+Troca de tema **só de cores**: a geometria é única — regras `[data-color-scheme="dark"]` não podem declarar `padding`, `margin`, dimensões, `gap`, `border-width`, posição, `font-size`, `line-height` ou equivalente (verificado por `questionnaireCssContract.test.ts`); o selo do logo tem a mesma caixa nos dois temas e só troca o fundo. Durante a troca (botão ou aparelho) o escopo liga `data-theme-transition` na raiz por ~220 ms, ativando a transição de cores de 200 ms — sem animação no carregamento e sem afetar a animação de largura da barra de progresso; `prefers-reduced-motion: reduce` troca imediatamente.
+
 ### `useQuestionnaireColorScheme()`
 
 Hook dentro do escopo: `{ scheme, toggle(), userChosen, canToggle }`. `toggle()` alterna para a visita corrente e ignora mudanças do aparelho a partir de então; nada é persistido — remontar volta ao `prefers-color-scheme` do dispositivo. `canToggle` é `true` apenas com `colorScheme="auto"` — com esquema fixo, `toggle()` é no-op e `FormThemeToggle` não renderiza. Fora do escopo lança erro. `useSessionColorScheme()` é o hook de estado bruto (sem contexto), para quem compõe a própria raiz.
@@ -1388,7 +1390,7 @@ Demais props (incl. `aria-*`) são repassadas ao elemento. Padding 20 px (<600) 
 | `size` | `"sm" \| "md" \| "lg"` | `"md"` | Altura 34 / 40 / 44 px |
 | `prefix` / `className` | `string` | — | BEM dual / classes extras |
 
-Selo com `--delpi-ui-form-logo-bg` (no escuro: badge claro 6×10 px, raio 8) para logos pensados para fundo claro.
+Selo com `--delpi-ui-form-logo-bg`: a caixa é a mesma nos dois temas (padding 6×10 px, raio 8) — só o fundo muda (transparente no claro, badge claro no escuro) para logos pensados para fundo claro.
 
 ### `FormThemeToggle`
 
