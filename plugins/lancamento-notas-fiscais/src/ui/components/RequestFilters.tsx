@@ -74,7 +74,7 @@ export function RequestFilters({
 
       {open ? (
         <div className="lnf-filters__body">
-          <div className="lnf-filters__row" data-testid="filters-primary">
+          <div className="lnf-filters__row lnf-filters__row--primary" data-testid="filters-primary">
             <label className="lnf-field">
               Filial
               {lockedBranch ? (

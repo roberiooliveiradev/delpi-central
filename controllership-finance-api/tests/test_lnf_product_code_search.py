@@ -74,3 +74,51 @@ def test_no_product_filter_keeps_original_list_query_and_pagination() -> None:
     repo.fetch_all = lambda sql, params=None: (statements.append(sql) or [])
     repo.list_requests(filters={}, created_by_user_id=None, page=1, page_size=20)
     assert all("invoice_posting_request_products" not in sql for sql in statements)
+
+
+
+def test_recorder_indexes_mapped_nfe_even_without_unmapped_items() -> None:
+    from controllership_finance_app.application.invoice_posting.unmapped_supplier_product_service import (
+        UnmappedSupplierProductRecorder,
+    )
+
+    class Service:
+        def execute(self, **kwargs):
+            return {
+                "productMapping": {"state": "ready"},
+                "items": [
+                    {
+                        "supplierProductCode": "FP-1",
+                        "internalProductCode": "90264242",
+                        "mappingStatus": "mapped",
+                    }
+                ],
+            }
+
+    class Repository:
+        indexed = None
+
+        def replace_indexed_nfe_product_rows(self, rows):
+            self.indexed = rows
+            return len(rows)
+
+        def insert_unmapped_supplier_products(self, rows):
+            raise AssertionError("Nao registra itens mapeados como sem codigo")
+
+    requests = Repository()
+    recorder = UnmappedSupplierProductRecorder(items=Service(), requests=requests)
+    recorder.record(
+        authorization="test",
+        document_id="doc",
+        provider_entity_id="provider",
+        access_key="test",
+        branch="01",
+        supplier_code="000001",
+        supplier_store="01",
+        supplier_name="Fornecedor",
+        document_number="000123456",
+        series="1",
+        request_id="00000000-0000-0000-0000-000000000001",
+    )
+    assert requests.indexed is not None
+    assert requests.indexed[0]["internal_product_code"] == "90264242"
