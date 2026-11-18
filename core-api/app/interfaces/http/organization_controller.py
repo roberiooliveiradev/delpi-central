@@ -34,6 +34,7 @@ from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUni
 from app.interfaces.http.security.authorization import require_all_permissions
 from app.interfaces.http.security.service_token import (
     require_organization_read_service_token,
+    require_reports_direct_usage_service_token,
 )
 from app.interfaces.http.utils.errors import api_error
 
@@ -339,3 +340,102 @@ def get_manager_weekly_app_opens(registration: str):
     except Exception:
         logger.exception("organization_weekly_app_opens_failed")
         return api_error("internal_error", "Falha na apuração semanal.", status=500)
+
+
+@integrations_organization_bp.route(
+    "/managers/<registration>/reports/direct-weekly-opens", methods=["GET"]
+)
+@require_reports_direct_usage_service_token()
+@integration_rate_limit(max_requests=12, per_seconds=60, key_prefix="reports-direct-week")
+def get_manager_reports_direct_weekly_opens(registration: str):
+    """S2S: one manager's direct RH employees only, with verified recipient.
+
+    This report never accepts include_indirect, manager email or recipient ID
+    from the caller. All inputs are resolved from RH + verified Core mapping.
+    """
+    try:
+        registration = PortalRhOrganizationGateway.validate_registration(registration)
+        week_start = request.args.get("week_start")
+        # Forbid the possibility that a caller supplies a broader team flag.
+        if "include_indirect" in request.args or "include_inactive" in request.args:
+            return api_error("validation_error", "Escopo da equipe é fixo: apenas diretos ativos.", status=400)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            team_service = OrganizationTeamService(
+                PortalRhOrganizationGateway(), uow.hr_registrations,
+            )
+            report = OrganizationWeeklyUsageService(
+                team_service,
+                SqlAlchemyOrganizationWeeklyUsageRepository(uow.session),
+            ).get_weekly_report(
+                registration, week_start=week_start, include_indirect=False, details=True,
+            )
+            # Defensive check against a broken upstream relationship contract:
+            # none of the indirect members may enter the delivery.
+            members = report.get("members") or []
+            if report.get("includeIndirect") is not False or any(
+                row.get("relationship") != "direct" for row in members
+            ):
+                raise ValueError("Hierarquia RH não retornou somente subordinados diretos.")
+            snapshot = team_service.get_team(
+                registration, include_indirect=False, include_inactive=False,
+            )
+            manager = snapshot["manager"]
+            if (
+                not manager.get("active")
+                or manager.get("identityStatus") != "mapped"
+                or not manager.get("coreUserId")
+            ):
+                return api_error(
+                    "manager_identity_missing",
+                    "Gestor sem identidade Core verificada e ativa.",
+                    status=422,
+                )
+            core_user = uow.users.get_by_id(_uuid(manager["coreUserId"]))
+            email = (getattr(core_user, "email", "") or "").strip().lower()
+            if (
+                core_user is None
+                or not getattr(core_user, "active", False)
+                or not email
+                or "@" not in email
+                or "***" in email
+            ):
+                return api_error(
+                    "manager_email_missing",
+                    "Gestor sem conta Core ativa e e-mail válido.",
+                    status=422,
+                )
+
+        result = {
+            **report,
+            "directOnly": True,
+            "manager": {
+                "registration": manager["registration"],
+                "fullName": manager["fullName"],
+            },
+            "recipient": {
+                "userId": str(core_user.id),
+                "email": email,
+            },
+        }
+        logger.info(
+            "reports_direct_team_weekly_read team=%s mapped=%s consented=%s",
+            report["teamCount"], report["verifiedMapped"], report["consentGranted"],
+        )
+        return jsonify(result), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except PortalRhManagerNotFound:
+        return api_error("manager_not_found", "Gestor não localizado no RH.", status=404)
+    except PortalRhOrganizationUnauthorized:
+        return api_error("rh_unavailable", "Credencial RH recusada.", status=503)
+    except PortalRhOrganizationContractError:
+        return api_error("rh_contract_error", "Hierarquia RH inválida.", status=502)
+    except PortalRhOrganizationUnavailable:
+        return api_error("rh_unavailable", "Portal RH indisponível.", status=503)
+    except Exception:
+        logger.exception("reports_direct_team_weekly_failed")
+        return api_error("internal_error", "Falha na consulta semanal direta.", status=500)
