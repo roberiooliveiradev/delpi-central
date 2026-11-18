@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from app.application.services.supplies.physical_otd_gate import (
+    physical_receipts_enabled,
+)
+
 from typing import Any
 
 from app.application.dto.supplies.purchase_order_otd_request import PurchaseOrderOtdRequest
@@ -9,7 +13,8 @@ from app.composition.query_cache_composer import build_query_cache
 def purchase_order_otd_cache_key(request: PurchaseOrderOtdRequest) -> str:
     return "|".join(
         [
-            "supplies-purchase-order-otd",
+            "supplies-purchase-order-otd-physical-v1"
+            if physical_receipts_enabled() else "supplies-purchase-order-otd",
             request.branch or "",
             request.start_date or "",
             request.end_date or "",

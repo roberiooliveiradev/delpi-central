@@ -291,6 +291,11 @@ if settings.LNF_HOSTED_ENABLED:
     )
 
     app.include_router(invoice_posting_router)
+    # #852 — leitura S2S mínima para OTD. NÃO amplia o router humano do LNF.
+    from controllership_finance_app.interface.http.routes.invoice_posting.otd_receipts_routes import (
+        router as lnf_otd_receipts_router,
+    )
+    app.include_router(lnf_otd_receipts_router)
     if _lnf_realtime_mounted:
         from controllership_finance_app.interface.http.routes.invoice_posting.realtime_routes import (
             router as invoice_posting_realtime_router,

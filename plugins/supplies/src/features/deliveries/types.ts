@@ -13,6 +13,8 @@ export type DeliveryLateListItem = {
   quantity?: number | null;
   expected_delivery_date?: string | null;
   receipt_entry_date?: string | null;
+  receipt_effective_date?: string | null;
+  receipt_source?: "lnf_fisico" | "erp_digitacao" | string | null;
   days_diff?: number | null;
   status?: DeliveryPunctualityStatus | string | null;
 };

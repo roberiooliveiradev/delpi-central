@@ -1533,6 +1533,9 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
       TRANSFORMOMETRO_API_BASE_URL: http://transformometro-api:8000
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      # #852: ativar SOMENTE depois de testar a leitura LNF e comparar os KPIs.
+      OTD_PHYSICAL_RECEIPTS_ENABLED: ${OTD_PHYSICAL_RECEIPTS_ENABLED:-false}
+      OTD_LNF_BASE_URL: ${OTD_LNF_BASE_URL:-http://controllership-finance-api:8000}
       # PARAMETROS_MINHADELPI é multi-ambiente: sem filtro, linhas vazias de
       # outro ambiente (ex.: PATH_AUTH@2) sobrescrevem as do ambiente produtivo.
       INTRANET_PARAMS_AMBIENTE: ${INTRANET_PARAMS_AMBIENTE:-1}
