@@ -115,6 +115,7 @@ def _list_order_clause(request: GetPurchaseOrderOtdPanelRequest) -> str:
         "supplier_short_name": "supplier_short_name",
         "expected_delivery_date": "expected_delivery_date",
         "receipt_entry_date": "receipt_entry_date",
+        "receipt_effective_date": "receipt_effective_date",
         "quantity": "quantity",
         "days_diff": "days_diff",
     }

@@ -122,6 +122,19 @@ export function DeliveriesListTable({
                 return formatDatePtBr(row.expected_delivery_date);
               case "receipt_entry_date":
                 return formatDatePtBr(row.receipt_entry_date);
+              case "receipt_effective_date":
+                return (
+                  <span
+                    title={
+                      row.receipt_source === "lnf_fisico"
+                        ? "Data de recebimento físico informada no Lançamento de Notas Fiscais"
+                        : "Data de digitação do Protheus (sem conciliação física disponível)"
+                    }
+                  >
+                    {formatDatePtBr(row.receipt_effective_date ?? row.receipt_entry_date)}
+                    {row.receipt_source === "lnf_fisico" ? " · Física" : ""}
+                  </span>
+                );
               case "days_diff":
                 return formatDaysDiff(row.days_diff);
               case "status":

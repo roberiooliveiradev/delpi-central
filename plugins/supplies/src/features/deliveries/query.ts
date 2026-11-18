@@ -20,6 +20,7 @@ export const DELIVERIES_SORTABLE_COLUMNS = {
   quantity: "quantity",
   expected_delivery_date: "expected_delivery_date",
   receipt_entry_date: "receipt_entry_date",
+  receipt_effective_date: "receipt_effective_date",
   days_diff: "days_diff",
   status: "status",
 } as const;

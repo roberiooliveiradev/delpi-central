@@ -1,6 +1,7 @@
 """Compose Portal late deliveries from api-delpi purchase-order-otd panel.
 
-Period filters DT_DIGITACAO. Late/on_time stay in the producer (DIAS).
+Period filters effective receipt date (physical LNF when reconciled, ERP otherwise).
+Late/on_time stay in the producer (DIAS).
 Consolidated 01+02 never calls the producer without branch.
 """
 
@@ -34,6 +35,7 @@ ALLOWED_SORT = frozenset(
         "supplier_short_name",
         "expected_delivery_date",
         "receipt_entry_date",
+        "receipt_effective_date",
         "quantity",
         "days_diff",
     }
@@ -61,6 +63,8 @@ _LINE_FIELDS = (
     "purchase_order_issue_date",
     "expected_delivery_date",
     "receipt_entry_date",
+    "receipt_effective_date",
+    "receipt_source",
     "invoice_issue_date",
     "days_diff",
     "is_on_time",

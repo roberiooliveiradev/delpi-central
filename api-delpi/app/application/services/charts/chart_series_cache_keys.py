@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.infrastructure.persistence.totvs.supplies_repositories.otd_physical_receipts import physical_receipts_enabled
 from app.application.dto.commercial.commercial_rol_series_request import (
     CommercialRolSeriesRequest,
 )
@@ -123,7 +124,7 @@ def supplies_purchase_order_otd_series_cache_key(
 ) -> str:
     return "|".join(
         [
-            "supplies-purchase-order-otd-series",
+            "supplies-purchase-order-otd-series-physical-v1" if physical_receipts_enabled() else "supplies-purchase-order-otd-series",
             request.granularity,
             request.date_start or "",
             request.date_end or "",
