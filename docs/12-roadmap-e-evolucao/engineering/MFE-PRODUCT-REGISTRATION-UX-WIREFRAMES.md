@@ -791,3 +791,13 @@ mensagens + editor compactos              header (titulo + contexto + Recolher/X
 ### Limites e evidencias
 
 Mudanca de **frontend/UX**, nao de contrato/backend. Deploy autorizado: **HML apenas**; PRD depende de decisao posterior. Residuais conhecidos permanecem (avatar foto corporativa; Escape nao empilha entre modais irmaos por design do guard local — mitigado no painel).
+
+### FIX-01 — ocupacao vertical do modo expandido (EVA-PRC-CONVERSATION-EXPANDED-VERTICAL-FILL-FIX-01)
+
+**Causa raiz comprovada** (geometria real em HML, `getBoundingClientRect`): a cadeia dialog→body→panel→frame propagava a altura corretamente (778px), mas `.delpi-ui-room-panel` mantinha o clamp de embed `height/max-height: min(34rem, 70vh)` = 544px — o `flex:1` do frame era truncado pelo `max-height`, deixando ~232px de vazio sob o composer.
+
+**Correcao** (`conversation-panel.css`, 7 linhas): no escopo `--expanded`, override das vars de embed do RoomPanel — `--delpi-ui-room-panel-min-height:0`, `height:auto`, `max-height:none`. Nenhum outro elo alterado; stage/msgs/dock ja estavam corretos.
+
+**Geometria AFTER (HML, 1440x900):** room 544→776px; msgs 408→640px; dock bottom 635→867 (vazio residual = 20px de padding do body). **Compacto intacto**: frame 544px/room 542px (min(34rem,70vh)), msgs scrollHeight 1665 vs clientHeight 406 (scroll real).
+
+**Testes:** contrato CSS `conversationPanelExpandedFill.contract.test.ts` (3 casos) + E2E HML 25/25 rerun no build corrigido (expand/collapse, draft, realtime F-01, Escape, foco, viewports).
