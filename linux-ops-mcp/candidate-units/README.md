@@ -16,3 +16,13 @@ or a pinned wrapper under owner change-control.
 ## Etapa 70: DAC estrito do signer
 
 O diretorio `/run/atlas-hml-signer-socket` tera owner `atlas-hml-signer`, grupo `atlas-hml-bridge`, modo **02750** (setgid). O processo signer cria `sign.sock` somente apos tornar-se nao-root; o socket herda GID `atlas-hml-bridge` e usa modo `0660`, sem `chown` ou fallback para GID primario. O grupo bridge nao tem permissao de escrita no diretorio. Chave e estado continuam separados. Estes arquivos permanecem nao instalaveis.
+
+## Etapa 74: criacao no boot sem reparo silencioso
+
+As cinco entradas de layout tmpfiles usam o prefixo ':' nos campos mode,
+user e group. O systemd-tmpfiles os aplica apenas a inodes recem-criados,
+nao altera permissao ou dono de diretorios ja existentes. Isso nao garante
+que o serviço seja impedido de iniciar: a validacao posterior por FD, ACL e
+identidades permanece obrigatoria e falha fechada. A configuracao .candidate
+nao tem extensao .conf nem esta instalada no sistema. Nao executar
+systemd-tmpfiles no srv-api sem autorizacao operacional especifica.
