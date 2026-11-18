@@ -43,6 +43,7 @@ def test_feed_exposes_only_matched_invoice_identity_and_local_receipt_date(monke
     assert value["items"][0]["erp_entry_date"] == "2026-08-14"
     assert "supplier_name" not in value["items"][0]
     assert "status = 'posted'" in seen["sql"]
+    assert "fiscal_model = 'nfe'" in seen["sql"]
     assert "sf1_recno IS NOT NULL" in seen["sql"]
     assert "fiscal_key_count = 1" in seen["sql"]
     assert seen["params"][:2] == ("01", "01")

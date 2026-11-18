@@ -40,6 +40,7 @@ WITH candidates AS (
         ) AS fiscal_key_count
     FROM lancamento_notas_fiscais.invoice_posting_requests
     WHERE status = 'posted'
+      AND (fiscal_model = 'nfe' OR fiscal_model IS NULL)
       AND sf1_recno IS NOT NULL
       AND sf1_recno > 0
       AND (%s::text IS NULL OR branch_code = %s)

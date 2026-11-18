@@ -43,7 +43,9 @@ de registro; não é prova automática da chegada física.
    cada item contém filial, fornecedor/loja, documento fiscal 9 dígitos,
    série normalizada, `sf1_recno`, `received_date` já convertida para
    o fuso `America/Sao_Paulo` e `erp_entry_date`.
-   Fonte: `posted` + `sf1_recno` válido. Ambiguidade fiscal é
+   Fonte: `posted` + `sf1_recno` válido e modelo NF-e
+   (ou legado sem modelo registrado); CT-e/NFS-e ficam fora do OTD
+   de recebimentos de mercadorias. Ambiguidade fiscal é
    excluída no owner; fonte truncada (>10.000) recusa o request HTTP 503.
 3. **Consumidor** `api-delpi`: flag
    `OTD_PHYSICAL_RECEIPTS_ENABLED=false` por padrão. Com `true`,
