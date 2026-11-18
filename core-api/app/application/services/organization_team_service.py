@@ -43,7 +43,9 @@ class OrganizationTeamService:
 
         def serialize_person(person: dict) -> dict:
             reg = person["registration"]
-            core_user_id = lookup.get(reg)
+            # A collaborator inactive in RH is not eligible for nominal reporting,
+            # even if the linked Core account has not yet been deactivated.
+            core_user_id = lookup.get(reg) if person["active"] else None
             return {
                 "registration": reg,
                 "fullName": person["full_name"],
