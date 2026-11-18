@@ -59,7 +59,7 @@ A primeira superfície do analista cabe no MFE existente, como irmã de `product
   - `M` `infra/scripts/up-dev-sequential.sh`
   - untracked: `delia-api/.battery/kimi-dev-eval/`, `plugins/tv-dashboard-presentation/artifacts/`, `plugins/tv-dashboard-presentation/e2e/specs/kpi-status-capture.spec.ts`
 - Há dezenas de worktrees preexistentes (`git worktree list`). Nenhuma foi alterada. A worktree `eng-products-e2e` (`feat/engineering-products-e2e`) é de outro assunto (catálogo de produtos de engenharia), não deste vertical.
-- Docs de intenção lidos: `engineering/ROADMAP.md` (adendo 2026-11-06), `engineering/ARCHITECTURE.md`, `engineering/API-ROUTES.md`, `engineering/INTEGRACOES.md`, `controle-mp/EVOLUCAO.md`, `my-requests/PLAYBOOK.md`, `AGENTS.md`.
+- Docs de intenção lidos: `engineering/ROADMAP.md` (adendo 2026-11-06), `engineering/ARCHITECTURE.md`, `engineering/API-ROUTES.md`, `engineering/INTEGRACOES.md`, `engineering/PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md` (histórico anterior em Git), `my-requests/PLAYBOOK.md`, `AGENTS.md`.
 
 `API-ROUTES.md` §10 e `INTEGRACOES.md` §7 ainda descrevem a decisão anterior (resumo + deep link para `my-requests`). O adendo do ROADMAP prevalece sobre a **superfície do analista**. Este inventário não reescreve essa decisão; confirma o que o código permite.
 
@@ -69,7 +69,7 @@ A primeira superfície do analista cabe no MFE existente, como irmã de `product
 
 | ID | Decisão vigente | Onde | Efeito neste inventário |
 |---|---|---|---|
-| Adendo PRC 2026-11-06 | Analista no `plugins/engineering`; solicitante permanece no Controle MP; BFF = `engineering-api` → API Controle MP | `ROADMAP.md` adendo; `EVOLUCAO.md` §10 | Fonte da fase 1 é a API Flask |
+| Adendo PRC 2026-11-06 | Analista no `plugins/engineering`; solicitante permanece no Controle MP; BFF = `engineering-api` → API Controle MP | `ROADMAP.md` adendo; histórico Git `controle-mp/EVOLUCAO.md` §10 | Fonte da fase 1 é a API Flask |
 | D-07 / E9 (histórico) | Deep link para `my-requests`, sem duplicar fila | `ROADMAP.md` antes do adendo; `API-ROUTES.md` §10 | Superfície inicial **não** segue mais isso. O path `GET /v1/integrations/raw-material-control/summary` **não existe** na `engineering-api` |
 | Ownership de fase 1 | Controle MP é dono da solicitação, da transição e do produto materializado. `engineering-api` é façade | Adendo §2 | BFF não grava produto nem reimplementa a máquina de estados como autoridade |
 | Proibições | Sem Postgres do Controle MP, sem import Flask, sem MFE→Flask/TOTVS, sem token admin no lugar do usuário, sem dual-write | Adendo §2 | Confirmadas como ausência no código da `engineering-api` (`tests/test_architecture.py` proíbe import Flask) |
@@ -895,7 +895,7 @@ delpi-central em `2cbd3e308d70f33a894b1e48d2b0d18214603b7b`:
 - Root path: [config.py](https://github.com/roberiooliveiradev/delpi-central/blob/2cbd3e308d70f33a894b1e48d2b0d18214603b7b/engineering-api/engineering_app/config.py)
 - Router do MFE: [engineeringRoutes.ts](https://github.com/roberiooliveiradev/delpi-central/blob/2cbd3e308d70f33a894b1e48d2b0d18214603b7b/plugins/engineering/src/app/engineeringRoutes.ts)
 - Stub: `requests-api/migrations/V007__seed_raw_material_creation_request_type.sql` e `requests_app/content/pt-BR/workflows/raw_material_creation.json`
-- Plano: [ROADMAP.md](./ROADMAP.md) adendo, [EVOLUCAO.md](../controle-mp/EVOLUCAO.md) §10
+- Plano: [ROADMAP.md](./ROADMAP.md) adendo, [contrato mestre PRC](./PRODUCT-REGISTRATION-MVP-TECHNICAL-CONTRACT.md) §10
 
 ---
 
