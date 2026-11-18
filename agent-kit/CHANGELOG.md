@@ -17,8 +17,11 @@
 - Fallback de config/contexts em `<git-common-dir>/agent-scope/` cobre branches
   antigas sem `agent-scope.json` versionado; o arquivo do worktree prevalece.
 - Regra canônica: `.cursor/rules/agent-session-scope.mdc` (owner
-  `platform-quality-testing.mdc`). 22 testes novos em
-  `tests/test_session_scope.py`.
+  `platform-quality-testing.mdc`). 25 testes em `tests/test_session_scope.py`.
+- **Hardening pós-dogfood:** `register` recusa sobrescrever lease ativo sem
+  `--amend` e grava lease atomicamente; globs `--path` que tocam contextos
+  `restricted` também exigem `--allow-restricted`; mensagem de bloqueio do
+  pre-commit não sugere mais o id de sessão alheio.
 
 ## 0.3.1 — 2026-11-15
 

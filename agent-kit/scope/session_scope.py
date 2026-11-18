@@ -392,6 +392,22 @@ def cmd_register(args: argparse.Namespace) -> int:
     for ctx in args.context or []:
         globs.extend(contexts[ctx].get("globs", []))
         chosen_contexts.append(ctx)
+    if not args.allow_restricted:
+        restricted_globs = [
+            g for c in contexts.values() if c.get("restricted")
+            for g in c.get("globs", [])
+        ]
+        hits = [
+            g for g in globs
+            if any(globs_overlap(g, rg) for rg in restricted_globs)
+        ]
+        if hits:
+            print(
+                f"[agent-scope] escopo toca zona(s) restrita(s), exige --allow-restricted: "
+                f"{', '.join(hits[:5])}",
+                file=sys.stderr,
+            )
+            return 2
     if not globs:
         print("[agent-scope] escopo vazio: informe --context e/ou --path", file=sys.stderr)
         return 2
@@ -427,8 +443,24 @@ def cmd_register(args: argparse.Namespace) -> int:
     if path is None:
         print("[agent-scope] não foi possível resolver <git-common-dir>", file=sys.stderr)
         return 2
+
+    # Lease ativo existente: sobrescrita silenciosa permitiria uma sessão
+    # capturar o id/escopo de outra. Exigir --amend explícito.
+    existing = load_lease(path) if path.is_file() else None
+    if existing and not lease_expired(existing, now) and not args.amend:
+        print(
+            f"[agent-scope] lease '{session}' já existe e está ativo "
+            f"(worktree: {existing.get('worktree')}). "
+            f"Para alterar o próprio escopo, repita com --amend; "
+            f"para sessão diferente no mesmo worktree, use outro --session.",
+            file=sys.stderr,
+        )
+        return 2
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(lease, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(lease, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp.replace(path)  # escrita atômica: sem lease truncado em corrida
     exp = time.strftime("%H:%M", time.localtime(lease["expires"])) if lease["expires"] else "sem expiração"
     print(f"[agent-scope] lease '{session}' registrado em {worktree} (expira {exp})")
     for g in lease["globs"]:
@@ -559,12 +591,9 @@ def cmd_pre_commit(args: argparse.Namespace) -> int:
     print("  Escopo desta sessão:", file=sys.stderr)
     for g in lease.get("globs", []):
         print(f"    {g}", file=sys.stderr)
-    print("  Corrija o stage, coordene com a sessão dona ou amplie o lease:", file=sys.stderr)
-    print(
-        f"  {sys.executable} {script_path(repo)} register --session "
-        f"{lease.get('session')} --path '<glob>'",
-        file=sys.stderr,
-    )
+    print("  Corrija o stage ou coordene com a sessão dona.", file=sys.stderr)
+    print("  Para ampliar O SEU lease (mesma sessão), repita o register com --amend;", file=sys.stderr)
+    print("  sessão diferente neste worktree: registre com um --session próprio.", file=sys.stderr)
     print("  Escape manual (desaconselhado): git commit --no-verify", file=sys.stderr)
     return 1
 
@@ -791,6 +820,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ttl", type=float, help="horas até expirar (0 = sem expiração)")
     p.add_argument("--note", help="nota da tarefa")
     p.add_argument("--allow-restricted", action="store_true", help="permite contextos restritos")
+    p.add_argument("--amend", action="store_true",
+                   help="altera lease ativo existente da MESMA sessão (escopo/TTL)")
     p.set_defaults(func=cmd_register)
 
     p = sub.add_parser("release", parents=[common], help="encerra lease de uma sessão")

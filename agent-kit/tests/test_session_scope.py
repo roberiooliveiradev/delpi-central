@@ -116,6 +116,35 @@ class TestLeaseLifecycle(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("desconhecido", r.stderr)
 
+    def test_register_refuses_overwrite_without_amend(self):
+        cli(self.repo, "register", "--session", "s1", "--context", "app:a")
+        r = cli(self.repo, "register", "--session", "s1", "--context", "app:b")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("--amend", r.stderr)
+        r = cli(self.repo, "register", "--session", "s1",
+                "--context", "app:b", "--amend")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        lease = json.loads(
+            (self.repo / ".git" / "agent-scope" / "sessions" / "s1.json").read_text())
+        self.assertEqual(lease["globs"], ["app-b/**"])
+
+    def test_register_expired_lease_can_be_taken(self):
+        cli(self.repo, "register", "--session", "s1", "--context", "app:a")
+        path = self.repo / ".git" / "agent-scope" / "sessions" / "s1.json"
+        lease = json.loads(path.read_text())
+        lease["expires"] = time.time() - 10
+        path.write_text(json.dumps(lease))
+        r = cli(self.repo, "register", "--session", "s1", "--context", "app:b")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_register_path_glob_respects_restricted(self):
+        r = cli(self.repo, "register", "--session", "s1", "--path", "sec/x/**")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("restrita", r.stderr)
+        r = cli(self.repo, "register", "--session", "s1",
+                "--path", "sec/x/**", "--allow-restricted")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
     def test_release(self):
         cli(self.repo, "register", "--session", "s1", "--context", "app:a")
         r = cli(self.repo, "release", "--session", "s1")
