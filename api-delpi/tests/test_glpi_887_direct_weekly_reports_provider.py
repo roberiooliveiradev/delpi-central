@@ -32,7 +32,13 @@ REPORT = {
             "relationship": "direct",
             "usageStatus": "recorded_opens",
             "totalRecordedOpens": 3,
-            "apps": [{"appName": "Portal RH", "recordedOpens": 3}],
+            "apps": [{
+                "appName": "Portal RH",
+                "recordedOpens": 3,
+                "recordedSessions": 2,
+                "totalDurationSeconds": 600,
+                "avgSessionSeconds": 300,
+            }],
         },
         {
             "registration": "00002",
@@ -88,7 +94,10 @@ def test_provider_uses_fixed_direct_endpoint_and_masks_nonconsented_employee():
 
     email = provider.render_email(dataset)
     assert "subordinados diretos" in email.html_body
-    assert "Portal RH: 3" in email.html_body
+    assert "Portal RH" in email.html_body
+    assert "Tempo médio por sessão*" in email.html_body
+    assert "5 min" in email.html_body
+    assert "3 aberturas" in email.html_body
     assert "&lt;TESTE&gt;" in email.html_body
     assert "SEM CONSENTIMENTO" in email.html_body
     assert "Indisponível" in email.html_body
@@ -196,3 +205,35 @@ def test_run_fails_before_any_graph_send_when_disabled(monkeypatch):
         use_case.execute(definition_id=str(uuid4()))
     repo.create_run.assert_not_called()
     mail.send_mail_to.assert_not_called()
+
+
+def test_employee_email_sections_and_missing_duration_label():
+    import copy
+
+    payload = copy.deepcopy(REPORT)
+    payload["members"][0]["apps"].append({
+        "appName": "Outra Ferramenta",
+        "recordedOpens": 2,
+    })
+    payload["members"][0]["totalRecordedOpens"] = 5
+    provider, _ = _provider(payload)
+    dataset = provider.collect({"managerRegistration": "20001"})
+    html = provider.render_email(dataset).html_body
+    assert "PESSOA &lt;TESTE&gt;" in html
+    assert "5 aberturas" in html
+    assert "Outra Ferramenta" in html
+    assert "Não medido" in html
+    assert html.find("PESSOA &lt;TESTE&gt;") < html.find("SEM CONSENTIMENTO")
+    assert "Dados de uso indisponíveis" in html
+    assert "consent_not_granted" not in html
+    assert html.count("Tempo médio por sessão*") == 1  # only eligible block
+
+
+def test_provider_rejects_forged_average():
+    import copy
+
+    payload = copy.deepcopy(REPORT)
+    payload["members"][0]["apps"][0]["avgSessionSeconds"] = 1
+    provider, _ = _provider(payload)
+    with pytest.raises(ValueError, match="inconsistente"):
+        provider.collect({"managerRegistration": "20001"})
