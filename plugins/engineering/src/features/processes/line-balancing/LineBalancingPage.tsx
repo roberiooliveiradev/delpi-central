@@ -11,26 +11,19 @@
  * hipóteses nunca são apresentadas como dimensionamento aprovado. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  exportTableFormat,
-  TabularExportButtons,
-} from "@delpi/plugin-ui/index";
+import { exportTableFormat } from "@delpi/plugin-ui/index";
 import type { StudioStudyInput } from "@delpi/line-balance-studio";
-import type { StudioRoutingState } from "@delpi/line-balance-studio/ui";
+import type {
+  StudioAnalysisState,
+  StudioDraftSaveState,
+  StudioOfficialOperation,
+  StudioRoutingState,
+} from "@delpi/line-balance-studio/ui";
 
 import { getCurrentAccessToken, HomeApiError } from "../../../api/httpClient";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
-import {
-  EngineeringActionButton,
-  EngineeringEmptyState,
-  EngineeringFormActions,
-  EngineeringKpiCard,
-  EngineeringSectionCard,
-  EngineeringStateBanner,
-  EngineeringStatusBadge,
-} from "../../../ui/engineeringUi";
+import { EngineeringStateBanner } from "../../../ui/engineeringUi";
 import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
-import { DataTable, type DataTableColumn } from "../../products/components/dataTableUi";
 import {
   fetchProductRouting,
   postProductLineBalance,
@@ -40,11 +33,8 @@ import type {
   ProductRoutingResult,
 } from "../../products/types";
 import {
-  formatHours,
-  formatMinutes,
   groupRoutingRows,
   stageLabel,
-  type RoutingOperationView,
 } from "../../products/routing/routingGrouping";
 import type { BalanceRunParams } from "../../products/routing/useRoutingStudyDraft";
 import { LineBalanceStudioMount } from "./LineBalanceStudio";
@@ -88,25 +78,6 @@ function isForbidden(error: unknown): boolean {
 function isNotFound(error: unknown): boolean {
   return error instanceof HomeApiError && error.status === 404;
 }
-
-const OP_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
-  { key: "op", header: "Operação", render: (op) => op.operation_code || "—" },
-  { key: "desc", header: "Descrição", render: (op) => op.operation_description ?? "—" },
-  { key: "ct", header: "CT", render: (op) => op.work_center ?? "—" },
-  { key: "resource", header: "Recurso", render: (op) => op.resource_code ?? "—" },
-  {
-    key: "time",
-    header: "Tempo padrão (min/peça)",
-    align: "right",
-    render: (op) => (op.time_minutes_piece != null ? formatMinutes(op.time_minutes_piece) : "UNKNOWN"),
-  },
-  {
-    key: "setup",
-    header: "Setup (h)",
-    align: "right",
-    render: (op) => (op.setup_hours != null ? formatHours(op.setup_hours) : "—"),
-  },
-];
 
 export function LineBalancingPage() {
   const [queriedCode, setQueriedCode] = useState("");
@@ -411,6 +382,61 @@ export function LineBalancingPage() {
     [queriedCode, branch, stage, studySeed],
   );
 
+  /* Análise oficial M1 — execução permanece aqui (BFF/domínio); o Studio
+   * recebe o estado serializado para apresentá-la na bancada do método. */
+  const studioAnalysisState: StudioAnalysisState | undefined = useMemo(() => {
+    if (!queriedCode || !stage || studySeed?.source !== "OBSERVED_ROUTING") return undefined;
+    if (balanceRunning) return { phase: "running" };
+    if (balanceError) {
+      return {
+        phase: "error",
+        message: isForbidden(balanceError)
+          ? "Acesso negado pela análise oficial — autorização insuficiente."
+          : isNotFound(balanceError)
+            ? "Produto ou estágio não encontrado pela análise oficial."
+            : balanceError instanceof HomeApiError
+              ? balanceError.message
+              : "Serviço de análise oficial indisponível.",
+      };
+    }
+    if (balanceResult) {
+      return {
+        phase: "result",
+        result: {
+          taktMinutes: stageBalance?.takt_minutes ?? null,
+          workContentMinutes: stageBalance?.work_content_minutes ?? null,
+          theoreticalMinStations: stageBalance?.theoretical_min_stations ?? null,
+          bottleneckOperation: stageBalance?.bottleneck_candidate?.operation_code ?? null,
+          operationsMissingTime: stageBalance?.operations_missing_time?.length ?? 0,
+          stageCovered: Boolean(stageBalance),
+        },
+      };
+    }
+    return { phase: "idle", issues: balanceParams.ok ? [] : balanceParams.issues };
+  }, [queriedCode, stage, studySeed, balanceRunning, balanceError, balanceResult, stageBalance, balanceParams]);
+
+  /* Metadados oficiais do roteiro — detalhe técnico sob demanda dentro da
+   * bancada (sem segunda tabela concorrente fora do Studio). */
+  const officialOperations: StudioOfficialOperation[] | undefined = useMemo(() => {
+    if (!stage || studySeed?.source !== "OBSERVED_ROUTING") return undefined;
+    return stage.operations.map((op) => ({
+      key: op.key,
+      code: op.operation_code,
+      description: op.operation_description,
+      workCenter: op.work_center,
+      resource: op.resource_code,
+      timeMinutesPiece: op.time_minutes_piece,
+      setupHours: op.setup_hours,
+    }));
+  }, [stage, studySeed]);
+
+  const draftSave: StudioDraftSaveState | undefined = useMemo(
+    () => saveStatus === "idle"
+      ? undefined
+      : { label: SAVE_LABEL[saveStatus] ?? saveStatus, tone: saveStatus === "saved" ? "success" : "warning" },
+    [saveStatus],
+  );
+
   return (
     <>
       {staleNotice ? <EngineeringStateBanner variant="default">{staleNotice}</EngineeringStateBanner> : null}
@@ -421,112 +447,18 @@ export function LineBalancingPage() {
       <LineBalanceStudioMount
         study={studySeed}
         routingState={studioRoutingState}
+        analysisState={studioAnalysisState}
+        officialOperations={officialOperations}
+        draftSave={draftSave}
         onStudyChange={onStudyChange}
         onRoutingSearch={searchRouting}
         onRoutingContext={onRoutingContext}
         onManualStudy={startManualStudy}
         onOriginReset={resetOrigin}
+        onAnalysisRun={runBalance}
+        onExport={exportStudy}
+        onClearStudy={() => setClearOpen(true)}
       />
-
-      {studySeed ? (
-        <EngineeringFormActions>
-          {saveStatus !== "idle" ? (
-            <EngineeringStatusBadge
-              label={SAVE_LABEL[saveStatus] ?? saveStatus}
-              variant={saveStatus === "saved" ? "success" : "warning"}
-            />
-          ) : null}
-          <EngineeringActionButton variant="default" onClick={() => setClearOpen(true)}>
-            Limpar estudo
-          </EngineeringActionButton>
-          <TabularExportButtons onExport={exportStudy} />
-        </EngineeringFormActions>
-      ) : null}
-
-      {stage && studySeed?.source === "OBSERVED_ROUTING" ? (
-        <>
-          <EngineeringSectionCard
-            title="Operações oficiais do roteiro"
-            subtitle={`${queriedCode} · ${stage.operations.length} operação(ões) deduplicada(s) por identidade de operação${routing?.truncated ? " · resultado truncado pela fonte" : ""}`}
-          >
-            {routing?.truncated ? (
-              <EngineeringStateBanner variant="default">
-                A fonte retornou resultado paginado incompleto — o estudo considera somente as operações efetivamente recebidas.
-              </EngineeringStateBanner>
-            ) : null}
-            <DataTable
-              columns={OP_COLUMNS}
-              rows={stage.operations}
-              rowKey={(op) => op.key}
-              layout="embedded"
-              compact
-              emptyMessage="Nenhuma operação neste estágio."
-            />
-          </EngineeringSectionCard>
-        </>
-      ) : null}
-
-      {queriedCode && stage && studySeed?.source === "OBSERVED_ROUTING" ? (
-        <EngineeringSectionCard
-          title="Análise oficial M1 — capacidade e takt"
-          subtitle="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED com os parâmetros PROVIDED das condições do estudo."
-        >
-          {!balanceParams.ok ? (
-            <ul className="engineering-routing__limitations" role="alert">
-              {balanceParams.issues.map((issue, i) => (
-                <li key={i}>{issue}</li>
-              ))}
-            </ul>
-          ) : null}
-          <EngineeringFormActions>
-            <EngineeringActionButton
-              variant="primary"
-              disabled={!balanceParams.ok || balanceRunning}
-              onClick={runBalance}
-            >
-              {balanceRunning ? "Calculando…" : "Executar análise oficial"}
-            </EngineeringActionButton>
-          </EngineeringFormActions>
-          {balanceError ? (
-            <EngineeringStateBanner variant="error">
-              {isForbidden(balanceError)
-                ? "Acesso negado pela análise oficial — autorização insuficiente."
-                : isNotFound(balanceError)
-                  ? "Produto ou estágio não encontrado pela análise oficial."
-                  : balanceError instanceof HomeApiError
-                    ? balanceError.message
-                    : "Serviço de análise oficial indisponível."}
-            </EngineeringStateBanner>
-          ) : null}
-          {stageBalance ? (
-            <div className="engineering-routing__balance-grid">
-              <EngineeringKpiCard title="Takt" value={formatMinutes(stageBalance.takt_minutes)} subtitle="min/peça — CALCULATED" />
-              <EngineeringKpiCard
-                title="Conteúdo de trabalho"
-                value={formatMinutes(stageBalance.work_content_minutes)}
-                subtitle="min — CALCULATED"
-              />
-              <EngineeringKpiCard
-                title="Mínimo teórico de postos"
-                value={stageBalance.theoretical_min_stations != null ? String(stageBalance.theoretical_min_stations) : "—"}
-                subtitle="CALCULATED"
-              />
-              <EngineeringKpiCard
-                title="Gargalo candidato"
-                value={stageBalance.bottleneck_candidate?.operation_code ?? "—"}
-                subtitle="CALCULATED"
-              />
-            </div>
-          ) : balanceResult ? (
-            <EngineeringEmptyState message="O resultado oficial não inclui o estágio selecionado." />
-          ) : null}
-          {stageBalance?.operations_missing_time?.length ? (
-            <EngineeringStateBanner variant="default">
-              {stageBalance.operations_missing_time.length} operação(ões) sem tempo oficial — UNKNOWN, nunca assumidas como zero.
-            </EngineeringStateBanner>
-          ) : null}
-        </EngineeringSectionCard>
-      ) : null}
 
       <EngineeringConfirmDialog
         open={clearOpen}

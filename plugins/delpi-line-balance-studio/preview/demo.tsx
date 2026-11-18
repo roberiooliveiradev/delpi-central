@@ -16,6 +16,18 @@ const operations = [
   { id: "o8", name: "Etiquetar embalagem", durationSeconds: null },
 ];
 
+/* Metadados oficiais de demonstração — o host real os extrai do roteiro
+ * OBSERVED; aqui apenas exercem o contrato `officialOperations`. */
+const demoOfficialOps = operations.map((operation, index) => ({
+  key: operation.id,
+  code: `OP${String((index + 1) * 10).padStart(3, "0")}`,
+  description: operation.name,
+  workCenter: "900",
+  resource: `R-${(index % 3) + 1}`,
+  timeMinutesPiece: operation.durationSeconds != null ? operation.durationSeconds / 60 : null,
+  setupHours: index % 2 === 0 ? 0.5 : null,
+}));
+
 const example: ManualStudyInput = {
   id: "demo",
   name: "Montagem de chicote piloto",
@@ -84,7 +96,42 @@ studio.addEventListener(STUDIO_EVENTS.routingSearch, event => {
 
 studio.addEventListener(STUDIO_EVENTS.routingContext, event => {
   const { stage } = (event as CustomEvent<{ branch: string; stage: string }>).detail;
-  if (stage) studio.study = observedStudy(queriedCode || "90264302", stage);
+  if (stage) {
+    studio.study = observedStudy(queriedCode || "90264302", stage);
+    studio.officialOperations = demoOfficialOps;
+    studio.analysisState = { phase: "idle", issues: [] };
+    studio.draftSave = { label: "Rascunho salvo", tone: "success" };
+  }
+});
+
+/* Análise oficial M1 — a demo simula execução host-side: recebe o evento,
+ * marca running e devolve um resultado tipado (nunca calculado no Studio). */
+studio.addEventListener(STUDIO_EVENTS.analysisRun, () => {
+  studio.analysisState = { phase: "running" };
+  setTimeout(() => {
+    studio.analysisState = {
+      phase: "result",
+      result: {
+        taktMinutes: 1.33,
+        workContentMinutes: 4,
+        theoreticalMinStations: 3,
+        bottleneckOperation: "OP040",
+        operationsMissingTime: 1,
+        stageCovered: true,
+      },
+    };
+  }, 700);
+});
+
+studio.addEventListener(STUDIO_EVENTS.exportRequest, event => {
+  const { format } = (event as CustomEvent<{ format: string }>).detail;
+  console.info(`[demo] exportação ${format} solicitada — host executa o download.`);
+});
+
+studio.addEventListener(STUDIO_EVENTS.clearRequest, () => {
+  if (globalThis.confirm?.("Limpar o rascunho local do estudo?")) {
+    newStudy();
+  }
 });
 
 function newStudy() {

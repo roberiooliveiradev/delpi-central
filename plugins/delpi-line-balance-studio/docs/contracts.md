@@ -36,3 +36,20 @@ A API pública resolve o consumo do mesmo estado por futuros editores e portais.
 - **Erros:** mesmos códigos de `createManualStudy` + `REQUIRED` em `routing.productCode | branchCode | stageId`. Nunca converte roteiro observado em `MANUAL`.
 - **AuthZ / limites:** a biblioteca não recebe credenciais nem abre rede; SSO, RBAC, HTTP, filial, estágio, cancelamento e truncamento permanecem no host. `routing.truncated` é exibido, não interpretado.
 - **Compatibilidade:** aditivo — consumidores manuais existentes compilam sem alteração.
+
+## Bancada unificada V4.1 — apresentação de resultados oficiais (RQ-LBS-13)
+
+- **Owner / consumidores:** o contrato do elemento pertence ao Studio. O Portal Engenharia (`plugins/engineering`, rota `/apps/engineering/processes/line-balancing`) executa a análise oficial M1 pelo BFF/domínio autorizado e entrega ao Studio apenas o estado tipado de apresentação. Nenhum cálculo oficial migra para o Studio.
+- **Propriedades novas do elemento `delpi-line-balance-studio`:**
+  - `analysisState: StudioAnalysisState` — `{ phase: "idle" | "running" | "result" | "error", issues?, message?, result? }`. `result` carrega `taktMinutes`, `workContentMinutes`, `theoreticalMinStations`, `bottleneckOperation` (todos `CALCULATED` do domínio), `operationsMissingTime` (contagem de tempos `UNKNOWN`) e `stageCovered` (`false` → a resposta não cobriu o estágio do estudo). O Studio só renderiza; fases, erros e mensagens são resolvidos pelo host.
+  - `officialOperations: readonly StudioOfficialOperation[]` — metadados do roteiro OBSERVED (`key`, `code`, `description`, `workCenter`, `resource`, `timeMinutesPiece`, `setupHours`) apresentados sob demanda pelo disclosure `Detalhes oficiais` na seção Operações. Somente consulta; ausência de tempo exibe `UNKNOWN`, nunca zero.
+  - `draftSave: StudioDraftSaveState` — `{ label, tone }` do badge de persistência do rascunho local, resolvido pelo host.
+  - `routingState: StudioRoutingState` (V4) — fases da busca de roteiro: `idle`, `searching`, `awaiting-stage` (com `branchOptions`/`stageOptions`), `error` com `message` do host.
+- **Eventos novos (bubbles + composed, `CustomEvent`):**
+  - `studio-analysis-run` — o usuário pediu a análise oficial M1; o host executa o BFF e devolve `analysisState`. Emitido apenas em estudo `OBSERVED_ROUTING`.
+  - `studio-export` — `detail.format ∈ { "csv", "xlsx", "pdf" }`; o host produz o arquivo com o estudo/cenário vigentes.
+  - `studio-clear-study` — pedido de limpeza; confirmação e descarte de persistência permanecem no host.
+- **Eventos V4 inalterados:** `studio-origin-select`, `studio-routing-search`, `studio-routing-context`, `studio-manual-study`, `studio-origin-reset`, `studio-method-change`, `study-change`.
+- **Ciclo de vida:** um novo `study` no setter reseta `analysisState`, `officialOperations`, `draftSave`, disclosures e confirmações — o host os republica por contexto. Resultados oficiais nunca vazam entre estudos.
+- **AuthZ / limites:** SSO, RBAC, HTTP, persistência, formatos de arquivo e execução M1 permanecem no host/domínio. O Studio não abre rede, não estima resultados e não publica roteiro.
+- **Compatibilidade:** aditivo — `analysisState`, `officialOperations` e `draftSave` são opcionais; hosts V4 continuam funcionais (M1 exibe diagnóstico local sem o bloco oficial, exportações fora do Studio seguem possíveis).

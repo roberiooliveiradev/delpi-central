@@ -7,7 +7,12 @@
 
 import { useEffect, useRef } from "react";
 import { registerLineBalanceStudio, STUDIO_EVENTS } from "@delpi/line-balance-studio/ui";
-import type { StudioRoutingState } from "@delpi/line-balance-studio/ui";
+import type {
+  StudioAnalysisState,
+  StudioDraftSaveState,
+  StudioOfficialOperation,
+  StudioRoutingState,
+} from "@delpi/line-balance-studio/ui";
 import type { StudioStudyInput } from "@delpi/line-balance-studio";
 
 declare global {
@@ -25,6 +30,9 @@ declare global {
 type StudioElement = HTMLElement & {
   study?: StudioStudyInput;
   routingState?: StudioRoutingState;
+  analysisState?: StudioAnalysisState;
+  officialOperations?: readonly StudioOfficialOperation[];
+  draftSave?: StudioDraftSaveState;
 };
 
 type StudioHandlers = {
@@ -33,6 +41,9 @@ type StudioHandlers = {
   onRoutingContext?: (context: { branch: string; stage: string }) => void;
   onManualStudy?: (name: string) => void;
   onOriginReset?: () => void;
+  onAnalysisRun?: () => void;
+  onExport?: (format: "csv" | "xlsx" | "pdf") => void;
+  onClearStudy?: () => void;
 };
 
 let registered = false;
@@ -40,18 +51,30 @@ let registered = false;
 export function LineBalanceStudioMount({
   study,
   routingState,
+  analysisState,
+  officialOperations,
+  draftSave,
   onStudyChange,
   onRoutingSearch,
   onRoutingContext,
   onManualStudy,
   onOriginReset,
+  onAnalysisRun,
+  onExport,
+  onClearStudy,
 }: {
   study: StudioStudyInput | undefined;
   routingState?: StudioRoutingState;
+  analysisState?: StudioAnalysisState;
+  officialOperations?: readonly StudioOfficialOperation[];
+  draftSave?: StudioDraftSaveState;
 } & StudioHandlers) {
   const ref = useRef<StudioElement | null>(null);
   const handlersRef = useRef<StudioHandlers>({});
-  handlersRef.current = { onStudyChange, onRoutingSearch, onRoutingContext, onManualStudy, onOriginReset };
+  handlersRef.current = {
+    onStudyChange, onRoutingSearch, onRoutingContext, onManualStudy,
+    onOriginReset, onAnalysisRun, onExport, onClearStudy,
+  };
 
   useEffect(() => {
     if (!registered) {
@@ -67,6 +90,18 @@ export function LineBalanceStudioMount({
   useEffect(() => {
     if (ref.current) ref.current.routingState = routingState;
   }, [routingState]);
+
+  useEffect(() => {
+    if (ref.current) ref.current.analysisState = analysisState;
+  }, [analysisState]);
+
+  useEffect(() => {
+    if (ref.current) ref.current.officialOperations = officialOperations;
+  }, [officialOperations]);
+
+  useEffect(() => {
+    if (ref.current) ref.current.draftSave = draftSave;
+  }, [draftSave]);
 
   useEffect(() => {
     const element = ref.current;
@@ -90,6 +125,14 @@ export function LineBalanceStudioMount({
         handlersRef.current.onManualStudy?.(data?.name?.trim() || "Estudo manual");
       }],
       [STUDIO_EVENTS.originReset, () => handlersRef.current.onOriginReset?.()],
+      [STUDIO_EVENTS.analysisRun, () => handlersRef.current.onAnalysisRun?.()],
+      [STUDIO_EVENTS.exportRequest, event => {
+        const data = detail<{ format?: string }>(event);
+        if (data?.format === "csv" || data?.format === "xlsx" || data?.format === "pdf") {
+          handlersRef.current.onExport?.(data.format);
+        }
+      }],
+      [STUDIO_EVENTS.clearRequest, () => handlersRef.current.onClearStudy?.()],
     ];
     for (const [type, listener] of listeners) element.addEventListener(type, listener);
     return () => {

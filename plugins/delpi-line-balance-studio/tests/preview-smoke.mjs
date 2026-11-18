@@ -47,6 +47,7 @@ try {
   assert.equal(await host.locator(".delpi-ui-tool-rail").getAttribute("data-expanded"), "false");
   await host.getByRole("button", { name: "Expandir métodos" }).click();
   /* Trocar origem pede confirmação e retorna aos cards. */
+  await host.getByRole("button", { name: "Mais ações" }).click();
   await host.getByRole("button", { name: "Trocar origem" }).click();
   await host.getByRole("button", { name: "Sim, trocar origem" }).click();
   await host.getByRole("button", { name: /Produto DELPI/ }).waitFor();
@@ -61,6 +62,22 @@ try {
   await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
   assert.match(await host.locator(".study-head").textContent(), /Produto 90264302/);
   assert.match(await host.locator(".study-head").textContent(), /OBSERVED/);
+  /* V4.1 — bancada unificada: detalhes oficiais sob demanda, ações
+   * secundárias em "Mais ações" e análise M1 dentro do método. */
+  await host.getByRole("button", { name: "Detalhes oficiais" }).click();
+  assert.match(await host.locator("#official-details").textContent(), /Tempo padrão/);
+  assert.match(await host.locator("#official-details").textContent(), /OP010/);
+  await host.getByRole("button", { name: "Mais ações" }).click();
+  await host.getByRole("button", { name: "Exportar CSV" }).waitFor();
+  assert.equal(await host.locator("#study-more-actions").getByRole("button").count(), 5);
+  await host.getByRole("button", { name: "Mais ações" }).click();
+  await host.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+  await host.getByRole("heading", { name: "Capacidade e takt" }).waitFor();
+  await host.getByRole("button", { name: "Executar análise oficial" }).click();
+  await host.locator(".delpi-ui-kpi-card").filter({ hasText: "Mínimo teórico de postos" }).waitFor();
+  assert.match(await host.locator(".official-analysis").textContent(), /CALCULATED/);
+  await host.getByRole("button", { name: /M5 · Yamazumi/ }).click();
+  await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
   const metric = name => host.locator(".delpi-ui-kpi-card").filter({ hasText: name }).locator("strong");
   const selectTrigger = name => host.getByRole("combobox", { name, exact: true });
   const options = host.getByRole("listbox");

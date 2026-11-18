@@ -48,6 +48,45 @@ export type StudioRoutingState = Readonly<{
   message?: string;
 }>;
 
+/** Resultado da análise oficial M1 executada pelo host (BFF/domínio) —
+ * o Studio só apresenta; nunca executa nem estima o cálculo oficial. */
+export type StudioAnalysisState = Readonly<{
+  phase: "idle" | "running" | "result" | "error";
+  /** Impedimentos de parâmetros — o host os resolve e o Studio os exibe. */
+  issues?: readonly string[];
+  /** Mensagem de erro resolvida pelo host (AuthZ, 404, indisponibilidade). */
+  message?: string;
+  result?: Readonly<{
+    taktMinutes?: number | null;
+    workContentMinutes?: number | null;
+    theoreticalMinStations?: number | null;
+    bottleneckOperation?: string | null;
+    /** Operações sem tempo oficial — UNKNOWN, nunca zero. */
+    operationsMissingTime?: number;
+    /** false → a resposta oficial não cobriu o estágio do estudo. */
+    stageCovered: boolean;
+  }>;
+}>;
+
+/** Linha oficial do roteiro OBSERVED — metadados técnicos (CT, recurso,
+ * tempo padrão, setup) apresentados sob demanda na bancada, sem virar uma
+ * segunda tabela concorrente. */
+export type StudioOfficialOperation = Readonly<{
+  key: string;
+  code?: string | null;
+  description?: string | null;
+  workCenter?: string | null;
+  resource?: string | null;
+  timeMinutesPiece?: number | null;
+  setupHours?: number | null;
+}>;
+
+/** Estado de persistência do rascunho local, resolvido pelo host. */
+export type StudioDraftSaveState = Readonly<{
+  label: string;
+  tone: "success" | "warning";
+}>;
+
 /** Eventos públicos emitidos pelo elemento (bubbles + composed). */
 export const STUDIO_EVENTS = {
   originSelect: "studio-origin-select",
@@ -56,6 +95,9 @@ export const STUDIO_EVENTS = {
   manualStudy: "studio-manual-study",
   originReset: "studio-origin-reset",
   methodChange: "studio-method-change",
+  analysisRun: "studio-analysis-run",
+  exportRequest: "studio-export",
+  clearRequest: "studio-clear-study",
 } as const;
 
 const navCardClasses = navigationCardBemClasses("lbs");
@@ -167,6 +209,11 @@ export class LineBalanceStudioElement extends HTMLElement {
   private selectedMethod: MethodId = "M5";
   private railExpanded = true;
   private confirmReset = false;
+  private analysis: StudioAnalysisState = { phase: "idle" };
+  private officialOps: readonly StudioOfficialOperation[] = [];
+  private saveState: StudioDraftSaveState | undefined;
+  private showMoreActions = false;
+  private showOfficialDetails = false;
   private routingWait: ReturnType<typeof setTimeout> | undefined;
   private manualWait: ReturnType<typeof setTimeout> | undefined;
 
@@ -225,6 +272,13 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.studyRevision += 1;
     this.showConditions = false;
     this.confirmReset = false;
+    this.showMoreActions = false;
+    this.showOfficialDetails = false;
+    /* Resultado oficial, detalhes do roteiro e estado de salvamento
+     * pertencem ao ciclo do estudo anterior — o host os republica. */
+    this.analysis = { phase: "idle" };
+    this.officialOps = [];
+    this.saveState = undefined;
     this.shiftDrafts = {};
     this.scenarioId = value?.scenarios[0]?.id ?? "";
     this.render();
@@ -234,6 +288,24 @@ export class LineBalanceStudioElement extends HTMLElement {
   set routingState(value: StudioRoutingState | undefined) {
     this.routingSession = value ?? { phase: "idle" };
     this.routingUnsupported = false;
+    this.render();
+  }
+
+  /** Análise oficial M1 — executada pelo host/BFF, exibida na bancada M1. */
+  set analysisState(value: StudioAnalysisState | undefined) {
+    this.analysis = value ?? { phase: "idle" };
+    this.render();
+  }
+
+  /** Metadados oficiais do roteiro OBSERVED — detalhe técnico sob demanda. */
+  set officialOperations(value: readonly StudioOfficialOperation[] | undefined) {
+    this.officialOps = value ?? [];
+    this.render();
+  }
+
+  /** Estado do rascunho local, resolvido pelo host (saved/quota/erro). */
+  set draftSave(value: StudioDraftSaveState | undefined) {
+    this.saveState = value;
     this.render();
   }
 
@@ -691,6 +763,64 @@ export class LineBalanceStudioElement extends HTMLElement {
     );
   }
 
+  /** Análise oficial M1 — execução sempre no host/domínio; aqui só a
+   * apresentação tipada recebida por `analysisState`. */
+  private renderOfficialAnalysis(analysis: StudioAnalysisState): ReactNode {
+    const running = analysis.phase === "running";
+    const issues = analysis.issues ?? [];
+    const blocked = issues.length > 0;
+    const result = analysis.result;
+    const kpis: { title: string; value: string; subtitle: string; icon: ReactNode }[] = result ? [
+      { title: "Takt", icon: <Timer size={18} />, subtitle: "min/peça · CALCULATED",
+        value: result.taktMinutes != null ? format(result.taktMinutes) : "—" },
+      { title: "Conteúdo de trabalho", icon: <Clock3 size={18} />, subtitle: "min · CALCULATED",
+        value: result.workContentMinutes != null ? format(result.workContentMinutes) : "—" },
+      { title: "Mínimo teórico de postos", icon: <ChartColumn size={18} />, subtitle: "CALCULATED",
+        value: result.theoreticalMinStations != null ? String(result.theoreticalMinStations) : "—" },
+      { title: "Gargalo candidato", icon: <Gauge size={18} />, subtitle: "CALCULATED",
+        value: result.bottleneckOperation ?? "—" },
+    ] : [];
+    return (
+      <div className="official-analysis">
+        <div className="official-analysis__head">
+          <strong>Análise oficial M1</strong>
+          <span>Calculada pelo domínio autorizado do portal sobre o roteiro OBSERVED.</span>
+        </div>
+        {blocked && (
+          <ul className="analysis-issues" role="alert">
+            {issues.map((issue, index) => <li key={index}>{issue}</li>)}
+          </ul>
+        )}
+        <ActionButton id="lb-run-analysis" variant="primary"
+          disabled={blocked || running}
+          onClick={() => this.emit(STUDIO_EVENTS.analysisRun, {})}>
+          {running ? "Calculando…" : "Executar análise oficial"}
+        </ActionButton>
+        {analysis.phase === "error" && (
+          <StateBox variant="warning" dismissible={false}>
+            {analysis.message ?? "Serviço de análise oficial indisponível."}
+          </StateBox>
+        )}
+        {analysis.phase === "result" && result && !result.stageCovered && (
+          <StateBox>O resultado oficial não inclui o estágio selecionado.</StateBox>
+        )}
+        {analysis.phase === "result" && result?.stageCovered && (
+          <section className="metrics" aria-label="Resultado oficial M1" aria-live="polite">
+            {kpis.map(kpi => (
+              <SimpleKpiCard key={kpi.title} classNames={kpiClasses} title={kpi.title}
+                valueTag="strong" icon={kpi.icon} value={kpi.value} subtitle={kpi.subtitle} />
+            ))}
+          </section>
+        )}
+        {analysis.phase === "result" && (result?.operationsMissingTime ?? 0) > 0 && (
+          <StateBox>
+            {result?.operationsMissingTime} operação(ões) sem tempo oficial — UNKNOWN, nunca assumidas como zero.
+          </StateBox>
+        )}
+      </div>
+    );
+  }
+
   private renderCapacityPanel(stations: { id: string; name: string; load: number; unknown: number }[], takt: number | null, observed: boolean): ReactNode {
     return (
       <SectionCard title="Capacidade e takt" subtitle="Diagnóstico local do estudo · CALCULATED local"
@@ -708,9 +838,9 @@ export class LineBalanceStudioElement extends HTMLElement {
         {takt === null && (
           <StateBox>Informe turno produtivo e demanda por turno válida nas condições de produção para obter a referência de takt.</StateBox>
         )}
-        <StateBox>{observed
-          ? "O dimensionamento oficial (takt, conteúdo de trabalho e mínimo teórico de postos) é executado pelo domínio autorizado do portal — este painel é apenas o diagnóstico local do rascunho."
-          : "Estudo manual sem contrato de cálculo oficial — os valores acima são diagnóstico local do rascunho (SIMULATION / DRAFT_LOCAL)."}</StateBox>
+        {observed
+          ? this.renderOfficialAnalysis(this.analysis)
+          : <StateBox>Estudo manual sem contrato de cálculo oficial — os valores acima são diagnóstico local do rascunho (SIMULATION / DRAFT_LOCAL).</StateBox>}
       </SectionCard>
     );
   }
@@ -779,7 +909,12 @@ export class LineBalanceStudioElement extends HTMLElement {
           <div className="main">
             <div className="study-head">
               <div className="study-id">
-                <strong>{observed ? `Produto ${observed.productCode}` : study.name}</strong>
+                <div className="study-title-row">
+                  <strong>{observed ? `Produto ${observed.productCode}` : study.name}</strong>
+                  {observed && <StatusBadge classNames={badgeClasses}
+                    label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
+                  <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
+                </div>
                 <span className="study-sub">
                   {observed
                     ? `Filial ${observed.branchCode} · ${observed.stageLabel ?? `Estágio ${observed.stageId}`}${observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}`
@@ -788,11 +923,6 @@ export class LineBalanceStudioElement extends HTMLElement {
                 <label className="edit-name">Nome do estudo
                   <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
                 </label>
-              </div>
-              <div className="badges">
-                {observed && <StatusBadge classNames={badgeClasses}
-                  label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
-                <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
               </div>
               <div className="study-actions">
                 {study.scenarios.length > 1 && (
@@ -807,9 +937,26 @@ export class LineBalanceStudioElement extends HTMLElement {
                 )}
                 <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
                   onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
-                <ActionButton onClick={() => this.requestOriginReset()}>Trocar origem</ActionButton>
+                <ActionButton aria-expanded={this.showMoreActions} aria-controls={this.showMoreActions ? "study-more-actions" : undefined}
+                  onClick={() => { this.showMoreActions = !this.showMoreActions; this.render(); }}>
+                  Mais ações ▾
+                </ActionButton>
+                {this.saveState && (
+                  <StatusBadge classNames={badgeClasses} label={this.saveState.label} variant={this.saveState.tone} />
+                )}
               </div>
             </div>
+            {this.showMoreActions && (
+              <div className="more-actions" id="study-more-actions" role="group" aria-label="Ações secundárias do estudo">
+                <ActionButton onClick={() => this.requestOriginReset()}>Trocar origem</ActionButton>
+                <span className="more-actions__sep" aria-hidden="true" />
+                <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "csv" })}>Exportar CSV</ActionButton>
+                <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "xlsx" })}>Exportar Excel</ActionButton>
+                <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "pdf" })}>Exportar PDF</ActionButton>
+                <span className="more-actions__sep" aria-hidden="true" />
+                <ActionButton onClick={() => this.emit(STUDIO_EVENTS.clearRequest, {})}>Limpar estudo</ActionButton>
+              </div>
+            )}
             {this.confirmReset && (
               <div className="confirm-bar" role="alertdialog" aria-label="Confirmar troca de origem">
                 <span>Trocar a origem encerra a sessão atual do estudo — o rascunho local salvo deste contexto permanece disponível.</span>
@@ -831,7 +978,9 @@ export class LineBalanceStudioElement extends HTMLElement {
           {this.selectedMethod === "M1" && this.renderCapacityPanel(stations, takt, Boolean(observed))}
           {this.selectedMethod === "M5" && (
           <SectionCard title="Yamazumi" subtitle="Carga por posto · segundos" classNames={sectionClasses} labels={sectionLabels}
-            actions={<ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>}>
+            actions={stations.length > 0
+              ? <ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>
+              : undefined}>
             {stations.length > 0 ? (
               <StackedColumnChart
                 columns={stations.map((station, index) => ({
@@ -860,13 +1009,47 @@ export class LineBalanceStudioElement extends HTMLElement {
                   {incomplete && <span>* Carga parcial por tempo desconhecido.</span>}
                 </>}
               />
-            ) : <StateBox>Adicione um posto para montar o gráfico.</StateBox>}
+            ) : (
+              <div className="empty-bench" role="note">
+                <strong>Nenhum posto configurado.</strong>
+                <p>Crie um posto e atribua operações para visualizar as cargas.</p>
+                <ActionButton variant="primary" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>
+              </div>
+            )}
           </SectionCard>
           )}
           <SectionCard title="Operações" subtitle="Edite os tempos e atribua um posto a cada operação."
             classNames={sectionClasses} labels={sectionLabels}
-            actions={<ActionButton id="add-operation" variant="primary"
-              onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>}>
+            actions={<>
+              {this.officialOps.length > 0 && (
+                <ActionButton aria-expanded={this.showOfficialDetails} aria-controls={this.showOfficialDetails ? "official-details" : undefined}
+                  onClick={() => { this.showOfficialDetails = !this.showOfficialDetails; this.render(); }}>
+                  Detalhes oficiais
+                </ActionButton>
+              )}
+              <ActionButton id="add-operation" variant="primary"
+                onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>
+            </>}>
+            {this.showOfficialDetails && this.officialOps.length > 0 && (
+              <div id="official-details" className="official-details">
+                <span className="official-details__cap">
+                  Metadados do roteiro oficial OBSERVED — consulta, não edição.
+                </span>
+                <DataTable rows={[...this.officialOps]} rowKey={row => row.key} classNames={tableClasses}
+                  labels={tableLabels} layout="scroll" compact
+                  columns={[
+                    { key: "op", header: "Operação", render: row => row.code || "—" },
+                    { key: "desc", header: "Descrição", render: row => row.description ?? "—" },
+                    { key: "ct", header: "CT", render: row => row.workCenter ?? "—" },
+                    { key: "resource", header: "Recurso", render: row => row.resource ?? "—" },
+                    { key: "time", header: "Tempo padrão (min/peça)", align: "right",
+                      render: row => row.timeMinutesPiece != null ? format(row.timeMinutesPiece) : "UNKNOWN" },
+                    { key: "setup", header: "Setup (h/lote)", align: "right",
+                      render: row => row.setupHours != null ? format(row.setupHours) : "—" },
+                  ]}
+                />
+              </div>
+            )}
             {invalidOperations && <StateBox variant="warning" dismissible={false}>Revise os nomes e os tempos. Use um valor positivo ou deixe o tempo em branco.</StateBox>}
             <DataTable rows={operationRows} rowKey={operation => operation.id} classNames={tableClasses}
               labels={tableLabels} layout="scroll" compact indexColumn={{ ariaLabel: "Índice da operação" }}

@@ -113,6 +113,18 @@ describe("M1 reuse + catálogo (PROC-07/08)", () => {
     expect(page).not.toContain("build_balance_result");
   });
 
+  it("bancada unificada V4.1 — análise oficial e detalhes via contrato do Studio", () => {
+    expect(page).toContain("studioAnalysisState");
+    expect(page).toContain("officialOperations");
+    expect(page).toContain("onAnalysisRun");
+    expect(mount).toContain("STUDIO_EVENTS.analysisRun");
+    expect(mount).toContain("STUDIO_EVENTS.clearRequest");
+    /* Host não re-renderiza tabelas/cards duplicados fora da bancada. */
+    expect(page).not.toContain("Operações oficiais do roteiro");
+    expect(page).not.toContain("Análise oficial M1 — capacidade e takt");
+    expect(page).not.toContain("EngineeringSectionCard");
+  });
+
   it("catálogo M1–M6 preservado no módulo, sem listagem extensa na entrada", () => {
     expect(methodCatalog).toContain("BALANCING_METHODS");
     expect(page).not.toContain("BALANCING_METHODS");
@@ -139,7 +151,7 @@ describe("Studio mount (PROC-09..12)", () => {
 
   it("tempos desconhecidos seguem UNKNOWN e a fonte fica rastreável", () => {
     expect(adapter).toContain("durationSeconds: minutesToSeconds(op.time_minutes_piece)");
-    expect(page).toContain("UNKNOWN");
+    expect(page).toContain("timeMinutesPiece: op.time_minutes_piece");
     expect(adapter).toContain("operationReference");
   });
 });
@@ -173,7 +185,8 @@ describe("Exports e segurança (PROC-16/19)", () => {
     expect(adapter).toContain("proveniencia");
     expect(adapter).toContain("limitacao");
     expect(adapter).toContain("buildStudioExportPayload");
-    expect(page).toContain("TabularExportButtons");
+    expect(page).toContain("onExport");
+    expect(mount).toContain("STUDIO_EVENTS.exportRequest");
     expect(page).toContain("exportTableFormat");
   });
 
