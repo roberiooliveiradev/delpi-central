@@ -105,3 +105,51 @@ def test_outside_parent_rejected_no_guessing_organizational_tree():
     service, _ = _discovery(team, Mock())
     with pytest.raises(ValueError, match="fora da subárvore"):
         service.preview("20001")
+
+
+def test_manager_discovery_endpoint_rejects_wrong_and_missing_tokens(monkeypatch):
+    from app.create_app import create_app
+
+    monkeypatch.setenv("CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN", "only-reports")
+    monkeypatch.setenv("CORE_ORGANIZATION_READ_SERVICE_TOKEN", "wrong-token")
+    client = create_app("testing").test_client()
+    endpoint = "/integrations/organization/managers/20001/reports/eligible-managers"
+
+    assert client.get(endpoint).status_code == 401
+    assert client.get(
+        endpoint, headers={"X-Delpi-Service-Token": "wrong-token"}
+    ).status_code == 403
+
+
+def test_manager_discovery_endpoint_returns_scoped_read_only_preview(monkeypatch):
+    from unittest.mock import patch
+    from app.create_app import create_app
+
+    monkeypatch.setenv("CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN", "reports-secret")
+    client = create_app("testing").test_client()
+    result = {
+        "rootRegistration": "20001",
+        "scopedToRoot": True,
+        "readOnly": True,
+        "managerCount": 1,
+        "readyCount": 1,
+        "candidates": [{
+            "registration": "20001", "directCount": 7,
+            "status": "ready", "userId": str(uuid4()),
+            "email": "gestor@delpi.com.br", "fullName": "GESTOR",
+        }],
+    }
+    with patch(
+        "app.interfaces.http.organization_controller.DirectReportManagerDiscoveryService"
+    ) as discovery, patch(
+        "app.interfaces.http.organization_controller.SqlAlchemyUnitOfWork"
+    ):
+        discovery.return_value.preview.return_value = result
+        response = client.get(
+            "/integrations/organization/managers/20001/reports/eligible-managers",
+            headers={"X-Delpi-Service-Token": "reports-secret"},
+        )
+    assert response.status_code == 200
+    assert response.json["managerCount"] == 1
+    assert response.json["scopedToRoot"] is True
+    discovery.return_value.preview.assert_called_once_with("20001")
