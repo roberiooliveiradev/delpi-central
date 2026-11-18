@@ -4,23 +4,29 @@
 
 **Responsabilidade:** workspace de entrega de fontes + contratos e manifestos; não é um runtime de API Python, serviço REST ativo, RPO ou autorização para compilar. A API Python permanece em `api-delpi/app/` sob suas camadas existentes e a integração é por contratos oficiais, nunca por import do código ADVPL.
 
-## Organização-alvo (criar paths sob demanda)
+## Organização (materializada na fundação)
 
 ```text
 api-delpi/integrations/protheus-advpl/
   README.md
   modules/
-    product-master/
-      src/          # DLP04I01.PRW candidato; não copiar legado automaticamente
-      contracts/    # versões de REST, JSON, erros, campos, owners
-      tests/        # fixtures e verificações estáticas; sem ERP write
-    product-suppliers/
-      src/          # DLP04I02.PRW = nome sugerido, verificar colisão antes de usar
-      contracts/
+    product-master/           # SB1 — MATA010/ExecAuto; ver README + contracts/module.yaml
+      src/                    # DLP04I01.PRW = PLANNED; não copiar legado automaticamente
+      contracts/module.yaml   # contrato declarativo do módulo
       tests/
-  shared/           # apenas após Abstraction Gate e 2+ consumers reais
-  packaging/        # scripts determinísticos para montar pacote imutável
-  handoffs/         # manifestos SHA-bound e comprovantes, nunca ZIPs mutáveis
+    product-suppliers/        # SA5 — MATA061 MVC Model-2; ver README + contracts/module.yaml
+      src/                    # DLP04I02.PRW = PLANNED (nome: INCONCLUSIVE p/ colisão no ERP)
+      contracts/module.yaml
+      tests/
+  shared/                     # somente docs; código exige Abstraction Gate + 2 consumers
+  packaging/
+    package.py                # ZIP determinístico a partir de commit aprovado
+    manifest.schema.json      # schema do manifesto consolidado
+    out/                      # artefatos gerados — git-ignored, nunca commitar ZIPs
+    tests/test_package.py     # 15 testes: positivos, segurança, determinismo
+  handoffs/
+    templates/compilation-checklist.md   # equipe ERP preenche na compilação
+    templates/delivery-record.yaml       # PREPARED→SENT→RECEIVED→COMPILED→TESTED→APPROVED
 ```
 
 Organizar por **capacidade de negócio**, não por HTTP verb. Cada módulo possui suas rotas, contratos e testes; não importar fontes de outro módulo. Utilitários compartilhados somente com owner, consumer, necessidade e testes reais. `openai-plugin/` é integração independente e não deve ser alterada.

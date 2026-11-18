@@ -1,0 +1,52 @@
+module_id: product-suppliers
+package_tag: SA5
+name: "Product Suppliers — SA5"
+responsibility: "Integração do vínculo Produto x Fornecedor (SA5) via MATA061 (MVC Model-2)."
+owners:
+  technical: "DELPI Integrações (api-delpi)"
+  erp: "Equipe Protheus (Delpi-ti)"
+entities: [SA5]
+sa5_identity: [A5_FILIAL, A5_FORNECE, A5_LOJA, A5_PRODUTO, A5_FABR, A5_FALOJA, A5_REFGRD]
+official_routines:
+  - id: MATA061
+    mechanism: "MVC Model-2 (SetPrimaryKey/SetUniqueLine)"
+    status: PROVEN_SOURCE
+    note: "MSExecAuto com arrays de MATA010 NAO se aplica; ativacao Model-2 = VALIDAR NO TST01"
+reference_source:
+  repo: "Delpi-ti/protheus-erp"
+  branch: master
+  paths:
+    - "73. CRM/Dmata061.prx"
+    - "73. CRM/MATA010M_DLP.PRW"
+  upstream_sha: INCONCLUSIVE
+  mirror_paths:
+    "docs/13-fontes-totvs-protheus/73. CRM/Dmata061.prx": "b45cc9333c410a58d5836f78b79a140c6056c9c6"
+    "docs/13-fontes-totvs-protheus/73. CRM/MATA010M_DLP.PRW": "a56c2a5079991742a544c39dd75fde8f3e9eda48"
+  mirror_commit: "be614649b7"
+candidate_source:
+  name: "DLP04I02.PRW"
+  status: PLANNED
+  name_availability: "INCONCLUSIVE (sem colisao em delpi-central/espelho; repo ERP inacessivel nesta sessao)"
+development_status: PLANNED
+operations:
+  known: []
+  pending:
+    - op: SA5_ADD
+      note: "via modelo oficial; obrigatorios SX3: FILIAL, FORNECE, LOJA, NOMEFOR, PRODUTO, CODPRF, REFGRD, DESCPRF"
+    - op: SA5_UPDATE
+      note: "atributos do vinculo; identidade imutavel"
+    - op: SA5_REMOVE
+      note: "semantica logica/fisica a ratificar no modelo"
+    - op: SA5_READBACK
+      note: "chave integral; products.suppliers ODBC nao projeta FABR/FALOJA/REFGRD (gap G0-C)"
+dependencies: []
+rest_contracts:
+  - id: "facade proposta"
+    uris: ["POST/PUT/DELETE /integrations/protheus/products/{code}/suppliers"]
+    status: PLANNED
+    note: "documentado no playbook SB1/SX3/SA5 secao 14; nao implementado"
+restrictions:
+  erp_write: "proibida — decisao de arquitetura pendente de ratificacao (Integracoes TOTVS + ERP + Coordination)"
+  rpo_compile: "exclusivo da equipe ERP"
+  direct_sql_reclock: FORBIDDEN
+sources: []
