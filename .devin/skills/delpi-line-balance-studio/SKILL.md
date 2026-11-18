@@ -31,8 +31,13 @@ Construir **do zero** a ferramenta reutilizável `plugins/delpi-line-balance-stu
 3. Implementar menor fatia original **somente no Studio**, mantendo Domain/Application livres de React, framework, HTTP, banco e provider SDK. Escolher distribuição bundled/remote com inventário antes de configuração.
 4. Testar unit, component, contract, integração, segurança, E2E e visual conforme risco. Validar mobile/desktop, light/dark e teclado. Executar no SHA.
 5. **Não se autoverificar:** abrir pedido ao `delpi-verifier` em `<git-dir>/delpi-verifier/requests/`, chamar `python ~/.delpi-agent-kit/verify.py --request-file <arquivo>` segundo `agent-kit/verifier/project-contract.md`. Corrigir findings e repetir até 3 rodadas; `INCONCLUSIVE` não é `PASS`.
-6. Seguir `AGENTS.md` para commit/push/deploy; HML antes de PROD quando aplicável, SSO live, smoke e rollback. Reportar `PENDING_USER_SMOKE` quando faltar principal produtivo.
+6. Publicar a entrega e suas evidências no GitHub conforme [Entrega no GitHub](#entrega-no-github). Para deploy, seguir `AGENTS.md`, com HML antes de PROD quando aplicável, SSO live, smoke e rollback. Reportar `PENDING_USER_SMOKE` quando faltar principal produtivo.
 7. Relatar `BASE_HEAD, FINAL_HEAD, ORIGIN_MAIN, FILES_CHANGED, CONTRACTS, TESTS, VERIFY_VERDICT, HML/PROD, ROLLBACK, EXECUTION_DRIFT, RESIDUALS`.
+
+## Entrega no GitHub
+- No ChatGPT, usar o aplicativo GitHub para consultar o HEAD e publicar em `roberiooliveiradev/delpi-central`. No D20/Devin, usar o Git autenticado do repositório.
+- Após os gates aplicáveis de `AGENTS.md`, commitar apenas arquivos da tarefa e publicar diretamente em `main` por fast-forward. Se o HEAD mudar, reancorar e revalidar antes de tentar novamente.
+- Ler de volta o HEAD remoto e confirmar a presença do commit. Registrar no relatório o link do commit, SHA final, testes e veredito do Verify. Se o acesso ou uma regra de proteção impedir a publicação, registrar a causa e o estado real do remoto.
 
 ## Objetivos UX
 - Início simplificado: `Produto oficial`, `Novo processo manual`, `Importar` somente quando suportado.
