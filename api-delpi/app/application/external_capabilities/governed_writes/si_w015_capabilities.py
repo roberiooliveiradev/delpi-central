@@ -170,9 +170,17 @@ class SiW015WriteStack:
                 for g in goals
                 if str(g.get("copied_from_goal_id") or "") == target_id
             ]
+            xmin = goal.get("row_xmin")
+            if xmin is None:
+                raise _err(
+                    "Não foi possível selar a versão da meta "
+                    "(row_xmin indisponível) — PREPARE abortado.",
+                    code=INTERNAL,
+                    status_code=500,
+                )
             exact_change = {
                 "goal_id": target_id,
-                "expected_xmin": goal.get("row_xmin"),
+                "expected_xmin": xmin,
             }
             impact = {
                 "record_type": "indicator_goal",
@@ -207,7 +215,7 @@ class SiW015WriteStack:
             summary_action = "hard_delete_goal"
             fp_state = {
                 "goal_id": target_id,
-                "row_xmin": goal.get("row_xmin"),
+                "row_xmin": xmin,
             }
         else:
             export = self._export(authorization)
