@@ -13,7 +13,8 @@
 | **P4** | 4 | Correção R8 + botões, rodapé de ações, aviso, revisão e tela de resultado | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `52064ee9d3`, deploy PROD e HML em 17/11/2026 (ver §9) |
 | **P5** | 5 | Formulário guiado completo (com perguntas de exemplo, não as da Pesquisa) | PluginUI → PROD | **ACEITO COM RESÍDUOS** — commit `f124b28a9d`, deploy PROD e HML em 17/11/2026 (ver §11) |
 | **P5.1** | 5 | Correção obrigatória do envio único (R14) + proteção dos exports (R15) + teste de `sessionStorage` (R16) | PluginUI → PROD | **ACEITO** — commit `98cc79573a`, deploy PROD e HML em 17/11/2026 (ver §13) |
-| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **EM EXECUÇÃO** (§14, ajustes §14.10) — D1 confirmada: manter o endereço |
+| **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **PUBLICADO (`fe905b73b9`, 17/11 17:23) E DESFEITO** por `9665f42e7` (17/11 17:32, outra frente) — revisão suspensa |
+| **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **PRONTO PARA EXECUÇÃO** (§15) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -691,3 +692,39 @@ Antes de concluir, **sem alterar nada em PROD**: informar se o `public-hub` de P
 3. **Tipos reais do kit:** o `public-hub` resolve `@delpi/plugin-ui/index` para o código-fonte do PluginUI (`tsconfig.app.json`, `paths`). A definição, os textos e os desfechos devem usar os **tipos exportados pelo kit** (`QuestionnaireStep`, `GuidedQuestionnaireTexts`, `QuestionnaireSubmitOutcome`, `FormResultPanelProps`…), sem `any` nem conversões forçadas, e o `typecheck` precisa passar.
 4. **Teste de integração com o kit real:** além do teste com o falso do kit, incluir **um** teste que renderiza o `GuidedQuestionnaire` real (importado pelo caminho do código-fonte do PluginUI) com a definição da Pesquisa, responde às 12 obrigatórias, revisa e envia, verificando o payload entregue ao `submitPublicSurvey`. Se a configuração de testes do `public-hub` impedir, reportar no relatório em vez de contornar.
 5. **Reuso de `surveyForm.ts`:** aceito; o formatador de período **sem hora** fica na pasta nova.
+
+---
+
+## 15. Pacote P6-R — Restauração do P6 desfeito por commit de outra frente
+
+### 15.1 Fato (verificado em 18/11/2026, `main` em `b00865e64`)
+
+- `fe905b73b9` (17/11 17:23) publicou o P6: 24 arquivos em `plugins/public-hub`.
+- `9665f42e7` (17/11 17:32, mensagem “docs(engineering): E1/VAL-01 B3 — §94.42.9 veredito r2…”, 61 arquivos) **desfaz exatamente** as mudanças do P6 em `plugins/public-hub` (comparação: `git diff fe905b73b9 fe905b73b9^ -- plugins/public-hub` idêntico a `git diff 9665f42e7^ 9665f42e7 -- plugins/public-hub`). O mesmo commit desfez trabalho de outras frentes — **fora do escopo deste pacote**.
+- Depois de `9665f42e7` **nenhum** commit alterou `plugins/public-hub`; o kit do PluginUI (P1–P5.1) **não** foi afetado.
+
+### 15.2 Objetivo
+
+Restaurar no `main` **exatamente** o conteúdo do P6 em `plugins/public-hub`, sem tocar em nenhum outro caminho, e redeployar o `public-hub` **somente em HML**.
+
+### 15.3 Regras
+
+- **Proibido** alterar, restaurar ou reverter qualquer arquivo fora de `plugins/public-hub` — inclusive os outros trabalhos desfeitos por `9665f42e7` (responsabilidade dos respectivos owners).
+- **Proibido** `git revert 9665f42e7` inteiro, `reset`, `push --force` ou reescrever histórico.
+- Commit novo, só com os 24 arquivos do P6.
+
+### 15.4 Procedimento
+
+1. Reancorar (§1.1) e confirmar de novo os fatos do §15.1 sobre o `origin/main` do momento (inclusive que nenhum commit posterior a `9665f42e7` tocou `plugins/public-hub`). Se algo mudou, **parar e reportar**.
+2. Em worktree temporário a partir de `origin/main` (autorizado, §6.8 item 4): aplicar o inverso de `9665f42e7` **limitado a `plugins/public-hub`** (ex.: `git diff 9665f42e7 9665f42e7^ -- plugins/public-hub | git apply --index`).
+3. **Prova de exatidão:** `git diff fe905b73b9 HEAD -- plugins/public-hub` **vazio** e `git diff --cached --stat` com só os 24 arquivos.
+4. Rodar `npm run ci --prefix plugins/public-hub` (ou o equivalente usado no P6) e os testes da pasta `satisfaction-survey/`, incluindo o de integração com o kit real.
+5. `verify.py` (escopo `base..head`, objetivo “restauração exata do P6”) até aprovação.
+6. Commit com mensagem `fix(public-hub): P6-R — restaura P6 (fe905b73b9) desfeito por 9665f42e7` e corpo citando os dois SHAs; push em `main`; remover o worktree.
+7. **Conferir de novo após o push** que `origin/main` contém a pasta `satisfaction-survey/` (detectar nova regressão).
+8. Deploy **só em HML**: `~/projetos-teste/delpi-central` → `git pull --ff-only` → `./infra/scripts/up-hml-sequential.sh --build public-hub`. Repetir H1, H2 (375 e 1280 px, claro e escuro), H6, H7 e H9 do §14.7, **sem enviar resposta**.
+9. **Nenhuma ação em PROD.** Registrar que o checkout de PROD continua com a página antiga e a Pesquisa desligada no backend.
+
+### 15.5 Relatório
+
+HEAD inicial/final · prova do §15.4.3 · testes · veredito do verificador sem edição · deploy HML e resultados de H1/H2/H6/H7/H9 · link do participante pendente para o H8 do solicitante (DRIVES ITAJAI, se ainda pendente) · confirmação de que nenhum arquivo fora de `plugins/public-hub` foi alterado.
