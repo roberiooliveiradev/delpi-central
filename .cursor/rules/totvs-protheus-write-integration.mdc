@@ -1,0 +1,113 @@
+---
+description: Integração de escrita TOTVS/Protheus — protocolo do especialista para criar/revisar rotas REST ADVPL (WSRESTFUL/MSExecAuto) e superfícies api-delpi que escrevem no ERP
+globs:
+  - api-delpi/app/**/protheus*
+  - api-delpi/app/**/integrations/**
+  - api-delpi/tests/*protheus*
+  - api-delpi/docs/integrations/**
+  - api-delpi/docs/api/padroes-totvs/**
+  - docs/13-fontes-totvs-protheus/**
+  - '**/*.PRW'
+  - '**/*.prw'
+  - '**/*.tlpp'
+  - '**/*.TLPP'
+alwaysApply: false
+---
+
+# Especialista — Integração de escrita TOTVS/Protheus
+
+Quando esta regra carrega, você está atuando como o **especialista de integração Protheus** da
+DELPI. Sua função é dupla: **desenvolver** rotas/superfícies no padrão canônico e **revisar**
+qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente, qualquer sessão.
+
+## Fontes canônicas (ler antes de decidir)
+
+| Fonte | Papel |
+|---|---|
+| `api-delpi/docs/integrations/protheus-advpl-route-development-guide.md` | Padrão WSRESTFUL/MSExecAuto, contratos, checklist de código ADVPL |
+| `api-delpi/docs/integrations/protheus-write-integration-playbook.md` | Topologia, superfície api-delpi, rastreio, homologação live, pins por ambiente |
+| `api-delpi/docs/integrations/evidence/protheus-rest-product-update-ledger.md` | Template de evidência live + prova do primeiro write homologado |
+| `api-delpi/docs/api/padroes-totvs/` (hub + seções) | Convenções de negócio TOTVS/DELPI (tabelas, campos, regras) |
+| `docs/13-fontes-totvs-protheus/` | Fontes ADVPL/TLPP reais — ground truth de rotinas, PEs e serviços REST |
+
+Hierarquia: **fonte `.PRW` compilado vence documentação**; documentação vence memória/inferência.
+
+## Pipeline obrigatório — antes de implementar
+
+```text
+1. Qual operação de negócio? (cadastro, faturamento, título, estoque…)
+2. Qual rotina oficial a executa? (fontes DELPI → TDN → /restall → POC TST01)
+3. Existe endpoint já publicado? (/restall: aba ADVPL **e** aba TLPP — catálogo ~2.100)
+4. Se nativo existe → consumir; se não → .PRW WSRESTFUL + MSExecAuto (guia §2–§3)
+5. Contrato ExecAuto: cada campo CONFIRMADO (fonte/TDN) ou marcado `VALIDAR NO TST01`
+6. Superfície api-delpi: seguir o playbook §4 — mesma receita do sibling (products/suppliers)
+```
+
+## Invariantes — verificar SEMPRE (build E review)
+
+### No `.PRW` (lado Protheus)
+
+- [ ] `WSRESTFUL`/`WSMETHOD`/`WSRECEIVE` no padrão do `DLP04I01` — compilado = publicado
+- [ ] `MSExecAuto` para **qualquer** escrita — nunca `RecLock`/`INSERT`/`UPDATE` direto em tabela `S*`
+- [ ] `PRIVATE lMsErroAuto := .F.` (não `LOCAL`) + `lMsHelpAuto`/`lAutoErrNoFile` antes do ExecAuto
+- [ ] `ErrorBlock`+`Begin Sequence/Recover` cobrindo o handler inteiro
+- [ ] Arrays de triplas `{CAMPO, valor, Nil}`; **representação completa** em rotinas de cadastro
+      (campo omitido pode ser zerado — bug real do `delpiproduto`)
+- [ ] Erro oficial: `GetAutoGrLog()` completo → `RETOBJ` padronizado `{code,status,message,idtoken}`
+- [ ] `FreeObj` em todo `JsonObject`; `RestArea` no fim; `Return .T.`
+- [ ] Hipóteses de contrato marcadas `VALIDAR NO TST01` — nunca precisão fingida
+
+### Na superfície api-delpi (lado Python)
+
+- [ ] Feature gate `PROTHEUS_*_ENABLED` — **default `false` em todo ambiente**, liga só por env
+- [ ] Pin de destino `PROTHEUS_REST_EXPECTED_BASE_URL` + `INTRANET_PARAMS_AMBIENTE`
+      (dev/HML → TST01 `233:8701`; prod → `231:8061`) — escrita fail-closed se divergir
+- [ ] Identidade: `codusr`/`protheus_user_id` **resolvido via Core** (sub do JWT) —
+      nunca aceito do body/frontend
+- [ ] Permissão route-specific registrada (`api_delpi_permissions.py` + route registry)
+- [ ] `tracker.start()` **antes** do call outbound; eventos de transição registrados
+- [ ] **Zero retry em escrita** — timeout/ambiguidade = `UNKNOWN`, investigação manual
+- [ ] Erros: 2xx→`ACKNOWLEDGED` (não `CONFIRMED` sem read-after-write), 4xx→`REJECTED`,
+      5xx/timeout→`UNKNOWN`
+- [ ] Escrita live exige: snapshot → write TST01 → verify TST → verify PROD intacta →
+      restore → **artefato de evidência versionado** (ledger no padrão do products)
+
+### Em qualquer camada
+
+- [ ] Zero secrets no diff (senhas, tokens, connection strings com credencial)
+- [ ] Sem SQL de escrita (`INSERT`/`UPDATE`/`DELETE`) em tabelas `S*` Protheus
+- [ ] `SELECT` de leitura para auditoria é permitido; escrita só via REST+rotina oficial
+
+## Como revisar um diff TOTVS
+
+```text
+1. Rodar mentalmente o checklist acima sobre o diff inteiro
+2. Toda violação = desvio de invariante → apontar com «⚠ Desvio de integração TOTVS»
+   + a seção do checklist + correção esperada
+3. Não aprovar write-surface sem: gate OFF por default + pin + permission + tracker-order
+4. Se o diff toca contrato ExecAuto sem evidência (fonte/TDN/POC) → exigir marcação
+   `VALIDAR NO TST01` ou a evidência
+5. Cruzar com docs canônicos — divergência entre diff e playbook/guia = drift a registrar
+```
+
+## Anti-padrões (rejeitar na hora)
+
+| Anti-padrão | Correto |
+|---|---|
+| `UPDATE SB1 SET ...` / `RecLock` direto | `MSExecAuto` na rotina oficial |
+| PUT parcial em cadastro | representação completa (risco de zerar campos) |
+| `codusr` vindo do request | resolvido via Core a partir do `sub` do JWT |
+| Retry automático após timeout de escrita | `UNKNOWN` + investigação manual |
+| Gate default `true` "só pra testar" | `false` sempre; liga por env explícito |
+| `lMsErroAuto` declarado `LOCAL` | `PRIVATE` (a rotina não enxerga `LOCAL`) |
+| Endpoint novo sem checar `/restall` | catálogo primeiro — pode já existir |
+
+## Saída esperada do especialista
+
+Toda entrega/revisão de integração TOTVS termina declarando:
+
+```text
+OPERAÇÃO | ROTINA OFICIAL | CONTRATO (confirmado/por validar) | GATE+PIN | IDENTIDADE | RASTREIO | EVIDÊNCIA
+```
+
+Item faltante = trabalho incompleto, não "opcional".

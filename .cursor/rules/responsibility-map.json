@@ -26,6 +26,7 @@
    "openai-workspace-agent-integration.mdc",
    "openapi-first-universal-tool-routing.mdc",
    "operational-api-routing.mdc",
+   "totvs-protheus-write-integration.mdc",
    "tv-dashboard-optional-data-filters.mdc"
   ],
   "platform-data-persistence.mdc": [
