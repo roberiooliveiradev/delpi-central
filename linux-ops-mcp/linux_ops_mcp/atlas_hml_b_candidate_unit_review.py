@@ -26,6 +26,13 @@ _REQUIRED_FILES = frozenset({
     "atlas-hml-snapshot-presenter.service.candidate",
     "atlas-hml-runtime-layout.tmpfiles.candidate",
 })
+_EXPECTED_TMPFILES = frozenset({
+    "d /run/atlas-hml-readonly 0750 root atlas-hml -",
+    "d /run/atlas-hml-signer 0750 atlas-hml-signer atlas-hml-signer -",
+    "d /run/atlas-hml-signer-socket 02750 atlas-hml-signer atlas-hml-bridge -",
+    "d /var/lib/atlas-hml-signer-state 0750 atlas-hml-signer atlas-hml-signer -",
+    "d /var/lib/atlas-hml-signer-keys 0700 atlas-hml-signer atlas-hml-signer -",
+})
 _HARDENED = {
     "NoNewPrivileges": "yes",
     "ProtectSystem": "strict",
@@ -98,6 +105,12 @@ def review_candidate_unit_sources(
                 raise HMLCandidateUnitError("HML_CANDIDATE_TMPFILES_DENIED")
             if "[Install]" in text:
                 raise HMLCandidateUnitError("HML_CANDIDATE_INSTALL_FORBIDDEN")
+            # A mention in a comment is insufficient. Reject extra paths,
+            # unexpected permissions and identity drift fail-closed.
+            entries = [line.strip() for line in text.splitlines()
+                       if line.strip() and not line.lstrip().startswith("#")]
+            if len(entries) != len(_EXPECTED_TMPFILES) or set(entries) != _EXPECTED_TMPFILES:
+                raise HMLCandidateUnitError("HML_CANDIDATE_TMPFILES_DENIED")
             continue
         parsed = _parse(text)
         if "Install" in parsed:

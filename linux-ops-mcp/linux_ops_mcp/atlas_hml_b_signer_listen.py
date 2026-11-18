@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from .atlas_hml_posix_acl_review import has_no_extended_posix_acl
+
 from .atlas_hml_b_local_signer import (
     HMLLocalSigner,
     HMLLocalSignerError,
@@ -61,6 +63,11 @@ def _require_nonroot_signer_uid() -> int:
     return effective
 
 
+def _inode_policy_signature(st: os.stat_result) -> tuple[int, ...]:
+    """Compare FD and pathname identity; cannot defend against host root."""
+    return (st.st_dev, st.st_ino, st.st_mode, st.st_uid, st.st_gid, st.st_nlink)
+
+
 def bind_signer_owned_socket(
     *,
     socket_path: Path,
@@ -68,7 +75,11 @@ def bind_signer_owned_socket(
     socket_gid: int,
     mode: int = 0o660,
 ) -> socket.socket:
-    """Create, bind and listen on a Unix socket after non-root identity is fixed."""
+    """Bind/listen after non-root drop in signer:bridge 02750 directory.
+
+    The setgid parent, not best-effort chown, gives the bridge group to the
+    socket. UID/GID/mode/ACL and link identity checks are fail-closed.
+    """
     uid = _require_nonroot_signer_uid()
     if (
         type(socket_path) is not type(Path("/"))
@@ -77,54 +88,85 @@ def bind_signer_owned_socket(
         or type(owner_uid) is not int
         or owner_uid != uid
         or type(socket_gid) is not int
-        or socket_gid < 0
+        or socket_gid <= 0
         or type(mode) is not int
         or mode != 0o660
+        or not all(hasattr(os, flag) for flag in ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC"))
     ):
         raise HMLSignerListenError("HML_SIGNER_LISTEN_POLICY_DENIED")
     parent = socket_path.parent
-    if not parent.is_absolute() or not parent.is_dir():
-        raise HMLSignerListenError("HML_SIGNER_LISTEN_PARENT_DENIED")
+    directory_fd = -1
     try:
-        parent_stat = os.stat(parent, follow_symlinks=False)
+        directory_fd = os.open(
+            parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+        )
+        parent_st = os.fstat(directory_fd)
+        named_parent = os.stat(parent, follow_symlinks=False)
         if (
-            not stat.S_ISDIR(parent_stat.st_mode)
-            or parent_stat.st_uid != owner_uid
-            or stat.S_IMODE(parent_stat.st_mode) not in (0o750, 0o700)
+            not stat.S_ISDIR(parent_st.st_mode)
+            or parent_st.st_uid != owner_uid
+            or parent_st.st_gid != socket_gid
+            or stat.S_IMODE(parent_st.st_mode) != 0o2750
+            or parent_st.st_nlink < 2
+            or _inode_policy_signature(parent_st) != _inode_policy_signature(named_parent)
+            or not has_no_extended_posix_acl(directory_fd, directory=True)
         ):
             raise HMLSignerListenError("HML_SIGNER_LISTEN_PARENT_DENIED")
-    except OSError:
+        # Also reject dangling symlinks, which Path.exists() misses.
+        try:
+            os.stat("sign.sock", dir_fd=directory_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise HMLSignerListenError("HML_SIGNER_LISTEN_PATH_EXISTS")
+    except HMLSignerListenError:
+        raise
+    except (OSError, ValueError, TypeError):
         raise HMLSignerListenError("HML_SIGNER_LISTEN_PARENT_DENIED") from None
-    if socket_path.exists():
-        raise HMLSignerListenError("HML_SIGNER_LISTEN_PATH_EXISTS")
+    finally:
+        if directory_fd >= 0:
+            os.close(directory_fd)
+
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    bound = False
     try:
         listener.bind(str(socket_path))
-        os.chmod(socket_path, mode)
-        # Ownership: only chown when privileges allow; otherwise require match.
-        try:
-            if hasattr(os, "chown"):
-                os.chown(socket_path, owner_uid, socket_gid)
-        except OSError:
-            pass
-        listener.listen(1)
-        st = os.stat(socket_path, follow_symlinks=False)
+        bound = True
+        first = os.stat(socket_path, follow_symlinks=False)
         if (
-            not stat.S_ISSOCK(st.st_mode)
-            or st.st_uid != owner_uid
-            or stat.S_IMODE(st.st_mode) != mode
+            not stat.S_ISSOCK(first.st_mode)
+            or first.st_uid != owner_uid
+            or first.st_gid != socket_gid
+            or first.st_nlink != 1
+            or first.st_dev != parent_st.st_dev
         ):
             raise HMLSignerListenError("HML_SIGNER_LISTEN_SOCKET_UNTRUSTED")
-        # GID must match when chown succeeded; otherwise accept process primary gid.
-        if st.st_gid != socket_gid and st.st_gid != os.getgid():
+        # Never chown: group inheritance is enforced before/after bind.
+        os.chmod(socket_path, mode)
+        listener.listen(1)
+        after = os.stat(socket_path, follow_symlinks=False)
+        parent_after = os.stat(parent, follow_symlinks=False)
+        if (
+            not stat.S_ISSOCK(after.st_mode)
+            or after.st_uid != owner_uid
+            or after.st_gid != socket_gid
+            or after.st_nlink != 1
+            or stat.S_IMODE(after.st_mode) != mode
+            or (after.st_dev, after.st_ino) != (first.st_dev, first.st_ino)
+            or _inode_policy_signature(parent_after) != _inode_policy_signature(parent_st)
+            or listener.getsockname() != str(socket_path)
+            or listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) != 1
+        ):
             raise HMLSignerListenError("HML_SIGNER_LISTEN_SOCKET_UNTRUSTED")
     except HMLSignerListenError:
         listener.close()
-        _safe_unlink_owned(socket_path, owner_uid=owner_uid)
+        if bound:
+            _safe_unlink_owned(socket_path, owner_uid=owner_uid)
         raise
     except (OSError, ValueError, TypeError):
         listener.close()
-        _safe_unlink_owned(socket_path, owner_uid=owner_uid)
+        if bound:
+            _safe_unlink_owned(socket_path, owner_uid=owner_uid)
         raise HMLSignerListenError("HML_SIGNER_LISTEN_BIND_FAILED") from None
     return listener
 

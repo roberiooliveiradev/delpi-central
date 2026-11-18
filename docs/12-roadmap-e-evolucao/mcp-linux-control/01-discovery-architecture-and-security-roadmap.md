@@ -769,3 +769,13 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - **69:** preflight estruturado sanitizado; handoff checklist; runbook de instalação futura 12 passos; rollback só ATLAS.
 - CI paths/pytest ampliados; quatro MCP READ; PREPARE/ACT OFF. Sem pull/deploy/chave real/users no host.
 - **Progresso conservador 60%** (dev pré-ativação integrado); atestação srv-api, SEC-01..10, bootstrap operacional e install systemd permanecem pendentes.
+
+
+## Etapa 70 | 18/11/2026 | Baseline no srv-api e endurecimento do socket signer:bridge
+
+**Fonte:** issue #232 e runbook 58 (./58-atlas-hml-b-etapa70-baseline-socket-dac.md). **SOURCE-ONLY; status BLOCKED**.
+- Baseline do operador: Ubuntu 24.04, Docker/containerd ativos; HML running+healthy; PROD running **sem healthcheck** (nao declarar healthy); socket Docker root:docker 0660 com ACL basica; usuario atlas-hml presente, bridge e signer ausentes; sem units/diretorios ATLAS; LSM carregados, mas perfis nao atestados.
+- Repositorio no host encontrava-se em bff9f1e (origin/main local igual); alteracoes locais preservadas: somente modo executavel do script up-hml-sequential.sh e linha gerada em SOURCES.txt. Nenhum pull, stash, reset ou deploy.
+- Falha no design corrigida: parent candidato do socket passou de 0750 a **02750** signer:bridge, herdando GID do grupo sem chown; bind exige UID/GID/mode exatos e recusa ACL, symlink, caminho existente ou troca de inode. Nao aceita GID primario como fallback.
+- Revisor lexical de tmpfiles exige estritamente as cinco entradas conhecidas; CI testa drift de modo/GID, preexistencia, ACL, symlink, e ponte real sob UIDs diferentes no runner descartavel.
+- PREPARE/ACT OFF; quatro MCP READ; SEC-01..10, auditoria host, chave real, bootstrap e install permanecem pendentes. **Progresso conservador 60%; sem pull/deploy**.

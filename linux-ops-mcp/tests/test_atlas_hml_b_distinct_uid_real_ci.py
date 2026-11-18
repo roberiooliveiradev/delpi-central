@@ -51,9 +51,11 @@ signer = HMLLocalSigner.from_key_file(
 )
 listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 try:
-    listener.bind(sock)  # CRITICAL: bind after subprocess drops UID
-    os.chmod(sock, 0o660)
-    listener.listen(1)   # CRITICAL: listen after UID drop
+    from linux_ops_mcp.atlas_hml_b_signer_listen import bind_signer_owned_socket
+    listener.close()
+    listener = bind_signer_owned_socket(
+        socket_path=Path(sock), owner_uid=os.getuid(), socket_gid=int(bgid),
+    )  # CI calls real candidate; bind/listen occurs only after UID drop
     st = os.stat(sock, follow_symlinks=False)
     assert st.st_uid == os.getuid() and st.st_gid == int(bgid)
     assert (st.st_mode & 0o7777) == 0o660
