@@ -318,11 +318,7 @@ function UpdateChangesSheet({
               );
             })}
           </div>
-            ) : (
-              <p className="delpi-prc__muted">
-                Nenhuma alteração cadastral solicitada.
-              </p>
-            )}
+            ) : null}
 
             {ops.length ? (
               <section

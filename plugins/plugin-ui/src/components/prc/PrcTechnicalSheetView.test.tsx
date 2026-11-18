@@ -418,9 +418,11 @@ describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () 
       />,
     );
     expect(screen.getByText("1 fornecedor a adicionar")).toBeTruthy();
+    // EVA-PRC-EMPTY-TEXT-FIX: nunca negar a outra categoria quando há
+    // qualquer alteração — «nenhuma cadastral» era ambíguo para o PO.
     expect(
-      screen.getByText("Nenhuma alteração cadastral solicitada."),
-    ).toBeTruthy();
+      screen.queryByText("Nenhuma alteração cadastral solicitada."),
+    ).toBeNull();
     expect(
       screen.queryByText("Nenhuma alteração de campo registrada."),
     ).toBeNull();
@@ -492,9 +494,6 @@ describe("PrcTechnicalSheetView — modo UPDATE (alterações solicitadas)", () 
     expect(screen.getByText("Nenhuma alteração solicitada.")).toBeTruthy();
     expect(
       screen.queryByText("Nenhuma alteração de campo registrada."),
-    ).toBeNull();
-    expect(
-      screen.queryByText("Nenhuma alteração cadastral solicitada."),
     ).toBeNull();
     expect(screen.queryByText("Fornecedores")).toBeNull();
   });

@@ -817,3 +817,7 @@ Mudanca de **frontend/UX**, nao de contrato/backend. Deploy autorizado: **HML ap
 - Nova prop `requestStatus`: em `completed`, a nota de remocao vira registro historico (`Remoção registrada nesta solicitação.`), sem sugerir pendencia/acao; fora de `completed` preserva `pendente de efetivação no cadastro oficial.` Nenhuma afirmacao de efetivacao no TOTVS — so a Engineering API e o cadastro oficial detem essa verdade.
 
 **Sem mudanca de contrato/backend/AuthZ/RBAC/TOTVS.** Testes: +5 casos em `PrcTechnicalSheetView.test.tsx` (supplier-only, scalar-only, mixed, empty, completed) — 26/26 no arquivo; suites plugin-ui 2797, engineering 264, my-requests 21.
+
+### EVA-PRC-EMPTY-TEXT-FIX — remocao da mensagem negativa cruzada
+
+**Decisao do PO:** quando existir qualquer alteracao solicitada, a interface nao exibe mensagens negativas sobre a ausencia de outra categoria. A linha «Nenhuma alteração cadastral solicitada.» no cenario supplier-only era ambigua (incluir fornecedor tambem e alteracao cadastral do produto). Diffs: supplier-only mostra apenas resumo + subsecao Fornecedores; scalar-only mostra apenas resumo + campos; empty-state «Nenhuma alteração solicitada.» permanece exclusivamente para zero+zero. Componente unico, sem mudanca de contrato.
