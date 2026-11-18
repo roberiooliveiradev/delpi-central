@@ -60,6 +60,7 @@ Pasta: [`playbooks/`](./playbooks/).
 | [playbook-analise-preco-materia-prima.md](./playbooks/playbook-analise-preco-materia-prima.md) | Análise de preço de MP |
 | [playbook-diretivas-produto.md](./playbooks/playbook-diretivas-produto.md) | Diretivas de produto / compras |
 | [playbook-situacao-de-producao-pa.md](./playbooks/playbook-situacao-de-producao-pa.md) | Situação de produção PA |
+| [playbook-cadastro-produto-sb1-sx3-sa5.md](./playbooks/playbook-cadastro-produto-sb1-sx3-sa5.md) | **Inventário integral SB1/SX3/SA5** + contratos CREATE/UPDATE `delpiproduto`, façade api-delpi e gaps do catálogo PRC (EVA G0-A) |
 | [playbook-visaostatus-produto.md](./playbooks/playbook-visaostatus-produto.md) | Visão status produto |
 | [playbook-producao-consumo-compras-perdas-op.md](./playbooks/playbook-producao-consumo-compras-perdas-op.md) | Produção, consumo, compras, perdas, OP |
 | [playbook-pa-inspecao-expedicao.md](./playbooks/playbook-pa-inspecao-expedicao.md) | PA inspeção / expedição |

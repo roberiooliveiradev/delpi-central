@@ -882,3 +882,28 @@ Completar **neste mesmo documento** uma matriz por campo, gerada a partir de fon
 | AC-F08 | Somente após aceite G0/G1 autorizar implementação de rotas CRUD e consumidores, com grants/permissões e gates separados |
 
 **Registro de decisão PO (18/11/2026):** inventário de campos **primeiro**; em seguida contratos/schema, rotas CRUD de produto via API DELPI, integração Engineering API + inteligência EVA/provider, frontend e validação/release. Manter a evolução neste documento único, sem novos planos concorrentes.
+
+#### 10.6 G0-A executado — inventário integral SB1/SX3/SA5 entregue (18/11/2026)
+
+**TASK_ID:** `EVA-PRC-TOTVS-SB1-SX3-SA5-COMPLETE-FIELD-CONTRACT-INVENTORY-01`  
+**Estado:** `PROVEN_RUNTIME (metadados SQL+SX3) / DOCUMENTED / NO_CODE / NO_TOTVS_WRITE / NO_DEPLOY`  
+**Artefato canônico:** [playbook-cadastro-produto-sb1-sx3-sa5.md](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-cadastro-produto-sb1-sx3-sa5.md) em `api-delpi/docs/api/padroes-totvs/playbooks/` — matriz completa por campo; **não copiar a matriz para este plano**.
+
+**Resumo do inventário (contagens comprovadas na base `DELPI` via `delpi-api-delpi`):**
+
+| Camada | Inventário |
+|---|---|
+| SB1 físico × SX3 | 318 colunas físicas (313 negócio + 5 controle) × 319 campos SX3; 29 customizações Delpi (`X3_PROPRI=U`) |
+| SA5 físico × SX3 | 123 físicas × 125 SX3 |
+| Handler ADVPL `delpiproduto` | 22 campos `B1_*` — array **idêntico** em CREATE (op3) e UPDATE (op4) |
+| Façade api-delpi | UPDATE: 21 campos + `B1_COD` (representação completa); CREATE: **inexistente**; SA5 write: **NOT_IMPLEMENTED** |
+| READ | `products.detail` ~76 campos (43 em `view=engineering`); `products.suppliers` 15 propriedades |
+| PRC v1 | 10 paths (~9 SB1 + vínculo SA5) — cobertura ~3% do físico SB1 |
+
+**Gaps principais:** (1) PRC rastreia 8 dos 21 campos graváveis — UPDATE não verifica 13 campos que o PUT reescreve; (2) `B1_CONTA` rastreado porém **fora** do array de write — sem caminho de materialização hoje; (3) CREATE sem façade e sem contrato de obrigatórios; (4) SA5 sem qualquer write; (5) `ACKNOWLEDGED` sem read-back `CONFIRMED`; (6) campos fiscais/comerciais/custo fora da view=engineering — `NO_PRC` até decisão de owner.
+
+**Decisões pendentes:** semântica do flag `X3_OBRIGAT` nesta base; obrigatórios CREATE por tipo/família via ensaio TST01; rotina oficial SA5 + triplas `A5_*`; divergência `IncProduto/excluir` (playbook×PRW); regra de geração de `B1_COD`; owners por família de campo.
+
+**Estado RQ/AC:** AC-F01 `PASS` (matriz integral), AC-F02 `PASS` (22 campos reconciliados POST/PUT + efeito `VAL()`/representação completa documentado), AC-F03 `PASS` (matriz oficial×read×write×PRC×UI no playbook), AC-F04 `PARTIAL/TO_INVENTORY` (owners propostos por classe no playbook §10; ratificação por campo pendente — flag SX3 inconclusiva), AC-F05 `PASS` (schema v2 proposto em anéis, não implementado), AC-F06 `PLANNED` (estratégia v1→v2 sem backfill destrutivo), AC-F07 `PASS parcial` (read-back disponível via products.detail; `CONTRACT_GAP` em SA5 write e B1_CONTA materialização), AC-F08 `PENDING` (aguarda aceite PO desta matriz).
+
+**Próximo passo recomendado:** aceite PO da matriz → ensaio TST01 governado (CREATE mínimo + SA5 write + read-back) → ratificação do schema v2 → só então rotas/frontend.
