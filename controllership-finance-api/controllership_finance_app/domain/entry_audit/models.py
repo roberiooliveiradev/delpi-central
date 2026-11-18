@@ -154,6 +154,31 @@ class AuditConfig:
     participant_by_type_enabled: bool = False
     # FA-3 (onda 1): TES de insumo fora de «Crédito de IPI em uso e consumo»; vazio = regra para todas.
     input_tes: str = ""
+    # FA-4 (onda 2): uma ocorrência por causa — itens dentro dela, acompanhantes como followers.
+    cause_grouping_enabled: bool = False
+
+
+@dataclass(frozen=True)
+class OccurrenceItem:
+    """Um item (ou o cabeçalho) dentro da causa — FA-4."""
+
+    item: str
+    field: str
+    protheus_value: str
+    xml_value: str
+    difference: str = ""
+
+
+@dataclass(frozen=True)
+class OccurrenceFollower:
+    """Divergência acompanhante («Acompanha…») que virou detalhe da causa — FA-4."""
+
+    rule_id: str
+    title: str
+    field: str
+    protheus_value: str
+    xml_value: str
+    why: str = ""
 
 
 @dataclass(frozen=True)
@@ -169,6 +194,9 @@ class Occurrence:
     access_key: str
     why: str = ""
     action: str = ""
+    cause_id: str = ""
+    items: tuple[OccurrenceItem, ...] = ()
+    followers: tuple[OccurrenceFollower, ...] = ()
 
 
 @dataclass(frozen=True)

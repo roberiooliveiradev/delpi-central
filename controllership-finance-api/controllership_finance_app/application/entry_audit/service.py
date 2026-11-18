@@ -17,6 +17,7 @@ from controllership_finance_app.application.entry_audit.vocabulary import (
     field_code,
     field_label,
     stable_occurrence_key,
+    stable_occurrence_key_v2,
     stored_field,
     yes_no,
 )
@@ -236,6 +237,7 @@ class EntryAuditService:
                 xml_by_key={**invoices, **ctes},
                 posted_outside=posted_outside,
                 participant=config.participant_by_type_enabled,
+                cause_grouping=config.cause_grouping_enabled,
             )
             self._store.mark_run(run_id, stage="saving")
             self._store.replace_output(run_id, **output)
@@ -292,7 +294,7 @@ class EntryAuditService:
             "gross_checked": round(sum(_amount(row) for row in documents), 2),
             "high_difference": round(sum(abs(_amount_text(row.get("difference"))) for row in high_rows), 2),
         }
-        return {
+        payload = {
             "kpis": current,
             "previous": self._previous_kpis(analysis, filters),
             "conformity": {
@@ -306,6 +308,52 @@ class EntryAuditService:
                 },
             },
             "branches_unavailable": ready,
+        }
+        groups = _cause_groups(documents, occurrences, status_map)
+        if groups is not None:
+            payload["groups"] = groups
+        return payload
+
+    def pending(
+        self,
+        *,
+        date_from=None,
+        date_to=None,
+        branches: list[str] | None = None,
+        severity: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> dict:
+        """Fila consolidada por nota + causa (FA-5), com status e KPIs FA-7."""
+        rows = self._store.pending_occurrences(date_from=date_from, date_to=date_to, branches=branches)
+        status_map = self._store.statuses_of([row.get("stable_key") for row in rows])
+        items = []
+        for row in rows:
+            if severity and row.get("severity") != severity:
+                continue
+            status = (status_map.get(row.get("stable_key")) or {}).get("status") or "pending"
+            item = dict(row)
+            item.pop("rn", None)
+            item["status"] = status
+            items.append(item)
+        pending_rows = [row for row in items if row["status"] != "resolved"]
+        resolved_rows = [row for row in items if row["status"] == "resolved"]
+        high = [row for row in pending_rows if row.get("severity") == "Alta"]
+        medium = [row for row in pending_rows if row.get("severity") == "Média"]
+        start = (page - 1) * page_size
+        return {
+            "items": items[start : start + page_size],
+            "page": page,
+            "page_size": page_size,
+            "total": len(items),
+            "kpis": {
+                "causes": len(items),
+                "pending": len(pending_rows),
+                "resolved": len(resolved_rows),
+                "pending_high": len(high),
+                "pending_medium": len(medium),
+                "pending_difference": round(sum(abs(_amount_text(row.get("difference"))) for row in pending_rows), 2),
+            },
         }
 
     def daily(self, analysis_id: str, filters: dict) -> dict:
@@ -387,7 +435,7 @@ class EntryAuditService:
             documents = [row for row in documents if row.get("situation") not in {"xml_unavailable", "posted_outside_period"}]
             status_map = self._statuses_map(occurrences)
             pending, resolved = _pending_resolved_counts(occurrences, status_map)
-            points.append({
+            point = {
                 "analysis_id": analysis["id"],
                 "date_from": analysis["date_from"].isoformat(),
                 "date_to": analysis["date_to"].isoformat(),
@@ -398,7 +446,11 @@ class EntryAuditService:
                 "high": sum(1 for row in occurrences if row.get("severity") == "Alta"),
                 "pending": pending,
                 "resolved": resolved,
-            })
+            }
+            groups = _cause_groups(documents, occurrences, status_map)
+            if groups is not None:
+                point["groups"] = groups
+            points.append(point)
         if group == "month":
             return {"points": points, "months": _months(points)}
         return {"points": points}
@@ -796,6 +848,7 @@ def _snapshot(config: AuditConfig, lookback_days: int) -> dict:
         "tolerance": config.tolerance,
         "participant_by_type_enabled": config.participant_by_type_enabled,
         "input_tes": config.input_tes,
+        "cause_grouping_enabled": config.cause_grouping_enabled,
     }
 
 
@@ -808,6 +861,7 @@ def _config_from(snapshot: dict) -> AuditConfig:
         improvements_enabled=True,
         participant_by_type_enabled=bool(snapshot.get("participant_by_type_enabled")),
         input_tes=str(snapshot.get("input_tes") or ""),
+        cause_grouping_enabled=bool(snapshot.get("cause_grouping_enabled")),
     )
 
 
@@ -975,7 +1029,7 @@ def _display_name(header: dict, xml, participant: bool) -> str:
     return str(header.get("supplier_name") or "") or (getattr(xml, "issuer_name", "") if xml is not None else "")
 
 
-def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None, posted_outside: list[dict] | None = None, participant: bool = False) -> dict:
+def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: list[dict], items: list[dict], tes_rows: list[dict], lnf: dict | None = None, unavailable: list[dict] | None = None, xml_by_key: dict | None = None, posted_outside: list[dict] | None = None, participant: bool = False, cause_grouping: bool = False) -> dict:
     by_key = {str(row.get("access_key") or ""): row for row in headers if row.get("access_key")}
     xml_docs = xml_by_key or {}
     occurrence_rows = []
@@ -984,11 +1038,41 @@ def _persistable(analysis_id: str, run_id: str, branch: str, result, headers: li
         xml = xml_docs.get(row.access_key)
         code = stored_field(row.field)
         supplier_name = _display_name(header, xml, participant)
+        stable_key = (
+            stable_occurrence_key_v2(branch=branch, access_key=row.access_key, cause_id=row.cause_id or row.rule_id, number=row.document_number, series=str(header.get("series") or ""), supplier=str(header.get("supplier_code") or ""), store=str(header.get("supplier_store") or ""))
+            if cause_grouping
+            else stable_occurrence_key(branch=branch, access_key=row.access_key, rule_id=row.rule_id, field=row.field, item=row.item, number=row.document_number, series=str(header.get("series") or ""), supplier=str(header.get("supplier_code") or ""), store=str(header.get("supplier_store") or ""))
+        )
+        item_rows = (
+            [
+                {
+                    "item": i.item,
+                    "field": i.field,
+                    "protheus_value": i.protheus_value,
+                    "xml_value": i.xml_value,
+                    "difference": _difference(i.protheus_value, i.xml_value, i.field),
+                }
+                for i in row.items
+            ]
+            if cause_grouping
+            else []
+        )
+        follower_rows = (
+            [
+                {"rule_id": f.rule_id, "title": f.title, "field": f.field, "protheus_value": f.protheus_value, "xml_value": f.xml_value, "why": f.why}
+                for f in row.followers
+            ]
+            if cause_grouping
+            else []
+        )
         occurrence_rows.append({
             "analysis_id": analysis_id,
             "run_id": run_id,
             "branch": branch,
-            "stable_key": stable_occurrence_key(branch=branch, access_key=row.access_key, rule_id=row.rule_id, field=row.field, item=row.item, number=row.document_number, series=str(header.get("series") or ""), supplier=str(header.get("supplier_code") or ""), store=str(header.get("supplier_store") or "")),
+            "stable_key": stable_key,
+            "cause_id": (row.cause_id or row.rule_id) if cause_grouping else "",
+            "items": item_rows,
+            "followers": follower_rows,
             "rule_id": row.rule_id,
             "severity": row.severity,
             "theme": row.rule_id.split(".", 1)[0],
@@ -1341,6 +1425,14 @@ def _public_occurrence(row: dict, status: dict | None) -> dict:
         "why": row.get("why") or "",
         "action": row.get("action") or "",
         "access_key": row.get("access_key") or "",
+        "cause_id": row.get("cause_id") or "",
+        "items": row.get("items") or [],
+        "total_difference": round(
+            sum(abs(_amount_text(item.get("difference"))) for item in (row.get("items") or []))
+            or abs(_amount_text(row.get("difference"))),
+            2,
+        ),
+        "followers": row.get("followers") or [],
         "status": (status or {}).get("status", "pending"),
     }
 
@@ -1389,6 +1481,45 @@ def _links(row: dict) -> dict:
 def _status_from_map(status_map: dict[str, dict], row: dict) -> str:
     found = status_map.get(str(row.get("stable_key") or ""))
     return (found or {}).get("status", "pending")
+
+
+def _cause_groups(documents: list[dict], occurrences: list[dict], status_map: dict) -> dict | None:
+    """FA-7 — indicadores em 3 grupos: sem problema / corrigidas / com pendência.
+
+    Só existe quando a análise tem linhas v2 (``cause_id`` preenchido).
+    """
+    if not any(row.get("cause_id") for row in occurrences):
+        return None
+    by_doc: dict[str, list[dict]] = {}
+    for row in occurrences:
+        by_doc.setdefault(_document_identity(row), []).append(row)
+    clean = corrected = pending = pending_high = pending_medium = 0
+    pending_difference = 0.0
+    for row in documents:
+        causes = by_doc.get(_document_identity(row))
+        if not causes:
+            clean += 1
+            continue
+        open_rows = [
+            cause
+            for cause in causes
+            if (status_map.get(cause.get("stable_key")) or {}).get("status") != "resolved"
+        ]
+        if open_rows:
+            pending += 1
+            pending_high += sum(1 for cause in open_rows if cause.get("severity") == "Alta")
+            pending_medium += sum(1 for cause in open_rows if cause.get("severity") == "Média")
+            pending_difference += sum(abs(_amount_text(cause.get("difference"))) for cause in open_rows)
+        else:
+            corrected += 1
+    return {
+        "clean": clean,
+        "corrected": corrected,
+        "pending": pending,
+        "pending_high": pending_high,
+        "pending_medium": pending_medium,
+        "pending_difference": round(pending_difference, 2),
+    }
 
 
 def _pending_resolved_counts(

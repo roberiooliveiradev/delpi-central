@@ -24,6 +24,7 @@ def audit_config() -> AuditConfig:
         unmatched_grace_days=int(settings.ENTRY_AUDIT_UNMATCHED_GRACE_DAYS),
         participant_by_type_enabled=bool(settings.ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED),
         input_tes=settings.ENTRY_AUDIT_INPUT_TES,
+        cause_grouping_enabled=bool(settings.ENTRY_AUDIT_CAUSE_GROUPING_ENABLED),
     )
 
 

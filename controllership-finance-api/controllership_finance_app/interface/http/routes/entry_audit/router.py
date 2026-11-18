@@ -200,6 +200,29 @@ def get_facets(analysis_id: str, request: Request):
     return _call(lambda: _with_branches(None, _service(request).facets(analysis_id, _filters(request)), "get_entry_audit_facets"))
 
 
+@router.get("/pending", operation_id="list_entry_audit_pending")
+def list_pending(
+    request: Request,
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    branches: str | None = Query(None),
+    severity: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    user = _actor(request)
+    if not hasattr(user, "principal_type"):
+        return user
+    branch_list = [part.strip() for part in branches.split(",") if part.strip()] if branches else None
+    return _call(lambda: ok(
+        _service(request).pending(
+            date_from=date_from, date_to=date_to, branches=branch_list,
+            severity=severity, page=page, page_size=page_size,
+        ),
+        operation_id="list_entry_audit_pending",
+    ))
+
+
 @router.get("/trend", operation_id="get_entry_audit_trend")
 def get_trend(request: Request, branch: str | None = None, date_from: date | None = None, date_to: date | None = None, group: str | None = None):
     user = _actor(request)

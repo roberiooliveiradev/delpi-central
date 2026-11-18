@@ -40,12 +40,15 @@ from controllership_finance_app.domain.entry_audit.catalog import (
     TAKER_ROLE,
     WHY,
 )
+from controllership_finance_app.domain.entry_audit.causes import cause_id_for
 from controllership_finance_app.domain.entry_audit.models import (
     AuditConfig,
     AuditResult,
     ExcludedItem,
     FiscalBookLine,
     Occurrence,
+    OccurrenceFollower,
+    OccurrenceItem,
     ProtheusHeader,
     ProtheusItem,
     TesRecord,
@@ -105,7 +108,7 @@ def audit(
     )
     header_hits.sort(key=lambda hit: (SEVERITY_ORDER[hit["severity"]], hit["title"], hit["supplier"], hit["number"]))
     item_hits.sort(key=lambda hit: (SEVERITY_ORDER[hit["severity"]], hit["title"], hit["supplier"], hit["number"], hit["item"]))
-    for hit in header_hits + item_hits:
+    for hit in _consolidate(header_hits + item_hits, settings):
         result.occurrences.append(_occurrence(hit))
     result.summary["protheus_documents"] = len(rows)
     result.summary["protheus_invoices"] = len(invoices_only)
@@ -174,7 +177,9 @@ def _header_base(result, row, document, booked, amounts_match, before, hits, tes
     if abs(round(row["icms_base"] - document.icms_base, 2)) <= settings.tolerance:
         return
     if not amounts_match and len(hits) > before:
-        _hit(hits, row, document, "header.icms_base_mismatch", "Base de ICMS divergente", hits[-1]["severity"], "Base ICMS", row["icms_base"], document.icms_base, "Acompanha a divergência de ICMS acima.")
+        # O acompanhante ancora no hit de ICMS deste lote — nunca na posição da lista.
+        icms_hit = next((hit for hit in reversed(hits[before:]) if hit["cause_id"] == "icms_amount"), hits[-1])
+        _hit(hits, row, document, "header.icms_base_mismatch", "Base de ICMS divergente", icms_hit["severity"], "Base ICMS", row["icms_base"], document.icms_base, "Acompanha a divergência de ICMS acima.", follower_cause=icms_hit["cause_id"])
     elif amounts_match and (booked <= settings.tolerance or _note_credit(row, tes, book, tes_by_document) is False):
         result.suppress("suppressed.base_or_rate_without_credit", LABEL_HEADER_BASE)
     elif amounts_match:
@@ -925,13 +930,48 @@ def _cte_situation(document: XmlDocument, company_tax_id: str, root: str) -> tup
     return "Média", reason
 
 
-def _hit(hits, row, document, rule_id, title, severity, field, protheus_value, xml_value, action, item="") -> None:
+def _hit(hits, row, document, rule_id, title, severity, field, protheus_value, xml_value, action, item="", follower_cause=None) -> None:
     hits.append({
         "rule_id": rule_id, "title": title, "severity": severity, "number": row["number"], "item": item,
         "field": field, "protheus_value": protheus_value, "xml_value": xml_value,
         "access_key": row.get("access_key", ""), "supplier": document.issuer_name if document is not None else row.get("name", ""),
-        "action": action,
+        "action": action, "cause_id": follower_cause or cause_id_for(rule_id), "follower": follower_cause is not None,
     })
+
+
+def _consolidate(hits: list[dict], settings) -> list[dict]:
+    """FA-4 — uma ocorrência por causa: agrupa hits por (nota, cause_id).
+
+    Cada hit do grupo vira uma linha de `items[]`; hits marcados como
+    «acompanhante» (`follower`) viram `followers[]` da mesma causa.
+    Com a flag desligada devolve os hits como vieram (comportamento v1).
+    """
+    if not settings.cause_grouping_enabled:
+        return hits
+    groups: dict[tuple, dict] = {}
+    order: list[tuple] = []
+    for hit in hits:
+        key = (hit["access_key"] or f"doc:{hit['number']}|{hit['supplier']}", hit["cause_id"])
+        group = groups.get(key)
+        if group is None:
+            group = groups[key] = {"hits": [], "followers": []}
+            order.append(key)
+        (group["followers"] if hit.get("follower") else group["hits"]).append(hit)
+    out: list[dict] = []
+    for key in order:
+        group = groups[key]
+        if not group["hits"]:
+            # Acompanhante sem principal (ex.: principal suprimida): promove o primeiro.
+            promoted = group["followers"].pop(0)
+            promoted["follower"] = False
+            group["hits"].append(promoted)
+        primary = min(group["hits"], key=lambda h: (SEVERITY_ORDER[h["severity"]], h["title"], str(h["item"])))
+        merged = dict(primary)
+        merged["cause_items"] = group["hits"]
+        merged["cause_followers"] = group["followers"]
+        out.append(merged)
+    out.sort(key=lambda h: (SEVERITY_ORDER[h["severity"]], h["title"], h["supplier"], h["number"], str(h["item"])))
+    return out
 
 
 def _occurrence(hit: dict) -> Occurrence:
@@ -939,7 +979,15 @@ def _occurrence(hit: dict) -> Occurrence:
         rule_id=hit["rule_id"], title=hit["title"], severity=hit["severity"], document_number=str(hit["number"]),
         item=str(hit["item"]), field=hit["field"], protheus_value=_render(hit["protheus_value"]),
         xml_value=_render(hit["xml_value"]), access_key=hit["access_key"], why=WHY.get(hit["title"], hit["action"]),
-        action=hit["action"],
+        action=hit["action"], cause_id=hit.get("cause_id") or cause_id_for(hit["rule_id"]),
+        items=tuple(
+            OccurrenceItem(item=str(h["item"]), field=h["field"], protheus_value=_render(h["protheus_value"]), xml_value=_render(h["xml_value"]))
+            for h in hit.get("cause_items", ())
+        ),
+        followers=tuple(
+            OccurrenceFollower(rule_id=h["rule_id"], title=h["title"], field=h["field"], protheus_value=_render(h["protheus_value"]), xml_value=_render(h["xml_value"]), why=WHY.get(h["title"], h["action"]))
+            for h in hit.get("cause_followers", ())
+        ),
     )
 
 

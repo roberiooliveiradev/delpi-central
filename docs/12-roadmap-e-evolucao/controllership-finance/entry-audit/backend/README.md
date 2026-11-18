@@ -80,8 +80,9 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 
 | Método e rota | Uso |
 |---|---|
-| `GET /entry-audit/analyses/{id}/occurrences` | aba Ocorrências; paginação e ordenação |
-| `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: `field`/`field_label` (origem = `origin` / «CST (origem)», sem mudar a chave estável), `supplier_name`, `series`, `tes`, `difference`, por quê diferente da ação, regra citada, links e histórico (eventos de resolver/reabrir) |
+| `GET /entry-audit/analyses/{id}/occurrences` | aba Ocorrências; paginação e ordenação. Com a onda 2 cada linha é uma **causa** (`cause_id`) — ver «Chave estável» abaixo |
+| `GET /entry-audit/analyses/{id}/occurrences/{key}` | detalhe: `field`/`field_label` (origem = `origin` / «CST (origem)», sem mudar a chave estável), `supplier_name`, `series`, `tes`, `difference`, por quê diferente da ação, regra citada, links e histórico (eventos de resolver/reabrir). Com a onda 2: `cause_id`, `items[]` (item, valores, diferença por item), `total_difference` e `followers[]` (achados acompanhantes) |
+| `GET /entry-audit/pending` | fila consolidada por chave de acesso + causa (FA-5): uma linha por nota e causa, sempre a ocorrência da análise mais recente; filtros `date_from`, `date_to`, `branches`, `severity`, `page`; `kpis` com `causes`, `pending`, `resolved`, `pending_high`, `pending_medium`, `pending_difference` |
 | `GET /entry-audit/analyses/{id}/documents` | aba Notas casadas; padrão = notas do período (`situation=period`); filtro explícito `clean` \| `divergent` \| `posted_outside_period` \| `xml_unavailable` |
 | `GET /entry-audit/analyses/{id}/unmatched` | aba Notas sem par; `nature` vem do `natOp` do XML |
 | `GET /entry-audit/xml/{access_key}` | XML pela chave, credencial de serviço; query `branch` e `document_type`. DANFE/DACTE só quando a nota tem pedido no LNF |
@@ -91,7 +92,9 @@ Prefixo `/entry-audit`. Todas exigem `controllership-finance.access` (D4). A uni
 | `POST /entry-audit/unmatched/{key}/resolve` · `/reopen` | idem para notas sem par |
 | `GET /entry-audit/analyses/{id}/export` | planilha com as 11 abas da skill (Resumo, TES usadas, Divergências, Comparativo, Só no XML, Só no SF1, CT-e Comparativo, Itens Divergências, Itens Comparativo, Itens Agrupados, Itens Excluídos) |
 
-A **chave estável** de uma ocorrência não depende do período: filial + chave de acesso do documento + ocorrência + campo + item. Assim, a mesma ocorrência que aparece em duas análises com períodos sobrepostos mostra o mesmo status de resolvida.
+A **chave estável** de uma ocorrência não depende do período. Na **v2** (onda 2, `ENTRY_AUDIT_CAUSE_GROUPING_ENABLED`): filial + chave de acesso do documento + causa (`branch|<key44>|cause:<cause_id>`; sem chave, `branch|doc:<number>|<series>|<supplier>|<store>|cause:<cause_id>`). Na v1: filial + chave + regra + campo + item. Assim, a mesma ocorrência que aparece em duas análises com períodos sobrepostos mostra o mesmo status de resolvida — e na v2 o status é da causa inteira.
+
+Com a onda 2, `summary` e `trend` trazem `groups` (FA-7): `clean`, `corrected`, `pending` por **nota**, mais `pending_high`, `pending_medium` e `pending_difference` por causa pendente. A exportação ganha a coluna «Causa» e uma linha por item da causa.
 
 Envelope, erros e `meta` iguais aos das outras rotas da BFF. Os DANFE/DACTE/XML usam as rotas que o LNF já expõe na BFF.
 
@@ -621,7 +624,7 @@ Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga
 
 `entry_audit_document`: `id`, `run_id`, `access_key`, `branch_code`, `document_number`, `series`, `supplier_code`, `supplier_store`, `supplier_name`, `issue_date`, `received_date`, `situation`, `divergence_count`, `comparison` JSONB.
 
-`entry_audit_occurrence`: `id`, `run_id`, `analysis_id`, `stable_key`, `rule_id`, `severity`, `theme`, `title`, `document_number`, `series`, `supplier_name`, `item`, `field`, `protheus_value`, `xml_value`, `difference`, `tes`, `why`, `action`, `access_key`. Índice `(analysis_id, severity)`, `(stable_key)`.
+`entry_audit_occurrence`: `id`, `run_id`, `analysis_id`, `stable_key`, `cause_id`, `items`/`followers` JSONB (V037), `rule_id`, `severity`, `theme`, `title`, `document_number`, `series`, `supplier_name`, `item`, `field`, `protheus_value`, `xml_value`, `difference`, `tes`, `why`, `action`, `access_key`. Índice `(analysis_id, severity)`, `(stable_key)`.
 
 `entry_audit_unmatched`: `id`, `run_id`, `analysis_id`, `stable_key`, `side` (`xml`|`protheus`), `rule_id`, `severity`, `reason`, `situation`, `lnf_request_id`, `lnf_status`, `access_key`, `document_number`, `series`, `party_name`, `issue_date`, `amount`, e, desde a V025, `party_tax_id`, `party_state`, `nature`, `cfop`, `cst`, `icms_base`, `icms_amount`, `ipi_amount`. A junção com o documento usa a chave de acesso; sem chave, filial + fornecedor + loja + número + série. Índice `(analysis_id)`.
 
@@ -629,7 +632,7 @@ Schema `controllership_finance`. Só cria tabela. Rollback de código não apaga
 
 `entry_audit_tes_used`: `id`, `run_id`, `tes_code`, `sf4` JSONB. Único `(run_id, tes_code)`.
 
-`entry_audit_status`: `stable_key` PK, `kind` (`occurrence`|`unmatched`), `status` (`pending`|`resolved`), `resolved_by_user_id`, `resolved_by_name`, `resolved_at`, `reopened_at`, `updated_at`.
+`entry_audit_status`: `stable_key` PK, `stable_key_v2` (V037 — chave v2 derivada na migração v1→v2), `kind` (`occurrence`|`unmatched`), `status` (`pending`|`resolved`), `resolved_by_user_id`, `resolved_by_name`, `resolved_at`, `reopened_at`, `updated_at`.
 
 `entry_audit_xml_cache`: `access_key` PK, `model`, `xml_gzip` BYTEA, `fetched_at`.
 
@@ -653,7 +656,7 @@ Detalhe de implementação nas etapas da [trilha dos ajustes](../fiscal-adjustme
 
 ### 7.2 BFF — ocorrência por causa (onda 2)
 
-`Occurrence` v2: `cause_id`, `items[]` (`item`, `protheus_value`, `xml_value`, `difference`), `total_difference`, `followers[]` (ocorrências acompanhantes, como «Acompanha…»), `resolution_source` (`manual`|`auto`), `persists_after_manual` (bool), `last_checked_at`. Severidade da causa = a maior dos itens. Chave estável v2: `{branch}|{access_key}|{cause_id}` (sem chave: mesma forma doc/série/participante atual). A v1 permanece legível pela migração FA-6.
+`Occurrence` v2: `cause_id`, `items[]` (`item`, `protheus_value`, `xml_value`, `difference`), `total_difference`, `followers[]` (ocorrências acompanhantes, como «Acompanha…»), `resolution_source` (`manual`|`auto`), `persists_after_manual` (bool), `last_checked_at`. Severidade da causa = a maior dos itens. Chave estável v2: `{branch}|{key44}|cause:{cause_id}` (sem chave: `doc:` + número/série/participante/loja + `cause:{cause_id}`). A v1 permanece legível pela migração FA-6.
 
 Leitura: `occurrences` e `occurrence/{key}` devolvem a causa completa; `resolve`/`reopen` agem na causa; exportação uma linha por item com coluna «Causa» (FA-16).
 
@@ -662,7 +665,7 @@ Leitura: `occurrences` e `occurrence/{key}` devolvem a causa completa; `resolve`
 | `GET /entry-audit/pending` | GET | fila consolidada por chave de acesso + `cause_id` (FA-5): a ocorrência da análise mais recente de cada causa pendente. Filtros `date_from`, `date_to`, `branch`, `severity`; paginação padrão |
 | `POST /entry-audit/reverify` | POST | escopo `{analysis_id}` ou `{date_from, date_to, branches}` ou `{occurrence_key}`. 202; execução assíncrona pelo worker existente (tipo de job novo, sem agendador — FA-13). `controllership-finance.access`; também `entry_audit.reverify` direto na CLARA (FA-17) |
 
-KPIs FA-7 em `summary`, `trend` e `pending`, recalculados a cada mudança de status: `clean` (nunca teve causa), `corrected` (todas as causas resolvidas), `pending` (com divergência pendente), mais `pending_high`, `pending_medium` e `pending_difference_total`.
+KPIs FA-7 em `summary`, `trend` e `pending`, recalculados a cada mudança de status: `clean` (nunca teve causa), `corrected` (todas as causas resolvidas), `pending` (com divergência pendente), mais `pending_high`, `pending_medium` e `pending_difference`.
 
 Novos `rule_id` (Alta; nascem já por causa): `ibscbs.xml_not_posted`, `ibscbs.posting_missing`, `ibscbs.value_mismatch`, `ibscbs.book_mismatch` (esta só após `ENTRY_AUDIT_IBSCBS_BOOK_FROM`).
 

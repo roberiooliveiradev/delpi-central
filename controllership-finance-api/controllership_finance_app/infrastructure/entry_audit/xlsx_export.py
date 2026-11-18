@@ -12,12 +12,12 @@ from xml.sax.saxutils import escape
 SHEETS = [
     ("Resumo", ["Indicador", "Quantidade", "Leitura"]),
     ("TES usadas", ["TES", "Descrição (SF4)", "Tipo do TES", "Cod. Fiscal", "CFOPs de entrada", "Itens DANFE", "Calcula ICMS", "Credita ICMS", "Livro ICMS", "Material de consumo", "Calcula IPI", "Credita IPI", "Livro IPI"]),
-    ("Divergências", ["Severidade", "Ocorrência", "NF", "Série", "Fornecedor (XML)", "Campo", "Valor Protheus", "Valor XML", "Diferença (Protheus − XML)", "TES (SD1)", "O que fazer", "Chave de Acesso"]),
+    ("Divergências", ["Severidade", "Causa", "Ocorrência", "NF", "Série", "Fornecedor (XML)", "Item", "Campo", "Valor Protheus", "Valor XML", "Diferença (Protheus − XML)", "TES (SD1)", "O que fazer", "Chave de Acesso"]),
     ("Comparativo", ["Situação", "NF", "Série", "Fornecedor (XML)", "ICMS Protheus", "IPI Protheus", "Total Protheus", "Ocorrências", "Chave de Acesso"]),
     ("Só no XML", ["Situação", "NF", "Série", "Emitente", "CNPJ", "UF", "Natureza", "CFOP", "CST", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave de Acesso"]),
     ("Só no SF1", ["Situação", "NF", "Série", "Fornecedor", "CNPJ", "UF", "Emissão", "Valor", "Base", "ICMS", "IPI", "Motivo / leitura", "Chave NF-e"]),
     ("CT-e Comparativo", ["Situação", "CT-e", "Série", "Transportadora", "UF", "Tomador", "CFOP CT-e", "TES", "CST XML", "Base XML", "ICMS XML", "Valor Protheus", "Chave de Acesso", "Notas vinculadas"]),
-    ("Itens Divergências", ["Severidade", "Ocorrência", "NF", "Item SD1", "Campo", "Valor Protheus", "Valor XML", "TES", "Chave de Acesso"]),
+    ("Itens Divergências", ["Severidade", "Causa", "Ocorrência", "NF", "Item SD1", "Campo", "Valor Protheus", "Valor XML", "TES", "Chave de Acesso"]),
     ("Itens Comparativo", [
         "Situação", "NF", "Série", "Fornecedor", "UF", "Item SD1", "Item XML", "Produto", "Descrição (XML)", "NCM",
         "Regime emitente", "CFOP XML", "CFOP Protheus", "TES", "CST XML", "CST Protheus",
@@ -52,11 +52,19 @@ def build_workbook(payload: dict) -> bytes:
             sf4.get("credits_ipi"), sf4.get("ipi_book"),
         ])
     for row in occurrences:
-        target = "Itens Divergências" if row.get("item") else "Divergências"
-        if row.get("item"):
-            rows[target].append([row.get("severity"), row.get("title"), row.get("document_number"), row.get("item"), row.get("field_label"), row.get("protheus_value"), row.get("xml_value"), row.get("tes"), row.get("access_key")])
-        else:
-            rows[target].append([row.get("severity"), row.get("title"), row.get("document_number"), row.get("series"), row.get("supplier_name"), row.get("field_label"), row.get("protheus_value"), row.get("xml_value"), row.get("difference"), row.get("tes"), row.get("action"), row.get("access_key")])
+        # FA-16: uma linha por item da causa consolidada; sem items[] (linhas v1) cai na própria linha.
+        item_rows = row.get("items") or [
+            {"item": row.get("item"), "field": row.get("field_label"), "protheus_value": row.get("protheus_value"), "xml_value": row.get("xml_value"), "difference": row.get("difference")}
+        ]
+        for entry in item_rows:
+            has_item = bool(entry.get("item"))
+            target = "Itens Divergências" if has_item and not row.get("followers") else "Divergências"
+            if has_item and target == "Itens Divergências":
+                rows[target].append([row.get("severity"), row.get("cause_id") or row.get("rule_id"), row.get("title"), row.get("document_number"), entry.get("item"), entry.get("field"), entry.get("protheus_value"), entry.get("xml_value"), row.get("tes"), row.get("access_key")])
+            else:
+                rows["Divergências"].append([row.get("severity"), row.get("cause_id") or row.get("rule_id"), row.get("title"), row.get("document_number"), row.get("series"), row.get("supplier_name"), entry.get("item"), entry.get("field"), entry.get("protheus_value"), entry.get("xml_value"), entry.get("difference"), row.get("tes"), row.get("action"), row.get("access_key")])
+        for follower in row.get("followers") or []:
+            rows["Divergências"].append([row.get("severity"), row.get("cause_id") or row.get("rule_id"), f"Acompanha: {follower.get('title')}", row.get("document_number"), row.get("series"), row.get("supplier_name"), "", follower.get("field"), follower.get("protheus_value"), follower.get("xml_value"), "", row.get("tes"), follower.get("why") or row.get("action"), row.get("access_key")])
     for row in payload["documents"]:
         comparison = row.get("comparison") or {}
         situation = "XML indisponível" if row.get("situation") == "xml_unavailable" else row.get("situation")

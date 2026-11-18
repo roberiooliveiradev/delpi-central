@@ -533,6 +533,10 @@ READ_ACTIONS: dict[tuple[str, str], dict] = {
         ref_param="analysis_id",
         required=("analysis_id", "key"),
     ),
+    ("entry_audit", "pending"): _read_spec(
+        ea_bridge.tool_entry_audit_pending,
+        allowed=("date_from", "date_to", "branch", "severity", "page", "page_size"),
+    ),
     ("entry_audit", "documents"): _read_spec(
         ea_bridge.tool_entry_audit_documents,
         ref_param="analysis_id",

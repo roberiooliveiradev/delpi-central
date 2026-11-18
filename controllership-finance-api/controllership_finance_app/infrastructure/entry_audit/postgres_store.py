@@ -230,8 +230,9 @@ class PostgresEntryAuditStore:
                 INSERT INTO {SCHEMA}.entry_audit_occurrence (
                     run_id, analysis_id, stable_key, rule_id, severity, theme, title,
                     document_number, series, supplier_name, item, field, protheus_value,
-                    xml_value, difference, tes, why, action, access_key
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    xml_value, difference, tes, why, action, access_key,
+                    cause_id, items, followers
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     run_id, row["analysis_id"], row["stable_key"], row["rule_id"], row["severity"],
@@ -240,6 +241,8 @@ class PostgresEntryAuditStore:
                     row.get("field") or "", row.get("protheus_value") or "", row.get("xml_value") or "",
                     row.get("difference"), row.get("tes") or "", row.get("why") or "",
                     row.get("action") or "", row.get("access_key") or "",
+                    row.get("cause_id") or "", Json(row.get("items") or []),
+                    Json(row.get("followers") or []),
                 ),
             )
         for row in unmatched:
@@ -500,6 +503,41 @@ class PostgresEntryAuditStore:
         for row in found:
             row["document_type"] = (row.get("sf4") or {}).get("document_type") or "nfe"
         return found
+
+    def pending_occurrences(self, *, date_from=None, date_to=None, branches=None) -> list[dict]:
+        """Fila consolidada (FA-5): ocorrência mais recente por (filial, nota, causa)."""
+        clauses = ["a.status = 'done'", "o.cause_id <> ''"]
+        params: list = []
+        if date_from:
+            clauses.append("a.date_to >= %s")
+            params.append(date_from)
+        if date_to:
+            clauses.append("a.date_from <= %s")
+            params.append(date_to)
+        rows = self._all(
+            f"""
+            SELECT * FROM (
+                SELECT o.*, r.branch_code AS branch, a.created_at AS analysis_created_at,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY r.branch_code,
+                               COALESCE(NULLIF(o.access_key, ''),
+                                        'doc:' || o.document_number || '|' || o.series || '|' || o.supplier_name),
+                               o.cause_id
+                           ORDER BY a.created_at DESC
+                       ) AS rn
+                  FROM {SCHEMA}.entry_audit_occurrence o
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = o.run_id
+                  JOIN {SCHEMA}.entry_audit_analysis a ON a.id = o.analysis_id
+                 WHERE {' AND '.join(clauses)}
+            ) latest
+            WHERE rn = 1
+            """,
+            tuple(params),
+        )
+        if branches:
+            wanted = set(branches)
+            rows = [row for row in rows if row.get("branch") in wanted]
+        return rows
 
     def cached_xml(self, access_key: str) -> dict | None:
         row = self._one(

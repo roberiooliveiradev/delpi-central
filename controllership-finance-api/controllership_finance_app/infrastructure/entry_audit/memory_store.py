@@ -227,6 +227,35 @@ class MemoryEntryAuditStore:
         self.statuses[stable_key] = current
         return deepcopy(current)
 
+    def pending_occurrences(self, *, date_from=None, date_to=None, branches=None) -> list[dict]:
+        """Fila consolidada (FA-5): ocorrência mais recente por (filial, nota, causa)."""
+        done = {
+            aid: row
+            for aid, row in self.analyses.items()
+            if row.get("status") == "done"
+            and (date_from is None or row.get("date_to") >= date_from)
+            and (date_to is None or row.get("date_from") <= date_to)
+        }
+        latest: dict[tuple, dict] = {}
+        for row in self.occurrences:
+            analysis = done.get(row.get("analysis_id"))
+            if analysis is None or not row.get("cause_id"):
+                continue
+            if branches and row.get("branch") not in branches:
+                continue
+            doc = row.get("access_key") or f"doc:{row.get('document_number')}|{row.get('series')}|{row.get('supplier_name')}"
+            key = (row.get("branch"), doc, row["cause_id"])
+            current = latest.get(key)
+            created = analysis.get("created_at")
+            if current is None or (created and created > current.get("_created", "")):
+                merged = dict(row)
+                merged["_created"] = created or ""
+                merged["analysis_created_at"] = created
+                latest[key] = merged
+        for row in latest.values():
+            row.pop("_created", None)
+        return list(latest.values())
+
     def rows(self, kind: str, analysis_id: str) -> list[dict]:
         table = {
             "documents": self.documents,

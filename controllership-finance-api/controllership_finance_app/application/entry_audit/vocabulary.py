@@ -99,3 +99,37 @@ def stable_occurrence_key(
     if len(key) == 44:
         return f"{branch}|{key}|{rule_id}|{code}|{item_part}"
     return f"{branch}|doc:{number}|{series}|{supplier}|{store}|{rule_id}|{code}|{item_part}"
+
+
+def stable_key_v2_from_v1(stable_key: str, cause_of) -> str | None:
+    """Deriva a chave v2 de uma chave v1 de status; None se já for v2 ou ilegível.
+
+    `cause_of` é o mapa rule_id → cause_id do domínio (a migração injeta a
+    função para manter este módulo livre de dependência de domínio).
+    """
+    parts = str(stable_key or "").split("|")
+    if not parts or "cause:" in stable_key:
+        return None
+    branch = parts[0]
+    if len(parts) >= 3 and parts[1].isdigit() and len(parts[1]) == 44:
+        return f"{branch}|{parts[1]}|cause:{cause_of(parts[2])}"
+    if len(parts) >= 6 and parts[1].startswith("doc:"):
+        return f"{branch}|{'|'.join(parts[1:5])}|cause:{cause_of(parts[5])}"
+    return None
+
+
+def stable_occurrence_key_v2(
+    *,
+    branch: str,
+    access_key: str,
+    cause_id: str,
+    number: str = "",
+    series: str = "",
+    supplier: str = "",
+    store: str = "",
+) -> str:
+    """Chave v2 (FA-4/FA-5): filial + identidade da nota + causa."""
+    key = "".join(ch for ch in (access_key or "") if ch.isdigit())
+    if len(key) == 44:
+        return f"{branch}|{key}|cause:{cause_id}"
+    return f"{branch}|doc:{number}|{series}|{supplier}|{store}|cause:{cause_id}"

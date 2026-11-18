@@ -69,6 +69,28 @@ def tool_entry_audit_options() -> CallToolResult:
     return _call(lambda: _service().options())
 
 
+def tool_entry_audit_pending(
+    date_from: str | None = None,
+    date_to: str | None = None,
+    branch: str | None = None,
+    severity: str | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
+) -> CallToolResult:
+    """Fila consolidada por nota + causa (FA-5), com status e KPIs."""
+    from datetime import date as _date
+
+    branches = [part.strip() for part in branch.split(",") if part.strip()] if branch else None
+    return _call(lambda: _service().pending(
+        date_from=_date.fromisoformat(date_from) if date_from else None,
+        date_to=_date.fromisoformat(date_to) if date_to else None,
+        branches=branches,
+        severity=severity,
+        page=int(page or 1),
+        page_size=int(page_size or 50),
+    ))
+
+
 def tool_entry_audit_analysis(
     analysis_id: str | None = None,
     date_from: str | None = None,
@@ -227,12 +249,17 @@ def tool_analyze_entry_audit_findings(
             action = str(items[0].get("action") or items[0].get("what_to_do") or "")
             cause = _cause(rule_id)
             tes_text = f" TES {tes}." if tes else ""
+            # FA-4: a contagem é de causas (nota + causa), não de linhas de ocorrência.
+            count = len({
+                (str(row.get("access_key") or row.get("document_number") or ""), str(row.get("cause_id") or row.get("stable_key") or ""))
+                for row in items
+            })
             findings.append({
                 "kind": "FACT",
                 "code": rule_id or "entry_audit.occurrence",
                 "cause": cause,
-                "message": f"{len(items)} × {title or rule_id} ({severity}). Causa {cause}.{tes_text}",
-                "value": {"count": len(items), "severity": severity, "rule_id": rule_id, "tes": tes, "cause": cause, "sample": [_public_row(row) for row in items[:3]]},
+                "message": f"{count} × {title or rule_id} ({severity}). Causa {cause}.{tes_text}",
+                "value": {"count": count, "severity": severity, "rule_id": rule_id, "tes": tes, "cause": cause, "sample": [_public_row(row) for row in items[:3]]},
             })
             if action:
                 findings.append({

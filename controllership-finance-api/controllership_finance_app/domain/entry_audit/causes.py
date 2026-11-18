@@ -77,3 +77,23 @@ def cause_for(rule_id: str) -> str:
     if key.startswith("unmatched."):
         return "lançamento"
     raise KeyError(f"regra sem causa canônica: {rule_id}")
+
+
+# FA-4 — identidade da causa para agrupar hits da mesma divergência numa
+# ocorrência só. Regras não listadas viram causa 1:1 pelo próprio rule_id.
+RULE_CAUSE_IDS: dict[str, str] = {
+    # Cabeçalho e item da mesma divergência de ICMS = uma causa (NF-B).
+    "header.icms_above_xml": "icms_amount",
+    "item.icms_above_xml": "icms_amount",
+    "header.icms_credit_short": "icms_amount",
+    "header.icms_base_mismatch": "icms_base",
+    # IPI: destaque no cabeçalho e crédito no item são a mesma divergência.
+    "header.ipi_not_booked": "ipi_amount",
+    "item.ipi_credit_mismatch": "ipi_amount",
+}
+
+
+def cause_id_for(rule_id: str) -> str:
+    """`cause_id` canônico do hit (FA-4). Fallback 1:1 pelo rule_id."""
+    key = str(rule_id or "")
+    return RULE_CAUSE_IDS.get(key, key)
