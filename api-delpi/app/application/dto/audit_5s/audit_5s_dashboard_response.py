@@ -25,6 +25,8 @@ class Audit5sDashboardSummary:
 class Audit5sDashboardCharts:
     score_by_period: list[dict[str, Any]] = field(default_factory=list)
     score_by_area: list[dict[str, Any]] = field(default_factory=list)
+    score_by_leaf_area: list[dict[str, Any]] = field(default_factory=list)
+    score_by_macro_area: list[dict[str, Any]] = field(default_factory=list)
     score_by_senso: list[dict[str, Any]] = field(default_factory=list)
     nc_by_status: list[dict[str, Any]] = field(default_factory=list)
 
