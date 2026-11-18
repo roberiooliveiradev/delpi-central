@@ -44,6 +44,15 @@
   `env.<x>.example` ou `.env.<variante>` — variação vai em env var ou
   profile (`platform-delivery-runtime-operations.mdc`).
 
+## Fontes TOTVS/ERP — orientação para agentes
+
+Em tarefas que envolvam ADVPL/TLPP, rotinas MATA/FINA, RESTALL, RPO, cadastro SB1/SA5 ou integração de escrita Protheus, invocar a skill `.devin/skills/totvs-protheus-integration/SKILL.md` (Devin) e aplicar `.cursor/rules/totvs-product-patterns.mdc` e `.cursor/rules/totvs-protheus-write-integration.mdc`.
+
+- **Fonte versionada primária de código Protheus:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, no SHA atual obtido por acesso GitHub autorizado. Registrar repo/branch/SHA/path/blob SHA; jamais supor acesso ou atualização automática.
+- **Espelho de referência:** `docs/13-fontes-totvs-protheus/` neste repositório; comparar blob SHA com o upstream. Bibliotecas e contratos: `api-delpi/docs/api/padroes-totvs/` e `api-delpi/docs/integrations/`.
+- **Runtime:** nem o GitHub nem o RESTALL provam versão compilada no RPO; exigir evidência de ambiente/compilação ou marcar `INCONCLUSIVE`/`TO_INVENTORY`. Acesso ao repositório não autoriza compilação, RPO write, deploy ou ERP write.
+- **Rotinas:** MATA010/ExecAuto é um contrato específico; MATA061/SA5 tem modelo MVC, não presumir ExecAuto. Antes de nova API, inventariar equivalentes, permissões, reuso e read-back integral; respeitar PREPARE/ACT, owner ERP e Core AuthZ.
+
 ## Verificação (delpi-verifier)
 
 <!-- delpi-verifier:contract v1 -->
