@@ -6871,3 +6871,39 @@ Análise do predicado `codes >= 2` por caminho:
 - **CHATGPT_LIVE_VALIDATION=PENDING_COORDINATION** — prova por identidade delegada cabe à Coordination.
 
 **Estado:** `DEPLOY02_PRODUCTION_EXPERIMENT_ACTIVE_LIVE_MCP_PENDING` — experimento operacional, não homologação; `GROUND_TRUTH_APPROVED=NO`, `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`. Issue #131 pendente (`gh` sem auth).
+
+### 94.42.16 E1/VAL-01 — B2-R2: Diagonal and Fan Leader Tracing
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B2R2-DIAGONAL-FAN-LEADER-TRACING-AND-VISUAL-VALIDATION-01`
+
+**Baseline produtivo confirmado pela Coordination (ChatGPT MCP, job `aj-51121cd45a9142e7`, digest `bb5d05c74c02`):** 90480120 — 15 candidatos, 14 matches, B3 14 INCONCLUSIVE + 1 NOT_COMPARABLE; líderes A3/A8 `CANDIDATE`, A5/A9/A4 `NOT_FOUND` (diagonais/leque), E `NOT_FOUND`.
+
+**RQ-B2R2-02 — primeiro ponto de falha (CONFIRMADO_NO_CODIGO + CONFIRMADO_EM_TESTE):** `detect_graphic_primitives` (opencv_adapter) só emitia corridas morfológicas eixo-alinhadas — os kernels retos `(kh,1)`/`(1,kv)` destroem traços inclinados por construção. O canal `segments` já existia no contrato do Understanding e o B2 já era orientação-agnóstico (ancoragem por caixa, encadeamento por proximidade de ponta `_LEADER_ATTACH_PX`, destino por endpoint) — a perda ocorria no adapter, antes do Understanding. Sonda HoughLinesP no residual provou no desenho real: A5 leque multi-ramo (~30–56°), A9 ~44°, A4 ~71°.
+
+**Implementação (commit `3d5c489aa8`, diff mínimo, sem hardcodes):**
+
+- `opencv_adapter.detect_graphic_primitives`: `HoughLinesP` sobre o residual (`bin ∧ ¬(h∪v)`), janela angular aguda 8°–82° (não duplica os canais h/v), `threshold=40`, `maxLineGap=6`, cap determinístico de 400 segmentos mais longos, campo `source="hough_lines_p_residual"` (proveniência; evidência candidata, nunca verdade técnica).
+- `understanding._merge_cluster`: colapso por projeção de eixo → **par de pontas mais distante do cluster**. Correto para diagonais e preserva a semântica eixo-alinhada (efeito observado: endpoints ±1px = ponta real do traço em vez de projeção).
+- Sem biblioteca nova; grafo não necessário — encadeamento por ponta já sustentava multi-segmento.
+
+**Testes RED→GREEN (8 novos):** diagonal → `SINGLE_REGION`; traços paralelos fundem; leque 3 ramos → `AMBIGUOUS` com multiplicidade preservada; dobra diagonal→vertical encadeia; cruzamento sem contato de ponta **não** conecta; diagonal próxima sem toque → `NOT_FOUND`; adapter emite `segments` com proveniência e abstém sem diagonais (skipif cv2).
+
+**Resultado real 90480120 (container produtivo, imagem `86bf8f6953f6`, fonte `0bbfa241f3` ⊃ `3d5c489aa8`):**
+
+| Ocorrência | Antes | Depois |
+|---|---|---|
+| A5 p1 (leque) | NOT_FOUND | **CANDIDATE**, caminho de 4 segmentos, tgt `NOT_IDENTIFIED` |
+| A9 p2 (diagonal) | NOT_FOUND | **CANDIDATE**, tgt `AMBIGUOUS_REGIONS` |
+| A4 p2 (diagonal) | NOT_FOUND | **CANDIDATE**, tgt `AMBIGUOUS_REGIONS` |
+| E p2 | NOT_FOUND | **AMBIGUOUS** (2 raízes — honesto) |
+| A2 p1 (vista 2) | CANDIDATE | `AMBIGUOUS` (2ª raiz plausível — rebaixamento conservador) |
+
+Invariantes: 15 candidatos / 9 excluídos / 10 linhas de tabela; `balloon_table_validation.v1` 14 `BALLOON_LABEL_IDENTIFIED` + E `NOT_LOCATED`, `automatic_approval=False` — B3 não inflou confiança. Primitivas: p1 86 segs / p2 134 segs.
+
+**Regressão cruzada (pipeline completo, imagem produtiva ± mounts, irmãos):** 90261723, 90261731, 90264311 — estados, alvos e contagens de líderes **idênticos**; única variação `endpoint_px` ±1 em 9 líderes (ponta real vs projeção — efeito esperado do merge). Suíte completa: **1708 pass / 23 skip**; audits architecture-phase3 + platform-guardrails: 0 findings.
+
+**Verificação independente (delpi-verifier):** `INCONCLUSIVE` por indisponibilidade ambiental — motor `devin` sem autenticação CLI (`devin auth login` interativo pendente); motor `cursor` com limite de uso da conta (reset 02/12/2026). Exceção ao gate autorizada explicitamente pelo owner; verificação diferida registrada como pendência de governança.
+
+**Deploy (canônico, srv-api):** rollback tagueado `infra-engineering-api:pre-b2r2-bb5d05c7-rollback`; prod pull ff-only → `0bbfa241f3` (⊃ `3d5c489aa8`, WIP prod preservado); rebuild sequencial; `delpi-engineering-api` healthy, digest `86bf8f6953f6`, tag `b2r2-3d5c489aa8`; código verificado in-container; `/health` 200; limites preservados (subprocess, 16GB, 900s, concorrência 1).
+
+**Estado:** `B2R2_FIX_VERIFIED_LIVE_MCP_PENDING` — experimental, não homologação. Resíduos: leque do A5 converge num único ramo anexado (ramos não ancorados na borda não viram raiz); destino `NOT_IDENTIFIED` quando a extremidade não toca região registrada; endpoints ±1px; `ENGINEERING_APPROVAL=DRAFT`, `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`.
