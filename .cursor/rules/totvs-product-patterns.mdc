@@ -131,3 +131,7 @@ Quando a tarefa envolver **entender ou reproduzir um relatório, regra, rotina, 
 6. Ao produzir diagnóstico, contrato ou plano, registrar **SOURCE_REPO + BRANCH + SOURCE_SHA + SOURCE_PATH + BLOB_SHA + função/trecho + paridade do espelho + evidência runtime separada + estado (`PROVEN_SOURCE/PROVEN_RUNTIME/TO_INVENTORY`) + decisão/owner**. Se a regra se provar reutilizável, enriquecer a biblioteca `padroes-totvs` segundo a seção anterior; não duplicar documentação sem necessidade.
 
 **Boundaries:** `api-delpi` é owner do SQL e das regras canônicas TOTVS. Para o Portal Suprimentos, `plugins/supplies → supplies-api → api-delpi`, e filial é apenas filtro operacional, nunca permission `supplies.unit.*`. As fontes desta pasta não substituem os contracts nem alteram RBAC, escrita ERP ou cutover.
+
+## Local de desenvolvimento de novos fontes — decisão PO
+
+Para novos fontes candidatos de integrações DELPI, desenvolver **somente** em `api-delpi/integrations/protheus-advpl/modules/<capability>/src/`, com contrato/testes no módulo conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` continua fonte de consulta de versões upstream (`master`@SHA), **não destino de commits**. Não alterar o espelho `docs/13-fontes-totvs-protheus/`. Handoff ZIP gerado por SHA aprovado, sem publicações ERP/compilação/deploy nesta fase.

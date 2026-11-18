@@ -111,3 +111,27 @@ def require_organization_read_service_token():
             return fn(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def require_reports_direct_usage_service_token():
+    """Only Delpi Reports may read direct team usage with a dedicated secret.
+
+    A general integration or organization token must NOT authorize access
+    to individual user activity. Only the named header is accepted.
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            expected = os.getenv("CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN", "").strip()
+            if not expected:
+                return forbidden("Reports direct usage service token is not configured")
+            provided = request.headers.get("X-Delpi-Service-Token", "").strip()
+            if not provided:
+                return unauthorized("Reports direct usage service token required")
+            if not secrets.compare_digest(provided, expected):
+                return forbidden("Invalid reports direct usage service token")
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

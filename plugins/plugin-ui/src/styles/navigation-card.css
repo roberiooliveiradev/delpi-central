@@ -116,3 +116,9 @@
   font-size: 0.9rem;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
+
+/* Opt-in selection state; same NavigationCard works in any domain. */
+.delpi-ui-nav-card[data-selected="true"] {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  box-shadow: inset 0 0 0 1px var(--delpi-ui-accent, var(--primary, #089bdb));
+}

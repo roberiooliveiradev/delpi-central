@@ -1,0 +1,10 @@
+/* Curated self-contained styles for tool workspaces; import once per style root.
+   Custom elements must inject the processed CSS INSIDE the shadow root. */
+@import "./native-controls.css";
+@import "./styles/navigation-card.css";
+@import "./styles/collapsible-tool-rail.css";
+@import "./styles/combobox-number.css";
+@import "./styles/number-stepper.css";
+
+/* SegmentToggle canonical styles are defined by the generic chart-card stylesheet. */
+@import "./styles/chart-card.css";

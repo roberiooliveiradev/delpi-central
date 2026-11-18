@@ -53,6 +53,11 @@ Em tarefas que envolvam ADVPL/TLPP, rotinas MATA/FINA, RESTALL, RPO, cadastro SB
 - **Runtime:** nem o GitHub nem o RESTALL provam versão compilada no RPO; exigir evidência de ambiente/compilação ou marcar `INCONCLUSIVE`/`TO_INVENTORY`. Acesso ao repositório não autoriza compilação, RPO write, deploy ou ERP write.
 - **Rotinas:** MATA010/ExecAuto é um contrato específico; MATA061/SA5 tem modelo MVC, não presumir ExecAuto. Antes de nova API, inventariar equivalentes, permissões, reuso e read-back integral; respeitar PREPARE/ACT, owner ERP e Core AuthZ.
 
+
+## Workspace ADVPL — decisão de escopo do PO
+
+Fontes ADVPL novos/evoluídos de integrações DELPI serão desenvolvidos e versionados somente em `api-delpi/integrations/protheus-advpl/` (ver `README.md` local e módulos por capacidade). O repositório privado `Delpi-ti/protheus-erp` é **referência READ-ONLY** até autorização futura explícita. O espelho `docs/13-fontes-totvs-protheus/` não é workspace de novas alterações. Pacotes de compilação ZIP são gerados de commits aprovados e entregues à equipe ERP; compilação no TST01/PRD, alterações do RPO e escritas ERP requerem gates independentes. Commits de fonte/documentação nesta pasta não autorizam deploy da API ou do Protheus; se o protocolo geral de deploy entrar em conflito, escalar ao owner antes de executar.
+
 ## Verificação (delpi-verifier)
 
 <!-- delpi-verifier:contract v1 -->

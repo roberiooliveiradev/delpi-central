@@ -34,3 +34,5 @@ Abra `http://localhost:8080`. No GitHub, selecione **GitHub Actions** em **Setti
 ## UX V4 aprovada — entrada e métodos
 
 A decisão visual do Product Owner em **2026-11-18** foi documentada em [UX V4: cards de origem e sidebar retrátil](docs/ux-v4-study-entry-and-method-sidebar.md). O início do Studio terá **dois cards grandes com ícones próprios** (`Produto DELPI` / `Estudo manual`), uma **sidebar secundária interna e recolhível** com ícone de cada método M1–M6, e **contexto de estudo compartilhado** entre métodos. Após iniciar um estudo, os cards dão lugar a um cabeçalho compacto e ao workspace. Os métodos planejados ficam em grupo discreto e não são executáveis. **Status: APPROVED_PRODUCT_DESIGN / TARGET_IMPLEMENTATION / TEST_NOT_RUN** — não é funcionalidade já entregue pela v0.1.
+
+**Inventário Plugin UI para UX V4:** [componentes existentes, lacunas, fronteiras e ordem de desenvolvimento](docs/plugin-ui-v4-component-inventory.md). Esta etapa define contratos candidatos e não altera a interface executável.

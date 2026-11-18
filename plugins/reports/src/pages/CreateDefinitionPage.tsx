@@ -10,10 +10,12 @@ import { definitionPath, REPORTS_LIST_PATH } from "../utils/route";
 
 const SHORTAGE_KEY = "safety_stock_shortage_30d";
 const MANAGEMENT_KEY = "management_revenue_monthly";
+const DIRECT_WEEKLY_KEY = "team_direct_app_opens_weekly";
 
 const PROVIDER_FALLBACK_LABELS: Record<string, string> = {
   [SHORTAGE_KEY]: "Rupturas próximos 30 dias",
   [MANAGEMENT_KEY]: "Relatório Gerencial — Faturamento",
+  [DIRECT_WEEKLY_KEY]: "Acessos semanais — subordinados diretos",
 };
 
 export function CreateDefinitionPage() {
@@ -24,6 +26,7 @@ export function CreateDefinitionPage() {
   const [horizonDays, setHorizonDays] = useState(30);
   const [customerLimit, setCustomerLimit] = useState(20);
   const [asOfDate, setAsOfDate] = useState("");
+  const [managerRegistration, setManagerRegistration] = useState("");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(true);
@@ -76,16 +79,18 @@ export function CreateDefinitionPage() {
     setSaving(true);
     setError(null);
     try {
+      if (providerKey === DIRECT_WEEKLY_KEY && !managerRegistration.trim()) {
+        throw new Error("Informe a matrícula RH do gestor.");
+      }
       const params =
-        providerKey === MANAGEMENT_KEY
-          ? {
-              customerLimit,
-              ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
-            }
-          : {
-              branch,
-              horizonDays,
-            };
+        providerKey === DIRECT_WEEKLY_KEY
+          ? { managerRegistration: managerRegistration.trim() }
+          : providerKey === MANAGEMENT_KEY
+            ? {
+                customerLimit,
+                ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
+              }
+            : { branch, horizonDays };
       const created = await createReportDefinition({
         name: name.trim(),
         providerKey,
@@ -102,6 +107,7 @@ export function CreateDefinitionPage() {
   }
 
   const isManagement = providerKey === MANAGEMENT_KEY;
+  const isDirectWeekly = providerKey === DIRECT_WEEKLY_KEY;
 
   return (
     <div className="rp-page-content">
@@ -204,6 +210,24 @@ export function CreateDefinitionPage() {
               <p className="rp-inline-note rp-field--full">
                 Sem data de referência, o envio usa o mês civil anterior à data
                 do disparo (agenda mensal no dia 1).
+              </p>
+            </>
+          ) : isDirectWeekly ? (
+            <>
+              <label className="rp-field rp-field--full">
+                <span>Matrícula do gestor (Portal RH)</span>
+                <input
+                  value={managerRegistration}
+                  onChange={(e) => setManagerRegistration(e.target.value)}
+                  maxLength={30}
+                  placeholder="Ex.: 20001"
+                  required
+                />
+              </label>
+              <p className="rp-inline-note rp-field--full">
+                Relatório da última semana concluída, apenas subordinados diretos.
+                Crie uma definição por gestor. O envio permanece bloqueado até a
+                liberação administrativa da integração.
               </p>
             </>
           ) : (

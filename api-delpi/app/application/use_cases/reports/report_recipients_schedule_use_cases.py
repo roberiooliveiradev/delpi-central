@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from app.config import settings
+
 from app.domain.services.reports.report_schedule_next_run_service import (
     DEFAULT_TIMEZONE,
     build_cron_expression,
@@ -104,8 +106,20 @@ class UpsertReportScheduleUseCase:
         enabled: bool = True,
         timezone_name: str = DEFAULT_TIMEZONE,
     ) -> dict[str, Any]:
-        if self._repository.get_definition(definition_id) is None:
+        definition = self._repository.get_definition(definition_id)
+        if definition is None:
             raise LookupError("Definição de relatório não encontrada.")
+        if definition.get("providerKey") == "team_direct_app_opens_weekly":
+            if schedule_kind.strip().lower() != "weekly" or weekday != 0:
+                raise ValueError(
+                    "Relatório de subordinados diretos deve ser agendado "
+                    "somente às segundas-feiras (semana já concluída)."
+                )
+            if enabled and not settings.REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED:
+                raise ValueError(
+                    "Agenda de relatórios diretos só pode ser habilitada "
+                    "após a autorização de envio e configuração do serviço."
+                )
         cron = build_cron_expression(
             schedule_kind=schedule_kind,
             hour=hour,
