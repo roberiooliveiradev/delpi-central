@@ -346,7 +346,7 @@ def get_manager_weekly_app_opens(registration: str):
     "/managers/<registration>/reports/direct-weekly-opens", methods=["GET"]
 )
 @require_reports_direct_usage_service_token()
-@integration_rate_limit(max_requests=12, per_seconds=60, key_prefix="reports-direct-week")
+@integration_rate_limit(max_requests=90, per_seconds=60, key_prefix="reports-direct-week")
 def get_manager_reports_direct_weekly_opens(registration: str):
     """S2S: one manager's direct RH employees only, with verified recipient.
 
@@ -408,6 +408,7 @@ def get_manager_reports_direct_weekly_opens(registration: str):
                     "Gestor sem conta Core ativa e e-mail válido.",
                     status=422,
                 )
+            core_user_id = str(core_user.id)
 
         result = {
             **report,
@@ -417,7 +418,7 @@ def get_manager_reports_direct_weekly_opens(registration: str):
                 "fullName": manager["fullName"],
             },
             "recipient": {
-                "userId": str(core_user.id),
+                "userId": core_user_id,
                 "email": email,
             },
         }
