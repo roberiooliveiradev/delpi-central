@@ -9,6 +9,9 @@ from app.domain.totvs.protheus_product_types import (
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.supplies_repositories.otd_physical_receipts import (
+    resolve_physical_source,
+)
 
 _DETAIL_VIEW = "VW_PONTUALIDADE_FORNECEDORES"
 
@@ -27,6 +30,17 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
         )
         params = (PRODUCT_TYPE_RAW_MATERIAL, SUPPLIES_OTD_PRODUCT_CODE_PREFIX)
         return clause, params
+
+    def _source(self, request: GetOTDRequest) -> tuple[str, str, tuple, bool]:
+        physical = resolve_physical_source(
+            self,
+            branch=request.branch,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+        if physical is None:
+            return "", f"{_DETAIL_VIEW} WITH (NOLOCK)", (), False
+        return "WITH " + physical.cte, "OTD_EFFECTIVE", physical.params, True
 
     def _build_details_filters(self, request: GetOTDRequest) -> tuple[str, tuple]:
         qb = QueryBuilder()
@@ -48,9 +62,10 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
 
     def get_otd_summary(self, request: GetOTDRequest) -> dict:
         where_clause, params = self._build_details_filters(request)
+        source_prefix, source_table, source_params, has_physical = self._source(request)
         branch_label = request.branch or "consolidated"
 
-        sql = f"""
+        sql = f"""{source_prefix}
             SELECT
                 ? AS branch,
                 ISNULL(MIN(CONVERT(VARCHAR(10), DT_DIGITACAO, 23)), '') AS start_date,
@@ -67,11 +82,11 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                         2
                     )
                 END AS otd_percentage
-            FROM {_DETAIL_VIEW} WITH (NOLOCK)
+            FROM {source_table}
             WHERE {where_clause}
         """
 
-        final_params = (branch_label,) + params
+        final_params = source_params + (branch_label,) + params
 
         with self as repo:
             result = repo.execute_one(sql, final_params)
@@ -88,8 +103,9 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
 
     def get_otd_monthly_breakdown(self, request: GetOTDRequest) -> list[dict]:
         where_clause, params = self._build_details_filters(request)
+        source_prefix, source_table, source_params, has_physical = self._source(request)
 
-        sql = f"""
+        sql = f"""{source_prefix}
             SELECT
                 FILIAL AS branch,
                 YEAR(DT_DIGITACAO) AS year,
@@ -108,7 +124,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                     ) / NULLIF(COUNT(*), 0),
                     2
                 ) AS otd_percentage
-            FROM {_DETAIL_VIEW} WITH (NOLOCK)
+            FROM {source_table}
             WHERE {where_clause}
             GROUP BY
                 FILIAL,
@@ -118,13 +134,14 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
         """
 
         with self as repo:
-            return repo.execute_query(sql, params) or []
+            return repo.execute_query(sql, source_params + params) or []
 
     def get_top_late_suppliers(self, request: GetOTDRequest) -> list[dict]:
         where_clause, params = self._build_details_filters(request)
+        source_prefix, source_table, source_params, has_physical = self._source(request)
         limit = max(1, int(getattr(request, "top_limit", 5) or 5))
 
-        sql = f"""
+        sql = f"""{source_prefix}
             SELECT TOP {limit}
                 FORNECEDOR AS supplier_code,
                 LOJA AS supplier_store,
@@ -139,7 +156,7 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                     ) / NULLIF(COUNT(*), 0),
                     2
                 ) AS otd_percentage
-            FROM {_DETAIL_VIEW} WITH (NOLOCK)
+            FROM {source_table}
             WHERE {where_clause}
             GROUP BY FORNECEDOR, LOJA
             HAVING SUM(CASE WHEN DIAS < 0 THEN 1 ELSE 0 END) > 0
@@ -147,13 +164,16 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
         """
 
         with self as repo:
-            return repo.execute_query(sql, params) or []
+            return repo.execute_query(sql, source_params + params) or []
 
     def get_late_deliveries(self, request: GetOTDRequest) -> list[dict]:
         where_clause, params = self._build_details_filters(request)
+        source_prefix, source_table, source_params, has_physical = self._source(request)
         limit = max(1, int(getattr(request, "details_limit", 20) or 20))
+        original_entry = "DT_DIGITACAO_ERP" if has_physical else "DT_DIGITACAO"
+        receipt_origin = "RECEIPT_SOURCE" if has_physical else "'erp_digitacao'"
 
-        sql = f"""
+        sql = f"""{source_prefix}
             SELECT TOP {limit}
                 FILIAL AS branch,
                 FORNECEDOR AS supplier_code,
@@ -168,14 +188,16 @@ class OtdQueryRepository(BaseRepository, OtdQueryRepositoryPort):
                 QUANTIDADE AS quantity,
                 CONVERT(VARCHAR(10), DT_EMISSAO_PC, 23) AS purchase_order_issue_date,
                 CONVERT(VARCHAR(10), DT_ENTREGA, 23) AS expected_delivery_date,
-                CONVERT(VARCHAR(10), DT_DIGITACAO, 23) AS receipt_entry_date,
+                CONVERT(VARCHAR(10), {original_entry}, 23) AS receipt_entry_date,
+                CONVERT(VARCHAR(10), DT_DIGITACAO, 23) AS receipt_effective_date,
+                {receipt_origin} AS receipt_source,
                 CONVERT(VARCHAR(10), DT_EMISSAO_NF, 23) AS invoice_issue_date,
                 DIAS AS days_diff
-            FROM {_DETAIL_VIEW} WITH (NOLOCK)
+            FROM {source_table}
             WHERE {where_clause}
               AND DIAS < 0
             ORDER BY DT_ENTREGA DESC, DIAS ASC, FORNECEDOR, NUMERO_PEDIDO, ITEM_PEDIDO
         """
 
         with self as repo:
-            return repo.execute_query(sql, params) or []
+            return repo.execute_query(sql, source_params + params) or []
