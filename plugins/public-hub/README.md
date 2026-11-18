@@ -200,7 +200,7 @@ Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`,
 |---|---|---|
 | Formulário | `/p/commercial/form/{token}` | `GET/POST /apps/commercial-api/public/satisfaction-surveys/{token}[/response]` |
 
-`src/apps/commercial/` (`api.ts`, `surveyForm.ts`, `FormPage.tsx`, `SurveyStateView.tsx`, `pages.tsx`). Questionário oficial vindo da API (15 perguntas, 3 etapas × 5, revisão e confirmação); respostas só em memória (sem storage/cookie/URL), `beforeunload` apenas com respostas não enviadas, POST somente em «Confirmar e enviar». Fetch sem bearer/cookies/referrer; token nunca logado. Testes: `surveyForm.test.ts`/`api.test.ts` (node:test) e `FormPage.test.tsx` (vitest).
+`src/apps/commercial/` (`api.ts`, `surveyForm.ts`, `satisfaction-survey/`, `pages.tsx`). Fluxo completo do `GuidedQuestionnaire` do kit (abertura → 3 etapas × 5 → revisão → envio → resultado) alimentado pelo questionário oficial da API (15 perguntas); respostas só em memória (sem storage/cookie/URL), `beforeunload` apenas com respostas não enviadas, POST somente em «Enviar respostas». Página em `chrome: "bare"` (sem decoração do shell: o kit controla tema e layout). Fetch sem bearer/cookies/referrer; token nunca logado. Testes: `surveyForm.test.ts`/`api.test.ts` (node:test) e `satisfaction-survey/*.test.tsx` (vitest, incluindo integração com o kit real).
 
 ### Código de Ética (`codigo-etica`)
 

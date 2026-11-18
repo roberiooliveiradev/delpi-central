@@ -16,3 +16,30 @@ export function LucideIconByName() {
 export function ScreenLoading({ children }: { children?: ReactNode }) {
   return children ?? null;
 }
+
+// Exports do kit de formulário usados pela página da Pesquisa (P6).
+// No-ops como os demais — o teste de integração usa o kit real por
+// caminho de código-fonte (§14.10.4).
+export function GuidedQuestionnaire() {
+  return null;
+}
+
+export function QuestionnaireThemeScope({ children }: { children?: ReactNode }) {
+  return children ?? null;
+}
+
+export function FormPageLayout({ children }: { children?: ReactNode }) {
+  return children ?? null;
+}
+
+export function FormResultPanel() {
+  return null;
+}
+
+export function FormLogo() {
+  return null;
+}
+
+export function FormButton() {
+  return null;
+}

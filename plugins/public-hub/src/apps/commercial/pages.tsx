@@ -1,29 +1,16 @@
 import type { AppPublicPages } from "../../shell/types";
-import { fetchPublicSurvey, type PublicSurveyState } from "./api.ts";
-import { SurveyFormView } from "./FormPage";
-import { SurveyStateView } from "./SurveyStateView";
-
-function renderState(state: PublicSurveyState) {
-  if (state.status === "open") return <SurveyFormView survey={state} />;
-  if (state.status === "invalid" || state.status === "temporary_error") {
-    return <SurveyStateView status={state.status} />;
-  }
-  return (
-    <SurveyStateView
-      status={state.status}
-      campaignName={state.campaignName}
-      startsAt={state.startsAt}
-      endsAt={state.endsAt}
-    />
-  );
-}
+import { fetchPublicSurvey } from "./api.ts";
+import { SatisfactionSurveyPage } from "./satisfaction-survey/SatisfactionSurveyPage.tsx";
+import { toPublicSurveyState } from "./satisfaction-survey/surveyResults.ts";
 
 export const commercialPages: AppPublicPages = {
   form: {
-    documentTitle: "Pesquisa de Satisfação — DELPI",
-    chrome: "fullpage",
-    // O estado inválido/indisponível é apresentado pela própria view (não o 404 genérico).
+    documentTitle: "Pesquisa de Satisfação de Clientes",
+    // Sem decoração do shell: o formulário do kit controla tema e layout
+    // (chrome "bare" também garante o contrato do rodapé fixo — §14.4e).
+    chrome: "bare",
+    // O estado inválido/indisponível é apresentado pela própria página (não o 404 genérico).
     load: ({ token }) => fetchPublicSurvey(token),
-    render: (data) => renderState(data as PublicSurveyState),
+    render: (data) => <SatisfactionSurveyPage state={toPublicSurveyState(data)} />,
   },
 };

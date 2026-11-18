@@ -6,7 +6,11 @@ import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
 import { ThemeToggle } from "./ThemeToggle";
 import { useKioskVisualViewportPin } from "./useKioskVisualViewportPin";
-import type { PublicPageContext, PublicPageDefinition } from "./types";
+import type {
+  PublicChrome,
+  PublicPageContext,
+  PublicPageDefinition,
+} from "./types";
 
 type State =
   | { status: "loading" }
@@ -95,7 +99,7 @@ export function PublicShell() {
 
 type StageProps = {
   children: ReactNode;
-  chrome?: "default" | "kiosk" | "fullpage";
+  chrome?: PublicChrome;
 };
 
 function Stage({ children, chrome = "default" }: StageProps) {
@@ -127,6 +131,14 @@ function Stage({ children, chrome = "default" }: StageProps) {
         {children}
       </div>
     );
+  }
+
+  // "bare": nenhuma decoração do shell — a página dona (ex.: formulário do
+  // kit) controla tema e layout. Manter a cadeia de ancestrais limpa é o
+  // contrato do rodapé fixo: nenhum wrapper com overflow entre o conteúdo
+  // e o scrollport do documento.
+  if (chrome === "bare") {
+    return <>{children}</>;
   }
 
   if (chrome === "fullpage") {
