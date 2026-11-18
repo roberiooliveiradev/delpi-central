@@ -52,6 +52,7 @@ Em tarefas que envolvam ADVPL/TLPP, rotinas MATA/FINA, RESTALL, RPO, cadastro SB
 - **Espelho de referência:** `docs/13-fontes-totvs-protheus/` neste repositório; comparar blob SHA com o upstream. Bibliotecas e contratos: `api-delpi/docs/api/padroes-totvs/` e `api-delpi/docs/integrations/`.
 - **Runtime:** nem o GitHub nem o RESTALL provam versão compilada no RPO; exigir evidência de ambiente/compilação ou marcar `INCONCLUSIVE`/`TO_INVENTORY`. Acesso ao repositório não autoriza compilação, RPO write, deploy ou ERP write.
 - **Rotinas:** MATA010/ExecAuto é um contrato específico; MATA061/SA5 tem modelo MVC, não presumir ExecAuto. Antes de nova API, inventariar equivalentes, permissões, reuso e read-back integral; respeitar PREPARE/ACT, owner ERP e Core AuthZ.
+- **Separação SQL × ADVPL:** rotas READ SQL/repositories da API DELPI e SX3 são apoio de schema/auditoria, nunca implementação nem contrato funcional para arquivos PRW/TLPP. Todo handler ADVPL deve usar rotina padrão TOTVS ou customização comprovada no repositório ERP @SHA; proibir copiar SELECT/joins/filtros da API, preencher payload por SQL ou contornar validações via DML/RecLock. READ ADVPL novo também exige mecanismo oficial próprio; sem evidência, `TO_INVENTORY`.
 
 
 ## Workspace ADVPL — decisão de escopo do PO
