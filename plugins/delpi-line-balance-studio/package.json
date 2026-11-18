@@ -7,15 +7,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/studio.d.ts",
+      "default": "./dist/ui/studio.js"
     }
   },
-  "files": ["dist"],
-  "engines": { "node": ">=22" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test tests/*.test.mjs"
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.ui.json && node scripts/prepare-preview.mjs --assets",
+    "build:preview": "npm run build && node scripts/prepare-preview.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:preview": "node tests/preview-smoke.mjs"
   },
   "devDependencies": {
+    "playwright": "1.62.1",
     "typescript": "5.9.3"
   }
 }

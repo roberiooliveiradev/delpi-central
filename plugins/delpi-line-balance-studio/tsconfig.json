@@ -12,5 +12,6 @@
     "noEmitOnError": true,
     "lib": ["ES2022"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/ui"]
 }

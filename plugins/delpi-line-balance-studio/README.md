@@ -16,3 +16,17 @@ npm test
 ```
 
 A suite compila TypeScript e verifica a API pública de `@delpi/line-balance-studio`. O código distribuível e as declarações ficam em `dist/`.
+
+## Interface e demonstração
+
+O subpath `@delpi/line-balance-studio/ui` exporta o elemento reutilizável. Consulte o [contrato da interface](docs/preview.md) para integrá-lo a outro host. A demonstração usa somente dados fictícios e mantém alterações em memória.
+
+Para validar a demo sem containers:
+
+```sh
+npm ci
+npm run build:preview
+python -m http.server 8080 --directory preview-dist
+```
+
+Abra `http://localhost:8080`. No GitHub, selecione **GitHub Actions** em **Settings → Pages → Source**. O workflow **Line Balance Studio · GitHub Pages** publica somente `preview-dist` e pode ser disparado novamente a partir da `main`.

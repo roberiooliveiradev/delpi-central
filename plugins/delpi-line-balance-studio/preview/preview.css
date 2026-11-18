@@ -1,0 +1,7 @@
+.lbs-demo-document { color-scheme: light dark; font: 13px/1.4 system-ui, sans-serif; }
+.lbs-demo-page { margin: 0; background: light-dark(#f4f7f6, #131d1b); }
+.demo-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 6px max(12px, calc((100% - 1220px) / 2)); background: #d9eee5; color: #20463a; }
+.demo-bar div { display: flex; gap: 5px; }
+.demo-bar button { background: transparent; font: inherit; color: #20463a; border: 1px solid #a7c7ba; border-radius: 5px; padding: 4px 7px; cursor: pointer; }
+.demo-bar button:hover { background: #bcded0; }
+.demo-bar button:focus-visible { outline: 2px solid #20463a; }
