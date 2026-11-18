@@ -314,7 +314,13 @@ export function HrIdentityReviewTab() {
               aria-label="Buscar conta por nome ou e-mail"
               value={accountQuery}
               disabled={saving}
-              onChange={(event) => setAccountQuery(event.target.value)}
+              onChange={(event) => {
+                searchSequence.current += 1;
+                setAccountQuery(event.target.value);
+                setSelectedAccount(null);
+                setAccounts([]);
+                setSearching(false);
+              }}
             />
             <Button
               type="submit"
