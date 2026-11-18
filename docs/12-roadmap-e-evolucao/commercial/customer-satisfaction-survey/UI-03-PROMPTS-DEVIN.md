@@ -16,7 +16,7 @@
 | **P6** | 7 | Página pública nova da Pesquisa no `public-hub` + correção do logo 403 (D3) | **Somente HML** | **ACEITO COM RESÍDUOS** (código restaurado pelo P6-R; ver §16) — aguarda o H8 do solicitante |
 | **P6-R** | 7 | Restauração exata do P6 no `main` + redeploy HML | **Somente HML** | **ACEITO** — commit `c51e18890e`, HML em 18/11/2026 (ver §16) |
 | **P6.1** | 7 | Correções visuais da conferência em HML (R21–R24) | PluginUI → PROD; `public-hub` → **somente HML** | **ACEITO** — commit `570119b9d5`, 18/11/2026 (ver §19) |
-| **P6.2** | 7 | Troca de tema só de cores, sem mudar posição/espaçamento, com transição suave (R25–R26) | PluginUI → PROD e HML | **PRONTO PARA EXECUÇÃO** (§21) |
+| **P6.2** | 7 | Troca de tema só de cores, sem mudar posição/espaçamento, com transição suave (R25–R26) | PluginUI → PROD e HML | **ACEITO** — commit `c7db8c81a0`, 18/11/2026 (ver §22) |
 | P7 | 8 | Correções da homologação | Conforme a camada alterada | A gerar |
 
 ## 1. Protocolo comum (vale para todo pacote)
@@ -845,3 +845,11 @@ Deploy: `plugin-ui` em **PROD e HML** (kit genérico); `public-hub` **somente em
 | I-e | Testes, build, `verify-host-exports`, auditorias, verificador; deploy `plugin-ui` PROD e HML; reconferir `main` após o push | Saídas |
 
 A página pública em HML recebe a correção sem novo deploy do `public-hub` (o kit é carregado em tempo de execução).
+
+---
+
+## 22. Revisão do P6.2 e fechamento da UI-03 em HML (18/11/2026)
+
+**Veredito do coordenador:** `ACCEPT`. Conferido: commit `c7db8c81a0` em `main`, os 5 arquivos do §21.2; o bloco `[data-color-scheme="dark"]` contém só tokens de cor e `color-scheme`; selo do logo com a mesma caixa nos dois temas; transição de cores aplicada só sob `data-theme-transition` (ligado durante a troca), com regra própria para a barra de progresso e desligada em `prefers-reduced-motion`. Medições do executor em HML: caixas idênticas nos dois temas em 375 e 1280 px.
+
+**Estado da UI-03:** formulário público **homologado em HML** (P1–P6.2, H1–H9). Resíduo cosmético: comentário de `FormLogo.tsx` ainda diz “selo no escuro” — corrigir no próximo pacote que tocar o kit. **Produção continua bloqueada** até o gate do README (solução completa, inclusive páginas internas e resultados, aceite e plano de implantação).
