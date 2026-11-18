@@ -132,10 +132,12 @@ Secrets reais ficam apenas no ambiente, nunca no repositório.
 em `docker-compose.hml.yml`, Portal RH permanece explicitamente
 **desabilitado**, para impedir conexão acidental com produção.
 
-**Antes do deploy, após merge/autorização:** backup e migração Core
-(`flask db upgrade`) de forma controlada; não aplicar migrations
-manualmente em bancos de produção. Validar acesso de rede/firewall,
-secrets, testes e plano de rollback.
+**Antes do deploy, após merge/autorização:** fazer backup e conferir a
+migração Core antes de iniciar o container. O `core-api/docker-entrypoint.sh`
+já executa `flask db upgrade` automaticamente na inicialização; portanto,
+o deploy da nova imagem **poderá aplicar a migration de produção**.
+Não disparar um segundo upgrade manual sem necessidade. Validar acesso
+de rede/firewall, secrets, testes e plano de rollback.
 
 Smoke pós-deploy (usar matrícula de teste autorizada):
 
