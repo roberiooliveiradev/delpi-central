@@ -729,3 +729,14 @@ Amostra derivada da resposta fornecida pelo operador, nao prova de consulta dire
 - `atlas_hml_b_local_signed_pipeline.py`: cadeia claim→intent→sign→seal→publish→verify→continuity integrada em fixtures.
 - `atlas_hml_b_pilot_readiness.py` + blueprints `.review` do signer; matriz do que é CI vs host vs autorização.
 - CI ampliado; DELPI Verifier uma vez ao fim. Quatro MCP READ, PREPARE/ACT OFF. **Progresso 58%. Sem pull/deploy.**
+
+
+## Etapa 63 | 17/11/2026 | Ponte não-root e continuidade segura do assinador para o piloto HML
+
+**Referências:** [issue #232](https://github.com/roberiooliveiradev/delpi-central/issues/232) e [runbook 54](./54-atlas-hml-b-etapa63-ponte-nonroot-retomada.md). **SOURCE-ONLY, NÃO OPERACIONAL; progresso de referência 58%.**
+
+- O produtor one-shot root continua com Docker compartilhado e gera unicamente o snapshot allowlisted HML. Nova **ponte não-root** recebe bytes de claim por leitura FD-check, revalida escopo/freshness, compõe intenção canônica, autentica o UID do signer via SO_PEERCRED no AF_UNIX e verifica a assinatura retornada antes de selar envelope. Nunca recebe chave privada, token GLPI ou acesso Docker.
+- Assinador local aceita **somente UID cliente não-root**. Persistência opcional (para arquitetura B candidata) via `HMLContinuityStore` isolado do consumidor: reserva de geração monotônica com flock/rename/fsync **antes** de retornar a assinatura; novo processo retoma exatamente de `last_generation+1`; checkpoint ausente/corrupto bloqueia a inicialização. Bootstrap geração 1 explicitamente **só em fixture descartável**; bootstrap operacional exige rito separado e aprovação.
+- Blueprints de bridge `.review` não instaláveis; signer socket agora prevê grupo dedicado `atlas-hml-bridge`, sem conceder ao bridge permissões sobre a chave privada `atlas-hml-signer`. Revisor lexical fail-closed e testes de drift ampliados.
+- Testes E2E de processo/socket/UID real do runner descartável, reboot simulado, replay, concorrência, falha de persistência, alvo PROD, claim stale e policy de peer; workflow Linux/Docker estendido. **CI não atesta systemd/UID real de `srv-api`, root pode comprometer chave e dados do mesmo host.**
+- Pendem SEC-01 ou exceção formal compatível com política, SEC-02..10 no host, bootstrap comprovado, autorização de key-generation e GLPI, diretórios/contas/unidades reais, rollback e janela operacional específica. Quatro MCP READ, PREPARE/ACT OFF, status blocked. **Não fazer pull/deploy, não instalar, não alterar Docker/host ou criar chave real.**

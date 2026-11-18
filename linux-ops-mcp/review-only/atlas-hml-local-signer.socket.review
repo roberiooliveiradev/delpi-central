@@ -8,6 +8,6 @@ RefuseManualStart=yes
 [Socket]
 ListenStream=/run/atlas-hml-signer/sign.sock
 SocketUser=root
-SocketGroup=atlas-hml-signer
+SocketGroup=atlas-hml-bridge
 SocketMode=0660
 Accept=no

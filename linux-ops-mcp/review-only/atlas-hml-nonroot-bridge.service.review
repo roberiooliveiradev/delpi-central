@@ -1,0 +1,34 @@
+# ATLAS HML NONROOT BRIDGE: REVIEW ONLY; NEVER INSTALL OR ENABLE.
+# Root producer publishes a minimal claim; bridge reads by FD and talks UDS.
+# Isolated user is not in docker group and does NOT hold Ed25519 private key.
+# Signer socket group atlas-hml-bridge is a proposed future dedicated identity.
+[Unit]
+Description=ATLAS HML NONROOT BRIDGE REVIEW ONLY
+ConditionPathExists=/run/atlas-hml-signer/REVIEW-ONLY-NEVER-CREATE
+RefuseManualStart=yes
+
+[Service]
+Type=oneshot
+User=atlas-hml-bridge
+Group=atlas-hml-bridge
+SupplementaryGroups=atlas-hml
+ExecStart=/usr/bin/false
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+InaccessiblePaths=/run/docker.sock /var/run/docker.sock
+ReadOnlyPaths=/run/atlas-hml-readonly
+UMask=0077
