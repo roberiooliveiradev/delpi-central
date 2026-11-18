@@ -242,7 +242,15 @@ def main(argv: list[str] | None = None) -> int:
             "totalManagersFound": len(plan),
             "counts": counts,
             "changesApplied": False,
-            "deliveryEnabled": False,
+            "deliveryEnabled": bool(settings.REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED),
+            "requiresAttention": [
+                {
+                    "registration": item["registration"],
+                    "reason": item["operation"],
+                }
+                for item in plan
+                if item["operation"] not in ("prepare_disabled", "already_exists")
+            ],
             "caution": "Cobertura limitada às hierarquias raízes informadas.",
         }
         if args.apply:
