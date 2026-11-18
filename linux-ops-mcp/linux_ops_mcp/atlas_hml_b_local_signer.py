@@ -29,6 +29,12 @@ from .atlas_hml_b_key_lifecycle import (
     HMLKeyLifecycleError,
     load_private_key_file,
 )
+from .atlas_hml_b_continuity_store import (
+    HMLContinuityRecord,
+    HMLContinuityStore,
+    HMLContinuityStoreError,
+)
+from .atlas_hml_snapshot_candidate import review_untrusted_snapshot, SnapshotContractError
 from .atlas_hml_b_snapshot_trust import key_id_for_public_key
 
 _MAX_REQUEST = 8192
@@ -72,6 +78,8 @@ class HMLLocalSigner:
         private_key: bytes,
         public_key: bytes,
         allowed_peer_uids: frozenset[int],
+        checkpoint_store: HMLContinuityStore | None = None,
+        disposable_genesis: bool = False,
     ) -> None:
         if type(private_key) is not bytes or len(private_key) != 32:
             raise HMLLocalSignerError("HML_LOCAL_SIGNER_KEY_INVALID")
@@ -81,6 +89,12 @@ class HMLLocalSigner:
             raise HMLLocalSignerError("HML_LOCAL_SIGNER_PEER_POLICY_INVALID")
         if any(type(uid) is not int or uid <= 0 for uid in allowed_peer_uids):
             raise HMLLocalSignerError("HML_LOCAL_SIGNER_PEER_POLICY_INVALID")
+        if (
+            (checkpoint_store is not None and type(checkpoint_store) is not HMLContinuityStore)
+            or type(disposable_genesis) is not bool
+            or (disposable_genesis and checkpoint_store is None)
+        ):
+            raise HMLLocalSignerError("HML_LOCAL_SIGNER_CHECKPOINT_INPUT_INVALID")
         key_id = key_id_for_public_key(public_key)
         # Verify keypair consistency without exposing private material.
         derived = Ed25519PrivateKey.from_private_bytes(private_key).public_key()
@@ -95,12 +109,29 @@ class HMLLocalSigner:
         self._fault: str | None = None
         self._seen_digests: list[bytes] = []
         self._last_generation: int | None = None
+        self._checkpoint_store = checkpoint_store
+        if checkpoint_store is not None:
+            try:
+                last = checkpoint_store.load()
+            except HMLContinuityStoreError:
+                raise HMLLocalSignerError("HML_LOCAL_SIGNER_CHECKPOINT_UNTRUSTED") from None
+            if last is None:
+                # First boot is never indistinguishable from a lost/rolled-back
+                # file in an operational context. Only disposable fixtures may
+                # explicitly start at generation 1; operational genesis requires
+                # a separate, authenticated owner bootstrap and change record.
+                if not disposable_genesis:
+                    raise HMLLocalSignerError("HML_LOCAL_SIGNER_BOOTSTRAP_REVIEW_REQUIRED")
+            else:
+                self._last_generation = last.generation
 
     @classmethod
     def from_key_file(
         cls, path: Path, *, public_key: bytes,
         owner_uid: int, expected_gid: int,
         allowed_peer_uids: frozenset[int],
+        checkpoint_store: HMLContinuityStore | None = None,
+        disposable_genesis: bool = False,
     ) -> "HMLLocalSigner":
         try:
             private = load_private_key_file(
@@ -111,6 +142,8 @@ class HMLLocalSigner:
         return cls(
             private_key=private, public_key=public_key,
             allowed_peer_uids=allowed_peer_uids,
+            checkpoint_store=checkpoint_store,
+            disposable_genesis=disposable_genesis,
         )
 
     @property
@@ -175,6 +208,22 @@ class HMLLocalSigner:
             signature = Ed25519PrivateKey.from_private_bytes(self._private).sign(
                 reviewed.signing_bytes,
             )
+            if self._checkpoint_store is not None:
+                # Reserve the issuance in an atomic + fsynced, FD-checked state
+                # BEFORE disclosing the signature to any peer. A crash after
+                # this reservation creates a gap that requires manual
+                # reconciliation, never a silent counter reset.
+                claim = review_untrusted_snapshot(reviewed.payload, now=now)
+                self._checkpoint_store.commit(HMLContinuityRecord(
+                    generation=reviewed.generation,
+                    digest=hashlib.sha256(reviewed.signing_bytes).hexdigest(),
+                    observed_at=reviewed.produced_at,
+                    container_id=claim.container_id,
+                    image_id=claim.image_id,
+                    updated_at=now,
+                ))
+        except (HMLContinuityStoreError, SnapshotContractError):
+            self._halt("HML_LOCAL_SIGNER_CHECKPOINT_UNTRUSTED")
         except (ValueError, TypeError):
             self._halt("HML_LOCAL_SIGNER_CRYPTO_FAILED")
         finally:

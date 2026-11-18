@@ -21,7 +21,7 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
     report = review.review_blueprint_sources(files)
     assert report.status == "blocked"
     assert report.scope == "hml/public-hub"
-    assert report.files_reviewed == 7
+    assert report.files_reviewed == 8
     for name, value in asdict(report).items():
         if name.endswith("_attested") or name.endswith("_approved") or name in (
             "systemd_units_installed", "prepare_eligible", "can_execute",
@@ -45,6 +45,14 @@ def test_checked_in_supervisor_blueprint_is_only_a_blocked_draft(files):
      "User=atlas-hml", "User=root"),
     ("atlas-hml-snapshot-presenter.service.review",
      "Group=atlas-hml", "Group=docker"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "User=atlas-hml-bridge", "User=root"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "SupplementaryGroups=atlas-hml", "SupplementaryGroups=atlas-hml docker"),
+    ("atlas-hml-nonroot-bridge.service.review",
+     "ExecStart=/usr/bin/false", "ExecStart=/usr/bin/python3 /opt/atlas/bridge.py"),
+    ("atlas-hml-local-signer.socket.review",
+     "SocketGroup=atlas-hml-bridge", "SocketGroup=docker"),
     ("atlas-hml-snapshot-presenter.service.review",
      "SupplementaryGroups=", "SupplementaryGroups=docker"),
     ("atlas-hml-snapshot-presenter.service.review",

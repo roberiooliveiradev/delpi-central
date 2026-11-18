@@ -90,6 +90,20 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
             "ReadOnlyPaths": "/run/atlas-hml-signer",
         },
     },
+    "atlas-hml-nonroot-bridge.service.review": {
+        "Unit": {
+            **_SIGNER_UNIT,
+            "Description": "ATLAS HML NONROOT BRIDGE REVIEW ONLY",
+        },
+        "Service": {
+            **_HARDENED, "Type": "oneshot", "User": "atlas-hml-bridge",
+            "Group": "atlas-hml-bridge",
+            "SupplementaryGroups": "atlas-hml",
+            "ExecStart": "/usr/bin/false",
+            "InaccessiblePaths": "/run/docker.sock /var/run/docker.sock",
+            "ReadOnlyPaths": "/run/atlas-hml-readonly",
+        },
+    },
     "atlas-hml-local-signer.socket.review": {
         "Unit": {
             **_SIGNER_UNIT,
@@ -97,7 +111,7 @@ _EXPECTED: dict[str, dict[str, dict[str, str]]] = {
         },
         "Socket": {
             "ListenStream": "/run/atlas-hml-signer/sign.sock",
-            "SocketUser": "root", "SocketGroup": "atlas-hml-signer",
+            "SocketUser": "root", "SocketGroup": "atlas-hml-bridge",
             "SocketMode": "0660", "Accept": "no",
         },
     },
@@ -132,7 +146,7 @@ class HMLSupervisorBlueprintError(Exception):
 class HMLSupervisorBlueprintReview:
     status: str = "blocked"
     scope: str = "hml/public-hub"
-    files_reviewed: int = 7
+    files_reviewed: int = 8
     systemd_units_installed: bool = False
     docker_privilege_attested: bool = False
     presenter_isolation_attested: bool = False
@@ -187,7 +201,7 @@ def review_blueprint_sources(sources: dict[str, str]) -> HMLSupervisorBlueprintR
         # Intentionally different extensions and the false ExecStart/condition
         # must remain; review templates must never be runtime-ready.
         expected_sentinel = (
-            _SIGNER_SENTINEL if name.startswith("atlas-hml-local-signer.")
+            _SIGNER_SENTINEL if name.startswith(("atlas-hml-local-signer.", "atlas-hml-nonroot-bridge."))
             else _SENTINEL
         )
         if (
