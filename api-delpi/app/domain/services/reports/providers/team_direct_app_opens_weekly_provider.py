@@ -175,6 +175,7 @@ class DirectTeamUsageWeeklyProvider:
             apps = item.get("apps")
             if not isinstance(apps, list):
                 raise ValueError("Lista de aplicativos inválida.")
+            app_details = []
             if status in {"unmapped", "consent_not_granted"}:
                 if recorded is not None or apps:
                     raise ValueError("Dados de uso não autorizados em membro sem cobertura.")
@@ -201,6 +202,34 @@ class DirectTeamUsageWeeklyProvider:
                         raise ValueError("Aberturas inválidas.")
                     summed += count
                     checked_apps.append(f"{app_name}: {count}")
+                    sessions = app.get("recordedSessions", 0)
+                    duration = app.get("totalDurationSeconds", 0)
+                    mean = app.get("avgSessionSeconds")
+                    if (
+                        isinstance(sessions, bool)
+                        or not isinstance(sessions, int)
+                        or sessions < 0
+                        or isinstance(duration, bool)
+                        or not isinstance(duration, int)
+                        or duration < 0
+                    ):
+                        raise ValueError("Duração registrada inválida.")
+                    if sessions == 0:
+                        if duration != 0 or mean is not None:
+                            raise ValueError("Média sem sessões registradas.")
+                    elif (
+                        duration < sessions
+                        or isinstance(mean, bool)
+                        or not isinstance(mean, int)
+                        or mean != round(duration / sessions)
+                    ):
+                        raise ValueError("Média de sessão inconsistente.")
+                    app_details.append({
+                        "name": app_name.strip(),
+                        "recordedOpens": count,
+                        "recordedSessions": sessions,
+                        "avgSessionSeconds": mean,
+                    })
                 if summed != total:
                     raise ValueError("Total de aberturas divergente.")
                 apps_description = "; ".join(checked_apps) if total else "Sem abertura registrada"
@@ -210,6 +239,7 @@ class DirectTeamUsageWeeklyProvider:
                 "collaborator": name.strip(),
                 "recordedOpens": total,
                 "applications": apps_description,
+                "appDetails": app_details,
             })
 
         monday = data.get("weekStart")
