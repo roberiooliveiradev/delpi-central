@@ -237,3 +237,16 @@ def test_provider_rejects_forged_average():
     provider, _ = _provider(payload)
     with pytest.raises(ValueError, match="inconsistente"):
         provider.collect({"managerRegistration": "20001"})
+
+
+def test_provider_supports_other_manager_registrations_no_fixed_20001():
+    import copy
+
+    payload = copy.deepcopy(REPORT)
+    payload["managerRegistration"] = "30005"
+    provider, transport = _provider(payload)
+    dataset = provider.collect({"managerRegistration": "30005"})
+    assert dataset.meta["managerRegistration"] == "30005"
+    assert transport.calls[0][0].endswith(
+        "/managers/30005/reports/direct-weekly-opens"
+    )
