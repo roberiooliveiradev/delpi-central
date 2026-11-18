@@ -170,7 +170,7 @@ def test_followup_edit_does_not_generate_notification():
     outbox = Outbox()
     client, _glpi = setup(outbox=outbox)
     response = client.put(
-        "/tickets/7/followups/8",
+        "/tickets/7/followups/1",
         json={"content": "<p>Corrigido</p>"},
         headers={
             **auth_headers(), "x-email": "ana.silva@delpi.com.br",

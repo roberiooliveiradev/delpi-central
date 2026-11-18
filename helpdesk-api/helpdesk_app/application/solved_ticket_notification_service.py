@@ -87,7 +87,7 @@ class CoreHelpdeskNotificationGateway:
         self.timeout = timeout
         self._http_post = http_post or httpx.post
 
-    def send(self, notice: SolvedTicketNotice | "FollowupTicketNotice") -> DeliveryResult:
+    def send(self, notice: SolvedTicketNotice | FollowupTicketNotice) -> DeliveryResult:
         if not self.service_token:
             logger.warning("helpdesk_solved_notifications_missing_core_token")
             return "retry"
