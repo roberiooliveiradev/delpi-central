@@ -221,7 +221,7 @@ export function HrIdentityReviewTab() {
         </Button>
       </div>
 
-      {error ? <Alert tone="danger">{error}</Alert> : null}
+      {!activeMember && error ? <Alert tone="danger">{error}</Alert> : null}
       {notice ? <Alert tone="success">{notice}</Alert> : null}
       {loading ? <Spinner label="Carregando colaboradores…" /> : null}
 
@@ -335,6 +335,7 @@ export function HrIdentityReviewTab() {
               </div>
             }
           >
+            {error ? <Alert tone="danger">{error}</Alert> : null}
             {confirmOpen ? (
               <div className="hr-identity-review__modal-content">
                 <p className="hr-identity-review__helper">
