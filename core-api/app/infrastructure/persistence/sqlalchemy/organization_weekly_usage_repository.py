@@ -1,6 +1,6 @@
-"""GLPI #887: batched read-only SQL for weekly, consented app openings.
+"""GLPI #887: batched read-only SQL for weekly, consented app activity.
 
-Only UI app-open events, not backend-only requests, routes or durations.
+Only UI app openings and app-session elapsed time, not backend-only traffic.
 All queries are bounded by verified user IDs and a closed UTC interval.
 """
 
@@ -88,7 +88,6 @@ class SqlAlchemyOrganizationWeeklyUsageRepository:
             }
             for row in rows
         ]
-
 
     def app_session_durations(
         self,
