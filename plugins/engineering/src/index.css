@@ -41,6 +41,7 @@
   --en-border: rgba(255, 255, 255, 0.14);
   --en-danger: #f87171;
   --en-success: #4ade80;
+  --delpi-ui-title: var(--en-text);
 }
 
 .portal-engineering.dashboard-page {
