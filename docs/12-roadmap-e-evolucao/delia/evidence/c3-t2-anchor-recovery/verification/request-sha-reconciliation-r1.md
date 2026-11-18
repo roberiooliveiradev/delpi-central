@@ -1,0 +1,40 @@
+PEDIDO DE VERIFICAÇÃO
+task_id: COORDINATION_C3_T2_ANCHOR_RECOVERY_DELIVERED_SHA_RECONCILIATION_AND_INDEPENDENT_REVERIFY
+objetivo: Reconciliar o desvio de integridade da entrega anterior — GitHub mostrou semantic_capability_support.py em 8095ee540f SEM _presentation_scope_arg_keys enquanto main posterior o continha. Provar quando/como/em qual SHA a implementação entrou na história canônica; provar equivalência de conteúdo dos 5 arquivos; confirmar correção no HEAD; validar cenário de apresentação explicitamente exigida; reexecutar testes no SHA efetivo; rederivar scoreboard; verificar independentemente. (RQ-1..RQ-10, AC-1..AC-40 conforme brief — texto integral abaixo.)
+
+RQ-1 RECONSTRUIR A HISTÓRIA REAL: inspecionar 54fbd80cc3, 3f1d7ab46f, 51e855b627, c94bbfe11a, 30888b81c7, 7726124ebe, 8095ee540f, 9665f42e7f, HEAD — ancestralidade, parent, blob SHA por arquivo, diff real, momento de introdução/remoção/reintegração, alterações concorrentes, relação com SHA avaliado.
+RQ-2 PROVAR EQUIVALÊNCIA DE CONTEÚDO: comparar implementação avaliada com HEAD entregue por conteúdo (blob SHA + diff), nos 5 arquivos da task + config/evidence; PROVEN só para equivalência demonstrada; classificar diferenças.
+RQ-3 CONFIRMAR A CORREÇÃO EM CÓDIGO no HEAD: _PRESENTATION_SCOPE_ARG_KEYS/_presentation_scope_arg_keys/_normalize_obligation_tuple rejeição top-level sem remoção silenciosa nem relaxamento; INVALID_GOAL+presentation_scope_keys+redeclaração bounded; comprehension-v3 default efetivo com v2 preservada.
+RQ-4 VALIDAR APRESENTAÇÃO EXPLICITAMENTE EXIGIDA (teste negativo principal): A) contagem sem view→sem âncora artificial; B) "Mostre especificamente a visão summary"→exigência representada no contrato legítimo (evidence_source/descrição), não eliminada silenciosamente, evidência de outra apresentação não satisfaz indevidamente; C) filtros materiais (status=ativo, unidade 02) preservados; D) análise explicitamente exigida≠contagem isolada; E) formato final separado de filtro material.
+RQ-5 INVARIANTES DE SUFICIÊNCIA: S1..S10 — filtro divergente/owner diferente não satisfaz; apresentação exigida não ignorada; não-exigida não bloqueia; sem total autoritativo sem SATISFIED; escopo preservado satisfaz; modelo não substitui acceptor; operation=analysis sob semântica contratual; carriers params/arguments não normalizados além do contrato; sem novo falso SATISFIED.
+RQ-6 REEXECUTAR TESTES NO SHA EFETIVO: tipado/normalização/seletores/filtros/INVALID_GOAL/compreensão/handoff/ModelRetry/suficiência/multipágina/segurança + suíte delia-api + audits phase3/guardrails/docs/rules + CI relevante — no HEAD real, não reusar exit 0 anterior.
+RQ-7 PRESERVAR EVIDÊNCIA REAL QWEN: manifest/SHA/modelo/fingerprint/run ids/traces/cenários/safety em c3-t2-anchor-recovery; scoreboard rederivado dos traces (arm A 6/9, arm B 6/9, INT2_B GROUNDED/SATISFIED total 109).
+RQ-8 VERIFICAÇÃO INDEPENDENTE NO SHA CORRETO: verify.py, outro modelo, ≤3 rodadas, OCs corrigidas/contestadas, escopo isolado, SHA explícito; não usar range amplo como se commits concorrentes fossem DÉLIA; veredito anterior não transferível.
+RQ-9 RECONCILIAR DOCUMENTAÇÃO/LEDGER: timeline de commits, SHAs efetivos, blob SHAs, comparação, testes, negativo explícito, verificador, residuais; não alterar relatório histórico; addendum de reconciliação.
+RQ-10 CLASSIFICAR: A reconciliado+testado; B correção só em commit posterior (HISTORICAL_DELIVERY_DRIFT=PROVEN); C diferença semântica; D negativo falha; E verificador bloqueado.
+
+AC-1 HEAD/branch/worktrees/WIP revalidados; AC-2 autoridades/fase reancoradas; AC-3 ancestralidade reconstruída; AC-4 primeiro commit efetivo identificado; AC-5 cinco arquivos comparados integralmente; AC-6 blob SHAs/diferenças registrados; AC-7 SHAs impl/eval/verificação/entrega diferenciados; AC-8 divergência histórica esclarecida sem reescrever commits; AC-9 acceptor confirmado no HEAD; AC-10 instruções v3 confirmadas; AC-11 v2 preservada; AC-12 INVALID_GOAL preservado; AC-13 suficiência preservada; AC-14 contagem sem view sem âncora artificial; AC-15 view exigida não ignorada; AC-16 operação analítica exigida preservada; AC-17 filtros materiais preservados; AC-18 identidades/owners preservados; AC-19 sem normalização indevida de carriers; AC-20 testes no SHA efetivo; AC-21 suíte delia-api executada; AC-22 audits executados; AC-23 scoreboard rederivado; AC-24 INT2_B no total autoritativo; AC-25 sem falso SATISFIED; AC-26 sem falso COMPLETE; AC-27 sem write/bypass; AC-28 verificador executado ou bloqueio formal; AC-29 pedido com RQ/AC integrais; AC-30 escopo sem WIP concorrente atribuído; AC-31 veredito no SHA/config corretos; AC-32 CI associada; AC-33 ledger reconciliado; AC-34 relatórios históricos sem edição; AC-35 sem agent/engine/planner novo; AC-36 sem refatoração especulativa; AC-37 WIP concorrente preservado; AC-38 sem deploy; AC-39 sem promoção two-agent; AC-40 sem avanço de fase.
+
+escopo: 54fbd80cc3..HEAD
+alegacoes:
+- A1 (forense PROVEN): 3f1d7ab46f (impl, dangling) → dobrado em c94bbfe11a → presente em 30888b81c7 → REVERTIDO em 7726124ebe ("reverte WIP delia indevido", blob volta a 2c53237f93=base) → 8095ee540f pushed SEM o fix (blob 2c53237f93 nos 5 arquivos) → REINTEGRADO em 9665f42e7f (filho de 8095ee540f, +49/+84/+7 linhas, blobs byte-idênticos a 3f1d7ab46f) → HEAD 74eaa8c429 mantém blob 752b9e3e0d.
+- A2 (equivalência PROVEN byte-a-byte): semantic_capability_support.py 752b9e3e0d, pydantic_ai_investigation.py 66e8a2695c, comprehension_instructions.delpi.json 9fbb07b56d, test_int2_typed_objective_obligation_contract.py fea63daa14, test_c3_t2_final_gates_sufficiency_collection_multiturn.py 11dc53ab4f — idênticos em 3f1d7ab46f, 9665f42e7f e HEAD 74eaa8c429; divergentes em 8095ee540f (estado revertido). HISTORICAL_DELIVERY_DRIFT=PROVEN (Caso B).
+- A3 (código no HEAD): acceptor rejeita seletores top-level (linhas 2434/2947/2959); INVALID_GOAL com presentation_scope_keys nomeados (2425-2447); default_instruction_version=comprehension-v3-material-anchors com v1/v2 preservadas.
+- A4 (apresentação explícita — contrato existente): exigência vai em evidence_source (âncora de apresentação em _PRESENTATION_EVIDENCE_SOURCES, p.ex. summary) ou descrição — NÃO eliminada: acceptor só rejeita top-level required_args; suficiência avalia âncora de apresentação com congruência de entidade (test_s1_g2 SATISFIED, test_s2b fail-closed sem entidade, test_int2b_declared_view_scope_still_binding binding). Sem nova representação implementada (não exigida).
+- A5 (testes no SHA efetivo 74eaa8c429): targeted 71 PASS (47 contract + 24 multiturn); suíte completa delia-api ~445 testes EXIT=0; audits phase3/guardrails/docs/rules=0 — tudo em docker exec delpi-delia-api no container DEV autorizado.
+- A6 (scoreboard rederivado dos jsonl): arm A 6/9 (G: A,A2,B,G,G2,R5); arm B 6/9 (G: A,A2,B,F,G,G2); INT2_B GROUNDED/SATISFIED total 109 nos dois arms.
+- A7 (safety nos traces): FALSE_SATISFIED/COMPLETE/FILTER_DRIFT/CROSS_OWNER/WRITES/AUTHZ_BYPASS/UNBOUNDED_RETRY=0; F injection recusada ambos arms.
+- A8 (não-escopo): commits concorrentes (engineering E1/VAL-01, prc, public-hub P6/P6-R, studio, atlas, devin skills) são alheios à task; 9665f42e7f também removeu test_tv_inventory_product_net_balance_1615.py (colateral engineering, restaurado depois por b1f98c15c3) — não atribuído à DÉLIA.
+- A9 (não-implementado): zero alteração de código nesta task — reconciliação pura; docs-only adenda previstos.
+
+modelo_executor: SWE-2 High (Devin CLI)
+rodada: 1
+comandos_verificacao:
+- git rev-parse SHA:arquivo para os 5 arquivos em 3f1d7ab46f/8095ee540f/9665f42e7f/HEAD
+- cd delia-api && docker exec delpi-delia-api python -m pytest -q tests/
+- python3 scripts/ci/audit_architecture_phase3.py --check && audit_platform_guardrails.py --check && audit_documentation_structure.py && audit_cursor_rules.py
+artefatos:
+- docs/12-roadmap-e-evolucao/delia/evidence/c3-t2-anchor-recovery/
+- delia-api/app/application/capability_provision/semantic_capability_support.py
+- delia-api/app/infrastructure/orchestration/pydantic_ai_investigation.py
+- delia-api/config/comprehension_instructions.delpi.json

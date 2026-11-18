@@ -1,0 +1,13 @@
+TEST_SHA=216b1432ba94114f07d7f232c461eb4a1b29fed0
+.......................................................................  [100%]
+71 passed in 3.19s
+TARGETED_EXIT=0
+........................................................................ [ 99%]
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/test_comprehension_catalog_and_continuation.py::test_two_agent_comprehension_receives_catalog_vocabulary
+  /usr/local/lib/python3.12/site-packages/pydantic_graph/_utils.py:67: DeprecationWarning: There is no current event loop
+    event_loop = asyncio.get_event_loop()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+SUITE_EXIT=0

@@ -85,3 +85,62 @@ futuros se operation declarada indevidamente voltar a bloquear.
 traces/manifest.yaml declara SHAs (base/implementation/evaluated), modelo,
 flag por arm e outcomes. traces/armB-…/ e traces/armA-…/ contêm
 session.jsonl + os 9 cenários sanitizados por arm (autocontido no Git).
+
+---
+
+# ADDENDUM — DELIVERED SHA RECONCILIATION (2026-11-18)
+
+TASK: COORDINATION_C3_T2_ANCHOR_RECOVERY_DELIVERED_SHA_RECONCILIATION_AND_INDEPENDENT_REVERIFY
+
+## Linha temporal forense (commits reais, não títulos)
+
+| SHA | Blob semantic_capability_support.py | Estado do fix |
+|---|---|---|
+| 54fbd80cc3 (base) | 2c53237f93 | ausente |
+| 3f1d7ab46f (impl, dangling) | 752b9e3e0d | presente |
+| c94bbfe11a | 752b9e3e0d | 1ª entrada canônica (folded) |
+| 30888b81c7 | 752b9e3e0d | presente |
+| 7726124ebe | 2c53237f93 | REVERTIDO ("reverte WIP delia indevido") |
+| 8095ee540f (declarado final anterior) | 2c53237f93 | AUSENTE — push sem o fix |
+| 9665f42e7f (filho de 8095ee540f) | 752b9e3e0d | REINTEGRADO byte-idêntico |
+| 43e8422906 / HEAD | 752b9e3e0d | presente |
+
+Os 5 arquivos da task em HEAD = blobs de 3f1d7ab46f (byte-idênticos):
+semantic_capability_support.py 752b9e3e0d · pydantic_ai_investigation.py
+66e8a2695c · comprehension_instructions.delpi.json 9fbb07b56d ·
+test_int2_typed_objective_obligation_contract.py fea63daa14 ·
+test_c3_t2_final_gates_sufficiency_collection_multiturn.py 11dc53ab4f.
+
+**HISTORICAL_DELIVERY_DRIFT=PROVEN (Caso B):** o SHA declarado como
+entrega final (8095ee540f) legítima e verificadamente NÃO continha a
+implementação — um agente concorrente reverteu os arquivos delia em
+7726124ebe antes do push; 9665f42e7f os reintegrou byte-idênticos.
+FIRST_COMPLETE_IMPLEMENTATION_SHA na cadeia corrente = 9665f42e7f
+(primeira entrada canônica foi c94bbfe11a, posteriormente revertida).
+
+## Revalidação no SHA efetivo (HEAD 216b1432ba — revalidado em 74eaa8c429 e reconfirmado em 216b1432ba; conteúdo delia inalterado entre eles)
+
+- Targeted: test_int2_typed_objective_obligation_contract.py +
+  test_c3_t2_final_gates_sufficiency_collection_multiturn.py — 71 PASS
+  (log versionado em verification/test-log-216b1432ba.txt, TEST_SHA
+  amarrado ao HEAD do momento).
+- Suíte completa delia-api: EXIT=0 no mesmo log (~445 testes).
+- Audits: phase3=0, guardrails=0, docs=OK, cursor-rules=OK.
+- Scoreboard rederivado dos jsonl: arm A 6/9, arm B 6/9 GROUNDED;
+  INT2_B GROUNDED/SATISFIED (total autoritativo 109) nos dois arms.
+
+## Apresentação explicitamente exigida (RQ-4)
+
+Contrato existente atende sem alteração: exigência de apresentação vai
+em evidence_source (âncora de apresentação, ex. summary) ou na
+descrição da obrigação — o acceptor rejeita apenas seletores top-level
+em required_args. Suficiência avalia a âncora de apresentação com
+congruência de entidade (S1 SATISFIED, S2b fail-closed sem entidade,
+test_int2b_declared_view_scope_still_binding mantém escopo declarado
+binding). Nenhuma representação nova criada; Suficiência não relaxada.
+
+## Verificador
+
+request-sha-reconciliation-r1.md + report-sha-reconciliation-r1.md em
+verification/ deste pacote. Veredito anterior r2 (7726124ebe) NÃO é
+transferível — revalidado aqui no HEAD efetivo.

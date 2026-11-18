@@ -7359,3 +7359,33 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
   concorrente — conteúdo byte-idêntico confirmado em HEAD).
 - **ESTADO:** entrega aceita com residual; DEPLOY=NOT_RUN;
   TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO.
+
+## COORDINATION_C3_T2_ANCHOR_RECOVERY_DELIVERED_SHA_RECONCILIATION_AND_INDEPENDENT_REVERIFY
+
+- **FORENSE (PROVEN):** 3f1d7ab46f (impl, dangling) → folded em
+  c94bbfe11a → presente em 30888b81c7 → REVERTIDO em 7726124ebe
+  ("reverte WIP delia indevido"; blob 752b9e3e0d→2c53237f93=base) →
+  8095ee540f pushed SEM o fix nos 5 arquivos → REINTEGRADO em
+  9665f42e7f (filho de 8095ee540f; blobs byte-idênticos a 3f1d7ab46f
+  nos 5 arquivos) → HEAD corrente mantém 752b9e3e0d.
+- **HISTORICAL_DELIVERY_DRIFT=PROVEN (Caso B):** o SHA declarado final
+  anterior (8095ee540f) legitima e verificadamente não continha a
+  implementação; first-canonical=c94bbfe11a, reintegração=9665f42e7f.
+- **EQUIVALÊNCIA (PROVEN byte-a-byte):** 5 arquivos em HEAD =
+  blobs de 3f1d7ab46f (semantic_capability_support 752b9e3e0d,
+  pydantic_ai_investigation 66e8a2695c, comprehension_instructions
+  9fbb07b56d, contract tests fea63daa14, sufficiency tests 11dc53ab4f).
+- **RQ-4 APRESENTAÇÃO EXPLÍCITA:** contrato existente atende —
+  exigência vai em evidence_source/descrição; acceptor rejeita só
+  seletores top-level em required_args; âncora de apresentação
+  avaliada com congruência de entidade (S1/S2b/binding cobertos).
+- **TESTES no SHA efetivo 216b1432ba:** targeted 71 PASS + suíte
+  delia-api EXIT=0 (log verification/test-log-216b1432ba.txt);
+  audits phase3/guardrails/docs/rules=0.
+- **SCOREBOARD rederivado dos jsonl:** arm A 6/9, arm B 6/9; INT2_B
+  GROUNDED/SATISFIED (109) nos dois arms.
+- **DR-1 resolvida:** escopo estreito (arquivos delia + pacote de
+  evidência), sem atribuir commits concorrentes à task.
+- **VERIFIER:** r1 REWORK (OC-1 docs/ledger, OC-2 evidência de teste);
+  rodadas seguintes em verification/ do pacote.
+- **ESTADO:** DEPLOY=NOT_RUN; PROMOTION/PHASE=NOT_AUTHORIZED.
