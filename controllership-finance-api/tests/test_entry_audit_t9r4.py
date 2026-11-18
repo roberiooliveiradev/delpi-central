@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
+from uuid import uuid4
 from zipfile import ZipFile
 
 import pytest
@@ -193,15 +194,51 @@ def test_e1_mcp_every_schema_filter_reaches_handler(monkeypatch, action):
 
 def test_e5_previous_kpis_match_current_fields():
     service = _service()
+    # Contrato U12 (service._previous_kpis): «previous» só existe quando há
+    # análise anterior com o mesmo span, filiais e tipos — aqui, o dia anterior.
+    previous_id = str(uuid4())
+    now = datetime.now(timezone.utc)
+    service._store.analyses[previous_id] = {
+        "id": previous_id,
+        "status": "done",
+        "date_from": WHEN - timedelta(days=1),
+        "date_to": WHEN - timedelta(days=1),
+        "document_types": ["nfe"],
+        "branches": ["01"],
+        "requested_via": "user",
+        "created_at": now,
+        "finished_at": now,
+    }
+    run_id = str(uuid4())
+    service._store.runs[run_id] = {
+        "id": run_id,
+        "analysis_id": previous_id,
+        "branch_code": "01",
+        "status": "done",
+        "stage": "done",
+        "error_message": "",
+        "counts": {},
+    }
     created = service.create(
         date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"],
         user_id="u", user_name="Ana", via="user",
     )
     service.claim_and_execute()
     summary = service.summary(created["id"], {})
+    assert summary["previous"] is not None
     assert set(summary["previous"]) == set(summary["kpis"])
     for name in ("resolved", "gross_checked", "high_difference", "xml_unavailable"):
         assert name in summary["previous"]
+
+
+def test_e5_previous_is_none_without_prior_analysis():
+    service = _service()
+    created = service.create(
+        date_from=WHEN, date_to=WHEN, document_types=["nfe"], branches=["01"],
+        user_id="u", user_name="Ana", via="user",
+    )
+    service.claim_and_execute()
+    assert service.summary(created["id"], {})["previous"] is None
 
 
 def test_e6_cte_comparison_has_no_empty_fiscal_code():

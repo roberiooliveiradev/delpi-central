@@ -22,6 +22,7 @@
 | [track.md](./track.md) | **trilha de execução**: decisões FA-1 a FA-18, quadro de status, etapas T15–T23, paradas, registro |
 | [plan.md](./plan.md) | ponteiro para o track |
 | [inventory.md](./inventory.md) | inventário da T14 (I2–I4): premissas conferidas no código com arquivo:linha, estrutura Protheus (F2B/F2D/SFT/SF4/SA1) e grupo IBSCBS no cache de XML |
+| [residuals.md](./residuals.md) | residuais por onda (status, SHA, evidência) — verificador, owner e verificação de execução |
 
 ## Trilha
 
