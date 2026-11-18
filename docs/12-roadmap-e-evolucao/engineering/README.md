@@ -1,5 +1,8 @@
 # Portal de Engenharia — documentação mestra
 
+> **PRC_DOC_REANCHOR_2026_11_18 — precedencia e evidencia:** Este indice contem premissas historicas (inclusive a afirmacao de que os plugins/API nao existiam em main). Para o recorte conversa PRC, 3 abas, modal e alteracoes solicitadas, o estado atual e **implementado e com deploy PRD reportado**, PO confirmou a correcao visual em 18/11. Outros modulos continuam sujeitos a seus proprios gates. Fonte de reconciliacao: [Fechamento PRC conversa/UX 18-11-2026](./PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md). Esta nota nao reclassifica outros fluxos ou autorizacoes. 
+
+
 > **FONTE CANÔNICA ATUAL — 2026-11-13:** [Regras de produto, inconsistências e plano central PRC-TRACK](./PRC-TRACK-CANONICAL-PRODUCT-RULES-AND-EXECUTION-PLAN.md). Este documento é referência histórica/setorial: em caso de divergência sobre no-op, V1, snapshot PRC, REOPEN, RESOLVED/REMOVED, flags durante solicitação, conclusão, permissões ou critérios de aceite, **o plano central prevalece**. Trechos legados contraditórios estão **SUPERSEDED**, não são perguntas abertas nem instruções para implementar. Regras UX não conflitantes continuam válidas. `G1_ARCHITECTURE_DECISION_REQUIRED / TEST_NOT_RUN`.
 
 
