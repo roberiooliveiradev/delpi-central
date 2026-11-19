@@ -50,6 +50,29 @@ rejeitados explicitamente se enviados.
   do delta do cliente e envia a representação completa. Ausência no
   delta nunca vira vazio.
 
+### Meta-campo `codusr` — ator real da operação
+
+- `codusr` é **meta-campo de auditoria**, não campo `B1_*` — viaja no
+  mesmo objeto JSON, é ignorado na montagem do array ExecAuto e não
+  aparece no catálogo `metadados`.
+- **Proveniência governada**: preenchido exclusivamente pelo consumidor
+  governado (api-delpi), que resolve o código Protheus do ator via
+  Core/JWT (`resolve_actor_codusr`). Cliente final **nunca** informa —
+  chaves de identidade no payload do cliente são rejeitadas
+  (`PROTHEUS_IDENTITY_CLIENT_FORBIDDEN`).
+- **Persistência** (mesmo padrão `MA020TDOK`/API de fornecedores do
+  Gabriel): após `MSExecAuto` sem erro, a fachada executa
+  `UPDATE AIF SET AIF_ZCDUSR = <codusr>` nas linhas de histórico SB1
+  criadas pela própria execução (`AIF_CODPRO = B1_COD`,
+  `AIF_DATA = hoje`, `AIF_HORA >= início do PUT`). Sem `codusr` o campo
+  fica vazio (compatível com execuções legadas).
+- **Não-fatal por desenho**: falha do patch de auditoria registra
+  `ConOut` mas não nega o write já commitado — a linha AIF apenas
+  permanece com `AIF_ZCDUSR` vazio.
+- Motivo: o REST executa como usuário técnico (`api.delpi`); sem
+  `AIF_ZCDUSR` a auditoria atribuiria toda alteração ao serviço —
+  antipadrão de rastreabilidade.
+
 ### product.metadata (GET)
 
 Autodescrição do contrato (não lê dados do ERP):
