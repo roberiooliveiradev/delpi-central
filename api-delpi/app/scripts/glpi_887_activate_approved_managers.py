@@ -41,6 +41,8 @@ APPROVED = frozenset({
 EXPECTED = APPROVED | EXCLUDED
 CONFIRM_PHRASE = "ATIVAR_10"
 TIMEZONE = "America/Sao_Paulo"
+TARGET_HOUR = 9
+LEGACY_HOUR = 8
 
 
 def _schedule_matches(schedule: dict[str, Any] | None) -> bool:
@@ -48,7 +50,7 @@ def _schedule_matches(schedule: dict[str, Any] | None) -> bool:
         isinstance(schedule, dict)
         and schedule.get("scheduleKind") == "weekly"
         and schedule.get("weekday") == 0
-        and schedule.get("hour") == 8
+        and schedule.get("hour") in (LEGACY_HOUR, TARGET_HOUR)
         and schedule.get("minute") == 0
         and schedule.get("timezone") == TIMEZONE
     )
@@ -150,6 +152,7 @@ def build_plan(
             "registration": reg,
             "definitionId": definition["id"],
             "enabled": bool(schedule["enabled"]),
+            "currentHour": schedule["hour"],
             "desiredEnabled": reg in APPROVED,
             "nextRunAt": schedule.get("nextRunAt"),
         })
@@ -167,13 +170,13 @@ def apply_plan(plan: list[dict[str, Any]], repository: Any) -> None:
         if not row["desiredEnabled"]:
             # Never touch either excluded manager; fail closed above.
             continue
-        if row["enabled"]:
+        if row["enabled"] and row["currentHour"] == TARGET_HOUR:
             continue
         manager_schedules.execute(
             definition_id=row["definitionId"],
             schedule_kind="weekly",
             weekday=0,
-            hour=8,
+            hour=TARGET_HOUR,
             minute=0,
             enabled=True,
             timezone_name=TIMEZONE,
@@ -187,9 +190,15 @@ def _summary(plan: list[dict[str, Any]]) -> dict[str, Any]:
         "approved": len(APPROVED),
         "excludedRegistrations": sorted(EXCLUDED),
         "currentlyEnabled": sum(x["enabled"] for x in plan),
-        "stillToEnable": sum(
-            x["desiredEnabled"] and not x["enabled"] for x in plan
+        "readyAtNine": sum(
+            x["desiredEnabled"] and x["enabled"] and x["currentHour"] == TARGET_HOUR
+            for x in plan
         ),
+        "stillToEnable": sum(
+            x["desiredEnabled"] and (not x["enabled"] or x["currentHour"] != TARGET_HOUR)
+            for x in plan
+        ),
+        "targetSchedule": "segunda-feira 09:00 America/Sao_Paulo",
         "excludedDisabled": all(
             not x["enabled"] for x in plan if not x["desiredEnabled"]
         ),
