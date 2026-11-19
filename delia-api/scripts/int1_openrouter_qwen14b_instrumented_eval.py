@@ -457,6 +457,31 @@ INT2_SCENARIOS = [
             ),
         },
     },
+    {
+        # Continuity turn-2 (C3/T2): the raw-material identity must be
+        # recovered from the live turn-1 published answer — prior turns
+        # are chained by DELIA_EVAL_LIVE_MULTITURN_CHAIN from the
+        # immediately preceding scenario in this run, never a forged
+        # assistant fixture. Pair with INT2_C2_record_detail_product.
+        "id": "INT2_C3_multiturn_stock_continuity",
+        "question": (
+            "Qual é o estoque disponível da matéria-prima identificada "
+            "nessa estrutura?"
+        ),
+        "prior": (),
+        "chain_from_live": True,
+        "expected": {
+            "delivery": "enumeration",
+            "plan_declared": True,
+            "coverage": "evaluated",
+            "verdict_rule": (
+                "resolve raw-material identity from live turn-1 "
+                "evidence; select legitimate stock capability; valid "
+                "arguments; grounded stock answer or honest gap — "
+                "never invent a balance or presume branch/warehouse"
+            ),
+        },
+    },
 ]
 
 
@@ -475,6 +500,29 @@ def _selected_scenarios() -> list[dict]:
             + ",".join(missing)
         )
     return [by_id[item] for item in wanted]
+
+
+def _install_model_retry_capture(scenario_holder: dict) -> None:
+    """Eval-only capture of the bounded-feedback loop.
+
+    Every ``ModelRetry`` raised inside a scenario records its feedback
+    text — the exact correction guidance the model received — so a
+    ``output_retries_exhausted`` terminal run can be attributed to a
+    concrete rejection contract instead of 'model behaved oddly'.
+    """
+    from pydantic_ai.exceptions import ModelRetry
+
+    original_init = ModelRetry.__init__
+    retry_box: dict = {}
+
+    def _wrapped_init(self, message="", *args, **kwargs):
+        sid = scenario_holder.get("id")
+        if sid:
+            retry_box.setdefault(sid, []).append(str(message)[:600])
+        return original_init(self, message, *args, **kwargs)
+
+    ModelRetry.__init__ = _wrapped_init
+    _CAPTURE["model_retry_feedback"] = retry_box
 
 
 def _install_plan_obligation_capture() -> None:
@@ -1009,6 +1057,15 @@ def run_scenario(
 
 
 def main() -> int:
+    import logging
+
+    # Surface orchestrator INFO decisions (agent_error error_type/
+    # cause_type/retry_tool/retry_errors) so eval failures carry their
+    # typed classification — never raw model output.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s %(name)s %(message)s",
+    )
     ensure_trace_dir()
     _refuse_insecure()
     settings = Settings()
@@ -1055,6 +1112,7 @@ def main() -> int:
     scenario_holder: dict = {"id": None, "correlation": evaluation_id}
     catalog_box: dict = {}
     b3_box: dict = {}
+    _install_model_retry_capture(scenario_holder)
     _install_finalize_capture()
     _install_plan_obligation_capture()
     _install_comprehension_capture(evaluation_id, scenario_holder)
@@ -1110,6 +1168,12 @@ def main() -> int:
         in {"1", "true", "yes", "on"}
     )
     live_clarification: dict | None = None
+    # Generic live chain source (C3/T2 continuity): every completed
+    # scenario publishes its result so a following scenario marked
+    # "chain_from_live" receives the real published turn-1 answer as
+    # prior — same evaluation_id, same subject session, no forged
+    # assistant text.
+    live_previous: dict | None = None
 
     summary = {
         "evaluation_id": evaluation_id,
@@ -1149,6 +1213,26 @@ def main() -> int:
                 "context_source": "live_turn1_published_response",
                 "parent_scenario_id": live_clarification["scenario_id"],
             }
+        if (
+            live_multiturn_chain
+            and effective.get("chain_from_live")
+            and live_previous is not None
+        ):
+            published = str(live_previous.get("content") or "").strip()
+            if not published:
+                raise SystemExit(
+                    "refused: live multiturn chain — previous turn "
+                    "published content empty; cannot forge assistant prior"
+                )
+            effective["prior"] = (
+                ("user", live_previous["question"]),
+                ("assistant", published),
+            )
+            effective["expected"] = {
+                **dict(effective.get("expected") or {}),
+                "context_source": "live_previous_published_response",
+                "parent_scenario_id": live_previous["scenario_id"],
+            }
         scenario_holder["id"] = effective["id"]
         scenario_holder["correlation"] = (
             f"{evaluation_id}-{effective['id']}"
@@ -1173,6 +1257,12 @@ def main() -> int:
                 "limitations": res.get("limitations"),
                 "mcp_invoke_targets": res.get("mcp_invoke_targets"),
             }
+        live_previous = {
+            "scenario_id": effective["id"],
+            "question": effective["question"],
+            "content": res.get("content") or "",
+            "grounding": res.get("grounding"),
+        }
         b3 = b3_box.get(effective["id"])
         summary["scenarios"][effective["id"]] = {
             "elapsed_s": res.get("elapsed_s"),
@@ -1184,6 +1274,9 @@ def main() -> int:
             "obligation_coverage": _CAPTURE.get("obligation_coverage"),
             "goal_declarations": _CAPTURE.get("goal_declarations"),
             "comprehension": _CAPTURE.get("comprehension"),
+            "model_retry_feedback": (
+                _CAPTURE.get("model_retry_feedback") or {}
+            ).get(effective["id"]),
             "limitations": res.get("limitations"),
             "content_head": (res.get("content") or "")[:160],
             "llm_runs": res.get("llm_runs"),
@@ -1195,14 +1288,23 @@ def main() -> int:
             "conversation_correlation": {
                 "evaluation_id": evaluation_id,
                 "turn1_scenario_id": (
-                    live_clarification.get("scenario_id")
-                    if live_clarification
-                    else None
+                    (effective.get("expected") or {}).get(
+                        "parent_scenario_id"
+                    )
+                    or (
+                        live_clarification.get("scenario_id")
+                        if live_clarification
+                        else None
+                    )
                 ),
                 "turn2_scenario_id": effective["id"],
                 "same_subject_session": True,
             }
-            if effective["id"] == "INT2_R6_same_conversation_recovery"
+            if effective["id"]
+            in {
+                "INT2_R6_same_conversation_recovery",
+                "INT2_C3_multiturn_stock_continuity",
+            }
             else None,
         }
         print(

@@ -417,6 +417,9 @@ def _run(
             ),
             "elapsed_ms": sum(u["elapsed_ms"] for u in usage_slice),
             "interrupted": sum(1 for u in usage_slice if u.get("error")),
+            "interruption_types": sorted(
+                {str(u["error"]) for u in usage_slice if u.get("error")}
+            ),
         },
         "content": getattr(result, "content", "") or "",
         "epistemic_class": str(getattr(result, "epistemic_class", "")),
