@@ -12,8 +12,11 @@
        JSON valido — porque a resposta final sobrescrevia a mensagem
        especifica de cada ramo (corrigido nesta versao);
      - o sibling SB1 no MESMO ambiente tambem rejeitou JSON valido como
-       "nao e um JSON valido" => GetContent()/FromJson sem body no
-       runtime daquele ambiente; validacao funcional exige o REST sao.
+       "nao e um JSON valido" => CAUSA RAIZ CONFIRMADA no TST01
+       (2026-11-19): o body chega integro ao GetContent(), mas
+       tJsonObject:FromJson retorna .F. mesmo em sucesso neste build —
+       o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
+       13-fontes). Validamos o parse pelo conteudo (GetNames() vazio).
    MUDANCAS 0.4.1 (diagnostico fail-closed, sem alterar contrato):
      - distincao "body vazio/indisponivel" x "JSON invalido" (evidencia se
        o corpo chega ao handler — a falha do ambiente auxiliar);
@@ -218,15 +221,23 @@ static function lExecSA5(oSelf)
         cJSON := oSelf:GetContent()
         oSelf:SetContentType("application/json")
 
+        // FromJson retorna .F. mesmo populando o objeto neste build —
+        // o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
+        // 13-fontes). Valida-se o parse pelo conteudo: GetNames()
+        // vazio = falhou.
+        if ValType(cJSON) == "C" .and. !Empty(cJSON)
+            oDados:FromJson(cJSON)
+        endif
+
         if ValType(cJSON) <> "C" .or. Empty(cJSON)
             lRet := .F.
             cErro := "Corpo da requisicao vazio ou indisponivel no handler."
             ConOut("DLP04I02 body: valtype=" + ValType(cJSON) + ;
                 " len=" + cValToChar(iif(ValType(cJSON) == "C", Len(cJSON), -1)))
-        elseif !oDados:FromJson(cJSON)
+        elseif Len(oDados:GetNames()) == 0
             lRet := .F.
             cErro := "Corpo da requisicao nao e um JSON valido"
-            ConOut("DLP04I02 body: FromJson falhou; len=" + cValToChar(Len(cJSON)))
+            ConOut("DLP04I02 body: parse falhou; len=" + cValToChar(Len(cJSON)))
         elseif !lPrepSA5(oDados, @aMiss, @cErro)
             lRet := .F.
         else

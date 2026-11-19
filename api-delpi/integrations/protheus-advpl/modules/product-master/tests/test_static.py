@@ -301,6 +301,11 @@ class V21ReviewGuards(unittest.TestCase):
             self.upper.index("OSELF:GETCONTENT()"),
             self.upper.index("OSELF:SETCONTENTTYPE"),
         )
+        # FromJson retorna .F. mesmo populando o objeto neste build —
+        # o legado ignora o retorno (DLP04I01/DLP05W01 no espelho).
+        # O parse e validado pelo conteudo, nunca pelo retorno.
+        self.assertNotIn("!ODADOS:FROMJSON", self.upper)
+        self.assertIn("LEN(ODADOS:GETNAMES())", self.upper)
 
     def test_sanitlog_no_trailing_separator(self):
         block = self.upper[

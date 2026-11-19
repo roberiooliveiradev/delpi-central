@@ -617,20 +617,23 @@ static function lExecSB1(oSelf, nOp)
         cJSON := oSelf:GetContent()
         oSelf:SetContentType("application/json")
 
-        if !oDados:FromJson(cJSON)
+        // FromJson retorna .F. mesmo populando o objeto neste build —
+        // o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
+        // 13-fontes). Valida-se o parse pelo conteudo: GetNames()
+        // vazio = falhou. Sem conteudo do body por seguranca.
+        oDados:FromJson(cJSON)
+
+        if Len(oDados:GetNames()) == 0
             lRet     := .F.
             cErrType := "client_error"
-            // diagnostico auto-contido: len/valtype do body recebido —
-            // distingue daemon que nao entrega body (len=0/valtype!=C)
-            // de conteudo corrompido. Sem conteudo do body por seguranca.
-            ConOut("DLP04I01 body: FromJson falhou; valtype=" + ;
+            ConOut("DLP04I01 body: parse falhou; valtype=" + ;
                 ValType(cJSON) + " len=" + ;
                 iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a"))
             oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
                 "Corpo da requisicao nao e um JSON valido (valtype=" + ;
                 ValType(cJSON) + ",len=" + ;
                 iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a") + ")", ;
-                "dlp-v052-gc", cErrType)
+                "dlp-v053-fj", cErrType)
         elseif !lPrepSB1(oDados, nOp, @aSB1, @cErro)
             lRet     := .F.
             cErrType := "client_error"

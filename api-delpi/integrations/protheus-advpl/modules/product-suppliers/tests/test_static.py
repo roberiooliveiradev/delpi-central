@@ -149,6 +149,11 @@ class StaticSourceTests(unittest.TestCase):
             self.upper.index("CJSON := OSELF:GETCONTENT()"),
             self.upper.index("OSELF:SETCONTENTTYPE"),
         )
+        # FromJson retorna .F. mesmo populando o objeto neste build —
+        # o legado ignora o retorno (DLP04I01/DLP05W01 no espelho).
+        # O parse e validado pelo conteudo, nunca pelo retorno.
+        self.assertNotIn("!ODADOS:FROMJSON", self.upper)
+        self.assertIn("LEN(ODADOS:GETNAMES())", self.upper)
 
 class ModuleConsistencyTests(unittest.TestCase):
     @classmethod
