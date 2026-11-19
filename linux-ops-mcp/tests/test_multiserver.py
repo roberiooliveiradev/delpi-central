@@ -16,7 +16,14 @@ from linux_ops_mcp.multiserver import (
     list_servers,
     resolve_server,
 )
-from linux_ops_mcp.reader import ItPortalReader, ReadError, Settings, host_health, deployment_revision
+from linux_ops_mcp.reader import (
+    ItPortalReader,
+    ReadError,
+    Settings,
+    deployment_revision,
+    host_health,
+    project_windows_host_service,
+)
 from linux_ops_mcp import server as mcp_server
 
 
@@ -443,6 +450,134 @@ def test_server_services_windows_and_linux():
         )
         assert windows["service_source"] == "it-portal-host-services"
         assert windows["attention_items"][0]["criticality"] == "critical"
+
+    asyncio.run(scenario())
+
+
+def test_project_windows_host_service_respects_it_portal_length_limits():
+    """IT Portal allows name/key 200 and display_name 240; shorter MCP caps must not drop them."""
+    name_200 = "N" * 200
+    key_200 = "k" * 200
+    display_240 = "D" * 240
+    projected = project_windows_host_service({
+        "service_key": key_200,
+        "name": name_200,
+        "display_name": display_240,
+        "state": "running",
+        "start_mode": "auto",
+        "is_favorite": True,
+        "criticality": "critical",
+        "is_present": True,
+        "observed_at": "2026-11-18T12:00:00Z",
+    })
+    assert projected is not None
+    assert projected["name"] == name_200
+    assert projected["service_key"] == key_200
+    assert projected["display_name"] == display_240
+
+    # Over contract bounds are rejected (no silent truncation).
+    assert project_windows_host_service({
+        "service_key": "k" * 201,
+        "name": "ok",
+        "display_name": "ok",
+        "state": "running",
+        "criticality": "normal",
+        "is_present": True,
+    }) is None
+    assert project_windows_host_service({
+        "service_key": "ok",
+        "name": "N" * 201,
+        "display_name": "ok",
+        "state": "running",
+        "criticality": "normal",
+        "is_present": True,
+    }) is None
+    over_display = project_windows_host_service({
+        "service_key": "ok",
+        "name": "ok",
+        "display_name": "D" * 241,
+        "state": "running",
+        "criticality": "normal",
+        "is_present": True,
+    })
+    assert over_display is not None
+    assert over_display["display_name"] is None
+
+
+def test_get_server_services_uses_observation_source_when_os_unknown():
+    """Unset/unrecognized OS must follow latest observation source, not include_windows_dashboard."""
+    win_id, linux_id, unknown_id = str(uuid4()), str(uuid4()), str(uuid4())
+    long_name = "W" * 200
+
+    def respond(request: httpx.Request):
+        path = request.url.path
+        if path.endswith(f"/servers/{win_id}"):
+            return httpx.Response(200, json=_envelope(_server(
+                win_id, "srv-win-obs", operating_system=None,
+            )))
+        if path.endswith(f"/servers/{linux_id}"):
+            return httpx.Response(200, json=_envelope(_server(
+                linux_id, "srv-linux-obs", operating_system="Something Exotic",
+            )))
+        if path.endswith(f"/servers/{unknown_id}"):
+            return httpx.Response(200, json=_envelope(_server(
+                unknown_id, "srv-unknown", operating_system=None,
+            )))
+        if path.endswith(f"/servers/{win_id}/observations/latest"):
+            return httpx.Response(200, json=_envelope(_windows_obs(win_id)))
+        if path.endswith(f"/servers/{linux_id}/observations/latest"):
+            return httpx.Response(200, json=_envelope(_linux_obs(linux_id)))
+        if path.endswith(f"/servers/{unknown_id}/observations/latest"):
+            return httpx.Response(200, json=_envelope(None))
+        if path.endswith(f"/servers/{win_id}/host-services"):
+            return httpx.Response(200, json=_envelope({
+                "items": [{
+                    **_windows_service(long_name, criticality="critical", state="stopped"),
+                    "service_key": long_name.casefold(),
+                    "display_name": "D" * 240,
+                }],
+                "total": 1,
+                "page": 1,
+                "page_size": 25,
+                "favorites_count": 1,
+            }))
+        if path.endswith("/dashboard/windows-services-health"):
+            return httpx.Response(200, json=_envelope({
+                "items": [],
+                "total": 0,
+                "generated_at": "2026-11-18T12:00:00Z",
+            }))
+        return httpx.Response(404)
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+
+        windows = await get_server_services(
+            reader, "Bearer test-user-token", server_id=win_id,
+        )
+        assert windows["os_family"] == "windows"
+        assert windows["service_source"] == "it-portal-host-services"
+        assert windows["items"][0]["name"] == long_name
+        assert windows["items"][0]["display_name"] == "D" * 240
+
+        linux = await get_server_services(
+            reader, "Bearer test-user-token", server_id=linux_id,
+            include_windows_dashboard=True,
+        )
+        assert linux["os_family"] == "linux"
+        assert linux["service_source"] == "observation_systemd_allowlist"
+        assert "windows_dashboard" not in linux
+
+        # Dashboard flag alone must not force the Windows host-services path.
+        unknown = await get_server_services(
+            reader,
+            "Bearer test-user-token",
+            server_id=unknown_id,
+            include_windows_dashboard=True,
+        )
+        assert unknown["os_family"] is None
+        assert unknown["service_source"] == "observation_systemd_allowlist"
+        assert "windows_dashboard" not in unknown
 
     asyncio.run(scenario())
 

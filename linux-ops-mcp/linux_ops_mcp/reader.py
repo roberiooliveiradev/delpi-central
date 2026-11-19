@@ -332,11 +332,18 @@ def project_server_inventory_row(raw: object) -> dict[str, Any] | None:
     }
 
 
+# IT Portal host-service contract (domain/host_services.py + V006):
+# name/service_key <= 200, display_name <= 240. Reject oversize; never truncate.
+_WINDOWS_HOST_SERVICE_NAME_MAX = 200
+_WINDOWS_HOST_SERVICE_KEY_MAX = 200
+_WINDOWS_HOST_SERVICE_DISPLAY_NAME_MAX = 240
+
+
 def project_windows_host_service(raw: object) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         return None
-    name = _limit_string(raw.get("name"), max_len=120)
-    service_key = _limit_string(raw.get("service_key"), max_len=160)
+    name = _limit_string(raw.get("name"), max_len=_WINDOWS_HOST_SERVICE_NAME_MAX)
+    service_key = _limit_string(raw.get("service_key"), max_len=_WINDOWS_HOST_SERVICE_KEY_MAX)
     if not name or not service_key:
         return None
     state = _limit_string(raw.get("state"), max_len=40) or "unknown"
@@ -346,7 +353,9 @@ def project_windows_host_service(raw: object) -> dict[str, Any] | None:
     return {
         "service_key": service_key,
         "name": name,
-        "display_name": _limit_string(raw.get("display_name"), max_len=160),
+        "display_name": _limit_string(
+            raw.get("display_name"), max_len=_WINDOWS_HOST_SERVICE_DISPLAY_NAME_MAX,
+        ),
         "state": state.lower() if isinstance(state, str) else "unknown",
         "start_mode": _limit_string(raw.get("start_mode"), max_len=40),
         "is_favorite": raw.get("is_favorite") is True,

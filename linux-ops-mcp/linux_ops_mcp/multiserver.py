@@ -609,6 +609,17 @@ async def get_server_services(
         return ambiguous_hostname_payload(resolved["__ambiguous__"])
 
     os_family = classify_os_family(resolved.get("operating_system"))
+    observation: dict[str, Any] | None = None
+    # Inventory OS may be absent/unrecognized; use latest observation source
+    # (windows_host_collector / linux_host_collector) before choosing the
+    # service backend. Never use include_windows_dashboard as OS identity.
+    if os_family is None:
+        observation = await reader.latest_for(
+            authorization, resolved["id"], linux_only=False,
+        )
+        obs_source = observation.get("source") if isinstance(observation, dict) else None
+        os_family = classify_os_family(resolved.get("operating_system"), obs_source)
+
     result: dict[str, Any] = {
         "server_id": resolved["id"],
         "name": resolved.get("name"),
@@ -618,7 +629,7 @@ async def get_server_services(
         "source": "it-portal-api",
     }
 
-    if os_family == "windows" or (os_family is None and include_windows_dashboard):
+    if os_family == "windows":
         listing = await _collect_windows_host_services(
             reader,
             authorization,
@@ -648,8 +659,11 @@ async def get_server_services(
             result["windows_dashboard"] = await reader.windows_services_health(authorization)
         return result
 
-    # Linux path: observation systemd allowlist only; no host commands.
-    observation = await reader.latest_for(authorization, resolved["id"], linux_only=False)
+    # Linux / unknown path: observation systemd allowlist only; no host commands.
+    if observation is None:
+        observation = await reader.latest_for(
+            authorization, resolved["id"], linux_only=False,
+        )
     analysis = analyze_observation(
         observation,
         server=resolved,
