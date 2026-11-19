@@ -74,7 +74,6 @@ PRODUCT_FIELD_SPECS: dict[str, dict[str, object]] = {
     "B1_CONTSOC": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_COMIS": {"kind": "N", "max_length": 5, "decimals": 2},
     "B1_CODBAR": {"kind": "C", "max_length": 15, "decimals": 0},
-    "B1_GRADE": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_FORMLOT": {"kind": "C", "max_length": 3, "decimals": 0},
     "B1_MONO": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_FPCOD": {"kind": "C", "max_length": 10, "decimals": 0},

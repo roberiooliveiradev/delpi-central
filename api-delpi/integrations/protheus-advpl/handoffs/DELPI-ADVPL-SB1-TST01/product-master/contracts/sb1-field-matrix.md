@@ -9,7 +9,7 @@ Classificação determinística:
 - `TO_INVENTORY`: campo SX3 sem coluna física na SB1010 do TST01 — fora do contrato de escrita até materialização
 - `READ_WRITE_ELIGIBLE`: editável na MATA010 (`X3_VISUAL` `''`/`'A'`) e não gerenciado
 
-Contagem: 285 elegíveis · 5 TO_INVENTORY · 26 gerenciados · 3 imutáveis = 319
+Contagem: 284 elegíveis · 6 TO_INVENTORY · 26 gerenciados · 3 imutáveis = 319
 
 | FIELD | DESCRIPTION | TYPE | SIZE | DEC | REQ_SX3 | CLASS | C | R | U | NOTE |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -85,7 +85,7 @@ Contagem: 285 elegíveis · 5 TO_INVENTORY · 26 gerenciados · 3 imutáveis = 3
 | B1_CONTSOC | Cont.Seg.Soc | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_COMIS | % Comissao | N | 5 | 2 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_CODBAR | Cod Barras | C | 15 | 0 |  | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
-| B1_GRADE | Grade | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
+| B1_GRADE | Grade | C | 1 | 0 | x | TO_INVENTORY | x | x | x | modelo SB1MASTER nao expoe o campo (FWFormFieldsModel) — TST01 2026-11-19 |
 | B1_FORMLOT | Cod Form Lot | C | 3 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_MONO | Forn. Canal | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_FPCOD | Cod.Familia | C | 10 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
