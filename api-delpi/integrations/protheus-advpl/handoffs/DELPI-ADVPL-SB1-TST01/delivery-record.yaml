@@ -1,12 +1,12 @@
-# Registro de entrega — DELPI-ADVPL-SB1-TST01-v0.5.1
+# Registro de entrega — DELPI-ADVPL-SB1-TST01-v0.5.2
 # Estados: PREPARED -> SENT -> RECEIVED -> COMPILED -> TESTED -> APPROVED
 
 delivery:
-  package_id: "DELPI-ADVPL-SB1-TST01-v0.5.1"
+  package_id: "DELPI-ADVPL-SB1-TST01-v0.5.2"
   package_version: "0.5.2"
-  zip_sha256: "4a8ac5d0e832747d243da0eb88c8dee3df2fa14b60f710f785b4c59203374e11"
+  zip_sha256: "(nao gerado — layout unzipped; ver manifest v0.5.2)"
   source_repository: "roberiooliveiradev/delpi-central"
-  source_commit: "2ca234a960"
+  source_commit: "d151616a19"
   modules: [product-master]
   target_environment: "TST01"
   layout: "unzipped — conteudo por modulo; zip removido em 2026-11-19"
@@ -22,7 +22,7 @@ tracking:
       note: "Revisao independente: 9 defeitos corrigidos (data vazia D, numerico canonico, read-back full-rep Decimal, ASCII, Begin Sequence). Verifier ACCEPT_WITH_RESIDUAL r2; 41 estaticos + 39 pytest do escopo verdes; runtime nao executado."
 
 references:
-  manifest_path: "handoffs/DELPI-ADVPL-SB1-TST01/DELPI-ADVPL-SB1-TST01-v0.5.1.manifest.json"
+  manifest_path: "handoffs/DELPI-ADVPL-SB1-TST01/DELPI-ADVPL-SB1-TST01-v0.5.2.manifest.json"
   erp_source_refs:
     - {repo: Delpi-ti/protheus-erp, branch: master, sha: UPSTREAM_ACCESS_BLOCKED, path: "04. Estoque/DLP04I01.PRW", blob_sha: cdb68b0487222823a96162c0e493e442648e21f7}
   compilation_checklist: "modules/product-master/contracts/official-limitations.md (secao 4 — checklist TST01, item 12b p/ data vazia)"

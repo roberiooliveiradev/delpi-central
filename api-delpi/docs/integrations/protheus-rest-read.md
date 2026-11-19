@@ -65,19 +65,19 @@ Estado Intranet (`PARAMETROS_MINHADELPI`, colunas `PARAMETRO`/`CONTEUDO`/`AMBIEN
 | Parâmetro | AMBIENTE 1 | AMBIENTE 2 |
 |---|---|---|
 | `USR_PROTHEUS` / `PSW_PROTHEUS` | PRESENT | PRESENT |
-| `URL_REST` | `http://192.168.1.233:8701/rest` | idem |
+| `URL_REST` | `http://192.168.1.233:8061` | idem (+ `BASE_PATH=/restall`) |
 | `PATH_SUPPLIERS` | `/delpi/api/v1/suppliers` | idem |
 | `PATH_AUTH` | `/api/oauth2/v1/token` (**corrigido**) | **EMPTY** (não alterado) |
 
 Composição canônica (sem duplicar `/rest`):
 
-`{URL_REST}/api/oauth2/v1/token` → `http://192.168.1.233:8701/rest/api/oauth2/v1/token`
+`{URL_REST}{BASE_PATH}/api/oauth2/v1/token` → `http://192.168.1.233:8061/restall/api/oauth2/v1/token`
 
 ### Transporte HTTP (decisão operacional)
 
 O solicitante manteve HTTP na rede interna. Isso é risco residual explícito, não garantia de segurança.
 
-- Porta `:8701` = cleartext HTTP (`Server: HTTPREST`).
+- Portas `:8061` (`/restall`, alvo atual) e `:8701` (`/rest`, alternativo datado 2026-11-19) = cleartext HTTP (`Server: HTTPREST`).
 - Smoke autenticado exige: config correta + conta vigente + **rotação da senha exposta no PDF** + aceitação do risco HTTP pelo responsável.
 - Enquanto a rotação não estiver confirmada: `AUTHENTICATED_LIVE_TEST=PENDING` (não reutilizar a senha do PDF).
 

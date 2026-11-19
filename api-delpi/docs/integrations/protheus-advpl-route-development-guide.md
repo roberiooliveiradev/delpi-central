@@ -44,7 +44,7 @@ Consequências:
 ## 2. Anatomia de uma rota WSRESTFUL
 
 Referência de produção: `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW`
-(serviço `delpiproduto`, publicado em `192.168.1.233:8701/rest/delpiproduto/v1/...`).
+(serviço `delpiproduto`, publicado em `192.168.1.233:8061/restall/delpiproduto/v1/...`; `:8701` é REST alternativo datado 2026-11-19).
 
 ### 2.1 Declaração do serviço — é isto que publica a rota
 

@@ -36,7 +36,7 @@ candidate_source:
     - "rejeicao explicita de campos desconhecidos/protegidos (28 SYSTEM_MANAGED/IMMUTABLE exceto B1_COD)"
     - "PUT exige representacao completa do catalogo (fail-closed contra zeramento); parcial resolvido na api-delpi via read-merge-write"
     - "POST exige apenas B1_COD; demais campos recebem defaults oficiais da MATA010"
-    - "tipos por SX3: C estrito, N nativo ou lIsNumStr, D AAAAMMDD, M string (5 condicionais VALIDAR NO TST01)"
+    - "tipos por SX3: C estrito, N nativo ou lIsNumStr, D AAAAMMDD, M string (5 memo SX3 TO_INVENTORY — sem coluna fisica na SB1010 do TST01, fora do catalogo)"
     - "ErrorBlock restaurado em todos os caminhos (finalizacao unica); GetAutoGrLog sanitizado; sem ErrorStack na resposta"
     - "DELETE excluir publicado e BLOQUEADO (501 not_homologated) — semantica oficial pendente"
     - "GET metadados publicado — autodescricao do catalogo (field+kind, 286 entradas)"
