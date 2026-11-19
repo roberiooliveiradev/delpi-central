@@ -7,6 +7,11 @@ from app.domain.ports.third_party_materials.third_party_materials_query_reposito
     ThirdPartyMaterialsQueryRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.third_party_materials.third_party_pending_sql import (
+    build_pending_export_sql,
+    build_pending_page_sql,
+    build_pending_summary_sql,
+)
 from app.infrastructure.persistence.totvs.third_party_materials.third_party_materials_sql import (
     build_count_shipments_sql,
     build_details_by_recno_sql,
@@ -73,6 +78,25 @@ class ThirdPartyMaterialsQueryRepository(
         sql, params = build_summary_sql(request)
         with self:
             return self.execute_one(sql, params) or {}
+
+    def get_pending_report_summary(self, request: ThirdPartyMaterialsQueryRequest) -> dict:
+        sql, params = build_pending_summary_sql(request)
+        with self:
+            return self.execute_one(sql, params) or {}
+
+    def list_pending_report_rows(
+        self, request: ThirdPartyMaterialsQueryRequest
+    ) -> list[dict]:
+        sql, params = build_pending_page_sql(request)
+        with self:
+            return self.execute_query(sql, params)
+
+    def list_pending_export_rows(
+        self, request: ThirdPartyMaterialsQueryRequest, *, limit: int
+    ) -> list[dict]:
+        sql, params = build_pending_export_sql(request, limit=limit)
+        with self:
+            return self.execute_query(sql, params)
 
     def list_export_rows(
         self,

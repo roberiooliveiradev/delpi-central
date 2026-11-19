@@ -128,6 +128,8 @@ export function hasUsefulScope(query: ThirdPartyMaterialsQuery): boolean {
   return Boolean(
     query.product.trim() ||
       query.customerReference.trim() ||
+      query.partnerCode.trim() ||
+      query.status.trim() ||
       query.receiptNumber.trim() ||
       query.returnNumber.trim() ||
       query.issuedFrom.trim() ||
@@ -135,3 +137,35 @@ export function hasUsefulScope(query: ThirdPartyMaterialsQuery): boolean {
       query.onlyWithBalance,
   );
 }
+
+export type PendingSupplierItem = {
+  branch: string;
+  supplier_code: string;
+  supplier_store: string;
+  supplier_name: string;
+  product_code: string;
+  product_description: string;
+  unit: string;
+  shipment_count: number;
+  received_quantity: number;
+  returned_quantity: number;
+  pending_quantity: number;
+};
+
+export type PendingSupplierSummary = {
+  supplier_count: number;
+  product_count: number;
+  shipment_count: number;
+  pending_quantity: number | null;
+  unit: string | null;
+  mixed_units: boolean;
+};
+
+export type PendingSupplierPage = {
+  items: PendingSupplierItem[];
+  summary: PendingSupplierSummary;
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
