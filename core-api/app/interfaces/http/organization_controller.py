@@ -117,6 +117,87 @@ def get_manager_team(registration: str):
         return api_error("organization_team_failed", "Erro ao consultar equipe.", status=500)
 
 
+@admin_hr_identity_bp.route("/identity-directory", methods=["GET"])
+@require_all_permissions(["rbac.manage", "users.manage"])
+@integration_rate_limit(max_requests=30, per_seconds=60, key_prefix="org-identity-directory")
+def get_identity_directory():
+    """All Core accounts + verified RH registration, independent of manager trees.
+
+    Administrative identity reconciliation only. Do NOT use this directory
+    to authorize team access or expand manager-specific reports.
+    """
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            users = uow.users.list_all()
+            if len(users) > 1000:
+                return api_error(
+                    "directory_too_large",
+                    "Diretório excede 1000 contas; paginação é necessária.",
+                    status=422,
+                )
+            allocations = uow.hr_registrations.get_allocated_registrations(
+                {user.id for user in users}
+            )
+            items = [
+                {
+                    "userId": str(user.id),
+                    "name": user.name or "",
+                    "email": user.email or "",
+                    "active": bool(user.active),
+                    "registration": allocations.get(str(user.id)),
+                }
+                for user in users
+            ]
+        items.sort(key=lambda x: (x["name"].casefold(), x["userId"]))
+        return jsonify({
+            "source": "core-api+verified-rh-mappings",
+            "items": items,
+            "total": len(items),
+            "linked": sum(bool(item["registration"]) for item in items),
+            "readOnly": True,
+            "scope": "all_core_accounts",
+            "note": (
+                "Diretório de contas da Minha Delpi, sem filtro de hierarquia. "
+                "Uma associação exige confirmação individual e RH ativo."
+            ),
+        }), 200
+    except Exception:
+        logger.exception("hr_identity_directory_failed")
+        return api_error("internal_error", "Falha ao consultar diretório.", status=500)
+
+
+@admin_hr_identity_bp.route(
+    "/collaborators/<registration>/identity-preview", methods=["GET"]
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+@integration_rate_limit(max_requests=30, per_seconds=60, key_prefix="org-identity-preview")
+def get_collaborator_identity_preview(registration: str):
+    """Fetch exactly one RH person regardless of supervisor or hierarchy."""
+    try:
+        registration = PortalRhOrganizationGateway.validate_registration(registration)
+        person = PortalRhOrganizationGateway().get_collaborator(registration)
+        return jsonify({
+            "registration": person["registration"],
+            "fullName": person["full_name"],
+            "branchCode": person["branch_code"],
+            "active": person["active"],
+            "readOnly": True,
+        }), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except PortalRhManagerNotFound:
+        return api_error("collaborator_not_found", "Matrícula não localizada no RH.", status=404)
+    except PortalRhOrganizationUnauthorized:
+        return api_error("rh_unavailable", "Credencial RH recusada.", status=503)
+    except PortalRhOrganizationContractError:
+        return api_error("rh_contract_error", "Contrato RH inválido.", status=502)
+    except PortalRhOrganizationUnavailable:
+        return api_error("rh_unavailable", "Portal RH indisponível.", status=503)
+    except Exception:
+        logger.exception("hr_identity_preview_failed")
+        return api_error("internal_error", "Falha ao consultar matrícula RH.", status=500)
+
+
 @admin_hr_identity_bp.route(
     "/users/<user_id>/hr-registration", methods=["GET"]
 )
