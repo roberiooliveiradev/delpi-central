@@ -185,14 +185,17 @@ TST01 por ambiente** antes de promover contrato.
     DB-backed via `RepositInDataBase=1`);
   - daemon `:8061`/`/restall` do TST01 (TDS `233:2001`) **descontinuado** —
     não entrega body ao WSRESTFUL nem carrega os objetos Delpi;
-  - produção: `URL_REST@AMBIENTE=1` aponta **intencionalmente** para
-    `…:8701/rest` — o GET de detalhe E14 resolve via amb=1 e só esse
-    daemon funciona; a restall produtiva `231:8061` não tem as rotas
-    publicadas (G8 bloqueado — depende do owner TOTVS). Pin prod
-    `231:8061` ≠ resolução → writes fail-closed por design até o cutover;
-  - `PARAMETROS_MINHADELPI` (AMB 1 e 2) carrega
-    `URL_REST=…:8701/rest` — o `/rest` vai **dentro** da URL_REST,
-    `BASE_PATH` vazio.
+  - produção = `192.168.1.231:8061/restall` — **API `delpi` viva**
+    (deploy Gabriel 26/10; prova 19/11: `GET suppliers/00000101` → 200).
+    `URL_REST@1`=`231:8061` + `BASE_PATH`=`/restall`; pin casa; writes
+    OFF por gates até autorização. A API de fornecedores é **TLPP REST**
+    (`@Post("/delpi/api/v1/suppliers")` + `oRest:`), não WSRESTFUL;
+  - `PARAMETROS_MINHADELPI.AMBIENTE=2` carrega `URL_REST=…:8701/rest`
+    (o `/rest` vai **dentro** da URL_REST; `BASE_PATH` vazio);
+    `AMBIENTE=1` usa origem pura + `BASE_PATH=/restall`;
+  - TLPP REST responde `501` em path sem método anotado (ex.: GET na
+    coleção `/suppliers` — só `@Post` existe) — não confundir com
+    "objeto ausente" (404).
 - Serviço REST = processo/appserver próprio com RPO/ini próprios:
   `[HTTPREST]`, `[HTTPV11]` (URI `/rest`), pool de threads,
   `MAXSTRINGSIZE`. Compilar ≠ carregar — restart relê o RPO.

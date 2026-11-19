@@ -255,15 +255,37 @@ Execução da opção `BASE_PATH` (decisão arquitetural do PO em R4), commit `c
 - **Rollback**: UPDATE reversível de `URL_REST@1` + `DELETE BASE_PATH@1`;
   flags via restore do `.env` + redeploy; código via `git revert`.
 
-## Adendo 2026-11-19 — drift de params corrigido
+## Adendo 2026-11-19 — G8 desbloqueado: API `delpi` está viva em produção
 
-`URL_REST@AMBIENTE=1` estava `http://192.168.1.231:8061` (+`BASE_PATH=/restall`)
-— resíduo do ensaio de cutover R4, nunca concluído (G8 segue bloqueado:
-`delpi` responde **501** e `delpiproduto` **404** na restall produtiva;
-`231:8701` não tem listener). Revertido para o estado canônico registrado
-neste doc: `URL_REST = http://192.168.1.233:8701/rest`, `BASE_PATH` vazio —
-idêntico ao `AMBIENTE=2`. Efeito: GET E14 volta a resolver no daemon
-funcional; writes prod seguem fail-closed por divergência de pin. O cutover
-permanece dependente do owner TOTVS publicar as rotas no REST produtivo —
-porta/serviço alvo pendentes de confirmação (probes externos a `231:8701`
-não respondem).
+Releitura do fio de e-mail Gabriel/Robério/Michael + probes live provaram
+que o deploy produtivo **já aconteceu em 26/10** ("A API do Fornecedor já
+está implementada... aproveitaremos a configuração já existente"):
+
+| Prova live 2026-11-19 (`231:8061/restall`) | Resultado |
+|---|---|
+| `POST /api/oauth2/v1/token` | 201 — credencial `api.delpi` válida |
+| `GET /delpi/api/v1/suppliers/00000101` | **200** — fornecedor real retornado |
+| `GET /delpi/api/v1/suppliers/000001` | 400 — validação própria da rota (exige código+loja) |
+| `GET /delpi/api/v1/suppliers` (coleção) | 501 — esperado: só existe `@Post` na coleção |
+
+Fontes anexos ao e-mail de 27/10 (em `C:\ADVPL\Fontes\anexos\`):
+`custom.delpi.compras.api.Fornecedor.tlpp` (TLPP REST anotado —
+`@Post/@Put/@Get("/delpi/api/v1/suppliers[/:id]")` → `FwLoadModel("MATA020")`
++ `VldData`/`CommitData`), `custom.delpi.framework.api.AlteraSenha.tlpp`,
+`MA020TDOK.prw` (PE de alteração SA2→SA5/AIB), `Campos Obrigatorios.xlsx`,
+`DT - API FORNECEDOR X MINHA DELPI.pdf`.
+
+**Estado final dos params (drift corrigido):**
+
+```text
+AMBIENTE=1 → URL_REST=http://192.168.1.231:8061 + BASE_PATH=/restall
+             (resolve suppliers em /restall/delpi/api/v1/suppliers;
+              pin 231:8061 confere — guarda PASS quando gates ligarem)
+AMBIENTE=2 → URL_REST=http://192.168.1.233:8701/rest + BASE_PATH vazio
+             (daemon dev_rest_minha_delpi — onde vivem delpiproduto/
+              delpiprodforn; :8061 do TST01 descontinuado)
+```
+
+Writes produtivos permanecem OFF por `PROTHEUS_*_ENABLED=false` +
+autorização operacional — mas o bloqueio G8 de infraestrutura **não existe
+mais**: a rota responde e autentica em produção.
