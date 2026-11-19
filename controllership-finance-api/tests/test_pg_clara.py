@@ -1466,3 +1466,52 @@ def test_lnf_only_actor_cannot_write_closing(env):
         )
     assert exc.value.code == "forbidden"
     assert _closing_effect_counts() == before
+
+
+def test_pg_checklist_version_state_resolves_latest_series(
+    env, monkeypatch
+):
+    """RT-002 (regressão runtime): com 2+ séries, `version` resolve
+    canonicamente para a série mais recente — a mesma regra de
+    `get_version`/`submit_version_for_review` (ORDER series_no DESC).
+    Antes, o resolver lia linha arbitrária e o ACT de version_submit
+    reportava outcome_verification_failed após executar de fato."""
+    from controllership_finance_app.application.clara import (
+        consent_channel as cc,
+    )
+
+    checklist = ClosingChecklistRepository()
+    template_id = str(checklist.list_templates()[0]["template_id"])
+    second = checklist.start_checklist_sequence(
+        template_id, actor=ADMIN, reason="rt002 multi-série",
+        confirmation="START_NEW_SEQUENCE",
+        idempotency_key=uuid.uuid4().hex,
+    )
+    assert second["series_no"] >= 2
+    writes = env["writes"]
+    # Série nova cria v1 DRAFT; a v1 da série anterior permanece
+    # histórica. O resolver deve ler a da série mais recente.
+    assert (
+        writes._template_version_state(template_id, 1)["status"]
+        == "DRAFT"
+    )
+    latest = writes._latest_version_state(template_id)
+    assert latest["version"] == 1 and latest["status"] == "DRAFT"
+
+    monkeypatch.setattr(
+        cc.settings, "CLARA_CONSENT_CHANNEL", "conversational"
+    )
+    proposal = writes.prepare(
+        capability="checklist.version_submit",
+        params={"template_id": template_id, "version": 1},
+        actor_sub=ADMIN,
+    )
+    result = writes.commit(
+        handle=proposal["proposal_handle"], actor_sub=ADMIN,
+        confirmation=True,
+    )
+    assert result["executed"] is True
+    assert (
+        writes._template_version_state(template_id, 1)["status"]
+        == "REVIEW"
+    )
