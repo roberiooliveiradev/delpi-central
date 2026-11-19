@@ -653,11 +653,11 @@ static function lExecSB1(oSelf, nOp)
                 "Corpo da requisicao nao e um JSON valido (valtype=" + ;
                 ValType(cJSON) + ",len=" + ;
                 iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a") + ")", ;
-                "dlp-v055-m283-codusr", cErrType)
+                "dlp-v056-m283-codusr", cErrType)
         elseif !lPrepSB1(oDados, nOp, @aSB1, @cErro)
             lRet     := .F.
             cErrType := "client_error"
-            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp-v055-m283-codusr", cErrType)
+            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp-v056-m283-codusr", cErrType)
         else
             // ator real (auditoria AIF_ZCDUSR — padrao Gabriel/MATA020):
             // REST roda como usuario tecnico; sem isto a AIF fica cega.
@@ -666,7 +666,10 @@ static function lExecSB1(oSelf, nOp)
             if ValType(oDados:GetJSonObject("codusr")) == "C"
                 cCodUsr := oDados:GetJSonObject("codusr")
             endif
-            cHoraIni := Time()
+            // Time() retorna HH:MM:SS (8) mas AIF_HORA grava HH:MM (5) —
+            // truncar, senao a janela >= nunca casa na mesma execucao
+            // (bug comprovado TST01 2026-11-19: 0 rows patcheados)
+            cHoraIni := Left(Time(), 5)
 
             MSExecAuto({|x,y| Mata010(x,y)}, aSB1, nOp)
 
@@ -675,11 +678,11 @@ static function lExecSB1(oSelf, nOp)
                 cErrType := "official_validation"
                 aLogAuto := GetAutoGrLog()
                 oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-                    cSanitLog(aLogAuto), "dlp-v055-m283-codusr", cErrType)
+                    cSanitLog(aLogAuto), "dlp-v056-m283-codusr", cErrType)
             else
                 cErrType := ""
                 oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
-                    "Registro integrado com sucesso!", "dlp-v055-m283-codusr", "")
+                    "Registro integrado com sucesso!", "dlp-v056-m283-codusr", "")
 
                 // MATA010 ja grava historico na AIF (AIF_CODPRO = B1_COD);
                 // o patch preenche o ator real nas linhas desta execucao.
@@ -713,7 +716,7 @@ static function lExecSB1(oSelf, nOp)
         nStatus  := 500
         oJsonRet := RETOBJ(oJsonRet, "500", "Erro interno", ;
             iif(Empty(cErroBlk), "Falha nao tratada na integracao", ;
-                SubStr(cErroBlk, 1, 400)), "dlp-v055-m283-codusr", cErrType)
+                SubStr(cErroBlk, 1, 400)), "dlp-v056-m283-codusr", cErrType)
     End sequence
 
     // finalizacao unica: restaura o handler anterior em TODO caminho
@@ -748,7 +751,7 @@ static function lExcBlocked(oSelf)
     oJsonRet := RETOBJ(oJsonRet, "501", "Nao homologado", ;
         "Exclusao de produto nao habilitada: semantica oficial de " + ;
         "exclusao da MATA010 pendente de comprovacao (TO_INVENTORY). " + ;
-        "Nenhuma operacao foi executada no ERP.", "dlp-v055-m283-codusr", "not_homologated")
+        "Nenhuma operacao foi executada no ERP.", "dlp-v056-m283-codusr", "not_homologated")
 
     oSelf:setStatus(501)
     oSelf:setResponse(oJsonRet:toJson())

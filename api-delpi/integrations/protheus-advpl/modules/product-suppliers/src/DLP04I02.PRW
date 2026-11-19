@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.0 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.0-codusr"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.1 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.1-codusr"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -251,7 +251,10 @@ static function lExecSA5(oSelf)
             if ValType(oDados:GetJSonObject("codusr")) == "C"
                 cCodUsr := oDados:GetJSonObject("codusr")
             endif
-            cHoraIni := Time()
+            // Time() retorna HH:MM:SS (8) mas AIF_HORA grava HH:MM (5) —
+            // truncar, senao a janela >= nunca casa na mesma execucao
+            // (bug comprovado TST01 2026-11-19: 0 rows patcheados)
+            cHoraIni := Left(Time(), 5)
 
             // Ciclo MVC oficial — modelo Model-2 'DMATA061'
             // (FWLoadModel comprovado na ViewDef do fonte oficial;
@@ -444,7 +447,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.0-codusr"
+Return "dlp04i02-0.5.1-codusr"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
