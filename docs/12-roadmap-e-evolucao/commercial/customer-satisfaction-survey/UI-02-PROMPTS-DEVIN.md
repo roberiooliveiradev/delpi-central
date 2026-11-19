@@ -10,8 +10,8 @@
 |---|---|---|---|---|
 | **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
 | **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **ACEITO COM RESÍDUOS** — commit `243c463652`, HML em 19/11/2026 (ver §5.8) |
-| **P3a** | 3 (parte do kit) | Números do bloco de título acompanham a quantidade (4 numa linha) no PluginUI | PluginUI: **PROD e HML** (componente genérico) | **A executar** (ver §6) |
-| P3b | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | Comercial: **somente HML** | A executar depois do aceite do P3a (ver §7) |
+| ~~P3a~~ | 3 (parte do kit) | ~~Números do bloco de título acompanham a quantidade~~ | — | **CANCELADO** em 19/11/2026: desnecessário, porque o `CommercialPageHero` usa `density="compact"`, que já põe 4 números numa linha (ver §6.0) |
+| **P3b** | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | Comercial: **somente HML** | **A executar** (ver §7) |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
 | P5 | 5 | Detalhe do participante (4, 16) | **Somente HML** | A gerar |
 | P6 | 6 | Limpeza, celular e tema claro | **Somente HML** | A gerar |
@@ -429,6 +429,17 @@ Qualquer outro arquivo, inclusive no PluginUI e em Clientes, está fora do escop
 
 ## 6. Pacote P3a — Números do bloco de título acompanham a quantidade (PluginUI)
 
+### 6.0 CANCELADO (19/11/2026) — motivo
+
+A declaração do executor mostrou (e o coordenador conferiu) que o I4 descreveu a densidade errada:
+
+- O `CommercialPageHero` aplica `density="compact"` por padrão (`plugins/commercial/src/app/commercialUi.ts:233–237`).
+- No compacto, a grade de números já é `repeat(auto-fit, minmax(8.5rem, 1fr))` (`page-hero.css:301–305`), com `minmax(7.5rem, 1fr)` na faixa intermediária (`:389–391`) e **2 colunas até 768 px** (`:399–401`).
+- Ou seja, **4 números já ficam numa linha no computador e em 2 por linha no tablet e no celular**, sem mudar o kit.
+- A grade fixa de 3 colunas só vale para a densidade confortável, que o Comercial não usa.
+
+**Decisão:** não alterar o PluginUI (eliminar antes de criar). A UI-02 §7 foi ajustada para o comportamento do compacto: 4 por linha no computador e 2 por linha até 768 px, inclusive no celular. O P3b não depende mais deste pacote. O texto abaixo fica só como registro.
+
 **Fase do plano:** 3, parte do kit. **Origem:** inventário I4.
 
 Hoje `.delpi-ui-page-hero__highlights` usa uma grade fixa de 3 colunas (`page-hero.css:112`), que vira 1 coluna abaixo de 900 px. Com os quatro números da campanha, eles ficam **3 + 1**, e a maquete mostra 4 numa linha.
@@ -478,7 +489,7 @@ Fazer a grade de números do `PageHero` **acompanhar a quantidade** quando houve
 
 ## 7. Pacote P3b — Detalhe da campanha: bloco de título, abas no endereço e Participantes (ajustes 4, 6–9 e 15)
 
-**Fase do plano:** 3. **Pré-requisito:** P3a aceito e em HML. **Especificação desta tela:** UI-02 §3.2 (topo comum e aba Participantes), §5, §6 e §7. **Maquete:** tela 3.
+**Fase do plano:** 3. **Pré-requisito:** P2 aceito (o P3a foi cancelado, ver §6.0). **Especificação desta tela:** UI-02 §3.2 (topo comum e aba Participantes), §5, §6 e §7. **Maquete:** tela 3.
 
 ### 7.1 Objetivo
 
@@ -537,7 +548,7 @@ Refazer a composição de `SatisfactionCampaignDetailPage` e `CampaignParticipan
 - Sem coluna Ação nem botões na linha.
 - Sem “Ver resultados” e sem “Respostas por empresa”.
 - Sem cor literal nova; trocar de tema muda só cores.
-- PluginUI sem mudança neste pacote (a mudança dele é o P3a).
+- PluginUI sem mudança neste pacote. Os 4 números usam a grade compacta que já existe (§6.0).
 - A pasta de documentação da Pesquisa fora do commit (`git diff --cached --stat` no relatório).
 
 ### 7.5 Testes mínimos

@@ -173,11 +173,7 @@ Cada tela tem estados distintos para carregando, vazio, vazio por filtro, erro c
 ## 7. Layout, temas e acessibilidade
 
 - **Larguras:** computador 1280 px ou mais; tablet 768 px; celular 360 px. Tabela no computador e cards no celular, igual a Clientes.
-- **Números do bloco de título:**
-  - computador: os quatro numa linha;
-  - abaixo de 900 px: dois por linha;
-  - celular: empilhados (decisão de 12/11/2026).
-  - Hoje a grade do `PageHero` tem três colunas fixas (I4): o ajuste é do PluginUI, no P3, sem mudar páginas com três números.
+- **Números do bloco de título:** a grade compacta do `CommercialPageHero` (`density="compact"`, que já existe no kit) põe os quatro numa linha no computador e dois por linha até 768 px, inclusive no celular. Ajustado em 19/11/2026: a grade compacta substitui o “empilhados no celular” de 12/11, porque dois por linha cabem em 360 px e evitam mudar o kit.
 - **Filtros** no bloco de título em grade que se ajusta sozinha. No celular, um por linha.
 - **Temas:** conferir claro e escuro em todas as telas. Selos, avisos, destaque de marcadores e números só com tokens.
 - **Acessibilidade:**
