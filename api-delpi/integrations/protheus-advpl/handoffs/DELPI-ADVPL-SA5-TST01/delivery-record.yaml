@@ -45,6 +45,6 @@ operation_states:
   READ_ADVPL: "PROVEN_RUNTIME TST01 :8701 0.7.0 — GET 200 data{} completo + 404 correto pos-delete"
   READ_API_DELPI: "PROVEN_CODE (get_supplier_link) — leitura canonica dos consumidores"
   DELETE: "PROVEN_RUNTIME TST01 :8701 0.7.0 — DeleteLine removeu o vinculo; ultimo vinculo continua nao-removivel (a060VldGrv oficial)"
-  known_gap_0_7_1: "identidade FABR/FALOJA vazios (vinculos reais sem fabricante) rejeitava 400 — fixado em 0.7.1, aguarda recompile"
+  known_gap_0_7_1: "RESOLVIDO — GET em vinculo FABR/FALOJA vazios retorna 200 data{} (build 0.7.1 TST01 :8701)"
 
 sensitive: "NUNCA registrar credenciais, tokens ou URIs com segredos neste arquivo."

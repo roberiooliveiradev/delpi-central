@@ -91,3 +91,17 @@ a validação de identidade exigia não-vazio em `A5_FABR`/`A5_FALOJA`.
 Dado real prova que vínculos sem fabricante próprio guardam `''`
 (6/6 vínculos do produto 10080010). Fix: mesma regra do `A5_REFGRD`
 (presença+tipo exigidos, valor pode ser vazio) → build `0.7.1`.
+
+## Confirmação 0.7.1 (TST01 :8701, 2026-11-19)
+
+```text
+GET /consultar — vinculo real 10080010x000098/01 (A5_FABR='' A5_FALOJA='')
+→ 200 | id=dlp04i02-0.7.1 | data{} com todos os campos
+   (antes: 400 client_error indevido — regressao fechada)
+```
+
+CRUD SA5 = PROVEN_RUNTIME integral: CREATE/READ/UPDATE/DELETE + casos
+negativos (404 pos-delete, 400 payload incompleto) + identidade com
+opcionais vazios (REFGRD/FABR/FALOJA). Estado final do produto
+10080010: 6 vinculos originais intactos; registro de teste removido
+pela propria rota (dogfooding do DELETE).
