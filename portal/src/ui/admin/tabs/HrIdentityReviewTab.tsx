@@ -146,7 +146,12 @@ export function HrIdentityReviewTab() {
           `Vínculo confirmado: ${account.name} ↔ ${person.fullName} (${person.registration}).`
         );
       }
-      closeAccount();
+      lookupSequence.current += 1;
+      setAccount(null);
+      setPerson(null);
+      setRegistration("");
+      setModalError(null);
+      setConfirmOpen(false);
       await loadDirectory();
     } catch (err) {
       setModalError(errorMessage(err));
