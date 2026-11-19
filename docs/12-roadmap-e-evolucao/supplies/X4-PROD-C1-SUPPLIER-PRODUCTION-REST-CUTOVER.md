@@ -254,3 +254,16 @@ Execução da opção `BASE_PATH` (decisão arquitetural do PO em R4), commit `c
   operacional distinta.
 - **Rollback**: UPDATE reversível de `URL_REST@1` + `DELETE BASE_PATH@1`;
   flags via restore do `.env` + redeploy; código via `git revert`.
+
+## Adendo 2026-11-19 — drift de params corrigido
+
+`URL_REST@AMBIENTE=1` estava `http://192.168.1.231:8061` (+`BASE_PATH=/restall`)
+— resíduo do ensaio de cutover R4, nunca concluído (G8 segue bloqueado:
+`delpi` responde **501** e `delpiproduto` **404** na restall produtiva;
+`231:8701` não tem listener). Revertido para o estado canônico registrado
+neste doc: `URL_REST = http://192.168.1.233:8701/rest`, `BASE_PATH` vazio —
+idêntico ao `AMBIENTE=2`. Efeito: GET E14 volta a resolver no daemon
+funcional; writes prod seguem fail-closed por divergência de pin. O cutover
+permanece dependente do owner TOTVS publicar as rotas no REST produtivo —
+porta/serviço alvo pendentes de confirmação (probes externos a `231:8701`
+não respondem).

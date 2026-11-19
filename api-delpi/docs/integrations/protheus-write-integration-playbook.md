@@ -16,7 +16,7 @@ de abrir qualquer nova superfície de escrita.
 | Peça | Endereço | Observação |
 |---|---|---|
 | SQL Server TOTVS | `192.168.1.230` | Bases `DELPI` (produção) e `DELPI_TST01` (teste) |
-| REST Protheus **produção** | `http://192.168.1.231:8061` | rotas sob `/restall` |
+| REST Protheus **produção** | `http://192.168.1.231:8061` | rotas sob `/restall`; **sem rotas Delpi publicadas** (G8). Até o cutover, `URL_REST@AMBIENTE=1` resolve intencionalmente `…:8701/rest` (TST) e o pin `231:8061` barra writes por divergência — ver `X4-PROD-C1-SUPPLIER-PRODUCTION-REST-CUTOVER.md` |
 | REST Protheus **teste (TST01)** | `http://192.168.1.233:8701` | rotas sob `/rest`; escreve em `DELPI_TST01`. Reversão 2026-11-19: o daemon `:8061` (`/restall`) do TST01 **não entrega body ao WSRESTFUL** e não carrega os objetos Delpi — descontinuado para integração |
 | Arquivos/log do serviço REST | `192.168.1.232` | deployment Protheus; log lista classes publicadas |
 | Tabela de parâmetros | `PARAMETROS_MINHADELPI` no banco Intranet (`INTRANET_DB_*`, default `IntranetDelpiDev`) | owner ERP/Intranet — nunca editar da api-delpi |
