@@ -9,8 +9,9 @@
 | Pacote | Fases do plano | Conteúdo | Deploy | Estado |
 |---|---|---|---|---|
 | **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
-| **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **Declaração aprovada com ajustes** em 18/11/2026 (ver §5.7) — em execução |
-| P3 | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | **Somente HML** | A gerar |
+| **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **ACEITO COM RESÍDUOS** — commit `243c463652`, HML em 19/11/2026 (ver §5.8) |
+| **P3a** | 3 (parte do kit) | Números do bloco de título acompanham a quantidade (4 numa linha) no PluginUI | PluginUI: **PROD e HML** (componente genérico) | **A executar** (ver §6) |
+| P3b | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | Comercial: **somente HML** | A executar depois do aceite do P3a (ver §7) |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
 | P5 | 5 | Detalhe do participante (4, 16) | **Somente HML** | A gerar |
 | P6 | 6 | Limpeza, celular e tema claro | **Somente HML** | A gerar |
@@ -401,3 +402,163 @@ Qualquer outro arquivo, inclusive no PluginUI e em Clientes, está fora do escop
    - Se o “help coverage gate” mudar de conteúdo por causa das dicas novas, as dicas novas não podem aparecer na lista de falhas.
 6. **Estado da ordenação** só em memória (sem `localStorage`), igual entre tabela e cards. Sem ordenação escolhida, a ordem é a do `filterCampaigns`.
 7. **Commit:** mostrar `git diff --cached --stat` antes do commit e incluir no relatório. A pasta de documentação da Pesquisa não entra neste commit.
+
+### 5.8 Revisão do relatório do P2 (19/11/2026)
+
+**Veredito:** ACCEPT_WITH_RESIDUAL.
+
+**Conferido pelo coordenador:**
+
+- O commit `243c463652` é ancestral de `origin/main` e tem exatamente os 7 arquivos do §5.3.
+- As chaves de preferência são as mesmas de antes (`SatisfactionSurveysPage.tsx:78–80`).
+- A ordenação pura segue as regras (`satisfactionSort.ts`): situação pelo ciclo, nome em `pt-BR`, taxa vazia sempre no fim, sem chave mantém a ordem.
+- Verificador `devin/swe-2-high`: r1 REWORK (cobertura de testes) e r2 **ACCEPT**, sem ordens de correção.
+- As 12 falhas `.mjs` restantes são anteriores ao pacote e estão listadas pelo nome. O teste estrutural da Pesquisa voltou a ficar verde.
+
+**Resíduos:**
+
+| ID | Resíduo | Tratamento |
+|---|---|---|
+| R8 | A barra “Ordenar por” dos cards tem a opção extra “Período”. Na tabela, o período está junto da coluna Campanha / período | Aceito como desvio mínimo. Revisar na homologação final |
+| R9 | **Mais um caso:** o commit `4be7b6948` (TOTVS G2-B2 r2) publicou a versão antiga deste arquivo e desfez a §5.7. Ela foi restaurada em `f803c27d3` | Mesmo problema do R6 e do R7. **Todo pacote, de qualquer frente, precisa conferir `git diff --cached --stat` antes do commit** |
+| R10 | 12 falhas `.mjs` anteriores ao pacote no Comercial (lista no relatório do P2) | Fora desta frente. Avisar os responsáveis |
+| R11 | O solicitante ainda não conferiu a lista em HML | Conferir junto com o P3b |
+
+---
+
+## 6. Pacote P3a — Números do bloco de título acompanham a quantidade (PluginUI)
+
+**Fase do plano:** 3, parte do kit. **Origem:** inventário I4.
+
+Hoje `.delpi-ui-page-hero__highlights` usa uma grade fixa de 3 colunas (`page-hero.css:112`), que vira 1 coluna abaixo de 900 px. Com os quatro números da campanha, eles ficam **3 + 1**, e a maquete mostra 4 numa linha.
+
+### 6.1 Objetivo
+
+Fazer a grade de números do `PageHero` **acompanhar a quantidade** quando houver **4** números, **sem mudar nada** nas páginas que usam 1, 2 ou 3 números. Elas são pelo menos 10 arquivos em `plugins/commercial` e `plugins/controllership-finance`.
+
+### 6.2 Requisitos
+
+| Itens | Computador (> 900 px) | 601–900 px | ≤ 600 px |
+|---|---|---|---|
+| 4 | **4 colunas** | **2 colunas** | 1 coluna |
+| 1, 2, 3 ou 5+ | **igual a hoje** (3 colunas) | **igual a hoje** (1 coluna) | **igual a hoje** |
+
+- Marcar a quantidade no elemento: atributo `data-highlight-count` ou modificador de classe no padrão `delpiUiClass` (declarar qual) e aplicar a regra só para 4.
+- **Proibido** mudar a regra base de 3 colunas ou o `1fr` ≤ 900 px dos outros casos.
+- `density="compact"` e as cores dos temas claro e escuro continuam iguais.
+- O catálogo `/apps/plugin-ui` ganha a variação com 4 números na demo do `PageHero`.
+
+### 6.3 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/plugin-ui/src/components/layout/PageHero.tsx` + teste | Marcar a quantidade |
+| `plugins/plugin-ui/src/styles/page-hero.css` | Regras só para 4 |
+| Demo do `PageHero` no catálogo (`src/catalog/demos/…`) | Variação com 4 |
+| `plugins/plugin-ui/docs/component-catalog.md` | Uma linha sobre o comportamento |
+
+### 6.4 Testes mínimos
+
+1. Com 4 itens, o elemento recebe a marcação; com 1, 2, 3 e 5 itens, não recebe, e as classes ficam idênticas às de hoje.
+2. Teste de contrato do CSS: a regra base (`repeat(3, …)` e `1fr` ≤ 900 px) continua igual. As regras novas só valem com a marcação de 4. Nenhum seletor global, nenhum `!important`.
+3. Testes existentes do `PageHero` verdes sem mudança.
+
+### 6.5 Critérios de aceite
+
+| # | Critério | Evidência |
+|---|---|---|
+| A1 | 4 números numa linha no computador, 2 por linha entre 601 e 900 px, 1 por linha no celular, nos dois temas | Demo do catálogo + capturas |
+| A2 | Nenhuma mudança visual nas páginas com 3 números: Minha Carteira, Clientes, Pedidos em aberto, Controladoria | Capturas antes e depois de pelo menos 2 delas + testes |
+| A3 | Auditorias de §1.3 sem item novo; testes e build do PluginUI verdes | Saídas |
+| A4 | Deploy `plugin-ui` em PROD e HML (§1.4); remote carrega; um MFE sem regressão | Resultado |
+| A5 | Verificador independente aprovado | Veredito sem edição |
+
+---
+
+## 7. Pacote P3b — Detalhe da campanha: bloco de título, abas no endereço e Participantes (ajustes 4, 6–9 e 15)
+
+**Fase do plano:** 3. **Pré-requisito:** P3a aceito e em HML. **Especificação desta tela:** UI-02 §3.2 (topo comum e aba Participantes), §5, §6 e §7. **Maquete:** tela 3.
+
+### 7.1 Objetivo
+
+Refazer a composição de `SatisfactionCampaignDetailPage` e `CampaignParticipantsTab` para ficarem iguais à tela 3 da maquete, nos dois temas.
+
+- Inclusão de clientes, situação, navegação para o participante e chamadas de API ficam iguais.
+- As abas Mensagem padrão e Dados ficam para o P4: neste pacote só passam a abrir pelo endereço.
+
+### 7.2 Entregáveis
+
+1. **Bloco de título** (UI-02 §3.2):
+   - trilha;
+   - etiqueta “MARKETING · PESQUISA DE SATISFAÇÃO”;
+   - nome da campanha como título;
+   - “Janela de resposta: {início} → {término}”;
+   - em `actions`: “Atualizado em” (mesma composição e formatação do P2, `formatSurveyUpdatedAt` e `updatedAt`), selo de situação e Atualizar;
+   - `highlights` com PARTICIPANTES, RESPONDIDAS, PENDENTES e TAXA DE RESPOSTA, vindos dos números que a página já recebe da API, com “—” enquanto carrega.
+2. **Remover** a grade `cm-satisfaction-metrics` da aba (e as regras sem uso em `satisfaction.css`) e o aviso de escopo parcial do detalhe. A chave `list.partialScope` **sai do conteúdo** agora, se nada mais a usar.
+3. **Aba no endereço (D1):**
+   - função pura `parseCampaignTab(search)` / `buildCampaignTabSearch(tab)` no molde `parse…DeepLink`/`build…Search` (I5), aceitando `participants`, `message` e `data`;
+   - sem valor ou com valor inválido, abre `participants`;
+   - trocar de aba usa `navigatePluginPath` com **push**, para o “voltar” do navegador funcionar;
+   - abrir uma URL com `?tab=` abre a aba certa;
+   - voltar e avançar no navegador atualizam a aba;
+   - a trilha e os links para o participante preservam o caminho da campanha.
+4. **Aba Participantes:**
+   - “Adicionar clientes” recolhível sem mudança de fluxo;
+   - **um único quadro “Participantes”**, com os filtros Situação e Pesquisar participante **dentro**, de preferência por `toolbarFilters` e `embedded` da Section, se ficar igual à maquete (declarar a escolha);
+   - barra da tabela;
+   - **três colunas**:
+     - Empresa: avatar + nome + “Código/loja …” com zeros preservados;
+     - Contato: nome em cima e e-mail embaixo; “Sem contato” em tom secundário;
+     - Situação.
+   - todas `sortable` (Empresa pelo nome em `pt-BR`; Contato pelo nome, com vazio no fim; Situação Pendente → Respondida);
+   - linha e card abrem o participante;
+   - paginação.
+5. **Textos** (UI-02 §6): `detail.metricParticipants` = “Participantes”, `detail.metricResponseRate` = “Taxa de resposta” e a etiqueta, reaproveitando `list.eyebrow` ou uma chave comum. Dicas novas em `CM_HELP.satisfactionSurveys`.
+
+### 7.3 Escopo de arquivos permitido
+
+| Arquivo | Ação |
+|---|---|
+| `plugins/commercial/src/features/satisfaction-surveys/SatisfactionCampaignDetailPage.tsx`, `CampaignParticipantsTab.tsx` | Composição |
+| Arquivo novo `campaignTabDeepLink.ts` na pasta da Pesquisa (ou em `plugins/commercial/src/utils/`, seguindo o molde I5; declarar) | Aba no endereço |
+| `satisfactionSort.ts` (participantes), `satisfactionDates.ts` | Funções puras |
+| `plugins/commercial/src/content/satisfactionSurveysContent.ts`, `helpTooltips.ts` | Textos e dicas |
+| `plugins/commercial/src/styles/satisfaction.css` | **Só remover** regras sem uso |
+| `satisfactionSurveys.test.ts`, `satisfactionSurveys.structural.test.mjs` | Testes |
+
+`app/pluginRoutes.ts` só pode mudar se a rota atual não aceitar `?tab=`. Nesse caso, parar e declarar.
+
+### 7.4 Invariantes
+
+- Mesmas chamadas de API, inclusão em lote e avisos flutuantes. Campanha encerrada continua sem inclusão.
+- Preferências da tabela de participantes com as mesmas chaves.
+- Sem coluna Ação nem botões na linha.
+- Sem “Ver resultados” e sem “Respostas por empresa”.
+- Sem cor literal nova; trocar de tema muda só cores.
+- PluginUI sem mudança neste pacote (a mudança dele é o P3a).
+- A pasta de documentação da Pesquisa fora do commit (`git diff --cached --stat` no relatório).
+
+### 7.5 Testes mínimos
+
+1. `parseCampaignTab` e `buildCampaignTabSearch`: os três valores, vazio, inválido, e preservação de outros parâmetros, se houver.
+2. Abrir com `?tab=message` mostra a aba Mensagem; trocar de aba grava no endereço com push.
+3. Os quatro números aparecem no bloco de título com os valores da API; “—” durante a carga; a grade antiga não existe mais.
+4. Sem o aviso de escopo parcial no detalhe; a chave foi removida, se não tiver mais uso.
+5. Um único quadro “Participantes” com os filtros dentro.
+6. Contato em duas linhas e “Sem contato”.
+7. Ordenação de cada coluna dos participantes.
+8. Linha abre o participante; inclusão de clientes com o mesmo comportamento.
+9. Lista de falhas `.mjs` antes e depois pelo nome, sem falha nova.
+
+### 7.6 Critérios de aceite
+
+| # | Critério | Evidência |
+|---|---|---|
+| A1 | Tela 3 da maquete reproduzida em 1280, 768 e 360 px, nos dois temas | Capturas em HML |
+| A2 | Ajustes 4, 6–9 e 15 entregues | Testes + capturas |
+| A3 | Atualizar a página e o “voltar” do navegador mantêm a aba | Roteiro em HML |
+| A4 | Comportamento preservado na inclusão, na situação e na navegação | Testes existentes verdes + roteiro em HML **sem enviar respostas** |
+| A5 | Escopo e commit só dos arquivos do §7.3 | `git diff --cached --stat` |
+| A6 | Deploy **somente HML** (`commercial`); risco de PROD do I7 registrado | Resultado |
+| A7 | Verificador independente aprovado | Veredito sem edição |
