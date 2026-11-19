@@ -102,6 +102,36 @@ Env relevantes:
 
 Ver detalhes e regra 8/9 em `MYWEG-NEEDS-PROTHEUS-E4.md`.
 
+## Coletas com materiais não identificados (correção 19/11/2026)
+
+O publicador segrega **somente** linhas sem qualquer código ou nome de material
+(`material_weg_original`, `material_weg_tratado`, `codigo_referencia_weg`
+e `codigo_produto_delpi` vazios), desde que os demais campos operacionais
+possam ser validados. Linhas sem referência DELPI, mas com material WEG
+conhecido, continuam no matching SB1 normal.
+
+- A quantidade dessas linhas nunca entra na Demanda por produto nem na cobertura.
+- O lote aceito persiste `source_files_json.quality` com contagens,
+  quantidades UN/MI e linhas de origem excluídas; os quatro hashes dos artefatos
+  permanecem intactos e os arquivos CSV/XLSX não são modificados.
+- O endpoint `GET /myweg/need-batches/latest` expõe `quality` a usuários
+  autorizados da filial 02. O sino compartilhado no PCP apresenta o alerta.
+- A Core recebe uma notificação best-effort `production_control_myweg_import_warnings`
+  após o commit do lote, uma única vez na criação (reenvio idempotente não dispara).
+- Erros de unidade (ex.: `MIL`), formato, integridade, duplicidade e lote
+  totalmente sem material continuam bloqueantes.
+- O JSON do publicador inclui `quality` quando houver segregação e registra
+  `myweg_pending_partial` com identificador da coleta e totais.
+
+**Recuperação de 19/11:** após aprovar e implantar os serviços afetados,
+verificar primeiro o dry-run de `collection_id`
+`20261119_080020_20261119_050019_EXPORT_20261119_050017`;
+verificar os registros aceitos e os dois excluídos (linhas de origem
+115/171, total 380 UN). Não editar os arquivos brutos, redefinir watermark,
+rodar `--include-historical` nem publicar lotes históricos em massa.
+A publicação real e o matching SB1 são operações distintas e devem ter
+read-back separado. Esta documentação não afirma recuperação produtiva concluída.
+
 ## Observabilidade
 
 JSON do pending inclui por item:
