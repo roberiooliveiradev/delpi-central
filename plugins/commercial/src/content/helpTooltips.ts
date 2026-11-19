@@ -835,6 +835,19 @@ export const CM_HELP = {
     colResponded: "Participantes que já enviaram a resposta definitiva.",
     colResponseRate:
       "Percentual oficial respondidas/participantes, calculado pela API. Sem participantes, exibe —.",
+    updatedAt:
+      "Hora da última leitura feita com sucesso. «Atualizando…» aparece enquanto a lista recarrega.",
+    campaignsTable:
+      "Campanhas filtradas acima. Clique num cabeçalho para ordenar; a linha inteira abre a campanha.",
+    layoutToggle:
+      "Alterna entre tabela densa e cards. A preferência fica salva neste navegador.",
+    tableColumns:
+      "Escolha e reordene as colunas visíveis da tabela. A preferência fica salva neste navegador.",
+    pageSize:
+      "Quantidade de campanhas por página. Ao trocar, a lista volta para a página 1.",
+    sortBy:
+      "Critério de ordenação dos cards. Nome usa ordem alfabética; Situação segue o ciclo Agendada → Aberta → Encerrada; taxa vazia fica sempre por último.",
+    sortDirection: "Crescente ou decrescente sobre o critério escolhido.",
     createName: "Nome interno da campanha, por exemplo «Pesquisa de satisfação 2026».",
     createStartsAt: "Quando o formulário passa a aceitar respostas (horário de Brasília).",
     createEndsAt: "Quando o formulário deixa de aceitar respostas (horário de Brasília).",

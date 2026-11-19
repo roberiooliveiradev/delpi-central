@@ -4,8 +4,12 @@
  */
 export const SATISFACTION_CONTENT = {
   breadcrumbRoot: "Pesquisa de Satisfação",
+  /** «Atualizado em dd/mm/aaaa, hh:mm» — recebe a data já formatada. */
+  updatedAt: (formatted: string) => `Atualizado em ${formatted}`,
+  updating: "Atualizando…",
   list: {
     title: "Configuração das Pesquisas",
+    eyebrow: "MARKETING · PESQUISA DE SATISFAÇÃO",
     description:
       "Campanhas, participantes e convites da Pesquisa de Satisfação de Clientes. Os convites são copiados e enviados por você — o Portal não dispara mensagens.",
     partialScope:
@@ -25,6 +29,23 @@ export const SATISFACTION_CONTENT = {
     colResponded: "Respostas",
     colResponseRate: "Taxa de resposta",
     responseRateUnavailable: "—",
+    cardPeriod: "Período",
+    recordsCount: (total: number) => `${total.toLocaleString("pt-BR")} registro(s)`,
+    layoutToggle: "Modo de visualização",
+    layoutTable: "Tabela",
+    layoutCards: "Cards",
+    pageSize: "Itens por página",
+    columnsMenu: "Colunas",
+    columnsMenuTitle: "Colunas da tabela",
+    columnsMenuReset: "Restaurar padrão",
+    columnAriaLabel: (label: string) => `Exibir coluna ${label}`,
+    columnReorderAriaLabel: (label: string) => `Reordenar coluna ${label}`,
+    sortBy: "Ordenar por",
+    sortDirection: "Direção da ordenação",
+    sortAsc: "Crescente",
+    sortDesc: "Decrescente",
+    sortName: "Campanha",
+    sortPeriod: "Período",
     loading: "Carregando campanhas…",
     loadError: "Não foi possível carregar as campanhas.",
     emptyTitle: "Nenhuma campanha",
