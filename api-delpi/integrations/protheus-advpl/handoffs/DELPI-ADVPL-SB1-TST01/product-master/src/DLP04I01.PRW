@@ -620,8 +620,17 @@ static function lExecSB1(oSelf, nOp)
         if !oDados:FromJson(cJSON)
             lRet     := .F.
             cErrType := "client_error"
+            // diagnostico auto-contido: len/valtype do body recebido —
+            // distingue daemon que nao entrega body (len=0/valtype!=C)
+            // de conteudo corrompido. Sem conteudo do body por seguranca.
+            ConOut("DLP04I01 body: FromJson falhou; valtype=" + ;
+                ValType(cJSON) + " len=" + ;
+                iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a"))
             oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-                "Corpo da requisicao nao e um JSON valido", "dlp", cErrType)
+                "Corpo da requisicao nao e um JSON valido (valtype=" + ;
+                ValType(cJSON) + ",len=" + ;
+                iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a") + ")", ;
+                "dlp-v052-gc", cErrType)
         elseif !lPrepSB1(oDados, nOp, @aSB1, @cErro)
             lRet     := .F.
             cErrType := "client_error"
