@@ -365,6 +365,82 @@ def test_list_servers_filtered_scan_survives_max_length_descriptions():
     asyncio.run(scenario())
 
 
+def test_list_servers_safe_pages_survive_json_escaped_control_descriptions():
+    """Safe page size must cover JSON \\uXXXX escapes (6 bytes/code point), not only UTF-8."""
+    # Portal accepts control chars in descriptions; JSON often serializes as \u0001.
+    escaped_description = "\x01" * 4000
+    assert len(escaped_description) == 4000
+    assert len(json.dumps(escaped_description)) - 2 == 24_000  # six ASCII bytes each
+
+    inventory = [
+        _rich_server(
+            i,
+            operating_system="Windows Server 2022",
+            description=escaped_description,
+        )
+        for i in range(36)
+    ]
+
+    # Previous UTF-8-only bound (12) still overflows with JSON escapes.
+    legacy = json.dumps(_envelope({
+        "items": inventory[:12],
+        "total": len(inventory),
+        "page": 1,
+        "page_size": 12,
+    })).encode("utf-8")
+    assert len(legacy) > MAX_UPSTREAM_BYTES
+
+    safe_body = json.dumps(_envelope({
+        "items": inventory[:_SAFE_INVENTORY_UPSTREAM_PAGE_SIZE],
+        "total": len(inventory),
+        "page": 1,
+        "page_size": _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE,
+    })).encode("utf-8")
+    assert len(safe_body) <= MAX_UPSTREAM_BYTES
+    assert _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE <= 10
+
+    requested: list[int] = []
+
+    def respond(request: httpx.Request):
+        page = int(request.url.params.get("page", "1"))
+        page_size = int(request.url.params.get("page_size", "25"))
+        requested.append(page_size)
+        start = (page - 1) * page_size
+        end = start + page_size
+        body = json.dumps(_envelope({
+            "items": inventory[start:end],
+            "total": len(inventory),
+            "page": page,
+            "page_size": page_size,
+        })).encode("utf-8")
+        assert len(body) <= MAX_UPSTREAM_BYTES
+        return httpx.Response(
+            200,
+            content=body,
+            headers={"content-type": "application/json"},
+        )
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+        page1 = await list_servers(
+            reader, "Bearer test-user-token", os_family="windows", page=1, page_size=25,
+        )
+        assert page1["total"] == 36
+        assert len(page1["items"]) == 25
+        assert all(size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE for size in requested)
+        # Full walk uses multiple safe pages (36 / 9 = 4).
+        assert len(requested) >= 4
+
+        page2 = await list_servers(
+            reader, "Bearer test-user-token", os_family="windows", page=2, page_size=25,
+        )
+        assert page2["total"] == 36
+        assert len(page2["items"]) == 11
+        assert page2["items"][-1]["hostname"] == "win-035.delpi.local"
+
+    asyncio.run(scenario())
+
+
 def test_get_infrastructure_health_scans_filtered_inventory_once():
     """os_family consolidation must not re-walk the full inventory per local page."""
     max_servers = 50

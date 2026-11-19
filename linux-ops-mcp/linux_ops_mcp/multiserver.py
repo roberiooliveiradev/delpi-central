@@ -8,10 +8,12 @@ from typing import Any
 from .diagnosis import analyze_observation, classify_os_family
 from .reader import MAX_UPSTREAM_BYTES, ItPortalReader, ReadError, Settings, require_uuid
 
-# IT Portal counts description length in Unicode code points (max 4000), while
-# MAX_UPSTREAM_BYTES counts UTF-8 bytes. Worst case: 4 bytes/code point.
+# IT Portal counts description length in Unicode code points (max 4000).
+# Upstream HTTP bodies are measured in bytes (MAX_UPSTREAM_BYTES). JSON may
+# escape a single code point as "\\uXXXX" (6 ASCII bytes) — worse than raw
+# UTF-8 (up to 4 bytes). Bound pages on that JSON-escape worst case.
 _SERVER_DESCRIPTION_MAX_CHARS = 4000
-_UTF8_MAX_BYTES_PER_CHAR = 4
+_JSON_ESCAPE_MAX_BYTES_PER_CHAR = 6  # e.g. "\u0001"
 _SERVER_ROW_OVERHEAD_BYTES = 4_096  # other ServerOut fields + JSON punctuation
 _LIST_ENVELOPE_OVERHEAD_BYTES = 1_024
 _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE = max(
@@ -20,7 +22,7 @@ _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE = max(
         25,
         (MAX_UPSTREAM_BYTES - _LIST_ENVELOPE_OVERHEAD_BYTES)
         // (
-            _SERVER_DESCRIPTION_MAX_CHARS * _UTF8_MAX_BYTES_PER_CHAR
+            _SERVER_DESCRIPTION_MAX_CHARS * _JSON_ESCAPE_MAX_BYTES_PER_CHAR
             + _SERVER_ROW_OVERHEAD_BYTES
         ),
     ),
