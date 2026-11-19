@@ -31,6 +31,7 @@ from app.composition.reports_composer import (
     build_list_report_runs_use_case,
     build_list_shortage_item_notes_use_case,
     build_preview_safety_stock_shortage_30d_use_case,
+    build_preview_safety_stock_below_daily_use_case,
     build_preview_management_revenue_monthly_use_case,
     build_process_due_report_schedules_use_case,
     build_replace_report_recipients_use_case,
@@ -398,6 +399,37 @@ def list_report_providers():
         log_error(f"Erro inesperado ao listar providers Reports: {exc}")
         return error_response(
             "Erro interno ao listar providers de relatório.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/providers/safety_stock_below_daily/preview",
+    operation_id="preview_report_provider_safety_stock_below_daily",
+)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
+def preview_safety_stock_below_daily(
+    branch: Annotated[str, Query(pattern="^(01|02)$")],
+):
+    """Amostra completa da filial selecionada, sem mesclar estoques de SC e ES."""
+    denied = branch_access_error(branch)
+    if denied:
+        return denied
+    try:
+        data = build_preview_safety_stock_below_daily_use_case().execute(
+            {"branch": branch}
+        )
+        return api_delpi_success(
+            data,
+            operation_id="preview_report_provider_safety_stock_below_daily",
+            message="Alertas abaixo do estoque de segurança consultados com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro no preview Reports estoque segurança diário: {exc}")
+        return error_response(
+            "Não foi possível consultar o alerta de estoque de segurança.",
             status_code=500,
         )
 

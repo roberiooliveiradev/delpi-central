@@ -1375,6 +1375,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_report_definition": RouteContract("report_definition", "scalar"),
     "list_report_runs": RouteContract("report_run", "paged_list"),
     "list_report_providers": RouteContract("report_provider", "paged_list"),
+    "preview_report_provider_safety_stock_below_daily": RouteContract(
+        "report_dataset", "paged_list"
+    ),
     "preview_report_provider_safety_stock_shortage_30d": RouteContract(
         "report_dataset",
         "paged_list",

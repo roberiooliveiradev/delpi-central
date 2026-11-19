@@ -109,6 +109,12 @@ class UpsertReportScheduleUseCase:
         definition = self._repository.get_definition(definition_id)
         if definition is None:
             raise LookupError("Definição de relatório não encontrada.")
+        if definition.get("providerKey") == "safety_stock_below_daily":
+            if schedule_kind.strip().lower() != "weekdays":
+                raise ValueError(
+                    "O alerta abaixo do estoque de segurança deve ser "
+                    "agendado somente de segunda a sexta (weekdays)."
+                )
         if definition.get("providerKey") == "team_direct_app_opens_weekly":
             if schedule_kind.strip().lower() != "weekly" or weekday != 0:
                 raise ValueError(
