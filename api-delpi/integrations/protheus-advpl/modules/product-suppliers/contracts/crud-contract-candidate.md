@@ -28,8 +28,12 @@ CREATE/PUT body — identidade + atributos editáveis:
  "A5_FALOJA":"…","A5_REFGRD":"…","A5_NOMEFOR":"…","A5_CODPRF":"…",
  "A5_DESCPRF":"…"}
 ```
-Respostas no padrão `RETOBJ` `{code,message,detailedMessage,id}` +
-HTTP 200/400 (erros oficiais via log do modelo, análogo a GetAutoGrLog —
+Respostas no padrão `RETOBJ` `{code,message,detailedMessage,id,errorType}` +
+HTTP 200/400/500 — 4xx = rejeição determinística, 5xx = exceção interna ou
+commit ambíguo (indeterminado). `id` carrega a tag de versão do fonte
+(`dlp04i02-<versão>`). `errorType` segue o enum do sibling:
+`client_error | official_validation | server_error | not_homologated`
+(erros oficiais via log do modelo, análogo a GetAutoGrLog —
 `VALIDAR NO TST01` a API de erro do MPFormModel).
 
 ## Regras de validação de entrada (fachada)

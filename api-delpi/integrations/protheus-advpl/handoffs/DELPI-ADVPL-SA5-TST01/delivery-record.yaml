@@ -1,0 +1,40 @@
+# Registro de entrega — DELPI-ADVPL-SA5-TST01-v0.4.1
+# Estados: PREPARED -> SENT -> RECEIVED -> COMPILED -> TESTED -> APPROVED
+
+delivery:
+  package_id: "DELPI-ADVPL-SA5-TST01-v0.4.1"
+  package_version: "0.4.1"
+  layout: "unzipped — conteudo por modulo; sem zip (decisao 2026-11-19)"
+  source_repository: "roberiooliveiradev/delpi-central"
+  source_commit: "WORKING_TREE (aguardando commit — packaging exige SHA aprovado)"
+  modules: [product-suppliers]
+  target_environment: "TST01"
+  package_status: "COMPILATION_REVIEW_CANDIDATE"
+  supersedes: "DELPI-ADVPL-SA5-TST01-v0.4.0 (compilado no ambiente auxiliar :8061 — nao usar)"
+
+tracking:
+  status: PREPARED
+  events:
+    - state: PREPARED
+      at: "2026-11-19"
+      by: "Devin — Especialista TOTVS (EVA-TOTVS-SA5-DLP04I02-V041-DIAG-HARDENING-01)"
+      note: "Correcao de diagnostico fail-closed: fim do overwrite da msg especifica pela generica; distincao body-vazio x JSON-invalido + ConOut len/valtype; 500 em excecao/commit ambiguo; errorType; id='dlp04i02-0.4.1' em toda resposta p/ identificacao do objeto no RPO. 31 estaticos verdes; runtime nao executado."
+
+evidence_tst01_2026_11_19:
+  compiled_env: "ambiente auxiliar 'TESTE DELPI COMPILACAO' (TDS 233:2001) — REST proprio em :8061/restall"
+  urns_registered: "4/4 vivas no :8061; PUT/GET/DELETE responderam 501 do contrato (fonte v0.4.0 comprovado)"
+  functional_blocker: "GetContent()/FromJson sem body no REST do :8061 (sibling delpiproduto rejeitou JSON valido igual) — validacao funcional exige REST sao"
+  target_rest: "REST alvo da api-delpi = :8701 (RPO via TDS 233:2002, AMBIENTE=2)"
+
+references:
+  manifest_path: "(nao gerado — packaging requer commit; fonte espelha modules/product-suppliers @working tree)"
+  compilation_checklist: "product-suppliers/contracts/tst01-compilation-checklist.md"
+
+operation_states:
+  CREATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (POST incluir)"
+  UPDATE: "BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING (PUT 501)"
+  READ_ADVPL: "TO_INVENTORY (GET 501)"
+  READ_API_DELPI: "PROVEN_CODE (get_supplier_link)"
+  DELETE: "BLOCKED / ERP_DECISION_REQUIRED (DELETE 501)"
+
+sensitive: "NUNCA registrar credenciais, tokens ou URIs com segredos neste arquivo."

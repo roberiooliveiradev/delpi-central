@@ -15,5 +15,26 @@ vida do fonte (`SOURCE_CANDIDATE … PRD_PUBLISHED`, ver README do workspace).
 - `templates/compilation-checklist.md` — checklist que a equipe ERP preenche na
   compilação/homologação.
 
-Preenchidos, os registros vivem aqui por entrega (`YYYY-MM-DD-<package_id>/`),
-junto do SHA-256 do ZIP — **o ZIP em si não é commitado**.
+Os registros vivem aqui por entrega — **uma pasta estável por pacote**
+(`DELPI-ADVPL-<TAG>-<AMBIENTE>/`), sempre com a versão mais recente.
+Histórico de versões fica no **Git**, não em pastas datadas.
+
+## Layout (desde 2026-11-19 — sem ZIP)
+
+```text
+DELPI-ADVPL-<TAG>-<AMBIENTE>/
+  delivery-record.yaml
+  <package_id>.manifest.json      (quando gerado por packaging/package.py)
+  <module-id>/
+    README.md
+    contracts/*
+    src/<FONTE>.PRW
+```
+
+O `.PRW` que a equipe ERP compila sai direto de `<module-id>/src/`. Não
+trabalhamos com `.zip` (o gerador `packaging/package.py` continua existindo
+e produz manifest+ZIP determinísticos se um dia for necessário provar
+integridade por hash).
+
+Versões anteriores de uma entrega: `git log -- <pasta>` / histórico do
+`delivery-record.yaml` (campo `package_version`).

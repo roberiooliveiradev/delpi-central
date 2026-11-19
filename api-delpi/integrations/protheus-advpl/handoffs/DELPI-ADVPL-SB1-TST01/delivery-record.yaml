@@ -9,6 +9,7 @@ delivery:
   source_commit: "2ca234a960"
   modules: [product-master]
   target_environment: "TST01"
+  layout: "unzipped — conteudo por modulo; zip removido em 2026-11-19"
   package_status: "COMPILATION_REVIEW_CANDIDATE"
   supersedes: "DELPI-ADVPL-SB1-TST01-v0.5.0 (fonte pre-review — nao compilar)"
 
@@ -21,7 +22,7 @@ tracking:
       note: "Revisao independente: 9 defeitos corrigidos (data vazia D, numerico canonico, read-back full-rep Decimal, ASCII, Begin Sequence). Verifier ACCEPT_WITH_RESIDUAL r2; 41 estaticos + 39 pytest do escopo verdes; runtime nao executado."
 
 references:
-  manifest_path: "handoffs/2026-11-19-DELPI-ADVPL-SB1-TST01-v0.5.1/DELPI-ADVPL-SB1-TST01-v0.5.1.manifest.json"
+  manifest_path: "handoffs/DELPI-ADVPL-SB1-TST01/DELPI-ADVPL-SB1-TST01-v0.5.1.manifest.json"
   erp_source_refs:
     - {repo: Delpi-ti/protheus-erp, branch: master, sha: UPSTREAM_ACCESS_BLOCKED, path: "04. Estoque/DLP04I01.PRW", blob_sha: cdb68b0487222823a96162c0e493e442648e21f7}
   compilation_checklist: "modules/product-master/contracts/official-limitations.md (secao 4 — checklist TST01, item 12b p/ data vazia)"

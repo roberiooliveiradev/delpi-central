@@ -2,7 +2,27 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
+   VERSAO: 0.4.1 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.4.1"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
+   EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
+     - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
+       (prova de publicacao da classe);
+     - POST retornou mensagem generica para QUALQUER body — inclusive
+       JSON valido — porque a resposta final sobrescrevia a mensagem
+       especifica de cada ramo (corrigido nesta versao);
+     - o sibling SB1 no MESMO ambiente tambem rejeitou JSON valido como
+       "nao e um JSON valido" => GetContent()/FromJson sem body no
+       runtime daquele ambiente; validacao funcional exige o REST sao.
+   MUDANCAS 0.4.1 (diagnostico fail-closed, sem alterar contrato):
+     - distincao "body vazio/indisponivel" x "JSON invalido" (evidencia se
+       o corpo chega ao handler — a falha do ambiente auxiliar);
+     - mensagem especifica de cada rejeicao preservada ate a resposta
+       (fim do overwrite generico);
+     - status 500 em excecao interna e em commit ambiguo (4xx = rejeicao
+       deterministica; 5xx = resultado indeterminado);
+     - campo errorType na resposta (paridade com o contrato do sibling);
+     - ConOut com valtype/len do body na falha de parse (sem conteudo).
 
    PROVENIENCIA:
      modelo oficial: Delpi-ti/protheus-erp @ master — "73. CRM/Dmata061.prx"
@@ -174,6 +194,9 @@ static function lExecSA5(oSelf)
     Local cErro      := ""
     Local cErroBlk   := ""
     Local cErroLog   := ""
+    Local cErrType   := "client_error"
+    Local nStatus    := 400
+    Local cJSON      := ""
     Local aMiss      := {}
     Local aIdent     := aSA5Ident()
     Local aAttr      := aSA5Attrs()
@@ -189,13 +212,22 @@ static function lExecSA5(oSelf)
 
     Begin Sequence
 
-        if !oDados:FromJson(oSelf:GetContent())
+        // body primeiro: "vazio/indisponivel" e "JSON invalido" sao
+        // diagnosticos diferentes — o primeiro prova que o runtime nao
+        // entregou o corpo (falha de ambiente), o segundo que chegou.
+        cJSON := oSelf:GetContent()
+
+        if ValType(cJSON) <> "C" .or. Empty(cJSON)
             lRet := .F.
-            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-                "Corpo da requisicao nao e um JSON valido", "dlp")
+            cErro := "Corpo da requisicao vazio ou indisponivel no handler."
+            ConOut("DLP04I02 body: valtype=" + ValType(cJSON) + ;
+                " len=" + cValToChar(iif(ValType(cJSON) == "C", Len(cJSON), -1)))
+        elseif !oDados:FromJson(cJSON)
+            lRet := .F.
+            cErro := "Corpo da requisicao nao e um JSON valido"
+            ConOut("DLP04I02 body: FromJson falhou; len=" + cValToChar(Len(cJSON)))
         elseif !lPrepSA5(oDados, @aMiss, @cErro)
             lRet := .F.
-            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp")
         else
             // Ciclo MVC oficial — modelo Model-2 'DMATA061'
             // (FWLoadModel comprovado na ViewDef do fonte oficial;
@@ -222,7 +254,8 @@ static function lExecSA5(oSelf)
             next nI
 
             if !oModel:VldData()
-                lRet := .F.
+                lRet     := .F.
+                cErrType := "official_validation"
                 // detalhe oficial do modelo NAO vai ao consumidor —
                 // conteudo nao comprovado como seguro; fica no log
                 cErroLog := lModelErr(oModel, cErroLog)
@@ -233,12 +266,15 @@ static function lExecSA5(oSelf)
                 // PERSISTENCE_CONFIRMED — exige retorno logico .T.
                 xCommit := oModel:CommitData()
                 if ValType(xCommit) <> "L"
-                    lRet := .F.
+                    lRet     := .F.
+                    cErrType := "server_error"
+                    nStatus  := 500
                     cErro := "Resultado ambiguo do commit do modelo " + ;
                         "DMATA061 — integracao nao confirmada; verificar " + ;
                         "o vinculo antes de repetir (VALIDAR NO TST01)."
                 elseif !xCommit
-                    lRet := .F.
+                    lRet     := .F.
+                    cErrType := "official_validation"
                     cErroLog := lModelErr(oModel, cErroLog)
                     cErro := "Persistencia rejeitada pelo modelo oficial " + ;
                         "DMATA061 (detalhe tecnico no log do AppServer)."
@@ -248,9 +284,10 @@ static function lExecSA5(oSelf)
 
     Recover
         ErrorBlock(oException)
-        lRet := .F.
-        oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-            "Falha interna na integracao Produto x Fornecedor.", "dlp")
+        lRet     := .F.
+        cErrType := "server_error"
+        nStatus  := 500
+        cErro    := "Falha interna na integracao Produto x Fornecedor."
     End sequence
 
     // finalizacao unica: restaura o handler anterior em todo caminho;
@@ -270,17 +307,19 @@ static function lExecSA5(oSelf)
         ConOut("DLP04I02 model: " + cErroLog)
     endif
 
+    // resposta unica no fim — a mensagem especifica de cada ramo chega
+    // ao consumidor; a generica so cobre o caso sem cErro preenchido
     if lRet
         oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
             "Vinculo aceito pelo modelo oficial DMATA061 " + ;
-            "(commit reconhecido; confirmacao final via read-back governado).", "dlp")
+            "(commit reconhecido; confirmacao final via read-back governado).", cVerTag(), "")
         oSelf:setStatus(200)
     else
         if Empty(cErro)
             cErro := "Operacao rejeitada pela integracao Produto x Fornecedor."
         endif
-        oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp")
-        oSelf:setStatus(400)
+        oJsonRet := RETOBJ(oJsonRet, cValToChar(nStatus), "Erro", cErro, cVerTag(), cErrType)
+        oSelf:setStatus(nStatus)
     endif
     oSelf:setResponse(oJsonRet:toJson())
 
@@ -311,7 +350,7 @@ WSMETHOD PUT sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
     Self:setStatus(501)
     Self:setResponse(RETOBJ(oJsonRet, "501", "Nao implementado", ;
         "Alteracao SA5 = CONTRACT_CANDIDATE: carga oficial do vinculo pela " + ;
-        "chave integral pendente de comprovacao (VALIDAR NO TST01)", "dlp"):toJson())
+        "chave integral pendente de comprovacao (VALIDAR NO TST01)", cVerTag(), "not_homologated"):toJson())
     FreeObj(oJsonRet)
 
 Return .T.
@@ -328,7 +367,7 @@ WSMETHOD GET sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
     Self:SetContentType("application/json")
     Self:setStatus(501)
     Self:setResponse(RETOBJ(oJsonRet, "501", "Nao implementado", ;
-        "READ via modelo oficial = TO_INVENTORY; usar a superficie de leitura governada da api-delpi", "dlp"):toJson())
+        "READ via modelo oficial = TO_INVENTORY; usar a superficie de leitura governada da api-delpi", cVerTag(), "not_homologated"):toJson())
     FreeObj(oJsonRet)
 
 Return .T.
@@ -345,24 +384,35 @@ WSMETHOD DELETE sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
     Self:SetContentType("application/json")
     Self:setStatus(501)
     Self:setResponse(RETOBJ(oJsonRet, "501", "Bloqueado", ;
-        "DELETE bloqueado: semantica oficial de exclusao SA5 pendente de ratificacao (a060VldGrv)", "dlp"):toJson())
+        "DELETE bloqueado: semantica oficial de exclusao SA5 pendente de ratificacao (a060VldGrv)", cVerTag(), "not_homologated"):toJson())
     FreeObj(oJsonRet)
 
 Return .T.
 
-/*/{Protheus.doc} RETOBJ
-    Padroniza o retorno JSON da API (mesmo contrato do product-master).
+/*/{Protheus.doc} cVerTag
+    Tag de versao do fonte — devolvida no campo 'id' de toda resposta
+    para identificacao unambiguous do objeto compilado no RPO.
 /*/
-Static Function RETOBJ(oObj, cCode, cMsg, cDetMsg, cIdToken)
+static function cVerTag()
+
+Return "dlp04i02-0.4.1"
+
+/*/{Protheus.doc} RETOBJ
+    Padroniza o retorno JSON da API (mesmo contrato do product-master:
+    code/message/detailedMessage/id/errorType).
+/*/
+Static Function RETOBJ(oObj, cCode, cMsg, cDetMsg, cIdToken, cErrType)
 
     Default cCode    := ""
     Default cMsg     := ""
     Default cDetMsg  := ""
     Default cIdToken := ""
+    Default cErrType := ""
 
     oObj['code']            := cCode
     oObj['message']         := FwCutOff(cMsg, .T.)
     oObj['detailedMessage'] := FwCutOff(cDetMsg, .T.)
     oObj['id']              := cIdToken
+    oObj['errorType']       := cErrType
 
 Return oObj
