@@ -40,10 +40,11 @@ references:
   compilation_checklist: "product-suppliers/contracts/tst01-compilation-checklist.md"
 
 operation_states:
-  CREATE: "PROVEN_RUNTIME TST01 :8701 (POST incluir gravou SA5 10080010x999999/01 — build 0.5.5-diag; 0.6.0 consolidado aguarda recompile+retest)"
-  UPDATE: "SOURCE_CANDIDATE 0.7.0 — ciclo MVC UPDATE implementado; VALIDAR TST01 (carga por posicao de alias)"
-  READ_ADVPL: "SOURCE_CANDIDATE 0.7.0 — VIEW op + navegacao da grade; VALIDAR TST01"
+  CREATE: "PROVEN_RUNTIME TST01 :8701 (POST incluir gravou SA5 10080010x999999/01)"
+  UPDATE: "PROVEN_RUNTIME TST01 :8701 0.7.0 — PUT alterou A5_NOMEFOR, read-back confirmou"
+  READ_ADVPL: "PROVEN_RUNTIME TST01 :8701 0.7.0 — GET 200 data{} completo + 404 correto pos-delete"
   READ_API_DELPI: "PROVEN_CODE (get_supplier_link) — leitura canonica dos consumidores"
-  DELETE: "SOURCE_CANDIDATE 0.7.0 — UPDATE op + DeleteLine; ultimo vinculo rejeitado pela validacao oficial (a060VldGrv) por desenho"
+  DELETE: "PROVEN_RUNTIME TST01 :8701 0.7.0 — DeleteLine removeu o vinculo; ultimo vinculo continua nao-removivel (a060VldGrv oficial)"
+  known_gap_0_7_1: "identidade FABR/FALOJA vazios (vinculos reais sem fabricante) rejeitava 400 — fixado em 0.7.1, aguarda recompile"
 
 sensitive: "NUNCA registrar credenciais, tokens ou URIs com segredos neste arquivo."

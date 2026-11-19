@@ -70,3 +70,24 @@ carga por posição de alias, métodos `GoLine/IsDeleted/DeleteLine/
 GetValue` do FWFormModel, produtos com múltiplos `A5_REFGRD`.
 Prova pendente: compilar `0.7.0` → exercitar GET/PUT/DELETE no vínculo
 `10080010×999999/01` (o DELETE dogfood a reversão do registro de teste).
+
+## PROVEN_RUNTIME 0.7.0 — CRUD completo (TST01 :8701, 2026-11-19)
+
+```text
+GET    /consultar → 200 — data{} com todos os campos via VIEW op
+PUT    /alterar   → 200 — A5_NOMEFOR 'TESTE INCLUSAO'→'TESTE ALTERADO VIA PUT' (read-back SA5010 ✓)
+DELETE /excluir   → 200 — vinculo 999999/01 removido (read-back: 0 ativo; 6 vinculos do produto intactos)
+GET pos-delete    → 404 not_found (correto)
+```
+
+Hipóteses `VALIDAR NO TST01` da rodada **confirmadas**: carga por
+posição de alias (`dbSetOrder(2)+MsSeek`), `Activate` VIEW/UPDATE,
+`Length/GoLine/IsDeleted/DeleteLine/GetValue` do FWFormModel.
+
+### Regressão encontrada no teste negativo → fix 0.7.1
+
+GET num vínculo real (`FABR=FALOJA=''`) retornou `400 client_error` —
+a validação de identidade exigia não-vazio em `A5_FABR`/`A5_FALOJA`.
+Dado real prova que vínculos sem fabricante próprio guardam `''`
+(6/6 vínculos do produto 10080010). Fix: mesma regra do `A5_REFGRD`
+(presença+tipo exigidos, valor pode ser vazio) → build `0.7.1`.
