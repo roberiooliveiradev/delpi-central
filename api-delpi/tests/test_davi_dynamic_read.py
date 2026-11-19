@@ -645,6 +645,37 @@ def test_argument_validation_matrix():
     assert build_argument_json_schema(action) == build_argument_json_schema(action)
 
 
+def test_unknown_argument_error_echoes_accepted_schema_keys():
+    # C3/T2 external-eval finding: a recoverable ARGUMENT_VALIDATION
+    # rejection must name the capability's accepted argument keys so the
+    # caller can self-correct on the next attempt instead of guessing
+    # container conventions (e.g. a plan-declared {"params": {...}}
+    # wrapper mirrored into invocation args).
+    action = TechnicalAction(
+        action_id="get_demo",
+        operation_id="get_demo",
+        method="GET",
+        path="/demo/{code}",
+        summary="demo",
+        description="",
+        tags=(),
+        davi_status=STATUS_DAVI_ELIGIBLE_READ,
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+            {"name": "page", "in": "query", "required": False, "type": "integer"},
+        ),
+        searchable_text="get_demo",
+        execution_mode="catalog_action",
+        approved_response_fields=("x",),
+    )
+    with pytest.raises(ArgumentValidationError) as exc:
+        validate_arguments(action, {"params": {"code": "1"}})
+    message = str(exc.value)
+    assert "Unknown argument" in message
+    assert "code" in message
+    assert "page" in message
+
+
 def test_catalog_action_plan_is_transport_neutral():
     action = _action(
         oid="future_read",
