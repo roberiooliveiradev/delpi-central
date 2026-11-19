@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.1-codusr"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.2 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.2-diag"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -256,29 +256,42 @@ static function lExecSA5(oSelf)
             // (bug comprovado TST01 2026-11-19: 0 rows patcheados)
             cHoraIni := Left(Time(), 5)
 
+            // DIAG: marcadores de etapa p/ localizar o componente
+            // visual que lanca srvobject em thread JOB (TST01 15:23).
+            // Temporario — remover quando a causa estiver isolada.
+            ConOut("DLP04I02 s1 pre-model")
+
             // Ciclo MVC oficial — modelo Model-2 'DMATA061'
             // (FWLoadModel comprovado na ViewDef do fonte oficial;
             //  GetModel/GetValue/Length/GoLine usados pelos callbacks)
             oModel := FWLoadModel("DMATA061")
+            ConOut("DLP04I02 s2 loadmodel ok")
             oModel:SetOperation(MODEL_OPERATION_INSERT)
+            ConOut("DLP04I02 s3 setop ok")
             oModel:Activate()
             lActivated := .T.
+            ConOut("DLP04I02 s4 activate ok")
 
             // header: produto (+ref. grade) — relation oficial aplica
             // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid
             oModel:GetModel("DMdFieldSA5"):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
             oModel:GetModel("DMdFieldSA5"):SetValue("A5_REFGRD",  oDados:GetJSonObject("A5_REFGRD"))
+            ConOut("DLP04I02 s5 header ok")
 
             oGrid := oModel:GetModel("DMdGridSA5")
+            ConOut("DLP04I02 s6 getgrid ok")
             oGrid:AddLine()
+            ConOut("DLP04I02 s7 addline ok")
 
             // linha corrente: identidade restante + atributos
             for nI := 2 to len(aIdent)   // A5_PRODUTO vem do header
                 oGrid:SetValue(aIdent[nI], oDados:GetJSonObject(aIdent[nI]))
             next nI
+            ConOut("DLP04I02 s8 grid-ident ok")
             for nI := 1 to len(aAttr)
                 oGrid:SetValue(aAttr[nI], oDados:GetJSonObject(aAttr[nI]))
             next nI
+            ConOut("DLP04I02 s9 grid-attrs ok")
 
             if !oModel:VldData()
                 lRet     := .F.
@@ -289,9 +302,11 @@ static function lExecSA5(oSelf)
                 cErro := "Rejeitado pela validacao oficial do modelo " + ;
                     "DMATA061 (detalhe tecnico no log do AppServer)."
             else
+                ConOut("DLP04I02 s10 vlddata ok")
                 // MODEL_VALIDATED != COMMIT_ACKNOWLEDGED !=
                 // PERSISTENCE_CONFIRMED — exige retorno logico .T.
                 xCommit := oModel:CommitData()
+                ConOut("DLP04I02 s11 commit ret=" + cValToChar(xCommit))
                 if ValType(xCommit) <> "L"
                     lRet     := .F.
                     cErrType := "server_error"
@@ -447,7 +462,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.1-codusr"
+Return "dlp04i02-0.5.2-diag"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
