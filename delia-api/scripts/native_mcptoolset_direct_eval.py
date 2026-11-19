@@ -47,7 +47,7 @@ from app.composition.root_composer import (
     _compose_turn_handler,
     _wire_delegated_credential_provider,
 )
-from app.domain.evidence.model import ModelRef
+from app.domain.evidence.model import EpistemicClass, ModelRef
 from app.domain.interaction.model import TurnKind
 from app.infrastructure.auth.subject_bearer import (
     bind_subject_bearer,
@@ -519,13 +519,28 @@ def _scenarios() -> list[dict]:
 
 def _prior_turns(prior) -> tuple[ConversationContextTurn, ...]:
     turns = []
-    for role, content in prior:
+    for item in prior:
+        role, content = item[0], item[1]
+        # Optional third element: the epistemic class the live turn
+        # published — production clients echo it back, so the chain
+        # must too (otherwise grounded priors look ungrounded).
+        epistemic_raw = item[2] if len(item) > 2 else None
+        epistemic: EpistemicClass | None = None
+        if epistemic_raw:
+            token = str(
+                getattr(epistemic_raw, "value", epistemic_raw)
+            ).rsplit(".", 1)[-1]
+            epistemic = EpistemicClass(token)
         kind = (
             TurnKind.USER_INPUT
             if str(role).lower() in ("user", "user_input")
             else TurnKind.DELIA_RESULT
         )
-        turns.append(ConversationContextTurn(kind=kind, content=content))
+        turns.append(
+            ConversationContextTurn(
+                kind=kind, content=content, epistemic_class=epistemic
+            )
+        )
     return tuple(turns)
 
 

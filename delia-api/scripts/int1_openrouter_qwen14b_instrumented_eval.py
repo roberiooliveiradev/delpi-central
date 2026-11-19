@@ -1200,7 +1200,11 @@ def main() -> int:
                 )
             effective["prior"] = (
                 ("user", live_clarification["question"]),
-                ("assistant", published),
+                (
+                    "assistant",
+                    published,
+                    live_clarification.get("epistemic_class"),
+                ),
             )
             effective["id"] = "INT2_R6_same_conversation_recovery"
             effective["expected"] = {
@@ -1226,7 +1230,11 @@ def main() -> int:
                 )
             effective["prior"] = (
                 ("user", live_previous["question"]),
-                ("assistant", published),
+                (
+                    "assistant",
+                    published,
+                    live_previous.get("epistemic_class"),
+                ),
             )
             effective["expected"] = {
                 **dict(effective.get("expected") or {}),
@@ -1254,6 +1262,7 @@ def main() -> int:
                 "question": effective["question"],
                 "content": res.get("content") or "",
                 "grounding": res.get("grounding"),
+                "epistemic_class": res.get("epistemic_class"),
                 "limitations": res.get("limitations"),
                 "mcp_invoke_targets": res.get("mcp_invoke_targets"),
             }
@@ -1262,6 +1271,7 @@ def main() -> int:
             "question": effective["question"],
             "content": res.get("content") or "",
             "grounding": res.get("grounding"),
+            "epistemic_class": res.get("epistemic_class"),
         }
         b3 = b3_box.get(effective["id"])
         summary["scenarios"][effective["id"]] = {

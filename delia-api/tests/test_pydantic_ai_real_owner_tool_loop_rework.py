@@ -22,11 +22,13 @@ from app.application.interaction.capability_attempt import (
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
 )
+from app.application.model_invocation.contracts import ConversationContextTurn
+from app.domain.interaction.model import TurnKind
 from app.application.interaction.contracts import (
     VerifiedCompositeEvidence,
 )
 from app.application.interaction.turn_budget import TurnDeadline
-from app.domain.evidence.model import SourceRef
+from app.domain.evidence.model import EpistemicClass, SourceRef
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
     PydanticAiInvestigationOrchestrator,
     focus_arguments_on_next_identifier,
@@ -888,6 +890,306 @@ def test_missing_identifier_without_evidence_asks_clarification():
     attempt = engine.attempt("Me mostre a estrutura desse produto")
     assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert "identificador" in (attempt.content or "").casefold()
+
+
+def test_reconfirming_prior_turn_identifier_is_rejected():
+    # C3/T2 post-DR-1 live finding: turn-2 prior carried the real
+    # turn-1 DELIA_RESULT naming the raw-material code; the model asked
+    # the user to re-confirm that same identifier instead of
+    # continuing the investigation. The redundant-ask guard only
+    # scanned the current input_text/collected — an identifier already
+    # present in prior turns must be treated as on the table: asking
+    # the user to repeat/confirm it adds nothing (record validity is
+    # owned by the governed READ surface, not the user).
+    gates = _gates()
+    calls = {"n": 0}
+    feedback: list[str] = []
+
+    def _fn(messages, _info):
+        calls["n"] += 1
+        for message in messages:
+            for part in getattr(message, "parts", ()):
+                content = getattr(part, "content", "")
+                if isinstance(content, str):
+                    feedback.append(content)
+        if calls["n"] == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {
+                            "question": (
+                                "Por favor, confirme se o código "
+                                "10020003 é correto."
+                            )
+                        },
+                    )
+                ]
+            )
+        return _final_answer("prossigo com a evidência")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "Qual é o estoque disponível da matéria-prima identificada "
+        "nessa estrutura?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="Qual é a estrutura do produto 90260921?",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content=(
+                    "A estrutura do produto 90260921 é composta por "
+                    "175,0 MT de CABO PVC (matéria-prima 10020003)."
+                ),
+                epistemic_class=EpistemicClass.OBSERVATION,
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+    # The presence guard — not a generic failure — pushed the model
+    # back: its dedicated error_code reached the model as feedback.
+    assert calls["n"] >= 2
+    assert any(
+        "clarification_rejected_identifier_already_in_context" in item
+        for item in feedback
+    )
+
+
+def test_reconfirming_prior_user_identifier_is_rejected():
+    # Sibling: the identifier was named by the USER in an earlier
+    # turn — asking them to repeat it is equally redundant.
+    gates = _gates()
+    calls = {"n": 0}
+
+    def _fn(messages, _info):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {
+                            "question": (
+                                "Confirme o código 10020003 antes "
+                                "de continuar?"
+                            )
+                        },
+                    )
+                ]
+            )
+        return _final_answer("prossigo")
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "Qual é o estoque desse material?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="A matéria-prima é 10020003, CABO PVC.",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content="Entendido, verifico o material.",
+                epistemic_class=EpistemicClass.HYPOTHESIS,
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is not GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_reconfirming_ungrounded_result_identifier_is_legitimate():
+    # Negative D: an identifier that only appeared in UNGROUNDED
+    # DELIA prose (model-originated candidate, never verified by an
+    # owner READ) does not count as on the table — asking the user to
+    # confirm it stays a legitimate clarification. Presence never
+    # elevates such text to FACT; it only gates redundancy.
+    gates = _gates()
+
+    def _fn(messages, _info):
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    "request_user_clarification",
+                    {
+                        "question": (
+                            "Confirme se o código 77700123 está "
+                            "correto?"
+                        )
+                    },
+                )
+            ]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "E o estoque desse item?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="O que você acha do item?",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content=(
+                    "Pode ser o item 77700123, mas ainda não verifiquei."
+                ),
+                epistemic_class=EpistemicClass.HYPOTHESIS,
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_reconfirming_classless_result_identifier_is_legitimate():
+    # Contract decision: a DELIA_RESULT prior WITHOUT a declared
+    # epistemic class cannot be distinguished from ungrounded prose —
+    # presence requires the OBSERVATION marker the grounded read path
+    # stamps (or user authorship). Production clients echo the class;
+    # a context that strips it fails toward clarification, never
+    # toward suppression.
+    gates = _gates()
+
+    def _fn(messages, _info):
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    "request_user_clarification",
+                    {
+                        "question": (
+                            "Confirme se o código 10020003 está "
+                            "correto?"
+                        )
+                    },
+                )
+            ]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "E o estoque?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="estrutura 90260921",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content="Matéria-prima 10020003.",
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_disambiguation_clarification_remains_legitimate():
+    # Negative A: multiple candidate identifiers in the ask is a
+    # referent-selection question — still a legitimate clarification.
+    gates = _gates()
+
+    def _fn(messages, _info):
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    "request_user_clarification",
+                    {
+                        "question": (
+                            "Confirme se a matéria-prima é 10020003 "
+                            "ou 10020004."
+                        )
+                    },
+                )
+            ]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "Qual é o estoque da matéria-prima dessa estrutura?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="estrutura 90260921",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content=(
+                    "Componentes: 10020003 e 10020004."
+                ),
+                epistemic_class=EpistemicClass.OBSERVATION,
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_missing_scope_clarification_remains_legitimate():
+    # Negative B: a question with no identifiers (missing scope such
+    # as branch/warehouse) must stay a legitimate clarification.
+    gates = _gates()
+
+    def _fn(messages, _info):
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    "request_user_clarification",
+                    {
+                        "question": (
+                            "Em qual filial e depósito devo consultar "
+                            "o estoque?"
+                        )
+                    },
+                )
+            ]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    attempt = engine.attempt(
+        "Qual é o estoque disponível da matéria-prima identificada "
+        "nessa estrutura?",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="estrutura 90260921",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content="Matéria-prima 10020003, 175,0 MT.",
+                epistemic_class=EpistemicClass.OBSERVATION,
+            ),
+        ),
+    )
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
 
 
 def test_unbound_evidence_ref_triggers_one_shot_native_retry():

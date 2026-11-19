@@ -95,6 +95,7 @@ from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
 from app.application.interaction.turn_budget import TurnDeadline
+from app.domain.evidence.model import EpistemicClass
 from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
@@ -1190,6 +1191,18 @@ def _prior_turn_is_user_authorized(turn: object) -> bool:
     return bool(content.strip()) and kind is None
 
 
+def _context_turn_text(turn: object) -> str:
+    if isinstance(turn, str):
+        return turn
+    if isinstance(turn, Mapping):
+        return str(turn.get("content") or turn.get("text") or "")
+    return str(
+        getattr(turn, "content", None)
+        or getattr(turn, "text", "")
+        or ""
+    )
+
+
 def _prior_turns_blob(prior_turns: object) -> str:
     """Authorized user-context text from prior turns (R6).
 
@@ -1203,19 +1216,63 @@ def _prior_turns_blob(prior_turns: object) -> str:
     for turn in prior_turns or ():
         if not _prior_turn_is_user_authorized(turn):
             continue
-        if isinstance(turn, str):
-            parts.append(turn)
+        content = _context_turn_text(turn)
+        if content:
+            parts.append(content)
+    return " ".join(parts)
+
+
+def _prior_turn_is_grounded_result(turn: object) -> bool:
+    """Whether a prior turn is a server-grounded DELIA result.
+
+    The grounded read path stamps evidence-carrying results with
+    ``EpistemicClass.OBSERVATION`` (plus provenance); ungrounded model
+    prose (hypotheses, clarifications, fabricated candidates) carries
+    other classes. Presence of an identifier here means coverage only
+    — never authority: re-validation stays with live Core/Domain.
+    """
+    if isinstance(turn, str):
+        return False
+    if isinstance(turn, Mapping):
+        kind = str(
+            turn.get("kind") or turn.get("role") or ""
+        ).upper()
+        epistemic = str(turn.get("epistemic_class") or "").upper()
+        return (
+            kind == TurnKind.DELIA_RESULT.value
+            and epistemic == EpistemicClass.OBSERVATION.value
+        )
+    kind = getattr(turn, "kind", None)
+    kind_token = str(
+        getattr(kind, "value", kind) or ""
+    ).strip().casefold()
+    if kind_token != TurnKind.DELIA_RESULT.value.casefold():
+        return False
+    epistemic = getattr(turn, "epistemic_class", None)
+    epistemic_token = str(
+        getattr(epistemic, "value", epistemic) or ""
+    ).strip().casefold()
+    return epistemic_token == EpistemicClass.OBSERVATION.value.casefold()
+
+
+def _prior_turns_presence_blob(prior_turns: object) -> str:
+    """Prior-turn content where an identifier counts as on the table.
+
+    ``USER_INPUT`` (and legacy user-role / role-less) turns always
+    count — the user authored the identifier. ``DELIA_RESULT`` turns
+    count only when server-grounded (OBSERVATION): asking the user to
+    re-confirm an identifier from real owner evidence is redundant,
+    while a candidate the model itself emitted ungrounded stays a
+    legitimate clarification target.
+    """
+    parts: list[str] = []
+    for turn in prior_turns or ():
+        if not (
+            _prior_turn_is_user_authorized(turn)
+            or _prior_turn_is_grounded_result(turn)
+        ):
             continue
-        if isinstance(turn, Mapping):
-            content = str(
-                turn.get("content") or turn.get("text") or ""
-            )
-        else:
-            content = str(
-                getattr(turn, "content", None)
-                or getattr(turn, "text", "")
-                or ""
-            )
+        content = _context_turn_text(turn)
         if content:
             parts.append(content)
     return " ".join(parts)
@@ -2735,6 +2792,50 @@ class PydanticAiInvestigationOrchestrator:
                         ),
                     }
                 )
+            question_identifiers = {
+                item.casefold()
+                for item in _IDENTIFIER_LITERAL_RE.findall(text)
+            }
+            if len(question_identifiers) == 1:
+                # Asking the user to re-confirm a single identifier that
+                # is already on the conversational table (this input, a
+                # prior user turn, or a server-grounded DELIA result) is
+                # redundant: record validity is established by the
+                # governed READ surface, never by user re-confirmation.
+                # Presence here is coverage, not authority — a
+                # single-identifier ask naming a code the user never saw
+                # stays allowed (the model surfaces its own candidate),
+                # and identifiers only present in ungrounded DELIA prose
+                # do not count. Multi-identifier asks are referent
+                # selection (disambiguation) and identifier-free asks
+                # are missing-scope questions: both remain legitimate
+                # clarifications.
+                context_blob = " ".join(
+                    part
+                    for part in (
+                        ctx.deps.input_text or "",
+                        _prior_turns_presence_blob(ctx.deps.prior_turns),
+                    )
+                    if part
+                )
+                context_identifiers = {
+                    item.casefold()
+                    for item in _IDENTIFIER_LITERAL_RE.findall(context_blob)
+                }
+                if question_identifiers <= context_identifiers:
+                    return _proj(
+                        {
+                            "status": "CONTINUE_REQUIRED",
+                            "error_code": "clarification_rejected_identifier_already_in_context",
+                            "note": (
+                                "The identifier is already present in "
+                                "the conversation — do not ask the "
+                                "user to repeat or confirm it. Verify "
+                                "it through the authorized owner "
+                                "tools instead."
+                            ),
+                        }
+                    )
             if any(
                 _is_business_evidence_attempt(item)
                 for item in ctx.deps.collected
