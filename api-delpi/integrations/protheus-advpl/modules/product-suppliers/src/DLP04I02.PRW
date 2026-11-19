@@ -2,10 +2,16 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.7.0 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.7.0"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.7.1 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.7.1"); comparar com o objeto compilado no RPO.
           0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
           ciclo MVC oficial (mesma cadeia headless provada no POST).
+          0.7.0 = PROVEN_RUNTIME TST01: GET 200 (data{}), PUT 200
+          (A5_NOMEFOR alterado, read-back), DELETE 200 (vinculo
+          removido), GET pos-delete 404 correto.
+          0.7.1 = identidade: A5_FABR/A5_FALOJA aceitam vazio — vinculos
+          reais sem fabricante proprio guardam '' (regressao do teste
+          negativo: GET em vinculo FABR='' retornava 400 indevido).
    ESTADO: PROVEN_RUNTIME TST01 (2026-11-19, REST :8701, build diag) —
           POST /incluir gravou SA5 10080010 x 999999/01 via modelo
           oficial MATA061 headless; read-back SQL confirmou.
@@ -148,11 +154,14 @@ static function lPrepSA5(oDados, aMiss, cErro)
 
     for nI := 1 to len(aReq)
         xVal := oDados:GetJSonObject(aReq[nI])
-        // A5_REFGRD: presenca e tipo exigidos, mas valor vazio e aceito —
-        // produtos sem grade nao possuem referencia (conservador;
-        // regra efetiva do modelo/SX3 = VALIDAR NO TST01).
+        // A5_REFGRD/A5_FABR/A5_FALOJA: presenca e tipo exigidos, mas
+        // valor vazio e aceito — produtos sem grade nao possuem REFGRD
+        // e vinculos reais sem fabricante proprio guardam FABR/FALOJA
+        // vazios (provado TST01 2026-11-19: 6/6 vinculos do produto
+        // 10080010 com FABR=FALOJA=''). FORNECE/LOJA/PRODUTO exigem valor.
         if ValType(xVal) == "U" .or. ValType(xVal) <> "C" .or. ;
-           (aReq[nI] <> "A5_REFGRD" .and. Empty(xVal))
+           (aReq[nI] <> "A5_REFGRD" .and. aReq[nI] <> "A5_FABR" .and. ;
+            aReq[nI] <> "A5_FALOJA" .and. Empty(xVal))
             aadd(aMiss, aReq[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
             lOk := .F.
         endif
@@ -807,8 +816,11 @@ static function lPrepSA5Ident(oDados, aMiss, cErro)
 
     for nI := 1 to len(aReq)
         xVal := oDados:GetJSonObject(aReq[nI])
+        // mesma regra de opcionais do lPrepSA5: REFGRD/FABR/FALOJA
+        // aceitam vazio (presenca+tipo exigidos)
         if ValType(xVal) == "U" .or. ValType(xVal) <> "C" .or. ;
-           (aReq[nI] <> "A5_REFGRD" .and. Empty(xVal))
+           (aReq[nI] <> "A5_REFGRD" .and. aReq[nI] <> "A5_FABR" .and. ;
+            aReq[nI] <> "A5_FALOJA" .and. Empty(xVal))
             aadd(aMiss, aReq[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
             lOk := .F.
         endif
@@ -870,7 +882,7 @@ Return lExecSA5Op(self, "DELETE")
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.7.0"
+Return "dlp04i02-0.7.1"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
