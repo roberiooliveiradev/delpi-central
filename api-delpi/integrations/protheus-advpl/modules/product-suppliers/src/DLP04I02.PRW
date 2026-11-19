@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.2 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.2-diag"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.3 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.3-diag"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -195,6 +195,7 @@ static function lExecSA5(oSelf)
     Local lActivated := .F.
     Local cErro      := ""
     Local cErroBlk   := ""
+    Local cErroEnv   := ""
     Local cErroLog   := ""
     Local cErrType   := "client_error"
     Local nStatus    := 400
@@ -212,7 +213,9 @@ static function lExecSA5(oSelf)
     Local oGrid      := NIL
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
-    Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
+    Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
+        cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
+            cValToChar(e:ErrorEnv), ""), Break(e) })
 
     Begin Sequence
 
@@ -268,7 +271,15 @@ static function lExecSA5(oSelf)
             ConOut("DLP04I02 s2 loadmodel ok")
             oModel:SetOperation(MODEL_OPERATION_INSERT)
             ConOut("DLP04I02 s3 setop ok")
+            // DIAG TEMP 0.5.3: o throw dentro de Activate() era engolido
+            // pelo recover (so Description, sem stack). Restaurar o
+            // handler anterior deixa o erro virar THREAD ERROR nativo
+            // com stack de chamadas (.PRX/linha) no console.log —
+            // evidencia necessaria p/ nomear o bloco/PE que instancia
+            // componente visual (suspeito: leitura XXJ010 no Activate).
+            ErrorBlock(oException)
             oModel:Activate()
+            ErrorBlock({|e| cErroBlk := e:Description, Break(e)})
             lActivated := .T.
             ConOut("DLP04I02 s4 activate ok")
 
@@ -370,6 +381,9 @@ static function lExecSA5(oSelf)
     if !Empty(cErroBlk)
         ConOut("DLP04I02 error: " + cErroBlk)
     endif
+    if !Empty(cErroEnv)
+        ConOut("DLP04I02 err-env: " + cErroEnv)
+    endif
     if !Empty(cErroLog)
         ConOut("DLP04I02 model: " + cErroLog)
     endif
@@ -462,7 +476,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.2-diag"
+Return "dlp04i02-0.5.3-diag"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
