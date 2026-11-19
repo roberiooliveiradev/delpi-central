@@ -18,6 +18,7 @@ App plugin para **cadastrar, agendar e enviar relatórios por e-mail** aos colab
 | [PLAYBOOK-testes-acompanhamento-observacao.md](./PLAYBOOK-testes-acompanhamento-observacao.md) | **Como testar** o fluxo (UI, API, e-mail, checklist) |
 | [PLAYBOOK-relatorio-gerencial-faturamento.md](./PLAYBOOK-relatorio-gerencial-faturamento.md) | Relatório Gerencial — faturamento MoM à Direção |
 | [PLAYBOOK-saldos-pa-email.md](./PLAYBOOK-saldos-pa-email.md) | Saldos PA — agenda no Portal PCP, envio/monitoramento no Reports |
+| [GLPI-1178-ALERTA-ESTOQUE-SEGURANCA.md](./GLPI-1178-ALERTA-ESTOQUE-SEGURANCA.md) | Novo provider: estoque abaixo da segurança por filial, pedidos de compra e agenda seg–sex |
 
 ---
 

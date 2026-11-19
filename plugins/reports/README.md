@@ -34,6 +34,7 @@ Provider atual: `safety_stock_shortage_30d`.
 | `providerKey` | Nome | Params principais |
 |---------------|------|-------------------|
 | `safety_stock_shortage_30d` | Rupturas próximos 30 dias | `branch`, `horizonDays` |
+| `safety_stock_below_daily` | Alerta diário — abaixo do estoque de segurança | `branch` = 01 **ou** 02; agenda `weekdays` |
 | `management_revenue_monthly` | Relatório Gerencial — Faturamento | `customerLimit`, `asOfDate?` |
 
 Playbook gerencial:  
@@ -100,3 +101,21 @@ TOKEN=... bash plugins/reports/scripts/register-manifest.sh
 ## Roadmap
 
 [docs/12-roadmap-e-evolucao/delpi-reports/](../../docs/12-roadmap-e-evolucao/delpi-reports/)
+
+## GLPI #1178 — alerta diário de estoque de segurança
+
+Novo provider `safety_stock_below_daily` (independente de rupturas 30 dias):
+saldo de SB2 para armazéns 01 + 98 + 99 versus `SBZ.BZ_ESTSEG`.
+Quando houver pedido SC7 em aberto, informa número/item, quantidade pendente,
+data prevista e cobertura de estoque de segurança. Diferencia saldo coberto em
+**quantidade** de confirmação efetiva de recebimento.
+
+Depois de publicar `api-delpi` e o MFE `reports`, crie **duas definições**:
+01 Santa Catarina e 02 Espírito Santo. Em cada uma selecione destinatários,
+salve, e agende `weekdays` (segunda a sexta) no fuso
+`America/Sao_Paulo`. O horário é configurável, a primeira agenda permanece
+desligada até salvar destinatários e habilitar o envio. Não envia aos fins de
+semana; a agenda não tem calendário de feriados.
+
+Consulte a pré-visualização na tela de detalhes, antes do primeiro envio.
+Runbook: `docs/12-roadmap-e-evolucao/delpi-reports/GLPI-1178-ALERTA-ESTOQUE-SEGURANCA.md`.

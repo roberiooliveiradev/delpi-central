@@ -1,0 +1,65 @@
+name: GLPI 1178 Safety Stock Daily Report
+
+on:
+  pull_request:
+    paths:
+      - "api-delpi/app/application/services/supplies/safety_stock_below_daily_aggregation_service.py"
+      - "api-delpi/app/domain/services/reports/providers/safety_stock_below_daily_provider.py"
+      - "api-delpi/app/composition/reports_composer.py"
+      - "api-delpi/app/interface/http/routes/reports/reports_router.py"
+      - "api-delpi/app/application/use_cases/reports/report_recipients_schedule_use_cases.py"
+      - "api-delpi/tests/test_glpi_1178_safety_stock_below_daily.py"
+      - "plugins/reports/**"
+      - ".github/workflows/glpi-1178-safety-stock-report-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "api-delpi/app/application/services/supplies/safety_stock_below_daily_aggregation_service.py"
+      - "api-delpi/app/domain/services/reports/providers/safety_stock_below_daily_provider.py"
+      - "api-delpi/app/composition/reports_composer.py"
+      - "api-delpi/app/interface/http/routes/reports/reports_router.py"
+      - "api-delpi/app/application/use_cases/reports/report_recipients_schedule_use_cases.py"
+      - "api-delpi/tests/test_glpi_1178_safety_stock_below_daily.py"
+      - "plugins/reports/**"
+      - ".github/workflows/glpi-1178-safety-stock-report-ci.yml"
+
+jobs:
+  report-backend:
+    name: Report domain, routing and schedule tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api-delpi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: api-delpi/requirements.txt
+      - run: |
+          pip install -e ../shared[fastapi]
+          pip install -r requirements.txt
+      - run: |
+          PYTHONPATH=. pytest \
+            tests/test_glpi_1178_safety_stock_below_daily.py \
+            tests/test_safety_stock_shortage_30d_provider.py \
+            tests/test_report_schedule_and_run.py \
+            tests/test_reports_routes_smoke.py -q
+
+  reports-frontend:
+    name: Reports MFE lint and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/reports
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/reports/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

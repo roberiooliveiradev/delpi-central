@@ -26,6 +26,7 @@
 | `GET` | `/runs/{id}` | `get_report_run` | read |
 | `GET` | `/providers` | `list_report_providers` | read |
 | `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | follow-up read + filial |
+| `GET` | `/providers/safety_stock_below_daily/preview` | `preview_report_provider_safety_stock_below_daily` | follow-up read + filial obrigatória 01/02 |
 | `GET` | `/providers/management_revenue_monthly/preview` | `preview_report_provider_management_revenue_monthly` | follow-up read |
 | `POST` | `/schedules/process-pending` | `process_pending_report_schedules` | write **ou** service token |
 | `GET` | `/personal-subscriptions/{providerKey}` | `get_personal_report_subscription` | **service token** (Portal PCP) |
@@ -183,3 +184,35 @@ docker exec delpi-api-delpi python -m pytest \
   tests/test_report_follow_up_portal_url.py \
   tests/test_reports_branch_access.py -q
 ```
+
+## Alerta diário de produtos abaixo do estoque de segurança — GLPI #1178
+
+O provider `safety_stock_below_daily` usa **uma filial por definição**
+(`params: {"branch": "01"}` ou `{"branch": "02"}`).
+O preview autenticado `GET /reports/providers/safety_stock_below_daily/preview?branch=01`
+é restrito à filial do usuário. Não existe opção `all` neste relatório.
+
+O saldo inicial é `SB2.B2_QATU` somado nos armazéns **01 + 98 + 99**.
+O limiar é `SBZ.BZ_ESTSEG` da filial. Só entram produtos do universo do
+Estoques de Segurança (MP ou prefixo 3019), não bloqueados,
+com estoque de segurança positivo e saldo **estritamente inferior**.
+Saldo zero ou negativo aparece no alerta e é classificado `is_stockout`:
+o caso de ruptura física é sinalizado, nunca escondido.
+
+A lista de pedidos vem de SC7 em aberto (`C7_QUANT - C7_QUJE`),
+sem residuais, por filial. O e-mail traz todos os pedidos em aberto do
+produto (número/item, qtd, unidade e `C7_DATPRF`); somente armazéns
+e unidades elegíveis contam para `eligible_open_quantity`.
+`coverage_status` compara `available_stock + eligible_open_quantity`
+com `safety_stock`: `sufficient`, `partial`, `none`.
+Não reduz a necessidade por empenhos futuros, pois este alerta é uma
+fotografia da posição atual, não a projeção de rupturas 30 dias.
+As datas de entrega vencidas ou ausentes geram aviso, e cobertura
+**em quantidade** não equivale a garantia de entrega.
+
+A agenda só aceita `scheduleKind = weekdays`, inclusive via API.
+É necessário haver destinatário configurado para habilitá-la.
+O cron já existente processa `next_run_at`, com fuso
+`America/Sao_Paulo`, e respeita sábados e domingos (não feriados).
+A implantação do código **não** cria destinatários nem habilita envios.
+Veja o runbook no diretório `docs/12-roadmap-e-evolucao/delpi-reports/`.
