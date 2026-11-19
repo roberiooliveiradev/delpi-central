@@ -115,6 +115,10 @@ Os ACs acima são requisitos macro do plano; o **prompt executável S1** detalha
 
 ## 5. S2 — Duplicar solicitação com novo ciclo (PRC-1621-RQ03/RQ04)
 
+> **Prompt pronto para execução (2026-11-19):** [S2 — Duplicação CREATE usando leitura autorizada e intake existente](./PRC-GLPI-1621-S2-CREATE-DUPLICATION-DEVIN-IMPLEMENTATION-PROMPT-2026-11-19.md). **Estado: PLANNED / PROMPT_READY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN**. A etapa mantém **S2b UPDATE** e **S3 cancelamento** excluídas. Gate reuse-before-design: verificar suficiência do `GET /requests/{id}` autorizado e `POST /intake/requests` antes de cogitar novo endpoint; se contrato insuficiente, escalar decisão com prova, não criar duplicação de estado no backend por conveniência.
+
+
+
 ### Comportamento alvo
 
 A ação **Duplicar solicitação** fica disponível para casos cuja leitura seja permitida pelo backend (ex.: caso próprio no My Requests, casos autorizados na Engenharia). Não é alteração do caso de origem.
