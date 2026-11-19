@@ -3,12 +3,20 @@
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
    VERSAO: 0.7.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.8.2"); comparar com o objeto compilado no RPO.
+          ("dlp04i02-0.8.3"); comparar com o objeto compilado no RPO.
           0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
           ciclo MVC oficial (mesma cadeia headless provada no POST).
           0.7.0 = PROVEN_RUNTIME TST01: GET 200 (data{}), PUT 200
           (A5_NOMEFOR alterado, read-back), DELETE 200 (vinculo
           removido), GET pos-delete 404 correto.
+          0.8.3 = fix runtime GET 500 (causa real, log TST01): o error
+                  block chamava __ObjHasData — funcao INEXISTENTE neste
+                  build (familia __Obj* fora do AppMap); qualquer throw
+                  dentro do error handler aborta a thread sem recover.
+                  ErrorBlock reduzido a e:Description+Break; aSA5Form-
+                  Fields passa a enumerar por GetStruct():GetFields()
+                  (prova DLPDBG01 — id no elemento 3), nunca oGrid:
+                  aFields (propriedade invalida no submodelo).
           0.8.2 = fix runtime GET 500: GetValue/SetValue em campo fora
                   do form aborta a thread sem recover (begin sequence
                   aninhado nao protege). Guarda trocada por intersecao
@@ -397,33 +405,24 @@ Return xVal
 static function aSA5FormFields(oGrid)
 
     local aOut := {}
-    local oF   := NIL
-    local cId  := ""
+    local aF   := {}
     local nI   := 0
 
-    if ValType(oGrid) == "O" .and. __ObjHasData(oGrid, "aFields") .and. ;
-       ValType(oGrid:aFields) == "A"
-        for nI := 1 to len(oGrid:aFields)
-            oF  := oGrid:aFields[nI]
-            cId := ""
-            if ValType(oF) == "O"
-                if __ObjHasData(oF, "cIdField")
-                    cId := oF:cIdField
-                elseif __ObjHasMethod(oF, "GetID")
-                    cId := oF:GetID()
-                elseif __ObjHasData(oF, "cID")
-                    cId := oF:cID
-                endif
-            elseif ValType(oF) == "A" .and. len(oF) > 0
-                cId := cValToChar(oF[1])
-            elseif ValType(oF) == "C"
-                cId := oF
-            endif
-            if !Empty(cId)
-                aadd(aOut, Upper(AllTrim(cId)))
+    // caminho provado DLPDBG01 (SB1MASTER): struct do modelo —
+    // GetFields() devolve array de ARR com o id no elemento 3.
+    // oGrid:aFields NAO existe neste build (propriedade invalida),
+    // e a familia __Obj* esta fora do AppMap — sem probe de dados.
+    begin sequence
+        aF := oGrid:GetStruct():GetFields()
+        for nI := 1 to len(aF)
+            if ValType(aF[nI]) == "A" .and. len(aF[nI]) >= 3 .and. ;
+               ValType(aF[nI][3]) == "C" .and. !Empty(aF[nI][3])
+                aadd(aOut, Upper(AllTrim(aF[nI][3])))
             endif
         next nI
-    endif
+    recover
+        aOut := {}
+    end sequence
 
 Return aOut
 
@@ -555,9 +554,7 @@ static function lExecSA5(oSelf)
     Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
-    Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
-        cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
-            cValToChar(e:ErrorEnv), ""), Break(e) })
+    Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
 
     Begin Sequence
 
@@ -894,9 +891,7 @@ static function lExecSA5Op(oSelf, cOp)
     Local oJsonRet   := JsonObject():New()
     Local oItem      := JsonObject():New()
     Local oDados     := JsonObject():New()
-    Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
-        cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
-            cValToChar(e:ErrorEnv), ""), Break(e) })
+    Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
 
     Begin Sequence
 
@@ -1252,7 +1247,7 @@ Return lExecSA5Op(self, "DELETE")
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.8.2"
+Return "dlp04i02-0.8.3"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:

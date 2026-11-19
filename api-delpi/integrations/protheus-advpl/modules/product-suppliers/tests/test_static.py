@@ -133,21 +133,29 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("ASA5ATTRDAT", self.code)
         self.assertGreaterEqual(self.code.count("AADD(AREJ"), 2)  # POST+PUT
 
-    def test_version_tag_082(self):
-        self.assertIn('"DLP04I02-0.8.2"', self.code)
+    def test_version_tag_083(self):
+        self.assertIn('"DLP04I02-0.8.3"', self.code)
 
-    def test_form_fields_intersection_no_nested_sequence(self):
-        # 0.8.2: campo fora do form aborta a thread SEM recover — o
-        # begin sequence aninhado por campo nao protegia (GET 500 cru).
-        # A guarda passou a ser intersecao com oGrid:aFields antes de
-        # GetValue/SetValue (probe DLPDBG01). Pina o helper, o uso nos
-        # 3 loops e a ausencia de begin sequence de campo (so restam os
-        # 4 sequencias de funcao: outer + DeActivate por handler).
+    def test_form_fields_via_struct_no_obj_family(self):
+        # 0.8.3: causa raiz do GET 500 (log TST01) — o error block
+        # chamava __ObjHasData, funcao INEXISTENTE neste build; throw
+        # dentro do handler aborta a thread sem recover. Pina: nenhum
+        # uso de __Obj* em codigo, enumeracao por GetStruct():GetFields()
+        # (prova DLPDBG01 — id no elemento 3), intersecao nos loops e
+        # begin sequence somente nas posicoes esperadas (5 em codigo:
+        # outer+DeActivate por handler + recover do aSA5FormFields).
+        code_lines = [
+            l for l in self.code.splitlines()
+            if not l.strip().startswith("//")
+        ]
+        self.assertFalse(any("__OBJ" in l for l in code_lines))
         self.assertIn("STATIC FUNCTION ASA5FORMFIELDS", self.code)
-        self.assertIn("__OBJHASDATA(OGRID, \"AFIELDS\")", self.code)
-        self.assertIn("__OBJHASDATA(OF, \"CIDFIELD\")", self.code)
+        self.assertIn("OGRID:GETSTRUCT():GETFIELDS()", self.code)
+        self.assertIn("AF[NI][3]", self.code)
         self.assertGreaterEqual(self.code.count("ASCAN(AFORM, AATTR[NI])"), 2)
-        self.assertEqual(self.code.count("BEGIN SEQUENCE"), 4)
+        self.assertEqual(
+            sum("BEGIN SEQUENCE" in l for l in code_lines), 5
+        )
 
     def test_catalog_single_arg_aadd(self):
         # 0.8.1: aadd multi-arg so grava o 1o item em ADVPL — regressao
