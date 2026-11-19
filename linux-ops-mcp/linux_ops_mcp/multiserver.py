@@ -236,6 +236,52 @@ async def list_servers(
     }
 
 
+# Preserve prior hostname-resolve coverage (~5000 upstream rows) with safe pages.
+_HOSTNAME_RESOLVE_MAX_PAGES = max(
+    50, (5_000 + _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE - 1) // _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE,
+)
+
+
+async def _find_servers_by_hostname(
+    reader: ItPortalReader,
+    authorization: str,
+    *,
+    hostname: str,
+    include_archived: bool = False,
+) -> list[dict[str, Any]]:
+    """Exact hostname match via UTF-8-safe pages and normalized Portal ``q``."""
+    if not isinstance(hostname, str) or not hostname.strip():
+        raise ReadError("server_selector_required")
+    needle = _normalize_hostname(hostname)
+    if not needle:
+        raise ReadError("server_selector_required")
+    if len(needle) > 253:
+        raise ReadError("invalid_hostname")
+    archived = "all" if include_archived else "active"
+    matches: list[dict[str, Any]] = []
+    page = 1
+    safe = _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+    while True:
+        batch = await reader.list_servers_page(
+            authorization,
+            # Portal substring search uses hostnames without trailing dots.
+            q=needle[:120],
+            archived=archived,
+            page=page,
+            page_size=safe,
+        )
+        for item in batch["items"]:
+            if _normalize_hostname(item["hostname"]) == needle:
+                matches.append(_annotate_os_family(item))
+        fetched = page * safe
+        if fetched >= batch["total"] or not batch["items"]:
+            break
+        page += 1
+        if page > _HOSTNAME_RESOLVE_MAX_PAGES:
+            break
+    return matches
+
+
 async def resolve_server(
     reader: ItPortalReader,
     authorization: str,
@@ -252,32 +298,9 @@ async def resolve_server(
             raise ReadError("server_archived")
         server["os_family"] = classify_os_family(server.get("operating_system"))
         return server
-    if not hostname or not isinstance(hostname, str) or not hostname.strip():
-        raise ReadError("server_selector_required")
-    needle = _normalize_hostname(hostname)
-    if len(needle) > 253:
-        raise ReadError("invalid_hostname")
-    archived = "all" if include_archived else "active"
-    matches: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        batch = await reader.list_servers_page(
-            authorization,
-            q=hostname.strip()[:120],
-            archived=archived,
-            page=page,
-            page_size=100,
-        )
-        for item in batch["items"]:
-            if _normalize_hostname(item["hostname"]) == needle:
-                item["os_family"] = classify_os_family(item.get("operating_system"))
-                matches.append(item)
-        fetched = page * 100
-        if fetched >= batch["total"] or not batch["items"]:
-            break
-        page += 1
-        if page > 50:
-            break
+    matches = await _find_servers_by_hostname(
+        reader, authorization, hostname=hostname or "", include_archived=include_archived,
+    )
     if not matches:
         raise ReadError("server_not_found")
     if len(matches) > 1:
@@ -318,30 +341,9 @@ async def resolve_server_or_candidates(
         return await resolve_server(
             reader, authorization, server_id=server_id, include_archived=include_archived,
         )
-    if not hostname or not isinstance(hostname, str) or not hostname.strip():
-        raise ReadError("server_selector_required")
-    needle = _normalize_hostname(hostname)
-    archived = "all" if include_archived else "active"
-    matches: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        batch = await reader.list_servers_page(
-            authorization,
-            q=hostname.strip()[:120],
-            archived=archived,
-            page=page,
-            page_size=100,
-        )
-        for item in batch["items"]:
-            if _normalize_hostname(item["hostname"]) == needle:
-                item["os_family"] = classify_os_family(item.get("operating_system"))
-                matches.append(item)
-        fetched = page * 100
-        if fetched >= batch["total"] or not batch["items"]:
-            break
-        page += 1
-        if page > 50:
-            break
+    matches = await _find_servers_by_hostname(
+        reader, authorization, hostname=hostname or "", include_archived=include_archived,
+    )
     if not matches:
         raise ReadError("server_not_found")
     if len(matches) > 1:

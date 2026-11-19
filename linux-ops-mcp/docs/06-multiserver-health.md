@@ -19,7 +19,7 @@ O Portal de TI continua sendo a unica fonte de inventario e observacoes. Novos s
 | Tool | Entrada principal | Fonte |
 |---|---|---|
 | `list_servers` | filtros + paginacao | `GET /servers`. Paginas upstream dimensionadas para o pior caso UTF-8 de `description` (4000 code points × 4 bytes) sob `MAX_UPSTREAM_BYTES`. Filtros client-side varrem o inventario uma vez e devolvem `total` real; nao aplicam o teto `LINUX_OPS_INFRA_MAX_SERVERS`. |
-| `get_server_health` | `server_id` ou `hostname` | inventario + `GET /servers/{id}/observations/latest` |
+| `get_server_health` | `server_id` ou `hostname` | inventario + `GET /servers/{id}/observations/latest`. Resolucao por hostname usa paginas UTF-8-safe e `q` normalizado (sem ponto final DNS). |
 | `get_infrastructure_health` | filtros de escopo + paginacao | inventario + latest por servidor (concorrente). Com `os_family`, uma unica varredura alimenta o consolidado; o teto `LINUX_OPS_INFRA_MAX_SERVERS` (default 500) limita servidores analisados. |
 | `get_server_services` | servidor + filtros | Windows: `/host-services` (+ opcional dashboard); Linux: systemd allowlist da observacao. Com `critical_only`, a filtragem ocorre sobre o inventario varrido (limite seguro) **antes** da paginacao local. Identificadores Windows seguem o contrato IT Portal (key/name 200, display_name/`service_name` 240). |
 

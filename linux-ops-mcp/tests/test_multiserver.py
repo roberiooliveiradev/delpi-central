@@ -18,6 +18,7 @@ from linux_ops_mcp.multiserver import (
     get_server_services,
     list_servers,
     resolve_server,
+    resolve_server_or_candidates,
 )
 from linux_ops_mcp.reader import (
     ItPortalReader,
@@ -534,9 +535,17 @@ def test_resolve_uuid_hostname_ambiguous_and_missing():
     def respond(request: httpx.Request):
         if request.url.path == "/servers":
             q = (request.url.params.get("q") or "").lower()
-            items = [row for row in inventory if q in row["hostname"].lower() or not q]
+            page = int(request.url.params.get("page", "1"))
+            page_size = int(request.url.params.get("page_size", "25"))
+            assert page_size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+            matched = [row for row in inventory if q in row["hostname"].lower() or not q]
+            start = (page - 1) * page_size
+            end = start + page_size
             return httpx.Response(200, json=_envelope({
-                "items": items, "total": len(items), "page": 1, "page_size": 100,
+                "items": matched[start:end],
+                "total": len(matched),
+                "page": page,
+                "page_size": page_size,
             }))
         if request.url.path.endswith(f"/servers/{unique}"):
             return httpx.Response(200, json=_envelope(inventory[2]))
@@ -560,6 +569,96 @@ def test_resolve_uuid_hostname_ambiguous_and_missing():
         assert ambiguous["ok"] is False
         assert ambiguous["error"] == "ambiguous_hostname"
         assert len(ambiguous["candidates"]) == 2
+
+    asyncio.run(scenario())
+
+
+def test_resolve_hostname_safe_pages_trailing_dot_and_ambiguous_candidates():
+    """Hostname resolve must use UTF-8-safe pages, normalized q, and keep ambiguity."""
+    target = "srv-app.delpi.local"
+    long_description = "\U0001f600" * 4000
+    # Distractors include the target as substring so Portal q spans multiple pages.
+    inventory = []
+    for i in range(40):
+        row = _rich_server(i, operating_system="Ubuntu 24.04", description=long_description)
+        row["hostname"] = f"noise-{i}.{target}"
+        row["name"] = row["hostname"].upper()
+        inventory.append(row)
+    target_id = str(uuid4())
+    dup_a, dup_b = str(uuid4()), str(uuid4())
+    inventory.extend([
+        {
+            **_rich_server(90, operating_system="Windows Server 2022", description=long_description),
+            "id": target_id,
+            "hostname": target,
+            "name": "TARGET",
+        },
+        {
+            **_rich_server(91, operating_system="Ubuntu 24.04", description=long_description),
+            "id": dup_a,
+            "hostname": "dup.delpi.local",
+            "name": "DUP-A",
+        },
+        {
+            **_rich_server(92, operating_system="Ubuntu 24.04", description=long_description),
+            "id": dup_b,
+            "hostname": "dup.delpi.local",
+            "name": "DUP-B",
+        },
+    ])
+
+    queried: list[str] = []
+    page_sizes: list[int] = []
+
+    def respond(request: httpx.Request):
+        assert request.url.path == "/servers"
+        q = request.url.params.get("q") or ""
+        queried.append(q)
+        page = int(request.url.params.get("page", "1"))
+        page_size = int(request.url.params.get("page_size", "25"))
+        page_sizes.append(page_size)
+        # Portal stores hostnames without trailing dots; reject dotted q.
+        assert not q.endswith(".")
+        matched = [
+            row for row in inventory
+            if q.lower() in row["hostname"].lower()
+        ]
+        start = (page - 1) * page_size
+        end = start + page_size
+        payload = _envelope({
+            "items": matched[start:end],
+            "total": len(matched),
+            "page": page,
+            "page_size": page_size,
+        })
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        assert len(body) <= MAX_UPSTREAM_BYTES
+        return httpx.Response(
+            200,
+            content=body,
+            headers={"content-type": "application/json; charset=utf-8"},
+        )
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+
+        resolved = await resolve_server(
+            reader, "Bearer test-user-token", hostname=f"{target}.",
+        )
+        assert resolved["id"] == target_id
+        assert queried
+        assert all(q == target for q in queried)
+        assert all(size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE for size in page_sizes)
+        assert len(page_sizes) >= 2  # multiple safe pages walked
+
+        with pytest.raises(ReadError, match="ambiguous_hostname"):
+            await resolve_server(reader, "Bearer test-user-token", hostname="dup.delpi.local.")
+
+        candidates = await resolve_server_or_candidates(
+            reader, "Bearer test-user-token", hostname="dup.delpi.local.",
+        )
+        assert "__ambiguous__" in candidates
+        assert {row["id"] for row in candidates["__ambiguous__"]} == {dup_a, dup_b}
 
     asyncio.run(scenario())
 
