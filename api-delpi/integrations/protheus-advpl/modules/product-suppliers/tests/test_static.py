@@ -133,8 +133,23 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("ASA5ATTRDAT", self.code)
         self.assertGreaterEqual(self.code.count("AADD(AREJ"), 2)  # POST+PUT
 
-    def test_version_tag_080(self):
-        self.assertIn('"DLP04I02-0.8.0"', self.code)
+    def test_version_tag_081(self):
+        self.assertIn('"DLP04I02-0.8.1"', self.code)
+
+    def test_catalog_single_arg_aadd(self):
+        # 0.8.1: aadd multi-arg so grava o 1o item em ADVPL — regressao
+        # 0.8.0 (PUT 400 indevido, GET incompleto). Pina a construcao
+        # unitaria por elemento e a cardinalidade do catalogo.
+        self.assertEqual(self.code.count('AADD(AR, "A5_'), 174)
+        self.assertNotIn('AADD(AR, "A5_NOMEFOR", "A5_NOMERED"', self.code)
+
+    def test_get_json_safe_normalization(self):
+        # 0.8.1: GetValue devolve D/N — valor cru no JsonObject derruba
+        # a serializacao fora do Begin Sequence (GET 500 cru TST01).
+        self.assertIn("STATIC FUNCTION XSA5JSONSAFE", self.code)
+        self.assertIn("DTOS(XVAL)", self.code)
+        self.assertEqual(self.code.count("OITEM[AIDENT[NI]] := IIF(VALTYPE(XVAL) == \"U\", \"\", XSA5JSONSAFE(XVAL))"), 1)
+        self.assertEqual(self.code.count("OITEM[AATTR[NI]] := IIF(VALTYPE(XVAL) == \"U\", \"\", XSA5JSONSAFE(XVAL))"), 1)
 
     def test_mvc_lifecycle_calls(self):
         for call in ("SETOPERATION", "ACTIVATE()", "VLDDATA",

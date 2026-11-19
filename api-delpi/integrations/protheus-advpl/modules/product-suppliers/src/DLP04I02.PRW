@@ -3,12 +3,19 @@
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
    VERSAO: 0.7.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.8.0"); comparar com o objeto compilado no RPO.
+          ("dlp04i02-0.8.1"); comparar com o objeto compilado no RPO.
           0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
           ciclo MVC oficial (mesma cadeia headless provada no POST).
           0.7.0 = PROVEN_RUNTIME TST01: GET 200 (data{}), PUT 200
           (A5_NOMEFOR alterado, read-back), DELETE 200 (vinculo
           removido), GET pos-delete 404 correto.
+          0.8.1 = fix runtime 0.8.0: catalogo montado com aadd
+                  multi-arg so gravava o 1o item por chamada (catalogo
+                  efetivo ~14 campos — PUT 400 indevido); aadd unitario
+                  por elemento (padrao DLP04I01). GET: GetValue devolve
+                  D/N — normalizado por xSA5JsonSafe antes do
+                  JsonObject (Date crua derrubava a serializacao fora
+                  do Begin Sequence => 500 cru do HTTPREST).
           0.8.0 = catalogo SA5 completo: 113 atributos SX3 editaveis
                   (matriz sa5-field-matrix.json); validadores aceitam
                   subconjuntos (PUT >= 1 campo; POST exige so o trio
@@ -150,25 +157,119 @@ Return {"A5_PRODUTO", "A5_FORNECE", "A5_LOJA", "A5_FABR", "A5_FALOJA", "A5_REFGR
 static function aSA5Attrs()
 
     local aR := {}
-    aadd(aR, "A5_NOMEFOR", "A5_NOMERED", "A5_CODPRF", "A5_CODPRCA", "A5_SITU", "A5_FABREV")
-    aadd(aR, "A5_PE", "A5_TIPE", "A5_EMBAL", "A5_FABRRED", "A5_MOE_US", "A5_VLCOTUS")
-    aadd(aR, "A5_ULT_ENT", "A5_QT_COT", "A5_ULT_FOB", "A5_PARTOPC", "A5_UNID", "A5_SKPLOT")
-    aadd(aR, "A5_RIAI", "A5_DTRIAI", "A5_VALRIAI", "A5_INCOTER", "A5_TR_COST", "A5_CODGRP")
-    aadd(aR, "A5_CODITE", "A5_CODBAR", "A5_TIPOCOT", "A5_SKIPLOT", "A5_DTCOM02", "A5_DTCOM03")
-    aadd(aR, "A5_DTCOM04", "A5_DTCOM05", "A5_DTCOM06", "A5_DTCOM07", "A5_DTCOM08", "A5_DTCOM09")
-    aadd(aR, "A5_DTCOM10", "A5_DTCOM11", "A5_DTCOM12", "A5_ENTREGA", "A5_QUANT01", "A5_QUANT02")
-    aadd(aR, "A5_QUANT03", "A5_QUANT04", "A5_QUANT05", "A5_QUANT06", "A5_QUANT07", "A5_QUANT08")
-    aadd(aR, "A5_QUANT09", "A5_QUANT10", "A5_QUANT11", "A5_QUANT12", "A5_PRECO01", "A5_PRECO02")
-    aadd(aR, "A5_PRECO03", "A5_LEAD_T", "A5_PRECO04", "A5_PRECO05", "A5_TIPATU", "A5_LOTEMIN")
-    aadd(aR, "A5_LOTEMUL", "A5_PRECO06", "A5_PRECO07", "A5_MSBLQL", "A5_PRECO08", "A5_PRECO09")
-    aadd(aR, "A5_PRECO10", "A5_PRECO11", "A5_PRECO12", "A5_PLAM1", "A5_NIVEL1", "A5_NQA1")
-    aadd(aR, "A5_PLAM2", "A5_NIVEL2", "A5_NQA2", "A5_COND01", "A5_COND02", "A5_COND03")
-    aadd(aR, "A5_COND04", "A5_COND05", "A5_TEMPLIM", "A5_NOTA", "A5_COND06", "A5_COND07")
-    aadd(aR, "A5_COND08", "A5_COND09", "A5_COND10", "A5_COND11", "A5_COND12", "A5_DTCOM01")
-    aadd(aR, "A5_TEMPTRA", "A5_PESO", "A5_ENTSIT", "A5_CCUSTO", "A5_DIASSIT", "A5_TESBP")
-    aadd(aR, "A5_CODFIS", "A5_CONV", "A5_TPCONV", "A5_CODTAB", "A5_DSCTAB", "A5_LEADT")
-    aadd(aR, "A5_QTDMN", "A5_UMNFE", "A5_NCMPRF", "A5_DESCPRF", "A5_TESCP", "A5_ECFLAG")
-    aadd(aR, "A5_ECDTEX", "A5_ECSEQ", "A5_CNO", "A5_TOLEDIF", "A5_VOLMAX")
+    aadd(aR, "A5_NOMEFOR")
+    aadd(aR, "A5_NOMERED")
+    aadd(aR, "A5_CODPRF")
+    aadd(aR, "A5_CODPRCA")
+    aadd(aR, "A5_SITU")
+    aadd(aR, "A5_FABREV")
+    aadd(aR, "A5_PE")
+    aadd(aR, "A5_TIPE")
+    aadd(aR, "A5_EMBAL")
+    aadd(aR, "A5_FABRRED")
+    aadd(aR, "A5_MOE_US")
+    aadd(aR, "A5_VLCOTUS")
+    aadd(aR, "A5_ULT_ENT")
+    aadd(aR, "A5_QT_COT")
+    aadd(aR, "A5_ULT_FOB")
+    aadd(aR, "A5_PARTOPC")
+    aadd(aR, "A5_UNID")
+    aadd(aR, "A5_SKPLOT")
+    aadd(aR, "A5_RIAI")
+    aadd(aR, "A5_DTRIAI")
+    aadd(aR, "A5_VALRIAI")
+    aadd(aR, "A5_INCOTER")
+    aadd(aR, "A5_TR_COST")
+    aadd(aR, "A5_CODGRP")
+    aadd(aR, "A5_CODITE")
+    aadd(aR, "A5_CODBAR")
+    aadd(aR, "A5_TIPOCOT")
+    aadd(aR, "A5_SKIPLOT")
+    aadd(aR, "A5_DTCOM02")
+    aadd(aR, "A5_DTCOM03")
+    aadd(aR, "A5_DTCOM04")
+    aadd(aR, "A5_DTCOM05")
+    aadd(aR, "A5_DTCOM06")
+    aadd(aR, "A5_DTCOM07")
+    aadd(aR, "A5_DTCOM08")
+    aadd(aR, "A5_DTCOM09")
+    aadd(aR, "A5_DTCOM10")
+    aadd(aR, "A5_DTCOM11")
+    aadd(aR, "A5_DTCOM12")
+    aadd(aR, "A5_ENTREGA")
+    aadd(aR, "A5_QUANT01")
+    aadd(aR, "A5_QUANT02")
+    aadd(aR, "A5_QUANT03")
+    aadd(aR, "A5_QUANT04")
+    aadd(aR, "A5_QUANT05")
+    aadd(aR, "A5_QUANT06")
+    aadd(aR, "A5_QUANT07")
+    aadd(aR, "A5_QUANT08")
+    aadd(aR, "A5_QUANT09")
+    aadd(aR, "A5_QUANT10")
+    aadd(aR, "A5_QUANT11")
+    aadd(aR, "A5_QUANT12")
+    aadd(aR, "A5_PRECO01")
+    aadd(aR, "A5_PRECO02")
+    aadd(aR, "A5_PRECO03")
+    aadd(aR, "A5_LEAD_T")
+    aadd(aR, "A5_PRECO04")
+    aadd(aR, "A5_PRECO05")
+    aadd(aR, "A5_TIPATU")
+    aadd(aR, "A5_LOTEMIN")
+    aadd(aR, "A5_LOTEMUL")
+    aadd(aR, "A5_PRECO06")
+    aadd(aR, "A5_PRECO07")
+    aadd(aR, "A5_MSBLQL")
+    aadd(aR, "A5_PRECO08")
+    aadd(aR, "A5_PRECO09")
+    aadd(aR, "A5_PRECO10")
+    aadd(aR, "A5_PRECO11")
+    aadd(aR, "A5_PRECO12")
+    aadd(aR, "A5_PLAM1")
+    aadd(aR, "A5_NIVEL1")
+    aadd(aR, "A5_NQA1")
+    aadd(aR, "A5_PLAM2")
+    aadd(aR, "A5_NIVEL2")
+    aadd(aR, "A5_NQA2")
+    aadd(aR, "A5_COND01")
+    aadd(aR, "A5_COND02")
+    aadd(aR, "A5_COND03")
+    aadd(aR, "A5_COND04")
+    aadd(aR, "A5_COND05")
+    aadd(aR, "A5_TEMPLIM")
+    aadd(aR, "A5_NOTA")
+    aadd(aR, "A5_COND06")
+    aadd(aR, "A5_COND07")
+    aadd(aR, "A5_COND08")
+    aadd(aR, "A5_COND09")
+    aadd(aR, "A5_COND10")
+    aadd(aR, "A5_COND11")
+    aadd(aR, "A5_COND12")
+    aadd(aR, "A5_DTCOM01")
+    aadd(aR, "A5_TEMPTRA")
+    aadd(aR, "A5_PESO")
+    aadd(aR, "A5_ENTSIT")
+    aadd(aR, "A5_CCUSTO")
+    aadd(aR, "A5_DIASSIT")
+    aadd(aR, "A5_TESBP")
+    aadd(aR, "A5_CODFIS")
+    aadd(aR, "A5_CONV")
+    aadd(aR, "A5_TPCONV")
+    aadd(aR, "A5_CODTAB")
+    aadd(aR, "A5_DSCTAB")
+    aadd(aR, "A5_LEADT")
+    aadd(aR, "A5_QTDMN")
+    aadd(aR, "A5_UMNFE")
+    aadd(aR, "A5_NCMPRF")
+    aadd(aR, "A5_DESCPRF")
+    aadd(aR, "A5_TESCP")
+    aadd(aR, "A5_ECFLAG")
+    aadd(aR, "A5_ECDTEX")
+    aadd(aR, "A5_ECSEQ")
+    aadd(aR, "A5_CNO")
+    aadd(aR, "A5_TOLEDIF")
+    aadd(aR, "A5_VOLMAX")
 
 Return aR
 
@@ -176,14 +277,52 @@ Return aR
 static function aSA5AttrNum()
 
     local aR := {}
-    aadd(aR, "A5_PE", "A5_EMBAL", "A5_VLCOTUS", "A5_QT_COT", "A5_ULT_FOB", "A5_TR_COST")
-    aadd(aR, "A5_SKIPLOT", "A5_ENTREGA", "A5_QUANT01", "A5_QUANT02", "A5_QUANT03", "A5_QUANT04")
-    aadd(aR, "A5_QUANT05", "A5_QUANT06", "A5_QUANT07", "A5_QUANT08", "A5_QUANT09", "A5_QUANT10")
-    aadd(aR, "A5_QUANT11", "A5_QUANT12", "A5_PRECO01", "A5_PRECO02", "A5_PRECO03", "A5_LEAD_T")
-    aadd(aR, "A5_PRECO04", "A5_PRECO05", "A5_LOTEMIN", "A5_LOTEMUL", "A5_PRECO06", "A5_PRECO07")
-    aadd(aR, "A5_PRECO08", "A5_PRECO09", "A5_PRECO10", "A5_PRECO11", "A5_PRECO12", "A5_TEMPLIM")
-    aadd(aR, "A5_NOTA", "A5_TEMPTRA", "A5_PESO", "A5_ENTSIT", "A5_DIASSIT", "A5_CONV")
-    aadd(aR, "A5_LEADT", "A5_QTDMN", "A5_TOLEDIF", "A5_VOLMAX")
+    aadd(aR, "A5_PE")
+    aadd(aR, "A5_EMBAL")
+    aadd(aR, "A5_VLCOTUS")
+    aadd(aR, "A5_QT_COT")
+    aadd(aR, "A5_ULT_FOB")
+    aadd(aR, "A5_TR_COST")
+    aadd(aR, "A5_SKIPLOT")
+    aadd(aR, "A5_ENTREGA")
+    aadd(aR, "A5_QUANT01")
+    aadd(aR, "A5_QUANT02")
+    aadd(aR, "A5_QUANT03")
+    aadd(aR, "A5_QUANT04")
+    aadd(aR, "A5_QUANT05")
+    aadd(aR, "A5_QUANT06")
+    aadd(aR, "A5_QUANT07")
+    aadd(aR, "A5_QUANT08")
+    aadd(aR, "A5_QUANT09")
+    aadd(aR, "A5_QUANT10")
+    aadd(aR, "A5_QUANT11")
+    aadd(aR, "A5_QUANT12")
+    aadd(aR, "A5_PRECO01")
+    aadd(aR, "A5_PRECO02")
+    aadd(aR, "A5_PRECO03")
+    aadd(aR, "A5_LEAD_T")
+    aadd(aR, "A5_PRECO04")
+    aadd(aR, "A5_PRECO05")
+    aadd(aR, "A5_LOTEMIN")
+    aadd(aR, "A5_LOTEMUL")
+    aadd(aR, "A5_PRECO06")
+    aadd(aR, "A5_PRECO07")
+    aadd(aR, "A5_PRECO08")
+    aadd(aR, "A5_PRECO09")
+    aadd(aR, "A5_PRECO10")
+    aadd(aR, "A5_PRECO11")
+    aadd(aR, "A5_PRECO12")
+    aadd(aR, "A5_TEMPLIM")
+    aadd(aR, "A5_NOTA")
+    aadd(aR, "A5_TEMPTRA")
+    aadd(aR, "A5_PESO")
+    aadd(aR, "A5_ENTSIT")
+    aadd(aR, "A5_DIASSIT")
+    aadd(aR, "A5_CONV")
+    aadd(aR, "A5_LEADT")
+    aadd(aR, "A5_QTDMN")
+    aadd(aR, "A5_TOLEDIF")
+    aadd(aR, "A5_VOLMAX")
 
 Return aR
 
@@ -191,9 +330,21 @@ Return aR
 static function aSA5AttrDat()
 
     local aR := {}
-    aadd(aR, "A5_ULT_ENT", "A5_DTRIAI", "A5_VALRIAI", "A5_DTCOM02", "A5_DTCOM03", "A5_DTCOM04")
-    aadd(aR, "A5_DTCOM05", "A5_DTCOM06", "A5_DTCOM07", "A5_DTCOM08", "A5_DTCOM09", "A5_DTCOM10")
-    aadd(aR, "A5_DTCOM11", "A5_DTCOM12", "A5_DTCOM01")
+    aadd(aR, "A5_ULT_ENT")
+    aadd(aR, "A5_DTRIAI")
+    aadd(aR, "A5_VALRIAI")
+    aadd(aR, "A5_DTCOM02")
+    aadd(aR, "A5_DTCOM03")
+    aadd(aR, "A5_DTCOM04")
+    aadd(aR, "A5_DTCOM05")
+    aadd(aR, "A5_DTCOM06")
+    aadd(aR, "A5_DTCOM07")
+    aadd(aR, "A5_DTCOM08")
+    aadd(aR, "A5_DTCOM09")
+    aadd(aR, "A5_DTCOM10")
+    aadd(aR, "A5_DTCOM11")
+    aadd(aR, "A5_DTCOM12")
+    aadd(aR, "A5_DTCOM01")
 
 Return aR
 
@@ -209,6 +360,20 @@ static function xSA5Typed(cField, xVal, aNum, aDat)
         return Val(xVal)
     elseif aScan(aDat, cField) > 0
         return StoD(xVal)
+    endif
+
+Return xVal
+
+// normaliza valor do modelo p/ JSON — Date vira DtoS (AAAAMMDD),
+// demais tipos nao-C/N/L viram texto; evita throw na serializacao
+// do JsonObject fora do Begin Sequence (regressao GET 500 TST01)
+static function xSA5JsonSafe(xVal)
+
+    if ValType(xVal) == "D"
+        return DtoS(xVal)
+    elseif ValType(xVal) <> "C" .and. ValType(xVal) <> "N" .and. ;
+           ValType(xVal) <> "L"
+        return cValToChar(xVal)
     endif
 
 Return xVal
@@ -769,7 +934,7 @@ static function lExecSA5Op(oSelf, cOp)
                                     else
                                         xVal := oGrid:GetValue(aIdent[nI])
                                     endif
-                                    oItem[aIdent[nI]] := iif(ValType(xVal) == "U", "", xVal)
+                                    oItem[aIdent[nI]] := iif(ValType(xVal) == "U", "", xSA5JsonSafe(xVal))
                                 next nI
                                 // atributos: catalogo completo — campo
                                 // fora do form lanca no GetValue; a
@@ -787,7 +952,7 @@ static function lExecSA5Op(oSelf, cOp)
                                         cErroBlk := ""
                                         cErroEnv := ""
                                     endif
-                                    oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xVal)
+                                    oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xSA5JsonSafe(xVal))
                                 next nI
                                 lRet    := .T.
                                 nStatus := 200
@@ -1036,7 +1201,7 @@ Return lExecSA5Op(self, "DELETE")
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.8.0"
+Return "dlp04i02-0.8.1"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
