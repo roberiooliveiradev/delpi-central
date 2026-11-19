@@ -168,8 +168,17 @@ def check_security_gate() -> dict[str, Any]:
     settings = Settings()
     base_url = settings.llm_base_url or ""
     host = (urlsplit(base_url).hostname or "").lower()
-    target_model = "qwen/qwen3-14b"
-    target_profile = "openrouter_qwen"
+    # Authorized eval target: qwen remains the default; an explicitly
+    # declared alternate arm (e.g. the authorized Kimi A/B) must be
+    # declared via env so the gate still verifies runtime == declared.
+    target_model = (
+        (os.environ.get("DELIA_EVAL_TARGET_MODEL") or "").strip()
+        or "qwen/qwen3-14b"
+    )
+    target_profile = (
+        (os.environ.get("DELIA_EVAL_TARGET_PROFILE") or "").strip()
+        or "openrouter_qwen"
+    )
     configured_egress = (
         (os.environ.get("DELIA_EVAL_EGRESS_AUTHORIZED") or "").strip() == "1"
     )
@@ -179,9 +188,13 @@ def check_security_gate() -> dict[str, Any]:
     if host != "openrouter.ai":
         blockers.append("evaluation endpoint must be https://openrouter.ai/api/v1")
     if settings.llm_model != target_model:
-        blockers.append("evaluation model does not match qwen/qwen3-14b")
+        blockers.append(
+            f"evaluation model does not match {target_model}"
+        )
     if settings.runtime_profile != target_profile:
-        blockers.append("evaluation profile does not match openrouter_qwen")
+        blockers.append(
+            f"evaluation profile does not match {target_profile}"
+        )
     if base_url and llm_egress_blocked_reason(settings.environment, base_url):
         blockers.append("existing Settings LLM egress policy blocks this endpoint")
 

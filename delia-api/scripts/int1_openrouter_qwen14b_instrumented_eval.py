@@ -79,8 +79,16 @@ subject_session_public_meta = _native.subject_session_public_meta
 
 
 
-TARGET_MODEL = "qwen/qwen3-14b"
-TARGET_PROFILE = "openrouter_qwen"
+# Authorized eval target — qwen is the default arm; an explicitly
+# declared alternate authorized arm (e.g. Kimi A/B) arrives via env.
+TARGET_MODEL = (
+    (os.environ.get("DELIA_EVAL_TARGET_MODEL") or "").strip()
+    or "qwen/qwen3-14b"
+)
+TARGET_PROFILE = (
+    (os.environ.get("DELIA_EVAL_TARGET_PROFILE") or "").strip()
+    or "openrouter_qwen"
+)
 TARGET_HOST = "openrouter.ai"
 
 # Exact scenarios from the prior real-eval harness (G1 independent reword).
@@ -486,6 +494,27 @@ INT2_SCENARIOS = [
 
 
 def _selected_scenarios() -> list[dict]:
+    # Frozen custom-scenario injection (A/B causal comparisons): an
+    # explicit DELIA_EVAL_SCENARIOS_JSON list [{id,question,prior,
+    # expected}] bypasses the built-in corpora so both arms receive a
+    # byte-identical frozen history — ``prior`` accepts (role,content)
+    # or (role,content,epistemic_class) tuples, same as _prior_turns.
+    custom_raw = (os.environ.get("DELIA_EVAL_SCENARIOS_JSON") or "").strip()
+    if custom_raw:
+        custom = json.loads(custom_raw)
+        if not isinstance(custom, list):
+            raise SystemExit(
+                "DELIA_EVAL_SCENARIOS_JSON must be a JSON list"
+            )
+        for item in custom:
+            if not isinstance(item, dict) or not item.get("question"):
+                raise SystemExit(
+                    "DELIA_EVAL_SCENARIOS_JSON items need id/question"
+                )
+            item.setdefault("id", "custom")
+            item.setdefault("prior", ())
+            item.setdefault("expected", {})
+        return list(custom)
     corpus = (os.environ.get("DELIA_EVAL_CORPUS") or "INT1").strip().upper()
     scenarios = INT2_SCENARIOS if corpus == "INT2" else SCENARIOS
     raw = (os.environ.get("DELIA_EVAL_SCENARIO_IDS") or "").strip()

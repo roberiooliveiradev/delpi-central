@@ -7,9 +7,20 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EVAL_NAME="delpi-delia-eval-int1-or-qwen14b"
-ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-openrouter-qwen14b-eval"
+# A/B arm selector: defaults to the canonical qwen profile; a different
+# authorized external profile (e.g. openrouter_kimi) selects the arm
+# without mutating the shared environment.
+EVAL_PROFILE="${DELIA_EVAL_RUNTIME_PROFILE:-openrouter_qwen}"
+EVAL_NAME="delpi-delia-eval-int1-or-${EVAL_PROFILE#openrouter_}"
+ARTIFACT_DIR="${REPO_ROOT}/delia-api/.battery/int1-openrouter-${EVAL_PROFILE#openrouter_}-eval"
 TRACE_DIR="${REPO_ROOT}/delia-api/.battery/int1-secure-decision-trace"
+# Declared authorized eval target for the security gate — read from
+# the profile contract, never typed per-arm.
+EVAL_MODEL="$(python3 -c "
+import json, sys
+profiles = json.load(open('${REPO_ROOT}/delia-api/config/pydantic_ai.runtime.delpi.json'))['profiles']
+print(profiles['${EVAL_PROFILE}']['model']['model_name'])
+")"
 EVAL_ENV="$(mktemp /tmp/delia-eval-or-env.XXXXXX)"
 PROD_STARTED_BEFORE="$(docker inspect -f '{{.State.StartedAt}}' delpi-delia-api 2>/dev/null || echo missing)"
 
@@ -47,7 +58,7 @@ chmod 600 "${EVAL_ENV}"
   echo "DELIA_ENV=development"
   echo "DELIA_EVAL_EGRESS_AUTHORIZED=1"
   echo "DELIA_EVAL_ALLOWED_LLM_HOSTS=openrouter.ai"
-  echo "DELIA_RUNTIME_PROFILE=openrouter_qwen"
+  echo "DELIA_RUNTIME_PROFILE=${EVAL_PROFILE}"
   # Optional A/B arm: forward an explicit investigation instruction
   # version (e.g. DELIA_EVAL_INSTRUCTION_VERSION=generalist-semantic-v2-6-*)
   # without mutating the shared environment or the resource default.
@@ -269,6 +280,7 @@ echo "DEV_RUNTIME_ISOLATION=PROVEN_PROCESS_SEPARATION"
 docker exec -i -e DELIA_APP_ROOT=/app "${EVAL_NAME}" python - <<'PY'
 from app.infrastructure.config.settings import Settings
 from urllib.parse import urlsplit
+import os
 import pydantic_ai
 s = Settings()
 host = urlsplit(s.llm_base_url or "").hostname or ""
@@ -280,15 +292,23 @@ print("baseline_host", host)
 print("baseline_egress", s.llm_egress_blocked_reason or "allowed")
 print("baseline_pydantic_ai", pydantic_ai.__version__)
 assert s.environment == "development"
-assert s.runtime_profile == "openrouter_qwen"
-assert s.llm_model == "qwen/qwen3-14b"
+expected_profile = os.environ["DELIA_RUNTIME_PROFILE"]
+assert s.runtime_profile == expected_profile
+import json as _json, pathlib as _pathlib
+_profiles = _json.loads(
+    _pathlib.Path("/app/config/pydantic_ai.runtime.delpi.json").read_text()
+)["profiles"]
+assert s.llm_model == _profiles[expected_profile]["model"]["model_name"]
 assert host == "openrouter.ai"
 assert s.llm_egress_blocked_reason is None
 assert s.llm_api_key
 print("BASELINE_CONFIG=OK")
 PY
 
-docker exec -i -e DELIA_APP_ROOT=/app "${EVAL_NAME}" \
+docker exec -i -e DELIA_APP_ROOT=/app \
+  -e "DELIA_EVAL_TARGET_PROFILE=${EVAL_PROFILE}" \
+  -e "DELIA_EVAL_TARGET_MODEL=${EVAL_MODEL}" \
+  "${EVAL_NAME}" \
   python scripts/int1_secure_decision_trace.py --check-security-gate \
   | tee "${ARTIFACT_DIR}/security-gate.json"
 # exit 2 from script means BLOCKED — require READY
@@ -324,6 +344,9 @@ docker exec -i \
   -e "DELIA_EVAL_SCENARIO_IDS=${SCENARIO_IDS}" \
   -e "DELIA_EVAL_CORPUS=${EVAL_CORPUS}" \
   -e "DELIA_EVAL_LIVE_MULTITURN_CHAIN=${LIVE_MULTITURN_CHAIN}" \
+  -e "DELIA_EVAL_SCENARIOS_JSON=${DELIA_EVAL_SCENARIOS_JSON:-}" \
+  -e "DELIA_EVAL_TARGET_PROFILE=${EVAL_PROFILE}" \
+  -e "DELIA_EVAL_TARGET_MODEL=${EVAL_MODEL}" \
   "${EVAL_NAME}" \
   python scripts/int1_openrouter_qwen14b_instrumented_eval.py \
   | tee "${ARTIFACT_DIR}/eval-output.jsonl"
