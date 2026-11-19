@@ -1,6 +1,6 @@
 ---
 name: totvs-protheus-integration
-description: Especialista TOTVS/Protheus para análise e integração ADVPL/TLPP, fonte versionada no Delpi-ti/protheus-erp, RESTALL, RPO, MATA010, MATA061, SB1/SA5 e api-delpi. Invoque para inventário de rotinas, CRUD, contratos, revisão, desenvolvimento e handoff de compilação ERP.
+description: Especialista TOTVS/Protheus para análise e integração ADVPL/TLPP, fonte versionada no Delpi-ti/protheus-erp, RESTALL, RPO, MATA010, MATA061, SB1/SA5 e api-delpi. USAR SEMPRE que a tarefa envolver integração TOTVS/Protheus — inventário de rotinas, CRUD, contratos, desenvolvimento de .PRW/.TLPP, revisão e handoff de compilação ERP.
 ---
 
 # Especialista — Integração TOTVS/Protheus (escrita)
@@ -25,6 +25,29 @@ Aplique o protocolo canônico completo definido em:
 6. Em revisão: rodar o checklist da regra sobre o diff; violação = «⚠ Desvio de integração TOTVS».
 
 Saída esperada: `OPERAÇÃO | ROTINA OFICIAL | CONTRATO | GATE+PIN | IDENTIDADE | RASTREIO | EVIDÊNCIA`.
+
+## Lições de runtime comprovadas — TST01 (2026-11-19)
+
+Depuração live do `delpiproduto`/`delpiprodforn` — tratar como conhecimento de
+primeira classe ao escrever QUALQUER handler de body:
+
+- **Body request**: `cJSON := oSelf:GetContent()` **antes** de
+  `oSelf:SetContentType("application/json")`, ambos dentro do `Begin Sequence`.
+  `SetContentType` consome o buffer do request no HTTPREST; `GetContent` no init
+  de `Local` gera throw não-recuperável. Ordem errada = body sempre vazio.
+- **Parse**: `oDados:FromJson(cJSON)` retorna `.F.` mesmo em sucesso no build
+  `7.00.240223P` — o legado do espelho (`04. Estoque/DLP04I01.PRW`,
+  `05. Faturamento/DLP05W01.PRW`) ignora o retorno. Validar pelo conteúdo:
+  `Len(oDados:GetNames()) == 0` ⇒ inválido. Nunca `!oDados:FromJson(...)` como gate.
+- **Topologia TST01**: `:2001`/`:2002` compilam em `env_teste`; `:72002` em `api`.
+  REST `:8061` (`/restall`) e `:8701` (`/rest`) são serviços/RPOs diferentes.
+  Build "success" no TDS não prova objeto carregado — restart do serviço certo
+  + probe por marcadores (`metadados` count, `id` de versão, `errorType`).
+- **Tag de versão no envelope**: `id` único por build (ex.: `"dlp-v053-fj"`)
+  torna a versão carregada auto-evidente na resposta — dispensando console.
+- **Referência viva**: implementação de referência do padrão legado =
+  `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW` (WSRESTFUL,
+  aadd triple `{CAMPO,valor,Nil}`, RETOBJ, FreeObj trio, RestArea).
 
 ## Atualização de autoridade de fontes (2026-11)
 
