@@ -15,9 +15,6 @@ from app.application.dto.third_party_materials.constantes import (
 from app.application.dto.third_party_materials.query_request import (
     ThirdPartyMaterialsQueryRequest,
 )
-from app.application.use_cases.financeiro_inadimplencia.numeric_helpers import (
-    build_pagination,
-)
 from app.domain.ports.third_party_materials.third_party_materials_query_repository_port import (
     ThirdPartyMaterialsQueryRepositoryPort,
 )
@@ -81,10 +78,15 @@ class PendingSupplierReportUseCase:
         return {
             "items": [_map_item(row, request.branch) for row in rows],
             "summary": summary,
-            **build_pagination(
-                page=request.page,
-                page_size=request.page_size,
-                total_items=summary["product_count"],
+            "page": request.page,
+            "page_size": request.page_size,
+            "total": summary["product_count"],
+            "total_pages": max(
+                1,
+                (summary["product_count"] + request.page_size - 1) // request.page_size,
+            ),
+            "is_complete": (
+                request.page * request.page_size >= summary["product_count"]
             ),
         }
 
