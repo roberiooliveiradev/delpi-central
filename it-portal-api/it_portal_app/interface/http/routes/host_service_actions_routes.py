@@ -14,12 +14,38 @@ from it_portal_app.interface.http.dependencies import get_host_service_control
 from it_portal_app.interface.http.s2s_auth import require_collector_identity
 from it_portal_app.interface.http.schemas import (
     Envelope, ERROR_RESPONSES, HostServiceActionInput, HostServiceActionOut,
+    HostServiceActionPrepareInput, HostServiceActionConfirmationOut,
     HostServiceAgentPollInput,
     HostServiceAgentClaimOut, HostServiceAgentReportInput,
 )
 
 router = APIRouter(tags=["Windows Host Service Actions"], responses=ERROR_RESPONSES)
 AGENT_SCOPE = "it-portal.host-services.control-agent"
+
+
+@router.post(
+    "/servers/{server_id}/host-services/{service_name}/action-confirmations",
+    operation_id="prepare_it_windows_host_service_action",
+    response_model=Envelope[HostServiceActionConfirmationOut],
+    status_code=201,
+)
+def prepare_action(
+    request: Request,
+    server_id: UUID,
+    service_name: str,
+    body: HostServiceActionPrepareInput,
+    service: HostServiceControl = Depends(get_host_service_control),
+):
+    actor = actor_from(authorize_write(request, SERVERS_VIEW, HOST_SERVICES_CONTROL))
+    result = service.prepare(
+        str(server_id), service_name, body.action, actor=actor,
+    )
+    return ok(
+        result,
+        "Confirmação preparada. Confirme explicitamente para executar.",
+        201,
+        operation_id="prepare_it_windows_host_service_action",
+    )
 
 
 @router.post("/servers/{server_id}/host-services/{service_name}/actions",
@@ -33,6 +59,7 @@ def request_action(request: Request, server_id: UUID, service_name: str,
     result = service.submit(
         str(server_id), service_name, body.action, str(body.request_id),
         confirmed=body.confirmed, actor=actor,
+        confirmation_id=str(body.confirmation_id) if body.confirmation_id else None,
     )
     return ok(result, "Solicitação enviada ao servidor.", 202,
               operation_id="request_it_windows_host_service_action")

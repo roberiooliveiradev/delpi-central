@@ -5,13 +5,19 @@ import hashlib
 import hmac
 import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from it_portal_app.application.ports import Actor, AuditEvent
-from it_portal_app.domain.errors import ConflictError, NotFoundError
+from it_portal_app.domain.errors import ConflictError, NotFoundError, ValidationError
 from it_portal_app.infrastructure.persistence.postgres_base import PostgresRepositoryBase
 
 _S = "it_portal"
 _TERMINAL = frozenset({"succeeded", "failed", "timeout"})
+_CONFIRMATION_TTL = timedelta(minutes=3)
+_CONFIRMATION_COLUMNS = (
+    "id, requester_subject, server_id, service_key, service_name, action, "
+    "state_before, request_id, expires_at, consumed_at, created_at"
+)
 # Queue TTL 30s. Agent has 75s to report, then result is unknown/no retry.
 _JOB_COLUMNS = (
     "id, server_id, service_key, service_name, action, state_before, status, "
@@ -25,6 +31,179 @@ def _public(row: dict) -> dict:
 
 
 class PostgresHostServiceActions(PostgresRepositoryBase):
+    def prepare_confirmation(
+        self,
+        server_id: str,
+        service_key: str,
+        action: str,
+        actor: Actor,
+    ) -> dict:
+        """Create a one-shot confirmation challenge bound to actor+target+state."""
+        with self._tx() as conn:
+            server = conn.execute(
+                f"SELECT archived_at FROM {_S}.servers WHERE id=%s FOR UPDATE",
+                (server_id,),
+            ).fetchone()
+            if server is None or server["archived_at"] is not None:
+                raise ConflictError("server_unavailable", "Servidor indisponível.")
+            svc = conn.execute(
+                f"""SELECT name, state, start_mode, can_stop, is_present, observed_at
+                    FROM {_S}.host_services
+                    WHERE server_id=%s AND service_key=%s FOR UPDATE""",
+                (server_id, service_key),
+            ).fetchone()
+            if svc is None or not svc["is_present"]:
+                raise NotFoundError(
+                    "control_service_unavailable",
+                    "Serviço não encontrado na coleta atual.",
+                )
+            if (action == "start" and (svc["state"] != "stopped" or svc["start_mode"] == "disabled")) or (
+                action in {"stop", "restart"}
+                and (svc["state"] != "running" or not svc["can_stop"])
+            ):
+                raise ConflictError(
+                    "control_state_conflict",
+                    "Estado do serviço não permite esta ação.",
+                )
+            if conn.execute(
+                "SELECT %s::timestamptz < now()-interval '12 minutes' AS stale",
+                (svc["observed_at"],),
+            ).fetchone()["stale"]:
+                raise ConflictError(
+                    "control_inventory_stale",
+                    "Inventário desatualizado; aguarde uma nova coleta.",
+                )
+            now = datetime.now(timezone.utc)
+            confirmation_id = str(uuid.uuid4())
+            request_id = str(uuid.uuid4())
+            expires_at = now + _CONFIRMATION_TTL
+            conn.execute(
+                f"""INSERT INTO {_S}.host_service_confirmations (
+                    id, requester_subject, server_id, service_key, service_name,
+                    action, state_before, request_id, expires_at, created_at
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (
+                    confirmation_id, actor.id, server_id, service_key, svc["name"],
+                    action, svc["state"], request_id, expires_at, now,
+                ),
+            )
+            self._audit(conn, AuditEvent(
+                entity_type="host_service_confirmation",
+                entity_id=confirmation_id,
+                server_id=server_id,
+                event_type="host_service_confirmation_prepared",
+                changes={
+                    "service": svc["name"],
+                    "action": action,
+                    "state_before": svc["state"],
+                    "expires_at": expires_at.isoformat(),
+                },
+            ), actor)
+            row = conn.execute(
+                f"SELECT {_CONFIRMATION_COLUMNS} FROM {_S}.host_service_confirmations WHERE id=%s",
+                (confirmation_id,),
+            ).fetchone()
+            return _public(row)
+
+    def consume_confirmation(
+        self,
+        *,
+        confirmation_id: str,
+        server_id: str,
+        service_key: str,
+        action: str,
+        actor: Actor,
+    ) -> dict:
+        """Atomically consume a confirmation; returns bound request_id + state_before."""
+        try:
+            cid = str(uuid.UUID(confirmation_id))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(
+                "invalid_confirmation_id",
+                "Identificador de confirmação inválido.",
+            ) from exc
+        with self._tx() as conn:
+            row = conn.execute(
+                f"""SELECT {_CONFIRMATION_COLUMNS}
+                    FROM {_S}.host_service_confirmations
+                    WHERE id=%s FOR UPDATE""",
+                (cid,),
+            ).fetchone()
+            if row is None:
+                raise NotFoundError(
+                    "control_confirmation_not_found",
+                    "Confirmação não encontrada.",
+                )
+            if str(row["requester_subject"]) != actor.id:
+                raise ConflictError(
+                    "control_confirmation_subject_mismatch",
+                    "Confirmação não pertence ao usuário autenticado.",
+                )
+            if str(row["server_id"]) != server_id or row["service_key"] != service_key or row["action"] != action:
+                raise ConflictError(
+                    "control_confirmation_target_mismatch",
+                    "Confirmação não corresponde ao servidor, serviço ou ação.",
+                )
+            if row["consumed_at"] is not None:
+                raise ConflictError(
+                    "control_confirmation_reused",
+                    "Confirmação já foi utilizada.",
+                )
+            expires_at = row["expires_at"]
+            if getattr(expires_at, "tzinfo", None) is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            if expires_at <= datetime.now(timezone.utc):
+                raise ConflictError(
+                    "control_confirmation_expired",
+                    "Confirmação expirada; prepare novamente.",
+                )
+            svc = conn.execute(
+                f"""SELECT name, state, start_mode, can_stop, is_present
+                    FROM {_S}.host_services
+                    WHERE server_id=%s AND service_key=%s FOR UPDATE""",
+                (server_id, service_key),
+            ).fetchone()
+            if svc is None or not svc["is_present"]:
+                raise NotFoundError(
+                    "control_service_unavailable",
+                    "Serviço não encontrado na coleta atual.",
+                )
+            if svc["state"] != row["state_before"]:
+                raise ConflictError(
+                    "control_state_changed",
+                    "Estado do serviço mudou desde a preparação.",
+                )
+            if (action == "start" and (svc["state"] != "stopped" or svc["start_mode"] == "disabled")) or (
+                action in {"stop", "restart"}
+                and (svc["state"] != "running" or not svc["can_stop"])
+            ):
+                raise ConflictError(
+                    "control_state_conflict",
+                    "Estado do serviço não permite esta ação.",
+                )
+            conn.execute(
+                f"""UPDATE {_S}.host_service_confirmations
+                    SET consumed_at=now() WHERE id=%s AND consumed_at IS NULL""",
+                (cid,),
+            )
+            self._audit(conn, AuditEvent(
+                entity_type="host_service_confirmation",
+                entity_id=cid,
+                server_id=server_id,
+                event_type="host_service_confirmation_consumed",
+                changes={
+                    "service": row["service_name"],
+                    "action": action,
+                    "state_before": row["state_before"],
+                },
+            ), actor)
+            return {
+                "request_id": str(row["request_id"]),
+                "state_before": row["state_before"],
+                "service_name": row["service_name"],
+                "confirmation_id": cid,
+            }
+
     @staticmethod
     def _expire(conn, server_id: str) -> None:
         # No automatic retry: a claimed Windows command could already have executed.
