@@ -23,6 +23,10 @@ tracking:
       at: "2026-11-19"
       by: "Devin — Especialista TOTVS (serie diag 0.5.2..0.5.5 -> 0.6.0)"
       note: "PROVEN_RUNTIME no REST :8701 (RPO api): causa raiz srvobject = Activate() do wrapper DMATA061 ExecBlock-ando browse U_DMATA061 (THREAD ERROR); fix = modelo oficial MATA061 (headless, TDN PCOM10001) + SetVldActivate({||.T.}) + omitir SetValue vazio (FWWHEN A5_REFGRD). POST /incluir gravou SA5 10080010x999999/01, read-back confirmou. AIF nao gera linha SA5 — patch AIF_ZCDUSR no-op; auditoria do ator no ledger api-delpi (decisao PO). Fonte consolidada 0.6.0 = mesmo fluxo provado sem marcadores diag; recompile+retest pendente."
+    - state: PREPARED
+      at: "2026-11-19"
+      by: "Devin — Especialista TOTVS (CRUD completo 0.7.0 — pedido PO)"
+      note: "PUT/GET/DELETE saem de 501 para o ciclo MVC oficial: posiciona SA5 no documento do produto (dbSetOrder(2)+MsSeek, indice FILIAL+PRODUTO+...), Activate em VIEW/UPDATE, localiza linha na grade pela identidade (lFindSA5Line + REFGRD no header), GetValue (GET) / SetValue so attrs (PUT) / DeleteLine (DELETE). Limite oficial: a060VldGrv rejeita modelo sem linhas ativas — ultimo vinculo nao removivel pela rota (fail-closed). Helpers compartilhados: lLoadSA5Model/lFindSA5Line/lPrepSA5Ident/lPrepSA5Attr. VALIDAR NO TST01: carga por posicao de alias, metodos da grade, multiplos REFGRD."
 
 evidence_tst01_2026_11_19:
   ledger_write: "api-delpi/docs/integrations/evidence/protheus-rest-product-supplier-create-ledger.md"
@@ -37,9 +41,9 @@ references:
 
 operation_states:
   CREATE: "PROVEN_RUNTIME TST01 :8701 (POST incluir gravou SA5 10080010x999999/01 — build 0.5.5-diag; 0.6.0 consolidado aguarda recompile+retest)"
-  UPDATE: "BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING (PUT 501)"
-  READ_ADVPL: "TO_INVENTORY (GET 501)"
-  READ_API_DELPI: "PROVEN_CODE (get_supplier_link)"
-  DELETE: "BLOCKED / ERP_DECISION_REQUIRED (DELETE 501)"
+  UPDATE: "SOURCE_CANDIDATE 0.7.0 — ciclo MVC UPDATE implementado; VALIDAR TST01 (carga por posicao de alias)"
+  READ_ADVPL: "SOURCE_CANDIDATE 0.7.0 — VIEW op + navegacao da grade; VALIDAR TST01"
+  READ_API_DELPI: "PROVEN_CODE (get_supplier_link) — leitura canonica dos consumidores"
+  DELETE: "SOURCE_CANDIDATE 0.7.0 — UPDATE op + DeleteLine; ultimo vinculo rejeitado pela validacao oficial (a060VldGrv) por desenho"
 
 sensitive: "NUNCA registrar credenciais, tokens ou URIs com segredos neste arquivo."

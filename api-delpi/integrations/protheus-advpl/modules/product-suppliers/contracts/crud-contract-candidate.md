@@ -1,18 +1,18 @@
 # Contrato REST candidato — product-suppliers (SA5)
 
-Status: `PLANNED` — sujeito a ratificação (ver architecture-decision).
-Sem handler implementado; `DLP04I02.PRW` = `SOURCE_NAME_AVAILABLE=INCONCLUSIVE`
-(sem colisão no delpi-central/espelho; repo ERP não revalidado).
+Status: `IMPLEMENTING` — `DLP04I02.PRW` versão `0.7.0` implementa o
+CRUD completo pelo modelo oficial MATA061 (fallback DMATA061), mesma
+cadeia headless provada no POST em TST01 2026-11-19.
 Nenhuma rota REST SA5 existe em 527/526 classes RESTALL (G0-B/C).
 
 ## Superfície conceitual
 
 | Op | Verbo/path conceitual | Mecanismo | Estado |
 |---|---|---|---|
-| CREATE | `POST /v1/product-suppliers` | FWLoadModel('MATA061') insert (fallback DMATA061) | **PROVEN_RUNTIME** TST01 2026-11-19 — POST gravou SA5 `10080010×999999/01`, read-back confirmou |
-| READ | `GET /v1/product-suppliers/{id}` | **fora do .PRW** — leitura api-delpi governada (estender FABR/FALOJA/REFGRD) ou via modelo | DECISION_REQUIRED |
-| UPDATE | `PUT /v1/product-suppliers/{id}` | modelo — linha pela PK | candidato — VALIDAR TST01 |
-| DELETE | `DELETE /v1/product-suppliers/{id}` | modelo — bloqueio do último vínculo pendente | BLOCKED até semântica+política |
+| CREATE | `POST /v1/ProdForn/incluir` | FWLoadModel('MATA061') insert (fallback DMATA061) | **PROVEN_RUNTIME** TST01 2026-11-19 — POST gravou SA5 `10080010×999999/01`, read-back confirmou |
+| READ | `GET /v1/ProdForn/consultar` | modelo — op VIEW: posiciona SA5 (índice 2) no produto, Activate, localiza a linha pela identidade, GetValue | candidato `0.7.0` — VALIDAR TST01 |
+| UPDATE | `PUT /v1/ProdForn/alterar` | modelo — op UPDATE: mesma carga, GoLine na linha, SetValue só nos atributos editáveis | candidato `0.7.0` — VALIDAR TST01 |
+| DELETE | `DELETE /v1/ProdForn/excluir` | modelo — op UPDATE + `DeleteLine()` na linha | candidato `0.7.0` — VALIDAR TST01. **Semântica oficial:** `a060VldGrv` rejeita modelo sem linhas ativas → último vínculo do produto não é removível por esta rota (rejeição oficial fail-closed; remoção do último vínculo = TO_INVENTORY) |
 
 Identidade composta na rota: **não usar path único** — proposta:
 `{product}` no path + `fornece/loja/fabr/faloja/refgrd` como query ou
@@ -53,15 +53,20 @@ commit ambíguo (indeterminado). `id` carrega a tag de versão do fonte
 - Confirmação pós-op: read-after-write pela PK completa; 2xx =
   `ACKNOWLEDGED`, não `CONFIRMED` sem read-back.
 
-## READ — decisão de superfície (G2-B3, registro aditivo)
+## READ — decisão de superfície (G2-B3, registro aditivo + atualização 0.7.0)
 
-A leitura SA5 no contexto REST ADVPL (`FWLoadModel('DMATA061')` + operação
-VIEW + carga pela PK integral) permanece `TO_INVENTORY` — o ciclo de
-leitura via modelo não está comprovado contra a versão instalada e não foi
-inventado. Decisão técnica aprovada para a superfície de **leitura**:
+Decisão técnica aprovada para a superfície de **leitura** canônica:
 adapter SQL read-only na `api-delpi`
 (`ProductSuppliersRepository.get_supplier_link` + projeções aditivas de
 `A5_FILIAL/A5_FABR/A5_FALOJA/A5_REFGRD`), compartilhando a seleção
-governada de ambiente (`TOTVS_TARGET_ENV`). Isto **não** é implementação
-do GET do `.PRW` nem autoriza escrita — a fachada ADVPL mantém READ/GET
-como `TO_INVENTORY` e DELETE como `BLOCKED`.
+governada de ambiente (`TOTVS_TARGET_ENV`).
+
+**Atualização 0.7.0 (PO 2026-11-19, pedido "CRUD completo no PRW"):**
+o `GET /v1/ProdForn/consultar` passou a existir na fachada ADVPL como
+leitura **via modelo oficial** (operação VIEW + carga por posição de
+alias + navegação da grade) — mecanismo oficial próprio, não transplante
+de SQL — classificado `SOURCE_CANDIDATE` até a prova TST01
+(`VALIDAR NO TST01`: `Activate` em VIEW por posição, `Length/GoLine/
+IsDeleted/GetValue` do FWFormModel). A superfície SQL da api-delpi
+permanece a leitura canônica para consumidores; o GET ADVPL existe
+para completude do CRUD governado e evidência do mecanismo.

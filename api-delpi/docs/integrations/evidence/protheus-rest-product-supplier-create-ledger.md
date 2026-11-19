@@ -46,3 +46,27 @@ Read-back SA5010: vínculo gravado com todos os campos ✓
 - READ (GET) — TO_INVENTORY, 501.
 - DELETE — BLOCKED (semântica `a060VldGrv` grid vazio), 501.
 - `A5_REFGRD` **não-vazio** (produto com grade) — caminho não exercitado.
+
+## Rodada 0.7.0 — CRUD completo (pedido PO, 2026-11-19)
+
+GET/PUT/DELETE saem de `501` para o ciclo MVC oficial, reutilizando a
+cadeia headless provada no POST (modelo `MATA061` + `SetVldActivate` +
+guardas `!Empty()`):
+
+```text
+Carga do documento: dbSelectArea("SA5") + dbSetOrder(2)
+  (indice FILIAL+PRODUTO+...) + MsSeek(xFilial("SA5")+produto)
+  → Activate() em VIEW (GET) ou UPDATE (PUT/DELETE)
+  → lFindSA5Line: navega a grade (Length/GoLine/IsDeleted/GetValue)
+    casando FORNECE+LOJA+FABR+FALOJA; REFGRD validado no header
+  → GET: GetValue nos campos da linha (header p/ PRODUTO/REFGRD)
+  → PUT: SetValue so nos atributos editaveis (identidade imutavel)
+  → DELETE: DeleteLine() na linha — ultimo vinculo e rejeitado pela
+    validacao oficial a060VldGrv (grid sem linhas ativas) por desenho
+```
+
+Classificação: `SOURCE_CANDIDATE` — hipóteses `VALIDAR NO TST01`:
+carga por posição de alias, métodos `GoLine/IsDeleted/DeleteLine/
+GetValue` do FWFormModel, produtos com múltiplos `A5_REFGRD`.
+Prova pendente: compilar `0.7.0` → exercitar GET/PUT/DELETE no vínculo
+`10080010×999999/01` (o DELETE dogfood a reversão do registro de teste).

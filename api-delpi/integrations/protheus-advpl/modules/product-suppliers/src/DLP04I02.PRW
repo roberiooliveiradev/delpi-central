@@ -2,8 +2,10 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.6.0 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.6.0"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.7.0 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.7.0"); comparar com o objeto compilado no RPO.
+          0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
+          ciclo MVC oficial (mesma cadeia headless provada no POST).
    ESTADO: PROVEN_RUNTIME TST01 (2026-11-19, REST :8701, build diag) —
           POST /incluir gravou SA5 10080010 x 999999/01 via modelo
           oficial MATA061 headless; read-back SQL confirmou.
@@ -56,23 +58,25 @@
    a060VldGrv, MT061MN, SX3) executam no ciclo do modelo.
 
    CLASSIFICACAO POR OPERACAO (sem fingimento de contrato):
-     CREATE (POST)  = SOURCE_CANDIDATE — ciclo MPFormModel documentado +
-                      ids/chave comprovados no fonte do modelo; commit so
-                      aceito com retorno logico .T. de CommitData().
-     UPDATE (PUT)   = BLOCKED — carga inequivoca do vinculo pela PK
-                      integral sem view nao esta comprovada; o handler
-                      retorna 501 explicito e NUNCA executa CommitData.
-     READ (GET)     = TO_INVENTORY — sem rotina oficial de leitura REST;
-                      retorna 501 explicito. Leitura segue na superficie
-                      SQL governada da api-delpi (evidencia auxiliar,
-                      separada desta fachada).
-     DELETE         = BLOCKED — a060VldGrv oficial rejeita salvar modelo
-                      com todas as linhas excluidas (ultimo vinculo);
-                      o mesmo callback tambem rejeita GRID VAZIO
-                      (Length()==0): inclusao exige sempre uma linha e
-                      UPDATE falha fechado se a linha nao carregar.
-                      Semantica de exclusao pendente de ratificacao.
-                      Retorna 501 explicito — nunca RecLock/DbDelete.
+     CREATE (POST)  = PROVEN_RUNTIME TST01 (2026-11-19) — SA5 gravada
+                      via modelo MATA061 headless + read-back SQL.
+     UPDATE (PUT)   = SOURCE_CANDIDATE — posiciona SA5 no documento do
+                      produto (indice 2), Activate em UPDATE, localiza a
+                      linha na grade pela identidade e SetValue so nos
+                      atributos editaveis (A5_NOMEFOR/A5_CODPRF/A5_DESCPRF).
+                      Carga por posicao de alias = VALIDAR NO TST01.
+     READ (GET)     = SOURCE_CANDIDATE — mesma carga em operacao VIEW,
+                      GetValue nos campos da linha localizada; resposta
+                      em data{}. Metodos GetValue/GoLine/IsDeleted do
+                      FWFormModel = VALIDAR NO TST01.
+     DELETE         = SOURCE_CANDIDATE — mesma carga em UPDATE +
+                      DeleteLine() na linha localizada. SEMANTICA
+                      OFICIAL: a060VldGrv rejeita salvar modelo com
+                      todas as linhas excluidas — o ultimo vinculo do
+                      produto nao pode ser removido por esta rota
+                      (rejeicao oficial, fail-closed; remover o ultimo
+                      vinculo exige a tela do MATA061/semantica de
+                      exclusao do documento — TO_INVENTORY).
 
    IDENTIDADE SA5 (PK oficial do modelo — imutavel em UPDATE):
      A5_FILIAL(ctx xFilial) + A5_FORNECE + A5_LOJA + A5_PRODUTO +
@@ -81,8 +85,13 @@
      oficial do modelo (contexto empresa/filial da sessao REST).
 
    LIMITES / VALIDAR NO TST01:
-     - Carregamento do vinculo pela PK integral sem view (UPDATE) —
-       metodo oficial nao comprovado; PUT permanece bloqueado.
+     - Carga por posicao de alias (dbSetOrder(2)+MsSeek produto) como
+       ancoragem do documento em UPDATE/VIEW = hipotese padrao MVC,
+       nao comprovada; GoLine/IsDeleted/DeleteLine/GetValue = ids do
+       padrao FWFormModel, nao comprovados neste RPO.
+     - Produtos com grade (A5_REFGRD != ""): o documento e ancorado
+       pelo registro posicionado — multiplos REFGRD do mesmo produto
+       = VALIDAR NO TST01 (pode 404 legitimo).
      - Retorno de CommitData() exigido logico .T.; retorno nao-logico
        e tratado como resultado AMBIGUO (erro, nao sucesso).
      - a060LinOk executa o dup-check apenas em isInserted() e le
@@ -106,8 +115,8 @@ WSRESTFUL DelpiProdForn DESCRIPTION "Api REST Produto x Fornecedor (SA5)" FORMAT
 
     WSMETHOD POST   sa5Prod  DESCRIPTION 'Inclui vinculo Produto x Fornecedor'   PATH '/v1/ProdForn/incluir'   WSSYNTAX '/v1/ProdForn/incluir'   TTALK "v1"
     WSMETHOD PUT    sa5Prod  DESCRIPTION 'Altera vinculo Produto x Fornecedor'   PATH '/v1/ProdForn/alterar'   WSSYNTAX '/v1/ProdForn/alterar'   TTALK "v1"
-    WSMETHOD GET    sa5Prod  DESCRIPTION 'Consulta vinculo (nao implementado)'   PATH '/v1/ProdForn/consultar' WSSYNTAX '/v1/ProdForn/consultar' TTALK "v1"
-    WSMETHOD DELETE sa5Prod  DESCRIPTION 'Exclui vinculo (bloqueado — semantica pendente)' PATH '/v1/ProdForn/excluir' WSSYNTAX '/v1/ProdForn/excluir' TTALK "v1"
+    WSMETHOD GET    sa5Prod  DESCRIPTION 'Consulta vinculo Produto x Fornecedor' PATH '/v1/ProdForn/consultar' WSSYNTAX '/v1/ProdForn/consultar' TTALK "v1"
+    WSMETHOD DELETE sa5Prod  DESCRIPTION 'Exclui vinculo Produto x Fornecedor'   PATH '/v1/ProdForn/excluir'   WSSYNTAX '/v1/ProdForn/excluir'   TTALK "v1"
 
 END WSRESTFUL
 
@@ -231,6 +240,7 @@ static function lExecSA5(oSelf)
     Local oModel     := NIL
     Local oGrid      := NIL
     Local xVal       := NIL
+    Local aLoad      := {}
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
@@ -288,17 +298,11 @@ static function lExecSA5(oSelf)
             // (U_DMATA061 -> FWMBrowse -> "JOB threads doesn't support
             // remote/visual components", causa raiz provada por
             // THREAD ERROR TST01).
-            oModel := FWLoadModel("MATA061")
-            if ValType(oModel) == "O"
-                cMdlId := "MATA061"
-                cFldId := "MdFieldSA5"
-                cGrdId := "MdGridSA5"
-            else
-                oModel := FWLoadModel("DMATA061")
-                cMdlId := "DMATA061"
-                cFldId := "DMdFieldSA5"
-                cGrdId := "DMdGridSA5"
-            endif
+            aLoad := lLoadSA5Model()
+            oModel := aLoad[1]
+            cMdlId := aLoad[2]
+            cFldId := aLoad[3]
+            cGrdId := aLoad[4]
             if ValType(oModel) <> "O"
                 lRet     := .F.
                 cErrType := "server_error"
@@ -453,59 +457,412 @@ Return .T.
 WSMETHOD POST sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
 Return lExecSA5(self)
 
+/* -----------------------------------------------------------------------
+   lFindSA5Line — localiza na grid do modelo a linha do vinculo pela
+   identidade FORNECE+LOJA+FABR+FALOJA (4 campos definitivos da grid).
+   REFGRD e validado contra o header do documento carregado.
+   Retorna o numero da linha (>0) ou 0.
+   VALIDAR NO TST01: nomes dos metodos da grid do modelo 'MATA061'
+   (GetValue/IsDeleted) presumidos pelo padrao FWFormModel.
+   ----------------------------------------------------------------------- */
+static function lFindSA5Line(oGrid, oDados)
+
+    local nI    := 0
+    local nAlvo := 0
+
+    for nI := 1 to oGrid:Length()
+        oGrid:GoLine(nI)
+        if !oGrid:IsDeleted() .and. ;
+            AllTrim(cValToChar(oGrid:GetValue("A5_FORNECE"))) == AllTrim(oDados:GetJSonObject("A5_FORNECE")) .and. ;
+            AllTrim(cValToChar(oGrid:GetValue("A5_LOJA")))    == AllTrim(oDados:GetJSonObject("A5_LOJA"))    .and. ;
+            AllTrim(cValToChar(oGrid:GetValue("A5_FABR")))    == AllTrim(oDados:GetJSonObject("A5_FABR"))    .and. ;
+            AllTrim(cValToChar(oGrid:GetValue("A5_FALOJA")))  == AllTrim(oDados:GetJSonObject("A5_FALOJA"))
+            nAlvo := nI
+            exit
+        endif
+    next nI
+
+Return nAlvo
+
+/* -----------------------------------------------------------------------
+   lLoadSA5Model — carrega o modelo oficial (MATA061, fallback DMATA061)
+   e devolve {oModel, cMdlId, cFldId, cGrdId}. Mesmo contrato do CREATE:
+   rotina automatica TDN + bypass de vld-activate (browse).
+   ----------------------------------------------------------------------- */
+static function lLoadSA5Model()
+
+    local oModel := NIL
+    local cMdlId := ""
+    local cFldId := ""
+    local cGrdId := ""
+
+    oModel := FWLoadModel("MATA061")
+    if ValType(oModel) == "O"
+        cMdlId := "MATA061"
+        cFldId := "MdFieldSA5"
+        cGrdId := "MdGridSA5"
+    else
+        oModel := FWLoadModel("DMATA061")
+        cMdlId := "DMATA061"
+        cFldId := "DMdFieldSA5"
+        cGrdId := "DMdGridSA5"
+    endif
+
+Return {oModel, cMdlId, cFldId, cGrdId}
+
+/* -----------------------------------------------------------------------
+   lExecSA5Op — GET consultar / PUT alterar / DELETE excluir.
+   Contrato uniforme: body JSON com identidade completa (6 campos);
+   PUT exige tambem os atributos editaveis (A5_NOMEFOR/A5_CODPRF/A5_DESCPRF);
+   codusr meta-campo (mesma regra do POST — ignorado pelo lPrep).
+   Mecanismo oficial: posiciona SA5 no documento do produto (indice 2:
+   FILIAL+PRODUTO+...), ativa o modelo na operacao correspondente e
+   navega a grade ate a linha do vinculo. Sem RecLock/SQL/DbWrite.
+   VALIDAR NO TST01: carga por posicao de alias + GoLine/DeleteLine/
+   GetValue do FWFormModel — assinaturas presumidas do padrao MVC.
+   DELETE: a060VldGrv oficial rejeita modelo com todas as linhas
+   excluidas — ultimo vinculo do produto nao pode ser removido por esta
+   rota (rejeicao oficial, fail-closed — semantica da rotina).
+   ----------------------------------------------------------------------- */
+static function lExecSA5Op(oSelf, cOp)
+
+    Local aArea      := GetArea()
+    Local lRet       := .F.
+    Local lActivated := .F.
+    Local cErro      := ""
+    Local cErroBlk   := ""
+    Local cErroEnv   := ""
+    Local cMdlId     := ""
+    Local cFldId     := ""
+    Local cGrdId     := ""
+    Local cErroLog   := ""
+    Local cErrType   := "client_error"
+    Local nStatus    := 400
+    Local cJSON      := ""
+    Local aMiss      := {}
+    Local aIdent     := aSA5Ident()
+    Local aAttr      := aSA5Attrs()
+    Local nI         := 0
+    Local nAlvo      := 0
+    Local xCommit    := NIL
+    Local xVal       := NIL
+    Local cCodUsr    := ""
+    Local cHoraIni   := ""
+    Local cQryUpd    := ""
+    Local nQry       := 0
+    Local cProd      := ""
+    Local oModel     := NIL
+    Local oGrid      := NIL
+    Local aLoad      := {}
+    Local oJsonRet   := JsonObject():New()
+    Local oItem      := JsonObject():New()
+    Local oDados     := JsonObject():New()
+    Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
+        cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
+            cValToChar(e:ErrorEnv), ""), Break(e) })
+
+    Begin Sequence
+
+        // GetContent SEMPRE antes de SetContentType (regressao TST01)
+        cJSON := oSelf:GetContent()
+        oSelf:SetContentType("application/json")
+
+        if ValType(cJSON) == "C" .and. !Empty(cJSON)
+            oDados:FromJson(cJSON)
+        endif
+
+        if ValType(cJSON) <> "C" .or. Empty(cJSON)
+            lRet := .F.
+            cErro := "Corpo da requisicao vazio ou indisponivel no handler."
+        elseif Len(oDados:GetNames()) == 0
+            lRet := .F.
+            cErro := "Corpo da requisicao nao e um JSON valido"
+        elseif !lPrepSA5Ident(oDados, @aMiss, @cErro)
+            lRet := .F.
+        elseif cOp == "PUT" .and. !lPrepSA5Attr(oDados, @aMiss, @cErro)
+            lRet := .F.
+        else
+            if ValType(oDados:GetJSonObject("codusr")) == "C"
+                cCodUsr := oDados:GetJSonObject("codusr")
+            endif
+            cHoraIni := Left(Time(), 5)
+            cProd    := AllTrim(oDados:GetJSonObject("A5_PRODUTO"))
+
+            // posiciona no documento do produto — indice 2 =
+            // A5_FILIAL+A5_PRODUTO+A5_FORNECE+A5_LOJA (relation oficial).
+            // dbSelectArea abre o alias se fechado (sem isso o SetOrder
+            // lanca em area nao aberta).
+            dbSelectArea("SA5")
+            SA5->(dbSetOrder(2))
+            if !SA5->(MsSeek(xFilial("SA5") + PadR(cProd, TamSx3("A5_PRODUTO")[1])))
+                lRet     := .F.
+                cErrType := "not_found"
+                nStatus  := 404
+                cErro := "Nenhum vinculo do produto " + cProd + ;
+                    " encontrado na SA5 (filial do contexto)."
+            else
+                aLoad := lLoadSA5Model()
+                oModel := aLoad[1]
+                cMdlId := aLoad[2]
+                cFldId := aLoad[3]
+                cGrdId := aLoad[4]
+                if ValType(oModel) <> "O"
+                    lRet     := .F.
+                    cErrType := "server_error"
+                    nStatus  := 500
+                    cErro := "Nenhum modelo oficial MATA061/DMATA061 " + ;
+                        "disponivel no RPO — integracao indisponivel."
+                else
+                    oModel:SetOperation(iif(cOp == "GET", ;
+                        MODEL_OPERATION_VIEW, MODEL_OPERATION_UPDATE))
+                    oModel:SetVldActivate({|| .T.})
+                    oModel:Activate()
+                    lActivated := .T.
+                    oGrid := oModel:GetModel(cGrdId)
+                    nAlvo := lFindSA5Line(oGrid, oDados)
+                    // REFGRD e campo do header do documento — linhas da
+                    // grade compartilham o valor; compara-se no header.
+                    if nAlvo > 0 .and. ;
+                       AllTrim(cValToChar(oModel:GetModel(cFldId):GetValue("A5_REFGRD"))) <> ;
+                           AllTrim(oDados:GetJSonObject("A5_REFGRD"))
+                        nAlvo := 0
+                    endif
+                    if nAlvo == 0
+                        lRet     := .F.
+                        cErrType := "not_found"
+                        nStatus  := 404
+                        cErro := "Vinculo nao localizado na grade do " + ;
+                            "modelo (identidade FORNECE/LOJA/FABR/FALOJA/REFGRD)."
+                    else
+                        oGrid:GoLine(nAlvo)
+                        do case
+                            case cOp == "GET"
+                                // leitura via modelo — campos do vinculo;
+                                // A5_PRODUTO/A5_REFGRD sao do header
+                                // (campo fora do componente -> throw;
+                                // chamada direta no componente certo)
+                                for nI := 1 to len(aIdent)
+                                    if aIdent[nI] == "A5_PRODUTO" .or. ;
+                                       aIdent[nI] == "A5_REFGRD"
+                                        xVal := oModel:GetModel(cFldId):GetValue(aIdent[nI])
+                                    else
+                                        xVal := oGrid:GetValue(aIdent[nI])
+                                    endif
+                                    oItem[aIdent[nI]] := iif(ValType(xVal) == "U", "", xVal)
+                                next nI
+                                for nI := 1 to len(aAttr)
+                                    xVal := oGrid:GetValue(aAttr[nI])
+                                    oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xVal)
+                                next nI
+                                lRet    := .T.
+                                nStatus := 200
+                            case cOp == "PUT"
+                                for nI := 1 to len(aAttr)
+                                    xVal := oDados:GetJSonObject(aAttr[nI])
+                                    if !Empty(xVal)
+                                        oGrid:SetValue(aAttr[nI], xVal)
+                                    endif
+                                next nI
+                                if !oModel:VldData()
+                                    lRet     := .F.
+                                    cErrType := "official_validation"
+                                    cErroLog := lModelErr(oModel, cErroLog)
+                                    cErro := "Rejeitado pela validacao oficial do modelo " + ;
+                                        cMdlId + " (detalhe tecnico no log do AppServer)."
+                                else
+                                    xCommit := oModel:CommitData()
+                                    if ValType(xCommit) <> "L"
+                                        lRet     := .F.
+                                        cErrType := "server_error"
+                                        nStatus  := 500
+                                        cErro := "Resultado ambiguo do commit do modelo " + ;
+                                            cMdlId + " — integracao nao confirmada."
+                                    elseif !xCommit
+                                        lRet     := .F.
+                                        cErrType := "official_validation"
+                                        cErroLog := lModelErr(oModel, cErroLog)
+                                        cErro := "Persistencia rejeitada pelo modelo oficial " + ;
+                                            cMdlId + " (detalhe tecnico no log do AppServer)."
+                                    else
+                                        lRet := .T.
+                                    endif
+                                endif
+                            otherwise  // DELETE
+                                oGrid:DeleteLine()
+                                if !oModel:VldData()
+                                    lRet     := .F.
+                                    cErrType := "official_validation"
+                                    cErroLog := lModelErr(oModel, cErroLog)
+                                    cErro := "Exclusao rejeitada pela validacao oficial do modelo " + ;
+                                        cMdlId + " (detalhe tecnico no log do AppServer)."
+                                else
+                                    xCommit := oModel:CommitData()
+                                    if ValType(xCommit) <> "L"
+                                        lRet     := .F.
+                                        cErrType := "server_error"
+                                        nStatus  := 500
+                                        cErro := "Resultado ambiguo do commit do modelo " + ;
+                                            cMdlId + " — exclusao nao confirmada."
+                                    elseif !xCommit
+                                        lRet     := .F.
+                                        cErrType := "official_validation"
+                                        cErroLog := lModelErr(oModel, cErroLog)
+                                        cErro := "Exclusao rejeitada pelo modelo oficial " + ;
+                                            cMdlId + " (detalhe tecnico no log do AppServer)."
+                                    else
+                                        lRet := .T.
+                                    endif
+                                endif
+                        endcase
+                        // patch AIF_ZCDUSR pos-commit (no-op seguro p/
+                        // SA5 — rotina nao gera AIF; decisao PO 2026-11-19:
+                        // auditoria do ator permanece no ledger api-delpi)
+                        if lRet .and. cOp <> "GET" .and. !Empty(cCodUsr)
+                            cQryUpd := "UPDATE " + RetSqlName("AIF") + ;
+                                " SET AIF_ZCDUSR = " + ValToSql(cCodUsr) + ;
+                                " WHERE D_E_L_E_T_ = ' '" + ;
+                                " AND AIF_TABELA = 'SA5'" + ;
+                                " AND AIF_CODPRO = " + ;
+                                ValToSql(AllTrim(oDados:GetJSonObject("A5_PRODUTO"))) + ;
+                                " AND AIF_DATA = " + ValToSql(Date()) + ;
+                                " AND AIF_HORA >= " + ValToSql(cHoraIni)
+                            nQry := TCSQLExec(cQryUpd)
+                            if nQry < 0
+                                ConOut("DLP04I02 codusr: AIF_ZCDUSR nao gravado (rc=" + ;
+                                    cValToChar(nQry) + ")")
+                            endif
+                        endif
+                    endif
+                endif
+            endif
+        endif
+
+    Recover
+        ErrorBlock(oException)
+        lRet     := .F.
+        cErrType := "server_error"
+        nStatus  := 500
+        cErro    := "Falha interna na integracao Produto x Fornecedor."
+    End sequence
+
+    // finalizacao unica
+    ErrorBlock(oException)
+    if lActivated .and. ValType(oModel) == "O"
+        Begin Sequence
+            oModel:DeActivate()
+        Recover
+        End sequence
+    endif
+    if !Empty(cErroBlk)
+        ConOut("DLP04I02 error: " + cErroBlk)
+    endif
+    if !Empty(cErroEnv)
+        ConOut("DLP04I02 err-env: " + cErroEnv)
+    endif
+    if !Empty(cErroLog)
+        ConOut("DLP04I02 model: " + cErroLog)
+    endif
+
+    if lRet
+        if cOp == "GET"
+            oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
+                "Vinculo localizado pelo modelo oficial " + cMdlId + ".", cVerTag(), "")
+            oJsonRet["data"] := oItem
+        elseif cOp == "PUT"
+            oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
+                "Alteracao aceita pelo modelo oficial " + cMdlId + " " + ;
+                "(commit reconhecido; confirmacao final via read-back governado).", cVerTag(), "")
+        else
+            oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
+                "Exclusao aceita pelo modelo oficial " + cMdlId + " " + ;
+                "(commit reconhecido; confirmacao final via read-back governado).", cVerTag(), "")
+        endif
+        oSelf:setStatus(200)
+    else
+        if Empty(cErro)
+            cErro := "Operacao rejeitada pela integracao Produto x Fornecedor."
+        endif
+        oJsonRet := RETOBJ(oJsonRet, cValToChar(nStatus), "Erro", cErro, cVerTag(), cErrType)
+        oSelf:setStatus(nStatus)
+    endif
+    oSelf:setResponse(oJsonRet:toJson())
+
+    FreeObj(oItem)
+    FreeObj(oJsonRet)
+    FreeObj(oDados)
+    RestArea(aArea)
+
+Return .T.
+
+/* -----------------------------------------------------------------------
+   lPrepSA5Ident — valida apenas a identidade completa (6 campos).
+   Reuso para GET/PUT/DELETE (PUT valida attrs a parte).
+   ----------------------------------------------------------------------- */
+static function lPrepSA5Ident(oDados, aMiss, cErro)
+
+    local aReq  := aSA5Ident()
+    local nI    := 0
+    local lOk   := .T.
+    local xVal  := NIL
+
+    for nI := 1 to len(aReq)
+        xVal := oDados:GetJSonObject(aReq[nI])
+        if ValType(xVal) == "U" .or. ValType(xVal) <> "C" .or. ;
+           (aReq[nI] <> "A5_REFGRD" .and. Empty(xVal))
+            aadd(aMiss, aReq[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
+            lOk := .F.
+        endif
+    next nI
+
+    if !lOk
+        cErro := "Payload incompleto — identidade ausente/nula/invalida: " + ;
+            lJoin(aMiss, ", ")
+    endif
+
+Return lOk
+
+/* -----------------------------------------------------------------------
+   lPrepSA5Attr — valida os atributos editaveis (PUT).
+   ----------------------------------------------------------------------- */
+static function lPrepSA5Attr(oDados, aMiss, cErro)
+
+    local aAttr := aSA5Attrs()
+    local nI    := 0
+    local lOk   := .T.
+    local xVal  := NIL
+
+    for nI := 1 to len(aAttr)
+        xVal := oDados:GetJSonObject(aAttr[nI])
+        if ValType(xVal) == "U" .or. ValType(xVal) <> "C"
+            aadd(aMiss, aAttr[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
+            lOk := .F.
+        endif
+    next nI
+
+    if !lOk
+        cErro := "Payload incompleto — atributos ausentes/nulos/invalidos: " + ;
+            lJoin(aMiss, ", ")
+    endif
+
+Return lOk
+
 /*/{Protheus.doc} sa5Prod (PUT)
-    CONTRACT_CANDIDATE — alteracao de atributos do vinculo via modelo
-    oficial. A carga inequivoca do vinculo pela PK integral no contexto
-    REST (sem view) nao esta comprovada; ate a evidencia TST01, o PUT
-    nao executa o ciclo do modelo nem CommitData — indisponibilidade
-    explicita, nunca sucesso ficticio nem update parcial inseguro.
+    Alteracao de atributos do vinculo via modelo oficial (UPDATE op).
 /*/
 WSMETHOD PUT sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
-
-    Local oJsonRet := JsonObject():New()
-
-    Self:SetContentType("application/json")
-    Self:setStatus(501)
-    Self:setResponse(RETOBJ(oJsonRet, "501", "Nao implementado", ;
-        "Alteracao SA5 = CONTRACT_CANDIDATE: carga oficial do vinculo pela " + ;
-        "chave integral pendente de comprovacao (VALIDAR NO TST01)", cVerTag(), "not_homologated"):toJson())
-    FreeObj(oJsonRet)
-
-Return .T.
+Return lExecSA5Op(self, "PUT")
 
 /*/{Protheus.doc} sa5Prod (GET)
-    TO_INVENTORY — sem rotina oficial de leitura REST comprovada.
-    Nao implementar com SQL: leitura permanece na superficie governada
-    da api-delpi (separada desta fachada).
+    Consulta do vinculo via modelo oficial (VIEW op) — nao-SQL.
 /*/
 WSMETHOD GET sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
-
-    Local oJsonRet := JsonObject():New()
-
-    Self:SetContentType("application/json")
-    Self:setStatus(501)
-    Self:setResponse(RETOBJ(oJsonRet, "501", "Nao implementado", ;
-        "READ via modelo oficial = TO_INVENTORY; usar a superficie de leitura governada da api-delpi", cVerTag(), "not_homologated"):toJson())
-    FreeObj(oJsonRet)
-
-Return .T.
+Return lExecSA5Op(self, "GET")
 
 /*/{Protheus.doc} sa5Prod (DELETE)
-    BLOCKED — a060VldGrv oficial rejeita salvar modelo sem linhas ativas;
-    semantica de exclusao (ultimo vinculo) pendente de ratificacao.
-    Jamais RecLock/DbDelete/SQL.
+    Exclusao da linha do vinculo via modelo oficial (DeleteLine).
 /*/
 WSMETHOD DELETE sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
-
-    Local oJsonRet := JsonObject():New()
-
-    Self:SetContentType("application/json")
-    Self:setStatus(501)
-    Self:setResponse(RETOBJ(oJsonRet, "501", "Bloqueado", ;
-        "DELETE bloqueado: semantica oficial de exclusao SA5 pendente de ratificacao (a060VldGrv)", cVerTag(), "not_homologated"):toJson())
-    FreeObj(oJsonRet)
-
-Return .T.
+Return lExecSA5Op(self, "DELETE")
 
 /*/{Protheus.doc} cVerTag
     Tag de versao do fonte — devolvida no campo 'id' de toda resposta
@@ -513,7 +870,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.6.0"
+Return "dlp04i02-0.7.0"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:

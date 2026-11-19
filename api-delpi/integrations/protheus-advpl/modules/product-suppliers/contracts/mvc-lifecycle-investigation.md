@@ -109,3 +109,21 @@ Cadeia causal completa medida por marcadores ConOut + THREAD ERROR nativo:
    (decisão PO 2026-11-19).
 6. **Prova de write**: `POST /incluir` → 200 → `SA5010` read-back
    `10080010 × 999999/01` gravado com todos os atributos.
+
+## Extensão 0.7.0 — carga por posição de alias (GET/PUT/DELETE)
+
+Hipótese implementada para carregar um documento existente sem view:
+
+```text
+dbSelectArea("SA5") + dbSetOrder(2)   // FILIAL+PRODUTO+FORNECE+LOJA
+MsSeek(xFilial("SA5") + produto)      // posiciona num registro do doc
+oModel:SetOperation(VIEW|UPDATE) + SetVldActivate({||.T.})
+oModel:Activate()                     // carrega header + grade do doc
+```
+
+Em seguida `lFindSA5Line` navega a grade (`Length/GoLine/IsDeleted/
+GetValue`) casando a identidade FORNECE+LOJA+FABR+FALOJA; `REFGRD`
+comparado no header (campo do documento). Status: `VALIDAR NO TST01` —
+a ancoragem do documento por posição de alias e os métodos da grade
+são o padrão documentado do FWFormModel, não provados neste RPO.
+Produtos com múltiplos `A5_REFGRD` = caso de borda pendente.
