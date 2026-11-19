@@ -239,6 +239,7 @@ def test_weekday_schedule_is_enforced_by_backend():
     repo.upsert_schedule_for_definition.return_value = {
         "scheduleKind": "weekdays", "cronExpression": "0 8 * * 1-5",
     }
+    repo.list_recipients.return_value = []
     use_case = UpsertReportScheduleUseCase(repo)
     with pytest.raises(ValueError, match="segunda a sexta"):
         use_case.execute(definition_id="report-sc", schedule_kind="daily",
