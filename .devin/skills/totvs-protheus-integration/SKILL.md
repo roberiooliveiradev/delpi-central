@@ -27,6 +27,25 @@ Aplique o protocolo canônico completo definido em:
 
 Saída esperada: `OPERAÇÃO | ROTINA OFICIAL | CONTRATO | GATE+PIN | IDENTIDADE | RASTREIO | EVIDÊNCIA`.
 
+## Padrões de projeto DELPI (design patterns comprovados)
+
+**Base de decisão obrigatória**: toda rota/customização nova deve compor
+estes padrões — e **toda lição comprovada em runtime deve ser registrada
+aqui antes de encerrar a sessão** (o especialista cresce a cada iteração;
+conhecimento que fica só na conversa se perde). Nomear o padrão no código
+e no handoff ajuda o revisor a conferir aplicação correta.
+
+| Padrão | Regra | Referência viva |
+|---|---|---|
+| **PAD-AUDITORIA-ATOR** | Toda escrita carrega `codusr` (meta-campo, resolvido via Core — nunca do cliente) e persiste em `AIF_ZCDUSR` pós-commit oficial. **Obrigatório** — proibido rota sem previsão; mecanismo ausente ⇒ `TO_INVENTORY`/escalar | DLP04I01/DLP04I02 v-codusr; `MA020TDOK`/API fornecedores (Gabriel) |
+| **PAD-JANELA-TEMPO-AIF** | Capturar `Left(Time(),5)` **antes** da rotina oficial; patch casa `AIF_DATA=hoje AND AIF_HORA>=início`. `Time()` traz `HH:MM:SS` (8) mas `AIF_HORA` grava `HH:MM` (5) — sem truncar, a janela `>=` nunca casa a linha da própria execução (prefixo menor < string ⇒ 0 rows silencioso — prova TST01 2026-11-19) | bugfix dlp-v056/0.5.1-codusr |
+| **PAD-META-CAMPO** | Campos de controle (`codusr`, futuros) viajam no mesmo body fora do catálogo de campos de negócio — excluídos da validação/ExecAuto; quem consome extrai antes da rotina | `lPrepSB1` loop codusr; `lPrepSA5` (itera só ident/attrs) |
+| **PAD-REPR-COMPLETA** | Update cadastral = representação completa (read-merge-write); omissão zera coluna no ExecAuto | `delpiproduto` 283 campos |
+| **PAD-TAG-VERSAO** | `id` do envelope identifica o build no RPO — bumpar a cada mudança e conferir no probe | `dlp-v05x-*`, `dlp04i02-x.y.z-*` |
+| **PAD-PATCH-NAO-FATAL** | Pós-commit oficial: anotações auxiliares (auditoria, complementos) nunca negam o write — falha ⇒ `ConOut`, não erro de resposta | bloco `AIF_ZCDUSR` nos 2 PRWs |
+| **PAD-GETCONTENT-FIRST** | `GetContent()` antes de `SetContentType()`, ambos dentro do `Begin Sequence` — ordem errada = body vazio | regressão comprovada TST01 |
+| **PAD-VALIDA-CONTEUDO** | Validar parse pelo conteúdo (`Len(GetNames())==0`), nunca pelo retorno de `FromJson` (NIL=ok / string=erro, não lógico) | semântica TDN comprovada |
+
 ## Lições de runtime comprovadas — TST01 (2026-11-19)
 
 Depuração live do `delpiproduto`/`delpiprodforn` — tratar como conhecimento de
@@ -362,6 +381,7 @@ relacionada) ou a validação oficial rejeita.
 | `A<rot>TOK` / PE de permissão | user exit | `RetCodUsr()`/`SuperGetMV("MV_*US*")` falham em REST: o usuário é o técnico do serviço (SYS_USR), não o operador — ex.: `A010TOK`+`MV_ZUSMPLB` bloqueia MP no TST01 |
 | `SB5010_UNQ` e afins | InTTS/commit | flush de complemento multi-filial (SB1 compartilhada × SB5/SBZ exclusivas) — diagnosticar PEs `MT010ALT`-style antes de culpar o contrato |
 | `Erro -->` no `GetAutoGrLog` | ExecAuto | bloco de erro fica no FIM do log — ler a cauda, não a cabeça |
+| `AIF_ZCDUSR` vazio pós-patch | janela `AIF_HORA` | `Time()` retorna `HH:MM:SS` mas `AIF_HORA` é `HH:MM` — truncar `Left(Time(),5)` (PAD-JANELA-TEMPO-AIF) |
 | `THREAD ERROR` | console appserver | exceção não tratada; corpo do erro no `console.log`/`error.log` |
 | `variable does not exist`/`function not found` | runtime | PRIVATE errado / função ausente no RPO (compilação ≠ carga) |
 | `array out of bounds` | runtime | array é 1-based; tripla `{CAMPO,val,NIL}` mal formada |

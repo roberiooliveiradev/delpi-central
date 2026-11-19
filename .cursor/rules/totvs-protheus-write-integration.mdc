@@ -79,7 +79,10 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
       oficial bem-sucedido**, persistir o ator em `AIF_ZCDUSR` nas linhas de
       histórico criadas pela própria execução (`AIF_TABELA` + chave da entidade:
       `AIF_CODPRO` para SB1/SA5, `AIF_CODIGO`+`AIF_LOJA` para SA2 +
-      `AIF_DATA=hoje` + `AIF_HORA>=início` capturado antes da rotina).
+      `AIF_DATA=hoje` + `AIF_HORA>=início` capturado antes da rotina;
+      `AIF_HORA` grava `HH:MM` (5) — capturar `Left(Time(),5)`, nunca
+      `Time()` cru com segundos — janela `>=` não casa a própria
+      execução — prova TST01 2026-11-19).
       Patch **não-fatal por desenho** — falha nunca nega o write já commitado,
       só registra `ConOut`. REST executa como usuário técnico; sem isso a
       auditoria atribui toda alteração ao serviço — antipadrão. Se o mecanismo
