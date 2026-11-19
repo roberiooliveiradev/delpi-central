@@ -514,12 +514,14 @@ static function lPrepSB1(oDados, nOp, aSB1, cErro)
                 aadd(aBad, cField + "(numerico)")
             endif
         elseif cKind == "D"
-            if ValType(xVal) == "C" .and. (lIsDateStr(xVal) .or. Empty(xVal))
-                // Empty(xVal): data vazia e legitima (SB1 grava blank) —
-                // sem ela o PUT completo falharia em todo produto com
-                // data em branco. Semantica do valor vazio no ExecAuto:
-                // VALIDAR NO TST01.
-                aadd(aSB1, {cField, xVal, NIL})
+            if ValType(xVal) == "C" .and. lIsDateStr(xVal)
+                // MVC exige tipo data — string AAAAMMDD -> StoD.
+                // FWNOSTRUCT comprovado no TST01 2026-11-19.
+                aadd(aSB1, {cField, StoD(xVal), NIL})
+            elseif ValType(xVal) == "C" .and. Empty(xVal)
+                // data vazia = ctod vazio — "" crua da FWNOSTRUCT no
+                // modelo (SB1MASTER). Comprovado TST01 2026-11-19.
+                aadd(aSB1, {cField, StoD(""), NIL})
             else
                 aadd(aBad, cField + "(data AAAAMMDD ou vazio)")
             endif

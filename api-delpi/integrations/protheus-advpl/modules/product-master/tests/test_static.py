@@ -269,9 +269,12 @@ class V21ReviewGuards(unittest.TestCase):
         cls.upper = cls.text.upper()
 
     def test_empty_date_is_legitimate(self):
-        # D vazio e legitimo na SB1; sem o aceite o PUT completo falharia
-        # em todo produto com data em branco (defeito comprovado).
-        self.assertRegex(
+        # D vazio e legitimo na SB1, mas o modelo MVC exige tipo data —
+        # "" crua da FWNOSTRUCT (comprovado TST01 2026-11-19); aceito
+        # como StoD(""), e AAAAMMDD vira StoD(xVal).
+        self.assertIn('STOD("")', self.upper)
+        self.assertIn('STOD(XVAL)', self.upper)
+        self.assertNotRegex(
             self.upper, r'LISDATESTR\(XVAL\)\s*\.OR\.\s*EMPTY\(XVAL\)')
 
     def test_string_literals_are_ascii(self):
