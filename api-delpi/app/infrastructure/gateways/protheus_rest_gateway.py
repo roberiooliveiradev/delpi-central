@@ -210,7 +210,40 @@ class ProtheusRestGateway:
             "Authorization": f"Bearer {access_token}",
         }
         response = self._send("PUT", url, headers=headers, json_body=body)
-        return _map_product_write_response(response, url=url)
+        return _map_product_write_response(response, url=url, operation="update")
+
+    def create_product(
+        self,
+        *,
+        url: str,
+        body: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """POST product create via delpiproduto — single attempt; never retry."""
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        response = self._send("POST", url, headers=headers, json_body=body)
+        return _map_product_write_response(response, url=url, operation="create")
+
+    def write_product_supplier(
+        self,
+        *,
+        method: str,
+        url: str,
+        body: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """SA5 link write via delpiprodforn — single attempt; never retry."""
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        response = self._send(method, url, headers=headers, json_body=body)
+        return _map_product_supplier_write_response(response, url=url, method=method)
 
     def _get_with_retry(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
         last_error: ProtheusRestError | None = None
@@ -586,8 +619,15 @@ def _map_product_write_response(
     response: httpx.Response,
     *,
     url: str,
+    operation: str = "update",
 ) -> dict[str, Any]:
     """delpiproduto contract: HTTP 200 on success, 400 with error log on refusal."""
+    op_label = "criar" if operation == "create" else "alterar"
+    reject_code = (
+        "PROTHEUS_PRODUCT_CREATE_REJECTED"
+        if operation == "create"
+        else "PROTHEUS_PRODUCT_UPDATE_REJECTED"
+    )
     if response.status_code in {401, 403}:
         raise ProtheusRestError(
             "Token Protheus inválido ou expirado.",
@@ -599,11 +639,11 @@ def _map_product_write_response(
 
     if response.status_code >= 500:
         log_error(
-            f"Protheus product update HTTP {response.status_code} "
+            f"Protheus product {operation} HTTP {response.status_code} "
             f"url={redact_text(url)}"
         )
         raise ProtheusRestError(
-            "Erro inesperado no Protheus ao alterar produto.",
+            f"Erro inesperado no Protheus ao {op_label} produto.",
             code="PROTHEUS_UPSTREAM_ERROR",
             status_code=502,
         )
@@ -617,25 +657,99 @@ def _map_product_write_response(
         # legitimately leave no extractable detail.)
         if not (code_error or safe_detail):
             log_error(
-                f"Protheus product update HTTP {response.status_code} "
+                f"Protheus product {operation} HTTP {response.status_code} "
                 f"url={redact_text(url)}"
             )
         raise ProtheusRestError(
-            "Alteração de produto rejeitada pelo Protheus."
+            f"Solicitação de {op_label} produto rejeitada pelo Protheus."
             + (f" Detalhe: {safe_detail}" if safe_detail else ""),
-            code="PROTHEUS_PRODUCT_UPDATE_REJECTED",
+            code=reject_code,
             status_code=400,
             recoverable=False,
         )
 
     # Success is an acknowledgement — read-after-write evidence is handled
     # separately; never claim persistence from the upstream ACK alone.
+    if operation == "create":
+        return {
+            "write_outcome": "accepted_by_upstream",
+            "create_acknowledged": True,
+            "creation_confirmed": False,
+            "persistence_proven": False,
+            "http_status": response.status_code,
+            "upstream": payload or None,
+        }
     return {
         "write_outcome": "accepted_by_upstream",
         "update_acknowledged": True,
         "update_confirmed": False,
         "persistence_proven": False,
         "http_status": response.status_code,
+        "upstream": payload or None,
+    }
+
+
+def _map_product_supplier_write_response(
+    response: httpx.Response,
+    *,
+    url: str,
+    method: str,
+) -> dict[str, Any]:
+    """delpiprodforn RETOBJ envelope: {code,message,detailedMessage,id,errorType}.
+
+    HTTP 200 = commit acknowledged by the official model; 400/404 are
+    deterministic refusals (client_error/official_validation/not_found/
+    not_homologated); 5xx keeps the commit state ambiguous (UNKNOWN).
+    """
+    if response.status_code in {401, 403}:
+        raise ProtheusRestError(
+            "Token Protheus inválido ou expirado.",
+            code="PROTHEUS_TOKEN_INVALID",
+            status_code=502,
+        )
+
+    payload = _json_payload(response)
+    detail = _extract_error_text(payload)
+    safe_detail = redact_text(detail)[:240] if detail else ""
+
+    if response.status_code == 404:
+        raise ProtheusRestError(
+            "Vínculo produto-fornecedor não encontrado no Protheus."
+            + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+            code="PROTHEUS_PRODUCT_SUPPLIER_NOT_FOUND",
+            status_code=404,
+            recoverable=False,
+        )
+
+    if response.status_code >= 500:
+        log_error(
+            f"Protheus product-supplier {method} HTTP {response.status_code} "
+            f"url={redact_text(url)}"
+        )
+        raise ProtheusRestError(
+            "Erro inesperado no Protheus ao gravar vínculo "
+            "produto-fornecedor."
+            + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+            code="PROTHEUS_UPSTREAM_ERROR",
+            status_code=502,
+        )
+
+    if response.status_code >= 400:
+        raise ProtheusRestError(
+            "Escrita de vínculo rejeitada pelo Protheus."
+            + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+            code="PROTHEUS_PRODUCT_SUPPLIER_REJECTED",
+            status_code=400,
+            recoverable=False,
+        )
+
+    return {
+        "write_outcome": "accepted_by_upstream",
+        "link_acknowledged": True,
+        "link_confirmed": False,
+        "persistence_proven": False,
+        "http_status": response.status_code,
+        "build_tag": payload.get("id"),
         "upstream": payload or None,
     }
 

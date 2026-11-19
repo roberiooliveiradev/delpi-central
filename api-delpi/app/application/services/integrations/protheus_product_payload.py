@@ -31,6 +31,7 @@ from app.domain.integrations.protheus_rest import (
 
 PRODUCT_CODE_PATTERN = r"^[A-Za-z0-9]{1,15}$"
 PRODUCT_UPDATE_PATH = "delpiproduto/v1/IncProduto/alterar"
+PRODUCT_CREATE_PATH = "delpiproduto/v1/IncProduto/incluir"
 
 # Reserved identity fields — never accepted from the client (lowercased).
 _FORBIDDEN_KEYS = frozenset(
@@ -76,6 +77,21 @@ def product_update_url(config: ProtheusRestConfig) -> str:
             status_code=503,
         )
     return f"{base[:idx]}/{PRODUCT_UPDATE_PATH}"
+
+
+def product_create_url(config: ProtheusRestConfig) -> str:
+    """Full URL of the delpiproduto incluir method (same derivation)."""
+    base = config.suppliers_base_url.rstrip("/")
+    marker = "/delpi/"
+    idx = base.find(marker)
+    if idx == -1:
+        raise ProtheusRestError(
+            "Não foi possível derivar a rota de produto a partir da "
+            "configuração Protheus resolvida.",
+            code="PROTHEUS_CONFIG_INVALID",
+            status_code=503,
+        )
+    return f"{base[:idx]}/{PRODUCT_CREATE_PATH}"
 
 
 def _err(message: str, code: str) -> ProtheusRestError:
@@ -270,6 +286,62 @@ def merge_product_update_fields(
             text = "0"
         merged[field] = text
     return merged
+
+
+def normalize_product_create_fields(raw: Mapping[str, Any] | None) -> tuple[str, dict[str, str]]:
+    """Create contract: product object carries B1_COD + catalog fields.
+
+    Unlike the update path, identity travels in the body (B1_COD required
+    and validated); all remaining keys must belong to the eligible
+    catalog minus B1_COD. No merge is possible — a create sends the
+    fields the caller provides and the official routine applies its own
+    defaults for the rest.
+    """
+    if raw is None or isinstance(raw, list) or not isinstance(raw, Mapping):
+        raise _err(
+            "Campo product deve ser um objeto JSON com B1_COD e os "
+            "campos do novo produto.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+        )
+
+    lowered = {str(k).strip().lower() for k in raw}
+    forbidden = ({"codusr", "user_id", "usr_id", "protheus_user_id"} & lowered)
+    if forbidden:
+        raise _err(
+            "Identidade do usuário não pode ser enviada nesta rota.",
+            "PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+        )
+
+    b1_key = next((k for k in raw if str(k).strip().upper() == "B1_COD"), None)
+    if b1_key is None:
+        raise _err(
+            "B1_COD é obrigatório para criação de produto.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+        )
+    code = validate_product_code(raw[b1_key])
+
+    fields_raw = {str(k): v for k, v in raw.items() if k is not b1_key}
+    if not fields_raw:
+        raise _err(
+            "Informe ao menos um campo elegível além de B1_COD.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+        )
+    protected = [k for k in fields_raw if k in PRODUCT_PROTECTED_FIELDS]
+    if protected:
+        raise _err(
+            "Campos protegidos (gerenciados pelo ERP) não podem ser "
+            "enviados: " + ", ".join(sorted(protected)[:10]) + ".",
+            "PROTHEUS_PRODUCT_FIELD_PROTECTED",
+        )
+    unknown = [k for k in fields_raw if k not in PRODUCT_FIELD_SPECS]
+    if unknown:
+        raise _err(
+            "Campos não reconhecidos no catálogo elegível de produto: "
+            + ", ".join(sorted(unknown)[:10])
+            + ". Consulte o contrato product.metadata.",
+            "PROTHEUS_PRODUCT_FIELD_UNKNOWN",
+        )
+    return code, {k: _normalize_value(k, v) for k, v in fields_raw.items()}
 
 
 def build_upstream_product_update_body(

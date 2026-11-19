@@ -432,3 +432,51 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 "mesma chave completa. Registro não retornado."
             )
         return rows[0] if rows else None
+
+    def get_link_snapshot(
+        self,
+        *,
+        product_code: str,
+        supplier_code: str,
+        supplier_store: str,
+        manufacturer_code: str,
+        manufacturer_store: str,
+        grade_reference: str,
+    ) -> dict | None:
+        """Full-column SA5 snapshot of a link, matched without filial.
+
+        A5_FILIAL is derived upstream (xFilial) — the client never
+        supplies it. Read-only SELECT * returns every A5_* column so
+        write read-back can verify the complete mappable field set.
+        """
+        sql = """
+        SELECT SA5.*
+        FROM SA5010 SA5 WITH (NOLOCK)
+        WHERE
+            SA5.D_E_L_E_T_ = ''
+            AND SA5.A5_PRODUTO = ?
+            AND SA5.A5_FORNECE = ?
+            AND SA5.A5_LOJA    = ?
+            AND SA5.A5_FABR    = ?
+            AND SA5.A5_FALOJA  = ?
+            AND SA5.A5_REFGRD  = ?
+        """
+
+        params = (
+            product_code,
+            supplier_code,
+            supplier_store,
+            manufacturer_code,
+            manufacturer_store,
+            grade_reference,
+        )
+
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        if len(rows) > 1:
+            raise RuntimeError(
+                "Anomalia de identidade SA5: múltiplos vínculos para a "
+                "mesma chave sem filial. Registro não retornado."
+            )
+        return rows[0] if rows else None

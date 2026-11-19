@@ -11,6 +11,8 @@ from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
     PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    PROTHEUS_PRODUCT_CREATE_PERMISSIONS,
+    PROTHEUS_PRODUCT_SUPPLIER_WRITE_PERMISSIONS,
     PROTHEUS_PRODUCT_UPDATE_PERMISSIONS,
     PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
     PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS,
@@ -23,7 +25,9 @@ from app.composition.protheus_rest_composer import (
     build_create_protheus_rest_supplier_use_case,
     build_get_protheus_integration_status_use_case,
     build_get_protheus_rest_supplier_use_case,
+    build_create_protheus_product_use_case,
     build_update_protheus_product_use_case,
+    build_write_protheus_product_supplier_use_case,
     build_update_protheus_rest_supplier_use_case,
 )
 from app.core.responses import error_response, not_found_response
@@ -316,6 +320,210 @@ def update_protheus_rest_supplier_route(
             code="PROTHEUS_INTERNAL_ERROR",
             recoverable=True,
         )
+
+
+@router.post(
+    "/products",
+    operation_id="create_protheus_product",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_PRODUCT_CREATE_PERMISSIONS,
+    required_scopes=("products.create",),
+    allowed_clients=("engineering-api",),
+)
+def create_protheus_product_route(
+    request: Request,
+    body: dict[str, Any] = Body(...),
+):
+    """Create a product via Protheus REST (delpiproduto /incluir).
+
+    The body carries `product` (flat B1_* object with B1_COD plus the
+    eligible catalog fields for the new record). An existing SB1 code is
+    a deterministic 409 — create never overwrites. The actor identity
+    resolved from Core travels upstream as the `codusr` meta-field
+    (AIF_ZCDUSR audit) and is kept in the integration tracking ledger.
+    """
+    if not isinstance(body, dict):
+        return error_response(
+            "Corpo da requisição deve ser um objeto JSON.",
+            status_code=422,
+            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+            recoverable=False,
+        )
+    for forbidden in ("codusr", "user_id", "usr_id", "protheus_user_id"):
+        if forbidden in body:
+            return error_response(
+                "Identidade Protheus não pode ser enviada pelo cliente.",
+                status_code=422,
+                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+                recoverable=False,
+            )
+    product = body.get("product", body)
+    try:
+        actor_id = _actor_user_id()
+        data = build_create_protheus_product_use_case().execute(
+            actor_user_id=actor_id,
+            product=product,
+            **_tracking_context(request),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="create_protheus_product",
+            message=(
+                "Solicitação de criação de produto enviada ao Protheus; "
+                "persistência ainda não comprovada pelo contrato."
+            ),
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+            fields=exc.fields,
+        )
+    except Exception as exc:
+        log_error(
+            f"Erro inesperado na criação de produto: {type(exc).__name__}"
+        )
+        return error_response(
+            "Erro interno ao criar produto no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+def _product_supplier_action(
+    request: Request,
+    *,
+    action: str,
+    product_code: str,
+    body: dict[str, Any],
+):
+    if not isinstance(body, dict):
+        return error_response(
+            "Corpo da requisição deve ser um objeto JSON.",
+            status_code=422,
+            code="PROTHEUS_PRODUCT_SUPPLIER_PAYLOAD_INVALID",
+            recoverable=False,
+        )
+    for forbidden in ("codusr", "user_id", "usr_id", "protheus_user_id"):
+        if forbidden in body:
+            return error_response(
+                "Identidade Protheus não pode ser enviada pelo cliente.",
+                status_code=422,
+                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+                recoverable=False,
+            )
+    supplier = body.get("supplier", body)
+    attributes = body.get("attributes")
+    try:
+        actor_id = _actor_user_id()
+        data = build_write_protheus_product_supplier_use_case().execute(
+            action=action,
+            actor_user_id=actor_id,
+            product_code=product_code,
+            supplier=supplier,
+            attributes=attributes,
+            **_tracking_context(request),
+        )
+        return api_delpi_success(
+            data,
+            operation_id=f"{action}_protheus_product_supplier",
+            message=(
+                "Solicitação de vínculo produto-fornecedor enviada ao "
+                "Protheus; persistência ainda não comprovada pelo contrato."
+            ),
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+            fields=exc.fields,
+        )
+    except Exception as exc:
+        log_error(
+            "Erro inesperado na escrita de vínculo produto-fornecedor: "
+            f"{type(exc).__name__}"
+        )
+        return error_response(
+            "Erro interno ao gravar vínculo produto-fornecedor no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+_PRODUCT_CODE_PATH = Path(
+    ...,
+    min_length=1,
+    max_length=15,
+    pattern=r"^[A-Za-z0-9]{1,15}$",
+    description="Product code (B1_COD), 1-15 alphanumeric characters",
+)
+
+
+@router.post(
+    "/products/{product_code}/suppliers",
+    operation_id="create_protheus_product_supplier",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_PRODUCT_SUPPLIER_WRITE_PERMISSIONS,
+    required_scopes=("product-suppliers.write",),
+    allowed_clients=("engineering-api",),
+)
+def create_protheus_product_supplier_route(
+    request: Request,
+    product_code: str = _PRODUCT_CODE_PATH,
+    body: dict[str, Any] = Body(...),
+):
+    """Create an SA5 link (delpiprodforn /incluir) — full SX3 catalog."""
+    return _product_supplier_action(
+        request, action="create", product_code=product_code, body=body
+    )
+
+
+@router.put(
+    "/products/{product_code}/suppliers",
+    operation_id="update_protheus_product_supplier",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_PRODUCT_SUPPLIER_WRITE_PERMISSIONS,
+    required_scopes=("product-suppliers.write",),
+    allowed_clients=("engineering-api",),
+)
+def update_protheus_product_supplier_route(
+    request: Request,
+    product_code: str = _PRODUCT_CODE_PATH,
+    body: dict[str, Any] = Body(...),
+):
+    """Update an SA5 link (delpiprodforn /alterar) — identity + attr subset."""
+    return _product_supplier_action(
+        request, action="update", product_code=product_code, body=body
+    )
+
+
+@router.delete(
+    "/products/{product_code}/suppliers",
+    operation_id="delete_protheus_product_supplier",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_PRODUCT_SUPPLIER_WRITE_PERMISSIONS,
+    required_scopes=("product-suppliers.write",),
+    allowed_clients=("engineering-api",),
+)
+def delete_protheus_product_supplier_route(
+    request: Request,
+    product_code: str = _PRODUCT_CODE_PATH,
+    body: dict[str, Any] = Body(...),
+):
+    """Delete an SA5 link (delpiprodforn /excluir) — identity only."""
+    return _product_supplier_action(
+        request, action="delete", product_code=product_code, body=body
+    )
 
 
 @router.put(

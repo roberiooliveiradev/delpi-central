@@ -114,6 +114,18 @@ class Settings:
         _get_env("PROTHEUS_PRODUCT_UPDATE_ENABLED", default="false").lower()
         in ("true", "1", "yes", "on")
     )
+    # Product POST create (delpiproduto /incluir) — gated, default OFF.
+    PROTHEUS_PRODUCT_CREATE_ENABLED: bool = (
+        _get_env("PROTHEUS_PRODUCT_CREATE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
+    # SA5 product-supplier link writes (delpiprodforn CRUD) — gated OFF.
+    PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED: bool = (
+        _get_env(
+            "PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED", default="false"
+        ).lower()
+        in ("true", "1", "yes", "on")
+    )
     # Expected REST target for THIS runtime (fail-closed write guard — C1).
     # Writes compare the resolved PARAMETROS URL_REST against this value;
     # missing/mismatched expected target blocks the write deterministically.

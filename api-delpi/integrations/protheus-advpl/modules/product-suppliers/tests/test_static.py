@@ -98,6 +98,44 @@ class StaticSourceTests(unittest.TestCase):
             self.assertIn('AREQ[NI] <> "A5_FALOJA"', body, fn)
             self.assertIn('AREQ[NI] <> "A5_REFGRD"', body, fn)
 
+    def test_full_sa5_catalog(self):
+        # 0.8.0: aSA5Attrs cobre o catalogo SX3 editavel inteiro
+        # (113 campos — sa5-field-matrix.json), nao so o trio inicial
+        self.assertIn("A5_NOMEFOR", self.code)
+        self.assertIn("A5_CODPRF", self.code)
+        self.assertIn("A5_DESCPRF", self.code)
+        self.assertIn("A5_LEAD_T", self.code)
+        self.assertIn("A5_CODPRCA", self.code)
+        self.assertIn("A5_CODBAR", self.code)
+        self.assertIn("A5_LOTEMIN", self.code)
+        self.assertIn("A5_NCMPRF", self.code)
+        # trio SX3-obrigatorio separado do catalogo (regra de CREATE)
+        self.assertIn("ASA5REQUIRED", self.code)
+
+    def test_attr_subset_validation(self):
+        # PUT aceita subconjunto: lPrepSA5Attr exige >= 1 campo do
+        # catalogo e valida tipo apenas dos presentes (nunca exige os 113)
+        m = re.search(
+            r'static function lPrepSA5Attr\(.*?\n(.*?)Return lOk',
+            self.text, re.S)
+        self.assertIsNotNone(m)
+        body = m.group(1).upper()
+        self.assertIn("LANY", body)
+        self.assertNotIn('VALTYPE(XVAL) == "U" .OR. VALTYPE(XVAL) <> "C"', body)
+
+    def test_typed_setvalue_and_per_field_guard(self):
+        # campos N/D convertidos (Val/StoD) e SetValue/GetValue protegidos
+        # por campo — campo fora do form rejeita nominalmente, nunca 500
+        self.assertIn("XSA5TYPED", self.code)
+        self.assertIn("VAL(XVAL)", self.code)
+        self.assertIn("STOD(XVAL)", self.code)
+        self.assertIn("ASA5ATTRNUM", self.code)
+        self.assertIn("ASA5ATTRDAT", self.code)
+        self.assertGreaterEqual(self.code.count("AADD(AREJ"), 2)  # POST+PUT
+
+    def test_version_tag_080(self):
+        self.assertIn('"DLP04I02-0.8.0"', self.code)
+
     def test_mvc_lifecycle_calls(self):
         for call in ("SETOPERATION", "ACTIVATE()", "VLDDATA",
                      "COMMITDATA", "DEACTIVATE", "ADDLINE"):

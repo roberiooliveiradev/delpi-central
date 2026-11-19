@@ -46,6 +46,7 @@ INDETERMINATE_ERROR_CODES = frozenset(
 INTEGRATION_KEY = "protheus"
 RESOURCE_SUPPLIER = "supplier"
 RESOURCE_PRODUCT = "product"
+RESOURCE_PRODUCT_SUPPLIER = "product-supplier"
 
 
 def environment_key_from_config(config: ProtheusRestConfig, params_ambiente: str) -> str:

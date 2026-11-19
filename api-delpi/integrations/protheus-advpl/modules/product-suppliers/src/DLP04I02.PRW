@@ -3,12 +3,21 @@
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
    VERSAO: 0.7.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.7.1"); comparar com o objeto compilado no RPO.
+          ("dlp04i02-0.8.0"); comparar com o objeto compilado no RPO.
           0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
           ciclo MVC oficial (mesma cadeia headless provada no POST).
           0.7.0 = PROVEN_RUNTIME TST01: GET 200 (data{}), PUT 200
           (A5_NOMEFOR alterado, read-back), DELETE 200 (vinculo
           removido), GET pos-delete 404 correto.
+          0.8.0 = catalogo SA5 completo: 113 atributos SX3 editaveis
+                  (matriz sa5-field-matrix.json); validadores aceitam
+                  subconjuntos (PUT >= 1 campo; POST exige so o trio
+                  SX3-obrigatorio + identidade); SetValue/GetValue por
+                  campo com guarda — campo fora do form MdGridSA5 e
+                  rejeitado nominalmente (official_validation no write,
+                  "" no read); conversao tipada N=Val()/D=StoD().
+                  VALIDAR NO TST01: intersecao real catalogo x formulario
+                  (dump DLPDBG01 pendente) e tipos N/D na saida do GET.
           0.7.1 = identidade: A5_FABR/A5_FALOJA aceitam vazio — vinculos
           reais sem fabricante proprio guardam '' (regressao do teste
           negativo: GET em vinculo FABR='' retornava 400 indevido).
@@ -134,10 +143,75 @@ static function aSA5Ident()
 
 Return {"A5_PRODUTO", "A5_FORNECE", "A5_LOJA", "A5_FABR", "A5_FALOJA", "A5_REFGRD"}
 
-// atributos editaveis do vinculo (restante e derivado pelo ERP/validacao)
+// atributos editaveis do vinculo — catalogo SX3 SA5 completo menos
+// identidade/protegidos (113 campos; sa5-field-matrix.json). A
+// intersecao com o formulario MdGridSA5 e validada em runtime:
+// SetValue/GetValue fora do form lanca e e capturado por campo.
 static function aSA5Attrs()
 
+    local aR := {}
+    aadd(aR, "A5_NOMEFOR", "A5_NOMERED", "A5_CODPRF", "A5_CODPRCA", "A5_SITU", "A5_FABREV")
+    aadd(aR, "A5_PE", "A5_TIPE", "A5_EMBAL", "A5_FABRRED", "A5_MOE_US", "A5_VLCOTUS")
+    aadd(aR, "A5_ULT_ENT", "A5_QT_COT", "A5_ULT_FOB", "A5_PARTOPC", "A5_UNID", "A5_SKPLOT")
+    aadd(aR, "A5_RIAI", "A5_DTRIAI", "A5_VALRIAI", "A5_INCOTER", "A5_TR_COST", "A5_CODGRP")
+    aadd(aR, "A5_CODITE", "A5_CODBAR", "A5_TIPOCOT", "A5_SKIPLOT", "A5_DTCOM02", "A5_DTCOM03")
+    aadd(aR, "A5_DTCOM04", "A5_DTCOM05", "A5_DTCOM06", "A5_DTCOM07", "A5_DTCOM08", "A5_DTCOM09")
+    aadd(aR, "A5_DTCOM10", "A5_DTCOM11", "A5_DTCOM12", "A5_ENTREGA", "A5_QUANT01", "A5_QUANT02")
+    aadd(aR, "A5_QUANT03", "A5_QUANT04", "A5_QUANT05", "A5_QUANT06", "A5_QUANT07", "A5_QUANT08")
+    aadd(aR, "A5_QUANT09", "A5_QUANT10", "A5_QUANT11", "A5_QUANT12", "A5_PRECO01", "A5_PRECO02")
+    aadd(aR, "A5_PRECO03", "A5_LEAD_T", "A5_PRECO04", "A5_PRECO05", "A5_TIPATU", "A5_LOTEMIN")
+    aadd(aR, "A5_LOTEMUL", "A5_PRECO06", "A5_PRECO07", "A5_MSBLQL", "A5_PRECO08", "A5_PRECO09")
+    aadd(aR, "A5_PRECO10", "A5_PRECO11", "A5_PRECO12", "A5_PLAM1", "A5_NIVEL1", "A5_NQA1")
+    aadd(aR, "A5_PLAM2", "A5_NIVEL2", "A5_NQA2", "A5_COND01", "A5_COND02", "A5_COND03")
+    aadd(aR, "A5_COND04", "A5_COND05", "A5_TEMPLIM", "A5_NOTA", "A5_COND06", "A5_COND07")
+    aadd(aR, "A5_COND08", "A5_COND09", "A5_COND10", "A5_COND11", "A5_COND12", "A5_DTCOM01")
+    aadd(aR, "A5_TEMPTRA", "A5_PESO", "A5_ENTSIT", "A5_CCUSTO", "A5_DIASSIT", "A5_TESBP")
+    aadd(aR, "A5_CODFIS", "A5_CONV", "A5_TPCONV", "A5_CODTAB", "A5_DSCTAB", "A5_LEADT")
+    aadd(aR, "A5_QTDMN", "A5_UMNFE", "A5_NCMPRF", "A5_DESCPRF", "A5_TESCP", "A5_ECFLAG")
+    aadd(aR, "A5_ECDTEX", "A5_ECSEQ", "A5_CNO", "A5_TOLEDIF", "A5_VOLMAX")
+
+Return aR
+
+// campos numericos do catalogo (X3_TIPO=N) — SetValue recebe Val(x)
+static function aSA5AttrNum()
+
+    local aR := {}
+    aadd(aR, "A5_PE", "A5_EMBAL", "A5_VLCOTUS", "A5_QT_COT", "A5_ULT_FOB", "A5_TR_COST")
+    aadd(aR, "A5_SKIPLOT", "A5_ENTREGA", "A5_QUANT01", "A5_QUANT02", "A5_QUANT03", "A5_QUANT04")
+    aadd(aR, "A5_QUANT05", "A5_QUANT06", "A5_QUANT07", "A5_QUANT08", "A5_QUANT09", "A5_QUANT10")
+    aadd(aR, "A5_QUANT11", "A5_QUANT12", "A5_PRECO01", "A5_PRECO02", "A5_PRECO03", "A5_LEAD_T")
+    aadd(aR, "A5_PRECO04", "A5_PRECO05", "A5_LOTEMIN", "A5_LOTEMUL", "A5_PRECO06", "A5_PRECO07")
+    aadd(aR, "A5_PRECO08", "A5_PRECO09", "A5_PRECO10", "A5_PRECO11", "A5_PRECO12", "A5_TEMPLIM")
+    aadd(aR, "A5_NOTA", "A5_TEMPTRA", "A5_PESO", "A5_ENTSIT", "A5_DIASSIT", "A5_CONV")
+    aadd(aR, "A5_LEADT", "A5_QTDMN", "A5_TOLEDIF", "A5_VOLMAX")
+
+Return aR
+
+// campos data do catalogo (X3_TIPO=D, formato AAAAMMDD) — StoD(x)
+static function aSA5AttrDat()
+
+    local aR := {}
+    aadd(aR, "A5_ULT_ENT", "A5_DTRIAI", "A5_VALRIAI", "A5_DTCOM02", "A5_DTCOM03", "A5_DTCOM04")
+    aadd(aR, "A5_DTCOM05", "A5_DTCOM06", "A5_DTCOM07", "A5_DTCOM08", "A5_DTCOM09", "A5_DTCOM10")
+    aadd(aR, "A5_DTCOM11", "A5_DTCOM12", "A5_DTCOM01")
+
+Return aR
+
+// obrigatorios SX3 para CREATE (X3_OBRIGAT comprovado — G0-C)
+static function aSA5Required()
+
 Return {"A5_NOMEFOR", "A5_CODPRF", "A5_DESCPRF"}
+
+// converte o valor texto do JSON para o tipo do campo no modelo
+static function xSA5Typed(cField, xVal, aNum, aDat)
+
+    if aScan(aNum, cField) > 0
+        return Val(xVal)
+    elseif aScan(aDat, cField) > 0
+        return StoD(xVal)
+    endif
+
+Return xVal
 
 /* -----------------------------------------------------------------------
    lPrepSA5 — valida presenca/tipo da identidade completa e dos atributos.
@@ -167,17 +241,29 @@ static function lPrepSA5(oDados, aMiss, cErro)
         endif
     next nI
 
+    // atributos: catalogo completo — valida tipo dos presentes;
+    // ausentes seguem omitidos (defaults do modelo oficial)
     for nI := 1 to len(aAttr)
         xVal := oDados:GetJSonObject(aAttr[nI])
-        if ValType(xVal) == "U" .or. ValType(xVal) <> "C"
-            aadd(aMiss, aAttr[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
+        if ValType(xVal) <> "U" .and. ValType(xVal) <> "C"
+            aadd(aMiss, aAttr[nI] + "(tipo " + ValType(xVal) + ")")
+            lOk := .F.
+        endif
+    next nI
+
+    // obrigatorios SX3 para CREATE
+    for nI := 1 to len(aSA5Required())
+        xVal := oDados:GetJSonObject(aSA5Required()[nI])
+        if ValType(xVal) <> "C" .or. Empty(xVal)
+            aadd(aMiss, aSA5Required()[nI])
             lOk := .F.
         endif
     next nI
 
     if !lOk
         cErro := "Payload incompleto — campos ausentes/nulos/invalidos: " + ;
-                 lJoin(aMiss, ", ") + ". Identidade completa (6 campos + filial por contexto) e atributos exigidos."
+                 lJoin(aMiss, ", ") + ". Identidade completa (6 campos + filial por contexto), " + ;
+                 "obrigatorios SX3 (NOMEFOR/CODPRF/DESCPRF) e tipos corretos exigidos."
     endif
 
 Return lOk
@@ -250,6 +336,8 @@ static function lExecSA5(oSelf)
     Local oGrid      := NIL
     Local xVal       := NIL
     Local aLoad      := {}
+    Local aRej       := {}
+    Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
@@ -347,14 +435,36 @@ static function lExecSA5(oSelf)
                     oGrid:SetValue(aIdent[nI], xVal)
                 endif
             next nI
+            // atributos: catalogo completo — so os presentes e nao
+            // vazios; conversao por tipo SX3; campo fora do form do
+            // modelo lanca e e capturado por campo (fail-closed:
+            // qualquer rejeicao vira official_validation)
             for nI := 1 to len(aAttr)
                 xVal := oDados:GetJSonObject(aAttr[nI])
-                if !Empty(xVal)
-                    oGrid:SetValue(aAttr[nI], xVal)
+                if ValType(xVal) == "C" .and. !Empty(xVal)
+                    lOk2 := .T.
+                    begin sequence
+                        oGrid:SetValue(aAttr[nI], ;
+                            xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
+                    recover
+                        lOk2 := .F.
+                    end sequence
+                    if !lOk2
+                        aadd(aRej, aAttr[nI])
+                        ConOut("DLP04I02 campo fora do form/rejeitado: " + aAttr[nI] + ;
+                            " — " + Left(cErroBlk, 120))
+                        cErroBlk := ""
+                        cErroEnv := ""
+                    endif
                 endif
             next nI
 
-            if !oModel:VldData()
+            if len(aRej) > 0
+                lRet     := .F.
+                cErrType := "official_validation"
+                cErro := "Campos rejeitados pelo modelo " + cMdlId + ": " + ;
+                    lJoin(aRej, ", ") + "."
+            elseif !oModel:VldData()
                 lRet     := .F.
                 cErrType := "official_validation"
                 // detalhe oficial do modelo NAO vai ao consumidor —
@@ -563,6 +673,8 @@ static function lExecSA5Op(oSelf, cOp)
     Local oModel     := NIL
     Local oGrid      := NIL
     Local aLoad      := {}
+    Local aRej       := {}
+    Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oItem      := JsonObject():New()
     Local oDados     := JsonObject():New()
@@ -659,20 +771,54 @@ static function lExecSA5Op(oSelf, cOp)
                                     endif
                                     oItem[aIdent[nI]] := iif(ValType(xVal) == "U", "", xVal)
                                 next nI
+                                // atributos: catalogo completo — campo
+                                // fora do form lanca no GetValue; a
+                                // guarda por campo devolve "" sem derrubar
+                                // a leitura do vinculo
                                 for nI := 1 to len(aAttr)
+                                    xVal := ""
+                    begin sequence
                                     xVal := oGrid:GetValue(aAttr[nI])
+                    recover
+                                    xVal := ""
+                    end sequence
+                                    if !Empty(cErroBlk)
+                                        ConOut("DLP04I02 GET campo fora do form: " + aAttr[nI])
+                                        cErroBlk := ""
+                                        cErroEnv := ""
+                                    endif
                                     oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xVal)
                                 next nI
                                 lRet    := .T.
                                 nStatus := 200
                             case cOp == "PUT"
+                                // subconjunto do catalogo — so presentes
+                                // e nao vazios; conversao por tipo SX3;
+                                // campo fora do form -> rejeicao por campo
                                 for nI := 1 to len(aAttr)
                                     xVal := oDados:GetJSonObject(aAttr[nI])
-                                    if !Empty(xVal)
-                                        oGrid:SetValue(aAttr[nI], xVal)
+                                    if ValType(xVal) == "C" .and. !Empty(xVal)
+                                        lOk2 := .T.
+                        begin sequence
+                                        oGrid:SetValue(aAttr[nI], ;
+                                            xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
+                        recover
+                                        lOk2 := .F.
+                        end sequence
+                                        if !lOk2
+                                            aadd(aRej, aAttr[nI])
+                                            ConOut("DLP04I02 PUT campo fora do form/rejeitado: " + aAttr[nI])
+                                            cErroBlk := ""
+                                            cErroEnv := ""
+                                        endif
                                     endif
                                 next nI
-                                if !oModel:VldData()
+                                if len(aRej) > 0
+                                    lRet     := .F.
+                                    cErrType := "official_validation"
+                                    cErro := "Campos rejeitados pelo modelo " + cMdlId + ": " + ;
+                                        lJoin(aRej, ", ") + "."
+                                elseif !oModel:VldData()
                                     lRet     := .F.
                                     cErrType := "official_validation"
                                     cErroLog := lModelErr(oModel, cErroLog)
@@ -841,18 +987,26 @@ static function lPrepSA5Attr(oDados, aMiss, cErro)
     local aAttr := aSA5Attrs()
     local nI    := 0
     local lOk   := .T.
+    local lAny  := .F.
     local xVal  := NIL
 
+    // PUT = subconjunto do catalogo: ao menos um campo presente;
+    // presentes devem ser texto (mesma normalizacao da api-delpi)
     for nI := 1 to len(aAttr)
         xVal := oDados:GetJSonObject(aAttr[nI])
-        if ValType(xVal) == "U" .or. ValType(xVal) <> "C"
-            aadd(aMiss, aAttr[nI] + iif(ValType(xVal) <> "U" .and. ValType(xVal) <> "C", "(tipo " + ValType(xVal) + ")", ""))
+        if ValType(xVal) == "C"
+            lAny := .T.
+        elseif ValType(xVal) <> "U"
+            aadd(aMiss, aAttr[nI] + "(tipo " + ValType(xVal) + ")")
             lOk := .F.
         endif
     next nI
 
-    if !lOk
-        cErro := "Payload incompleto — atributos ausentes/nulos/invalidos: " + ;
+    if lOk .and. !lAny
+        lOk := .F.
+        cErro := "Informe ao menos um campo do catalogo SA5 para alterar."
+    elseif !lOk
+        cErro := "Payload invalido — atributos com tipo indevido: " + ;
             lJoin(aMiss, ", ")
     endif
 
@@ -882,7 +1036,7 @@ Return lExecSA5Op(self, "DELETE")
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.7.1"
+Return "dlp04i02-0.8.0"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
