@@ -153,7 +153,7 @@ def test_invalid_code_precedes_feature_gate(monkeypatch) -> None:
     identity.get_identity_for_user.assert_not_called()
 
 
-def test_enabled_sends_flat_b1_body_without_codusr(monkeypatch) -> None:
+def test_enabled_sends_flat_b1_body_with_resolved_codusr(monkeypatch) -> None:
     gateway = MagicMock()
     gateway.update_product.return_value = {
         "write_outcome": "accepted_by_upstream",
@@ -170,8 +170,8 @@ def test_enabled_sends_flat_b1_body_without_codusr(monkeypatch) -> None:
     assert body["B1_COD"] == "ABC123"
     assert body["B1_DESC"] == "NOVO"
     assert body["B1_TIPO"] == "MC"
-    assert len(body) == 285  # catálogo completo (merge inclui B1_COD)
-    assert "codusr" not in body
+    assert len(body) == 284  # catálogo completo (merge inclui B1_COD) + codusr
+    assert body["codusr"] == "000161"  # ator real — AIF_ZCDUSR upstream
     assert call.kwargs["url"].endswith("/delpiproduto/v1/IncProduto/alterar")
     assert result["product_code"] == "ABC123"
     assert result["codusr"] == "000161"
@@ -311,9 +311,9 @@ def test_partial_update_merges_snapshot(monkeypatch) -> None:
     body = gateway.update_product.call_args.kwargs["body"]
     assert body["B1_GRUPO"] == "9999"
     assert body["B1_DESC"] == "PESO PARA TESTE 6KG"  # preservado do snapshot
-    assert len(body) == 285
+    assert len(body) == 284  # merge (282) + B1_COD + codusr
     assert result["fields_sent"] == ["B1_GRUPO"]
-    assert result["fields_merged"] == 284
+    assert result["fields_merged"] == 282
 
 
 def test_protected_field_rejected(monkeypatch) -> None:

@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.4.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.4.1"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.0 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.0-codusr"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -204,6 +204,10 @@ static function lExecSA5(oSelf)
     Local aAttr      := aSA5Attrs()
     Local nI         := 0
     Local xCommit    := NIL
+    Local cCodUsr    := ""
+    Local cHoraIni   := ""
+    Local cQryUpd    := ""
+    Local nQry       := 0
     Local oModel     := NIL
     Local oGrid      := NIL
     Local oJsonRet   := JsonObject():New()
@@ -240,6 +244,15 @@ static function lExecSA5(oSelf)
         elseif !lPrepSA5(oDados, @aMiss, @cErro)
             lRet := .F.
         else
+            // ator real (auditoria AIF_ZCDUSR — padrao Gabriel/MATA020):
+            // REST roda como usuario tecnico; sem isto a AIF fica cega.
+            // codusr e meta-campo: lPrepSA5 ignora chaves fora de
+            // aSA5Ident/aSA5Attrs, entao nao precisa de exclusao.
+            if ValType(oDados:GetJSonObject("codusr")) == "C"
+                cCodUsr := oDados:GetJSonObject("codusr")
+            endif
+            cHoraIni := Time()
+
             // Ciclo MVC oficial — modelo Model-2 'DMATA061'
             // (FWLoadModel comprovado na ViewDef do fonte oficial;
             //  GetModel/GetValue/Length/GoLine usados pelos callbacks)
@@ -289,6 +302,31 @@ static function lExecSA5(oSelf)
                     cErroLog := lModelErr(oModel, cErroLog)
                     cErro := "Persistencia rejeitada pelo modelo oficial " + ;
                         "DMATA061 (detalhe tecnico no log do AppServer)."
+                else
+                    // commit ok — patch do ator real no historico AIF.
+                    // Nao-fatal por desenho: falha aqui nao nega o write
+                    // ja commitado — so registra no console.
+                    // VALIDAR NO TST01: inventario AIF010 em 2026-11-19
+                    // mostrou apenas SA2/SB1 — SA5 pode nao gerar linha
+                    // AIF; nesse caso o UPDATE toca 0 linhas (inofensivo).
+                    if !Empty(cCodUsr)
+                        cQryUpd := "UPDATE " + RetSqlName("AIF") + ;
+                            " SET AIF_ZCDUSR = " + ValToSql(cCodUsr) + ;
+                            " WHERE D_E_L_E_T_ = ' '" + ;
+                            " AND AIF_TABELA = 'SA5'" + ;
+                            " AND AIF_CODPRO = " + ;
+                            ValToSql(AllTrim(oDados:GetJSonObject("A5_PRODUTO"))) + ;
+                            " AND AIF_DATA = " + ValToSql(Date()) + ;
+                            " AND AIF_HORA >= " + ValToSql(cHoraIni)
+                        nQry := TCSQLExec(cQryUpd)
+                        if nQry < 0
+                            ConOut("DLP04I02 codusr: AIF_ZCDUSR nao gravado (rc=" + ;
+                                cValToChar(nQry) + ")")
+                        else
+                            ConOut("DLP04I02 codusr=" + cCodUsr + ;
+                                " -> AIF_ZCDUSR gravado")
+                        endif
+                    endif
                 endif
             endif
         endif
@@ -406,7 +444,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.4.1"
+Return "dlp04i02-0.5.0-codusr"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:

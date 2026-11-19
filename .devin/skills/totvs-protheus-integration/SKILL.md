@@ -317,6 +317,16 @@ relacionada) ou a validação oficial rejeita.
 - REST executa como **usuário de sistema do serviço** — não há usuário
   final no Protheus; a identidade de negócio (`codusr`) é dado do
   contrato/ledger, não autenticação ERP.
+- **`codusr` → `AIF_ZCDUSR` (padrão Gabriel/MATA020, adotado em DLP04I01/
+  DLP04I02)**: meta-campo no body upstream, ignorado pela validação de
+  campos do catálogo; após commit oficial bem-sucedido,
+  `UPDATE AIF SET AIF_ZCDUSR=<codusr>` nas linhas recém-criadas
+  (`AIF_TABELA` + `AIF_CODPRO`/`AIF_CODIGO` + `AIF_DATA=hoje` +
+  `AIF_HORA>=início`). Não-fatal por desenho — falha do patch não nega
+  o write. api-delpi injeta `codusr` resolvido via Core; cliente nunca
+  informa (`_FORBIDDEN_KEYS`). SB1 usa `AIF_CODPRO`; SA2 usa
+  `AIF_CODIGO`+`AIF_LOJA`. Inventário TST01 2026-11-19: AIF010 só tinha
+  linhas SA2/SB1 — SA5 pode não gerar histórico (`VALIDAR NO TST01`).
 - `TTALK "v1"` no WSMETHOD versiona o verbo — nova versão = PATH `/v2/`,
   nunca quebrar `/v1/` em uso.
 - `SetRestFault(code, msg)` = erro HTTP nativo; envelope RETOBJ para o

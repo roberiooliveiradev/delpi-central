@@ -9,8 +9,9 @@ cadastro atual (read-merge-write), nunca reenviando apenas o delta.
 Campos aceitos do cliente: qualquer subconjunto do catálogo elegível
 (`PRODUCT_FIELD_SPECS`, gerado de contracts/sb1-field-matrix.json —
 SX3 TST01==PROD). Campos protegidos/sistema/imutáveis são rejeitados.
-B1_COD identifica o registro e vem do path — nunca do body. A classe
-não tem campo codusr: a atribuição vive no ledger de tracking.
+B1_COD identifica o registro e vem do path — nunca do body. `codusr`
+nunca é aceito do cliente: o ator real é resolvido via Core (sub do JWT)
+e viaja no body upstream para auditoria `AIF_ZCDUSR` — além do ledger.
 """
 
 from __future__ import annotations
@@ -272,9 +273,16 @@ def merge_product_update_fields(
 
 
 def build_upstream_product_update_body(
-    *, product_code: str, fields: Mapping[str, str]
+    *, product_code: str, fields: Mapping[str, str], codusr: str | None = None
 ) -> dict[str, Any]:
-    """Flat B1_* object — delpiproduto reads B1_COD to locate the record."""
+    """Flat B1_* object — delpiproduto reads B1_COD to locate the record.
+
+    `codusr` (ator real resolvido via Core) viaja como meta-campo fora do
+    catálogo B1_* — o upstream grava em `AIF_ZCDUSR` para a auditoria não
+    ficar cega (padrão Gabriel/MATA020; REST executa como usuário técnico).
+    """
     body: dict[str, Any] = {"B1_COD": product_code}
     body.update(fields)
+    if codusr:
+        body["codusr"] = codusr
     return body

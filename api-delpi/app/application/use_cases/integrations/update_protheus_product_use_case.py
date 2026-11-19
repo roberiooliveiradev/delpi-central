@@ -101,8 +101,8 @@ class UpdateProtheusProductUseCase:
                 recoverable=False,
             )
 
-        # delpiproduto has no codusr field — the resolved identity is used
-        # for attribution in the tracking ledger only.
+        # Ator real resolvido via Core — enviado upstream como meta-campo
+        # `codusr` para auditoria AIF_ZCDUSR (DLP04I01) e no ledger.
         codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)
@@ -127,7 +127,7 @@ class UpdateProtheusProductUseCase:
 
         token = self._token_service.get_valid_token(config)
         body = build_upstream_product_update_body(
-            product_code=normalized_code, fields=merged
+            product_code=normalized_code, fields=merged, codusr=codusr
         )
         url = product_update_url(config)
 

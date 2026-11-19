@@ -145,6 +145,15 @@ def test_upstream_body_is_flat_b1() -> None:
     assert "codusr" not in body
 
 
+def test_upstream_body_carries_resolved_codusr() -> None:
+    body = build_upstream_product_update_body(
+        product_code="ABC123",
+        fields=normalize_product_update_fields(FULL_PRODUCT),
+        codusr="000161",
+    )
+    assert body["codusr"] == "000161"
+
+
 def test_product_update_url_prod_shape() -> None:
     config = ProtheusRestConfig(
         username="u",

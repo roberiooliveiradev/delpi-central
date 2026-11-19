@@ -503,6 +503,12 @@ static function lPrepSB1(oDados, nOp, aSB1, cErro)
         cField := aNames[nI]
         cKind  := cFieldKind(cField, aFields)
 
+        // meta-campo de auditoria (ator real) — nao e B1_*, extraido
+        // pelo handler antes do ExecAuto e gravado em AIF_ZCDUSR
+        if cField == "codusr"
+            loop
+        endif
+
         if Empty(cKind)
             aadd(aBad, cField)
             loop
@@ -613,6 +619,10 @@ static function lExecSB1(oSelf, nOp)
     Local aSB1       := {}
     Local aLogAuto   := {}
     Local nStatus    := 400
+    Local cCodUsr    := ""
+    Local cHoraIni   := ""
+    Local cQryUpd    := ""
+    Local nQry       := 0
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
@@ -643,12 +653,21 @@ static function lExecSB1(oSelf, nOp)
                 "Corpo da requisicao nao e um JSON valido (valtype=" + ;
                 ValType(cJSON) + ",len=" + ;
                 iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a") + ")", ;
-                "dlp-v054-m283", cErrType)
+                "dlp-v055-m283-codusr", cErrType)
         elseif !lPrepSB1(oDados, nOp, @aSB1, @cErro)
             lRet     := .F.
             cErrType := "client_error"
-            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp-v054-m283", cErrType)
+            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp-v055-m283-codusr", cErrType)
         else
+            // ator real (auditoria AIF_ZCDUSR — padrao Gabriel/MATA020):
+            // REST roda como usuario tecnico; sem isto a AIF fica cega.
+            // ValType "U" quando ausente — nao usar HasProperty (metodo
+            // do FWJsonObject TLPP; nao comprovado no JsonObject legado).
+            if ValType(oDados:GetJSonObject("codusr")) == "C"
+                cCodUsr := oDados:GetJSonObject("codusr")
+            endif
+            cHoraIni := Time()
+
             MSExecAuto({|x,y| Mata010(x,y)}, aSB1, nOp)
 
             if lMsErroAuto
@@ -656,11 +675,34 @@ static function lExecSB1(oSelf, nOp)
                 cErrType := "official_validation"
                 aLogAuto := GetAutoGrLog()
                 oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-                    cSanitLog(aLogAuto), "dlp-v054-m283", cErrType)
+                    cSanitLog(aLogAuto), "dlp-v055-m283-codusr", cErrType)
             else
                 cErrType := ""
                 oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
-                    "Registro integrado com sucesso!", "dlp-v054-m283", "")
+                    "Registro integrado com sucesso!", "dlp-v055-m283-codusr", "")
+
+                // MATA010 ja grava historico na AIF (AIF_CODPRO = B1_COD);
+                // o patch preenche o ator real nas linhas desta execucao.
+                // Nao-fatal por desenho: falha aqui nao pode negar o write
+                // ja commitado — so registra no console.
+                if !Empty(cCodUsr)
+                    cQryUpd := "UPDATE " + RetSqlName("AIF") + ;
+                        " SET AIF_ZCDUSR = " + ValToSql(cCodUsr) + ;
+                        " WHERE D_E_L_E_T_ = ' '" + ;
+                        " AND AIF_TABELA = 'SB1'" + ;
+                        " AND AIF_CODPRO = " + ;
+                        ValToSql(AllTrim(oDados:GetJSonObject("B1_COD"))) + ;
+                        " AND AIF_DATA = " + ValToSql(Date()) + ;
+                        " AND AIF_HORA >= " + ValToSql(cHoraIni)
+                    nQry := TCSQLExec(cQryUpd)
+                    if nQry < 0
+                        ConOut("DLP04I01 codusr: AIF_ZCDUSR nao gravado (rc=" + ;
+                            cValToChar(nQry) + ")")
+                    else
+                        ConOut("DLP04I01 codusr=" + cCodUsr + ;
+                            " -> AIF_ZCDUSR gravado")
+                    endif
+                endif
             endif
         endif
 
@@ -671,7 +713,7 @@ static function lExecSB1(oSelf, nOp)
         nStatus  := 500
         oJsonRet := RETOBJ(oJsonRet, "500", "Erro interno", ;
             iif(Empty(cErroBlk), "Falha nao tratada na integracao", ;
-                SubStr(cErroBlk, 1, 400)), "dlp-v054-m283", cErrType)
+                SubStr(cErroBlk, 1, 400)), "dlp-v055-m283-codusr", cErrType)
     End sequence
 
     // finalizacao unica: restaura o handler anterior em TODO caminho
@@ -706,7 +748,7 @@ static function lExcBlocked(oSelf)
     oJsonRet := RETOBJ(oJsonRet, "501", "Nao homologado", ;
         "Exclusao de produto nao habilitada: semantica oficial de " + ;
         "exclusao da MATA010 pendente de comprovacao (TO_INVENTORY). " + ;
-        "Nenhuma operacao foi executada no ERP.", "dlp-v054-m283", "not_homologated")
+        "Nenhuma operacao foi executada no ERP.", "dlp-v055-m283-codusr", "not_homologated")
 
     oSelf:setStatus(501)
     oSelf:setResponse(oJsonRet:toJson())
