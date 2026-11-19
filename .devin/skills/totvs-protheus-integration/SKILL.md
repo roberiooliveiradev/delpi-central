@@ -45,6 +45,10 @@ e no handoff ajuda o revisor a conferir aplicação correta.
 | **PAD-PATCH-NAO-FATAL** | Pós-commit oficial: anotações auxiliares (auditoria, complementos) nunca negam o write — falha ⇒ `ConOut`, não erro de resposta | bloco `AIF_ZCDUSR` nos 2 PRWs |
 | **PAD-GETCONTENT-FIRST** | `GetContent()` antes de `SetContentType()`, ambos dentro do `Begin Sequence` — ordem errada = body vazio | regressão comprovada TST01 |
 | **PAD-VALIDA-CONTEUDO** | Validar parse pelo conteúdo (`Len(GetNames())==0`), nunca pelo retorno de `FromJson` (NIL=ok / string=erro, não lógico) | semântica TDN comprovada |
+| **PAD-MODELO-AUTOMATICO** | `FWLoadModel` em REST headless usa o id do modelo da **rotina automática** (`'MATA061'`, componentes `MdFieldSA5`/`MdGridSA5`), não o wrapper browse (`'DMATA061'`/`DMd*`) — o wrapper ExecBlock-a sua user function visual na vld-activate e morre em JOB | TDN PCOM10001 + prova TST01 2026-11-19 |
+| **PAD-VLDACTIVATE-BYPASS** | `oModel:SetVldActivate({|| .T.})` antes do `Activate()` — a vld-activate default pode ExecBlock-ar a user function da rotina (browse `FWMBrowse` ⇒ `srvobject` em JOB). Substituir é o bypass documentado | THREAD ERROR: `U_DMATA061→FWMBrowse` |
+| **PAD-SETVALUE-VAZIO** | `SetValue` de campo vazio viola `X3_WHEN` de campos calculados/protegidos ("Modo edicao nao respeitado" — até `""`). Omitir `SetValue` quando `Empty(x)` — o modelo aplica init/default | `A5_REFGRD` TST01; classe, não caso |
+| **PAD-DIAG-STAGES** | Erro opaco em JOB: marcadores `ConOut` por etapa + handler default momentâneo para THREAD ERROR com stack nativa (`.PRX`/linha) — localiza a chamada culpada em 1-2 ciclos | builds `*-diag` DLP04I02 |
 
 ## Lições de runtime comprovadas — TST01 (2026-11-19)
 
@@ -382,6 +386,9 @@ relacionada) ou a validação oficial rejeita.
 | `SB5010_UNQ` e afins | InTTS/commit | flush de complemento multi-filial (SB1 compartilhada × SB5/SBZ exclusivas) — diagnosticar PEs `MT010ALT`-style antes de culpar o contrato |
 | `Erro -->` no `GetAutoGrLog` | ExecAuto | bloco de erro fica no FIM do log — ler a cauda, não a cabeça |
 | `AIF_ZCDUSR` vazio pós-patch | janela `AIF_HORA` | `Time()` retorna `HH:MM:SS` mas `AIF_HORA` é `HH:MM` — truncar `Left(Time(),5)` (PAD-JANELA-TEMPO-AIF) |
+| `JOB threads doesn't support remote/visual components` (srvobject.cpp) em `Activate()` de modelo | vld-activate ExecBlock-ando user function de browse | modelo da rotina automática (`'MATA061'`) + `SetVldActivate({||.T.})` (PAD-MODELO-AUTOMATICO / PAD-VLDACTIVATE-BYPASS) — THREAD ERROR provou `U_DMATA061→FWMBrowse` |
+| `official_validation` "Modo edicao nao respeitado" (FWWHEN) | `SetValue` em campo protegido por `X3_WHEN` | omitir `SetValue` quando valor vazio (PAD-SETVALUE-VAZIO) |
+| `AIF` sem linhas da entidade (SA5) | rotina oficial não gera histórico para aquela tabela | patch `AIF_ZCDUSR` vira no-op — auditoria do ator no ledger api-delpi; escalar/decisão PO, nunca silenciar |
 | `THREAD ERROR` | console appserver | exceção não tratada; corpo do erro no `console.log`/`error.log` |
 | `variable does not exist`/`function not found` | runtime | PRIVATE errado / função ausente no RPO (compilação ≠ carga) |
 | `array out of bounds` | runtime | array é 1-based; tripla `{CAMPO,val,NIL}` mal formada |

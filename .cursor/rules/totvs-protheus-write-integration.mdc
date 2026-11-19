@@ -50,7 +50,7 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 ### No `.PRW` (lado Protheus)
 
 - [ ] `WSRESTFUL`/`WSMETHOD`/`WSRECEIVE` quando REST custom realmente necessário; compilação não equivale a rota operacional comprovada
-- [ ] Escrita apenas por rotina oficial suportada: MATA010 via `MSExecAuto`; MATA061/SA5 via modelo MVC oficial sob contrato aprovado e teste TST01. Nunca `RecLock`/SQL direto em `S*`
+- [ ] Escrita apenas por rotina oficial suportada: MATA010 via `MSExecAuto`; MATA061/SA5 via modelo MVC oficial sob contrato aprovado e teste TST01 (**modelo `'MATA061'` — rotina automática TDN PCOM10001 — é headless comprovado TST01 2026-11-19**; o wrapper `'DMATA061'` instancia `FWMBrowse` na vld-activate e morre em JOB — fallback apenas). Nunca `RecLock`/SQL direto em `S*`
 - [ ] Para `MSExecAuto`: `PRIVATE lMsErroAuto := .F.` (não `LOCAL`) + `lMsHelpAuto`/`lAutoErrNoFile`. MVC exige tratamento próprio comprovado
 - [ ] `ErrorBlock`+`Begin Sequence/Recover` cobrindo o handler inteiro
 - [ ] `GetContent()` **sempre antes** de `SetContentType()`, ambos **dentro** do `Begin Sequence`
@@ -72,6 +72,12 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
       rejeita ids fora do form — enumerar via `tools/DLPDBG01.PRW`)
 - [ ] Somente para ExecAuto: arrays de triplas `{CAMPO, valor, Nil}`; representação completa quando contrato exigir
       (campo omitido pode ser zerado — bug real do `delpiproduto`)
+- [ ] Para MVC em thread JOB (REST): `oModel:SetVldActivate({|| .T.})` antes do
+      `Activate()` — a vld-activate default pode ExecBlock-ar a user function de
+      browse da rotina (`U_DMATA061→FWMBrowse` ⇒ `srvobject` — prova TST01).
+      E `SetValue` de campo **vazio** viola `X3_WHEN` de campos protegidos
+      ("Modo edicao nao respeitado", até `""`) — omitir `SetValue` quando
+      `Empty(x)` e deixar o modelo derivar (prova `A5_REFGRD` TST01)
 - [ ] Para ExecAuto: `GetAutoGrLog()`; para MVC: erros/validações do modelo; respostas normalizadas sem mascarar falhas
 - [ ] **Auditoria do ator real — OBRIGATÓRIA (proibido entregar rota de escrita sem
       previsão):** o `.PRW` deve aceitar o meta-campo `codusr` (fora do catálogo de
@@ -82,7 +88,11 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
       `AIF_DATA=hoje` + `AIF_HORA>=início` capturado antes da rotina;
       `AIF_HORA` grava `HH:MM` (5) — capturar `Left(Time(),5)`, nunca
       `Time()` cru com segundos — janela `>=` não casa a própria
-      execução — prova TST01 2026-11-19).
+      execução — prova TST01 2026-11-19). **Se a rotina oficial não gerar
+      linha AIF para a entidade** (provado: MATA061/SA5 — `AIF010` sem
+      registros SA5 após write), o patch vira no-op e a **auditoria do
+      ator permanece no ledger api-delpi** — limitação aceita por decisão
+      PO 2026-11-19; registrar explicitamente, nunca silenciar.
       Patch **não-fatal por desenho** — falha nunca nega o write já commitado,
       só registra `ConOut`. REST executa como usuário técnico; sem isso a
       auditoria atribui toda alteração ao serviço — antipadrão. Se o mecanismo

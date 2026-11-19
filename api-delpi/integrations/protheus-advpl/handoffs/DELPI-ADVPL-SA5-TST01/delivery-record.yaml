@@ -13,14 +13,19 @@ delivery:
   supersedes: "DELPI-ADVPL-SA5-TST01-v0.4.0 (compilado no ambiente auxiliar :8061 — nao usar)"
 
 tracking:
-  status: PREPARED
+  status: TESTED
   events:
     - state: PREPARED
       at: "2026-11-19"
       by: "Devin — Especialista TOTVS (EVA-TOTVS-SA5-DLP04I02-V041-DIAG-HARDENING-01)"
       note: "Correcao de diagnostico fail-closed: fim do overwrite da msg especifica pela generica; distincao body-vazio x JSON-invalido + ConOut len/valtype; 500 em excecao/commit ambiguo; errorType; id='dlp04i02-0.4.1' em toda resposta p/ identificacao do objeto no RPO. 31 estaticos verdes; runtime nao executado."
+    - state: TESTED
+      at: "2026-11-19"
+      by: "Devin — Especialista TOTVS (serie diag 0.5.2..0.5.5 -> 0.6.0)"
+      note: "PROVEN_RUNTIME no REST :8701 (RPO api): causa raiz srvobject = Activate() do wrapper DMATA061 ExecBlock-ando browse U_DMATA061 (THREAD ERROR); fix = modelo oficial MATA061 (headless, TDN PCOM10001) + SetVldActivate({||.T.}) + omitir SetValue vazio (FWWHEN A5_REFGRD). POST /incluir gravou SA5 10080010x999999/01, read-back confirmou. AIF nao gera linha SA5 — patch AIF_ZCDUSR no-op; auditoria do ator no ledger api-delpi (decisao PO). Fonte consolidada 0.6.0 = mesmo fluxo provado sem marcadores diag; recompile+retest pendente."
 
 evidence_tst01_2026_11_19:
+  ledger_write: "api-delpi/docs/integrations/evidence/protheus-rest-product-supplier-create-ledger.md"
   compiled_env: "ambiente auxiliar 'TESTE DELPI COMPILACAO' (TDS 233:2001) — REST proprio em :8061/restall"
   urns_registered: "4/4 vivas no :8061; PUT/GET/DELETE responderam 501 do contrato (fonte v0.4.0 comprovado)"
   functional_blocker: "GetContent()/FromJson sem body no REST do :8061 (sibling delpiproduto rejeitou JSON valido igual) — validacao funcional exige REST sao"
@@ -31,7 +36,7 @@ references:
   compilation_checklist: "product-suppliers/contracts/tst01-compilation-checklist.md"
 
 operation_states:
-  CREATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (POST incluir)"
+  CREATE: "PROVEN_RUNTIME TST01 :8701 (POST incluir gravou SA5 10080010x999999/01 — build 0.5.5-diag; 0.6.0 consolidado aguarda recompile+retest)"
   UPDATE: "BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING (PUT 501)"
   READ_ADVPL: "TO_INVENTORY (GET 501)"
   READ_API_DELPI: "PROVEN_CODE (get_supplier_link)"

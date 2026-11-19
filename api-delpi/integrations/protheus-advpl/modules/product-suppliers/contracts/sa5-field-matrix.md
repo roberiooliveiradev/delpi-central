@@ -27,3 +27,11 @@ publicado no playbook SB1/SX3/SA5 — não duplicado aqui.
 Obrigatórios SX3 já comprovados (G0-C): `FILIAL, FORNECE, LOJA, NOMEFOR,
 PRODUTO, CODPRF, REFGRD, DESCPRF`. `X3_OBRIGAT` ≠ obrigação universal da
 REST — confirmar obrigatoriedade por fluxo no TST01.
+
+## Provas de runtime — TST01 2026-11-19
+
+| Campo | Achado runtime | Evidência |
+|---|---|---|
+| `A5_REFGRD` | `X3_WHEN` rejeita atribuição **até de `""`** — `SetValue` omitido quando vazio; modelo deriva. Produto sem grade: enviar `""` e deixar omitido | `FWWHEN "Modo edicao nao respeitado"` no console (build diag) |
+| `A5_PRODUTO` | header `MdFieldSA5` aceita `SetValue` normalmente | write provado |
+| demais identidade/atributos | `SetValue` em grid `MdGridSA5` aceitos | SA5 gravado e read-back íntegro |

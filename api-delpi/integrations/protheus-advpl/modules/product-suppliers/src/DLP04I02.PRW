@@ -1,10 +1,25 @@
 /* ========================================================================
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
-   oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
+   oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.5 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.5-diag"); comparar com o objeto compilado no RPO.
-   ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
+   VERSAO: 0.6.0 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.6.0"); comparar com o objeto compilado no RPO.
+   ESTADO: PROVEN_RUNTIME TST01 (2026-11-19, REST :8701, build diag) —
+          POST /incluir gravou SA5 10080010 x 999999/01 via modelo
+          oficial MATA061 headless; read-back SQL confirmou.
+   CADEIA CAUSAL RESOLVIDA (TST01 2026-11-19):
+     - modelo 'DMATA061' (wrapper browse CRM) -> Activate() ExecBlock-ava
+       U_DMATA061 -> FWMBrowse -> "JOB threads doesn't support
+       remote/visual components" (srvobject.cpp) — THREAD ERROR provado;
+     - modelo oficial 'MATA061' (TDN PCOM10001, rotina automatica)
+       ativa headless — primario; DMATA061 fica fallback;
+     - SetVldActivate({||.T.}) substitui a vld-activate que chamava a
+       user function de browse (ponto de extensao documentado MPFormModel);
+     - A5_REFGRD tem X3_WHEN que rejeita ate "": SetValue omitido em
+       campo vazio (init/default do modelo);
+     - AIF nao gera linha p/ SA5 nesta rotina (provado): patch
+       AIF_ZCDUSR vira no-op; auditoria do ator fica no ledger api-delpi
+       (decisao PO 2026-11-19).
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
        (prova de publicacao da classe);
@@ -35,7 +50,8 @@
      inventario : contracts/official-model-inventory.md (G2-B)
 
    MECANISMO: fachada WSRESTFUL instanciando o MODELO MVC oficial
-   'DMATA061' — nunca RecLock, SQL ou DbWrite sobre SA5. As validacoes,
+   'MATA061' (fallback 'DMATA061') — nunca RecLock, SQL ou DbWrite
+   sobre SA5. As validacoes,
    triggers e pontos de entrada do cadastro oficial (a060LinOk,
    a060VldGrv, MT061MN, SX3) executam no ciclo do modelo.
 
@@ -77,7 +93,7 @@
      - a060VldGrv chama Help() (UI): comportamento fora de tela =
        VALIDAR NO TST01.
      - API de erro do modelo (GetErrorMessage) = VALIDAR NO TST01.
-     - Presenca compilada do modelo 'DMATA061' e PEs ativos no RPO.
+     - Presenca compilada do modelo 'MATA061' e PEs ativos no RPO.
      - Compilacao/homologacao: pendente (TST01, equipe ERP).
    ======================================================================== */
 
@@ -176,13 +192,13 @@ static function lModelErr(oModel, cErro)
     elseif ValType(xErr) <> "U"
         cErro += cValToChar(xErr) + CRLF
     else
-        cErro += "Validacao do modelo DMATA061 rejeitada (detalhe indisponivel)." + CRLF
+        cErro += "Validacao do modelo oficial rejeitada (detalhe indisponivel)." + CRLF
     endif
 
 Return cErro
 
 /* -----------------------------------------------------------------------
-   lExecSA5 — CREATE do vinculo via modelo oficial DMATA061.
+   lExecSA5 — CREATE do vinculo via modelo oficial MATA061.
    Semantica de sucesso: COMMIT_ACKNOWLEDGED pelo modelo — nunca
    PERSISTENCE_CONFIRMED (confirmacao exige read-back governado).
    Nenhum caminho retorna 200 sem CommitData() explicitamente .T.;
@@ -196,6 +212,7 @@ static function lExecSA5(oSelf)
     Local cErro      := ""
     Local cErroBlk   := ""
     Local cErroEnv   := ""
+    Local cMdlId     := ""
     Local cFldId     := ""
     Local cGrdId     := ""
     Local cErroLog   := ""
@@ -262,60 +279,51 @@ static function lExecSA5(oSelf)
             // (bug comprovado TST01 2026-11-19: 0 rows patcheados)
             cHoraIni := Left(Time(), 5)
 
-            // DIAG: marcadores de etapa p/ localizar o componente
-            // visual que lanca srvobject em thread JOB (TST01 15:23).
-            // Temporario — remover quando a causa estiver isolada.
-            ConOut("DLP04I02 s1 pre-model")
-
-            // Ciclo MVC oficial — DIAG 0.5.4 dupla hipotese:
-            // (a) modelo 'MATA061' = rotina automatica documentada no
-            //     TDN (EXECAUTO, componentes MdFieldSA5/MdGridSA5);
-            // (b) fallback 'DMATA061' (componentes DMd* — o que lancou
-            //     FWMBrowse via U_DMATA061 no FWVLDACTIVATE).
-            // SetVldActivate({||.T.}) substitui a validacao de ativacao
-            // que ExecBlock-ava a user function do browse (causa raiz
-            // comprovada por THREAD ERROR TST01 15:40).
+            // Ciclo MVC oficial — modelo 'MATA061' = rotina automatica
+            // documentada no TDN (EXECAUTO; componentes MdFieldSA5/
+            // MdGridSA5), headless comprovado em TST01 2026-11-19.
+            // Fallback 'DMATA061' (componentes DMd* — wrapper CRM).
+            // SetVldActivate({||.T.}) substitui a validacao de ativacao:
+            // o default ExecBlock-ava a user function de browse
+            // (U_DMATA061 -> FWMBrowse -> "JOB threads doesn't support
+            // remote/visual components", causa raiz provada por
+            // THREAD ERROR TST01).
             oModel := FWLoadModel("MATA061")
             if ValType(oModel) == "O"
+                cMdlId := "MATA061"
                 cFldId := "MdFieldSA5"
                 cGrdId := "MdGridSA5"
-                ConOut("DLP04I02 s2 model MATA061 ok")
             else
                 oModel := FWLoadModel("DMATA061")
+                cMdlId := "DMATA061"
                 cFldId := "DMdFieldSA5"
                 cGrdId := "DMdGridSA5"
-                ConOut("DLP04I02 s2 model DMATA061 ok")
             endif
-            oModel:SetOperation(MODEL_OPERATION_INSERT)
-            ConOut("DLP04I02 s3 setop ok")
-            oModel:SetVldActivate({|| .T.})
-            ConOut("DLP04I02 s3a vldactivate bypass")
-            // handler default mantido p/ expor stack nativa de qualquer
-            // residual dentro do Activate (THREAD ERROR no console)
-            ErrorBlock(oException)
-            oModel:Activate()
-            ErrorBlock({|e| cErroBlk := e:Description, ;
-                cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
-                    cValToChar(e:ErrorEnv), ""), Break(e)})
-            lActivated := .T.
-            ConOut("DLP04I02 s4 activate ok")
+            if ValType(oModel) <> "O"
+                lRet     := .F.
+                cErrType := "server_error"
+                nStatus  := 500
+                cErro := "Nenhum modelo oficial MATA061/DMATA061 " + ;
+                    "disponivel no RPO — integracao indisponivel."
+            else
+                oModel:SetOperation(MODEL_OPERATION_INSERT)
+                oModel:SetVldActivate({|| .T.})
+                oModel:Activate()
+                lActivated := .T.
 
             // header: produto (+ref. grade) — relation oficial aplica
             // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid.
             // A5_REFGRD tem X3_WHEN ("Ref Grd Cfg") que rejeita ate
             // atribuicao vazia — omitir o SetValue quando vazio e deixar
-            // o modelo derivar (regressao TST01 0.5.4: FWWHEN
+            // o modelo derivar (regressao TST01: FWWHEN
             // "Modo edicao nao respeitado").
             oModel:GetModel(cFldId):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
             if !Empty(oDados:GetJSonObject("A5_REFGRD"))
                 oModel:GetModel(cFldId):SetValue("A5_REFGRD", oDados:GetJSonObject("A5_REFGRD"))
             endif
-            ConOut("DLP04I02 s5 header ok")
 
             oGrid := oModel:GetModel(cGrdId)
-            ConOut("DLP04I02 s6 getgrid ok")
             oGrid:AddLine()
-            ConOut("DLP04I02 s7 addline ok")
 
             // linha corrente: identidade restante + atributos; vazio =
             // omitir (init do modelo) — WHEN de campo calculado/protegido
@@ -326,14 +334,12 @@ static function lExecSA5(oSelf)
                     oGrid:SetValue(aIdent[nI], xVal)
                 endif
             next nI
-            ConOut("DLP04I02 s8 grid-ident ok")
             for nI := 1 to len(aAttr)
                 xVal := oDados:GetJSonObject(aAttr[nI])
                 if !Empty(xVal)
                     oGrid:SetValue(aAttr[nI], xVal)
                 endif
             next nI
-            ConOut("DLP04I02 s9 grid-attrs ok")
 
             if !oModel:VldData()
                 lRet     := .F.
@@ -342,33 +348,32 @@ static function lExecSA5(oSelf)
                 // conteudo nao comprovado como seguro; fica no log
                 cErroLog := lModelErr(oModel, cErroLog)
                 cErro := "Rejeitado pela validacao oficial do modelo " + ;
-                    "DMATA061 (detalhe tecnico no log do AppServer)."
+                    cMdlId + " (detalhe tecnico no log do AppServer)."
             else
-                ConOut("DLP04I02 s10 vlddata ok")
                 // MODEL_VALIDATED != COMMIT_ACKNOWLEDGED !=
                 // PERSISTENCE_CONFIRMED — exige retorno logico .T.
                 xCommit := oModel:CommitData()
-                ConOut("DLP04I02 s11 commit ret=" + cValToChar(xCommit))
                 if ValType(xCommit) <> "L"
                     lRet     := .F.
                     cErrType := "server_error"
                     nStatus  := 500
                     cErro := "Resultado ambiguo do commit do modelo " + ;
-                        "DMATA061 — integracao nao confirmada; verificar " + ;
+                        cMdlId + " — integracao nao confirmada; verificar " + ;
                         "o vinculo antes de repetir (VALIDAR NO TST01)."
                 elseif !xCommit
                     lRet     := .F.
                     cErrType := "official_validation"
                     cErroLog := lModelErr(oModel, cErroLog)
                     cErro := "Persistencia rejeitada pelo modelo oficial " + ;
-                        "DMATA061 (detalhe tecnico no log do AppServer)."
+                        cMdlId + " (detalhe tecnico no log do AppServer)."
                 else
                     // commit ok — patch do ator real no historico AIF.
                     // Nao-fatal por desenho: falha aqui nao nega o write
                     // ja commitado — so registra no console.
-                    // VALIDAR NO TST01: inventario AIF010 em 2026-11-19
-                    // mostrou apenas SA2/SB1 — SA5 pode nao gerar linha
-                    // AIF; nesse caso o UPDATE toca 0 linhas (inofensivo).
+                    // DECISAO PO 2026-11-19: SA5 nao gera linha AIF nesta
+                    // rotina (provado — AIF010 sem registros SA5); o
+                    // UPDATE toca 0 linhas (no-op seguro) e a auditoria
+                    // do ator fica no ledger da api-delpi.
                     if !Empty(cCodUsr)
                         cQryUpd := "UPDATE " + RetSqlName("AIF") + ;
                             " SET AIF_ZCDUSR = " + ValToSql(cCodUsr) + ;
@@ -388,6 +393,7 @@ static function lExecSA5(oSelf)
                         endif
                     endif
                 endif
+            endif
             endif
         endif
 
@@ -423,7 +429,7 @@ static function lExecSA5(oSelf)
     // ao consumidor; a generica so cobre o caso sem cErro preenchido
     if lRet
         oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
-            "Vinculo aceito pelo modelo oficial DMATA061 " + ;
+            "Vinculo aceito pelo modelo oficial " + cMdlId + " " + ;
             "(commit reconhecido; confirmacao final via read-back governado).", cVerTag(), "")
         oSelf:setStatus(200)
     else
@@ -442,7 +448,7 @@ static function lExecSA5(oSelf)
 Return .T.
 
 /*/{Protheus.doc} sa5Prod (POST)
-    Inclusao de vinculo SA5 via modelo oficial DMATA061.
+    Inclusao de vinculo SA5 via modelo oficial MATA061.
 /*/
 WSMETHOD POST sa5Prod WSRECEIVE WSRESTFUL DelpiProdForn
 Return lExecSA5(self)
@@ -507,7 +513,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.5-diag"
+Return "dlp04i02-0.6.0"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:

@@ -9,7 +9,7 @@ Nenhuma rota REST SA5 existe em 527/526 classes RESTALL (G0-B/C).
 
 | Op | Verbo/path conceitual | Mecanismo | Estado |
 |---|---|---|---|
-| CREATE | `POST /v1/product-suppliers` | FWLoadModel('DMATA061') insert | candidato — VALIDAR TST01 |
+| CREATE | `POST /v1/product-suppliers` | FWLoadModel('MATA061') insert (fallback DMATA061) | **PROVEN_RUNTIME** TST01 2026-11-19 — POST gravou SA5 `10080010×999999/01`, read-back confirmou |
 | READ | `GET /v1/product-suppliers/{id}` | **fora do .PRW** — leitura api-delpi governada (estender FABR/FALOJA/REFGRD) ou via modelo | DECISION_REQUIRED |
 | UPDATE | `PUT /v1/product-suppliers/{id}` | modelo — linha pela PK | candidato — VALIDAR TST01 |
 | DELETE | `DELETE /v1/product-suppliers/{id}` | modelo — bloqueio do último vínculo pendente | BLOCKED até semântica+política |

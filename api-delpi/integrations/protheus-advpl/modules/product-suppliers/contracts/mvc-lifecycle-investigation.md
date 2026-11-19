@@ -78,3 +78,34 @@ linhas `DMdGridSA5` e confirma pelo commit oficial do modelo.
   fora de tela = VALIDAR NO TST01.
 - Relação oficial propaga `A5_FILIAL (xFilial)`, `A5_PRODUTO`, `A5_REFGRD`
   do header ao grid — o fonte não precisa reescrevê-los por linha.
+
+## Resolução em runtime — TST01 2026-11-19 (PROVEN)
+
+Cadeia causal completa medida por marcadores ConOut + THREAD ERROR nativo:
+
+| Suspeita | Resultado | Evidência |
+|---|---|---|
+| `M->A5_*` em `a060LinOk` causaria exceção | REFUTADA | o throw aconteceu ANTES de qualquer campo — dentro de `Activate()` |
+| `VldData`/callback visual | REFUTADA | `Activate()` falhou antes; após fix, `VldData` rodou e rejeitou por validação de negócio (400 governado) |
+| **`Activate()` → `FWVLDACTIVATE` → `ExecBlock` → `U_DMATA061` → `FWMBrowse`** | **CONFIRMADA (causa raiz)** | THREAD ERROR: `FWMBROWSE:ACTIVATE(FWMBROWSE.PRW:671) ← U_DMATA061(DMATA061.PRX:34) ← FWVLDACTIVATE ← Activate` |
+
+### Fatos provados
+
+1. **`FWLoadModel("MATA061")` é o modelo headless oficial** — rotina
+   automática documentada no TDN (PCOM10001). `Activate()` passa em
+   thread JOB. `DMATA061` é o wrapper de browse/CRM — não usar como
+   primário (vld-activate chama a user function do browse).
+2. **`oModel:SetVldActivate({|| .T.})`** substitui a validação de
+   ativação que ExecBlock-ava a user function — ponto de extensão
+   documentado do `MPFormModel`. Mantido nos dois caminhos.
+3. **`A5_REFGRD` tem `X3_WHEN`** ("Ref Grd Cfg") que rejeita atribuição
+   até de string vazia — `SetValue` omitido quando vazio; o modelo
+   deriva/inicializa. Mesma guarda `!Empty()` aplicada nos loops do grid.
+4. **Componentes do modelo `MATA061`**: `MdFieldSA5` (header) e
+   `MdGridSA5` (grid) — sem o prefixo `D` do DMATA061 (`DMd*`).
+5. **`AIF` não recebe linha SA5** — `AIF010` consultada após write
+   bem-sucedido: zero registros `AIF_TABELA='SA5'`. O patch `AIF_ZCDUSR`
+   é no-op seguro; **auditoria do ator fica no ledger api-delpi**
+   (decisão PO 2026-11-19).
+6. **Prova de write**: `POST /incluir` → 200 → `SA5010` read-back
+   `10080010 × 999999/01` gravado com todos os atributos.
