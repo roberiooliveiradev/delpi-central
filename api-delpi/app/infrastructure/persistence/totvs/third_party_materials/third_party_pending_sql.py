@@ -117,4 +117,7 @@ def build_pending_export_sql(
     {SUPPLIER_FROM}
     ORDER BY C.supplier_code, C.supplier_store, C.product_code
     """
-    return sql, tuple([limit, *params])
+    # The WHERE markers belong to the preceding CTE, so they come before
+    # the TOP (?) marker in SQL text. pyodbc binds by textual position.
+    # The legacy /returns/export builder is different: TOP precedes WHERE.
+    return sql, tuple([*params, limit])
