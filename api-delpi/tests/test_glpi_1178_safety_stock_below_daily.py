@@ -1,7 +1,8 @@
 """GLPI #1178: estoque de segurança, pedidos, filiais, e-mail e agenda."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,6 +12,9 @@ from app.application.services.supplies.safety_stock_below_daily_aggregation_serv
 )
 from app.application.use_cases.reports.report_recipients_schedule_use_cases import (
     UpsertReportScheduleUseCase,
+)
+from app.domain.services.reports.report_schedule_next_run_service import (
+    compute_next_run_at,
 )
 from app.domain.services.reports.providers.safety_stock_below_daily_provider import (
     SafetyStockBelowDailyProvider,
@@ -280,3 +284,15 @@ def test_preview_route_is_branch_gated_and_has_stable_contract(mock_build, mock_
     )
     mock_gate.assert_called_once_with("02")
     assert use_case.execute.call_args.args[0] == {"branch": "02"}
+
+
+def test_weekdays_automatically_skips_saturday_and_sunday():
+    sao_paulo = ZoneInfo("America/Sao_Paulo")
+    after = datetime(2026, 11, 20, 9, 0, tzinfo=sao_paulo)  # Friday
+    next_run = compute_next_run_at(
+        schedule_kind="weekdays", hour=8, minute=0,
+        timezone_name="America/Sao_Paulo", after=after,
+    )
+    assert next_run.date() == date(2026, 11, 23)  # Monday
+    assert next_run.hour == 8
+    assert next_run.weekday() == 0
