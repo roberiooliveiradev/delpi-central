@@ -61,9 +61,11 @@ def _setup():
     )
     repo.upsert_schedule_for_definition.side_effect = lambda **kwargs: schedules[
         kwargs["definition_id"]
-    ].update({"enabled": kwargs["enabled"], "nextRunAt": kwargs["next_run_at"].isoformat()}) or schedules[
-        kwargs["definition_id"]
-    ]
+    ].update({
+        "enabled": kwargs["enabled"],
+        "hour": int(kwargs["cron_expression"].split()[1]),
+        "nextRunAt": kwargs["next_run_at"].isoformat(),
+    }) or schedules[kwargs["definition_id"]]
     provider = Mock()
     provider.collect.side_effect = lambda params: SimpleNamespace(
         provider_key=activation.PROVIDER,
@@ -125,7 +127,9 @@ def test_apply_only_ten_and_never_excluded(monkeypatch):
     assert all(call.kwargs["enabled"] is True for call in calls)
     assert data[4]["def-20057"]["enabled"] is False
     assert data[4]["def-20077"]["enabled"] is False
+    assert all(call.kwargs["cron_expression"] == "0 9 * * 1" for call in calls)
     assert activation._summary(_plan(data))["stillToEnable"] == 0
+    assert activation._summary(_plan(data))["readyAtNine"] == 10
 
     # Idempotent: no new writes on a second activation.
     data[2].upsert_schedule_for_definition.reset_mock()
@@ -200,3 +204,33 @@ def test_preview_main_never_writes(monkeypatch, capsys):
     assert code == 0
     assert '"stillToEnable": 10' in capsys.readouterr().out
     data[2].upsert_schedule_for_definition.assert_not_called()
+
+
+def test_existing_enabled_eight_am_is_rescheduled_to_nine_without_extra_email(monkeypatch):
+    data = _setup()
+    data[4]["def-20001"]["enabled"] = True
+    data[4]["def-20001"]["hour"] = 8
+    monkeypatch.setattr(
+        activation.settings, "REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED", True
+    )
+    plan = _plan(data)
+    assert activation._summary(plan)["stillToEnable"] == 10
+    activation.apply_plan(plan, data[2])
+    assert data[4]["def-20001"]["enabled"] is True
+    assert data[4]["def-20001"]["hour"] == 9
+    assert data[4]["def-20057"]["enabled"] is False
+    assert data[4]["def-20077"]["enabled"] is False
+    assert activation._summary(_plan(data))["readyAtNine"] == 10
+
+
+def test_already_enabled_at_nine_is_not_reset(monkeypatch):
+    data = _setup()
+    for reg in activation.APPROVED:
+        data[4]["def-" + reg]["enabled"] = True
+        data[4]["def-" + reg]["hour"] = 9
+    monkeypatch.setattr(
+        activation.settings, "REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED", True
+    )
+    activation.apply_plan(_plan(data), data[2])
+    data[2].upsert_schedule_for_definition.assert_not_called()
+    assert activation._summary(_plan(data))["readyAtNine"] == 10
