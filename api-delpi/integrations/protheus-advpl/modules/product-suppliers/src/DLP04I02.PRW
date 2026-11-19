@@ -15,6 +15,8 @@
                   dentro do error handler aborta a thread sem recover.
                   ErrorBlock reduzido a e:Description+Break; aSA5Form-
                   Fields passa a enumerar por GetStruct():GetFields()
+                  AScan da guarda com == (match exato — '=' casa
+                  prefixo A5_PE/A5_PESO e recriaria o crash).
                   (prova DLPDBG01 — id no elemento 3), nunca oGrid:
                   aFields (propriedade invalida no submodelo).
           0.8.2 = fix runtime GET 500: GetValue/SetValue em campo fora
@@ -551,7 +553,6 @@ static function lExecSA5(oSelf)
     Local aLoad      := {}
     Local aRej       := {}
     Local aForm      := {}
-    Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
@@ -660,7 +661,7 @@ static function lExecSA5(oSelf)
             for nI := 1 to len(aAttr)
                 xVal := oDados:GetJSonObject(aAttr[nI])
                 if ValType(xVal) == "C" .and. !Empty(xVal)
-                    if aScan(aForm, aAttr[nI]) > 0
+                    if aScan(aForm, {|x| x == aAttr[nI]}) > 0
                         oGrid:SetValue(aAttr[nI], ;
                             xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
                     else
@@ -887,7 +888,6 @@ static function lExecSA5Op(oSelf, cOp)
     Local aRej       := {}
     Local aForm      := {}
     Local aFora      := {}
-    Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oItem      := JsonObject():New()
     Local oDados     := JsonObject():New()
@@ -993,7 +993,7 @@ static function lExecSA5Op(oSelf, cOp)
                                 // guarda por campo devolve "" sem derrubar
                                 // a leitura do vinculo
                                 for nI := 1 to len(aAttr)
-                                    if aScan(aForm, aAttr[nI]) > 0
+                                    if aScan(aForm, {|x| x == aAttr[nI]}) > 0
                                         xVal := oGrid:GetValue(aAttr[nI])
                                         oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xSA5JsonSafe(xVal))
                                     else
@@ -1015,7 +1015,7 @@ static function lExecSA5Op(oSelf, cOp)
                                 for nI := 1 to len(aAttr)
                                     xVal := oDados:GetJSonObject(aAttr[nI])
                                     if ValType(xVal) == "C" .and. !Empty(xVal)
-                                        if aScan(aForm, aAttr[nI]) > 0
+                                        if aScan(aForm, {|x| x == aAttr[nI]}) > 0
                                             oGrid:SetValue(aAttr[nI], ;
                                                 xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
                                         else

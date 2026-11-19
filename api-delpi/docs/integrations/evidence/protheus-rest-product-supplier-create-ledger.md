@@ -105,3 +105,38 @@ negativos (404 pos-delete, 400 payload incompleto) + identidade com
 opcionais vazios (REFGRD/FABR/FALOJA). Estado final do produto
 10080010: 6 vinculos originais intactos; registro de teste removido
 pela propria rota (dogfooding do DELETE).
+
+## Rodada 0.8.x — catálogo SA5 completo (TST01 :8701, 2026-11-19)
+
+```text
+0.8.0 live:
+  PUT /alterar A5_LEAD_T+A5_CODPRCA → 400 "Informe ao menos um campo"
+    CAUSA: aadd(aR,"A","B","C") multi-arg grava so o 1o elemento
+    (catalogo efetivo ~14 campos — padrao ADVPL documentado no DLP04I01)
+  GET /consultar → 500 cru HTTPREST
+0.8.1 live:
+  PUT /alterar A5_LEAD_T+A5_CODPRCA → 200 MATA061 commit reconhecido
+    (catalogo unitario funcional p/ escrita — PROVEN_RUNTIME)
+  GET /consultar → 500 cru
+0.8.2 live:
+  GET /consultar → 500 cru; PUT sem attrs → 400 client_error
+    id=dlp04i02-0.8.2 (build confirmado no RPO)
+    console.log (dev_rest_minha_delpi) revelou a causa raiz:
+      THREAD ERROR InterFunctionCall: cannot find function
+      __OBJHASDATA — no ErrorBlock da linha 899 — chamada dentro
+      do recover aborta a thread sem recover => 500 sem envelope.
+      Erro original: oGrid:aFields = propriedade invalida no
+      submodelo de grade. A familia __Obj* esta FORA do AppMap
+      deste build — o veneno estava no remedio desde o 0.8.0
+      (begin sequence interna + errorblock envenenado).
+0.8.3 (pendente compile — VALIDAR NO TST01):
+  ErrorBlock limpo (e:Description+Break); aSA5FormFields via
+  oGrid:GetStruct():GetFields() (prova DLPDBG01 — id no item 3);
+  AScan com == (match exato — '=' casa prefixo A5_PE/A5_PESO);
+  baseline provado 0.7.x como fail-safe; xSA5JsonSafe D->DtoS.
+```
+
+Licao registrada: **nunca chamar funcao inexistente-no-build dentro
+de ErrorBlock** — erro dentro do handler de erro mata a thread sem
+recover e mascara a causa original. Familia `__Obj*` indisponivel
+neste RPO; enumeracao de campos do form e via `GetStruct():GetFields()`.

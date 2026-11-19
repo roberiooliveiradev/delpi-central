@@ -152,7 +152,7 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("STATIC FUNCTION ASA5FORMFIELDS", self.code)
         self.assertIn("OGRID:GETSTRUCT():GETFIELDS()", self.code)
         self.assertIn("AF[NI][3]", self.code)
-        self.assertGreaterEqual(self.code.count("ASCAN(AFORM, AATTR[NI])"), 2)
+        self.assertEqual(self.code.count("ASCAN(AFORM, {|X| X == AATTR[NI]})"), 3)
         self.assertEqual(
             sum("BEGIN SEQUENCE" in l for l in code_lines), 5
         )
