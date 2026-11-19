@@ -4,7 +4,7 @@
 
 Auditoria final do ambiente informado pelo responsável:
 - 12/12 gestores com e-mail verificado, conteúdo HTML e agenda semanal correta;
-- todos os horários segunda-feira 08:00 America/Sao_Paulo;
+- todos os horários segunda-feira 09:00 America/Sao_Paulo;
 - 0 e-mails enviados pela auditoria;
 - gate global ainda OFF.
 
@@ -37,6 +37,13 @@ gestor recebe automaticamente é `enabled` na agenda individual,
 com checagem de destinatário único e RH↔Core no momento do envio.
 A liberação do gate passa a permitir disparos manuais autorizados no
 sistema; não confundir com habilitar todas as agendas.
+
+**Alteração de horário solicitada:** os 10 gestores aprovados passam a ser
+configurados para segunda-feira às **09:00**. Agendas já preparadas
+às 08:00 são migradas pelo ativador para 09:00; agendas já ativas
+às 09:00 são preservadas sem ressetar o próximo disparo.
+As matrículas excluídas `20057` e `20077` permanecem
+**desligadas**, sem alteração das agendas.
 
 ## Pré-flight após merge
 
@@ -104,7 +111,7 @@ O script confirma a árvore RH raiz `10257`, **exatamente 12
 matrículas**, mapeamentos Core prontos, destinatário único
 e idêntico ao Core/RH, equipes diretas do provider, definições
 ativas, ausência de `weekStart` fixo, cron semanal segunda
-08h, fuso correto e as duas exclusões desligadas.
+09h, fuso correto e as duas exclusões desligadas.
 
 Qualquer divergência bloqueia antes de alterar. Em falha de
 gravação no meio, a operação pode ficar parcial; auditar o
@@ -124,7 +131,7 @@ O esperado:
 - `excludedDisabled=true`
 - `deliveryGateEnabled=true`
 - Todos os próximos horários dos aprovados devem estar no futuro,
-  segunda-feira às 08h `America/Sao_Paulo`.
+  segunda-feira às 09h `America/Sao_Paulo`.
 
 Além disso, validar o poller interno:
 
@@ -139,7 +146,7 @@ Não executar `process-pending` manualmente para testar depois de
 liberar as agendas, pois ele envia relatórios vencidos de verdade.
 
 **Primeiro envio recorrente previsto:** 23/11/2026,
-segunda-feira, 08h de Brasília, sujeito ao poller (até 15 min de
+segunda-feira, 09h de Brasília, sujeito ao poller (até 15 min de
 atraso no padrão e disponibilidade do serviço). O e-mail deverá
 abranger 16/11–22/11/2026, a semana completa anterior.
 
