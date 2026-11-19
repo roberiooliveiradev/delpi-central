@@ -115,6 +115,11 @@ class UpsertReportScheduleUseCase:
                     "O alerta abaixo do estoque de segurança deve ser "
                     "agendado somente de segunda a sexta (weekdays)."
                 )
+            if enabled and not self._repository.list_recipients(definition_id):
+                raise ValueError(
+                    "Selecione ao menos um destinatário antes de habilitar "
+                    "o alerta diário de estoque de segurança."
+                )
         if definition.get("providerKey") == "team_direct_app_opens_weekly":
             if schedule_kind.strip().lower() != "weekly" or weekday != 0:
                 raise ValueError(

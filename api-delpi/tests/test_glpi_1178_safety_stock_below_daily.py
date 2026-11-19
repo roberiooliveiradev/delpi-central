@@ -211,7 +211,7 @@ def test_email_has_all_orders_dates_volume_notice_and_escaped_data():
     assert "PC124/02" in email.html_body
     assert "21/11/2026" in email.html_body
     assert "18/11/2026" in email.html_body
-    assert "entrega prevista vencida" in email.html_body if False else True
+    assert "entrega prevista vencida" in email.html_body
     assert "não garante" in email.html_body
     assert "Atende em quantidade" in email.html_body
     assert email.attachments == (logo,)
@@ -246,6 +246,12 @@ def test_weekday_schedule_is_enforced_by_backend():
     with pytest.raises(ValueError, match="segunda a sexta"):
         use_case.execute(definition_id="report-sc", schedule_kind="weekly",
                          hour=8, minute=0, weekday=0)
+    with pytest.raises(ValueError, match="destinatário"):
+        use_case.execute(definition_id="report-sc", schedule_kind="weekdays",
+                         hour=8, minute=0, enabled=True)
+    repo.list_recipients.return_value = [{"userId": "u1", "email": "demo@example.com"}]
+    use_case.execute(definition_id="report-sc", schedule_kind="weekdays",
+                     hour=8, minute=0, enabled=True)
     result = use_case.execute(definition_id="report-sc", schedule_kind="weekdays",
                               hour=8, minute=0, enabled=False)
     assert result["scheduleKind"] == "weekdays"
