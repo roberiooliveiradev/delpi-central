@@ -95,7 +95,9 @@ async def test_read_avatar_does_not_shadow_catalog_capabilities() -> None:
         "read", {"capability": "avatar_x", "arguments": {}}
     )
     assert result.is_error is True
-    assert result.structured_content["code"] == "CAPABILITY_NOT_ALLOWED"
+    # absent-from-index ids are recoverable ARGUMENT_VALIDATION since
+    # DR-1; only the exact "avatar" literal routes to the asset path.
+    assert result.structured_content["code"] == "ARGUMENT_VALIDATION"
 
 
 @pytest.mark.asyncio

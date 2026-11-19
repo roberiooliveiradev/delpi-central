@@ -510,10 +510,67 @@ def test_read_executes_eligible_catalog_capability():
 
 def test_read_rejects_unavailable_and_unknown_capabilities():
     _seed_actions()
-    for capability in ("execute_readonly_sql", "not_a_real_action"):
-        with pytest.raises(GovernedExecutionError) as exc:
-            davi_read(capability=capability, catalog_action_executor=_StubExecutor())
-        assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+    # Present in the index but not executable → non-recoverable
+    # eligibility denial (do not hint at alternatives).
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_read(
+            capability="execute_readonly_sql",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+    # Absent from the index (invented id) → recoverable argument-class
+    # rejection pointing to the authorized catalog (DR-1 bounded
+    # recovery): the caller can re-select a published id itself.
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_read(
+            capability="not_a_real_action",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == ARGUMENT_VALIDATION_CODE
+    message = str(exc.value)
+    assert "not_a_real_action" in message
+    assert "catalog" in message
+
+
+def test_read_unknown_capability_guidance_does_not_enumerate_ids():
+    # Bounded feedback: name the rejected id + point to the catalog
+    # mechanism — never echo the eligible-id list (no giant enum, no
+    # disclosure of ids the caller did not request).
+    _seed_actions()
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_read(
+            capability="get_material_stock",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == ARGUMENT_VALIDATION_CODE
+    message = str(exc.value)
+    assert "get_material_stock" in message
+    for eligible_id in (
+        "search_products",
+        "get_product_stock",
+        "get_product_structure",
+    ):
+        assert eligible_id not in message
+
+
+def test_read_unknown_capability_reaches_no_executor():
+    # Fail closed before the owner is invoked: the executor port must
+    # never see a call for an absent capability id.
+    _seed_actions()
+    executor = _StubExecutor()
+    with pytest.raises(GovernedExecutionError):
+        davi_read(capability="not_a_real_action", catalog_action_executor=executor)
+    assert executor.calls == []
+
+
+@pytest.mark.asyncio
+async def test_read_wire_unknown_capability_is_recoverable():
+    result = await create_mcp_server().call_tool(
+        "read", {"capability": "not_a_real_action"}
+    )
+    assert result.is_error is True
+    assert result.structured_content["code"] == "ARGUMENT_VALIDATION"
+    assert result.structured_content["recoverable"] is True
 
 
 def test_read_rejects_missing_and_invalid_arguments():
@@ -615,10 +672,20 @@ def test_analyze_rejects_non_analytic_capabilities():
             catalog_action_executor=_StubExecutor(),
         )
     assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
-    for capability in ("execute_readonly_sql", "not_a_real_action"):
-        with pytest.raises(GovernedExecutionError) as exc:
-            davi_analyze(capability=capability, catalog_action_executor=_StubExecutor())
-        assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+    # present-but-non-executable stays a non-recoverable denial;
+    # absent-from-index is recoverable argument feedback (DR-1).
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_analyze(
+            capability="execute_readonly_sql",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_CODE
+    with pytest.raises(GovernedExecutionError) as exc:
+        davi_analyze(
+            capability="not_a_real_action",
+            catalog_action_executor=_StubExecutor(),
+        )
+    assert exc.value.code == ARGUMENT_VALIDATION_CODE
 
 
 def test_analyze_argument_validation_fail_closed():

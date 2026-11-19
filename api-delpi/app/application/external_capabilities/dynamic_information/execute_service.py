@@ -155,6 +155,22 @@ def execute_action_plan(
     )
 
 
+def _unknown_capability_error(requested: str) -> GovernedExecutionError:
+    # DR-1 bounded recovery: an id absent from the governed index is an
+    # argument-class rejection (recoverable on the wire), distinct from a
+    # present-but-ineligible denial. The feedback names the rejected id
+    # and points to the authorized catalog mechanism — it never
+    # enumerates eligible ids and never selects one on the caller's
+    # behalf; the model remains responsible for the semantic decision.
+    return GovernedExecutionError(
+        f"capability '{requested}' is not published on the governed "
+        "DAVI surface — re-query the authorized catalog "
+        "(get_context action=catalog, or action=schema for a specific "
+        "id) and re-issue this call with a published capability id",
+        code=ARGUMENT_VALIDATION_CODE,
+    )
+
+
 def davi_read(
     *,
     capability: str,
@@ -178,7 +194,9 @@ def davi_read(
             code=ARGUMENT_VALIDATION_CODE,
         )
     action = get_action_by_id(requested)
-    if action is None or not action.executable:
+    if action is None:
+        raise _unknown_capability_error(requested)
+    if not action.executable:
         raise GovernedExecutionError(
             "capability is not available on the governed DAVI surface",
             code=CAPABILITY_NOT_ALLOWED_CODE,
@@ -236,9 +254,10 @@ def davi_analyze(
             code=ARGUMENT_VALIDATION_CODE,
         )
     action = get_action_by_id(requested)
+    if action is None:
+        raise _unknown_capability_error(requested)
     if (
-        action is None
-        or not action.executable
+        not action.executable
         or (action.shape or "") not in ANALYZE_ELIGIBLE_SHAPES
     ):
         raise GovernedExecutionError(
