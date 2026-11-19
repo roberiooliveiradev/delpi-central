@@ -91,6 +91,25 @@ A API permanece responsável pela validação e rejeita a operação mesmo quand
 
 Os ACs acima são requisitos macro do plano; o **prompt executável S1** detalha AC-1621-S1-01..09, sem alterar S2/S3. S1 só pode ser `PASS` após implementação real, testes, aceite apropriado e evidence SHA-bound.
 
+## 4A. S1b — Tipo de produto MP pré-selecionado apenas em My Requests (19/11/2026)
+
+> **Novo refinamento funcional do PO após validação visual do S1.** **Status:** `S1B_PO_APPROVED / PLANNED / PROMPT_READY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN`. Trata-se de pacote adicional e limitado; **não reabre nem altera os dois defaults globais do S1**, nem autoriza backend.
+
+**Evidência funcional:** o PO apresentou a tela de produção `/apps/my-requests/new?type=raw-material-creation` com armazém `01` e conta contábil `11401002` já pré-selecionados. O campo Tipo aparecia em `Selecionar…` e seu dropdown oferecia `MP — Matéria-prima`, `PA — Produto acabado` e `PI — Produto intermediário`.
+
+**Regra aprovada:**
+- **My Requests, novo CREATE, sem `editCase`:** inicializar também `productKind="MP"`, mantendo `defaultWarehouse="01"` e `accountingAccount="11401002"`. Tipo segue **editável** e com as outras opções legítimas do catálogo. Pré-seleção não equivale a bloqueio nem regra de domínio.
+- **Portal Engenharia, novo CREATE:** Tipo continua sem pré-seleção (`Selecionar…`) e permite escolher qualquer opção válida, inclusive PA/PI. Os dois defaults do S1 permanecem iguais nos dois portais.
+- **UPDATE e casos existentes em qualquer portal:** usar valores oficiais/draft, não aplicar `MP` ou sugestões ao diff, não alterar valores digitados ou contexto de correção. Refetch e navegação não sobrescrevem seleção manual.
+- **Implementation boundary:** estender o `PrcRequestForm` compartilhado sob `@delpi/plugin-ui`, diferenciando `source="my-requests"` de `source="portal-engineering"`. Ambos os wrappers ficam finos; a `source` é sinal de UX, **não authority**. Zero nova API, migração, RBAC ou escrita TOTVS.
+- **S2/S3:** sem mudança de escopo.
+
+**RQ-1621-S1B-01..05:** abrangem prefill MP apenas no My Requests, manutenção de seleção manual na Engenharia, preservação em alternâncias/UPDATE/editCase, e payload existente sem diff backend.
+
+**AC-1621-S1B-01..09:** incluem visibilidade dos três defaults em My Requests; Tipo vazio na Engenharia; opções PA/PI disponíveis; troca manual e payload; proteção de UPDATE/editCase; testes de concorrência UI/refetch; builds em ambos os MFEs; RED/GREEN, verificador e evidência por SHA.
+
+**Prompt canônico de implementação:** [S1b — My Requests / prefill MP somente nesta origem](./PRC-GLPI-1621-S1B-MY-REQUESTS-PRODUCT-TYPE-PREFILL-IMPLEMENTATION-PROMPT-2026-11-19.md). **Nenhum código foi modificado nesta decisão documental.**
+
 ## 5. S2 — Duplicar solicitação com novo ciclo (PRC-1621-RQ03/RQ04)
 
 ### Comportamento alvo
@@ -207,4 +226,4 @@ O pedido usa “antes de ser vista pela Engenharia”; o sistema demonstra um ma
 - Portais consumidores: plugins/my-requests/src/features/product-registration e plugins/engineering/src/features/product-registration.
 - Demanda de negócio: GLPI Helpdesk DELPI #1621; não confundir com issue do GitHub.
 
-**Próximo passo bounded:** D-1621-01 já está ratificada para S1. Reancorar HEAD e executar **S1 frontend-only** por [prompt específico](./PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md): diff no formulário compartilhado + testes nos dois portais + revisão independente, **sem alteração na Engineering API**. D-1621-02 continua decisão futura de S3. Nenhuma pasta ou bounded context adicional é necessário.
+**Próximo passo bounded (19/11/2026):** S1 de armazém/conta foi implementado conforme commit `a38db789a3bbe5adc69b4f482c77ae644c72780c` e confirmado visualmente pelo PO **em My Requests**; aceitação completa do Portal Engenharia continua `TEST_NOT_RUN` nesta conversa. Implementar **S1b** (Tipo MP pré-selecionado **somente** em My Requests) conforme [prompt S1b](./PRC-GLPI-1621-S1B-MY-REQUESTS-PRODUCT-TYPE-PREFILL-IMPLEMENTATION-PROMPT-2026-11-19.md), com regressão dos dois portais e sem diff na Engineering API. S2/S3 permanecem posteriores; D-1621-02 ainda precisa de decisão para S3.
