@@ -24,8 +24,8 @@ conforme regra — SQL de leitura não define nem substitui mecanismo ADVPL.
 
 ## Catálogo de campos — contrato upstream v2
 
-O `.PRW` carrega o catálogo completo de campos elegíveis: **291 campos**
-(285 `READ_WRITE_ELIGIBLE` + 5 `CONDITIONAL` memo + `B1_COD` como chave).
+O `.PRW` carrega o catálogo completo de campos elegíveis: **286 campos**
+(285 `READ_WRITE_ELIGIBLE` + `B1_COD` como chave; 5 campos memo SX3 sem coluna física classificados `TO_INVENTORY`, fora do contrato).
 Os **28 protegidos** (`SYSTEM_MANAGED`/`IMMUTABLE`, exceto `B1_COD`) são
 rejeitados explicitamente se enviados.
 
@@ -42,7 +42,7 @@ rejeitados explicitamente se enviados.
 ### product.update (PUT) — representação completa
 
 - `B1_COD` **obrigatório** para localizar o registro.
-- A fachada ADVPL exige **todos os 291 campos do catálogo** (campo
+- A fachada ADVPL exige **todos os 286 campos do catálogo** (campo
   ausente → `400` com a lista). Representação completa é invariante:
   omitir campo em ExecAuto de alteração pode zerar o cadastro.
 - **Atualização parcial é responsabilidade do consumidor governado**:
@@ -57,7 +57,7 @@ Autodescrição do contrato (não lê dados do ERP):
 ```json
 {"entity":"SB1","routine":"MATA010","mechanism":"MSExecAuto",
  "fields":[{"field":"B1_COD","kind":"C"}, ...],
- "fields_count":291,"matrix_ref":"contracts/sb1-field-matrix.json"}
+ "fields_count":286,"matrix_ref":"contracts/sb1-field-matrix.json"}
 ```
 
 `kind` ∈ `C|N|D|M`. A fonte única de verdade completa (descrição, size,
@@ -84,7 +84,7 @@ lê o snapshot antes de escrever.
 - **Caractere** (`kind=C`): somente `ValType "C"` — objeto, array,
   booleano e número são rejeitados; nenhuma conversão automática.
 - **Data** (`kind=D`): string `AAAAMMDD` (8 dígitos).
-- **Memo** (`kind=M`, 5 campos `CONDITIONAL`): somente string;
+- **Memo** (`kind=M`): os 5 campos memo SX3 estão `TO_INVENTORY` (sem coluna física no TST01) e não integram o catálogo;
   gravação efetiva do conteúdo memo depende de validação no TST01 —
   campos marcados `VALIDAR NO TST01` na matriz.
 - Validação de catálogo pertence à fachada ADVPL; regras finais de
@@ -117,7 +117,7 @@ not_homologated` (vazio em sucesso).
 
 - Compilação e execução real: `TEST_NOT_RUN`.
 - PEs/triggers ativos na MATA010 do ambiente (inventário RPO pendente).
-- Campos `CONDITIONAL` (memo): gravação via ExecAuto a validar no TST01.
+- Campos memo `TO_INVENTORY` (sem coluna física): gravação somente após materialização da coluna na SB1010.
 - Semântica de DELETE da MATA010: `TO_INVENTORY` — exige fonte
   MATA010 + inventário de vínculos antes de qualquer implementação.
 - Gatilhos SX7 outbound observados não computam campos SB1; PEs que

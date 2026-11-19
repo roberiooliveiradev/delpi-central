@@ -5,10 +5,11 @@ Fonte: `SX3010` de `DELPI_TST01` e `DELPI` (produção) — **dicionários idên
 Classificação determinística:
 - `IMMUTABLE`: identidade/filial — nunca escrita pelo cliente
 - `SYSTEM_MANAGED`: `X3_VISUAL='V'` (oficial somente-visualização) ou espelho de movimento/rotina/PE
-- `CONDITIONAL`: memo — semântica ExecAuto pendente (`VALIDAR NO TST01`)
+- `CONDITIONAL`: memo — semântica ExecAuto pendente (classificação histórica; nenhum campo ativo)
+- `TO_INVENTORY`: campo SX3 sem coluna física na SB1010 do TST01 — fora do contrato de escrita até materialização
 - `READ_WRITE_ELIGIBLE`: editável na MATA010 (`X3_VISUAL` `''`/`'A'`) e não gerenciado
 
-Contagem: 285 elegíveis · 5 condicionais · 26 gerenciados · 3 imutáveis = 319
+Contagem: 285 elegíveis · 5 TO_INVENTORY · 26 gerenciados · 3 imutáveis = 319
 
 | FIELD | DESCRIPTION | TYPE | SIZE | DEC | REQ_SX3 | CLASS | C | R | U | NOTE |
 |---|---|---|---|---|---|---|---|---|---|---|

@@ -32,14 +32,14 @@ candidate_source:
     mirror_commit: "be614649b7"
     note: "SHA do candidato = commit do delpi-central que o contem; distinto do SHA upstream"
   changes:
-    - "catalogo completo SB1: 291 campos gerados de contracts/sb1-field-matrix.json (SX3 TST01, parity PROD)"
+    - "catalogo completo SB1: 286 campos gerados de contracts/sb1-field-matrix.json (SX3 TST01, parity PROD)"
     - "rejeicao explicita de campos desconhecidos/protegidos (28 SYSTEM_MANAGED/IMMUTABLE exceto B1_COD)"
     - "PUT exige representacao completa do catalogo (fail-closed contra zeramento); parcial resolvido na api-delpi via read-merge-write"
     - "POST exige apenas B1_COD; demais campos recebem defaults oficiais da MATA010"
     - "tipos por SX3: C estrito, N nativo ou lIsNumStr, D AAAAMMDD, M string (5 condicionais VALIDAR NO TST01)"
     - "ErrorBlock restaurado em todos os caminhos (finalizacao unica); GetAutoGrLog sanitizado; sem ErrorStack na resposta"
     - "DELETE excluir publicado e BLOQUEADO (501 not_homologated) — semantica oficial pendente"
-    - "GET metadados publicado — autodescricao do catalogo (field+kind, 291 entradas)"
+    - "GET metadados publicado — autodescricao do catalogo (field+kind, 286 entradas)"
     - "RETOBJ v2 com errorType (client_error/official_validation/server_error/not_homologated)"
     - "v2.1 revisao independente: campos D aceitam vazio legitimo; GetContent dentro do Begin Sequence; sanitlog sem separador pendente; lookup de catalogo sem rebuild; literais ASCII"
   pending_validation:
@@ -53,7 +53,7 @@ operations:
       evidence: "DLP04I01.PRW upstream + DELPIPRODUTO POST PROVEN_RUNTIME (contrato v2: catalogo completo, B1_COD obrigatorio)"
     - op: UPDATE
       status: PROVEN_SOURCE
-      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (v2: representacao completa 291 campos; parcial via read-merge-write na api-delpi)"
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (v2: representacao completa 286 campos; parcial via read-merge-write na api-delpi)"
     - op: METADATA
       status: SOURCE_CANDIDATE
       evidence: "GET /v1/IncProduto/metadados no candidato — autodescricao estatica, sem leitura ERP"

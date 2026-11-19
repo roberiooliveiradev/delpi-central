@@ -1,7 +1,7 @@
 """Consulta somente leitura SB1 — snapshot completo do registro para
 read-merge-write da alteração parcial governada (EVA SB1 full-field CRUD).
 
-Seleciona TODOS os campos do catálogo elegível (291 — mesma matriz de
+Seleciona TODOS os campos do catálogo elegível (286 — mesma matriz de
 contracts/sb1-field-matrix.json / protheus_product_field_catalog.py).
 Uso: ler o estado atual, aplicar o delta do cliente e reenviar a
 representação completa ao ExecAuto (anti-zeramento por omissão).
