@@ -1673,6 +1673,21 @@ export type MachineLoadProcessIssueResult = {
   message: string | null;
 };
 
+/** Registros sem identificação de material nunca entram no planejamento por produto. */
+export type MyWegNeedsQuality = {
+  sourceRecordCount: number;
+  excludedCount: number;
+  excludedQuantityUn: string;
+  excludedQuantityMi: string;
+  excludedRecords: Array<{
+    index: number;
+    sourceLine: string;
+    reason: string;
+    quantityOriginalUn: string;
+    unit: string;
+  }>;
+};
+
 /** Totais do lote MyWEG — strings decimais canônicas (não usar float). */
 export type MyWegNeedsTotals = {
   quantidade_original_un: string;
@@ -1700,6 +1715,7 @@ export type MyWegNeedsBatchSummary = {
   collectionDate: string;
   importedAt: string;
   recordCount: number;
+  quality?: MyWegNeedsQuality | null;
   totals: MyWegNeedsTotals;
   payloadSha256?: string;
 };

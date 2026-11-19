@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -15,6 +15,7 @@ from production_control_app.domain.myweg_needs_contract import (
     build_idempotency_key,
     compute_payload_sha256,
     decimal_to_canonical_str,
+    UN_TO_MI_DIVISOR,
 )
 from production_control_app.domain.services.myweg_needs_normalization import (
     normalize_source_records,
@@ -34,8 +35,85 @@ _SOURCE_HASH_KEYS = {
 }
 
 
+def _split_unidentified_materials(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Segrega somente linhas sem qualquer identificador de material.
+
+    Outros erros (unidade, quantidade, data, origem, duplicidade) continuam
+    sujeitos à validação fail-closed do contrato E1.
+    """
+    valid_rows: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    excluded_un = Decimal("0")
+
+    for index, row in enumerate(rows):
+        def field(name: str) -> str:
+            value = row.get(name)
+            return str(value).strip() if value is not None else ""
+
+        identifiers = (
+            field("material_weg_tratado"),
+            field("material_weg_original"),
+            field("codigo_referencia_weg"),
+            field("codigo_produto_delpi"),
+        )
+        if any(identifiers):
+            valid_rows.append(row)
+            continue
+
+        unit = field("unidade").upper() or "UN"
+        quantity_text = field("quantidade").replace(" ", "")
+        if "," in quantity_text and "." in quantity_text:
+            quantity_text = quantity_text.replace(".", "").replace(",", ".")
+        elif "," in quantity_text:
+            quantity_text = quantity_text.replace(",", ".")
+        try:
+            quantity = Decimal(quantity_text)
+        except (InvalidOperation, ValueError):
+            valid_rows.append(row)
+            continue
+
+        # Somente o material pode faltar neste caminho. Outros defeitos
+        # permanecem bloqueantes, sem classificação enganosa de "excluído".
+        if (
+            unit != "UN"
+            or not quantity.is_finite()
+            or quantity <= 0
+            or not field("origem_material_weg")
+            or not field("data_remessa")
+            or not (field("linha_fonte") or field("assinatura_registro"))
+        ):
+            valid_rows.append(row)
+            continue
+
+        excluded_un += quantity
+        excluded.append({
+            "index": index,
+            "sourceLine": field("linha_fonte"),
+            "reason": "material_unidentified",
+            "quantityOriginalUn": decimal_to_canonical_str(quantity),
+            "unit": unit,
+        })
+
+    if not excluded:
+        return valid_rows, None
+    return valid_rows, {
+        "sourceRecordCount": len(rows),
+        "excludedCount": len(excluded),
+        "excludedQuantityUn": decimal_to_canonical_str(excluded_un),
+        "excludedQuantityMi": decimal_to_canonical_str(
+            excluded_un / UN_TO_MI_DIVISOR
+        ),
+        "excludedRecords": excluded,
+    }
+
+
 def build_ingest_payload(artifacts: CollectionArtifacts) -> dict[str, Any]:
-    normalized = normalize_source_records(artifacts.source_rows)
+    valid_rows, quality = _split_unidentified_materials(artifacts.source_rows)
+    if not valid_rows:
+        raise ValueError("Coleta sem registros válidos: todos os materiais estão indefinidos.")
+    normalized = normalize_source_records(valid_rows)
     if not normalized.ok:
         issues = "; ".join(
             f"{issue.path or '?'}: {issue.message}" for issue in normalized.issues[:8]
@@ -55,6 +133,8 @@ def build_ingest_payload(artifacts: CollectionArtifacts) -> dict[str, Any]:
         _SOURCE_HASH_KEYS[name]: digest
         for name, digest in artifacts.file_hashes.items()
     }
+    if quality:
+        source_files["quality"] = quality
     exported_at = datetime.now(tz=_SAO_PAULO).astimezone(timezone.utc)
 
     payload = {
@@ -72,7 +152,7 @@ def build_ingest_payload(artifacts: CollectionArtifacts) -> dict[str, Any]:
             "quantidade_mi": decimal_to_canonical_str(totals_mi),
         },
         "payload_sha256": payload_sha256,
-        "records": artifacts.source_rows,
+        "records": valid_rows,
     }
 
     validation = validate_ingest_batch(payload)
@@ -90,6 +170,7 @@ def build_ingest_payload(artifacts: CollectionArtifacts) -> dict[str, Any]:
             payload_sha256=payload_sha256,
         ),
         "record_count": len(normalized.records),
+        "quality": quality,
         "empty_referencia_count": sum(
             1
             for row in validation.batch["records"]

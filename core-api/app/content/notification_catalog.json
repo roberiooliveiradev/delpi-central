@@ -302,6 +302,15 @@
       ],
       "pluginId": "delpi-mes"
     },
+    "production_control_myweg_import_warnings": {
+      "label": "Portal PCP",
+      "notificationLabel": "Pendências de identificação MyWEG",
+      "icon": "triangle-alert",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["production-control"],
+      "pluginId": "production-control"
+    },
     "production_control_line_feeder_urgent": {
       "label": "Alimentador de Linha",
       "notificationLabel": "Solicitações urgentes das bancadas",

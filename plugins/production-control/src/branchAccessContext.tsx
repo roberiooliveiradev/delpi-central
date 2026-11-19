@@ -5,16 +5,30 @@ import { ALL_PPC_BRANCHES } from "./utils/branchAccess";
 
 const PpcAllowedBranchesContext = createContext<readonly PpcBranch[]>(ALL_PPC_BRANCHES);
 
+type FeatureAccess = { canViewLineFeeder: boolean; canViewMyWeg: boolean };
+const PpcFeatureAccessContext = createContext<FeatureAccess>({
+  canViewLineFeeder: false,
+  canViewMyWeg: false,
+});
+
+export function usePpcFeatureAccess(): FeatureAccess {
+  return useContext(PpcFeatureAccessContext);
+}
+
 export function PpcAllowedBranchesProvider({
   allowedBranches,
   children,
+  featureAccess = { canViewLineFeeder: false, canViewMyWeg: false },
 }: {
   allowedBranches: readonly PpcBranch[];
+  featureAccess?: FeatureAccess;
   children: ReactNode;
 }) {
   return (
     <PpcAllowedBranchesContext.Provider value={allowedBranches}>
-      {children}
+      <PpcFeatureAccessContext.Provider value={featureAccess}>
+        {children}
+      </PpcFeatureAccessContext.Provider>
     </PpcAllowedBranchesContext.Provider>
   );
 }

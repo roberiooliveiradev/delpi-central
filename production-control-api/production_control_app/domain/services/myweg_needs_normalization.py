@@ -641,6 +641,14 @@ def _validate_ingest_batch(
             )
         )
 
+    # Metadados de exclusão ficam junto aos hashes de origem imutáveis.
+    # O servidor confere que a auditoria é internamente consistente.
+    source_quality = _validate_source_quality(
+        source_files.get("quality") if isinstance(source_files, Mapping) else None,
+        raw_record_count=len(raw_records),
+        issues=issues,
+    )
+
     # --- normalização das linhas (fase origem embutida) ---
     source_result = normalize_source_records(raw_records)
     issues.extend(source_result.issues)
@@ -708,8 +716,11 @@ def _validate_ingest_batch(
         "collected_at": collected_at.isoformat() if collected_at else None,
         "exported_at": exported_at.isoformat() if exported_at else None,
         "source_files": {
-            key: _text(source_files.get(key)).lower()
-            for key in REQUIRED_SOURCE_FILE_HASH_KEYS
+            **{
+                key: _text(source_files.get(key)).lower()
+                for key in REQUIRED_SOURCE_FILE_HASH_KEYS
+            },
+            **({"quality": source_quality} if source_quality else {}),
         },
         "payload_sha256": payload_sha256,
         "record_count": len(normalized),
@@ -726,6 +737,86 @@ def _validate_ingest_batch(
     return MyWegNeedsNormalizationResult(
         ok=True, batch=batch, records=normalized, issues=[]
     )
+
+
+
+def _validate_source_quality(
+    raw: Any,
+    *,
+    raw_record_count: int,
+    issues: list[MyWegNeedsValidationIssue],
+) -> dict[str, Any] | None:
+    """Preserva excluídos no JSONB do lote sem alterar records/fingerprint."""
+    if raw is None:
+        return None
+
+    def reject(message: str) -> None:
+        issues.append(MyWegNeedsValidationIssue(
+            code=ERROR_INVALID_SOURCE_FILES,
+            message=message,
+            path="source_files.quality",
+        ))
+
+    if not isinstance(raw, Mapping):
+        reject("quality deve ser objeto.")
+        return None
+    rows = raw.get("excludedRecords")
+    if not isinstance(rows, list) or not rows or len(rows) > 10000:
+        reject("excludedRecords deve conter entre 1 e 10000 linhas.")
+        return None
+    seen_indexes: set[int] = set()
+    excluded_un = Decimal("0")
+    normalized: list[dict[str, Any]] = []
+    for item in rows:
+        if not isinstance(item, Mapping):
+            reject("Linha de exclusão inválida.")
+            return None
+        index = item.get("index")
+        quantity = _optional_decimal(item.get("quantityOriginalUn"))
+        if (
+            type(index) is not int
+            or index < 0
+            or index in seen_indexes
+            or quantity is None
+            or quantity <= 0
+            or _text(item.get("reason")) != "material_unidentified"
+            or _text(item.get("unit")) != "UN"
+        ):
+            reject("Índice, motivo, unidade ou quantidade de exclusão inválidos.")
+            return None
+        seen_indexes.add(index)
+        excluded_un += quantity
+        normalized.append({
+            "index": index,
+            "sourceLine": _text(item.get("sourceLine"))[:100],
+            "reason": "material_unidentified",
+            "quantityOriginalUn": decimal_to_canonical_str(quantity),
+            "unit": "UN",
+        })
+    reported_un = _optional_decimal(raw.get("excludedQuantityUn"))
+    reported_mi = _optional_decimal(raw.get("excludedQuantityMi"))
+    reported_count = raw.get("excludedCount")
+    source_count = raw.get("sourceRecordCount")
+    if (
+        type(reported_count) is not int
+        or reported_count != len(normalized)
+        or type(source_count) is not int
+        or source_count != raw_record_count + len(normalized)
+        or any(index >= source_count for index in seen_indexes)
+        or reported_un != excluded_un
+        or reported_mi != (excluded_un / UN_TO_MI_DIVISOR)
+    ):
+        reject("Contagens ou somas da exclusão não conciliam com as records aceitas.")
+        return None
+    return {
+        "sourceRecordCount": source_count,
+        "excludedCount": len(normalized),
+        "excludedQuantityUn": decimal_to_canonical_str(excluded_un),
+        "excludedQuantityMi": decimal_to_canonical_str(
+            excluded_un / UN_TO_MI_DIVISOR
+        ),
+        "excludedRecords": normalized,
+    }
 
 
 def _optional_decimal(value: Any) -> Decimal | None:

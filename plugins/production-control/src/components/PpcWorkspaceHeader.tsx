@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { DelpiLogoMark, HelpTooltip } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 
-import { useAllowedPpcBranches } from "../branchAccessContext";
+import { useAllowedPpcBranches, usePpcFeatureAccess } from "../branchAccessContext";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch } from "../types";
@@ -12,6 +12,7 @@ import {
 } from "../utils/mywegHeaderBanner";
 import { buildPpcHref, navigatePpc, storeBranch } from "../utils/routeParser";
 import { PpcPeriodFilterButton } from "./PpcPeriodFilterButton";
+import { LineFeederUrgentBell } from "./LineFeederUrgentBell";
 
 type PpcWorkspaceHeaderProps = {
   title: string;
@@ -100,6 +101,7 @@ export function PpcWorkspaceHeader({
   onPeriodChange,
 }: PpcWorkspaceHeaderProps) {
   const allowedBranches = useAllowedPpcBranches();
+  const featureAccess = usePpcFeatureAccess();
   const setBranch = (next: PpcBranch) => {
     storeBranch(next);
     navigatePpc(
@@ -174,6 +176,13 @@ export function PpcWorkspaceHeader({
         </div>
 
         <div className="ppc-header__actions">
+          {(featureAccess.canViewLineFeeder || (branch === "02" && featureAccess.canViewMyWeg)) ? (
+            <LineFeederUrgentBell
+              branch={branch}
+              canViewUrgent={featureAccess.canViewLineFeeder}
+              canViewMyWeg={featureAccess.canViewMyWeg}
+            />
+          ) : null}
           {actions}
           {allowedBranches.length > 1 ? (
             <div className="ppc-branch" role="group" aria-label={copy.branch.label}>

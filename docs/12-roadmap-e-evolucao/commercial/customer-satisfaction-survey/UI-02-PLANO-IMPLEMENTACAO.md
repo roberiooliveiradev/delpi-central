@@ -98,7 +98,7 @@ Cada fase é um pedido de execução delimitado, com commit próprio, verificaç
 
 ### Fase 3 — Detalhe da campanha: bloco de título, abas e Participantes (itens 4, 6–9, 15)
 
-- Bloco de título com trilha, etiqueta, nome, janela de resposta, situação, “Atualizado em”, Atualizar e os quatro números em `highlights`.
+- Bloco de título com trilha, etiqueta, nome, janela de resposta, situação, “Atualizado em”, Atualizar e os quatro números em `highlights`. Sem mudança no kit: a densidade compacta do Comercial já põe 4 numa linha (P3a cancelado em 19/11/2026).
 - Remover a grade de números da aba e o aviso de escopo.
 - Abas Participantes, Mensagem padrão e Dados da campanha, com a aba no endereço (D1); voltar e avançar no navegador trocam a aba.
 - Aba Participantes: quadro recolhível “Adicionar clientes” sem mudança de fluxo; um quadro “Participantes” com filtros Situação e Pesquisar participante, barra da tabela, colunas Empresa (avatar + código/loja), Contato (duas linhas) e Situação, e paginação.

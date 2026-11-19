@@ -6,6 +6,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PpcAllowedBranchesProvider } from "../branchAccessContext";
 import { PpcWorkspaceHeader } from "./PpcWorkspaceHeader";
 
+vi.mock("./LineFeederUrgentBell", () => ({
+  LineFeederUrgentBell: ({ branch }: { branch: string }) => (
+    <span data-testid="ppc-global-operational-bell">{branch}</span>
+  ),
+}));
+
 vi.mock("@delpi/plugin-ui/index", () => ({
   HelpTooltip: () => null,
   DelpiLogoMark: () => null,
@@ -70,5 +76,48 @@ describe("PpcWorkspaceHeader — branch access", () => {
       </PpcAllowedBranchesProvider>,
     );
     expect(container.querySelector("header.ppc-header--myweg")).toBeNull();
+  });
+  it("renderiza o sino global em qualquer workspace autorizado e sem duplicidade", () => {
+    const { rerender } = render(
+      <PpcAllowedBranchesProvider
+        allowedBranches={["02"]}
+        featureAccess={{ canViewLineFeeder: true, canViewMyWeg: true }}
+      >
+        <PpcWorkspaceHeader title="Demanda" branch="02" subpluginId="demand" />
+      </PpcAllowedBranchesProvider>,
+    );
+    expect(screen.getAllByTestId("ppc-global-operational-bell")).toHaveLength(1);
+
+    rerender(
+      <PpcAllowedBranchesProvider
+        allowedBranches={["02"]}
+        featureAccess={{ canViewLineFeeder: true, canViewMyWeg: true }}
+      >
+        <PpcWorkspaceHeader title="Materiais" branch="02" subpluginId="materials" />
+      </PpcAllowedBranchesProvider>,
+    );
+    expect(screen.getAllByTestId("ppc-global-operational-bell")).toHaveLength(1);
+  });
+
+  it("filial 01 não recebe alerta MyWEG e não expõe sino sem autorização", () => {
+    const { rerender } = render(
+      <PpcAllowedBranchesProvider
+        allowedBranches={["01"]}
+        featureAccess={{ canViewLineFeeder: false, canViewMyWeg: true }}
+      >
+        <PpcWorkspaceHeader title="Demanda" branch="01" subpluginId="demand" />
+      </PpcAllowedBranchesProvider>,
+    );
+    expect(screen.queryByTestId("ppc-global-operational-bell")).toBeNull();
+
+    rerender(
+      <PpcAllowedBranchesProvider
+        allowedBranches={["02"]}
+        featureAccess={{ canViewLineFeeder: false, canViewMyWeg: true }}
+      >
+        <PpcWorkspaceHeader title="Demanda" branch="02" subpluginId="demand" />
+      </PpcAllowedBranchesProvider>,
+    );
+    expect(screen.getAllByTestId("ppc-global-operational-bell")).toHaveLength(1);
   });
 });

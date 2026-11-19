@@ -312,7 +312,16 @@ def build_myweg_needs_service(repository=None):
         MyWegNeedsService,
     )
 
-    return MyWegNeedsService(repository or build_myweg_needs_repository())
+    gateway = None
+    if (settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip():
+        from production_control_app.infrastructure.gateways.core_api_notification_gateway import (
+            CoreApiNotificationGateway,
+        )
+        gateway = CoreApiNotificationGateway()
+    return MyWegNeedsService(
+        repository or build_myweg_needs_repository(),
+        notification_gateway=gateway,
+    )
 
 
 def build_myweg_invoice_observations_repository():
