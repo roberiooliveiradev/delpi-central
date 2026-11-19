@@ -62,6 +62,36 @@ try {
   await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
   assert.match(await host.locator(".study-head").textContent(), /Produto 90264302/);
   assert.match(await host.locator(".study-head").textContent(), /OBSERVED/);
+  /* V4.2 — ajuda contextual: badges de proveniência com balão, guia de
+   * método, tooltips por teclado e Escape, e aviso legível nos dois temas. */
+  assert.ok(await host.locator(".delpi-ui-help-tooltip__trigger").count() >= 2);
+  await host.getByRole("button", { name: "Ajuda: rascunho DRAFT_LOCAL" }).focus();
+  const bubble = page.locator(".delpi-ui-help-tooltip__bubble");
+  await bubble.waitFor();
+  assert.match(await bubble.textContent(), /rascunho local/i);
+  await page.keyboard.press("Escape");
+  await bubble.waitFor({ state: "hidden" });
+  const guideButton = host.getByRole("button", { name: "Como usar este método" });
+  await guideButton.click();
+  assert.equal(await guideButton.getAttribute("aria-expanded"), "true");
+  assert.equal(await guideButton.getAttribute("aria-controls"), "method-guide");
+  assert.match(await host.locator("#method-guide").textContent(), /Yamazumi/i);
+  assert.match(await host.locator("#method-guide").textContent(), /SIMULATION/);
+  await host.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+  assert.match(await host.locator("#method-guide").textContent(), /análise oficial/i);
+  assert.match(await host.locator("#method-guide").textContent(), /UNKNOWN/);
+  await guideButton.click();
+  await host.locator("#method-guide").waitFor({ state: "hidden" });
+  /* Impedimento da análise: aviso com receita warning do kit e botão
+   * soft-disabled que permanece focável para a explicação. */
+  await host.evaluate(element => {
+    element.analysisState = { phase: "idle", issues: ["Demanda por turno ausente."] };
+  });
+  await host.locator(".analysis-issues").waitFor();
+  assert.match(await host.locator(".analysis-issues").textContent(), /Demanda/);
+  const runAnalysis = host.getByRole("button", { name: "Executar análise oficial" });
+  assert.equal(await runAnalysis.getAttribute("aria-disabled"), "true");
+  await host.evaluate(element => { element.analysisState = { phase: "idle", issues: [] }; });
   /* V4.1 — bancada unificada: detalhes oficiais sob demanda, ações
    * secundárias em "Mais ações" e análise M1 dentro do método. */
   await host.getByRole("button", { name: "Detalhes oficiais" }).click();
@@ -147,7 +177,7 @@ try {
   await host.getByRole("button", { name: "+ Adicionar pausa", exact: true }).click();
   assert.equal(await metric("Tempo produtivo").textContent(), "225 min");
   await page.locator("#new").click();
-  await host.getByText("Adicione uma operação para começar.").waitFor();
+  await host.getByText("Nenhuma operação no estudo. Use «+ Adicionar operação» para começar.").waitFor();
   await host.getByRole("button", { name: "+ Adicionar operação", exact: true }).click();
   const name = host.getByLabel("Nome da operação 1", { exact: true });
   await name.evaluate(element => {

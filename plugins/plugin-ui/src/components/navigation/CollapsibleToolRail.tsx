@@ -5,6 +5,7 @@ export type ToolRailItem = {
   id: string;
   label: string;
   icon: ReactNode;
+  /** Explicação curta do item — entra no `title` nativo do botão. */
   description?: string;
   statusText?: string;
   disabled?: boolean;
@@ -67,7 +68,7 @@ function ToolRailGroupView({
               data-active={activeId === item.id ? "true" : undefined}
               aria-pressed={activeId === item.id}
               aria-label={item.label}
-              title={[item.label, item.statusText].filter(Boolean).join(" — ")}
+              title={[item.label, item.statusText, item.description].filter(Boolean).join(" — ")}
               disabled={item.disabled}
               onClick={() => { if (!item.disabled) onSelect(item.id); }}
             >

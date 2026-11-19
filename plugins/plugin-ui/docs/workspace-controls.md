@@ -33,6 +33,7 @@ O pacote possui subpath público em `package.json` e um expose próprio `./works
 | Ferramentas e métodos | `CollapsibleToolRail` com itens, ícones, grupos, labels e status genéricos |
 | Ações e entradas | `ActionButton`, `IconButton`, `NativeTextControl`, `ModernSelectControl`, `NumberStepperControl`, `SegmentToggle` |
 | Corpo e feedback | `SectionCard`, `DataTable`, `SimpleKpiCard`, `StateBox`, `StatusBadge`, `StackedColumnChart` |
+| Ajuda contextual | `HelpTooltip`, `HintAction`, `FieldLabel`, `SectionHintLabel`, `TitleWithHelp`, `TabHintCell`, `KeyTip` — genéricos, sem texto de domínio (ver família `help` na doc do pacote principal) |
 
 ### Exemplo de sidebar genérica
 
@@ -88,7 +89,8 @@ const classNames = navigationCardBemClasses("my-workspace");
 ## Requisitos técnicos e riscos
 
 - `CollapsibleToolRail` controlado, sem estado de autorização ou navegação; gruppos recolhíveis têm estado local de apresentação.
-- Labels acessíveis permanecem nos itens com ícones, incluindo atributo `title` para foco/hover básico. Grupos com itens desabilitados não executam ações.
+- Labels acessíveis permanecem nos itens com ícones, incluindo atributo `title` para foco/hover básico; `ToolRailItem.description` (opcional) compõe esse `title` após `label` e `statusText`. Grupos com itens desabilitados não executam ações.
+- O item ativo do rail usa `color-mix(accent 55%, text)` — mantém a identidade azul com contraste AA nos temas claro e escuro; o gatilho da família help usa `--delpi-ui-text-muted` opaco pelo mesmo motivo.
 - Componente não implementa drawer mobile ou trap de foco; o modo compacto cabe no viewport, mas um consumer que exija drawer deve usar um drawer genérico aprovado, com foco e escape testados. Não declarar drawer funcional.
 - `NumberStepperControl` e `SegmentToggle` são exports do kit geral, não inventados para este conjunto.
 - Na importação MF, verificar export presente em remote e versão de CSS acoplada ao código; não alegar compatibilidade apenas porque o Typescript compila.

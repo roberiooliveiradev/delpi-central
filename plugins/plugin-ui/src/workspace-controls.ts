@@ -28,3 +28,5 @@ export { SimpleKpiCard, simpleKpiCardBemClasses } from "./components/layout/Simp
 export { StateBox } from "./components/feedback/StateBox";
 export { StatusBadge, statusBadgeBemClasses } from "./components/feedback/StatusBadge";
 export { StackedColumnChart, type StackedColumnChartProps } from "./components/charts/StackedColumnChart";
+/* Família help — balões explicativos genéricos (textos vêm do consumidor). */
+export * from "./components/help";

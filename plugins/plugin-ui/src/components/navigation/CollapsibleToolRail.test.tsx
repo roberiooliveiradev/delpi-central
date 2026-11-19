@@ -39,4 +39,10 @@ describe("CollapsibleToolRail", () => {
     expect(screen.getByRole("button", { name: "Expandir ferramentas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Análise" }).getAttribute("aria-pressed")).toBe("true");
   });
+  it("appends item description to the native title tooltip", () => {
+    render(<CollapsibleToolRail expanded onExpandedChange={vi.fn()} onSelect={vi.fn()} ariaLabel="Ferramentas"
+      groups={[{ id: "g", items: [{ id: "a", label: "Análise", icon: <Gauge size={16}/>, statusText: "Ativo", description: "Abre a análise de capacidade." }] }]} />);
+    expect(screen.getByRole("button", { name: "Análise" }).getAttribute("title"))
+      .toBe("Análise — Ativo — Abre a análise de capacidade.");
+  });
 });

@@ -53,3 +53,24 @@ A API pública resolve o consumo do mesmo estado por futuros editores e portais.
 - **Ciclo de vida:** um novo `study` no setter reseta `analysisState`, `officialOperations`, `draftSave`, disclosures e confirmações — o host os republica por contexto. Resultados oficiais nunca vazam entre estudos.
 - **AuthZ / limites:** SSO, RBAC, HTTP, persistência, formatos de arquivo e execução M1 permanecem no host/domínio. O Studio não abre rede, não estima resultados e não publica roteiro.
 - **Compatibilidade:** aditivo — `analysisState`, `officialOperations` e `draftSave` são opcionais; hosts V4 continuam funcionais (M1 exibe diagnóstico local sem o bloco oficial, exportações fora do Studio seguem possíveis).
+
+## Ajuda contextual V4.2 — catálogo de conteúdo e contratos de kit consumidos
+
+- **Sem mudança no contrato do elemento:** propriedades e eventos permanecem os
+  mesmos da V4.1; a V4.2 é uma evolução de apresentação e acessibilidade.
+- **Conteúdo de ajuda é de domínio do Studio:** todos os textos técnicos
+  (conceitos, métodos, ações, guias M1/M5) vivem em `src/ui/helpCatalog.ts`,
+  com identificadores estáveis (`source.*`, `study.*`, `production.*`,
+  `balance.*`, `method.*`, `action.*`, `state.*`). O Plugin UI continua
+  genérico e não recebe texto de domínio.
+- **Contratos do kit consumidos (aditivos, já públicos):**
+  - `HelpTooltip`, `HintAction`, `FieldLabel` exportados também pelo subpath
+    `@delpi/plugin-ui/workspace-controls`;
+  - `SectionCard.hint`, `SimpleKpiCard.titleHint`, `DataTableColumn.headerHint`,
+    `ActionButton.softDisabled`;
+  - `ToolRailItem.description` passa a compor o `title` nativo dos itens do
+    `CollapsibleToolRail`.
+- **Folha de help:** `styles/help.css` do kit é servida por
+  `workspace-controls.css` (shadow root do elemento) e por `styles.css`
+  (documento) — necessária nos dois escopos porque o balão portal para
+  `document.body`.

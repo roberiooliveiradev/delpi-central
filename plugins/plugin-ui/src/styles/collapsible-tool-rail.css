@@ -68,7 +68,7 @@
 .delpi-ui-tool-rail__name { font-size: .81rem; font-weight: 550; overflow-wrap: anywhere; }
 .delpi-ui-tool-rail__status { font-size: .69rem; color: var(--delpi-ui-text-muted, var(--text-muted, #657185)); }
 .delpi-ui-tool-rail__item[data-active="true"] {
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 55%, var(--delpi-ui-text, var(--text, #111)));
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 12%, transparent);
   font-weight: 650;
 }

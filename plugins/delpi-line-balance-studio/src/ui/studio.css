@@ -92,8 +92,20 @@ table.delpi-ui-table th { --delpi-ui-title: var(--secundary, #003866); }
 .official-analysis { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border, #d4dce5); }
 .official-analysis__head { display: grid; gap: 2px; }
 .official-analysis__head span { color: var(--text-muted); font-size: 12px; }
-.analysis-issues { margin: 0; padding: 9px 12px 9px 28px; border-radius: 10px; background: var(--delpi-ui-warning-bg, #fdf2dd); color: var(--text, CanvasText); font-size: 12.5px; }
+/* Aviso de impedimentos da análise — mesma receita canônica do state-box
+ * warning do kit (accent color-mix sobre a superfície), legível em light e dark. */
+.analysis-issues { margin: 0; padding: 9px 12px 9px 28px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--delpi-ui-warning, var(--warning, #f59e0b)) 40%, var(--delpi-ui-border, var(--border, #e6e6e6))); background: color-mix(in srgb, var(--delpi-ui-warning, var(--warning, #f59e0b)) 14%, var(--delpi-ui-surface, var(--surface, #ffffff))); color: var(--delpi-ui-text, var(--text, #111111)); font-size: 12.5px; }
 .official-details { display: grid; gap: 6px; margin-bottom: 10px; }
 .official-details__cap { color: var(--text-muted); font-size: 12px; }
 .op-cell { display: flex; flex-direction: column; gap: 2px; }
 .op-ref { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+/* V4.2 — ajuda contextual: pares título/balão e painel do guia de método. */
+.badge-with-help { display: inline-flex; align-items: center; gap: 3px; }
+.title-with-help { display: inline-flex; align-items: center; gap: 5px; }
+.scenario-control { display: flex; align-items: center; gap: 7px; }
+.method-help { display: grid; gap: 12px; padding: 13px 15px; border: 1px solid var(--border, #d4dce5); border-radius: 12px; background: var(--surface-2, Canvas); }
+.method-help__head { display: grid; gap: 3px; }
+.method-help__head p { margin: 0; color: var(--text-muted); font-size: 12.5px; }
+.method-help__columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 20px; }
+.method-help__columns h3 { margin: 0 0 5px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.method-help__columns ol, .method-help__columns ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12.5px; }
