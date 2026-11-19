@@ -210,6 +210,8 @@ def _nfe(root: ET.Element) -> XmlDocument | None:
                 simple_rate=_child_num(icms, "", "pCredSN") if icms is not None else 0.0,
                 discount=_child_num(detail, "prod", "vDesc"),
                 other_amount=_child_num(detail, "prod", "vOutro"),
+                pis_amount=_child_num(detail, "PIS", "vPIS"),
+                cofins_amount=_child_num(detail, "COFINS", "vCOFINS"),
                 has_ibscbs=bool(reform),
                 ibscbs_cst=str(reform.get("cst") or ""),
                 ibscbs_class=str(reform.get("class") or ""),
@@ -292,8 +294,8 @@ def _cte(root: ET.Element) -> XmlDocument | None:
         _text(root, _CTE, ".//ide/toma4/CNPJ") or _text(root, _CTE, ".//ide/toma4/CPF")
     )
     service = _num(root, _CTE, ".//vPrest/vTPrest")
-    imposto = next((node for node in root.iter(f"{{{_CTE}}}imposto")), None)
-    reform = _ibscbs(imposto) or {}
+    imp_node = next((node for node in root.iter(f"{{{_CTE}}}imp")), None)
+    reform = _ibscbs(imp_node) or {}
     linked = tuple(
         (node.text or "").strip()
         for node in root.iter(f"{{{_CTE}}}chave")

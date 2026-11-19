@@ -32,6 +32,7 @@ Os cinco ajustes entram na auditoria existente, em **ondas separadas por flag** 
 | FA-16 | FA-1/FA-2 e FA-3 entram também na skill de referência (cópia `reference/` pelo agente, skill da conta pelo owner). Paridade roda com as ondas 2–4 desligadas. Exportação uma linha por item com coluna «Causa». |
 | FA-17 | Sem permission nova; seis tools iguais; `entry_audit.reverify` é escrita direta. |
 | FA-18 | Flags por onda (padrão `false`, ligadas em PROD só após HML PASS): onda 1 `ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED` + `ENTRY_AUDIT_INPUT_TES`; onda 2 `ENTRY_AUDIT_CAUSE_GROUPING_ENABLED`; onda 3 `ENTRY_AUDIT_IBSCBS_ENABLED`; onda 4 `ENTRY_AUDIT_REVERIFY_ENABLED`. Rotas novas de leitura da api-delpi sem flag. |
+| FA-19 | IBS/CBS só compara quando o XML traz o grupo (owner, 18/11): lançamento com IBS/CBS e XML sem `IBSCBS` **não** gera ocorrência — não está entre as quatro validações do documento do Fiscal. Valores só se comparam com `document.has_ibscbs` (total da nota, NF-e e CT-e) e `xml_item.has_ibscbs` (item). Sem regra nova; FA-8 a FA-11 intactas. |
 
 ## Duplicação registrada — «B/D → SA1»
 

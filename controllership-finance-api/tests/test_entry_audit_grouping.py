@@ -250,6 +250,17 @@ def _cause_row(analysis_id: str, run_id: str, stable_key: str, **overrides) -> d
     }
 
 
+def _document(run_id: str, access_key: str = KEY) -> dict:
+    return {
+        "run_id": run_id, "access_key": access_key, "branch": "01",
+        "document_number": "9999", "series": "1", "supplier_name": "Fornecedor",
+    }
+
+
+def _run_of(store: MemoryEntryAuditStore, analysis_id: str) -> str:
+    return [run["id"] for run in store.runs.values() if run["analysis_id"] == analysis_id][0]
+
+
 def _service(store: MemoryEntryAuditStore) -> EntryAuditService:
     class _Ports:
         def documents(self, **_kw):
@@ -284,14 +295,16 @@ def _service(store: MemoryEntryAuditStore) -> EntryAuditService:
 
 
 def test_pending_queue_keeps_latest_analysis_per_note_and_cause() -> None:
-    """FA-5: a fila mostra a ocorrência da análise mais recente, por nota+causa."""
+    """FA-5: a fila mostra a ocorrência da análise mais recente que cobriu a nota."""
     store = MemoryEntryAuditStore()
     old_analysis = _add_analysis(store, datetime(2026, 11, 12, tzinfo=timezone.utc))
-    old_run = next(iter(store.runs))
+    old_run = _run_of(store, old_analysis)
+    store.documents.append(_document(old_run))
     store.occurrences.append(_cause_row(old_analysis, old_run, "old-key", severity="Baixa", title="antiga"))
     new_analysis = _add_analysis(store, datetime(2026, 11, 15, tzinfo=timezone.utc))
-    new_run = [run for run in store.runs.values() if run["analysis_id"] == new_analysis][0]
-    store.occurrences.append(_cause_row(new_analysis, new_run["id"], f"01|{KEY}|cause:icms_amount"))
+    new_run = _run_of(store, new_analysis)
+    store.documents.append(_document(new_run))
+    store.occurrences.append(_cause_row(new_analysis, new_run, f"01|{KEY}|cause:icms_amount"))
     service = _service(store)
     payload = service.pending()
     assert payload["total"] == 1
@@ -304,6 +317,73 @@ def test_pending_queue_keeps_latest_analysis_per_note_and_cause() -> None:
     payload = service.pending()
     assert payload["kpis"]["resolved"] == 1
     assert payload["kpis"]["pending"] == 0
+
+
+def test_pending_drops_cause_absent_in_latest_covering_analysis() -> None:
+    """FA-5 (i): causa que não aparece na análise seguinte da mesma nota sai da fila."""
+    store = MemoryEntryAuditStore()
+    old_analysis = _add_analysis(store, datetime(2026, 11, 12, tzinfo=timezone.utc))
+    old_run = _run_of(store, old_analysis)
+    store.documents.append(_document(old_run))
+    store.occurrences.append(_cause_row(old_analysis, old_run, f"01|{KEY}|cause:icms_amount"))
+    new_analysis = _add_analysis(store, datetime(2026, 11, 15, tzinfo=timezone.utc))
+    store.documents.append(_document(_run_of(store, new_analysis)))
+    # A análise nova leu a nota e não gerou causa — a fila fica limpa.
+    assert _service(store).pending()["total"] == 0
+
+
+def test_pending_keeps_cause_when_note_not_covered_by_newer_analysis() -> None:
+    """FA-5 (ii): nota não lida pela análise nova mantém a causa da anterior."""
+    store = MemoryEntryAuditStore()
+    old_analysis = _add_analysis(store, datetime(2026, 11, 12, tzinfo=timezone.utc))
+    old_run = _run_of(store, old_analysis)
+    store.documents.append(_document(old_run))
+    store.occurrences.append(_cause_row(old_analysis, old_run, f"01|{KEY}|cause:icms_amount"))
+    new_analysis = _add_analysis(store, datetime(2026, 11, 15, tzinfo=timezone.utc))
+    store.documents.append(_document(_run_of(store, new_analysis), access_key="42261199999999000191550010000088881000000099"))
+    payload = _service(store).pending()
+    assert payload["total"] == 1
+    assert payload["items"][0]["stable_key"] == f"01|{KEY}|cause:icms_amount"
+
+
+def test_pending_resolved_status_survives_covering_analysis_change() -> None:
+    """FA-5 (iii): status resolvido segue pela stable_key, mesmo com a causa reemitida."""
+    store = MemoryEntryAuditStore()
+    old_analysis = _add_analysis(store, datetime(2026, 11, 12, tzinfo=timezone.utc))
+    old_run = _run_of(store, old_analysis)
+    store.documents.append(_document(old_run))
+    key = f"01|{KEY}|cause:icms_amount"
+    store.occurrences.append(_cause_row(old_analysis, old_run, key))
+    store.upsert_status(key, kind="occurrence", status="resolved", user_id="u", user_name="Ana")
+    new_analysis = _add_analysis(store, datetime(2026, 11, 15, tzinfo=timezone.utc))
+    new_run = _run_of(store, new_analysis)
+    store.documents.append(_document(new_run))
+    store.occurrences.append(_cause_row(new_analysis, new_run, key))
+    payload = _service(store).pending()
+    assert payload["total"] == 1
+    assert payload["items"][0]["status"] == "resolved"
+    assert payload["kpis"]["pending"] == 0
+    assert payload["kpis"]["resolved"] == 1
+
+
+def test_pending_drops_ibscbs_causes_after_analysis_without_ibscbs() -> None:
+    """FA-5 (iv): análise nova com IBS/CBS desligado tira da fila as causas ibscbs.*."""
+    store = MemoryEntryAuditStore()
+    old_analysis = _add_analysis(store, datetime(2026, 11, 12, tzinfo=timezone.utc))
+    old_run = _run_of(store, old_analysis)
+    store.documents.append(_document(old_run))
+    store.occurrences.append(_cause_row(
+        old_analysis, old_run, f"01|{KEY}|cause:ibscbs.value_mismatch",
+        cause_id="ibscbs.value_mismatch", theme="ibscbs", title="IBS/CBS divergente",
+    ))
+    store.occurrences.append(_cause_row(old_analysis, old_run, f"01|{KEY}|cause:icms_amount"))
+    new_analysis = _add_analysis(store, datetime(2026, 11, 15, tzinfo=timezone.utc))
+    new_run = _run_of(store, new_analysis)
+    store.documents.append(_document(new_run))
+    store.occurrences.append(_cause_row(new_analysis, new_run, f"01|{KEY}|cause:icms_amount"))
+    payload = _service(store).pending()
+    assert payload["total"] == 1
+    assert payload["items"][0]["cause_id"] == "icms_amount"
 
 
 def test_cause_groups_split_clean_corrected_and_pending() -> None:
@@ -329,3 +409,32 @@ def test_cause_groups_split_clean_corrected_and_pending() -> None:
     assert groups["pending"] == 1
     # Linhas v1 (sem cause_id) não produzem o bloco.
     assert _cause_groups(documents, [{"access_key": "B", "branch": "01", "document_number": "2", "series": "1"}], {}) is None
+
+
+def test_pending_occurrences_sql_placeholder_param_parity():
+    """OC-1 (verifier): `window` é interpolada 3× na query — os params devem
+    cobrir todos os `%s` em qualquer combinação de filtros de data."""
+    from controllership_finance_app.infrastructure.entry_audit.postgres_store import (
+        PostgresEntryAuditStore,
+    )
+
+    store = PostgresEntryAuditStore()
+    captured = []
+    store._all = lambda sql, params: captured.append((sql, params)) or []
+
+    store.pending_occurrences(
+        date_from=date(2026, 11, 1), date_to=date(2026, 11, 17),
+    )
+    sql, params = captured[0]
+    assert sql.count("%s") == len(params)
+    assert len(params) == 6
+
+    captured.clear()
+    store.pending_occurrences(date_from=date(2026, 11, 1))
+    sql, params = captured[0]
+    assert sql.count("%s") == len(params) == 3
+
+    captured.clear()
+    store.pending_occurrences()
+    sql, params = captured[0]
+    assert sql.count("%s") == len(params) == 0

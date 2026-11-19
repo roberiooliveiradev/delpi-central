@@ -726,6 +726,23 @@ def _reform_xml_values(source, tax: str) -> tuple[float, float, float]:
     )
 
 
+_LC214_TOLERANCE = 0.05
+
+
+def _lc214_hint(posted_base: float, xml_base: float, expected_posted: float, expected_xml: float, rules: str) -> str:
+    """P1 — base lançada ≈ vProd−vDesc e XML ≈ vProd−vDesc−ICMS−PIS−COFINS:
+    a regra do Configurador não excluiu os tributos (LC 214/2025, art. 12, §2º)."""
+    if (
+        abs(posted_base - expected_posted) <= _LC214_TOLERANCE
+        and abs(xml_base - expected_xml) <= _LC214_TOLERANCE
+    ):
+        return (
+            " A base lançada inclui ICMS/PIS/COFINS, que a LC 214/2025 (art. 12, §2º) "
+            f"exclui da base do IBS/CBS: conferir a base na regra {rules or '—'} do Configurador."
+        )
+    return ""
+
+
 def _ibscbs_compare(hits, row, document, xml_source, taxes: dict, tes_label: str, settings, item: str = "") -> bool:
     """Compara presença, base, alíquota e valor por tributo (FA-8/FA-10)."""
     found = False
@@ -737,12 +754,17 @@ def _ibscbs_compare(hits, row, document, xml_source, taxes: dict, tes_label: str
         rates = agg["rates"] if agg else set()
         rules = ", ".join(sorted(agg["rules"])) if agg else ""
         diffs = []
+        hint = ""
         if abs(posted_amount - xml_amount) > settings.tolerance:
             diffs.append(f"valor lançado R$ {_brl(posted_amount)} × XML R$ {_brl(xml_amount)}")
         if agg and (len(rates) > 1 or abs(next(iter(rates)) - xml_rate) > 0.01):
             diffs.append(f"alíquota lançada {'/'.join(f'{rate:g}' for rate in sorted(rates))}% × XML {xml_rate:g}%")
         if agg and abs(posted_base - xml_base) > settings.tolerance:
             diffs.append(f"base lançada R$ {_brl(posted_base)} × XML R$ {_brl(xml_base)}")
+            if isinstance(xml_source, XmlItem):
+                expected_posted = xml_source.amount - xml_source.discount
+                expected_xml = expected_posted - xml_source.icms_amount - xml_source.pis_amount - xml_source.cofins_amount
+                hint = _lc214_hint(posted_base, xml_base, expected_posted, expected_xml, rules)
         if not diffs:
             continue
         found = True
@@ -750,7 +772,7 @@ def _ibscbs_compare(hits, row, document, xml_source, taxes: dict, tes_label: str
         _hit(
             hits, row, document, "ibscbs.value_mismatch", f"{label} calculado diferente do XML",
             "Alta", label, posted_amount, xml_amount,
-            f"{label} divergente ({'; '.join(diffs)}). {tes_label}, regra do Configurador {rules or '—'}: conferir a regra e recalcular o item.",
+            f"{label} divergente ({'; '.join(diffs)}). {tes_label}, regra do Configurador {rules or '—'}: conferir a regra e recalcular o item.{hint}",
             item=item,
         )
     return found
@@ -805,20 +827,37 @@ def _ibscbs(result, item_rows, invoices, ctes, reform_taxes, reform_book, settin
         if not doc_taxes:
             # Sem nenhuma linha F2D, os itens já cobriram (xml_not_posted/posting_missing).
             continue
+        if not document.has_ibscbs:
+            # FA-19: lançamento com IBS/CBS e XML sem o grupo não gera ocorrência.
+            continue
         xml_total = {
             "CBSFED": document.cbs_amount or sum(item.cbs_amount for item in document.items),
             "IBSEST": document.ibs_uf_amount or sum(item.ibs_uf_amount for item in document.items),
             "IBSMUN": document.ibs_mun_amount or sum(item.ibs_mun_amount for item in document.items),
         }
+        xml_items = document.items
+        expected_posted = sum(xml_item.amount - xml_item.discount for xml_item in xml_items)
+        expected_xml = sum(
+            xml_item.amount - xml_item.discount - xml_item.icms_amount - xml_item.pis_amount - xml_item.cofins_amount
+            for xml_item in xml_items
+        )
+        xml_base_total = document.reform_base or sum(xml_item.reform_base for xml_item in xml_items)
         for tax in REFORM_TAXES:
             posted_amount = doc_taxes.get(tax, {}).get("amount", 0.0)
             if abs(posted_amount - xml_total[tax]) <= settings.tolerance:
                 continue
             label = _REFORM_LABEL[tax]
+            rules = ", ".join(sorted(doc_taxes.get(tax, {}).get("rules", set())))
+            posted_base = doc_taxes.get(tax, {}).get("base", 0.0)
+            hint = ""
+            if xml_items and abs(posted_base - xml_base_total) > settings.tolerance:
+                hint = _lc214_hint(
+                    posted_base, xml_base_total, expected_posted, expected_xml, rules,
+                )
             _hit(
                 hits, doc_rows[0], document, "ibscbs.value_mismatch", f"{label} da nota diferente do total do XML",
                 "Alta", label, round(posted_amount, 2), xml_total[tax],
-                f"Total de {label} lançado R$ {_brl(posted_amount)} × XML R$ {_brl(xml_total[tax])} na nota. TES dos itens: {', '.join(sorted({row['tes'] for row in doc_rows if row['tes']})) or '—'}.",
+                f"Total de {label} lançado R$ {_brl(posted_amount)} × XML R$ {_brl(xml_total[tax])} na nota. TES dos itens: {', '.join(sorted({row['tes'] for row in doc_rows if row['tes']})) or '—'}.{hint}",
             )
 
     # CT-e: IBS/CBS no imposto, nível do documento.

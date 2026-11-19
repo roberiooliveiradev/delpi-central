@@ -228,7 +228,8 @@ class MemoryEntryAuditStore:
         return deepcopy(current)
 
     def pending_occurrences(self, *, date_from=None, date_to=None, branches=None) -> list[dict]:
-        """Fila consolidada (FA-5): ocorrência mais recente por (filial, nota, causa)."""
+        """Fila consolidada (FA-5): para cada (filial, nota) a análise concluída
+        mais recente **que leu a nota** decide; só as causas dela entram na fila."""
         done = {
             aid: row
             for aid, row in self.analyses.items()
@@ -236,6 +237,19 @@ class MemoryEntryAuditStore:
             and (date_from is None or row.get("date_to") >= date_from)
             and (date_to is None or row.get("date_from") <= date_to)
         }
+        covered: dict[tuple, datetime] = {}
+        for row in list(self.documents) + list(self.ctes):
+            run = self.runs.get(row.get("run_id"))
+            if run is None:
+                continue
+            analysis = done.get(run.get("analysis_id"))
+            if analysis is None:
+                continue
+            doc = row.get("access_key") or f"doc:{row.get('document_number')}|{row.get('series')}|{row.get('supplier_name')}"
+            key = (run.get("branch_code"), doc)
+            created = analysis.get("created_at")
+            if created and created > covered.get(key, datetime.min.replace(tzinfo=created.tzinfo)):
+                covered[key] = created
         latest: dict[tuple, dict] = {}
         for row in self.occurrences:
             analysis = done.get(row.get("analysis_id"))
@@ -244,16 +258,14 @@ class MemoryEntryAuditStore:
             if branches and row.get("branch") not in branches:
                 continue
             doc = row.get("access_key") or f"doc:{row.get('document_number')}|{row.get('series')}|{row.get('supplier_name')}"
-            key = (row.get("branch"), doc, row["cause_id"])
-            current = latest.get(key)
             created = analysis.get("created_at")
-            if current is None or (created and created > current.get("_created", "")):
+            if covered.get((row.get("branch"), doc)) != created:
+                continue
+            key = (row.get("branch"), doc, row["cause_id"])
+            if key not in latest:
                 merged = dict(row)
-                merged["_created"] = created or ""
-                merged["analysis_created_at"] = created
+                merged["analysis_created_at"] = analysis.get("created_at")
                 latest[key] = merged
-        for row in latest.values():
-            row.pop("_created", None)
         return list(latest.values())
 
     def rows(self, kind: str, analysis_id: str) -> list[dict]:

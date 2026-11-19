@@ -505,8 +505,9 @@ class PostgresEntryAuditStore:
         return found
 
     def pending_occurrences(self, *, date_from=None, date_to=None, branches=None) -> list[dict]:
-        """Fila consolidada (FA-5): ocorrência mais recente por (filial, nota, causa)."""
-        clauses = ["a.status = 'done'", "o.cause_id <> ''"]
+        """Fila consolidada (FA-5): para cada (filial, nota) a análise concluída
+        mais recente **que leu a nota** decide; só as causas dela entram na fila."""
+        clauses = ["a.status = 'done'"]
         params: list = []
         if date_from:
             clauses.append("a.date_to >= %s")
@@ -514,25 +515,55 @@ class PostgresEntryAuditStore:
         if date_to:
             clauses.append("a.date_from <= %s")
             params.append(date_to)
+        window = " AND ".join(clauses)
         rows = self._all(
             f"""
-            SELECT * FROM (
-                SELECT o.*, r.branch_code AS branch, a.created_at AS analysis_created_at,
-                       ROW_NUMBER() OVER (
-                           PARTITION BY r.branch_code,
-                               COALESCE(NULLIF(o.access_key, ''),
-                                        'doc:' || o.document_number || '|' || o.series || '|' || o.supplier_name),
-                               o.cause_id
-                           ORDER BY a.created_at DESC
-                       ) AS rn
-                  FROM {SCHEMA}.entry_audit_occurrence o
-                  JOIN {SCHEMA}.entry_audit_run r ON r.id = o.run_id
-                  JOIN {SCHEMA}.entry_audit_analysis a ON a.id = o.analysis_id
-                 WHERE {' AND '.join(clauses)}
-            ) latest
-            WHERE rn = 1
+            WITH covered AS (
+                SELECT r.branch_code AS branch,
+                       COALESCE(NULLIF(d.access_key, ''),
+                                'doc:' || d.document_number || '|' || d.series || '|' || d.supplier_name) AS note_key,
+                       a.created_at AS analysis_created_at
+                  FROM {SCHEMA}.entry_audit_document d
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = d.run_id
+                  JOIN {SCHEMA}.entry_audit_analysis a ON a.id = r.analysis_id
+                 WHERE {window}
+                UNION ALL
+                SELECT r.branch_code, NULLIF(c.access_key, ''), a.created_at
+                  FROM {SCHEMA}.entry_audit_cte c
+                  JOIN {SCHEMA}.entry_audit_run r ON r.id = c.run_id
+                  JOIN {SCHEMA}.entry_audit_analysis a ON a.id = r.analysis_id
+                 WHERE {window}
+            ),
+            latest_cover AS (
+                SELECT branch, note_key, MAX(analysis_created_at) AS latest_at
+                  FROM covered
+                 WHERE note_key IS NOT NULL
+                 GROUP BY branch, note_key
+            )
+            SELECT DISTINCT ON (
+                       r.branch_code,
+                       COALESCE(NULLIF(o.access_key, ''),
+                                'doc:' || o.document_number || '|' || o.series || '|' || o.supplier_name),
+                       o.cause_id
+                   )
+                   o.*, r.branch_code AS branch, a.created_at AS analysis_created_at
+              FROM {SCHEMA}.entry_audit_occurrence o
+              JOIN {SCHEMA}.entry_audit_run r ON r.id = o.run_id
+              JOIN {SCHEMA}.entry_audit_analysis a ON a.id = o.analysis_id
+              JOIN latest_cover lc
+                ON lc.branch = r.branch_code
+               AND lc.note_key = COALESCE(
+                       NULLIF(o.access_key, ''),
+                       'doc:' || o.document_number || '|' || o.series || '|' || o.supplier_name)
+               AND lc.latest_at = a.created_at
+             WHERE {window} AND o.cause_id <> ''
+             ORDER BY r.branch_code,
+                      COALESCE(NULLIF(o.access_key, ''),
+                               'doc:' || o.document_number || '|' || o.series || '|' || o.supplier_name),
+                      o.cause_id, o.id
             """,
-            tuple(params),
+            # `window` é interpolado 3× (duas branches do `covered` + WHERE externo).
+            tuple(params + params + params),
         )
         if branches:
             wanted = set(branches)

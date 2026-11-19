@@ -16,7 +16,38 @@ from controllership_finance_app.domain.entry_audit.models import (
     XmlDocument,
     XmlItem,
 )
-from controllership_finance_app.infrastructure.entry_audit.xml_reader import _ibscbs
+from controllership_finance_app.infrastructure.entry_audit.xml_reader import (
+    _ibscbs,
+    read_xml_payloads,
+)
+
+_CTE_NS = "http://www.portalfiscal.inf.br/cte"
+
+
+def _cte_xml(access_key: str, number: int, total: float, *, with_ibscbs: bool = True) -> bytes:
+    ibscbs = (
+        "<IBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gIBSCBS>"
+        "<vBC>50.00</vBC>"
+        "<gIBSUF><pIBSUF>0.10</pIBSUF><vIBSUF>0.05</vIBSUF></gIBSUF>"
+        "<gIBSMun><pIBSMun>0.00</pIBSMun><vIBSMun>0.00</vIBSMun></gIBSMun>"
+        "<vIBS>0.05</vIBS>"
+        "<gCBS><pCBS>0.90</pCBS><vCBS>0.45</vCBS></gCBS>"
+        "</gIBSCBS></IBSCBS>"
+        if with_ibscbs else ""
+    )
+    return (
+        f'<?xml version="1.0" encoding="UTF-8"?><cteProc xmlns="{_CTE_NS}" versao="4.00">'
+        f'<CTe><infCte Id="CTe{access_key}" versao="4.00">'
+        f'<ide><mod>57</mod><serie>1</serie><nCT>{number}</nCT><dhEmi>2026-11-12T11:00:00-03:00</dhEmi>'
+        f'<CFOP>5352</CFOP><UFIni>SC</UFIni><UFFim>SC</UFFim><toma3><toma>3</toma></toma3></ide>'
+        f'<emit><CNPJ>{SUPPLIER}</CNPJ><xNome>Transportadora Sintetica</xNome>'
+        f'<enderEmit><UF>SC</UF></enderEmit><CRT>3</CRT></emit>'
+        f'<dest><CNPJ>{COMPANY}</CNPJ><enderDest><UF>SC</UF></enderDest></dest>'
+        f'<vPrest><vTPrest>{total:.2f}</vTPrest></vPrest>'
+        f'<imp><ICMS><ICMS00><CST>00</CST><vBC>50.00</vBC><pICMS>12.00</pICMS><vICMS>6.00</vICMS>'
+        f'</ICMS00></ICMS>{ibscbs}<vTotDFe>{total:.2f}</vTotDFe></imp>'
+        f'</infCte></CTe><protCTe><infProt><cStat>100</cStat></infProt></protCTe></cteProc>'
+    ).encode()
 
 SUPPLIER = "22222222000191"
 COMPANY = "11111111000191"
@@ -190,6 +221,50 @@ def test_cte_ibscbs_not_posted_flags_at_document_level() -> None:
     assert "ibscbs.xml_not_posted" in _rules(result)
 
 
+def test_posted_without_xml_ibscbs_produces_no_occurrence() -> None:
+    """FA-19 (i): lançamento com F2D e XML sem IBSCBS não gera ocorrência ibscbs.*."""
+    key = _key("55", 2006)
+    reform = [
+        _reform(2006, "1", "CBSFED", 9.0, base=1000.0, rate=0.9, rule="CBS100"),
+        _reform(2006, "1", "IBSEST", 1.0, base=1000.0, rate=0.1, rule="IBS100"),
+    ]
+    result = _run(
+        [_header(2006, key, 1000)], [_item(2006, "1", 1000)],
+        {key: _invoice(2006, key, (_xml_item(1, 1000, ibscbs=False),), 1000)},
+        reform=reform,
+    )
+    assert not [rule for rule in _rules(result) if rule.startswith("ibscbs.")]
+
+
+def test_posted_and_xml_with_different_values_still_flags() -> None:
+    """FA-19 (ii): IBSCBS nos dois lados com valores diferentes → value_mismatch continua."""
+    key = _key("55", 2007)
+    reform = [
+        _reform(2007, "1", "CBSFED", 12.0, base=1000.0, rate=0.9, rule="CBS100"),
+        _reform(2007, "1", "IBSEST", 1.3, base=1000.0, rate=0.1, rule="IBS100"),
+    ]
+    result = _run(
+        [_header(2007, key, 1000)], [_item(2007, "1", 1000)],
+        {key: _invoice(2007, key, (_xml_item(1, 1000, cbs=7.19, ibs_uf=0.80),), 1000)},
+        reform=reform,
+    )
+    assert "ibscbs.value_mismatch" in _rules(result)
+
+
+def test_cte_posted_without_xml_ibscbs_produces_no_occurrence() -> None:
+    """FA-19 (iii): CT-e lançado com F2D e XML sem IBSCBS → nenhuma ocorrência ibscbs.*."""
+    key = _key("57", 2008)
+    reform = [
+        _reform(2008, "1", "CBSFED", 0.45, base=50.0, rate=0.9, rule="CBS100", tes="036"),
+        _reform(2008, "1", "IBSEST", 0.05, base=50.0, rate=0.1, rule="IBS100", tes="036"),
+    ]
+    result = _run(
+        [_header(2008, key, 50, species="CTE")], [_item(2008, "1", 50, cfop="1352", tes="036")],
+        ctes={key: _cte(2008, key, ibscbs=False)}, reform=reform,
+    )
+    assert not [rule for rule in _rules(result) if rule.startswith("ibscbs.")]
+
+
 def test_flag_off_produces_no_ibscbs_hits() -> None:
     key = _key("55", 1005)
     config = AuditConfig(improvements_enabled=False, ibscbs_enabled=False, cause_grouping_enabled=True)
@@ -230,6 +305,91 @@ def test_book_mismatch_only_after_book_from() -> None:
         reform=posted, book=book, config=config,
     )
     assert "ibscbs.book_mismatch" in _rules(on)
+
+
+def test_cte_parser_reads_ibscbs_from_imp_group() -> None:
+    """T19R2/A: no CT-e o grupo de impostos é infCte/imp (não «imposto»)."""
+    key = _key("57", 2002)
+    _, ctes, ignored = read_xml_payloads([_cte_xml(key, 2002, 50.0)])
+    assert ignored == 0
+    document = ctes[key]
+    assert document.has_ibscbs
+    assert document.ibscbs_cst == "000"
+    assert document.ibscbs_class == "000001"
+    assert document.reform_base == 50.0
+    assert document.ibs_uf_rate == 0.1
+    assert document.ibs_uf_amount == 0.05
+    assert document.ibs_mun_rate == 0.0
+    assert document.ibs_mun_amount == 0.0
+    assert document.cbs_rate == 0.9
+    assert document.cbs_amount == 0.45
+
+
+def test_cte_parsed_with_ibscbs_and_no_f2d_flags_xml_not_posted() -> None:
+    """T19R2/A: CT-e real (com IBSCBS) e sem cálculo F2D → xml_not_posted, nunca posting_missing."""
+    key = _key("57", 2003)
+    _, ctes, _ = read_xml_payloads([_cte_xml(key, 2003, 50.0)])
+    result = _run(
+        [_header(2003, key, 50, species="CTE")], [_item(2003, "1", 50, cfop="1352", tes="036")],
+        ctes=ctes,
+    )
+    assert "ibscbs.xml_not_posted" in _rules(result)
+    assert "ibscbs.posting_missing" not in _rules(result)
+
+
+def test_value_mismatch_hints_lc214_when_posted_base_includes_other_taxes() -> None:
+    """T19R2/C — P1: lançado ≈ vProd−vDesc e XML ≈ vProd−vDesc−ICMS−PIS−COFINS."""
+    key = _key("55", 2004)
+    xml_item = XmlItem(
+        number=1, product_code="P1", description="Peca 1", ncm="84818099", cfop="5101",
+        amount=1000.0, origin="0", cst="00", csosn="", icms_base=1000.0, icms_rate=12.0,
+        icms_amount=120.0, ipi_amount=0.0, ipi_base=0.0, ipi_rate=0.0, st_amount=0.0,
+        pis_amount=14.52, cofins_amount=66.88,
+        has_ibscbs=True, ibscbs_cst="000", ibscbs_class="000001",
+        reform_base=798.60, ibs_uf_rate=0.1, ibs_uf_amount=0.80,
+        ibs_mun_rate=0.0, ibs_mun_amount=0.0, cbs_rate=0.9, cbs_amount=7.19,
+    )
+    invoice = _invoice(2004, key, (xml_item,), 1000.0)
+    invoice = XmlDocument(**{**invoice.__dict__, "reform_base": 798.60})
+    reform = [
+        _reform(2004, "1", "CBSFED", 9.0, base=1000.0, rate=0.9, rule="CBS100"),
+        _reform(2004, "1", "IBSEST", 1.0, base=1000.0, rate=0.1, rule="IBS100"),
+    ]
+    result = _run(
+        [_header(2004, key, 1000)], [_item(2004, "1", 1000)], {key: invoice}, reform=reform,
+    )
+    texts = [occurrence.action for occurrence in result.occurrences if occurrence.rule_id == "ibscbs.value_mismatch"]
+    assert texts
+    assert any(
+        "LC 214/2025" in text and "CBS100" in text for text in texts
+    )
+
+
+def test_value_mismatch_without_p1_has_no_lc214_hint() -> None:
+    """Base divergente fora do padrão P1: texto sem a orientação da LC 214."""
+    key = _key("55", 2005)
+    xml_item = XmlItem(
+        number=1, product_code="P1", description="Peca 1", ncm="84818099", cfop="5101",
+        amount=1000.0, origin="0", cst="00", csosn="", icms_base=1000.0, icms_rate=12.0,
+        icms_amount=120.0, ipi_amount=0.0, ipi_base=0.0, ipi_rate=0.0, st_amount=0.0,
+        pis_amount=14.52, cofins_amount=66.88,
+        has_ibscbs=True, ibscbs_cst="000", ibscbs_class="000001",
+        reform_base=798.60, ibs_uf_rate=0.1, ibs_uf_amount=0.80,
+        ibs_mun_rate=0.0, ibs_mun_amount=0.0, cbs_rate=0.9, cbs_amount=7.19,
+    )
+    invoice = _invoice(2005, key, (xml_item,), 1000.0)
+    invoice = XmlDocument(**{**invoice.__dict__, "reform_base": 798.60})
+    # Lançado com base 800 — não é vProd−vDesc e não é a fórmula da LC 214.
+    reform = [
+        _reform(2005, "1", "CBSFED", 7.2, base=800.0, rate=0.9, rule="CBS100"),
+        _reform(2005, "1", "IBSEST", 0.8, base=800.0, rate=0.1, rule="IBS100"),
+    ]
+    result = _run(
+        [_header(2005, key, 1000)], [_item(2005, "1", 1000)], {key: invoice}, reform=reform,
+    )
+    texts = [occurrence.action for occurrence in result.occurrences if occurrence.rule_id == "ibscbs.value_mismatch"]
+    assert texts
+    assert all("LC 214/2025" not in text for text in texts)
 
 
 def test_ibscbs_group_parses_from_xml_item() -> None:

@@ -99,6 +99,8 @@ class XmlItem:
     simple_rate: float = 0.0
     discount: float = 0.0
     other_amount: float = 0.0
+    pis_amount: float = 0.0
+    cofins_amount: float = 0.0
     # Reforma tributária (FA-8): grupo IBSCBS do item.
     has_ibscbs: bool = False
     ibscbs_cst: str = ""
