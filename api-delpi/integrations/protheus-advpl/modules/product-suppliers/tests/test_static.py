@@ -139,6 +139,17 @@ class StaticSourceTests(unittest.TestCase):
         self.assertNotIn("lMsErroAuto := .F.\n// fake", self.text)
 
 
+    def test_body_read_inside_sequence(self):
+        # GetContent dentro do Begin Sequence e SEMPRE antes de
+        # SetContentType: o HTTPREST consome o buffer do request em
+        # SetContentType (regressao TST01 2026-11-19).
+        seq = self.upper.index("BEGIN SEQUENCE")
+        self.assertLess(seq, self.upper.index("CJSON := OSELF:GETCONTENT()"))
+        self.assertLess(
+            self.upper.index("CJSON := OSELF:GETCONTENT()"),
+            self.upper.index("OSELF:SETCONTENTTYPE"),
+        )
+
 class ModuleConsistencyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

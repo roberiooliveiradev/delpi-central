@@ -295,6 +295,12 @@ class V21ReviewGuards(unittest.TestCase):
         seq = self.upper.index("BEGIN SEQUENCE")
         self.assertLess(seq, self.upper.index("OSELF:GETCONTENT()"))
         self.assertLess(seq, self.upper.index("OSELF:SETCONTENTTYPE"))
+        # GetContent SEMPRE antes de SetContentType: o HTTPREST consome o
+        # buffer do request em SetContentType (regressao TST01 2026-11-19).
+        self.assertLess(
+            self.upper.index("OSELF:GETCONTENT()"),
+            self.upper.index("OSELF:SETCONTENTTYPE"),
+        )
 
     def test_sanitlog_no_trailing_separator(self):
         block = self.upper[
