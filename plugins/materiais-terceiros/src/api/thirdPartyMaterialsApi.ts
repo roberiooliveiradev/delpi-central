@@ -1,6 +1,7 @@
 import { unwrapApiDelpiEnvelope } from "../types/api";
 import type {
   Shipment,
+  PendingSupplierPage,
   ShipmentsPage,
   SummaryData,
   ThirdPartyMaterialsQuery,
@@ -75,6 +76,45 @@ export async function exportReturns(
     `${API_BASE}/returns/export${queryString({
       ...sharedQuery(query),
       export_format: exportFormat,
+    })}`,
+    options,
+  );
+  return { blob: result.blob, filename: result.filename };
+}
+
+export async function fetchPendingSuppliers(
+  query: ThirdPartyMaterialsQuery,
+  page: number,
+  pageSize: number,
+  options: HttpRequestOptions = {},
+): Promise<PendingSupplierPage> {
+  return getEnvelope<PendingSupplierPage>(
+    `/pending-by-supplier${queryString({
+      branch: query.branch,
+      partner_code: query.partnerCode || undefined,
+      partner_store: query.partnerStore || undefined,
+      product: query.product || undefined,
+      include_test_products: query.includeTestProducts || undefined,
+      page,
+      page_size: pageSize,
+    })}`,
+    options,
+  );
+}
+
+export async function exportPendingSuppliers(
+  query: ThirdPartyMaterialsQuery,
+  format: "csv" | "xlsx",
+  options: HttpRequestOptions = {},
+): Promise<{ blob: Blob; filename: string }> {
+  const result = await httpGetBlob(
+    `${API_BASE}/pending-by-supplier/export${queryString({
+      branch: query.branch,
+      partner_code: query.partnerCode || undefined,
+      partner_store: query.partnerStore || undefined,
+      product: query.product || undefined,
+      include_test_products: query.includeTestProducts || undefined,
+      export_format: format,
     })}`,
     options,
   );

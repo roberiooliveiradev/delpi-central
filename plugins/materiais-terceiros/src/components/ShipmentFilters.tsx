@@ -95,11 +95,11 @@ export function ShipmentFilters({
       <div className="mt-filters__secondary">
         <FilterInputField
           id="mt-filter-partner"
-          label="Cliente"
+          label="Parceiro (cliente/fornecedor)"
           hint={HELP_TOOLTIPS.filters.partner}
           type="search"
           value={filters.partnerCode}
-          placeholder="Código SA1"
+          placeholder="Código SA1 ou SA2"
           onChange={(value) => onChange({ partnerCode: value })}
           disabled={loading || !filters.branch}
         />

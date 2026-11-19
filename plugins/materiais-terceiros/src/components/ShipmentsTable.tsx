@@ -54,8 +54,13 @@ const columns: DataTableColumn<Shipment>[] = [
   },
   {
     key: "partner",
-    header: "Cliente",
-    render: (row) => row.partner.name || row.partner.code || "—",
+    header: "Parceiro",
+    render: (row) => (
+      <span>
+        <strong>{row.partner.name || row.partner.code || "—"}</strong>
+        {row.partner.code ? ` · ${row.partner.type === "F" ? "Fornecedor" : "Cliente"} ${row.partner.code}/${row.partner.store || ""}` : ""}
+      </span>
+    ),
     sortValue: (row) => row.partner.name || row.partner.code,
   },
   {

@@ -7,6 +7,9 @@ from app.application.use_cases.third_party_materials.get_shipment_use_case impor
 from app.application.use_cases.third_party_materials.get_summary_use_case import (
     GetThirdPartyMaterialsSummaryUseCase,
 )
+from app.application.use_cases.third_party_materials.pending_supplier_report_use_case import (
+    PendingSupplierReportUseCase,
+)
 from app.application.use_cases.third_party_materials.list_shipments_use_case import (
     ListThirdPartyMaterialsShipmentsUseCase,
 )
@@ -41,3 +44,6 @@ def build_export_third_party_materials_returns_use_case() -> (
     ExportThirdPartyMaterialsReturnsUseCase
 ):
     return ExportThirdPartyMaterialsReturnsUseCase(repository=_repository())
+
+def build_pending_supplier_report_use_case() -> PendingSupplierReportUseCase:
+    return PendingSupplierReportUseCase(repository=_repository())
