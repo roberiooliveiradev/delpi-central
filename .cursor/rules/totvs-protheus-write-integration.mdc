@@ -56,13 +56,20 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 - [ ] `GetContent()` **sempre antes** de `SetContentType()`, ambos **dentro** do `Begin Sequence`
       (SetContentType consome o buffer do request no HTTPREST; GetContent no init de `Local`
       gera throw não-recuperável — regressão comprovada TST01 2026-11-19)
-- [ ] `oDados:FromJson(cJSON)` — **retorno não confiável** no build 7.00.240223P
-      (retorna `.F.` mesmo populando o objeto; o legado ignora o retorno —
-      `DLP04I01`/`DLP05W01` no espelho 13-fontes). Validar o parse pelo
-      **conteúdo**: `Len(oDados:GetNames()) == 0` ⇒ JSON inválido
+- [ ] `oDados:FromJson(cJSON)` — semântica TDN: retorna **NIL em sucesso** ou
+      **string de erro** na falha — nunca lógico. `!oDados:FromJson()` inverte
+      o sentido (sucesso `NIL` → `!NIL` = `.T.` ⇒ "JSON inválido" mesmo com body
+      válido — regressão comprovada TST01 2026-11-19). O legado ignora o retorno
+      (`DLP04I01`/`DLP05W01` no espelho). Validar por `ValType(ret) == "U"` ou
+      pelo conteúdo: `Len(oDados:GetNames()) == 0` ⇒ JSON inválido
 - [ ] Tag de versão no `id` do envelope de resposta (ex.: `"dlp-v053-fj"`) —
       distingue qual build está carregado no RPO durante homologação
 - [ ] Diagnóstico de body sem conteúdo (`valtype`/`len` apenas — nunca o corpo)
+- [ ] Tipos no ExecAuto/MVC: campos `D` como **date** (`StoD(xVal)`; vazio =
+      `StoD("")`, nunca `""` crua — `FWNOSTRUCT` no SB1MASTER), campos `N` como
+      numérico (`Val(xVal)`), `C`/`M` como string. O catálogo elegível deve ser a
+      interseção SX3 ∩ campos do formulário do modelo (`FWFormFieldsModel`
+      rejeita ids fora do form — enumerar via `tools/DLPDBG01.PRW`)
 - [ ] Somente para ExecAuto: arrays de triplas `{CAMPO, valor, Nil}`; representação completa quando contrato exigir
       (campo omitido pode ser zerado — bug real do `delpiproduto`)
 - [ ] Para ExecAuto: `GetAutoGrLog()`; para MVC: erros/validações do modelo; respostas normalizadas sem mascarar falhas
@@ -125,7 +132,9 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 | Gate default `true` "só pra testar" | `false` sempre; liga por env explícito |
 | `lMsErroAuto` declarado `LOCAL` | `PRIVATE` (a rotina não enxerga `LOCAL`) |
 | Endpoint novo sem checar `/restall` | catálogo primeiro — pode já existir |
-| `!oDados:FromJson(cJSON)` como gate | retorno não confiável — validar por `Len(oDados:GetNames()) == 0` |
+| `!oDados:FromJson(cJSON)` como gate | `FromJson` retorna NIL/texto, não lógico — validar por `ValType(ret)=="U"` ou `Len(oDados:GetNames()) == 0` |
+| String em campo `D`/`N` no ExecAuto | `StoD()`/`Val()` — o modelo MVC exige o tipo do campo (`FWNOSTRUCT`) |
+| Campo SX3 no payload sem checar o form | `FWFormFieldsModel` rejeita — catálogo = SX3 ∩ campos do `SB1MASTER` (dump `DLPDBG01`) |
 | `GetContent` após `SetContentType` ou no init de `Local` | `GetContent` primeiro, dentro do `Begin Sequence` |
 | Assumir que compilou no RPO certo pelo log "success" | confirmar conexão TDS × ambiente × serviço × mtime do `custom.rpo` |
 

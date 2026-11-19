@@ -623,10 +623,11 @@ static function lExecSB1(oSelf, nOp)
         cJSON := oSelf:GetContent()
         oSelf:SetContentType("application/json")
 
-        // FromJson retorna .F. mesmo populando o objeto neste build —
-        // o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
-        // 13-fontes). Valida-se o parse pelo conteudo: GetNames()
-        // vazio = falhou. Sem conteudo do body por seguranca.
+        // Semantica real do FromJson (TDN): retorna NIL em sucesso ou
+        // string de erro na falha — nunca logico. !FromJson() inverte
+        // o sentido (sucesso NIL => "invalido"). O legado ignora o
+        // retorno (DLP04I01/DLP05W01 no espelho 13-fontes). Valida-se o
+        // parse pelo conteudo: GetNames() vazio = falhou.
         oDados:FromJson(cJSON)
 
         if Len(oDados:GetNames()) == 0

@@ -13,10 +13,9 @@
        especifica de cada ramo (corrigido nesta versao);
      - o sibling SB1 no MESMO ambiente tambem rejeitou JSON valido como
        "nao e um JSON valido" => CAUSA RAIZ CONFIRMADA no TST01
-       (2026-11-19): o body chega integro ao GetContent(), mas
-       tJsonObject:FromJson retorna .F. mesmo em sucesso neste build —
-       o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
-       13-fontes). Validamos o parse pelo conteudo (GetNames() vazio).
+       (2026-11-19): FromJson retorna NIL em sucesso (semantica TDN) —
+       !FromJson() inverte e rejeita JSON valido. O legado ignora o
+       retorno; validamos pelo conteudo (GetNames() vazio).
    MUDANCAS 0.4.1 (diagnostico fail-closed, sem alterar contrato):
      - distincao "body vazio/indisponivel" x "JSON invalido" (evidencia se
        o corpo chega ao handler — a falha do ambiente auxiliar);
@@ -221,10 +220,10 @@ static function lExecSA5(oSelf)
         cJSON := oSelf:GetContent()
         oSelf:SetContentType("application/json")
 
-        // FromJson retorna .F. mesmo populando o objeto neste build —
-        // o legado ignora o retorno (DLP04I01/DLP05W01 no espelho
-        // 13-fontes). Valida-se o parse pelo conteudo: GetNames()
-        // vazio = falhou.
+        // Semantica real do FromJson (TDN): retorna NIL em sucesso ou
+        // string de erro na falha — nunca logico. !FromJson() inverte
+        // o sentido. O legado ignora o retorno (DLP04I01/DLP05W01 no
+        // espelho). Valida-se o parse pelo conteudo: GetNames() vazio.
         if ValType(cJSON) == "C" .and. !Empty(cJSON)
             oDados:FromJson(cJSON)
         endif

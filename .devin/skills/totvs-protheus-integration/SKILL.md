@@ -49,6 +49,74 @@ primeira classe ao escrever QUALQUER handler de body:
   `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW` (WSRESTFUL,
   aadd triple `{CAMPO,valor,Nil}`, RETOBJ, FreeObj trio, RestArea).
 
+## Corpo de conhecimento ADVPL — ecossistema DELPI + TDN
+
+### Convenções do espelho (docs/13-fontes-totvs-protheus)
+
+- **Nomenclatura**: `DLP<modulo><tipo><seq>` — módulo = código do módulo
+  Protheus (02 Compras, 04 Estoque, 05 Faturamento, 06 Financeiro, 09 Fiscal,
+  10 PCP, 34 Contábil, 36 Qualidade, 73 CRM); tipo = I (integração REST),
+  W (webservice), F/J/P (processos/rotinas); legado usa prefixo `DEL*`
+  (DEL04P01). Customizações de modelos: `<ROTINA>_DLP` (MATA010M_DLP).
+- **Includes REST**: `#Include "TOTVS.CH"` + `#Include "RESTFUL.CH"`
+  (+ `"FWMVCDEF.CH"` quando MVC).
+- **Anatomia WSRESTFUL**: `WSRESTFUL <Nome> DESCRIPTION "..." FORMAT
+  "application/json"` → `WSMETHOD <VERBO> <id> DESCRIPTION PATH '/v1/x'
+  WSSYNTAX '/v1/x' TTALK "v1"` → `END WSRESTFUL`; implementação:
+  `WSMETHOD <VERBO> <id> WSRECEIVE <parms> WSRESTFUL <Nome>`.
+  Versão no PATH (`/v1/`) e no TTALK — evolução de contrato = `/v2/` novo.
+- **Envelope canônico**: `RETOBJ(oObj, cCode, cMsg, cDetMsg, cIdToken)` →
+  `{code, message, detailedMessage, id}` com `FwCutOff()` sanitizando
+  (remove chars de controle — CP1252; literais não-ASCII = mojibake).
+- **Higiene**: `Local aArea := GetArea()`/`RestArea(aArea)`; `FreeObj` em
+  todo `JsonObject` criado; `Return .T.`/`SetRestFault` para erro HTTP.
+- **Contexto cross-empresa**: `PREPARE ENVIRONMENT EMPRESA ".." FILIAL ".."
+  MODULO ".."` quando a rotina exige (ver `DLP02J05`, `DLP05F03`).
+
+### Semântica real das APIs (TDN + prova live TST01)
+
+| API | Semântica comprovada |
+|---|---|
+| `oSelf:GetContent()` | retorna body como string; chamar ANTES de `SetContentType`, dentro do `Begin Sequence` |
+| `SetContentType()` | consome o buffer do request no HTTPREST — depois dele `GetContent` vê vazio |
+| `oJson:FromJson(c)` | retorna **NIL** em sucesso / **string de erro** na falha — NÃO lógico; `!FromJson()` inverte o sentido. Validar por `ValType(ret)=="U"` ou `Len(o:GetNames())==0` |
+| `oJson["campo"]` / `GetJSonObject` | acesso a propriedade; ausente ⇒ `U` (NIL) — testar com `ValType()` |
+| `GetNames()` | lista de chaves parseadas — prova de conteúdo populado |
+| `FWJsonDeserialize` | alternativa documentada (retorna objeto/NIL); NÃO usada no ecossistema DELPI — preferir padrão provado |
+| `SetResponse`/`SetStatus`/`SetRestFault` | resposta, código HTTP, falha REST nativa |
+
+### Rotinas oficiais e mecanismos de escrita
+
+- **MATA010 (SB1)** = MVC desde 12.1.17: form `SB1MASTER` + submodelos
+  injetados por `MATA010M` (DH5, SB5, SVK, MdGridSA5, SBZ). ExecAuto oficial:
+  `FWMVCRotAuto(oModel,"SB1",nOp,{{"SB1MASTER",aFields}})` ou `MSExecAuto`
+  com triplas `{CAMPO,valor,Nil}`. **O modelo exige o tipo do campo**:
+  `D`→date (`StoD`), `N`→numérico — string `""` em data = `FWNOSTRUCT`.
+  O form **não expõe todo SX3**: `FWFormFieldsModel` rejeita ids ausentes
+  (ex.: `B1_GRADE`) — catálogo elegível = SX3 ∩ form (dump `DLPDBG01.PRW`).
+- **Ciclo MVC manual**: `FWLoadModel`→`SetOperation`→`Activate`→
+  `SetValue("FORM",campo,val)`→`VldData`→`CommitData`→`GetErrorMessage`
+  →`DeActivate`/`Destroy`. UPDATE exige `dbSeek` prévio no registro.
+- **MSExecAuto clássico**: `PRIVATE lMsErroAuto := .F.` +
+  `lMsHelpAuto`/`lAutoErrNoFile`; erro em `GetAutoGrLog()` — **o erro real
+  está no FIM do log** (manter cauda, não cabeça).
+- **MATA061 (SA5)** = MVC Model-2 (`DMATA061`), chave composta
+  FILIAL+FORNECE+LOJA+PRODUTO+FABR+FALOJA+REFGRD — `MSExecAuto` NÃO se
+  aplica; estratégia = modelo oficial (`DLP04I02` implementa).
+- **Erros do modelo**: `oModel:GetErrorMessage()` devolve array com
+  [form-origem, campo-origem, form-erro, campo-erro, id-erro, mensagem,
+  solução, valor, valor-anterior] — `FWNOSTRUCT` = tipo errado,
+  `VLDDATA_POST` = validação de negócio.
+
+### Diagnostics e iteração TST01
+
+- Tag de versão no `id` do envelope (ex.: `"dlp-v053-fj"`) — a resposta
+  autodeclara o build carregado no RPO.
+- `ConOut` para o console do AppServer — acessível via `console.log` do
+  serviço. Diagnóstico remoto: `tools/DLPDBG01.PRW` (dump de campos do
+  modelo — `u_DLPDBG01` via TDS/smartclient).
+- Nunca logar conteúdo de body (segurança) — só `ValType`/`Len`.
+
 ## Atualização de autoridade de fontes (2026-11)
 
 - **Fonte versionada primária ADVPL/TLPP:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, consultado no HEAD vigente via GitHub autorizado. Registrar `SOURCE_REPO/BRANCH/SHA/PATH/BLOB_SHA` em cada análise.
