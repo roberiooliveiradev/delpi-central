@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from production_control_app.application.services.myweg_needs_service import MyWegNeedsService
+from production_control_app.domain.services.myweg_needs_normalization import validate_ingest_batch
 from production_control_app.jobs.myweg_needs_publisher.payload_builder import (
     _split_unidentified_materials,
     build_ingest_payload,
@@ -121,3 +122,12 @@ def test_legacy_valid_batch_remains_compatible():
     valid, quality = _split_unidentified_materials([raw])
     assert valid == [raw]
     assert quality is None
+
+
+def test_tampered_quality_counts_rejected_by_s2s_contract():
+    built = build_ingest_payload(_artifacts(_rows()))
+    payload = deepcopy(built["payload"])
+    payload["source_files"]["quality"]["excludedQuantityUn"] = "999"
+    validation = validate_ingest_batch(payload)
+    assert validation.ok is False
+    assert any(issue.path == "source_files.quality" for issue in validation.issues)
