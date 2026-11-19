@@ -229,7 +229,7 @@ services:
     environment:
       # HML lê/escreve SEMPRE no TOTVS de teste (TST01): o seletor
       # TOTVS_TARGET_ENV trava o catálogo (DELPI_TST01 + AMBIENTE=2 + pin
-      # REST 192.168.1.233:8701) e falha fechado em qualquer divergência.
+      # REST 192.168.1.233:8061) e falha fechado em qualquer divergência.
       # Host/credenciais vêm das TOTVS_DB_* do ambiente de deploy (mesmo
       # SQL Server); a base de dados é literal — nunca DELPI produtiva.
       API_DELPI_ENV: homologation
@@ -260,11 +260,12 @@ services:
       # alvo continua travado no pin TST abaixo (fail-closed).
       PROTHEUS_PRODUCT_UPDATE_ENABLED: ${PROTHEUS_PRODUCT_UPDATE_ENABLED:-false}
       # HML sempre resolve o Protheus de TESTE: AMBIENTE=2 seleciona os
-      # parâmetros do REST de homologação (192.168.1.233:8701 → DELPI_TST01)
+      # parâmetros do REST de homologação (192.168.1.233:8061 → DELPI_TST01)
       # e o pin abaixo trava o único alvo de escrita permitido. Se os
       # parâmetros driftarem para produção, o write guard falha fechado.
       INTRANET_PARAMS_AMBIENTE: "2"
-      PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8701/rest"
+      # PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8701/rest"
+      PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8061"
       OPENAPI_CONSUMER_NOTIFY_ON_STARTUP: "false"
       OPENAPI_CONSUMER_NOTIFY_ENABLED: "false"
       OPENAPI_CONSUMER_CHAT_SYNC_URL: ""

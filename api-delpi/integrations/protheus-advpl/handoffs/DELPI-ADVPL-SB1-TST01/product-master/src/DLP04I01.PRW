@@ -14,8 +14,8 @@
                  verificada 2026-11-18) — contracts/sb1-field-matrix.json
 
    EVOLUCAO vs v1 (22 campos fixos):
-     1. Catalogo completo de campos elegiveis: 291 campos B1_* gravaveis
-        (285 READ_WRITE_ELIGIBLE + 5 CONDITIONAL-memo + B1_COD identidade),
+     1. Catalogo completo de campos elegiveis: 286 campos B1_* gravaveis
+        (285 READ_WRITE_ELIGIBLE + B1_COD identidade (5 memo sem coluna fisica no TST01 removidos)),
         derivados do SX3 real — contracts/sb1-field-matrix.json e a fonte.
      2. Validacao dinamica por nome: campos fora do catalogo sao rejeitados
         (desconhecido) e campos protegidos/imutaveis/sistema sao rejeitados
@@ -24,7 +24,7 @@
         D=data "AAAAMMDD"; M=memo como string (VALIDAR NO TST01).
      4. POST incluir: B1_COD obrigatorio + campos elegiveis informados;
         obrigatoriedade de negocio fica com a MATA010 oficial.
-     5. PUT alterar: representacao completa obrigatoria — TODOS os 291
+     5. PUT alterar: representacao completa obrigatoria — TODOS os 286
         campos do catalogo (politica fail-closed anti-zeramento; a
         api-delpi faz merge read-modify-write para o cliente mandar so
         o delta).
@@ -84,87 +84,307 @@ WSRESTFUL DelpiProduto DESCRIPTION "Api REST para Tratativa de produtos" FORMAT 
 END WSRESTFUL
 
 /* -----------------------------------------------------------------------
-   Catalogo oficial de campos gravaveis (gerado do SX3 — 291 entradas).
+   Catalogo oficial de campos gravaveis (gerado do SX3 — 286 entradas; 5 memo sem coluna fisica no TST01 removidos).
    {CAMPO, especie} — especie: C=caractere, N=numerico, D=data, M=memo.
    Campos fora desta lista (imutaveis, sistema, espelhos de movimento,
    B1_FILIAL, B1_CODITE) sao rejeitados como protegidos.
    ----------------------------------------------------------------------- */
 static function aB1Fields()
 
-Return { ;
-    {"B1_GRUPO","C"}, {"B1_COD","C"}, {"B1_DESC","C"}, {"B1_REFEREN","C"}, ;
-    {"B1_CODDES","C"}, {"B1_REFCANT","C"}, {"B1_TIPO","C"}, {"B1_YHOHS","C"}, ;
-    {"B1_POSIPI","C"}, {"B1_ESPECIE","C"}, {"B1_EX_NCM","C"}, {"B1_EX_NBM","C"}, ;
-    {"B1_LOCPAD","C"}, {"B1_UM","C"}, {"B1_LINHA","C"}, {"B1_SUBGRUP","C"}, ;
-    {"B1_TPMAT","C"}, {"B1_PICM","N"}, {"B1_BITMAP","C"}, {"B1_SEGUM","C"}, ;
-    {"B1_IPI","N"}, {"B1_ALIQISS","N"}, {"B1_CODISS","C"}, {"B1_TE","C"}, ;
-    {"B1_TS","C"}, {"B1_PICMRET","N"}, {"B1_PICMENT","N"}, {"B1_IMPZFRC","C"}, ;
-    {"B1_CONV","N"}, {"B1_TIPCONV","C"}, {"B1_ALTER","C"}, {"B1_QE","N"}, ;
-    {"B1_ESTFOR","C"}, {"B1_PRV1","N"}, {"B1_EMIN","N"}, {"B1_CUSTD","N"}, ;
-    {"B1_MCUSTD","C"}, {"B1_PESO","N"}, {"B1_ESTSEG","N"}, {"B1_FORPRZ","C"}, ;
-    {"B1_PE","N"}, {"B1_TIPE","C"}, {"B1_LE","N"}, {"B1_LOJPROC","C"}, ;
-    {"B1_LM","N"}, {"B1_CONTA","C"}, {"B1_TOLER","N"}, {"B1_CC","C"}, ;
-    {"B1_ITEMCC","C"}, {"B1_FAMILIA","C"}, {"B1_PROC","C"}, {"B1_QB","N"}, ;
-    {"B1_TIPODEC","C"}, {"B1_DTREFP1","D"}, {"B1_ORIGEM","C"}, {"B1_CLASFIS","C"}, ;
-    {"B1_FANTASM","C"}, {"B1_RASTRO","C"}, {"B1_FORAEST","C"}, {"B1_CONINI","D"}, ;
-    {"B1_CONTSOC","C"}, {"B1_COMIS","N"}, {"B1_CODBAR","C"}, {"B1_GRADE","C"}, ;
-    {"B1_FORMLOT","C"}, {"B1_MONO","C"}, {"B1_FPCOD","C"}, {"B1_PERINV","N"}, ;
-    {"B1_CONTRAT","C"}, {"B1_DESC_P","C"}, {"B1_DESC_GI","C"}, {"B1_DESC_I","C"}, ;
-    {"B1_GRTRIB","C"}, {"B1_MRP","C"}, {"B1_VM_I","M"}, {"B1_VM_GI","M"}, ;
-    {"B1_VM_P","M"}, {"B1_ANUENTE","C"}, {"B1_CODOBS","C"}, {"B1_NOTAMIN","N"}, ;
-    {"B1_PRVALID","N"}, {"B1_FABRIC","C"}, {"B1_NUMCOP","N"}, {"B1_IRRF","C"}, ;
-    {"B1_LOCALIZ","C"}, {"B1_OPERPAD","C"}, {"B1_PRODPAI","C"}, {"B1_VLREFUS","N"}, ;
-    {"B1_IMPORT","C"}, {"B1_OBS","M"}, {"B1_SITPROD","C"}, {"B1_MODELO","C"}, ;
-    {"B1_SETOR","C"}, {"B1_BALANCA","C"}, {"B1_TECLA","C"}, {"B1_TIPOCQ","C"}, ;
-    {"B1_SOLICIT","C"}, {"B1_GRUPCOM","C"}, {"B1_NALNCCA","C"}, {"B1_NUMCQPR","N"}, ;
-    {"B1_NALSH","C"}, {"B1_CONTCQP","N"}, {"B1_REVATU","C"}, {"B1_INSS","C"}, ;
-    {"B1_CODEMB","C"}, {"B1_ESPECIF","C"}, {"B1_DATASUB","D"}, {"B1_MAT_PRI","C"}, ;
-    {"B1_REDINSS","N"}, {"B1_ALADI","C"}, {"B1_REDIRRF","N"}, {"B1_TAB_IPI","C"}, ;
-    {"B1_GRUDES","C"}, {"B1_REDPIS","N"}, {"B1_REDCOF","N"}, {"B1_PCSLL","N"}, ;
-    {"B1_PCOFINS","N"}, {"B1_PPIS","N"}, {"B1_QTDSER","C"}, {"B1_FLAGSUG","C"}, ;
-    {"B1_CLASSVE","C"}, {"B1_MIDIA","C"}, {"B1_VLR_IPI","N"}, {"B1_QTMIDIA","N"}, ;
-    {"B1_ENVOBR","C"}, {"B1_SERIE","C"}, {"B1_FAIXAS","N"}, {"B1_NROPAG","N"}, ;
-    {"B1_ISBN","C"}, {"B1_TITORIG","C"}, {"B1_LINGUA","C"}, {"B1_EDICAO","C"}, ;
-    {"B1_CORPRI","C"}, {"B1_CORSEC","C"}, {"B1_NICONE","C"}, {"B1_ATRIB1","C"}, ;
-    {"B1_ATRIB2","C"}, {"B1_ATRIB3","C"}, {"B1_REGSEQ","C"}, {"B1_OBSISBN","C"}, ;
-    {"B1_CLVL","C"}, {"B1_ATIVO","C"}, {"B1_PESBRU","N"}, {"B1_REQUIS","C"}, ;
-    {"B1_SELO","C"}, {"B1_TIPCAR","C"}, {"B1_VLR_ICM","N"}, {"B1_VLRSELO","N"}, ;
-    {"B1_CODNOR","C"}, {"B1_LOTVEN","N"}, {"B1_OK","C"}, {"B1_CPOTENC","C"}, ;
-    {"B1_MSBLQL","C"}, {"B1_POTENCI","N"}, {"B1_QTDACUM","N"}, {"B1_EMAX","N"}, ;
-    {"B1_PIS","C"}, {"B1_COFINS","C"}, {"B1_FRETISS","C"}, {"B1_TPREG","C"}, ;
-    {"B1_CSLL","C"}, {"B1_CNAE","C"}, {"B1_VLR_PIS","N"}, {"B1_VLR_COF","N"}, ;
-    {"B1_CALCFET","C"}, {"B1_PAUTFET","N"}, {"B1_LMP","N"}, {"B1_DESPIMP","C"}, ;
-    {"B1_PARCEI","C"}, {"B1_USAFEFO","C"}, {"B1_AGREGCU","C"}, {"B1_FRACPER","N"}, ;
-    {"B1_CLASSE","C"}, {"B1_INT_ICM","N"}, {"B1_GCCUSTO","C"}, {"B1_CCCUSTO","C"}, ;
-    {"B1_PMACNUT","N"}, {"B1_PMICNUT","N"}, {"B1_CODPROC","C"}, {"B1_CODQAD","C"}, ;
-    {"B1_VM_PROC","M"}, {"B1_QBP","N"}, {"B1_VLCIF","N"}, {"B1_RETOPER","C"}, ;
-    {"B1_CRDEST","N"}, {"B1_PRFDSUL","N"}, {"B1_CODANT","C"}, {"B1_FETHAB","C"}, ;
-    {"B1_FECP","N"}, {"B1_IVAAJU","C"}, {"B1_ESCRIPI","C"}, {"B1_FUSTF","C"}, ;
-    {"B1_CRICMS","C"}, {"B1_SELOEN","C"}, {"B1_ALFECOP","N"}, {"B1_REGRISS","C"}, ;
-    {"B1_ALFECST","N"}, {"B1_PRODREC","C"}, {"B1_FECOP","C"}, {"B1_VIGENC","D"}, ;
-    {"B1_EMBDELP","N"}, {"B1_CRDPRES","N"}, {"B1_AFETHAB","N"}, {"B1_AFACS","N"}, ;
-    {"B1_AFABOV","N"}, {"B1_REFBAS","C"}, {"B1_TFETHAB","C"}, {"B1_VEREAN","C"}, ;
-    {"B1_RPRODEP","C"}, {"B1_RICM65","C"}, {"B1_PRDORI","C"}, {"B1_CFEM","C"}, ;
-    {"B1_CFEMS","C"}, {"B1_CFEMA","N"}, {"B1_DTCORTE","D"}, {"B1_TRIBMUN","C"}, ;
-    {"B1_TNATREC","C"}, {"B1_TPPROD","C"}, {"B1_CODLAN","C"}, {"B1_PR43080","N"}, ;
-    {"B1_DCI","C"}, {"B1_DCRE","C"}, {"B1_ALFUMAC","N"}, {"B1_DCR","C"}, ;
-    {"B1_PRN944I","C"}, {"B1_DCRII","N"}, {"B1_COEFDCR","N"}, {"B1_CHASSI","C"}, ;
-    {"B1_DIFCNAE","C"}, {"B1_REGESIM","C"}, {"B1_RSATIVO","C"}, {"B1_FECPBA","N"}, ;
-    {"B1_PRINCMG","N"}, {"B1_CRICMST","C"}, {"B1_ALFECRN","N"}, {"B1_AJUDIF","C"}, ;
-    {"B1_SITTRIB","C"}, {"B1_DESBSE3","C"}, {"B1_BASE3","C"}, {"B1_IAT","C"}, ;
-    {"B1_IPPT","C"}, {"B1_TALLA","C"}, {"B1_GDODIF","C"}, {"B1_MARKUP","N"}, ;
-    {"B1_PRODSBP","C"}, {"B1_CARGAE","C"}, {"B1_VALEPRE","C"}, {"B1_LOTESBP","N"}, ;
-    {"B1_TIPOBN","C"}, {"B1_DESBSE2","C"}, {"B1_ADMIN","C"}, {"B1_BASE2","C"}, ;
-    {"B1_GARANT","C"}, {"B1_TIPVEC","C"}, {"B1_BASE","C"}, {"B1_TPDP","C"}, ;
-    {"B1_PERGART","N"}, {"B1_MEPLES","C"}, {"B1_PAFMD5","C"}, {"B1_PORCPRL","C"}, ;
-    {"B1_ESTRORI","C"}, {"B1_AFAMAD","N"}, {"B1_GRPTI","C"}, {"B1_GRPCST","C"}, ;
-    {"B1_CEST","C"}, {"B1_AFASEMT","N"}, {"B1_AIMAMT","N"}, {"B1_AFUNDES","N"}, ;
-    {"B1_COLOR","C"}, {"B1_IMPNCM","N"}, {"B1_CODGTIN","C"}, {"B1_YDESP","C"}, ;
-    {"B1_YSC","C"}, {"B1_YPC","C"}, {"B1_YPV","C"}, {"B1_YMI","C"}, ;
-    {"B1_YNFE","C"}, {"B1_YPDESD","N"}, {"B1_YPDESF","N"}, {"B1_YVLPC","C"}, ;
-    {"B1_XLEWEG","C"}, {"B1_CONV3","N"}, {"B1_UM3","C"}, {"B1_NF3UM","C"}, ;
-    {"B1_APOPRO","C"}, {"B1_ITEMWEG","C"}, {"B1_YCAT","C"}, {"B1_ZDLPSEG","C"}, ;
-    {"B1_ZINVDLP","C"}, {"B1_ZDESREV","C"}, {"B1_XBLQCOM","C"} ;}
+    /* Catalogo montado com aAdd() — literal unico de 286 sub-arrays
+       excedia o limite de array literal do compilador ADVPL (erro
+       de compilacao no fechamento do literal). Pares {campo,
+       especie} identicos ao catalogo anterior. */
+    local aRet := {}
+
+    aAdd(aRet, {"B1_GRUPO","C"})
+    aAdd(aRet, {"B1_COD","C"})
+    aAdd(aRet, {"B1_DESC","C"})
+    aAdd(aRet, {"B1_REFEREN","C"})
+    aAdd(aRet, {"B1_CODDES","C"})
+    aAdd(aRet, {"B1_REFCANT","C"})
+    aAdd(aRet, {"B1_TIPO","C"})
+    aAdd(aRet, {"B1_YHOHS","C"})
+    aAdd(aRet, {"B1_POSIPI","C"})
+    aAdd(aRet, {"B1_ESPECIE","C"})
+    aAdd(aRet, {"B1_EX_NCM","C"})
+    aAdd(aRet, {"B1_EX_NBM","C"})
+    aAdd(aRet, {"B1_LOCPAD","C"})
+    aAdd(aRet, {"B1_UM","C"})
+    aAdd(aRet, {"B1_LINHA","C"})
+    aAdd(aRet, {"B1_SUBGRUP","C"})
+    aAdd(aRet, {"B1_TPMAT","C"})
+    aAdd(aRet, {"B1_PICM","N"})
+    aAdd(aRet, {"B1_BITMAP","C"})
+    aAdd(aRet, {"B1_SEGUM","C"})
+    aAdd(aRet, {"B1_IPI","N"})
+    aAdd(aRet, {"B1_ALIQISS","N"})
+    aAdd(aRet, {"B1_CODISS","C"})
+    aAdd(aRet, {"B1_TE","C"})
+    aAdd(aRet, {"B1_TS","C"})
+    aAdd(aRet, {"B1_PICMRET","N"})
+    aAdd(aRet, {"B1_PICMENT","N"})
+    aAdd(aRet, {"B1_IMPZFRC","C"})
+    aAdd(aRet, {"B1_CONV","N"})
+    aAdd(aRet, {"B1_TIPCONV","C"})
+    aAdd(aRet, {"B1_ALTER","C"})
+    aAdd(aRet, {"B1_QE","N"})
+    aAdd(aRet, {"B1_ESTFOR","C"})
+    aAdd(aRet, {"B1_PRV1","N"})
+    aAdd(aRet, {"B1_EMIN","N"})
+    aAdd(aRet, {"B1_CUSTD","N"})
+    aAdd(aRet, {"B1_MCUSTD","C"})
+    aAdd(aRet, {"B1_PESO","N"})
+    aAdd(aRet, {"B1_ESTSEG","N"})
+    aAdd(aRet, {"B1_FORPRZ","C"})
+    aAdd(aRet, {"B1_PE","N"})
+    aAdd(aRet, {"B1_TIPE","C"})
+    aAdd(aRet, {"B1_LE","N"})
+    aAdd(aRet, {"B1_LOJPROC","C"})
+    aAdd(aRet, {"B1_LM","N"})
+    aAdd(aRet, {"B1_CONTA","C"})
+    aAdd(aRet, {"B1_TOLER","N"})
+    aAdd(aRet, {"B1_CC","C"})
+    aAdd(aRet, {"B1_ITEMCC","C"})
+    aAdd(aRet, {"B1_FAMILIA","C"})
+    aAdd(aRet, {"B1_PROC","C"})
+    aAdd(aRet, {"B1_QB","N"})
+    aAdd(aRet, {"B1_TIPODEC","C"})
+    aAdd(aRet, {"B1_DTREFP1","D"})
+    aAdd(aRet, {"B1_ORIGEM","C"})
+    aAdd(aRet, {"B1_CLASFIS","C"})
+    aAdd(aRet, {"B1_FANTASM","C"})
+    aAdd(aRet, {"B1_RASTRO","C"})
+    aAdd(aRet, {"B1_FORAEST","C"})
+    aAdd(aRet, {"B1_CONINI","D"})
+    aAdd(aRet, {"B1_CONTSOC","C"})
+    aAdd(aRet, {"B1_COMIS","N"})
+    aAdd(aRet, {"B1_CODBAR","C"})
+    aAdd(aRet, {"B1_GRADE","C"})
+    aAdd(aRet, {"B1_FORMLOT","C"})
+    aAdd(aRet, {"B1_MONO","C"})
+    aAdd(aRet, {"B1_FPCOD","C"})
+    aAdd(aRet, {"B1_PERINV","N"})
+    aAdd(aRet, {"B1_CONTRAT","C"})
+    aAdd(aRet, {"B1_DESC_P","C"})
+    aAdd(aRet, {"B1_DESC_GI","C"})
+    aAdd(aRet, {"B1_DESC_I","C"})
+    aAdd(aRet, {"B1_GRTRIB","C"})
+    aAdd(aRet, {"B1_MRP","C"})
+    aAdd(aRet, {"B1_ANUENTE","C"})
+    aAdd(aRet, {"B1_CODOBS","C"})
+    aAdd(aRet, {"B1_NOTAMIN","N"})
+    aAdd(aRet, {"B1_PRVALID","N"})
+    aAdd(aRet, {"B1_FABRIC","C"})
+    aAdd(aRet, {"B1_NUMCOP","N"})
+    aAdd(aRet, {"B1_IRRF","C"})
+    aAdd(aRet, {"B1_LOCALIZ","C"})
+    aAdd(aRet, {"B1_OPERPAD","C"})
+    aAdd(aRet, {"B1_PRODPAI","C"})
+    aAdd(aRet, {"B1_VLREFUS","N"})
+    aAdd(aRet, {"B1_IMPORT","C"})
+    aAdd(aRet, {"B1_SITPROD","C"})
+    aAdd(aRet, {"B1_MODELO","C"})
+    aAdd(aRet, {"B1_SETOR","C"})
+    aAdd(aRet, {"B1_BALANCA","C"})
+    aAdd(aRet, {"B1_TECLA","C"})
+    aAdd(aRet, {"B1_TIPOCQ","C"})
+    aAdd(aRet, {"B1_SOLICIT","C"})
+    aAdd(aRet, {"B1_GRUPCOM","C"})
+    aAdd(aRet, {"B1_NALNCCA","C"})
+    aAdd(aRet, {"B1_NUMCQPR","N"})
+    aAdd(aRet, {"B1_NALSH","C"})
+    aAdd(aRet, {"B1_CONTCQP","N"})
+    aAdd(aRet, {"B1_REVATU","C"})
+    aAdd(aRet, {"B1_INSS","C"})
+    aAdd(aRet, {"B1_CODEMB","C"})
+    aAdd(aRet, {"B1_ESPECIF","C"})
+    aAdd(aRet, {"B1_DATASUB","D"})
+    aAdd(aRet, {"B1_MAT_PRI","C"})
+    aAdd(aRet, {"B1_REDINSS","N"})
+    aAdd(aRet, {"B1_ALADI","C"})
+    aAdd(aRet, {"B1_REDIRRF","N"})
+    aAdd(aRet, {"B1_TAB_IPI","C"})
+    aAdd(aRet, {"B1_GRUDES","C"})
+    aAdd(aRet, {"B1_REDPIS","N"})
+    aAdd(aRet, {"B1_REDCOF","N"})
+    aAdd(aRet, {"B1_PCSLL","N"})
+    aAdd(aRet, {"B1_PCOFINS","N"})
+    aAdd(aRet, {"B1_PPIS","N"})
+    aAdd(aRet, {"B1_QTDSER","C"})
+    aAdd(aRet, {"B1_FLAGSUG","C"})
+    aAdd(aRet, {"B1_CLASSVE","C"})
+    aAdd(aRet, {"B1_MIDIA","C"})
+    aAdd(aRet, {"B1_VLR_IPI","N"})
+    aAdd(aRet, {"B1_QTMIDIA","N"})
+    aAdd(aRet, {"B1_ENVOBR","C"})
+    aAdd(aRet, {"B1_SERIE","C"})
+    aAdd(aRet, {"B1_FAIXAS","N"})
+    aAdd(aRet, {"B1_NROPAG","N"})
+    aAdd(aRet, {"B1_ISBN","C"})
+    aAdd(aRet, {"B1_TITORIG","C"})
+    aAdd(aRet, {"B1_LINGUA","C"})
+    aAdd(aRet, {"B1_EDICAO","C"})
+    aAdd(aRet, {"B1_CORPRI","C"})
+    aAdd(aRet, {"B1_CORSEC","C"})
+    aAdd(aRet, {"B1_NICONE","C"})
+    aAdd(aRet, {"B1_ATRIB1","C"})
+    aAdd(aRet, {"B1_ATRIB2","C"})
+    aAdd(aRet, {"B1_ATRIB3","C"})
+    aAdd(aRet, {"B1_REGSEQ","C"})
+    aAdd(aRet, {"B1_OBSISBN","C"})
+    aAdd(aRet, {"B1_CLVL","C"})
+    aAdd(aRet, {"B1_ATIVO","C"})
+    aAdd(aRet, {"B1_PESBRU","N"})
+    aAdd(aRet, {"B1_REQUIS","C"})
+    aAdd(aRet, {"B1_SELO","C"})
+    aAdd(aRet, {"B1_TIPCAR","C"})
+    aAdd(aRet, {"B1_VLR_ICM","N"})
+    aAdd(aRet, {"B1_VLRSELO","N"})
+    aAdd(aRet, {"B1_CODNOR","C"})
+    aAdd(aRet, {"B1_LOTVEN","N"})
+    aAdd(aRet, {"B1_OK","C"})
+    aAdd(aRet, {"B1_CPOTENC","C"})
+    aAdd(aRet, {"B1_MSBLQL","C"})
+    aAdd(aRet, {"B1_POTENCI","N"})
+    aAdd(aRet, {"B1_QTDACUM","N"})
+    aAdd(aRet, {"B1_EMAX","N"})
+    aAdd(aRet, {"B1_PIS","C"})
+    aAdd(aRet, {"B1_COFINS","C"})
+    aAdd(aRet, {"B1_FRETISS","C"})
+    aAdd(aRet, {"B1_TPREG","C"})
+    aAdd(aRet, {"B1_CSLL","C"})
+    aAdd(aRet, {"B1_CNAE","C"})
+    aAdd(aRet, {"B1_VLR_PIS","N"})
+    aAdd(aRet, {"B1_VLR_COF","N"})
+    aAdd(aRet, {"B1_CALCFET","C"})
+    aAdd(aRet, {"B1_PAUTFET","N"})
+    aAdd(aRet, {"B1_LMP","N"})
+    aAdd(aRet, {"B1_DESPIMP","C"})
+    aAdd(aRet, {"B1_PARCEI","C"})
+    aAdd(aRet, {"B1_USAFEFO","C"})
+    aAdd(aRet, {"B1_AGREGCU","C"})
+    aAdd(aRet, {"B1_FRACPER","N"})
+    aAdd(aRet, {"B1_CLASSE","C"})
+    aAdd(aRet, {"B1_INT_ICM","N"})
+    aAdd(aRet, {"B1_GCCUSTO","C"})
+    aAdd(aRet, {"B1_CCCUSTO","C"})
+    aAdd(aRet, {"B1_PMACNUT","N"})
+    aAdd(aRet, {"B1_PMICNUT","N"})
+    aAdd(aRet, {"B1_CODPROC","C"})
+    aAdd(aRet, {"B1_CODQAD","C"})
+    aAdd(aRet, {"B1_QBP","N"})
+    aAdd(aRet, {"B1_VLCIF","N"})
+    aAdd(aRet, {"B1_RETOPER","C"})
+    aAdd(aRet, {"B1_CRDEST","N"})
+    aAdd(aRet, {"B1_PRFDSUL","N"})
+    aAdd(aRet, {"B1_CODANT","C"})
+    aAdd(aRet, {"B1_FETHAB","C"})
+    aAdd(aRet, {"B1_FECP","N"})
+    aAdd(aRet, {"B1_IVAAJU","C"})
+    aAdd(aRet, {"B1_ESCRIPI","C"})
+    aAdd(aRet, {"B1_FUSTF","C"})
+    aAdd(aRet, {"B1_CRICMS","C"})
+    aAdd(aRet, {"B1_SELOEN","C"})
+    aAdd(aRet, {"B1_ALFECOP","N"})
+    aAdd(aRet, {"B1_REGRISS","C"})
+    aAdd(aRet, {"B1_ALFECST","N"})
+    aAdd(aRet, {"B1_PRODREC","C"})
+    aAdd(aRet, {"B1_FECOP","C"})
+    aAdd(aRet, {"B1_VIGENC","D"})
+    aAdd(aRet, {"B1_EMBDELP","N"})
+    aAdd(aRet, {"B1_CRDPRES","N"})
+    aAdd(aRet, {"B1_AFETHAB","N"})
+    aAdd(aRet, {"B1_AFACS","N"})
+    aAdd(aRet, {"B1_AFABOV","N"})
+    aAdd(aRet, {"B1_REFBAS","C"})
+    aAdd(aRet, {"B1_TFETHAB","C"})
+    aAdd(aRet, {"B1_VEREAN","C"})
+    aAdd(aRet, {"B1_RPRODEP","C"})
+    aAdd(aRet, {"B1_RICM65","C"})
+    aAdd(aRet, {"B1_PRDORI","C"})
+    aAdd(aRet, {"B1_CFEM","C"})
+    aAdd(aRet, {"B1_CFEMS","C"})
+    aAdd(aRet, {"B1_CFEMA","N"})
+    aAdd(aRet, {"B1_DTCORTE","D"})
+    aAdd(aRet, {"B1_TRIBMUN","C"})
+    aAdd(aRet, {"B1_TNATREC","C"})
+    aAdd(aRet, {"B1_TPPROD","C"})
+    aAdd(aRet, {"B1_CODLAN","C"})
+    aAdd(aRet, {"B1_PR43080","N"})
+    aAdd(aRet, {"B1_DCI","C"})
+    aAdd(aRet, {"B1_DCRE","C"})
+    aAdd(aRet, {"B1_ALFUMAC","N"})
+    aAdd(aRet, {"B1_DCR","C"})
+    aAdd(aRet, {"B1_PRN944I","C"})
+    aAdd(aRet, {"B1_DCRII","N"})
+    aAdd(aRet, {"B1_COEFDCR","N"})
+    aAdd(aRet, {"B1_CHASSI","C"})
+    aAdd(aRet, {"B1_DIFCNAE","C"})
+    aAdd(aRet, {"B1_REGESIM","C"})
+    aAdd(aRet, {"B1_RSATIVO","C"})
+    aAdd(aRet, {"B1_FECPBA","N"})
+    aAdd(aRet, {"B1_PRINCMG","N"})
+    aAdd(aRet, {"B1_CRICMST","C"})
+    aAdd(aRet, {"B1_ALFECRN","N"})
+    aAdd(aRet, {"B1_AJUDIF","C"})
+    aAdd(aRet, {"B1_SITTRIB","C"})
+    aAdd(aRet, {"B1_DESBSE3","C"})
+    aAdd(aRet, {"B1_BASE3","C"})
+    aAdd(aRet, {"B1_IAT","C"})
+    aAdd(aRet, {"B1_IPPT","C"})
+    aAdd(aRet, {"B1_TALLA","C"})
+    aAdd(aRet, {"B1_GDODIF","C"})
+    aAdd(aRet, {"B1_MARKUP","N"})
+    aAdd(aRet, {"B1_PRODSBP","C"})
+    aAdd(aRet, {"B1_CARGAE","C"})
+    aAdd(aRet, {"B1_VALEPRE","C"})
+    aAdd(aRet, {"B1_LOTESBP","N"})
+    aAdd(aRet, {"B1_TIPOBN","C"})
+    aAdd(aRet, {"B1_DESBSE2","C"})
+    aAdd(aRet, {"B1_ADMIN","C"})
+    aAdd(aRet, {"B1_BASE2","C"})
+    aAdd(aRet, {"B1_GARANT","C"})
+    aAdd(aRet, {"B1_TIPVEC","C"})
+    aAdd(aRet, {"B1_BASE","C"})
+    aAdd(aRet, {"B1_TPDP","C"})
+    aAdd(aRet, {"B1_PERGART","N"})
+    aAdd(aRet, {"B1_MEPLES","C"})
+    aAdd(aRet, {"B1_PAFMD5","C"})
+    aAdd(aRet, {"B1_PORCPRL","C"})
+    aAdd(aRet, {"B1_ESTRORI","C"})
+    aAdd(aRet, {"B1_AFAMAD","N"})
+    aAdd(aRet, {"B1_GRPTI","C"})
+    aAdd(aRet, {"B1_GRPCST","C"})
+    aAdd(aRet, {"B1_CEST","C"})
+    aAdd(aRet, {"B1_AFASEMT","N"})
+    aAdd(aRet, {"B1_AIMAMT","N"})
+    aAdd(aRet, {"B1_AFUNDES","N"})
+    aAdd(aRet, {"B1_COLOR","C"})
+    aAdd(aRet, {"B1_IMPNCM","N"})
+    aAdd(aRet, {"B1_CODGTIN","C"})
+    aAdd(aRet, {"B1_YDESP","C"})
+    aAdd(aRet, {"B1_YSC","C"})
+    aAdd(aRet, {"B1_YPC","C"})
+    aAdd(aRet, {"B1_YPV","C"})
+    aAdd(aRet, {"B1_YMI","C"})
+    aAdd(aRet, {"B1_YNFE","C"})
+    aAdd(aRet, {"B1_YPDESD","N"})
+    aAdd(aRet, {"B1_YPDESF","N"})
+    aAdd(aRet, {"B1_YVLPC","C"})
+    aAdd(aRet, {"B1_XLEWEG","C"})
+    aAdd(aRet, {"B1_CONV3","N"})
+    aAdd(aRet, {"B1_UM3","C"})
+    aAdd(aRet, {"B1_NF3UM","C"})
+    aAdd(aRet, {"B1_APOPRO","C"})
+    aAdd(aRet, {"B1_ITEMWEG","C"})
+    aAdd(aRet, {"B1_YCAT","C"})
+    aAdd(aRet, {"B1_ZDLPSEG","C"})
+    aAdd(aRet, {"B1_ZINVDLP","C"})
+    aAdd(aRet, {"B1_ZDESREV","C"})
+    aAdd(aRet, {"B1_XBLQCOM","C"})
+
+Return aRet
 
 /* -----------------------------------------------------------------------
    cFieldKind — retorna a especie do campo no catalogo, ou "" se ausente.
@@ -522,7 +742,7 @@ Return lExecSB1(self, 3)
 
 /*/{Protheus.doc} incProd (PUT)
     Alteracao de produto SB1 via rotina oficial MATA010 (ExecAuto op 4).
-    Representacao completa obrigatoria: todos os 291 campos do catalogo
+    Representacao completa obrigatoria: todos os 286 campos do catalogo
     (politica fail-closed contra perda por omissao).
 /*/
 WSMETHOD PUT incProd WSRECEIVE WSRESTFUL DelpiProduto

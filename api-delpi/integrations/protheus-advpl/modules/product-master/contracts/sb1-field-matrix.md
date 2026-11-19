@@ -95,9 +95,9 @@ Contagem: 285 elegíveis · 5 condicionais · 26 gerenciados · 3 imutáveis = 3
 | B1_DESC_I | Desc. Ingles | C | 6 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_GRTRIB | Grupo Trib. | C | 6 | 0 |  | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_MRP | Entra MRP | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
-| B1_VM_I | Desc. Ingles | M | 36 | 0 | x | CONDITIONAL | x | x | x | memo — semântica ExecAuto VALIDAR NO TST01 |
-| B1_VM_GI | Desc. LI | M | 48 | 0 | x | CONDITIONAL | x | x | x | memo — semântica ExecAuto VALIDAR NO TST01 |
-| B1_VM_P | Desc. Portug | M | 36 | 0 | x | CONDITIONAL | x | x | x | memo — semântica ExecAuto VALIDAR NO TST01 |
+| B1_VM_I | Desc. Ingles | M | 36 | 0 | x | TO_INVENTORY | x | x | x | sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao|
+| B1_VM_GI | Desc. LI | M | 48 | 0 | x | TO_INVENTORY | x | x | x | sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao|
+| B1_VM_P | Desc. Portug | M | 36 | 0 | x | TO_INVENTORY | x | x | x | sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao|
 | B1_OPC | Opc. Default | C | 80 | 0 | x | SYSTEM_MANAGED |  | x |  | X3_VISUAL=V — somente visualização (oficial) |
 | B1_ANUENTE | Anuente | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_CODOBS | Cod. Obs. | C | 6 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
@@ -111,7 +111,7 @@ Contagem: 285 elegíveis · 5 condicionais · 26 gerenciados · 3 imutáveis = 3
 | B1_PRODPAI | Produto Pai | C | 15 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_VLREFUS | Val.Ref.US$ | N | 15 | 5 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_IMPORT | Prod. Import | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
-| B1_OBS | Observacao | M | 60 | 0 | x | CONDITIONAL | x | x | x | memo — semântica ExecAuto VALIDAR NO TST01 |
+| B1_OBS | Observacao | M | 60 | 0 | x | TO_INVENTORY | x | x | x | sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao|
 | B1_SITPROD | Situacao | C | 2 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_MODELO | Modelo | C | 15 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=(default) — editável MATA010 |
 | B1_SETOR | Setor | C | 2 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
@@ -208,7 +208,7 @@ Contagem: 285 elegíveis · 5 condicionais · 26 gerenciados · 3 imutáveis = 3
 | B1_PMICNUT | % Micronutr. | N | 6 | 2 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_CODPROC | Cód.desc.pro | C | 6 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_CODQAD | Dep Correcao | C | 33 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
-| B1_VM_PROC | Desc.Process | M | 48 | 0 | x | CONDITIONAL | x | x | x | memo — semântica ExecAuto VALIDAR NO TST01 |
+| B1_VM_PROC | Desc.Process | M | 48 | 0 | x | TO_INVENTORY | x | x | x | sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao|
 | B1_QBP | Base Pre-Es. | N | 7 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_VLCIF | Valor CIF | N | 12 | 3 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |
 | B1_RETOPER | Ret.Operação | C | 1 | 0 | x | READ_WRITE_ELIGIBLE | x | x | x | X3_VISUAL=A — editável MATA010 |

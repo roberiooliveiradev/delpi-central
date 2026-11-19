@@ -24,7 +24,7 @@ evidence_tst01_2026_11_19:
   compiled_env: "ambiente auxiliar 'TESTE DELPI COMPILACAO' (TDS 233:2001) — REST proprio em :8061/restall"
   urns_registered: "4/4 vivas no :8061; PUT/GET/DELETE responderam 501 do contrato (fonte v0.4.0 comprovado)"
   functional_blocker: "GetContent()/FromJson sem body no REST do :8061 (sibling delpiproduto rejeitou JSON valido igual) — validacao funcional exige REST sao"
-  target_rest: "REST alvo da api-delpi = :8701 (RPO via TDS 233:2002, AMBIENTE=2)"
+  target_rest: "REST alvo da api-delpi = :8061/restall (RPO via TDS 233:2001, AMBIENTE=2; ex-:8701 movido em 2026-11-19)"
 
 references:
   manifest_path: "(nao gerado — packaging requer commit; fonte espelha modules/product-suppliers @working tree)"
