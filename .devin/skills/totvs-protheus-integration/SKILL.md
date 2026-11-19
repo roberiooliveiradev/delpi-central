@@ -117,6 +117,81 @@ primeira classe ao escrever QUALQUER handler de body:
   modelo — `u_DLPDBG01` via TDS/smartclient).
 - Nunca logar conteúdo de body (segurança) — só `ValType`/`Len`.
 
+### Modelo de dados Protheus (essencial p/ qualquer integração)
+
+- **`D_E_L_E_T_`** = soft-delete: `'*'` excluído, `' '` ativo. Protheus
+  **nunca hard-deleta** — DELETE oficial vira flag; qualquer leitura deve
+  filtrar `D_E_L_E_T_ = ' '`. `R_E_C_N_O_`/`R_E_C_D_E_L_` são ids internos —
+  nunca expor como chave de contrato.
+- **Tabela física** `<alias><empresa><filial>` (SB1010, SB1020 — sufixo por
+  filial); `xFilial("SB1")` resolve a filial corrente; relations oficiais do
+  modelo aplicam `xFilial` sozinhos.
+- **Campos memo (SX3 `M`)**: conteúdo fora da tabela física — leitura só via
+  `MSMM()`; se a coluna não existir no físico (caso B1_VM_*/B1_OBS do TST01),
+  o campo sai do contrato até materialização.
+- **SX3 = dicionário declarativo, não contrato**: `X3_VALID` (expressão de
+  validação), `X3_RELACAO` (código de validação), `X3_CBOX` (combo),
+  `X3_F3` (consulta padrão), `X3_PICTURE` (máscara), `X3_VISUAL` (editável na
+  tela), `X3_WHEN`. SX3 declara; o **modelo da rotina** decide o que é
+  aceito — por isso SX3 ∩ form é o catálogo real.
+- **Parâmetros `SX6`/`MV_*`** alteram comportamento do modelo — ex.:
+  `MV_CADPROD` habilita submodelos/grade. Validar params do ambiente antes
+  de assumir presença de campos/submodelos.
+- **Campos custom**: faixa alfabética reservada por cliente (Delpi usa
+  Z/Y/X em muitos); são campos SX3 normais — mesmas regras.
+
+### Mapa de rotinas oficiais × mecanismo
+
+| Rotina | Domínio | Mecanismo comprovado/referência |
+|---|---|---|
+| MATA010 | SB1 produtos | MVC `SB1MASTER`; `FWMVCRotAuto`/`MSExecAuto` (DLP04I01) |
+| MATA020 | SA1 clientes | ExecAuto suportado (historicamente) |
+| MATA030 | SA2 fornecedores | ExecAuto suportado (historicamente) |
+| MATA061 | SA5 prod×fornecedor | MVC Model-2 `DMATA061` — sem MSExecAuto (DLP04I02) |
+| MATA120/160 | SC5/SC6 pedidos | ExecAuto parcial — validar por release |
+| MATA650/250 | SC4 OP/apontamento | ExecAuto |
+| FINA070/080 | SE1/SE2 títulos | ExecAuto histórico |
+
+Mecanismo e campos do form variam por release/parâmetro — **VALIDAR NO
+TST01 por ambiente** antes de promover contrato.
+
+### ExecAuto/MVC em profundidade
+
+- Triplas `{CAMPO, valor, Nil}` com **valor tipado** (D=`StoD`, N=numérico,
+  C=string) — o modelo valida estrutura (`FWNOSTRUCT` = tipo errado).
+- `GetAutoGrLog()` = dump sequencial de campos processados + blocos
+  `"Erro -->"` no **final** — ao truncar para resposta, manter a cauda.
+- `PRIVATE lMsErroAuto := .F.` (não LOCAL — a rotina interna a enxerga),
+  `lMsHelpAuto := .T.`, `lAutoErrNoFile := .T.`.
+- `oModel:GetErrorMessage()` = array [form-origem, campo-origem, form-erro,
+  campo-erro, id-erro, msg, solução, valor, valor-anterior].
+- UPDATE via modelo manual exige `dbSeek` prévio posicionando o registro.
+
+### Runtimes REST e appserver
+
+- `/rest` = HTTPREST clássico; `/restall` = REST 2.0 — **mesmo WSRESTFUL,
+  daemon diferente** (pool, entrega de body, reciclagem pós-build).
+- Auth nativo: `/rest/api/oauth2/v1/token` quando oauth2 configurado.
+- Serviço REST = processo/appserver próprio com RPO/ini próprios:
+  `[HTTPREST]`, `[HTTPV11]` (URI `/rest`), pool de threads,
+  `MAXSTRINGSIZE`. Compilar ≠ carregar — restart relê o RPO.
+- TDS compila no RPO da **conexão ativa**: porta × ambiente × serviço.
+
+### ADVPL essencial (referência rápida)
+
+- `ValType`: C N D L A O J U B M — ausente/indefinido = `"U"`.
+- Escopo: `LOCAL` (função), `STATIC` (arquivo), `PRIVATE` (visível na
+  cadeia de chamada — por isso `lMsErroAuto` exige PRIVATE), `PUBLIC`.
+- `ErrorBlock` + `Begin Sequence`/`Recover` = try/catch; `Break(e)` entrega
+  o erro ao Recover; restaurar com `ErrorBlock(oAnterior)` no fim.
+- Conversões: `StoD/DtoS/CtoD`, `Val/Str/cValToChar`, `AllTrim/RTrim`.
+- `WSMETHOD`/`WSRESTFUL` são `#xcommand`/`#xtranslate` do `RESTFUL.CH` —
+  viram `Function ___REST_*` na compilação.
+- `user function X()` = pública/invocável (u_X); `static function` =
+  privada ao arquivo (helpers internos).
+- `JsonObject`: `o["k"]`, `GetJSonObject`, `GetNames`, `ToJson`; array de
+  objetos vira array ADVPL; `FreeObj` obrigatório.
+
 ## Atualização de autoridade de fontes (2026-11)
 
 - **Fonte versionada primária ADVPL/TLPP:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, consultado no HEAD vigente via GitHub autorizado. Registrar `SOURCE_REPO/BRANCH/SHA/PATH/BLOB_SHA` em cada análise.
