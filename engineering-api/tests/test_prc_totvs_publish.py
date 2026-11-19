@@ -316,6 +316,28 @@ class TestPublishCreate:
         assert inner["officialCode"] == "001234"
         assert len(prc_publish_repo["publisher"].calls) == calls_after
 
+    def test_same_key_divergent_reason_returns_duplicate_conflict(
+        self, client, jwks_env, core_rbac, prc_publish_repo
+    ):
+        # OC-1 r4 — caso negativo da semantica idempotente: mesma
+        # Idempotency-Key com reason divergente nao e replay — e
+        # PrcDuplicateError (409) sem nenhuma escrita adicional.
+        prc_publish_repo["reader"] = FakeReader([_product()])
+        rid, version = _create_in_progress(client, jwks_env, core_rbac)
+        first = _publish(
+            client, jwks_env, rid, version, officialCode="001234",
+            idempotency_key="pub-div", reason="primeira publicacao",
+        )
+        assert first.status_code == 200, first.text
+        calls_after = len(prc_publish_repo["publisher"].calls)
+
+        second = _publish(
+            client, jwks_env, rid, version, officialCode="001234",
+            idempotency_key="pub-div", reason="outro motivo",
+        )
+        assert second.status_code == 409, second.text
+        assert len(prc_publish_repo["publisher"].calls) == calls_after
+
     def test_create_requires_official_code(
         self, client, jwks_env, core_rbac, prc_publish_repo
     ):
