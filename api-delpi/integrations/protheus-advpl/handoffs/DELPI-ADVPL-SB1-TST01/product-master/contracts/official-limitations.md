@@ -18,7 +18,7 @@ que a equipe ERP deve validar antes de qualquer escrita real.
 
 | Item | Bloqueio |
 |---|---|
-| Compilação do candidato no RPO TST01 | requer TDS na conexão `233:2001` (REST `:8061/restall`) + restart do REST — exclusivo equipe ERP. Registro 2026-11-19: daemon `:8061` não entrega body ao WSRESTFUL; validação funcional de escrita em avaliação via TDS `233:2002` (`:8701`) |
+| Compilação do candidato no RPO TST01 | requer TDS na conexão `233:2002` (ambiente `api`, REST `:8701/rest`, serviço `dev_rest_minha_delpi`) + restart do REST — exclusivo equipe ERP. Registro 2026-11-19: daemon `:8061` não entrega body ao WSRESTFUL — descontinuado como alvo de integração |
 | 8 campos (`TO_INVENTORY`) | `B1_VM_I`, `B1_VM_GI`, `B1_VM_P`, `B1_OBS`, `B1_VM_PROC` — SX3 declara e modelo expoe (tipo M), mas sem coluna física na SB1010 do TST01; + `B1_GRADE`, `B1_OK`, `B1_CARGAE` — modelo SB1MASTER nao expoe (dump u_DLPDBG01, 317 campos, TST01 2026-11-19) => catalogo 283 até materialização |
 | DELETE (op 5 MATA010) | sem fonte MATA010 disponível; vínculos SA5/SB2/movimentações não inventariados — **método publicado retorna 501 e não executa nada** |
 | Semântica de representação completa no op 4 | política fail-closed assumida por contrato (bug conhecido de zeramento); confirmar comportamento por campo no TST01 |

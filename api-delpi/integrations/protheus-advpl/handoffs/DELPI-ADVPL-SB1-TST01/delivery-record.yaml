@@ -35,7 +35,7 @@ operation_states:
   DELETE: "BLOCKED / OFFICIAL_SEMANTICS_PENDING (DELETE 501 not_homologated)"
 
 runtime_blockers:
-  - "compilacao no RPO do ambiente AMBIENTE=2 (TDS 233:2001, REST :8061/restall) + restart do REST — exclusivo equipe ERP; registro 2026-11-19: :8061 nao entrega body ao WSRESTFUL — validacao funcional alternativa TDS 233:2002 (:8701) em curso"
+  - "compilacao no RPO do ambiente `api` (TDS 233:2002, REST :8701/rest, servico dev_rest_minha_delpi) + restart do REST — exclusivo equipe ERP; registro 2026-11-19: :8061 nao entrega body ao WSRESTFUL — descontinuado, alvo canonico TST01 = :8701"
   - "formato do valor D no ExecAuto (string AAAAMMDD / vazio): VALIDAR NO TST01 — item novo do checklist"
   - "5 campos memo SX3 sem coluna fisica na SB1010 do TST01 (B1_VM_I/GI/P, B1_OBS, B1_VM_PROC) → TO_INVENTORY, fora do catalogo v0.5.2"
   - "serializacao de JsonObject aninhados no GET metadados: validar na compilacao"

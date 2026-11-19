@@ -176,7 +176,18 @@ TST01 por ambiente** antes de promover contrato.
   `WSRESTFUL DelpiProduto ... PATH '/v1/IncProduto/alterar'` →
   `PUT /rest/delpiproduto/v1/IncProduto/alterar`. Sem o prefixo do
   serviço = 404 mesmo com objeto compilado (lição TST01 2026-11-19).
-- Auth nativo: `/rest/api/oauth2/v1/token` quando oauth2 configurado.
+- Auth nativo: `/rest/api/oauth2/v1/token` quando oauth2 configurado —
+  **form-urlencoded** (`grant_type=password&username&password`); o
+  endpoint rejeita JSON ("Está faltando grant_type").
+- **Alvos canônicos (drift resolvido 2026-11-19):**
+  - TST01 = `192.168.1.233:8701` (`/rest`, ambiente `api`, TDS `233:2002`,
+    serviço `dev_rest_minha_delpi`, RPO `apo\debug\api\Rest\custom.rpo` —
+    DB-backed via `RepositInDataBase=1`);
+  - daemon `:8061`/`/restall` do TST01 (TDS `233:2001`) **descontinuado** —
+    não entrega body ao WSRESTFUL nem carrega os objetos Delpi;
+  - produção = `192.168.1.231:8061` (`/restall`) — `PROVEN_LIVE`, manter;
+  - `PARAMETROS_MINHADELPI.AMBIENTE=2` carrega `URL_REST=…:8701/rest`
+    (o `/rest` vai **dentro** da URL_REST; `BASE_PATH` vazio).
 - Serviço REST = processo/appserver próprio com RPO/ini próprios:
   `[HTTPREST]`, `[HTTPV11]` (URI `/rest`), pool de threads,
   `MAXSTRINGSIZE`. Compilar ≠ carregar — restart relê o RPO.

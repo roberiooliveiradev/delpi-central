@@ -17,7 +17,7 @@ de abrir qualquer nova superfície de escrita.
 |---|---|---|
 | SQL Server TOTVS | `192.168.1.230` | Bases `DELPI` (produção) e `DELPI_TST01` (teste) |
 | REST Protheus **produção** | `http://192.168.1.231:8061` | rotas sob `/restall` |
-| REST Protheus **teste (TST01)** | `http://192.168.1.233:8061` | rotas sob `/restall`; escreve em `DELPI_TST01`. Transição 2026-11-19: `:8701` (`/rest`, ambiente `api`) segue como REST alternativo de validação funcional |
+| REST Protheus **teste (TST01)** | `http://192.168.1.233:8701` | rotas sob `/rest`; escreve em `DELPI_TST01`. Reversão 2026-11-19: o daemon `:8061` (`/restall`) do TST01 **não entrega body ao WSRESTFUL** e não carrega os objetos Delpi — descontinuado para integração |
 | Arquivos/log do serviço REST | `192.168.1.232` | deployment Protheus; log lista classes publicadas |
 | Tabela de parâmetros | `PARAMETROS_MINHADELPI` no banco Intranet (`INTRANET_DB_*`, default `IntranetDelpiDev`) | owner ERP/Intranet — nunca editar da api-delpi |
 
@@ -25,7 +25,7 @@ A linha `AMBIENTE` da tabela de parâmetros decide o destino:
 `INTRANET_PARAMS_AMBIENTE=1` → produção · `=2` → TST01.
 
 **Regra de ouro:** dev e HML vivem pinados a `AMBIENTE=2` +
-`PROTHEUS_REST_EXPECTED_BASE_URL=http://192.168.1.233:8061`
+`PROTHEUS_REST_EXPECTED_BASE_URL=http://192.168.1.233:8701/rest`
 (em HML, literais no compose — `env_file` não sobrescreve).
 Produção: `AMBIENTE=1` + pin `http://192.168.1.231:8061`.
 O pin é fail-closed: se os parâmetros resolverem URL diferente do esperado,
@@ -134,7 +134,7 @@ Nunca retry automático em escrita. `UNKNOWN` exige reconciliação manual
 | Var | dev/local | HML | prod |
 |---|---|---|---|
 | `INTRANET_PARAMS_AMBIENTE` | `2` | `"2"` literal | `1` |
-| `PROTHEUS_REST_EXPECTED_BASE_URL` | `http://192.168.1.233:8061` | literal TST | `http://192.168.1.231:8061` |
+| `PROTHEUS_REST_EXPECTED_BASE_URL` | `http://192.168.1.233:8701/rest` | literal TST | `http://192.168.1.231:8061` |
 | `PROTHEUS_{ENTITY}_…_ENABLED` | `true` só durante homologação | `false` literal até janela autorizada | `false` |
 
 HML precisa de acesso ao banco de parâmetros — os `DB_*`/`TOTVS_DB_*` de
@@ -145,7 +145,8 @@ checkout de produção). Sem `INTRANET_DB_*` a integração falha fechada.
 Provisionado em 2026-11-17: `.env.hml` com `INTRANET_DB_*` +
 `PROTHEUS_PRODUCT_UPDATE_ENABLED=true` + pins TST; container
 `delpi-hml-api-delpi` healthy com a rota live e params resolvendo
-`URL_REST=http://192.168.1.233:8061` (+ `BASE_PATH=/restall`).
+`URL_REST=http://192.168.1.233:8701/rest` (`BASE_PATH` vazio; `/rest` vai
+dentro da URL_REST — composição pré-BASE_PATH).
 
 ## 7. Receita de homologação live (TST01)
 

@@ -113,7 +113,7 @@ Canais avaliados para consultar **funções/rotinas efetivamente compiladas**:
 
 | Canal | Método | Resultado |
 |---|---|---|
-| RESTALL (`:8061` / `:8701`) | classes publicadas | `PROVEN_LIVE` para catálogo REST; **nenhuma classe de inspeção de RPO** no inventário G0-B (527/526 classes) |
+| RESTALL (`:8061` / `:8701`) | classes publicadas | `PROVEN_LIVE` para catálogo REST; **nenhuma classe de inspeção de RPO** no inventário G0-B (527/526 classes). TST01: `:8701` (`/rest`) é o alvo canônico de integração desde 2026-11-19 — `:8061` não entrega body ao WSRESTFUL |
 | SOAP/WS (`:8080` `WSINDEX.apw`) | catálogo de serviços + status | `PROVEN_LIVE` — inventário de serviços publicados (lista abaixo); **metadados de função não expostos** |
 | FWDICTIONARY/FWWSMODEL (SOAP) | consulta dicionário/modelo | `DESABILITADO` no catálogo — não invocável |
 | SmartClient TCP (`:5555`) | sessão nativa | `BLOCKED` — protocolo binário proprietário, sem cliente headless |
