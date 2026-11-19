@@ -309,16 +309,41 @@ def narrow_product_fields(product: dict[str, Any], *, view: str = "full") -> dic
     return {field: product.get(field) for field in allowed if field in product}
 
 
+# Campos SA5 comerciais excluídos do raw_fields na visão
+# "engineering-full" (mesmo critério do doc 63 §4 — preço/condição
+# comercial não vai para a superfície de engenharia).
+_SA5_COMMERCIAL_PREFIXES = (
+    "A5_PRECO", "A5_VLCOTUS", "A5_ULT_FOB", "A5_TR_COST",
+    "A5_QT_COT", "A5_COND", "A5_DTCOM", "A5_QUANT", "A5_MOE_US",
+)
+
+
 def narrow_supplier_fields(
     supplier: dict[str, Any], *, view: str = "full"
 ) -> dict[str, Any]:
-    if not isinstance(supplier, dict) or view != "engineering":
+    if not isinstance(supplier, dict):
         return supplier
-    return {
-        field: supplier.get(field)
-        for field in PRODUCT_SUPPLIER_ENGINEERING_FIELDS
-        if field in supplier
-    }
+    if view == "engineering":
+        return {
+            field: supplier.get(field)
+            for field in PRODUCT_SUPPLIER_ENGINEERING_FIELDS
+            if field in supplier
+        }
+    if view == "engineering-full":
+        out = {
+            field: supplier.get(field)
+            for field in PRODUCT_SUPPLIER_ENGINEERING_FIELDS
+            if field in supplier
+        }
+        raw = supplier.get("raw_fields")
+        if isinstance(raw, dict):
+            out["raw_fields"] = {
+                k: v
+                for k, v in raw.items()
+                if not k.startswith(_SA5_COMMERCIAL_PREFIXES)
+            }
+        return out
+    return supplier
 
 
 def narrow_paged_items(

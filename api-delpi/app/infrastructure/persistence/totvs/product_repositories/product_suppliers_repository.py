@@ -96,6 +96,9 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 SA5.A5_CODPRCA  AS catalog_code,
                 SA5.A5_CODBAR   AS barcode,
 
+                -- Full SA5 row (all A5_* columns land in raw_fields)
+                SA5.*,
+
                 -- Lead times
                 SA5.A5_LEAD_T           AS registered_lead_time_days,
                 RLT.avg_lead_time_days  AS real_avg_lead_time_days,
@@ -175,6 +178,10 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
 
                 last_price=r["last_price"],
                 last_price_date=r["last_price_date"],
+
+                raw_fields={
+                    k: v for k, v in r.items() if k.startswith("A5_")
+                } or None,
             )
             for r in rows
         ]

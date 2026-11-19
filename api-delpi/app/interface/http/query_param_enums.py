@@ -156,7 +156,12 @@ LMP_DASHBOARD_STATUS_VALUES = (
 )
 LMP_SUMMARY_MODE_VALUES = ("kpi", "full")
 PRODUCT_EXCLUSIVITY_VIEW_VALUES = ("by_material", "by_finished_product")
-PRODUCT_DETAIL_VIEW_VALUES = ("full", "summary", "engineering")
+PRODUCT_DETAIL_VIEW_VALUES = (
+    "full",
+    "summary",
+    "engineering",
+    "engineering-full",
+)
 
 
 PRODUCTION_OTD_STATUS_VALUES = ("on_time", "late")

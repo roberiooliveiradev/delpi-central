@@ -33,3 +33,8 @@ class Supplier:
     manufacturer_code: Optional[str] = None
     manufacturer_store: Optional[str] = None
     grade_reference: Optional[str] = None
+
+    # Raw SA5 row (all A5_* columns) — additive Optional; powers the
+    # full-field detail/verification surface without narrowing the
+    # curated engineering view used by other consumers.
+    raw_fields: Optional[dict] = None
