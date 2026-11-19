@@ -90,10 +90,13 @@ _PENDING_FIELDS = {
 
 @router.get(
     "/pending-by-supplier",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "get_supplies_third_party_materials_pending_suppliers",
-        path="/supplies/third-party-materials/pending-by-supplier",
+    summary="Pendências de materiais de terceiros por fornecedor",
+    description=(
+        "Consolida o saldo aberto por fornecedor, loja e produto, considerando "
+        "cada remessa SB6 uma única vez. Restringe-se a materiais de fornecedores "
+        "recebidos pela Delpi, preservando a autorização por filial."
     ),
+    operation_id="get_supplies_third_party_materials_pending_suppliers",
 )
 @require_any_permission(THIRD_PARTY_MATERIALS_READ_PERMISSIONS)
 def get_supplies_third_party_materials_pending_suppliers(
@@ -134,10 +137,12 @@ def get_supplies_third_party_materials_pending_suppliers(
 
 @router.get(
     "/pending-by-supplier/export",
-    **OpenApiAgentMetadataBuilder.from_contract(
-        "export_supplies_third_party_materials_pending_suppliers",
-        path="/supplies/third-party-materials/pending-by-supplier/export",
+    summary="Exportação de pendências por fornecedor",
+    description=(
+        "Exporta o consolidado por fornecedor, loja e produto em CSV ou Excel. "
+        "Recusa arquivos acima do limite de linhas; requer permissão de exportação."
     ),
+    operation_id="export_supplies_third_party_materials_pending_suppliers",
 )
 @require_any_permission(THIRD_PARTY_MATERIALS_EXPORT_PERMISSIONS)
 def export_supplies_third_party_materials_pending_suppliers(

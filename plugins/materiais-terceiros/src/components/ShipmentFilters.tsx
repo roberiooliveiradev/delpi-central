@@ -16,6 +16,7 @@ type ShipmentFiltersProps = {
   filters: ThirdPartyMaterialsQuery;
   authorizedBranches: string[];
   loading?: boolean;
+  mode?: "pending" | "shipments";
   onChange: (patch: Partial<ThirdPartyMaterialsQuery>) => void;
   onClear: () => void;
 };
@@ -29,6 +30,7 @@ export function ShipmentFilters({
   filters,
   authorizedBranches,
   loading = false,
+  mode = "shipments",
   onChange,
   onClear,
 }: ShipmentFiltersProps) {
@@ -60,6 +62,8 @@ export function ShipmentFilters({
           onChange={(value) => onChange({ product: value })}
           disabled={loading || !filters.branch}
         />
+        {mode === "shipments" ? (
+          <>
         <FilterInputField
           id="mt-filter-customer-ref"
           label="Ref. cliente"
@@ -90,6 +94,8 @@ export function ShipmentFilters({
           onChange={(value) => onChange({ returnNumber: value })}
           disabled={loading || !filters.branch}
         />
+          </>
+        ) : null}
       </div>
 
       <div className="mt-filters__secondary">
@@ -112,6 +118,8 @@ export function ShipmentFilters({
           onChange={(value) => onChange({ partnerStore: value })}
           disabled={loading || !filters.branch}
         />
+        {mode === "shipments" ? (
+          <>
         <FilterInputField
           id="mt-filter-from"
           label="Emitida de"
@@ -147,6 +155,8 @@ export function ShipmentFilters({
           onChange={(checked) => onChange({ onlyWithBalance: checked })}
           disabled={loading || !filters.branch}
         />
+          </>
+        ) : null}
         <FilterCheckboxField
           id="mt-filter-test"
           label="Incluir produtos de teste"

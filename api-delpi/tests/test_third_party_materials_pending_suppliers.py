@@ -126,6 +126,12 @@ def test_export_fails_closed_for_more_than_limit():
 def test_pending_report_router_contract_and_branch_access():
     from app.interface.http.routes.supplies.third_party_materials_router import router
     paths = {route.path for route in router.routes if hasattr(route, "path")}
+    pending = next(route for route in router.routes if route.path.endswith("/pending-by-supplier"))
+    pending_export = next(
+        route for route in router.routes if route.path.endswith("/pending-by-supplier/export")
+    )
+    assert pending.operation_id == "get_supplies_third_party_materials_pending_suppliers"
+    assert pending_export.operation_id == "export_supplies_third_party_materials_pending_suppliers"
     assert "/supplies/third-party-materials/pending-by-supplier" in paths
     assert "/supplies/third-party-materials/pending-by-supplier/export" in paths
 

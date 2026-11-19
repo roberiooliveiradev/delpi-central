@@ -228,6 +228,7 @@ export function MateriaisTerceirosPage({
         </div>
 
         <ShipmentFilters
+          mode={view}
           filters={query}
           authorizedBranches={authorizedBranches}
           onChange={handleFilterChange}
