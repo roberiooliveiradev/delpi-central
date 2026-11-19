@@ -22,6 +22,8 @@ Envelope padrão `{ success, message, data, meta }`. `branch` obrigatório (`01`
 | GET | `/shipments` | `get_supplies_third_party_materials_shipments` | paged_list |
 | GET | `/shipments/{shipment_recno}` | `get_supplies_third_party_materials_shipment` | playbook_report |
 | GET | `/summary` | `get_supplies_third_party_materials_summary` | scalar |
+| GET | `/pending-by-supplier` | `get_supplies_third_party_materials_pending_suppliers` | paged_list |
+| GET | `/pending-by-supplier/export` | `export_supplies_third_party_materials_pending_suppliers` | document_export |
 | GET | `/returns/export` | `export_supplies_third_party_materials_returns` | document_export |
 
 Paginação da lista: **por remessa** (2 etapas: `DISTINCT RECNO_REMESSA` + detalhe `IN`). A view tem 1 linha por retorno; saldo/qtd recebida se repetem — nunca somar nas linhas detalhadas.
@@ -37,7 +39,7 @@ Ref. Cliente (`SB1.B1_REFEREN`) **não** está na view live — a API faz `LEFT 
 | `branch` | Filial TOTVS `01`/`02` (obrigatório) |
 | `product` | Código do produto |
 | `customer_reference` | Ref. Cliente (`SB1.B1_REFEREN`) — prefixo, case-insensitive |
-| `partner_code` / `partner_store` | Cliente SA1 |
+| `partner_code` / `partner_store` | Parceiro cliente SA1 ou fornecedor SA2. No consolidado, somente fornecedores com saldo |
 | `receipt_number` / `return_number` | NF entrada / NF retorno |
 | `issued_from` / `issued_to` | Emissão da remessa (ISO) |
 | `status` | `completed` \| `partial` \| `no_return` |
@@ -80,3 +82,11 @@ A api-delpi **só consulta**. DBA aplica/confere a view no SQL Server antes do s
 
 - Filial sempre obrigatória; sem dump da base no primeiro load do MFE.
 - Sem cache na v1. Medir plano em homolog antes de criar índice.
+
+## Consolidado de pendências de fornecedores
+
+O fluxo existente de remessas de materiais de terceiros `B6_TIPO='D'` é mantido. A consulta do consolidado aplica `TIPO_PARCEIRO='F'` e `POSSUI_SALDO='S'`, deduplica `RECNO_REMESSA` antes do somatório e agrupa por fornecedor, loja e produto.
+
+O campo `supplier_name` vem da `SA2010`; clientes existentes continuam identificados pela `SA1010` na view. Resumo e exportação respeitam filial, filtros, permissão e limite; unidades diferentes não devem ser somadas num único KPI sem contexto.
+
+A API e o MFE são containers distintos. A disponibilização da nova interface requer rebuild e recriação do serviço `materiais-terceiros`, não apenas da `api-delpi`.
