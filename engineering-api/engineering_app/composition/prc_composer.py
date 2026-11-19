@@ -151,16 +151,45 @@ def build_prc_attachment_storage():
     )
 
 
+def build_product_publisher():
+    """Adapter de escrita governada — api-delpi /integrations/protheus/*.
+
+    Delegação do Bearer humano (mesmo padrão do reader); a api-delpi
+    resolve ``codusr`` e aplica os gates/pins de escrita no ERP. O gate
+    de exposição da ação (``ENG_PRC_TOTVS_PUBLISH_ENABLED``) é checado
+    no service — o adapter é construído sempre para manter o wiring
+    determinístico em testes.
+    """
+    from engineering_app.config import settings
+    from engineering_app.infrastructure.gateways.downstream_client import (
+        DownstreamClient,
+    )
+    from engineering_app.infrastructure.gateways.product_publisher import (
+        ApiDelpiProductPublisher,
+    )
+
+    return ApiDelpiProductPublisher(
+        DownstreamClient(
+            settings.DELPI_API_URL,
+            timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
+        )
+    )
+
+
 def build_prc_service() -> ProductRegistrationService:
     global _SERVICE_SINGLETON
     if _SERVICE_SINGLETON is not None:
         return _SERVICE_SINGLETON
+    from engineering_app.config import settings
+
     _SERVICE_SINGLETON = ProductRegistrationService(
         build_prc_repository(),
         official_reader=build_official_product_reader(),
         allowed_sources=_sources_allowlist(),
         attachment_storage=build_prc_attachment_storage(),
         realtime_publisher=build_realtime_publisher(),
+        product_publisher=build_product_publisher(),
+        totvs_publish_enabled=settings.ENG_PRC_TOTVS_PUBLISH_ENABLED,
     )
     return _SERVICE_SINGLETON
 

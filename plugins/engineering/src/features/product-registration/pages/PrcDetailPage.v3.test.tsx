@@ -144,7 +144,9 @@ describe("PrcActionBar — hierarquia, ícones e ajuda", () => {
   });
 
   it("ações levam ajuda contextual via title", () => {
-    expect(ACTION_BAR).toMatch(/title=\{spec\.help\}/);
+    expect(ACTION_BAR).toMatch(/spec\.help/);
+    // Automação gateada troca o hint por aviso honesto de gate.
+    expect(ACTION_BAR).toMatch(/publishGated/);
   });
 
   it("ação destrutiva recebe classe visual distinta", () => {
@@ -164,5 +166,14 @@ describe("PrcActionBar — hierarquia, ícones e ajuda", () => {
       );
       expect(SPECS).toMatch(block);
     }
+  });
+
+  it("publish_totvs — automação com destaque acentuado e ícone", () => {
+    const block = /action: "publish_totvs",[\s\S]*?icon: CloudUpload,[\s\S]*?accent: true/;
+    expect(SPECS).toMatch(block);
+    expect(ACTION_BAR).toMatch(/engineering-prc__action--accent/);
+    expect(ACTION_BAR).toMatch(/publishGated/);
+    expect(API).toMatch(/totvsPublishEnabled\?: boolean/);
+    expect(API).toMatch(/totvsPublish\?: string/);
   });
 });

@@ -90,3 +90,44 @@ DELPI.SB1010      B1_COD='10450043' → B1_DESC='PESO PARA TESTE 6KG'   (produç
 - ~~Carimbo dentro do Protheus sai como conta de serviço (`delpiproduto` não recebe `codusr`); ator real fica no ledger local~~ — **FECHADO 2026-11-19**: `codusr` viaja no body upstream (meta-campo fora do catálogo) e o build `dlp-v056-m283-codusr` grava `AIF_ZCDUSR` pós-commit MATA010. Prova live TST01: PUT `10100057` com `"codusr":"000461"` → linha `AIF010` `15:21` (`AIF_CODPRO=10100057`, campo `B1_DESC`) com `AIF_ZCDUSR='000461'`. Bug corrigido no caminho: janela `AIF_HORA` exige `Left(Time(),5)` (`AIF_HORA` é `HH:MM`, `Time()` traz segundos). Verifier r3 `ACCEPT_WITH_RESIDUAL`.
 - ~~Sem teste automatizado dedicado a `_map_product_write_response`~~ — FECHADO: `tests/test_protheus_rest_gateway_product_update.py` (7 testes: 4xx com/sem detalhe→REJECTED, non-UTF8→REJECTED, 5xx→UPSTREAM_ERROR, 401→TOKEN_INVALID, timeout single-attempt, 2xx não declara persistência).
 - ~~HML precisa de `INTRANET_DB_*` e gate~~ — PROVISIONADO 2026-11-17: `.env.hml` no checkout `~/projetos-teste/delpi-central` com `INTRANET_DB_*` reais + `PROTHEUS_PRODUCT_UPDATE_ENABLED=true`; `delpi-hml-api-delpi` healthy, rota live no OpenAPI, params resolvendo `URL_REST=http://192.168.1.233:8701/rest` (TST01). Pendente só: permissão `api-delpi.integrations.protheus.products.update` para usuário de teste.
+
+## Homologação live — 2026-11-19 (TST01, autorizada pelo usuário) — reparo de combo legado
+
+Contexto: PUT `10080025` (MP) rejeitado `FWNOLIST` em `B1_YVLPC='N'` — SX3 combo hoje exige `1=Sim;2=Não`, mas ~55k produtos têm literal legado `S`/`N`. O ExecAuto revalida TODO campo da representação completa → round-trip impossível.
+
+Fix implementado (api-delpi, sem recompile): `repair_legacy_combo_values()` + `get_x3_combo_map()` — traduz literal Sim/Não para a ÚNICA chave de rótulo equivalente do combo X3, só quando inequívoco; o restante segue p/ validação oficial. Auditado em `legacy_combo_repairs` + `outbound_payload` + log.
+
+| Passo | Resultado | Evidência |
+|-------|-----------|-----------|
+| UPDATE `10080025` (MP, c/ reparo) | `B1_YVLPC` enviado como `'2'` no outbound; ainda **REJECTED** — mas por `U_A010TOK` (PE PosVld): `RetCodUsr()` (conta técnica REST) ∉ `MV_ZUSMPLB` (`000105;000294;000159;000166;000102;000008;000210;000406`). Bloqueio oficial correto de matéria-prima — decisão de inclusão da conta técnica é do time TOTVS | `error_details` ledger + `detailedMessage` `VLDDATA_POST` + fonte `A010TOK.prw` |
+| UPDATE `70010015` (MC, `B1_CONTA=''`) | **REJECTED** `VLDDATA_OBRIGAT` — `B1_CONTA` obrigatória | `detailedMessage` direto do REST |
+| UPDATE `60330049` (MC) `B1_DESC` → `'MULTIMETRO DIGITAL - E2E DELPI'` | **200 CONFIRMED** — `confirmation=CONFIRMED`, `legacy_combo_repairs={B1_YVLPC: S→1}` (este produto gravava `'S'`) | response + `outbound_payload` `B1_YVLPC='1'` |
+| Read-back SQL TST01 | `B1_DESC='MULTIMETRO DIGITAL - E2E DELPI'`, `B1_YVLPC='1'` (valor canônico persistido — semântica preservada) | SQL `SB1010` |
+| Restore via façade | **200 CONFIRMED** — `B1_DESC='MULTIMETRO DIGITAL'` restaurado | response + SQL |
+| CREATE `TSTE2E001` (MC, 7 campos) | **REJECTED** `VLDDATA_OBRIGAT` `B1_COD` — modelo Delpi exige ~273 campos OBRIGAT; include "mínimo" não passa | `detailedMessage` |
+| CREATE replay c/ 283 campos | **REJECTED** `FWRULES` — "Regra de dependencia nao respeitada (Forn. Canal / B1_PROC)", origem `B1_MONO`. `B1_MONO`∈{`S`,`N`,`''`} × `B1_PROC='000011'` × `B1_LOJPROC='01'` → mesma rejeição. Regra custom do modelo não decodificada (não está em `MATA010M_DLP` nem SX3/SX7) — aguarda `console.log` do serviço REST | `detailedMessage` direto |
+
+### Linhas do ledger (`plugins_hub.integration_tracking`)
+
+```text
+825f3856-… | update | 10080025 | REJECTED     | 000000 | ambiente:2@192.168.1.233:8701 | 400 | PROTHEUS_PRODUCT_UPDATE_REJECTED
+911acb53-… | update | 10080025 | REJECTED     | 000000 | (idem, pós-reparo — FWRULES U_A010TOK)
+d9411f30-… | update | 70010015 | REJECTED     | 000000 | OBRIGAT B1_CONTA
+1a9e66bc-… | update | 60330049 | ACKNOWLEDGED | 000000 | 200 — CONFIRMED c/ reparo S→1
+26daf41f-… | update | 60330049 | ACKNOWLEDGED | 000000 | 200 — restore CONFIRMED
+5e95afc7-… | create | TSTE2E001| REJECTED     | 000000 | OBRIGAT/FWRULES cadeia
+```
+
+### Estado pós-teste (SQL read-back, 2026-11-19)
+
+```text
+DELPI_TST01.SB1010 B1_COD='60330049' → B1_DESC='MULTIMETRO DIGITAL'  (restaurado)
+                                    B1_YVLPC='1'                   (reparo persistido — era 'S', semântica idêntica)
+DELPI_TST01.SB1010 B1_COD='TSTE2E001'→ inexistente                  (create rejeitado, nada gravado)
+```
+
+### Lacunas atualizadas 2026-11-19
+
+- **MP bloqueado por regra oficial** (`U_A010TOK`+`MV_ZUSMPLB`): fluxo real de matéria-prima exige conta técnica REST no parâmetro OU mudança do PE — decisão PO/TOTVS, não de código.
+- **CREATE ainda não provado em TST01**: OBRIGAT ~273 campos (include precisa de representação quase completa — contrato atual envia só campos informados) + dependência custom `B1_MONO→B1_PROC` opaca sem `console.log`. Opções: ficha completa no PRC, merge c/ defaults SX3, ou template por tipo de produto.
+- `confirmation=CONFIRMED` já existe no read-back do use case; `update_confirmed`/`persistence_proven` upstream seguem `false` honestamente (são flags do envelope Protheus, não da nossa verificação).

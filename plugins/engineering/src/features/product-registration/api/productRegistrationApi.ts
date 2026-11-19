@@ -86,6 +86,10 @@ export type PrcRequestDetail = {
   } | null;
   removeCompletionPolicy?: string;
   allowedActions: string[];
+  /** PRC-TOTVS-PUBLISH — gate de ambiente da automação (backend-first).
+   * `publish_totvs` em allowedActions reflete permissão; esta flag
+   * informa se o gate ENG_PRC_TOTVS_PUBLISH_ENABLED está ligado. */
+  totvsPublishEnabled?: boolean;
   /** PRC-REF-019-FIX-01 — capacidades de esclarecimento (backend-first). */
   informationExchange?: {
     hasOpenBlocker: boolean;
@@ -701,6 +705,9 @@ export type PrcCompletionReceipt = {
   verifiedAt?: string;
   verificationId?: string;
   officialCode?: string;
+  /** PRC-TOTVS-PUBLISH — presente quando a conclusão publicou no
+   * TOTVS via automação ("applied"). */
+  totvsPublish?: string;
 };
 
 export async function prcAction(

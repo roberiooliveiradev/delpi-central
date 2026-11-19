@@ -1559,6 +1559,10 @@ services:
       PROTHEUS_SUPPLIER_CREATE_ENABLED: ${PROTHEUS_SUPPLIER_CREATE_ENABLED:-false}
       PROTHEUS_SUPPLIER_UPDATE_ENABLED: ${PROTHEUS_SUPPLIER_UPDATE_ENABLED:-false}
       PROTHEUS_PRODUCT_UPDATE_ENABLED: ${PROTHEUS_PRODUCT_UPDATE_ENABLED:-false}
+      # Gates E1 (PRC publish): create SB1 via MATA010 + SA5 CRUD via
+      # MATA061 — default OFF; ligar somente por ambiente após homologação.
+      PROTHEUS_PRODUCT_CREATE_ENABLED: ${PROTHEUS_PRODUCT_CREATE_ENABLED:-false}
+      PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED: ${PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED:-false}
       # Fail-closed write target pin — writes abort if PARAMETROS URL_REST
       # resolves to anything else (prod→.231/restall, local/homol→.233/rest).
       PROTHEUS_REST_EXPECTED_BASE_URL: ${PROTHEUS_REST_EXPECTED_BASE_URL:-}
@@ -2888,6 +2892,11 @@ services:
       ENG_NC_DB_PASSWORD: ${ENG_NC_DB_PASSWORD:-}
       ENG_NC_IMPORT_REPLACE_ENABLED: ${ENG_NC_IMPORT_REPLACE_ENABLED:-}
       PLUGINS_DB_USER: ${PLUGINS_DB_USER:-}
+
+      # PRC → TOTVS — automação "Salvar no TOTVS" (publish_and_complete).
+      # Fail-closed: vazio/ausente = ação indisponível. Exige além deste
+      # gate os gates api-delpi PROTHEUS_PRODUCT_CREATE/SUPPLIER_WRITE.
+      ENG_PRC_TOTVS_PUBLISH_ENABLED: ${ENG_PRC_TOTVS_PUBLISH_ENABLED:-}
 
       # EVA ACT (tools mutáveis MCP) — tiers fail-closed por classe de
       # risco (doc 57): ENG_EVA_ACT_ENABLED=write (create/update);

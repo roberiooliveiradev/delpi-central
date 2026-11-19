@@ -198,15 +198,73 @@ class DownstreamClient:
         telemetria; `service_token` opt-in vai no header S2S canônico,
         nunca no legado compartilhado (F2a.R1/G4.A.R1).
         """
+        return await self._write(
+            "POST",
+            path,
+            json_body=json_body,
+            access_token=access_token,
+            request_id=request_id,
+            service_token=service_token,
+        )
+
+    async def put(
+        self,
+        path: str,
+        *,
+        json_body: Mapping[str, Any],
+        access_token: str,
+        request_id: str | None = None,
+        service_token: str | None = None,
+    ) -> Any:
+        """PUT idempotente — mesma delegação e envelope do POST."""
+        return await self._write(
+            "PUT",
+            path,
+            json_body=json_body,
+            access_token=access_token,
+            request_id=request_id,
+            service_token=service_token,
+        )
+
+    async def delete(
+        self,
+        path: str,
+        *,
+        json_body: Mapping[str, Any] | None = None,
+        access_token: str,
+        request_id: str | None = None,
+        service_token: str | None = None,
+    ) -> Any:
+        """DELETE com body opcional — mesma delegação e envelope do POST."""
+        return await self._write(
+            "DELETE",
+            path,
+            json_body=json_body,
+            access_token=access_token,
+            request_id=request_id,
+            service_token=service_token,
+        )
+
+    async def _write(
+        self,
+        method: str,
+        path: str,
+        *,
+        json_body: Mapping[str, Any] | None,
+        access_token: str,
+        request_id: str | None,
+        service_token: str | None,
+    ) -> Any:
         try:
             async with httpx.AsyncClient(
                 base_url=self._base_url,
                 timeout=self._timeout,
                 transport=self._transport,
             ) as client:
-                resp = await client.post(
+                resp = await client.request(
+                    method,
                     path,
-                    json=dict(json_body),
+                    json=dict(json_body) if json_body is not None else None,
                     headers=self._headers(access_token, request_id, service_token),
                 )
         except httpx.TimeoutException as exc:

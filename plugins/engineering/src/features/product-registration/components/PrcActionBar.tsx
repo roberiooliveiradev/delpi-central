@@ -39,6 +39,7 @@ export function PrcActionBar({
   fieldSpecs,
   suppliers,
   draft,
+  totvsPublishEnabled,
   onRunAction,
   onEditDraft,
 }: {
@@ -55,6 +56,9 @@ export function PrcActionBar({
   suppliers?: InfoSupplierOption[];
   /** Ficha atual — "Atual:" por campo no modal de devolução. */
   draft?: Record<string, unknown> | null;
+  /** PRC-TOTVS-PUBLISH — gate de ambiente informado pelo backend;
+   * ausente/falso → botão de automação desabilitado com hint honesto. */
+  totvsPublishEnabled?: boolean;
   onRunAction: (spec: PrcActionSpec, extras: PrcActionExtras) => void;
   onEditDraft?: () => void;
 }) {
@@ -151,13 +155,24 @@ export function PrcActionBar({
     onRunAction(spec, {});
   };
 
-  const verifyConfirmMessage = isUpdate
-    ? "A Engineering API relê o cadastro oficial no TOTVS e compara " +
-      "apenas os campos alterados nesta solicitação. Qualquer " +
-      "divergência mantém a solicitação Em atendimento."
-    : "Informe o código oficial gerado no TOTVS após o cadastro " +
-      "manual. A Engineering API confirma existência e " +
-      "correspondência campo a campo antes de concluir.";
+  const isPublish = pending?.spec.action === "publish_totvs";
+  const verifyConfirmMessage = isPublish
+    ? isUpdate
+      ? "A Engineering API grava os campos alterados e os vínculos " +
+        "no TOTVS pelas rotinas oficiais e relê o cadastro antes de " +
+        "concluir. Se a gravação falhar, a solicitação permanece Em " +
+        "atendimento."
+      : "Informe o código oficial a criar no TOTVS. A Engineering " +
+        "API cadastra o produto e os fornecedores pelas rotinas " +
+        "oficiais, registra o código na solicitação e conclui " +
+        "verificado."
+    : isUpdate
+      ? "A Engineering API relê o cadastro oficial no TOTVS e compara " +
+        "apenas os campos alterados nesta solicitação. Qualquer " +
+        "divergência mantém a solicitação Em atendimento."
+      : "Informe o código oficial gerado no TOTVS após o cadastro " +
+        "manual. A Engineering API confirma existência e " +
+        "correspondência campo a campo antes de concluir.";
 
   return (
     <>
@@ -172,6 +187,11 @@ export function PrcActionBar({
            * ficam secundárias; destrutivas sempre ghost, por último.
            * UX V3 — ícone Lucide + rótulo + ajuda contextual (title). */
           const Icon = spec.icon;
+          /* Automação TOTVS: ação permitida mas gate de ambiente
+           * desligado → botão desabilitado com hint (UX honesta, nunca
+           * esconde a capability por decisão de apresentação). */
+          const publishGated =
+            spec.action === "publish_totvs" && totvsPublishEnabled === false;
           return (
             <EngineeringActionButton
               key={spec.action}
@@ -182,9 +202,19 @@ export function PrcActionBar({
                     ? "primary"
                     : "default"
               }
-              className={spec.danger ? "engineering-prc__action--danger" : undefined}
-              title={spec.help}
-              softDisabled={busy}
+              className={
+                spec.danger
+                  ? "engineering-prc__action--danger"
+                  : spec.accent
+                    ? "engineering-prc__action--accent"
+                    : undefined
+              }
+              title={
+                publishGated
+                  ? "Automação TOTVS desabilitada neste ambiente — use o caminho manual (Concluir atendimento)."
+                  : spec.help
+              }
+              softDisabled={busy || publishGated}
               onClick={() => click(spec)}
             >
               {Icon ? <Icon size={14} aria-hidden /> : null}
@@ -241,12 +271,16 @@ export function PrcActionBar({
                   label={
                     isUpdate
                       ? "Código oficial TOTVS (baseline)"
-                      : "Código do produto criado no TOTVS"
+                      : isPublish
+                        ? "Código do produto a criar no TOTVS"
+                        : "Código do produto criado no TOTVS"
                   }
                   hint={
                     isUpdate
                       ? "Código travado no baseline D15 — troca exige operação própria."
-                      : "Informe o código oficial atribuído ao produto após o cadastro manual no TOTVS."
+                      : isPublish
+                        ? "Informe o código oficial a ser criado no TOTVS para este produto."
+                        : "Informe o código oficial atribuído ao produto após o cadastro manual no TOTVS."
                   }
                   value={pending.officialCode}
                   onChange={(v) =>

@@ -259,6 +259,10 @@ services:
       # homologação autorizada, o .env.hml do servidor pode ligar — o
       # alvo continua travado no pin TST abaixo (fail-closed).
       PROTHEUS_PRODUCT_UPDATE_ENABLED: ${PROTHEUS_PRODUCT_UPDATE_ENABLED:-false}
+      # Gates E1 (PRC publish): create SB1 + SA5 CRUD — OFF por padrão;
+      # .env.hml do servidor liga na janela de homologação autorizada.
+      PROTHEUS_PRODUCT_CREATE_ENABLED: ${PROTHEUS_PRODUCT_CREATE_ENABLED:-false}
+      PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED: ${PROTHEUS_PRODUCT_SUPPLIER_WRITE_ENABLED:-false}
       # HML sempre resolve o Protheus de TESTE: AMBIENTE=2 seleciona os
       # parâmetros do REST de homologação (192.168.1.233:8061 → DELPI_TST01)
       # e o pin abaixo trava o único alvo de escrita permitido. Se os
@@ -656,6 +660,9 @@ services:
       ENG_PRC_DB_SSLMODE: ${ENG_PRC_DB_SSLMODE:-prefer}
       ENG_PRC_ATTACHMENTS_STORAGE: disk
       ENG_PRC_ATTACHMENTS_DIR: /app/data/prc-attachments
+      # Automação PRC "Salvar no TOTVS" — OFF por padrão; .env.hml liga
+      # na janela de homologação (PROD nunca — parada em HML por decisão).
+      ENG_PRC_TOTVS_PUBLISH_ENABLED: ${ENG_PRC_TOTVS_PUBLISH_ENABLED:-}
     healthcheck:
       test:
         [

@@ -215,6 +215,114 @@ SUPPLIER_OFFICIAL_MAP: dict[str, str] = {
 PRODUCT_TYPES: tuple[str, ...] = ("raw_material",)
 
 
+# --- Publicação governada no TOTVS (PRC → api-delpi → rotina oficial) ------
+#
+# A Engineering API nunca escreve no ERP diretamente: o ProductPublisherPort
+# delega o Bearer humano às rotas /integrations/protheus/* da api-delpi, que
+# resolve codusr, aplica gates/pins e invoca a rotina oficial (MATA010
+# ExecAuto / MATA061 MVC). Os mapas abaixo traduzem os paths do draft PRC
+# para o catálogo B1_*/A5_* — o contrato downstream já aceita o catálogo
+# completo (~283 B1 + 113 A5); ampliar a ficha = adicionar FieldSpec +
+# entrada aqui, sem tocar no publisher.
+
+# Path PRC → campo SB1 gravável. Identidade (B1_COD) viaja fora deste
+# mapa: em create é obrigatória no body; em update nunca é reescrita.
+# ``accountingAccount`` (B1_CONTA) é read-only por decisão PO (PRC-D3) —
+# verificado no read-back, nunca publicado.
+PRC_PRODUCT_WRITE_MAP: dict[str, str] = {
+    "description": "B1_DESC",
+    "group": "B1_GRUPO",
+    "productKind": "B1_TIPO",
+    "defaultWarehouse": "B1_LOCPAD",
+    "unit": "B1_UM",
+    "thirdPartyProduct": "B1_TPMAT",
+    "customerReference": "B1_REFEREN",
+}
+
+# supplierLinkChanges[].fields → atributos SA5 graváveis (subconjunto
+# elegível da api-delpi; a rota aceita o catálogo completo).
+PRC_LINK_OP_WRITE_MAP: dict[str, str] = {
+    "partNumber": "A5_CODPRF",
+    "catalogNumber": "A5_CODPRCA",
+}
+
+
+def build_sa5_link_identity(
+    supplier_code: str, store: str
+) -> dict[str, str]:
+    """Identidade SA5 completa a partir da chave PRC (code, store).
+
+    A5_FABR/A5_FALOJA/A5_REFGRD ficam vazios — o PRC chaveia vínculos
+    somente por (supplierCode, store), cobrindo os links padrão sem
+    fabricante/grade. Vínculos com identidade estendida ficam fora do
+    escopo PRC e respondem not_found honesto (caminho manual preservado).
+    """
+    return {
+        "A5_FORNECE": supplier_code,
+        "A5_LOJA": store,
+        "A5_FABR": "",
+        "A5_FALOJA": "",
+        "A5_REFGRD": "",
+    }
+
+
+def build_sa5_create_attrs(
+    *,
+    supplier_name: str,
+    product_description: str,
+    fields: dict[str, Any],
+) -> dict[str, str]:
+    """Atributos A5_* para op ``add`` — trio SX3 obrigatório completo.
+
+    A5_DESCPRF (descrição do produto no fornecedor) é exigido pelo modelo
+    MATA061 e o PRC não coleta descrição distinta — usa a descrição do
+    próprio produto, que é o valor semântico do vínculo.
+    """
+    attrs: dict[str, str] = {
+        "A5_NOMEFOR": str(supplier_name or "").strip(),
+        "A5_CODPRF": str(fields.get("partNumber") or "").strip(),
+        "A5_DESCPRF": str(product_description or "").strip(),
+    }
+    catalog_number = str(fields.get("catalogNumber") or "").strip()
+    if catalog_number:
+        attrs["A5_CODPRCA"] = catalog_number
+    return attrs
+
+
+def build_sa5_update_attrs(fields: dict[str, Any]) -> dict[str, str]:
+    """Atributos A5_* para op ``update`` — somente campos informados."""
+    attrs: dict[str, str] = {}
+    for native, a5 in PRC_LINK_OP_WRITE_MAP.items():
+        if native in fields:
+            value = fields[native]
+            attrs[a5] = "" if value is None else str(value).strip()
+    return attrs
+
+
+def build_sb1_write_fields(
+    technical_data: dict[str, Any], *, paths: list[str] | None = None
+) -> dict[str, str]:
+    """Campos B1_* a publicar a partir do technical_data do draft.
+
+    ``paths=None`` publica todos os campos mapeados presentes (create);
+    ``paths=[...]`` restringe ao conjunto alterado (update — a api-delpi
+    faz merge com o snapshot oficial antes do ExecAuto).
+    """
+    scope = paths if paths is not None else list(PRC_PRODUCT_WRITE_MAP)
+    body: dict[str, str] = {}
+    for path in scope:
+        b1 = PRC_PRODUCT_WRITE_MAP.get(path)
+        if b1 is None or path not in technical_data:
+            continue
+        value = technical_data[path]
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            body[b1] = text
+    return body
+
+
 # --- Normalização e validação ---------------------------------------------
 
 

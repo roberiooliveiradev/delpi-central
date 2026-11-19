@@ -521,6 +521,17 @@
   margin-inline-start: auto;
 }
 
+/* Automação "Salvar no TOTVS" — destaque acentuado (verde = gravar
+ * no ERP com sucesso) distinguindo do primary azul da conclusão manual. */
+.engineering-prc__action--accent {
+  background: var(--en-success, #12b76a) !important;
+  border-color: var(--en-success, #12b76a) !important;
+  color: #fff !important;
+}
+.engineering-prc__action--accent:hover {
+  filter: brightness(0.94);
+}
+
 /* Ação destrutiva textual (ghost + cor de perigo do tema). */
 .engineering-prc__action--danger {
   color: var(--en-danger, #d92d20) !important;

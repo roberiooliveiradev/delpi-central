@@ -1234,6 +1234,59 @@ async def prc_action_verify_and_complete(
     )
 
 
+@router.post(
+    "/v1/product-registration/requests/{request_id}/actions/publish-totvs",
+    operation_id="prc_action_publish_totvs",
+    summary=(
+        "11c — Salvar no TOTVS: publica ficha+vínculos via api-delpi "
+        "(rotinas oficiais) e conclui verificado"
+    ),
+)
+@require_any_permission(_PROCESS_PERMS)
+async def prc_action_publish_totvs(
+    request_id: str = Path(...),
+    body: VerifyBody = Body(...),
+    idempotency_key: str | None = Header(default=None, max_length=200),
+):
+    """PRC-TOTVS-PUBLISH — automação da conclusão de atendimento.
+
+    Mesma pré-condição da conclusão manual: publica o draft nas rotinas
+    oficiais via api-delpi e em seguida executa o mesmo read-back +
+    versionamento + complete. Gate ``ENG_PRC_TOTVS_PUBLISH_ENABLED``;
+    o caminho manual (editar no TOTVS + concluir) permanece intacto.
+    """
+    user, denied = _user("prc_action_publish_totvs")
+    if denied is not None:
+        return denied
+    rid, bad = _uuid_or_fail(request_id, "prc_action_publish_totvs")
+    if bad is not None:
+        return bad
+    access_token = str(getattr(user, "access_token", "") or "")
+    if not access_token:
+        return fail(
+            "Token de acesso indisponível para publicação oficial.",
+            401, operation_id="prc_action_publish_totvs",
+        )
+    svc = build_prc_service()
+    try:
+        data = await svc.publish_and_complete(
+            rid, actor=_actor(user),
+            expected_version=body.expectedVersion,
+            official_code=body.officialCode,
+            reason=body.reason,
+            access_token=access_token,
+            correlation_id=get_request_id(),
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _err(exc, "prc_action_publish_totvs")
+    return ok(
+        data,
+        message="Produto salvo no TOTVS e atendimento concluído.",
+        operation_id="prc_action_publish_totvs",
+    )
+
+
 # --- 12 verificações -------------------------------------------------------------
 
 

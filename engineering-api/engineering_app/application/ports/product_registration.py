@@ -5,7 +5,13 @@ Persistência: adapter Postgres dedicado (principal próprio —
 unavailable fail-honest.
 
 Leitura oficial: ``OfficialProductReaderPort`` — contrato READ-ONLY do
-owner (api-delpi → TOTVS); a Engineering API nunca escreve no ERP.
+owner (api-delpi → TOTVS).
+
+Escrita oficial: ``ProductPublisherPort`` — a Engineering API nunca
+fala com o ERP diretamente; ela delega o Bearer humano às rotas
+governadas ``/integrations/protheus/*`` da api-delpi (owner do contrato
+TOTVS), que resolve ``codusr`` no Core, aplica gates/pins e invoca a
+rotina oficial (MATA010/MATA061).
 
 Payloads de retorno são dicts prontos para o envelope ``ok()`` do edge.
 """
@@ -583,4 +589,93 @@ class OfficialProductReaderPort(Protocol):
 
     async def read_product(
         self, *, access_token: str, request_id: str, official_code: str
+    ) -> dict[str, Any]: ...
+
+
+class ProductPublisherError(Exception):
+    """Falha classificada na escrita delegada (api-delpi → Protheus).
+
+    ``kind``:
+    - ``forbidden``            → 401/403 do downstream (ator sem escopo);
+    - ``not_found``            → produto/vínculo inexistente;
+    - ``conflict``             → 409 (ex.: B1_COD já existente no create);
+    - ``official_validation``  → 400/422 do contrato oficial;
+    - ``timeout``              → transporte esgotado;
+    - ``contract_error``       → envelope/shape inesperado;
+    - ``unavailable``          → 5xx/gate-off/transporte indisponível.
+    """
+
+    def __init__(self, kind: str, message: str) -> None:
+        self.kind = kind
+        super().__init__(message)
+
+
+class ProductPublisherPort(Protocol):
+    """Escrita governada no ERP — delegação à api-delpi (owner TOTVS).
+
+    Cada método encaminha o Bearer humano à rota oficial correspondente;
+    a api-delpi resolve ``codusr`` a partir do ``sub`` do JWT (nunca do
+    body), aplica gates/pins e invoca a rotina oficial com read-back.
+    Falha de transporte/contrato/negócio → ``ProductPublisherError``.
+    Sucesso → ``data`` do envelope downstream (evidência da operação).
+    """
+
+    async def create_product(
+        self,
+        *,
+        fields: dict[str, str],
+        access_token: str,
+        request_id: str,
+    ) -> dict[str, Any]: ...
+
+    async def update_product(
+        self,
+        *,
+        product_code: str,
+        fields: dict[str, str],
+        access_token: str,
+        request_id: str,
+    ) -> dict[str, Any]: ...
+
+    async def resolve_supplier_name(
+        self,
+        *,
+        supplier_code: str,
+        store: str,
+        access_token: str,
+        request_id: str,
+    ) -> str | None:
+        """Razão social oficial (A2_NOME) do fornecedor — necessária para
+        ``A5_NOMEFOR`` em ops ``add`` (o contrato PRC não coleta nome no
+        op; o modelo MATA061 exige). ``None`` = fornecedor inexistente.
+        """
+        ...
+
+    async def create_supplier_link(
+        self,
+        *,
+        product_code: str,
+        identity: dict[str, str],
+        attributes: dict[str, str],
+        access_token: str,
+        request_id: str,
+    ) -> dict[str, Any]: ...
+
+    async def update_supplier_link(
+        self,
+        *,
+        product_code: str,
+        identity: dict[str, str],
+        attributes: dict[str, str],
+        access_token: str,
+        request_id: str,
+    ) -> dict[str, Any]: ...
+
+    async def delete_supplier_link(
+        self,
+        *,
+        product_code: str,
+        identity: dict[str, str],
+        access_token: str,
+        request_id: str,
     ) -> dict[str, Any]: ...

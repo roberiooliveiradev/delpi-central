@@ -259,6 +259,71 @@ def snapshot_value_matches(field: str, current: Any, expected: str) -> bool:
     return snapshot_body_text(current) == expected
 
 
+def parse_x3_combo(raw: Any) -> dict[str, str]:
+    """``"1=Sim;2=Não"`` → ``{"1": "Sim", "2": "Não"}`` (X3_CBOX)."""
+    combo: dict[str, str] = {}
+    for item in str(raw or "").split(";"):
+        key, sep, label = item.partition("=")
+        if sep and key.strip():
+            combo[key.strip()] = label.strip()
+    return combo
+
+
+_YES_LITERALS = frozenset({"S", "SIM"})
+_NO_LITERALS = frozenset({"N", "NAO", "NÃO"})
+
+
+def repair_legacy_combo_values(
+    fields: Mapping[str, str], combo_map: Mapping[str, Mapping[str, str]]
+) -> tuple[dict[str, str], dict[str, dict[str, str]]]:
+    """Repara valores persistidos fora do combo oficial (X3_CBOX).
+
+    Contexto: o ExecAuto/MATA010 revalida TODO campo enviado na
+    representação completa. Registros SB1 legados gravaram literais
+    ``"S"``/``"N"`` em campos cujo combo hoje exige chaves (ex.
+    ``1=Sim;2=Não``) — o round-trip morre em FWNOLIST em massa
+    (B1_YVLPC: ~55k registros em TST01).
+
+    Reparamos SOMENTE equivalências inequívocas de rótulo: literal
+    Sim → única chave com rótulo "Sim"; literal Não → única chave com
+    rótulo "Não". Assim "N"→"2" preserva a semântica persistida e
+    torna o campo válido no dicionário. Valor já pertencente ao combo
+    nunca é tocado; valor sem equivalência inequívoca segue intacto —
+    o upstream valida e rejeita honestamente (campo nomeado no erro).
+
+    Retorna ``(fields_repairados, repairs)`` onde ``repairs`` registra
+    ``{campo: {"from": v_antigo, "to": v_enviado}}`` para auditoria —
+    o reparo altera o dado persistido e deve ficar visível no ledger.
+    """
+    repaired = dict(fields)
+    repairs: dict[str, dict[str, str]] = {}
+    for field, spec in PRODUCT_FIELD_SPECS.items():
+        if spec["kind"] != "C" or field not in repaired:
+            continue
+        combo = combo_map.get(field) or {}
+        if not combo:
+            continue
+        value = repaired[field]
+        text = str(value).strip()
+        if text in combo:
+            continue
+        upper = text.upper()
+        if upper in _YES_LITERALS:
+            matches = [k for k, lbl in combo.items() if lbl.upper() == "SIM"]
+        elif upper in _NO_LITERALS:
+            matches = [
+                k
+                for k, lbl in combo.items()
+                if lbl.upper() in ("NAO", "NÃO")
+            ]
+        else:
+            matches = []
+        if len(matches) == 1:
+            repaired[field] = matches[0]
+            repairs[field] = {"from": str(value), "to": matches[0]}
+    return repaired, repairs
+
+
 def merge_product_update_fields(
     *, snapshot: Mapping[str, Any], changes: Mapping[str, str]
 ) -> dict[str, str]:

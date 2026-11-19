@@ -272,3 +272,72 @@ def test_snapshot_value_matches_numeric_and_padded() -> None:
     # data: vazio persistido ≡ "" enviado.
     assert snapshot_value_matches("B1_DTCORTE", "        ", "")
     assert snapshot_value_matches("B1_DTCORTE", "20260101", "20260101")
+
+
+def test_repair_legacy_combo_values_sim_nao() -> None:
+    from app.application.services.integrations.protheus_product_payload import (
+        parse_x3_combo,
+        repair_legacy_combo_values,
+    )
+
+    combo_map = {
+        "B1_YVLPC": parse_x3_combo("1=Sim;2=Não"),
+        "B1_CONTRAT": parse_x3_combo("S=Sim;N=Nao;A=Ambos"),
+        "B1_ENVOBR": parse_x3_combo("0=Sim;1=Nao"),
+        "B1_MRP": parse_x3_combo("S=Sim;N=Nao;E=Especial"),
+    }
+    fields = {
+        "B1_YVLPC": "N",      # legado -> '2' (Não)
+        "B1_ENVOBR": "S",     # legado -> '0' (Sim — chave invertida)
+        "B1_CONTRAT": "S",    # já válido -> intocado
+        "B1_MRP": "E",        # já válido -> intocado
+        "B1_DESC": "QUALQUER",
+    }
+    merged, repairs = repair_legacy_combo_values(fields, combo_map)
+    assert merged["B1_YVLPC"] == "2"
+    assert merged["B1_ENVOBR"] == "0"
+    assert merged["B1_CONTRAT"] == "S"
+    assert merged["B1_MRP"] == "E"
+    assert repairs == {
+        "B1_YVLPC": {"from": "N", "to": "2"},
+        "B1_ENVOBR": {"from": "S", "to": "0"},
+    }
+
+
+def test_repair_legacy_combo_values_sem_equivalencia_fica_intacto() -> None:
+    from app.application.services.integrations.protheus_product_payload import (
+        parse_x3_combo,
+        repair_legacy_combo_values,
+    )
+
+    # 'X' não é literal Sim/Não e não está no combo -> upstream decide.
+    combo_map = {"B1_CLASSVE": parse_x3_combo("1=Normal;2=Promocao;3=Descarte")}
+    merged, repairs = repair_legacy_combo_values(
+        {"B1_CLASSVE": "X"}, combo_map
+    )
+    assert merged["B1_CLASSVE"] == "X"
+    assert repairs == {}
+
+
+def test_repair_legacy_combo_values_ambiguo_nao_repara() -> None:
+    from app.application.services.integrations.protheus_product_payload import (
+        repair_legacy_combo_values,
+    )
+
+    # duas chaves com rótulo "Sim" -> ambíguo -> não repara.
+    merged, repairs = repair_legacy_combo_values(
+        {"B1_YVLPC": "S"}, {"B1_YVLPC": {"1": "Sim", "9": "Sim"}}
+    )
+    assert merged["B1_YVLPC"] == "S"
+    assert repairs == {}
+
+
+def test_parse_x3_combo() -> None:
+    from app.application.services.integrations.protheus_product_payload import (
+        parse_x3_combo,
+    )
+
+    assert parse_x3_combo("1=Sim;2=Não") == {"1": "Sim", "2": "Não"}
+    assert parse_x3_combo("1=Sim; 2 =Não") == {"1": "Sim", "2": "Não"}
+    assert parse_x3_combo("") == {}
+    assert parse_x3_combo(None) == {}

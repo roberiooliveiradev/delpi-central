@@ -309,8 +309,10 @@ export function PrcDetailPage({
         setEditing(false);
         setFeedback({
           kind: "success",
-          text: isComplete
-            ? "Atendimento concluído com verificação oficial."
+          text: spec.action === "publish_totvs"
+            ? "Produto salvo no TOTVS e atendimento concluído com verificação oficial."
+            : isComplete
+              ? "Atendimento concluído com verificação oficial."
             : spec.action === "return_for_correction"
               ? "Solicitação devolvida para correção."
               : spec.action === "resubmit_correction"
@@ -729,6 +731,7 @@ export function PrcDetailPage({
               fieldSpecs={fieldSpecs}
               suppliers={infoSuppliers}
               draft={detail.technicalDraft}
+              totvsPublishEnabled={detail.totvsPublishEnabled ?? false}
               onRunAction={runAction}
               onEditDraft={() => {
                 selectTab("draft");

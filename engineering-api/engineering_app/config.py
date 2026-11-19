@@ -76,6 +76,10 @@ class Settings:
     # ENG-REALTIME-01 — feature flag do tempo real transversal.
     # ``false`` desliga handshake WS e publicação; HTTP permanece
     # integralmente funcional.
+    ENG_PRC_TOTVS_PUBLISH_ENABLED: bool = (
+        _get_env("ENG_PRC_TOTVS_PUBLISH_ENABLED", default="false").lower()
+        == "true"
+    )
     ENG_REALTIME_ENABLED: bool = (
         _get_env("ENG_REALTIME_ENABLED", default="true").lower()
         not in ("0", "false", "no", "off")

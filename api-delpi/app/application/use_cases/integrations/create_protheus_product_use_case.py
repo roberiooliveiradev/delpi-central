@@ -33,6 +33,7 @@ from app.application.services.integrations.protheus_product_payload import (
     build_upstream_product_update_body,
     normalize_product_create_fields,
     product_create_url,
+    repair_legacy_combo_values,
     snapshot_value_matches,
 )
 from app.application.services.integrations.protheus_token_service import (
@@ -118,6 +119,22 @@ class CreateProtheusProductUseCase:
                 recoverable=False,
             )
 
+        # Reparo de literal legado fora do combo X3 — mesma regra do
+        # update (literal Sim/Não → única chave de rótulo equivalente);
+        # valores sem equivalência seguem para a validação oficial.
+        repairs: dict[str, dict[str, str]] = {}
+        try:
+            combo_map = self._product_repository.get_x3_combo_map()
+        except Exception:  # noqa: BLE001 — leitura SX3 nunca mascara o write
+            combo_map = {}
+        if combo_map:
+            fields, repairs = repair_legacy_combo_values(fields, combo_map)
+            if repairs:
+                log_info(
+                    "protheus_product_create_legacy_combo_repair "
+                    f"product_code={normalized_code} repairs={repairs}"
+                )
+
         token = self._token_service.get_valid_token(config)
         body = build_upstream_product_update_body(
             product_code=normalized_code, fields=fields, codusr=codusr
@@ -190,6 +207,8 @@ class CreateProtheusProductUseCase:
         }
         if divergent:
             result["readback_divergent_fields"] = divergent
+        if repairs:
+            result["legacy_combo_repairs"] = repairs
         if not ack_recorded:
             result["tracking_warning"] = "acknowledgement_record_failed"
         return result

@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Ban,
   CheckCircle2,
+  CloudUpload,
   FileSearch,
   MessageCircleQuestion,
   Pencil,
@@ -52,6 +53,8 @@ export type PrcActionSpec = {
   confirmMessage?: ReactNode;
   danger?: boolean;
   primary?: boolean;
+  /** Destaque visual acentuado (cor própria) — ação de automação. */
+  accent?: boolean;
   /** Ícone Lucide ao lado do rótulo (UX V3 — ação sempre rotulada). */
   icon?: LucideIcon;
   /** Ajuda contextual (title) quando a consequência não é evidente. */
@@ -115,6 +118,28 @@ export const PRC_ACTION_SPECS: Record<string, PrcActionSpec> = {
     help: "Retoma o atendimento desta solicitação.",
     path: "resume",
     primary: true,
+  },
+  /** PRC-TOTVS-PUBLISH — automação governada: publica no TOTVS via
+   * api-delpi (rotinas oficiais) e conclui com a mesma verificação do
+   * caminho manual, que permanece disponível. */
+  publish_totvs: {
+    action: "publish_totvs",
+    label: "Salvar no TOTVS",
+    icon: CloudUpload,
+    help:
+      "Grava a ficha no TOTVS pelas rotinas oficiais e conclui a " +
+      "solicitação já verificada. O caminho manual (editar no TOTVS e " +
+      "Concluir atendimento) continua disponível.",
+    path: "publish-totvs",
+    needsOfficialCode: true,
+    confirmTitle: "Salvar no TOTVS",
+    confirmMessage:
+      "A Engineering API grava a ficha e os vínculos no TOTVS pelas " +
+      "rotinas oficiais e, em seguida, relê o cadastro para concluir " +
+      "verificado. Se a gravação falhar, a solicitação permanece Em " +
+      "atendimento e o caminho manual segue disponível.",
+    primary: true,
+    accent: true,
   },
   /** PRC-REF-020 — ação principal de conclusão com verificação oficial. */
   complete: {
@@ -184,6 +209,7 @@ export const PRC_ACTION_SPECS: Record<string, PrcActionSpec> = {
 };
 
 export const PRC_ACTION_ORDER = [
+  "publish_totvs",
   "complete",
   "verify_and_complete",
   "resubmit_correction",
@@ -199,5 +225,9 @@ export const PRC_ACTION_ORDER = [
 
 /** Ações que disparam verificação oficial (loading específico na UI). */
 export function isPrcCompleteAction(action: string): boolean {
-  return action === "complete" || action === "verify_and_complete";
+  return (
+    action === "complete" ||
+    action === "verify_and_complete" ||
+    action === "publish_totvs"
+  );
 }

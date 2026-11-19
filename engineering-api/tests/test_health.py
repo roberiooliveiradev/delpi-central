@@ -107,6 +107,9 @@ ALLOWED_BUSINESS_PATHS = {
         "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments",
         "/v1/product-registration/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}",
         "/v1/product-registration/requests/{request_id}/actions/verify-and-complete",
+        # E2 — publicação governada no TOTVS (gate ENG_PRC_TOTVS_PUBLISH_ENABLED
+        # + permissão publish_totvs + Bearer delegado para api-delpi).
+        "/v1/product-registration/requests/{request_id}/actions/publish-totvs",
         "/v1/product-registration/requests/{request_id}/verifications",
         "/v1/product-registration/technical-records",
         "/v1/product-registration/technical-records/{record_id}",

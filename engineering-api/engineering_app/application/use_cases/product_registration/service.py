@@ -18,6 +18,8 @@ from typing import Any
 from engineering_app.application.ports.product_registration import (
     AttachmentStoragePort,
     OfficialProductReaderPort,
+    ProductPublisherError,
+    ProductPublisherPort,
     ProductRegistrationRepository,
     RECORD_SORTS,
     resolve_record_sort,
@@ -98,6 +100,7 @@ _ANALYST_ONLY_ACTIONS = frozenset(
         "start",
         "return_for_correction",
         "complete",
+        "publish_totvs",
         "verify_and_complete",
         "reject",
         "request_information",
@@ -163,7 +166,12 @@ def _scope_check(actor: PrcActor, request: dict) -> None:
         raise PrcForbiddenError("Solicitação fora do escopo do ator.")
 
 
-def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
+def _request_detail(
+    request: dict,
+    actor: PrcActor,
+    *,
+    totvs_publish_enabled: bool = False,
+) -> dict[str, Any]:
     draft = request.get("draft") or {}
     verifs = request.get("verifications") or []
     last = verifs[-1] if verifs else None
@@ -193,6 +201,11 @@ def _request_detail(request: dict, actor: PrcActor) -> dict[str, Any]:
             sa5_baseline.SA5_REMOVE_COMPLETION_POLICY
         ),
         "allowedActions": actor.allowed_actions(request["status"]),
+        # Automação TOTVS: a ação aparece em allowedActions pela
+        # permissão; a flag informa se o gate de ambiente está ligado
+        # (UX — botão desabilitado honesto, nunca escondido por regra
+        # de apresentação).
+        "totvsPublishEnabled": totvs_publish_enabled,
         "verificationSummary": (
             {
                 "result": last["result"],
@@ -284,12 +297,16 @@ class ProductRegistrationService:
         allowed_sources: tuple[str, ...] | None = None,
         attachment_storage: "AttachmentStoragePort | None" = None,
         realtime_publisher: RealtimePublisher | None = None,
+        product_publisher: ProductPublisherPort | None = None,
+        totvs_publish_enabled: bool = False,
     ) -> None:
         self._repo = repository
         self._reader = official_reader
         self._sources = allowed_sources or _ALLOWED_SOURCES_DEFAULT
         self._storage = attachment_storage
         self._realtime = realtime_publisher or NullRealtimePublisher()
+        self._publisher = product_publisher
+        self._totvs_publish_enabled = bool(totvs_publish_enabled)
 
     def _filter_actions_for_actor(
         self,
@@ -455,7 +472,10 @@ class ProductRegistrationService:
         *,
         request_id: str | None = None,
     ) -> dict[str, Any]:
-        detail = _request_detail(request, actor)
+        detail = _request_detail(
+            request, actor,
+            totvs_publish_enabled=self._totvs_publish_enabled,
+        )
         # §56 — vínculo causal só quando uma revisão publicada registra
         # este request_id; no-op conclui sem autoria de revisão anterior.
         detail["publishedRevision"] = self._published_revision(request)
@@ -2306,6 +2326,335 @@ class ProductRegistrationService:
             idempotency_key=idempotency_key,
             action_name="verify_and_complete",
         )
+
+    async def publish_and_complete(
+        self,
+        request_id: str,
+        *,
+        actor: PrcActor,
+        expected_version: int,
+        official_code: str | None,
+        reason: str | None,
+        access_token: str,
+        correlation_id: str,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Conclusão automatizada: publica no TOTVS e conclui verificado.
+
+        Mesma pré-condição da conclusão manual (``in_progress``/
+        ``under_review``, sem rodada de esclarecimento aberta). O fluxo
+        delega as escritas à api-delpi — rotinas oficiais MATA010/SA5 —
+        e, após publicação aceita, executa a conclusão verificada
+        canônica (read-back integral + versionamento + complete). Falha
+        de publicação aborta antes da conclusão; o caminho manual segue
+        disponível.
+        """
+        if not self._totvs_publish_enabled:
+            raise PrcOfficialError(
+                "unavailable",
+                "Publicação automatizada no TOTVS desabilitada neste "
+                "ambiente.",
+            )
+        if self._publisher is None:
+            raise PrcOfficialError(
+                "unavailable", "Publicador oficial não configurado."
+            )
+        _require_actor_verify(actor)
+        request = self._get_scoped(request_id, actor)
+        if not actor.has_action_permission("publish_totvs"):
+            raise PrcForbiddenError(
+                "Sem permissão para a ação 'publish_totvs'."
+            )
+        draft = request.get("draft") or {}
+        data = draft.get("technical_data") or {}
+        code = self._resolve_publish_code(request, data, official_code)
+        fp = _fingerprint(
+            {
+                "action": "publish_and_complete",
+                "request_id": request_id,
+                "expected_version": expected_version,
+                "official_code": code,
+                "reason": reason,
+            }
+        )
+        # Replay ANTES do state check (mesma ordem canonica do _apply):
+        # apos publish bem-sucedido o status ja saiu de _COMPLETE_FROM —
+        # o retry legitimo com a mesma chave recebe o resultado gravado,
+        # nao state_conflict.
+        replay = self._idempotent_replay(
+            actor=actor, operation="publish_and_complete",
+            key=idempotency_key, fingerprint=fp,
+        )
+        if replay is not None:
+            return replay
+        if request["status"] not in _COMPLETE_FROM:
+            raise PrcStateConflictError("state_conflict")
+        rounds = self._repo.list_information_rounds(request_id=request_id)
+        if info_rounds.has_open_information_blocker(rounds):
+            raise PrcStateConflictError("information_round_open")
+        link_ops = data.get("supplierLinkChanges") or []
+        # Mesma política do caminho manual: remoção de vínculo é
+        # PENDING_OWNER — falha ANTES de qualquer escrita no ERP.
+        if (
+            sa5_baseline.remove_ops_present(link_ops)
+            and not sa5_baseline.SA5_REMOVE_COMPLETION_ALLOWED
+        ):
+            raise PrcStateConflictError(
+                "remove_completion_pending_owner"
+            )
+        # CAS antes das escritas: expectedVersion obsoleto aborta aqui —
+        # nunca depois de ja ter escrito no ERP (efeito colateral sem
+        # transicao). A checagem final continua no _apply da conclusao.
+        if int(request.get("row_version") or 0) != int(expected_version):
+            raise PrcConcurrencyError("stale_version")
+        try:
+            await self._publish_product_write(
+                request, data, code, access_token, correlation_id
+            )
+            await self._publish_supplier_link_ops(
+                request, data, link_ops, code, access_token,
+                correlation_id,
+            )
+        except ProductPublisherError as exc:
+            if exc.kind == "conflict":
+                raise PrcStateConflictError(
+                    f"Conflito de publicação no TOTVS: {exc}"
+                )
+            if exc.kind == "official_validation":
+                raise PrcValidationError(str(exc))
+            raise PrcOfficialError(
+                {
+                    "forbidden": "forbidden",
+                    "not_found": "not_found",
+                    "timeout": "timeout",
+                    "contract_error": "contract_error",
+                }.get(exc.kind, "unavailable"),
+                f"Falha ao publicar no TOTVS: {exc}",
+            )
+        result = await self._complete_with_official_verification(
+            request_id,
+            actor=actor,
+            expected_version=expected_version,
+            official_code=code,
+            reason=reason,
+            access_token=access_token,
+            correlation_id=correlation_id,
+            idempotency_key=None,
+            action_name="complete",
+        )
+        result = {**result, "totvsPublish": "applied"}
+        self._idempotent_store(
+            actor=actor, operation="publish_and_complete",
+            key=idempotency_key, fingerprint=fp, request_id=request_id,
+            status=200, payload=result,
+        )
+        return result
+
+    def _resolve_publish_code(
+        self,
+        request: dict[str, Any],
+        data: dict[str, Any],
+        official_code: str | None,
+    ) -> str:
+        """Código oficial da publicação — mesma regra da conclusão
+        manual: UPDATE trava no código baseline; CREATE usa o código
+        informado pelo analista, o já registrado no caso ou o proposto
+        no draft (``officialProductCode``)."""
+        existing_code = (
+            str(request.get("official_product_code") or "").strip()
+        )
+        provided = str(official_code or "").strip()
+        if request["request_type"] == "update":
+            if not existing_code:
+                raise PrcValidationError(
+                    "Solicitação UPDATE sem código oficial baseline.",
+                    fields={"officialCode": "required"},
+                )
+            if provided and provided != existing_code:
+                raise PrcValidationError(
+                    "UPDATE não permite troca arbitrária de officialCode "
+                    "na conclusão.",
+                    fields={"officialCode": "immutable"},
+                )
+            code = existing_code
+        else:
+            draft_code = str(data.get("officialProductCode") or "").strip()
+            code = provided or existing_code or draft_code
+            if not code:
+                raise PrcValidationError(
+                    "Informe o código oficial a ser criado no TOTVS.",
+                    fields={"officialCode": "required"},
+                )
+        try:
+            return catalog.normalize_code(code, max_length=60)
+        except PrcValidationError:
+            raise PrcValidationError(
+                "officialCode inválido.",
+                fields={"officialCode": "invalid"},
+            )
+
+    async def _publish_product_write(
+        self,
+        request: dict[str, Any],
+        data: dict[str, Any],
+        code: str,
+        access_token: str,
+        correlation_id: str,
+    ) -> None:
+        assert self._publisher is not None
+        if request["request_type"] == "create":
+            fields = catalog.build_sb1_write_fields(data)
+            await self._publisher.create_product(
+                fields={"B1_COD": code, **fields},
+                access_token=access_token,
+                request_id=correlation_id,
+            )
+            return
+        # UPDATE: publica somente os campos alterados — a api-delpi faz
+        # merge com o snapshot oficial antes do ExecAuto, produzindo a
+        # representação completa exigida pela rotina.
+        changed = (request.get("draft") or {}).get("changed_paths") or []
+        paths = [str(c.get("path")) for c in changed if c.get("path")]
+        fields = catalog.build_sb1_write_fields(data, paths=paths)
+        if fields:
+            await self._publisher.update_product(
+                product_code=code,
+                fields=fields,
+                access_token=access_token,
+                request_id=correlation_id,
+            )
+
+    async def _publish_supplier_link_ops(
+        self,
+        request: dict[str, Any],
+        data: dict[str, Any],
+        link_ops: list[dict[str, Any]],
+        code: str,
+        access_token: str,
+        correlation_id: str,
+    ) -> None:
+        assert self._publisher is not None
+        draft_suppliers = data.get("suppliers") or []
+        product_description = str(data.get("description") or "").strip()
+        # A5_DESCPRF é exigido pelo modelo na criação de vínculo. Em
+        # UPDATE de produto sem revisão anterior o draft não carrega a
+        # descrição — resolve na fonte oficial quando houver op ``add``.
+        if (
+            not product_description
+            and self._reader is not None
+            and any(op.get("operation") == "add" for op in link_ops)
+        ):
+            observed = await self._reader.read_product(
+                access_token=access_token,
+                request_id=correlation_id,
+                official_code=code,
+            )
+            if observed.get("status") == "available":
+                product_description = str(
+                    (observed.get("product") or {}).get("description")
+                    or ""
+                ).strip()
+        if request["request_type"] == "create":
+            # CREATE: o baseline é vazio — cada vínculo da ficha é uma
+            # inclusão (o draft pode não carregar supplierLinkChanges).
+            link_ops = [
+                {
+                    "operation": "add",
+                    "key": {
+                        "supplierCode": s.get("supplierCode"),
+                        "store": s.get("store"),
+                    },
+                    "fields": {
+                        "partNumber": s.get("partNumber"),
+                        "catalogNumber": s.get("catalogNumber"),
+                    },
+                }
+                for s in draft_suppliers
+            ]
+        for op in link_ops:
+            key = op.get("key") or {}
+            supplier_code = str(key.get("supplierCode") or "").strip()
+            store = str(key.get("store") or "").strip()
+            if not supplier_code or not store:
+                raise PrcValidationError(
+                    "supplierLinkChanges sem chave completa.",
+                    fields={"suppliers": "key_required"},
+                )
+            identity = catalog.build_sa5_link_identity(
+                supplier_code, store
+            )
+            operation = str(op.get("operation") or "").strip()
+            fields = op.get("fields") or {}
+            if operation == "add":
+                draft_supplier = next(
+                    (
+                        s
+                        for s in draft_suppliers
+                        if str(s.get("supplierCode") or "").strip()
+                        == supplier_code
+                        and str(s.get("store") or "").strip() == store
+                    ),
+                    {},
+                )
+                # A5_NOMEFOR: nome do draft quando presente (create);
+                # senão resolve na fonte oficial — o contrato PRC não
+                # coleta razão social no op (chave = code+store).
+                supplier_name = str(
+                    draft_supplier.get("supplierName") or ""
+                ).strip()
+                if not supplier_name:
+                    supplier_name = (
+                        await self._publisher.resolve_supplier_name(
+                            supplier_code=supplier_code,
+                            store=store,
+                            access_token=access_token,
+                            request_id=correlation_id,
+                        )
+                        or ""
+                    )
+                if not supplier_name:
+                    raise ProductPublisherError(
+                        "not_found",
+                        "Fornecedor "
+                        f"{supplier_code}/{store} não encontrado na "
+                        "fonte oficial — nome exigido pelo vínculo SA5.",
+                    )
+                attrs = catalog.build_sa5_create_attrs(
+                    supplier_name=supplier_name,
+                    product_description=product_description,
+                    fields=fields,
+                )
+                await self._publisher.create_supplier_link(
+                    product_code=code,
+                    identity=identity,
+                    attributes=attrs,
+                    access_token=access_token,
+                    request_id=correlation_id,
+                )
+            elif operation == "update":
+                attrs = catalog.build_sa5_update_attrs(fields)
+                if attrs:
+                    await self._publisher.update_supplier_link(
+                        product_code=code,
+                        identity=identity,
+                        attributes=attrs,
+                        access_token=access_token,
+                        request_id=correlation_id,
+                    )
+            elif operation == "remove":
+                # Alcançável somente quando a política de remoção for
+                # liberada pelo owner (SA5_REMOVE_COMPLETION_ALLOWED).
+                await self._publisher.delete_supplier_link(
+                    product_code=code,
+                    identity=identity,
+                    access_token=access_token,
+                    request_id=correlation_id,
+                )
+            else:
+                raise PrcValidationError(
+                    f"Operação de vínculo inválida: {operation}.",
+                    fields={"suppliers": "operation_invalid"},
+                )
 
     async def _complete_with_official_verification(
         self,

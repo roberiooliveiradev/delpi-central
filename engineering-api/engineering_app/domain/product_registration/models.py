@@ -102,6 +102,7 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "in_progress": (
         "return_for_correction",
         "complete",
+        "publish_totvs",
         "reject",
     ),
     "needs_information": ("resume", "reject"),
@@ -113,6 +114,7 @@ _ACTIONS_BY_STATUS: dict[str, tuple[str, ...]] = {
     "under_review": (
         "return_to_attendance",
         "complete",
+        "publish_totvs",
         "verify_and_complete",
         "request_information",
         "reject",
@@ -141,6 +143,9 @@ _ACTION_PERMISSION: dict[str, tuple[tuple[str, ...], ...]] = {
     "complete": ((ENG_ACCESS,),),
     "reject": ((ENG_ACCESS,),),
     "verify_and_complete": ((ENG_ACCESS,),),
+    # PRC-TOTVS-PUBLISH — automação delegada à api-delpi: mesma barra
+    # de permissão da conclusão manual (analista com engineering.access).
+    "publish_totvs": ((ENG_ACCESS,),),
     "route_divergence": ((ENG_ACCESS,),),
 }
 

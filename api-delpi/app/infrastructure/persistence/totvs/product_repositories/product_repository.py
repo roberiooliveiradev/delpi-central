@@ -401,3 +401,28 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
             return None
         with self as repo:
             return repo.execute_one(product_snapshot_sql(), (code,))
+
+    def get_x3_combo_map(self) -> dict:
+        """Combos oficiais SX3 (X3_CBOX) dos campos B1_* — read governado.
+
+        Usado pelo merge-write para reparar literais legados fora da
+        lista (``repair_legacy_combo_values``): o ExecAuto revalida cada
+        campo enviado e rejeita valor fora do combo (FWNOLIST).
+        """
+        from app.application.services.integrations.protheus_product_payload import (
+            parse_x3_combo,
+        )
+
+        sql = (
+            "SELECT RTRIM(X3_CAMPO) AS campo, RTRIM(X3_CBOX) AS cbox "
+            "FROM SX3010 WITH (NOLOCK) "
+            "WHERE X3_CAMPO LIKE 'B1\\_%' ESCAPE '\\' "
+            "AND RTRIM(X3_CBOX) <> '' AND D_E_L_E_T_ = ' '"
+        )
+        with self as repo:
+            rows = repo.execute_query(sql, ())
+        return {
+            str(r["campo"]).strip(): parse_x3_combo(r["cbox"])
+            for r in rows
+            if str(r.get("campo") or "").strip()
+        }

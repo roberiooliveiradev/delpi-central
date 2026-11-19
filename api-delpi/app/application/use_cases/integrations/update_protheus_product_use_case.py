@@ -34,6 +34,7 @@ from app.application.services.integrations.protheus_product_payload import (
     merge_product_update_fields,
     normalize_product_update_fields,
     product_update_url,
+    repair_legacy_combo_values,
     snapshot_value_matches,
     validate_product_code,
 )
@@ -126,6 +127,25 @@ class UpdateProtheusProductUseCase:
             )
         merged = merge_product_update_fields(snapshot=snapshot, changes=fields)
 
+        # Reparo de valor legado fora do combo X3: o ExecAuto revalida
+        # TODO campo enviado (FWNOLIST em literal "S"/"N" legado em
+        # combos 1=Sim;2=Não). Só equivalências inequívocas de rótulo
+        # são reparadas; o restante segue para validação oficial.
+        # Reparos ficam auditados no resultado e no ledger (outbound).
+        repairs: dict[str, dict[str, str]] = {}
+        try:
+            combo_map = self._product_repository.get_x3_combo_map()
+        except Exception:  # noqa: BLE001 — falha de leitura SX3 não deve
+            # mascarar o write: sem mapa não há reparo; o upstream decide.
+            combo_map = {}
+        if combo_map:
+            merged, repairs = repair_legacy_combo_values(merged, combo_map)
+            if repairs:
+                log_info(
+                    "protheus_product_update_legacy_combo_repair "
+                    f"product_code={normalized_code} repairs={repairs}"
+                )
+
         token = self._token_service.get_valid_token(config)
         body = build_upstream_product_update_body(
             product_code=normalized_code, fields=merged, codusr=codusr
@@ -203,6 +223,8 @@ class UpdateProtheusProductUseCase:
         }
         if divergent:
             result["readback_divergent_fields"] = divergent
+        if repairs:
+            result["legacy_combo_repairs"] = repairs
         if not ack_recorded:
             result["tracking_warning"] = "acknowledgement_record_failed"
         return result
