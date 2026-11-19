@@ -1,9 +1,10 @@
 """Update an existing Protheus product via delpiproduto — gated, no retry.
 
 Every attempt is registered in the integration execution tracker BEFORE the
-upstream call (fail closed). The upstream delpiproduto route has no codusr
-field, so the resolved actor identity is kept in our tracking ledger for
-attribution; the upstream body carries only flat B1_* fields.
+upstream call (fail closed). The resolved actor identity (Core/JWT) travels
+upstream as the `codusr` meta-field — outside the B1_* catalog — for the
+`AIF_ZCDUSR` audit stamp, and is kept in the tracking ledger too; clients
+can never inject it (forbidden identity keys are rejected at the edge).
 
 Partial-update contract (v2): the client sends only the fields to change;
 this surface reads the current SB1 snapshot (governed SQL read), merges

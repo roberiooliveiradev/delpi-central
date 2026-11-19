@@ -342,8 +342,9 @@ def update_protheus_product_route(
 
     Upstream maps all B1_* keys unconditionally, so the body must carry the
     complete field snapshot (read the record first); B1_COD comes from the
-    path. There is no codusr field upstream — the actor identity resolved
-    from Core is kept in the integration tracking ledger for attribution.
+    path. The actor identity resolved from Core travels upstream as the
+    `codusr` meta-field (AIF_ZCDUSR audit) and is kept in the integration
+    tracking ledger; clients can never supply it (forbidden keys).
     """
     if not isinstance(body, dict):
         return error_response(
