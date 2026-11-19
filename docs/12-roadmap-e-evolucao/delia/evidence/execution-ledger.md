@@ -7479,3 +7479,12 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **ESTADO ATUAL:** DEPLOY=EXECUTED (bounded recovery);
   TWO_AGENT_PROMOTION=NOT_AUTHORIZED; PHASE_ADVANCEMENT=NO;
   F2=PENDING_COORDINATION.
+
+
+## 2026-11-19 — Coordination: Qwen14B goal recovery review and F2 authorization
+
+- **Decision evidence:** `docs/12-roadmap-e-evolucao/delia/evidence/coordination/2026-11-19-qwen14b-recovery-review-f2-decision.md` (Coordination decision commit `5de0e54d7d69663aadc1452b875d04cc01037823`).
+- **Delivery reviewed:** `1698b2edb005eb9365fae09a11e791c95ed131f3` — pre-invocation goal `ModelRetry` feedback-only correction, `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND`; gate and authorization semantics unchanged. Executor reported RED→GREEN, 15+92+135 tests PASS and independent verifier r2 `ACCEPT_WITH_RESIDUAL` (SHA-bound, zero OCs; verifier pytest TEST_NOT_RUN). **Coordination review: ACCEPT_WITH_RESIDUAL for bounded code correction.**
+- **Task outcome:** one Qwen14B real scenario, no goal declaration/owner call/grounded stock answer; `USER_OUTCOME_PROVEN=NO`, `QWEN_FUNCTIONAL_RESULT=FAIL`. Earlier frozen A/B at `530d3307b17f0703abcce0b9cafc48a328864eb7` showed Kimi owner-backed stock READ with final-answer grounding residual; scenario-specific, N=1 each. Stop further Qwen prompt-only retries by inertia.
+- **Coordinator authorizes NEXT BOUNDED STEP:** `COORDINATION_C3_T2_F2_INT1_CONTINUITY_PAGINATION_CONVERGENCE_EXECUTION_BRIEF`, F2 INT-1 continuity, pagination, convergence/no-progress/budget and sufficiency feedback per Doc 16, subject to new HEAD/contracts/CP-RQ reanchor, bounded RED→GREEN, safety, outcome and independent verification. `F2_IMPLEMENTATION=PENDING`; F3/F4/F5 remain queued and gated.
+- **Gates:** `PHASE=C3/T2`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED` for this delivery/F2; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `INT3_INT4_AGENT_IMPLEMENTATION=NOT_AUTHORIZED`. No acceptance of C3/T2 as complete.
