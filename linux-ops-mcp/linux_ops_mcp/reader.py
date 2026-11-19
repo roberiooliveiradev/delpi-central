@@ -571,8 +571,13 @@ class ItPortalReader:
             issues.append({
                 "server_id": server_id,
                 "server_name": _limit_string(item.get("server_name"), max_len=120),
-                "service_key": _limit_string(item.get("service_key"), max_len=160),
-                "service_name": _limit_string(item.get("service_name"), max_len=120),
+                # Dashboard aliases hs.display_name AS service_name (V006: key 200, display 240).
+                "service_key": _limit_string(
+                    item.get("service_key"), max_len=_WINDOWS_HOST_SERVICE_KEY_MAX,
+                ),
+                "service_name": _limit_string(
+                    item.get("service_name"), max_len=_WINDOWS_HOST_SERVICE_DISPLAY_NAME_MAX,
+                ),
                 "criticality": item.get("criticality") if item.get("criticality") in {"high", "critical"} else None,
                 "state": _limit_string(item.get("state"), max_len=40),
                 "status": item.get("status") if item.get("status") in {"stopped", "attention", "unverified"} else None,

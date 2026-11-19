@@ -66,11 +66,12 @@ async def list_servers(
         result["source"] = "it-portal-api"
         return result
 
-    # Client-side filters require walking inventory pages so totals stay correct.
+    # Client-side filters require walking the full upstream inventory so
+    # pagination totals stay correct. Do NOT apply infra_max_servers here —
+    # that bound belongs to get_infrastructure_health consolidation only.
     collected: list[dict[str, Any]] = []
     upstream_page = 1
-    upstream_total = None
-    max_servers = reader.settings.infra_max_servers
+    upstream_total: int | None = None
     while True:
         batch = await reader.list_servers_page(
             authorization,
@@ -90,14 +91,13 @@ async def list_servers(
                 continue
             item["os_family"] = classify_os_family(item.get("operating_system"))
             collected.append(item)
-            if len(collected) >= max_servers:
-                break
-        if len(collected) >= max_servers:
-            break
         fetched = upstream_page * 100
         if fetched >= (upstream_total or 0) or not batch["items"]:
             break
         upstream_page += 1
+        # Safety against a misreported upstream total (not an inventory cap).
+        if upstream_page > 10_000:
+            break
 
     total = len(collected)
     start = (page - 1) * page_size

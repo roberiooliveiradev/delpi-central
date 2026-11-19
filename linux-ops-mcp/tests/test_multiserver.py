@@ -152,6 +152,170 @@ def test_list_servers_multiple_and_pagination_beyond_25():
     asyncio.run(scenario())
 
 
+def test_list_servers_client_filter_paginates_beyond_infra_max_servers():
+    """os_family filter must not silently cap inventory at LINUX_OPS_INFRA_MAX_SERVERS."""
+    max_servers = 50  # low fixture ceiling; production default is 500
+    windows = [
+        _server(
+            str(uuid4()),
+            f"win-{i:04d}.delpi.local",
+            operating_system="Windows Server 2022",
+            administrative_status="in_operation",
+        )
+        for i in range(max_servers + 20)
+    ]
+    linux = [
+        _server(str(uuid4()), f"linux-{i:03d}.delpi.local", operating_system="Ubuntu 24.04")
+        for i in range(10)
+    ]
+    inventory = windows + linux
+    assert len(windows) == 70
+
+    def respond(request: httpx.Request):
+        assert request.url.path == "/servers"
+        page = int(request.url.params.get("page", "1"))
+        page_size = int(request.url.params.get("page_size", "25"))
+        start = (page - 1) * page_size
+        end = start + page_size
+        return httpx.Response(200, json=_envelope({
+            "items": inventory[start:end],
+            "total": len(inventory),
+            "page": page,
+            "page_size": page_size,
+        }))
+
+    async def scenario():
+        reader = ItPortalReader(
+            _settings(infra_max_servers=max_servers),
+            transport=httpx.MockTransport(respond),
+        )
+        page1 = await list_servers(
+            reader, "Bearer test-user-token", os_family="windows", page=1, page_size=25,
+        )
+        assert page1["total"] == 70
+        assert len(page1["items"]) == 25
+        assert page1["filtered_client_side"] is True
+        assert page1["inventory_scanned"] == len(inventory)
+
+        page3 = await list_servers(
+            reader, "Bearer test-user-token", os_family="windows", page=3, page_size=25,
+        )
+        assert page3["total"] == 70
+        assert len(page3["items"]) == 20
+        assert page3["items"][0]["hostname"] == "win-0050.delpi.local"
+
+        # Sibling: administrative_status filter also keeps full total (windows+linux).
+        admin = await list_servers(
+            reader,
+            "Bearer test-user-token",
+            administrative_status="in_operation",
+            page=1,
+            page_size=100,
+        )
+        assert admin["total"] == len(inventory)
+        assert len(admin["items"]) == 80
+
+        # Negative: infrastructure consolidation still applies the safe cap.
+        def respond_infra(request: httpx.Request):
+            path = request.url.path
+            if path == "/servers":
+                page = int(request.url.params.get("page", "1"))
+                page_size = int(request.url.params.get("page_size", "25"))
+                start = (page - 1) * page_size
+                end = start + page_size
+                return httpx.Response(200, json=_envelope({
+                    "items": inventory[start:end],
+                    "total": len(inventory),
+                    "page": page,
+                    "page_size": page_size,
+                }))
+            if path.endswith("/observations/latest"):
+                return httpx.Response(200, json=_envelope(None))
+            return httpx.Response(404)
+
+        infra_reader = ItPortalReader(
+            _settings(infra_max_servers=max_servers),
+            transport=httpx.MockTransport(respond_infra),
+        )
+        infra = await get_infrastructure_health(
+            infra_reader, "Bearer test-user-token", os_family="windows", page_size=100,
+        )
+        assert infra["scope"]["inventory_total"] == 70
+        assert infra["scope"]["servers_considered"] == max_servers
+        assert infra["scope"]["bounded_by_max_servers"] is True
+        assert infra["servers_total"] == max_servers
+
+    asyncio.run(scenario())
+
+
+def test_windows_services_health_preserves_it_portal_identifier_limits():
+    """Dashboard issues must keep service_key<=200 and service_name<=240."""
+    server_id = str(uuid4())
+    key_200 = "k" * 200
+    name_240 = "N" * 240
+
+    def respond(request: httpx.Request):
+        assert request.url.path == "/dashboard/windows-services-health"
+        return httpx.Response(200, json=_envelope({
+            "generated_at": "2026-11-19T11:00:00Z",
+            "total": 1,
+            "running": 0,
+            "stopped": 1,
+            "attention": 0,
+            "unverified": 0,
+            "health_percent": 0.0,
+            "issues_total": 1,
+            "issues": [{
+                "server_id": server_id,
+                "server_name": "SRV-WIN",
+                "service_key": key_200,
+                "service_name": name_240,
+                "criticality": "critical",
+                "state": "stopped",
+                "status": "stopped",
+                "reason": "Parado",
+            }],
+        }))
+
+    async def scenario():
+        reader = ItPortalReader(_settings(), transport=httpx.MockTransport(respond))
+        payload = await reader.windows_services_health("Bearer test-user-token")
+        assert payload["issues"][0]["service_key"] == key_200
+        assert payload["issues"][0]["service_name"] == name_240
+
+        # Negative: oversize key/name become None (no silent truncation).
+        def respond_oversize(request: httpx.Request):
+            return httpx.Response(200, json=_envelope({
+                "generated_at": "2026-11-19T11:00:00Z",
+                "total": 1,
+                "running": 0,
+                "stopped": 1,
+                "attention": 0,
+                "unverified": 0,
+                "health_percent": 0.0,
+                "issues_total": 1,
+                "issues": [{
+                    "server_id": server_id,
+                    "server_name": "SRV-WIN",
+                    "service_key": "k" * 201,
+                    "service_name": "N" * 241,
+                    "criticality": "high",
+                    "state": "stopped",
+                    "status": "stopped",
+                    "reason": "Parado",
+                }],
+            }))
+
+        oversize_reader = ItPortalReader(
+            _settings(), transport=httpx.MockTransport(respond_oversize),
+        )
+        oversize = await oversize_reader.windows_services_health("Bearer test-user-token")
+        assert oversize["issues"][0]["service_key"] is None
+        assert oversize["issues"][0]["service_name"] is None
+
+    asyncio.run(scenario())
+
+
 def test_linux_and_windows_server_health():
     linux_id, windows_id = str(uuid4()), str(uuid4())
 
