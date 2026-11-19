@@ -171,6 +171,11 @@ TST01 por ambiente** antes de promover contrato.
 
 - `/rest` = HTTPREST clássico; `/restall` = REST 2.0 — **mesmo WSRESTFUL,
   daemon diferente** (pool, entrega de body, reciclagem pós-build).
+- **URI inclui o nome do serviço WSRESTFUL**:
+  `/rest/<NomeDoServico>/<path do WSMETHOD>` — ex.:
+  `WSRESTFUL DelpiProduto ... PATH '/v1/IncProduto/alterar'` →
+  `PUT /rest/delpiproduto/v1/IncProduto/alterar`. Sem o prefixo do
+  serviço = 404 mesmo com objeto compilado (lição TST01 2026-11-19).
 - Auth nativo: `/rest/api/oauth2/v1/token` quando oauth2 configurado.
 - Serviço REST = processo/appserver próprio com RPO/ini próprios:
   `[HTTPREST]`, `[HTTPV11]` (URI `/rest`), pool de threads,
@@ -315,7 +320,10 @@ relacionada) ou a validação oficial rejeita.
 |---|---|---|
 | `FWNOSTRUCT` | FWFormFieldsModel | valor difere do tipo do campo — tipar com `StoD`/`Val` antes da tripla/`SetValue` |
 | `O id de formulario 'X' nao e valido` | FWFormFieldsModel | campo fora do form do modelo — remover do contrato (SX3 ∩ form) |
-| `VLDDATA_POST` | VldData/CommitData | validação de negócio pós-carga (X3_VALID/bVldPos) — investigar a regra, não o transporte |
+| `VLDDATA_POST` | VldData/CommitData | validação de negócio pós-carga (X3_VALID/bVldPos/PE) — investigar a regra, não o transporte. Opaco quando o PE retorna `.F.` sem mensagem útil |
+| `FWNOLIST` | FWFormFieldsModel | valor fora do `X3_CBOX` — enviar chave da combo (`'1'/'2'`), não rótulo/legado (`'N'`) |
+| `A<rot>TOK` / PE de permissão | user exit | `RetCodUsr()`/`SuperGetMV("MV_*US*")` falham em REST: o usuário é o técnico do serviço (SYS_USR), não o operador — ex.: `A010TOK`+`MV_ZUSMPLB` bloqueia MP no TST01 |
+| `SB5010_UNQ` e afins | InTTS/commit | flush de complemento multi-filial (SB1 compartilhada × SB5/SBZ exclusivas) — diagnosticar PEs `MT010ALT`-style antes de culpar o contrato |
 | `Erro -->` no `GetAutoGrLog` | ExecAuto | bloco de erro fica no FIM do log — ler a cauda, não a cabeça |
 | `THREAD ERROR` | console appserver | exceção não tratada; corpo do erro no `console.log`/`error.log` |
 | `variable does not exist`/`function not found` | runtime | PRIVATE errado / função ausente no RPO (compilação ≠ carga) |
