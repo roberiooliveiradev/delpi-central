@@ -45,3 +45,29 @@ PDF_SHA256=af47dd4cfbbbd25c0530948e2454ed9a4f6fb9a3ce2aeef0c6ceeb050d98edf3
 3. Coordination: disponibilizar PNGs locais por canal autorizado (não estão no Git público).
 
 **G2 permanece bloqueado** até aceite formal do G1.
+
+---
+
+## VAL-04 — `graphic_primitives.dots` implementado (release bloqueado)
+
+Canal aditivo de terminadores geométricos implementado em
+`opencv_adapter` (`saturation_opening` + fallback `distance_transform`)
+e consumido pelo B2 em `understanding` (`terminator_dots_px` +
+`termination:{DOT_TERMINATED|DOT_OVERSHOOT,dot_px,overshoot_px}`).
+
+Desenho real 90480120: p1=81 dots, p2=67; A4/A8/AA/A1 `DOT_TERMINATED`
+com endpoints físicos inalterados; A5 leque AMBIGUOUS com os 3 dots
+expostos; A9/E compartilham o dot (2002,1086) recuperado via
+distance_transform — ambiguidade preservada. Irmãos
+90261723/90261731/90264311 sem regressão; 90264311-A2 `DOT_OVERSHOOT`
+61 px confirmado visualmente. B1/tabela/B3 estáveis;
+`automatic_approval=false`.
+
+Testes: +13 (adapter+B2), 111 pass nos arquivos afetados em container;
+suíte 1713 pass com 6 falhas ambientais pré-existentes (worker sem
+cv2/paddle no venv — reproduzidas com diff stasheado).
+
+Verificação independente: `INCONCLUSIVE` (cursor usage limit até
+02/12/2026). **Código NÃO publicado** — permanece em working tree
+governado até motor verificador disponível ou exceção da Coordination.
+Doc 119 §94.42.19 + pacote `eva-val01-g1/val04-dots-review-package.md`.
