@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, Mapping
@@ -33,11 +34,13 @@ from production_control_app.infrastructure.persistence.postgres_myweg_needs_repo
 )
 
 _SAO_PAULO = ZoneInfo("America/Sao_Paulo")
+logger = logging.getLogger(__name__)
 
 
 class MyWegNeedsService:
-    def __init__(self, repository: MyWegNeedsRepositoryPort) -> None:
+    def __init__(self, repository: MyWegNeedsRepositoryPort, notification_gateway: Any | None = None) -> None:
         self._repository = repository
+        self._notification_gateway = notification_gateway
 
     def ingest_batch(
         self,
@@ -114,6 +117,10 @@ class MyWegNeedsService:
                 raise
             return self._resolve_existing(raced, batch["payload_sha256"], created=False)
 
+        # Fato persistido primeiro. Alertas são best-effort e não alteram ingestão.
+        quality = (stored.get("source_files") or {}).get("quality")
+        if isinstance(quality, dict) and quality.get("excludedCount"):
+            self._notify_partial_ingest(stored, quality)
         return self._ingest_response(stored, created=True)
 
     def list_batches(self, user: object | None, *, page: int, page_size: int) -> dict[str, Any]:
@@ -187,6 +194,54 @@ class MyWegNeedsService:
             )
         return self._ingest_response(existing, created=created)
 
+    def _notify_partial_ingest(self, batch: dict[str, Any], quality: dict[str, Any]) -> None:
+        count = int(quality["excludedCount"])
+        quantity = quality["excludedQuantityUn"]
+        logger.warning(
+            "myweg_ingest_partial collection_id=%s excluded_count=%s excluded_un=%s",
+            batch["collection_id"], count, quantity,
+        )
+        if self._notification_gateway is None:
+            return
+        payload = {
+            "title": "Integração MyWEG com pendências",
+            "message": (
+                f"A coleta MyWEG {batch['collection_date']} foi importada com "
+                f"{count} registro(s) sem identificação de material "
+                f"({quantity} UN), fora do cálculo de demanda por produto."
+            ),
+            "type": "warning",
+            "category": "production_control_myweg_import_warnings",
+            "presentation": "text",
+            "sourceApp": "production-control",
+            "permissionCodes": ["production-control.myweg-needs.view"],
+            "requiredPermissionCodes": ["production-control.view.filial-02"],
+            "action": {
+                "type": "portal_route",
+                "label": "Abrir Necessidades WEG",
+                "target": "/apps/production-control/myweg-needs?branch=02",
+            },
+            "metadata": {
+                "event": "myweg_ingest_partial",
+                "collectionId": batch["collection_id"],
+                "branch": "02",
+                "excludedCount": count,
+            },
+        }
+        try:
+            self._notification_gateway.dispatch(payload)
+        except Exception:
+            logger.warning(
+                "myweg_partial_notification_failed collection_id=%s",
+                batch["collection_id"],
+                exc_info=True,
+            )
+
+    @staticmethod
+    def _batch_quality(batch: Mapping[str, Any]) -> dict[str, Any] | None:
+        quality = (batch.get("source_files") or {}).get("quality")
+        return dict(quality) if isinstance(quality, dict) else None
+
     @staticmethod
     def _ingest_response(batch: dict[str, Any], *, created: bool) -> dict[str, Any]:
         return {
@@ -196,6 +251,7 @@ class MyWegNeedsService:
             "branch": batch["branch"],
             "status": batch["status"],
             "recordCount": int(batch["record_count"]),
+            "quality": MyWegNeedsService._batch_quality(batch),
             "totals": {
                 "quantidade_original_un": decimal_to_canonical_str(
                     Decimal(str(batch["total_quantidade_un"]))
@@ -221,6 +277,7 @@ class MyWegNeedsService:
             "collectionDate": batch["collection_date"],
             "importedAt": batch["imported_at"],
             "recordCount": int(batch["record_count"]),
+            "quality": MyWegNeedsService._batch_quality(batch),
             "totals": {
                 "quantidade_original_un": decimal_to_canonical_str(
                     Decimal(str(batch["total_quantidade_un"]))

@@ -208,7 +208,15 @@ export default function App({
   const shellBranch = activeBranch ?? allowedBranches[0] ?? "01";
 
   return (
-    <PpcAllowedBranchesProvider allowedBranches={allowedBranches}>
+    <PpcAllowedBranchesProvider
+      allowedBranches={allowedBranches}
+      featureAccess={{
+        canViewLineFeeder:
+          isSuperadmin || (permissions ?? []).includes("production-control.line-feeder.view"),
+        canViewMyWeg:
+          isSuperadmin || (permissions ?? []).includes("production-control.myweg-needs.view"),
+      }}
+    >
       <PpcConfirmDialogProvider>
         <PpcAppShell items={items} activeId={route.subpluginId || DEFAULT_SUBPLUGIN} branch={shellBranch}>
           {error ? (
