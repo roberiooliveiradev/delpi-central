@@ -3,12 +3,20 @@
    oficial MATA061 (cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
    VERSAO: 0.7.1 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.8.1"); comparar com o objeto compilado no RPO.
+          ("dlp04i02-0.8.2"); comparar com o objeto compilado no RPO.
           0.7.0 = CRUD completo: PUT/GET/DELETE passam de 501 para o
           ciclo MVC oficial (mesma cadeia headless provada no POST).
           0.7.0 = PROVEN_RUNTIME TST01: GET 200 (data{}), PUT 200
           (A5_NOMEFOR alterado, read-back), DELETE 200 (vinculo
           removido), GET pos-delete 404 correto.
+          0.8.2 = fix runtime GET 500: GetValue/SetValue em campo fora
+                  do form aborta a thread sem recover (begin sequence
+                  aninhado nao protege). Guarda trocada por intersecao
+                  com oGrid:aFields — aSA5FormFields enumera os ids do
+                  form (probe cIdField/GetID/cID, padrao DLPDBG01) e
+                  GET devolve "" / PUT+POST rejeitam campo-a-campo
+                  (official_validation). Sem aFields exposto, baseline
+                  provado 0.7.x (3 attrs) como fail-safe.
           0.8.1 = fix runtime 0.8.0: catalogo montado com aadd
                   multi-arg so gravava o 1o item por chamada (catalogo
                   efetivo ~14 campos — PUT 400 indevido); aadd unitario
@@ -378,6 +386,47 @@ static function xSA5JsonSafe(xVal)
 
 Return xVal
 
+/* ---------------------------------------------------------------------
+   aSA5FormFields — ids dos campos expostos pelo submodelo de grade
+   (FWFormFieldsModel:aFields — mesmo probe do DLPDBG01). GetValue/
+   SetValue em campo fora do form aborta a thread sem recover (GET 500
+   cru TST01 0.8.0/0.8.1) — intersecao deterministica ANTES da chamada,
+   sem begin sequence aninhado. Enumeracao vazia = form desconhecido:
+   caller decide fail-closed.
+   --------------------------------------------------------------------- */
+static function aSA5FormFields(oGrid)
+
+    local aOut := {}
+    local oF   := NIL
+    local cId  := ""
+    local nI   := 0
+
+    if ValType(oGrid) == "O" .and. __ObjHasData(oGrid, "aFields") .and. ;
+       ValType(oGrid:aFields) == "A"
+        for nI := 1 to len(oGrid:aFields)
+            oF  := oGrid:aFields[nI]
+            cId := ""
+            if ValType(oF) == "O"
+                if __ObjHasData(oF, "cIdField")
+                    cId := oF:cIdField
+                elseif __ObjHasMethod(oF, "GetID")
+                    cId := oF:GetID()
+                elseif __ObjHasData(oF, "cID")
+                    cId := oF:cID
+                endif
+            elseif ValType(oF) == "A" .and. len(oF) > 0
+                cId := cValToChar(oF[1])
+            elseif ValType(oF) == "C"
+                cId := oF
+            endif
+            if !Empty(cId)
+                aadd(aOut, Upper(AllTrim(cId)))
+            endif
+        next nI
+    endif
+
+Return aOut
+
 /* -----------------------------------------------------------------------
    lPrepSA5 — valida presenca/tipo da identidade completa e dos atributos.
    Retorna .T. ou .F. com cErro listando campos ausentes/nulos/invalidos.
@@ -502,6 +551,7 @@ static function lExecSA5(oSelf)
     Local xVal       := NIL
     Local aLoad      := {}
     Local aRej       := {}
+    Local aForm      := {}
     Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
@@ -589,6 +639,12 @@ static function lExecSA5(oSelf)
             endif
 
             oGrid := oModel:GetModel(cGrdId)
+            aForm := aSA5FormFields(oGrid)
+            if len(aForm) == 0
+                ConOut("DLP04I02 aFields do grid indisponivel — " + ;
+                    "baseline provado 0.7.x como guarda")
+                aForm := {"A5_NOMEFOR", "A5_CODPRF", "A5_DESCPRF"}
+            endif
             oGrid:AddLine()
 
             // linha corrente: identidade restante + atributos; vazio =
@@ -602,24 +658,17 @@ static function lExecSA5(oSelf)
             next nI
             // atributos: catalogo completo — so os presentes e nao
             // vazios; conversao por tipo SX3; campo fora do form do
-            // modelo lanca e e capturado por campo (fail-closed:
-            // qualquer rejeicao vira official_validation)
+            // modelo e detectado por intersecao com aFields do grid
+            // (fail-closed: rejeicao nominal -> official_validation)
             for nI := 1 to len(aAttr)
                 xVal := oDados:GetJSonObject(aAttr[nI])
                 if ValType(xVal) == "C" .and. !Empty(xVal)
-                    lOk2 := .T.
-                    begin sequence
+                    if aScan(aForm, aAttr[nI]) > 0
                         oGrid:SetValue(aAttr[nI], ;
                             xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
-                    recover
-                        lOk2 := .F.
-                    end sequence
-                    if !lOk2
+                    else
                         aadd(aRej, aAttr[nI])
-                        ConOut("DLP04I02 campo fora do form/rejeitado: " + aAttr[nI] + ;
-                            " — " + Left(cErroBlk, 120))
-                        cErroBlk := ""
-                        cErroEnv := ""
+                        ConOut("DLP04I02 campo fora do form: " + aAttr[nI])
                     endif
                 endif
             next nI
@@ -839,6 +888,8 @@ static function lExecSA5Op(oSelf, cOp)
     Local oGrid      := NIL
     Local aLoad      := {}
     Local aRej       := {}
+    Local aForm      := {}
+    Local aFora      := {}
     Local lOk2       := .T.
     Local oJsonRet   := JsonObject():New()
     Local oItem      := JsonObject():New()
@@ -905,6 +956,12 @@ static function lExecSA5Op(oSelf, cOp)
                     oModel:Activate()
                     lActivated := .T.
                     oGrid := oModel:GetModel(cGrdId)
+                    aForm := aSA5FormFields(oGrid)
+                    if len(aForm) == 0
+                        ConOut("DLP04I02 aFields do grid indisponivel — " + ;
+                            "baseline provado 0.7.x como guarda")
+                        aForm := {"A5_NOMEFOR", "A5_CODPRF", "A5_DESCPRF"}
+                    endif
                     nAlvo := lFindSA5Line(oGrid, oDados)
                     // REFGRD e campo do header do documento — linhas da
                     // grade compartilham o valor; compara-se no header.
@@ -941,19 +998,19 @@ static function lExecSA5Op(oSelf, cOp)
                                 // guarda por campo devolve "" sem derrubar
                                 // a leitura do vinculo
                                 for nI := 1 to len(aAttr)
-                                    xVal := ""
-                    begin sequence
-                                    xVal := oGrid:GetValue(aAttr[nI])
-                    recover
-                                    xVal := ""
-                    end sequence
-                                    if !Empty(cErroBlk)
-                                        ConOut("DLP04I02 GET campo fora do form: " + aAttr[nI])
-                                        cErroBlk := ""
-                                        cErroEnv := ""
+                                    if aScan(aForm, aAttr[nI]) > 0
+                                        xVal := oGrid:GetValue(aAttr[nI])
+                                        oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xSA5JsonSafe(xVal))
+                                    else
+                                        aadd(aFora, aAttr[nI])
+                                        oItem[aAttr[nI]] := ""
                                     endif
-                                    oItem[aAttr[nI]] := iif(ValType(xVal) == "U", "", xSA5JsonSafe(xVal))
                                 next nI
+                                if len(aFora) > 0
+                                    ConOut("DLP04I02 GET fora do form (" + ;
+                                        cValToChar(len(aFora)) + "): " + ;
+                                        lJoin(aFora, ", "))
+                                endif
                                 lRet    := .T.
                                 nStatus := 200
                             case cOp == "PUT"
@@ -963,18 +1020,12 @@ static function lExecSA5Op(oSelf, cOp)
                                 for nI := 1 to len(aAttr)
                                     xVal := oDados:GetJSonObject(aAttr[nI])
                                     if ValType(xVal) == "C" .and. !Empty(xVal)
-                                        lOk2 := .T.
-                        begin sequence
-                                        oGrid:SetValue(aAttr[nI], ;
-                                            xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
-                        recover
-                                        lOk2 := .F.
-                        end sequence
-                                        if !lOk2
+                                        if aScan(aForm, aAttr[nI]) > 0
+                                            oGrid:SetValue(aAttr[nI], ;
+                                                xSA5Typed(aAttr[nI], xVal, aSA5AttrNum(), aSA5AttrDat()))
+                                        else
                                             aadd(aRej, aAttr[nI])
-                                            ConOut("DLP04I02 PUT campo fora do form/rejeitado: " + aAttr[nI])
-                                            cErroBlk := ""
-                                            cErroEnv := ""
+                                            ConOut("DLP04I02 PUT campo fora do form: " + aAttr[nI])
                                         endif
                                     endif
                                 next nI
@@ -1201,7 +1252,7 @@ Return lExecSA5Op(self, "DELETE")
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.8.1"
+Return "dlp04i02-0.8.2"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
