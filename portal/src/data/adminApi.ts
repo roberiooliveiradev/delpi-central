@@ -45,6 +45,37 @@ export type ListAppsQueryOptions = ListQueryOptions & {
   type?: AppManifestType;
 };
 
+export type HrIdentityDirectoryUser = {
+  userId: string;
+  name: string;
+  email: string;
+  active: boolean;
+  registration: string | null;
+};
+
+export type HrIdentityDirectory = {
+  items: HrIdentityDirectoryUser[];
+  total: number;
+  linked: number;
+  readOnly: true;
+  scope: "all_core_accounts";
+};
+
+export type HrCollaboratorIdentityPreview = {
+  registration: string;
+  fullName: string;
+  branchCode: string;
+  active: boolean;
+  readOnly: true;
+};
+
+export type HrIdentityMapping = {
+  userId: string;
+  registration: string;
+  verifiedAt: string | null;
+  verifiedByUserId: string | null;
+};
+
 export type AdminUser = {
   id: string;
   name: string;
@@ -585,6 +616,32 @@ export class AdminApi {
   /* =========================
      RBAC - Users
   ========================= */
+
+  // GLPI #887: vínculo global sem dependência de matrícula de gestor.
+  getHrIdentityDirectory() {
+    return this.client.get<HrIdentityDirectory>(
+      "/core-api/admin/organization/identity-directory"
+    );
+  }
+
+  getHrCollaboratorIdentityPreview(registration: string) {
+    return this.client.get<HrCollaboratorIdentityPreview>(
+      `/core-api/admin/organization/collaborators/${encodeURIComponent(registration)}/identity-preview`
+    );
+  }
+
+  getHrIdentityMapping(userId: string) {
+    return this.client.get<{ mapping: HrIdentityMapping | null }>(
+      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`
+    );
+  }
+
+  confirmHrIdentityMapping(userId: string, registration: string) {
+    return this.client.put<{ mapping: HrIdentityMapping }>(
+      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
+      { registration, confirmIdentity: true }
+    );
+  }
 
   listUsers(options?: ListUsersQueryOptions) {
     const params = new URLSearchParams();
