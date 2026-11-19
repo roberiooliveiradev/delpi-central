@@ -986,3 +986,11 @@ A demanda GLPI #1621 (Criação de Matéria-prima) será implementada no **bound
 - **S4 — validação:** testes unitários, contrato, integração, permissões por objeto, concorrência start × cancel, regressão PRC, E2E autenticado em ambas superfícies e verificador independente; release governado separadamente.
 
 **Contrato e execução completos:** [PRC-GLPI-1621 — Plano integrado dos dois portais](./PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-IMPLEMENTATION-PLAN-2026-11-19.md), incluindo RQ/AC, ownership e gates. **Prompt executor S1:** [Frontend-only — defaults CREATE para Devin/Cursor](./PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md). **Próxima execução bounded:** reproduzir RED e implementar S1 no kit compartilhado, com teste dos dois MFEs; nenhum G0 adicional de defaults na Engineering API. **S1_APPROVED_FRONTEND_ONLY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN**, nenhuma mudança de runtime realizada por este registro.
+
+### S1b — Refinamento do PO: Tipo MP somente no My Requests (19/11/2026)
+
+> **PLANNED / PROMPT_READY / NOT_IMPLEMENTED / TEST_NOT_RUN.** O PO apresentou evidência visual de que o S1 já aparece no My Requests (armazém `01` e conta `11401002`). A experiência de Tipo ainda solicita seleção manual.
+
+**Jornadas distintas, mesma Engineering API:** `my-requests` é canal de cadastro/alteração de **matéria-prima**; no **novo CREATE** deste canal o campo `productKind` deve aparecer preenchido como `MP — Matéria-prima` (seleção **editável**, opções oficiais ainda acessíveis). No **Portal Engenharia**, o usuário pode solicitar produtos de outros tipos suportados (incluindo PA/PI) e Tipo continua sem seleção inicial. **EVA**, quando autorizada a usar essa capacidade, segue as regras/contratos da Engineering API e não recebe default de My Requests. Não alterar API, permissões, contratos, ERP nem criar tool EVA por este refinamento. UPDATE e edição de caso não são afetados.
+
+**Prompt técnico:** [GLPI #1621 — S1b / Tipo MP somente em My Requests](./PRC-GLPI-1621-S1B-MY-REQUESTS-PRODUCT-TYPE-PREFILL-IMPLEMENTATION-PROMPT-2026-11-19.md). Reutilizar `PrcRequestForm` em `@delpi/plugin-ui`, testar as duas origens, sem duplicar lógica nos MFEs. S2 e S3 permanecem etapas distintas.
