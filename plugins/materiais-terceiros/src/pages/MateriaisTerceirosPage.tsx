@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { exportReturns, fetchShipment } from "../api/thirdPartyMaterialsApi";
+import { exportPendingSuppliers, exportReturns, fetchShipment } from "../api/thirdPartyMaterialsApi";
 import { EmptyState } from "../components/EmptyState";
 import { PageHeader } from "../components/PageHeader";
 import { SectionError } from "../components/SectionError";
@@ -8,6 +8,8 @@ import { ShipmentDetailDialog } from "../components/ShipmentDetailDialog";
 import { ShipmentFilters } from "../components/ShipmentFilters";
 import { ShipmentsTable } from "../components/ShipmentsTable";
 import { SummaryCards } from "../components/SummaryCards";
+import { PendingSuppliersView } from "../components/PendingSuppliersView";
+import { usePendingSuppliers } from "../hooks/usePendingSuppliers";
 import { HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useShipments } from "../hooks/useShipments";
 import { useSummary } from "../hooks/useSummary";
@@ -81,6 +83,7 @@ export function MateriaisTerceirosPage({
   }, [authorizedBranches]);
 
   const [filters, setFilters] = useState<UrlState>(initial);
+  const [view, setView] = useState<"shipments" | "pending">("pending");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [selected, setSelected] = useState<Shipment | null>(null);
@@ -98,8 +101,17 @@ export function MateriaisTerceirosPage({
   const scoped = hasUsefulScope(query);
   const appliedQuery = scoped ? query : null;
 
-  const summary = useSummary(appliedQuery);
-  const shipments = useShipments(appliedQuery, page, pageSize);
+  const summary = useSummary(view === "shipments" ? appliedQuery : null);
+  const shipments = useShipments(view === "shipments" ? appliedQuery : null, page, pageSize);
+  const pendingQuery = useMemo(() => query.branch ? {
+    ...EMPTY_QUERY,
+    branch: query.branch,
+    partnerCode: query.partnerCode,
+    partnerStore: query.partnerStore,
+    product: query.product,
+    includeTestProducts: query.includeTestProducts,
+  } : null, [query.branch, query.partnerCode, query.partnerStore, query.product, query.includeTestProducts]);
+  const pending = usePendingSuppliers(view === "pending" ? pendingQuery : null, page, pageSize);
 
   const handleFilterChange = useCallback((patch: Partial<ThirdPartyMaterialsQuery>) => {
     setFilters((current) => ({ ...current, ...patch }));
@@ -159,7 +171,8 @@ export function MateriaisTerceirosPage({
   const handleRefresh = useCallback(() => {
     summary.reload();
     shipments.reload();
-  }, [summary, shipments]);
+    pending.reload();
+  }, [summary.reload, shipments.reload, pending.reload]);
 
   const handlePageSizeChange = useCallback((next: number) => {
     setPageSize(Math.min(next, MAX_PAGE_SIZE));
@@ -190,8 +203,29 @@ export function MateriaisTerceirosPage({
           title="Materiais de Terceiros"
           subtitle={HELP_TOOLTIPS.pageSubtitle}
           onRefresh={handleRefresh}
-          refreshing={summary.refreshing || shipments.refreshing}
+          refreshing={summary.refreshing || shipments.refreshing || pending.refreshing}
         />
+
+        <div className="mt-view-switch" role="tablist" aria-label="Visões de materiais de terceiros">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "pending"}
+            className={`mt-view-switch__item${view === "pending" ? " mt-view-switch__item--active" : ""}`}
+            onClick={() => { setView("pending"); setPage(1); }}
+          >
+            Consolidado de pendências
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "shipments"}
+            className={`mt-view-switch__item${view === "shipments" ? " mt-view-switch__item--active" : ""}`}
+            onClick={() => { setView("shipments"); setPage(1); }}
+          >
+            Remessas e devoluções
+          </button>
+        </div>
 
         <ShipmentFilters
           filters={query}
@@ -200,11 +234,47 @@ export function MateriaisTerceirosPage({
           onClear={handleClear}
         />
 
-        {!scoped ? (
-          <EmptyState message="Informe a filial e um critério (produto, NF, período ou somente saldo) para consultar as remessas." />
+        {view === "pending" ? (
+          <PendingSuppliersView
+            data={pending.data}
+            loading={pending.loading}
+            error={pending.error}
+            onRetry={pending.reload}
+            query={pendingQuery}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onExport={exportAllowed ? async (format) => {
+              if (!pendingQuery) return;
+              const result = await exportPendingSuppliers(pendingQuery, format);
+              downloadBlob(result.blob, result.filename);
+            } : undefined}
+            onDrillDown={(item) => {
+              setFilters((prev) => ({
+                ...prev,
+                branch: item.branch,
+                partnerCode: item.supplier_code,
+                partnerStore: item.supplier_store,
+                product: item.product_code,
+                onlyWithBalance: true,
+                status: "",
+                customerReference: "",
+                receiptNumber: "",
+                returnNumber: "",
+                issuedFrom: "",
+                issuedTo: "",
+              }));
+              setPage(1);
+              setView("shipments");
+            }}
+          />
         ) : null}
 
-        {scoped && summary.error ? (
+        {view === "shipments" && !scoped ? (
+          <EmptyState message="Informe a filial e um critério (parceiro, produto, NF, período ou somente saldo) para consultar as remessas." />
+        ) : null}
+
+        {view === "shipments" && scoped && summary.error ? (
           <SectionError
             title={summary.error.title}
             message={summary.error.message}
@@ -212,9 +282,9 @@ export function MateriaisTerceirosPage({
           />
         ) : null}
 
-        {scoped ? <SummaryCards summary={summary.data} loading={summary.loading} /> : null}
+        {view === "shipments" && scoped ? <SummaryCards summary={summary.data} loading={summary.loading} /> : null}
 
-        {scoped && shipments.error ? (
+        {view === "shipments" && scoped && shipments.error ? (
           <SectionError
             title={shipments.error.title}
             message={shipments.error.message}
@@ -226,7 +296,7 @@ export function MateriaisTerceirosPage({
           <SectionError title="Exportação" message={exportError} />
         ) : null}
 
-        {scoped ? (
+        {view === "shipments" && scoped ? (
           <ShipmentsTable
             rows={shipments.data?.items ?? []}
             loading={shipments.loading}
