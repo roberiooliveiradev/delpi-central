@@ -4,7 +4,7 @@ import asyncio
 from linux_ops_mcp.server import READ_TOOLS, OAUTH_SECURITY_SCHEMES, create_mcp_server
 
 
-def test_only_approved_four_tools_and_explicit_oauth_security_schemes():
+def test_only_approved_read_tools_and_explicit_oauth_security_schemes():
     async def discover():
         return await create_mcp_server().list_tools()
 
