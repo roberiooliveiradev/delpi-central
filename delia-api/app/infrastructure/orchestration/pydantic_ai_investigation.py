@@ -1985,12 +1985,16 @@ class PydanticAiInvestigationOrchestrator:
                 # The classification grants no permission — AuthZ,
                 # Policy and Domain checks still run on every call.
                 raise ModelRetry(
-                    "This business query depends on a typed "
-                    "investigation objective that has not been "
-                    "declared yet. Declare the objective, expected "
-                    "delivery and material evidence obligations once "
-                    "via declare_investigation_goal, then reissue "
-                    "this query."
+                    f"Call to {cap_key} was not executed — a typed "
+                    "investigation goal has not been declared yet, "
+                    "so no owner was contacted. Do not reissue this "
+                    "call before the goal is accepted: it will be "
+                    "rejected again and consume your retry budget. "
+                    "Call declare_investigation_goal once now with "
+                    "goal_class, expected_delivery and "
+                    "evidence_needed describing the user's "
+                    "objective; after the declaration is accepted, "
+                    "reissue this same call unchanged."
                 )
             _schema_props = (
                 (catalog_entry.get("input_schema") or {}).get(

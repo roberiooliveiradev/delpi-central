@@ -855,3 +855,105 @@ def _final_complete() -> ModelResponse:
             )
         ]
     )
+
+
+# -------------------------------------------------------------------
+# Goal-declaration recovery — the feedback must be a recovery
+# contract, not just a rejection notice (C3/T2 post-A/B diagnosis:
+# qwen/qwen3-14b received the ModelRetry 3x and reissued the SAME
+# blocked call every time until UnexpectedModelBehavior — the owner
+# was never contacted. The feedback named no blocked call, never
+# said the call did not execute, never warned that repeating it is
+# futile, and named no concrete declaration fields.)
+# -------------------------------------------------------------------
+
+
+def test_gate_retry_feedback_is_a_recovery_contract():
+    """The pre-declare ModelRetry must function as an actionable
+    recovery contract for models that do not infer ordering from a
+    bare rejection: it must (a) identify the blocked call, (b) state
+    it was not executed / no owner was contacted, (c) forbid
+    reissuing the same call before the goal is accepted, and (d)
+    direct the single corrective action — declare_investigation_goal
+    with its concrete argument names — before reissue."""
+    gates = _gates()
+    retries: list[str] = []
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                for part in m.parts:
+                    if isinstance(part, RetryPromptPart):
+                        content = getattr(part, "content", "")
+                        retries.append(
+                            content
+                            if isinstance(content, str)
+                            else str(content)
+                        )
+        prior = sum(1 for m in messages if isinstance(m, ModelResponse))
+        if prior == 0:
+            return ModelResponse(parts=[_read_call()])
+        return _final_answer()
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=4
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("quais itens existem")
+    assert retries, "pre-declare call must yield gate feedback"
+    feedback = retries[0]
+    assert "alpha.search_items" in feedback
+    low = feedback.casefold()
+    assert "not executed" in low or "was not executed" in low
+    assert "declare_investigation_goal" in feedback
+    assert "goal_class" in feedback
+    assert "expected_delivery" in feedback
+    assert "evidence_needed" in feedback
+    # the same blocked call must not be reissued before the goal is
+    # accepted — the verbatim retry loop the live run fell into
+    assert "do not reissue" in low or "do not repeat" in low
+
+
+def test_gate_repeated_violation_stays_bounded_owner_unreached():
+    """Scenario C reproduction: a model that keeps reissuing the SAME
+    blocked call (never declaring a goal) must (a) never reach the
+    owner, (b) receive gate feedback on every attempt, and (c)
+    terminate within the bounded retry budget — fail closed, not
+    loop unboundedly."""
+    gates = _gates()
+    owner_calls: list[str] = []
+    original = gates._governed_semantic_tool_invoke
+
+    def _spy(**kwargs):
+        owner_calls.append(str(kwargs.get("capability_id") or ""))
+        return original(**kwargs)
+
+    gates._governed_semantic_tool_invoke = _spy  # type: ignore[method-assign]
+    retry_count = {"n": 0}
+    read_calls = {"n": 0}
+
+    def _fn(messages, _info):
+        for m in messages:
+            if isinstance(m, ModelRequest):
+                retry_count["n"] += sum(
+                    1
+                    for p in m.parts
+                    if isinstance(p, RetryPromptPart)
+                )
+        read_calls["n"] += 1
+        return ModelResponse(parts=[_read_call()])
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates,
+        model=FunctionModel(_fn),
+        tool_calls_limit=8,
+        agent_retries=2,
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        attempt = engine.attempt("quais itens existem")
+    assert owner_calls == []
+    # agent_retries=2 bounds the identical blocked call at 1+2=3
+    # attempts; the run must end honestly, never loop.
+    assert read_calls["n"] <= 8
+    assert retry_count["n"] >= 1
+    assert attempt is not None

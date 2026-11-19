@@ -1,0 +1,310 @@
+== starting AB_C3_frozen_stock_continuity
+== AB_C3_frozen_stock_continuity: {"elapsed_s": 149.2, "error": null, "grounding": "GroundingStatus.NON_GROUNDED", "mcp_invoke_targets": [], "declared_answer": null, "investigation_plan": null, "obligation_coverage": [], "goal_declarations": [], "comprehension": null, "model_retry_feedback": ["Call to davi.read was not executed — a typed investigation goal has not been declared yet, so no owner was contacted. Do not reissue this call before the goal is accepted: it will be rejected again and consume your retry budget. Call declare_investigation_goal once now with goal_class, expected_delivery and evidence_needed describing the user's objective; after the declaration is accepted, reissue this same call unchanged."], "limitations": ["agent_requested_clarification", "tool_calls_limit_reached"], "content_head": "Por favor, confirme o código da matéria-prima para a qual deseja verificar o estoque disponível.", "llm_runs": {"count": 2, "input_tokens": 1265, "output_tokens": 304, "elapsed_ms": 147677, "interrupted": 1, "interruption_types": ["UsageLimitExceeded"]}, "provider_request_b3": {"boundary": "pydantic_ai_provider_request_pre_http", "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)", "pydantic_ai_provider_boundary": "PROVEN", "http_wire_bytes": "NOT_OBSERVED", "tool_count": 15, "tool_order": ["declare_investigation_goal", "compose_verified_observations", "request_user_clarification", "davi.get_context", "davi.knowledge", "davi.read", "davi.analyze", "teo.analyze", "teo.get_context", "teo.read", "teo.knowledge", "vista.get_context", "vista.read", "vista.analyze", "vista.knowledge"], "tools": [{"name": "declare_investigation_goal", "description_length": 3510, "description_sha256": "004ad2c1d277e779995a6c6eda95f04bfc741222308d6bfe10cd6c09778c25ee", "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427", "schema_property_count": 6, "required_fields": ["goal_class"], "tool_order": 0, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": true}, {"name": "compose_verified_observations", "description_length": 206, "description_sha256": "c9bbb8b2a710a6e992d02446ca14c7fca448896ce931f0f5c256ff3f752a0df0", "schema_sha256": "51b315ab5cf509ccf374fa95e5e25c456ad15001b9b7ecf997dc247f2f4a9a0f", "schema_property_count": 2, "required_fields": ["left_observation_index", "right_observation_index"], "tool_order": 1, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "request_user_clarification", "description_length": 211, "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c", "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b", "schema_property_count": 2, "required_fields": ["question"], "tool_order": 2, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "davi.get_context", "description_length": 638, "description_sha256": "cee611bb51d4a5fecc112ec43b319103109603e5cd95777391001a5e82ac2eb0", "schema_sha256": "2f001fe7f3701d80f46e48811824a2197f307993143e9f518ac6fd67509ff46b", "schema_property_count": 2, "required_fields": [], "tool_order": 3, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "davi.knowledge", "description_length": 408, "description_sha256": "494cf8e28420a8a9a77dcf04f00fed246b8e7825b6bd75d727ac1b629399a54a", "schema_sha256": "10d9c25fcd5e8c76308ff1f2aef131420936ca955e997b54f1a286852b527314", "schema_property_count": 7, "required_fields": ["action"], "tool_order": 4, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "davi.read", "description_length": 1056, "description_sha256": "1275580da22d1ec6859333d81abb2e02b411a56586109a055b6891ef2a22af55", "schema_sha256": "0ef129f941054920e479013abab13147034182423a78c680fd087c383bc426d5", "schema_property_count": 2, "required_fields": ["capability"], "tool_order": 5, "description_has_process_wbs": false, "description_has_bom_negative": true, "description_mentions_get_product_structure": true}, {"name": "davi.analyze", "description_length": 564, "description_sha256": "821b03ae113ed4e0c48d14ba644c57f2ca6b0c6d47db8192dd4611e3fbc500ef", "schema_sha256": "9a43e27ad0be2a3849754dce51fb243cf2593c082af05590feee60b775770b32", "schema_property_count": 2, "required_fields": ["capability"], "tool_order": 6, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "teo.analyze", "description_length": 1175, "description_sha256": "9f40088dcfd3e5c963377601c9abbc2a1f39546ae0c858c0f384705306a2bdcf", "schema_sha256": "0bfb3529c380fda12afbe1c4dfac952076a29acb54613ded670e61cbc9283433", "schema_property_count": 13, "required_fields": ["view"], "tool_order": 7, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "teo.get_context", "description_length": 481, "description_sha256": "f2ef7bcd9bb89737f831092363c9daee7d95fbd94ba3304320f10641b5b4862d", "schema_sha256": "25e17ff2a1a424574fdd7e24211907afb64862c2b545c4adb4a5c8eab729196c", "schema_property_count": 2, "required_fields": [], "tool_order": 8, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "teo.read", "description_length": 2363, "description_sha256": "0757130b3afdecc6c15bacf2f5a53ef3b3654860c5a60c2076c204c8d21f0d12", "schema_sha256": "db9817f3f8cc35955ca029a1c70bdf205946ff1a06410e8eba8cae8f95a6b9ff", "schema_property_count": 3, "required_fields": ["entity"], "tool_order": 9, "description_has_process_wbs": true, "description_has_bom_negative": true, "description_mentions_get_product_structure": false}, {"name": "teo.knowledge", "description_length": 629, "description_sha256": "3374aa72b0d7abed56d52b2b065461a8eda4e93c7c7ff5fd32540768f5a6a3a5", "schema_sha256": "a1fb76ef5bfacab591785903b719c03cf3af742233c63164e0d1ae8272333b48", "schema_property_count": 2, "required_fields": ["source"], "tool_order": 10, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "vista.get_context", "description_length": 287, "description_sha256": "afce0b44ccddf66f7ae6f7913c6d65d0140824310be6239b36d0dd9319a545d9", "schema_sha256": "486a8260d3f7b1b293b007b7b40bf2e851eb5649fd104b854a05322bb8216843", "schema_property_count": 1, "required_fields": [], "tool_order": 11, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "vista.read", "description_length": 666, "description_sha256": "071279a82d08a721f4486c3587b2cf7f52f7c27c991d0f25594a4e0b3dea2f71", "schema_sha256": "015c360d325368f5b4cbb68def29562a3f6faf3c4b0115bb407733c1dc0a481a", "schema_property_count": 5, "required_fields": ["entity", "action"], "tool_order": 12, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "vista.analyze", "description_length": 352, "description_sha256": "2fad08602fbde673d5d7f01c6842c32eaac90846e9aa4a33cf60c6f9d2c75fb2", "schema_sha256": "0f5f7ae5ab127a068cb67f134e8a27c01bc8a358a3900ab25b8f4cb1004caec2", "schema_property_count": 3, "required_fields": ["analysis"], "tool_order": 13, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}, {"name": "vista.knowledge", "description_length": 241, "description_sha256": "99826aa5451e919552860ff5f7f1e1bcd10e38051d7d88f1b387040a2c5ec53c", "schema_sha256": "de1a93e0c4eaa2484cc57b61b9cf283fd3db7b1f8fb5ed3a70f806143c4bd849", "schema_property_count": 5, "required_fields": ["action"], "tool_order": 14, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}], "tool_choice_policy": "UNFORCED", "model_request_parameters": {"allow_text_output": true, "allow_image_output": false, "output_mode": "auto", "function_tool_count": 15, "declared_function_tool_count": 15, "output_tool_names": ["final_result"], "has_tool_choice_field": false, "tool_choice": null}, "user_prompt": "Qual é a estrutura do produto 90260921?", "agent_instructions_sha256": "5af3ba5d6019726984e578f5a231a0f163fcc5f0e028ebd06ced33d6e48129a0", "agent_instructions_length": 10851, "request_fingerprint": "f3985fbc55274060"}, "prior": [["user", "Qual é a estrutura do produto 90260921?"], ["assistant", "O produto com código **90260921** tem a seguinte estrutura:\n\n**Descrição:** 21010421 CHICOTE DE LIGACAO\n**Tipo:** PA (Peça de Acessório)\n**Unidade:** MI (Milheiro)\n**Quantidade:** 1\n\n**Componentes:**\n1. **Código:** 10020003\n   **Descrição:** CABO PVC 105°C 0,50MM² PT 750V ESTANHADO NBR 9117\n   **Tipo:** MP (Material)\n   **Unidade:** MT (Metro)\n   **Quantidade:** 175,0\n\nA estrutura é composta por um único componente, que é um cabo elétrico. Não há subcomponentes adicionais listados.", "OBSERVATION"]], "context_source": null, "conversation_correlation": null}
+{
+ "evaluation_id": "or-qwen14b-23814cefa7ce",
+ "model": "qwen/qwen3-14b",
+ "runtime_profile": "openrouter_qwen",
+ "config_fingerprint": "e4a5b706a3b3156b",
+ "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+ "live_multiturn_chain": false,
+ "scenarios": {
+  "AB_C3_frozen_stock_continuity": {
+   "elapsed_s": 149.2,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "mcp_invoke_targets": [],
+   "declared_answer": null,
+   "investigation_plan": null,
+   "obligation_coverage": [],
+   "goal_declarations": [],
+   "comprehension": null,
+   "model_retry_feedback": [
+    "Call to davi.read was not executed — a typed investigation goal has not been declared yet, so no owner was contacted. Do not reissue this call before the goal is accepted: it will be rejected again and consume your retry budget. Call declare_investigation_goal once now with goal_class, expected_delivery and evidence_needed describing the user's objective; after the declaration is accepted, reissue this same call unchanged."
+   ],
+   "limitations": [
+    "agent_requested_clarification",
+    "tool_calls_limit_reached"
+   ],
+   "content_head": "Por favor, confirme o código da matéria-prima para a qual deseja verificar o estoque disponível.",
+   "llm_runs": {
+    "count": 2,
+    "input_tokens": 1265,
+    "output_tokens": 304,
+    "elapsed_ms": 147677,
+    "interrupted": 1,
+    "interruption_types": [
+     "UsageLimitExceeded"
+    ]
+   },
+   "provider_request_b3": {
+    "boundary": "pydantic_ai_provider_request_pre_http",
+    "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+    "pydantic_ai_provider_boundary": "PROVEN",
+    "http_wire_bytes": "NOT_OBSERVED",
+    "tool_count": 15,
+    "tool_order": [
+     "declare_investigation_goal",
+     "compose_verified_observations",
+     "request_user_clarification",
+     "davi.get_context",
+     "davi.knowledge",
+     "davi.read",
+     "davi.analyze",
+     "teo.analyze",
+     "teo.get_context",
+     "teo.read",
+     "teo.knowledge",
+     "vista.get_context",
+     "vista.read",
+     "vista.analyze",
+     "vista.knowledge"
+    ],
+    "tools": [
+     {
+      "name": "declare_investigation_goal",
+      "description_length": 3510,
+      "description_sha256": "004ad2c1d277e779995a6c6eda95f04bfc741222308d6bfe10cd6c09778c25ee",
+      "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427",
+      "schema_property_count": 6,
+      "required_fields": [
+       "goal_class"
+      ],
+      "tool_order": 0,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": true
+     },
+     {
+      "name": "compose_verified_observations",
+      "description_length": 206,
+      "description_sha256": "c9bbb8b2a710a6e992d02446ca14c7fca448896ce931f0f5c256ff3f752a0df0",
+      "schema_sha256": "51b315ab5cf509ccf374fa95e5e25c456ad15001b9b7ecf997dc247f2f4a9a0f",
+      "schema_property_count": 2,
+      "required_fields": [
+       "left_observation_index",
+       "right_observation_index"
+      ],
+      "tool_order": 1,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "request_user_clarification",
+      "description_length": 211,
+      "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c",
+      "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b",
+      "schema_property_count": 2,
+      "required_fields": [
+       "question"
+      ],
+      "tool_order": 2,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "davi.get_context",
+      "description_length": 638,
+      "description_sha256": "cee611bb51d4a5fecc112ec43b319103109603e5cd95777391001a5e82ac2eb0",
+      "schema_sha256": "2f001fe7f3701d80f46e48811824a2197f307993143e9f518ac6fd67509ff46b",
+      "schema_property_count": 2,
+      "required_fields": [],
+      "tool_order": 3,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "davi.knowledge",
+      "description_length": 408,
+      "description_sha256": "494cf8e28420a8a9a77dcf04f00fed246b8e7825b6bd75d727ac1b629399a54a",
+      "schema_sha256": "10d9c25fcd5e8c76308ff1f2aef131420936ca955e997b54f1a286852b527314",
+      "schema_property_count": 7,
+      "required_fields": [
+       "action"
+      ],
+      "tool_order": 4,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "davi.read",
+      "description_length": 1056,
+      "description_sha256": "1275580da22d1ec6859333d81abb2e02b411a56586109a055b6891ef2a22af55",
+      "schema_sha256": "0ef129f941054920e479013abab13147034182423a78c680fd087c383bc426d5",
+      "schema_property_count": 2,
+      "required_fields": [
+       "capability"
+      ],
+      "tool_order": 5,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": true,
+      "description_mentions_get_product_structure": true
+     },
+     {
+      "name": "davi.analyze",
+      "description_length": 564,
+      "description_sha256": "821b03ae113ed4e0c48d14ba644c57f2ca6b0c6d47db8192dd4611e3fbc500ef",
+      "schema_sha256": "9a43e27ad0be2a3849754dce51fb243cf2593c082af05590feee60b775770b32",
+      "schema_property_count": 2,
+      "required_fields": [
+       "capability"
+      ],
+      "tool_order": 6,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "teo.analyze",
+      "description_length": 1175,
+      "description_sha256": "9f40088dcfd3e5c963377601c9abbc2a1f39546ae0c858c0f384705306a2bdcf",
+      "schema_sha256": "0bfb3529c380fda12afbe1c4dfac952076a29acb54613ded670e61cbc9283433",
+      "schema_property_count": 13,
+      "required_fields": [
+       "view"
+      ],
+      "tool_order": 7,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "teo.get_context",
+      "description_length": 481,
+      "description_sha256": "f2ef7bcd9bb89737f831092363c9daee7d95fbd94ba3304320f10641b5b4862d",
+      "schema_sha256": "25e17ff2a1a424574fdd7e24211907afb64862c2b545c4adb4a5c8eab729196c",
+      "schema_property_count": 2,
+      "required_fields": [],
+      "tool_order": 8,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "teo.read",
+      "description_length": 2363,
+      "description_sha256": "0757130b3afdecc6c15bacf2f5a53ef3b3654860c5a60c2076c204c8d21f0d12",
+      "schema_sha256": "db9817f3f8cc35955ca029a1c70bdf205946ff1a06410e8eba8cae8f95a6b9ff",
+      "schema_property_count": 3,
+      "required_fields": [
+       "entity"
+      ],
+      "tool_order": 9,
+      "description_has_process_wbs": true,
+      "description_has_bom_negative": true,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "teo.knowledge",
+      "description_length": 629,
+      "description_sha256": "3374aa72b0d7abed56d52b2b065461a8eda4e93c7c7ff5fd32540768f5a6a3a5",
+      "schema_sha256": "a1fb76ef5bfacab591785903b719c03cf3af742233c63164e0d1ae8272333b48",
+      "schema_property_count": 2,
+      "required_fields": [
+       "source"
+      ],
+      "tool_order": 10,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "vista.get_context",
+      "description_length": 287,
+      "description_sha256": "afce0b44ccddf66f7ae6f7913c6d65d0140824310be6239b36d0dd9319a545d9",
+      "schema_sha256": "486a8260d3f7b1b293b007b7b40bf2e851eb5649fd104b854a05322bb8216843",
+      "schema_property_count": 1,
+      "required_fields": [],
+      "tool_order": 11,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "vista.read",
+      "description_length": 666,
+      "description_sha256": "071279a82d08a721f4486c3587b2cf7f52f7c27c991d0f25594a4e0b3dea2f71",
+      "schema_sha256": "015c360d325368f5b4cbb68def29562a3f6faf3c4b0115bb407733c1dc0a481a",
+      "schema_property_count": 5,
+      "required_fields": [
+       "entity",
+       "action"
+      ],
+      "tool_order": 12,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "vista.analyze",
+      "description_length": 352,
+      "description_sha256": "2fad08602fbde673d5d7f01c6842c32eaac90846e9aa4a33cf60c6f9d2c75fb2",
+      "schema_sha256": "0f5f7ae5ab127a068cb67f134e8a27c01bc8a358a3900ab25b8f4cb1004caec2",
+      "schema_property_count": 3,
+      "required_fields": [
+       "analysis"
+      ],
+      "tool_order": 13,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     },
+     {
+      "name": "vista.knowledge",
+      "description_length": 241,
+      "description_sha256": "99826aa5451e919552860ff5f7f1e1bcd10e38051d7d88f1b387040a2c5ec53c",
+      "schema_sha256": "de1a93e0c4eaa2484cc57b61b9cf283fd3db7b1f8fb5ed3a70f806143c4bd849",
+      "schema_property_count": 5,
+      "required_fields": [
+       "action"
+      ],
+      "tool_order": 14,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     }
+    ],
+    "tool_choice_policy": "UNFORCED",
+    "model_request_parameters": {
+     "allow_text_output": true,
+     "allow_image_output": false,
+     "output_mode": "auto",
+     "function_tool_count": 15,
+     "declared_function_tool_count": 15,
+     "output_tool_names": [
+      "final_result"
+     ],
+     "has_tool_choice_field": false,
+     "tool_choice": null
+    },
+    "user_prompt": "Qual é a estrutura do produto 90260921?",
+    "agent_instructions_sha256": "5af3ba5d6019726984e578f5a231a0f163fcc5f0e028ebd06ced33d6e48129a0",
+    "agent_instructions_length": 10851,
+    "request_fingerprint": "f3985fbc55274060"
+   },
+   "prior": [
+    [
+     "user",
+     "Qual é a estrutura do produto 90260921?"
+    ],
+    [
+     "assistant",
+     "O produto com código **90260921** tem a seguinte estrutura:\n\n**Descrição:** 21010421 CHICOTE DE LIGACAO\n**Tipo:** PA (Peça de Acessório)\n**Unidade:** MI (Milheiro)\n**Quantidade:** 1\n\n**Componentes:**\n1. **Código:** 10020003\n   **Descrição:** CABO PVC 105°C 0,50MM² PT 750V ESTANHADO NBR 9117\n   **Tipo:** MP (Material)\n   **Unidade:** MT (Metro)\n   **Quantidade:** 175,0\n\nA estrutura é composta por um único componente, que é um cabo elétrico. Não há subcomponentes adicionais listados.",
+     "OBSERVATION"
+    ]
+   ],
+   "context_source": null,
+   "conversation_correlation": null
+  }
+ },
+ "external_usage": {
+  "model_calls": 2,
+  "input_tokens": 1265,
+  "output_tokens": 304,
+  "latency_ms_total": 147677
+ },
+ "trace_dir": "/traces/or-qwen14b-23814cefa7ce"
+}
