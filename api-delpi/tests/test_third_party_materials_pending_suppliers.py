@@ -5,6 +5,8 @@ from decimal import Decimal
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 
+from openpyxl import load_workbook
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -13,6 +15,7 @@ from app.application.dto.third_party_materials.query_request import ThirdPartyMa
 from app.application.use_cases.third_party_materials.pending_supplier_report_use_case import PendingSupplierReportUseCase
 from app.infrastructure.persistence.totvs.third_party_materials.third_party_materials_sql import (
     build_details_by_recnos_sql,
+    build_export_sql,
 )
 from app.infrastructure.persistence.totvs.third_party_materials.third_party_pending_sql import (
     build_pending_export_sql,
@@ -53,8 +56,36 @@ def test_consolidated_query_groups_remessas_before_summing_and_is_parameterized(
 
     export_sql, export_params = build_pending_export_sql(request, limit=20000)
     assert "SELECT TOP (?)" in export_sql
-    assert export_params[0] == 20000
-    assert export_params[1:] == params
+    # The CTE WHERE is evaluated/bound before the final SELECT TOP (?).
+    # Regresses an earlier reversal that surfaced as HTTP 503 on CSV/XLSX.
+    assert export_sql.index("WHERE") < export_sql.index("SELECT TOP (?)")
+    assert export_sql.count("?") == len(export_params)
+    assert export_params[:-1] == params
+    assert export_params[-1] == 20000
+
+
+def test_export_markers_keep_filters_before_limit_with_multiple_fields():
+    request = _request(product="20050012", partner_store="01")
+    sql, params = build_pending_export_sql(request, limit=20000)
+
+    assert sql.count("?") == len(params)
+    assert params == ("01", "20050012", "001692", "01", "99999999", 20000)
+    assert "SELECT TOP (?)" in sql
+    assert sql.index("V.FILIAL)) = ?") < sql.index("SELECT TOP (?)")
+    assert "LTRIM(RTRIM(V.COD_PARCEIRO)) = ?" in sql
+
+    # No ignored-product marker when the caller explicitly requests test products.
+    include_test = _request(
+        product="20050012", partner_store="01", include_test_products=True,
+    )
+    test_sql, test_params = build_pending_export_sql(include_test, limit=12)
+    assert test_sql.count("?") == len(test_params)
+    assert test_params == ("01", "20050012", "001692", "01", 12)
+
+    # Protect the older, non-CTE return export: TOP (?) is before its WHERE.
+    legacy_sql, legacy_params = build_export_sql(request, limit=20)
+    assert legacy_sql.index("SELECT TOP (?)") < legacy_sql.index("WHERE")
+    assert legacy_params == (20, "01", "20050012", "001692", "01", "99999999")
 
 
 def test_supplier_report_maps_totals_and_csv():
@@ -94,6 +125,20 @@ def test_supplier_report_maps_totals_and_csv():
     text = exported["stream"].read().decode("utf-8-sig")
     assert "BELCABOS" in text
     assert "20050017" in text
+
+    exported_xlsx = use_case.export(_request(export_format="xlsx"))
+    assert exported_xlsx["exported_count"] == 1
+    assert exported_xlsx["content_type"] == (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    worksheet = load_workbook(exported_xlsx["stream"], read_only=True, data_only=True).active
+    rows = list(worksheet.values)
+    assert rows[0][1] == "Fornecedor"
+    assert rows[1][1] == "001692"
+    assert rows[1][2] == "01"
+    assert rows[1][3].startswith("BELCABOS")
+    assert rows[1][4] == "20050017"
+    assert rows[1][-1] == 4
 
 
 def test_mixed_units_are_not_summed_in_kpi():
@@ -155,3 +200,46 @@ def test_pending_report_router_contract_and_branch_access():
         assert response.status_code == 200
         assert response.json()["meta"]["operationId"] == "get_supplies_third_party_materials_pending_suppliers"
         assert builder.call_count == 1
+
+
+def test_supplier_pending_export_http_returns_attachment_in_both_formats():
+    from app.interface.http.routes.supplies.third_party_materials_router import router
+
+    app = FastAPI()
+    app.include_router(router)
+    client = TestClient(app)
+    with patch(
+        "app.interface.http.routes.supplies.third_party_materials_router.branch_access_error",
+        return_value=None,
+    ), patch(
+        "app.interface.http.routes.supplies.third_party_materials_router.build_pending_supplier_report_use_case",
+    ) as builder:
+        for fmt, media_type in (
+            ("csv", "text/csv; charset=utf-8"),
+            ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        ):
+            filename = f"pendencias-fornecedor.{fmt}"
+            builder.return_value.export.return_value = {
+                "stream": BytesIO(b"sample-data"),
+                "content_type": media_type,
+                "filename": filename,
+                "exported_count": 1,
+            }
+            response = client.get(
+                "/supplies/third-party-materials/pending-by-supplier/export",
+                params={
+                    "branch": "01", "product": "20050012",
+                    "partner_code": "000006", "partner_store": "01",
+                    "export_format": fmt,
+                },
+            )
+            assert response.status_code == 200
+            assert response.content == b"sample-data"
+            assert filename in response.headers["content-disposition"]
+            assert response.headers["x-exported-count"] == "1"
+            request = builder.return_value.export.call_args.args[0]
+            assert request.branch == "01"
+            assert request.partner_code == "000006"
+            assert request.partner_store == "01"
+            assert request.product == "20050012"
+            assert request.export_format == fmt
