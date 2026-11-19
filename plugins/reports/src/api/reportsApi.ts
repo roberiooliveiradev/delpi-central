@@ -11,6 +11,7 @@ import type {
   ShortageItemNote,
   ShortageItemNotesList,
   ShortagePreviewItem,
+  SafetyBelowPreviewData,
 } from "../types/reports";
 
 export const REPORTS_API_BASE = "/apps/api-delpi/reports";
@@ -255,4 +256,19 @@ export async function searchDirectoryUsers(
     { signal },
   );
   return payload.items ?? [];
+}
+
+export async function previewSafetyStockBelow(
+  branch: string,
+  signal?: AbortSignal,
+): Promise<SafetyBelowPreviewData> {
+  const qs = new URLSearchParams({ branch });
+  const response = await httpGet<ApiSuccessResponse<SafetyBelowPreviewData>>(
+    REPORTS_API_BASE + "/providers/safety_stock_below_daily/preview?" + qs.toString(),
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(
+    response,
+    "Não foi possível carregar os materiais abaixo do estoque de segurança.",
+  );
 }
