@@ -18,7 +18,8 @@ Aplique o protocolo canônico completo definido em:
 
 1. Rotina oficial primeiro (`Delpi-ti/protheus-erp` master@SHA → espelho DELPI → TDN/SX3 → RESTALL vigente → POC TST01).
 2. Escrita = REST governado + **rotina oficial compatível**: `MSExecAuto` para MATA010 quando suportado; MVC oficial para MATA061/SA5 após contrato e homologação. **Nunca** SQL/RecLock direto em `S*`.
-3. Superfície api-delpi: gate OFF por default, pin de ambiente, `codusr` via Core,
+3. Superfície api-delpi: gate OFF por default, pin de ambiente, `codusr` via Core
+   **e propagado upstream** (obrigatório — ver auditoria do ator abaixo),
    tracker antes da escrita, zero retry em timeout.
 4. Contrato ExecAuto: campo confirmado (fonte/TDN) ou marcado `VALIDAR NO TST01`.
 5. Escrita live: snapshot → TST01 → verify → PROD intacta → restore → ledger versionado.
@@ -317,6 +318,13 @@ relacionada) ou a validação oficial rejeita.
 - REST executa como **usuário de sistema do serviço** — não há usuário
   final no Protheus; a identidade de negócio (`codusr`) é dado do
   contrato/ledger, não autenticação ERP.
+- **Auditoria do ator real — REGRA OBRIGATÓRIA (diretriz do PO
+  2026-11-19):** toda rota DELPI de escrita no Protheus **deve** carregar
+  o código Protheus do usuário (`codusr`/`protheus_user_id`) e persisti-lo
+  para auditoria. **É proibido entregar rota sem essa previsão** — se o
+  mecanismo não existir no ambiente (sem `AIF_ZCDUSR`, entidade sem linha
+  AIF), inventariar/escalar, nunca silenciar: rota sem capacidade de
+  auditoria do ator é rota incompleta.
 - **`codusr` → `AIF_ZCDUSR` (padrão Gabriel/MATA020, adotado em DLP04I01/
   DLP04I02)**: meta-campo no body upstream, ignorado pela validação de
   campos do catálogo; após commit oficial bem-sucedido,

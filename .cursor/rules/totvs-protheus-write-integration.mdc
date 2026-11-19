@@ -73,6 +73,20 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 - [ ] Somente para ExecAuto: arrays de triplas `{CAMPO, valor, Nil}`; representação completa quando contrato exigir
       (campo omitido pode ser zerado — bug real do `delpiproduto`)
 - [ ] Para ExecAuto: `GetAutoGrLog()`; para MVC: erros/validações do modelo; respostas normalizadas sem mascarar falhas
+- [ ] **Auditoria do ator real — OBRIGATÓRIA (proibido entregar rota de escrita sem
+      previsão):** o `.PRW` deve aceitar o meta-campo `codusr` (fora do catálogo de
+      campos de negócio — nunca entra no array ExecAuto/MVC) e, **após o commit
+      oficial bem-sucedido**, persistir o ator em `AIF_ZCDUSR` nas linhas de
+      histórico criadas pela própria execução (`AIF_TABELA` + chave da entidade:
+      `AIF_CODPRO` para SB1/SA5, `AIF_CODIGO`+`AIF_LOJA` para SA2 +
+      `AIF_DATA=hoje` + `AIF_HORA>=início` capturado antes da rotina).
+      Patch **não-fatal por desenho** — falha nunca nega o write já commitado,
+      só registra `ConOut`. REST executa como usuário técnico; sem isso a
+      auditoria atribui toda alteração ao serviço — antipadrão. Se o mecanismo
+      não estiver disponível no ambiente (campo `AIF_ZCDUSR` ausente, entidade
+      que não gera linha AIF), marcar `VALIDAR NO TST01`/`TO_INVENTORY` e
+      escalar — **nunca silenciar**: a rota não é completa sem capacidade de
+      auditoria do ator.
 - [ ] `FreeObj` em todo `JsonObject`; `RestArea` no fim; `Return .T.`
 - [ ] Hipóteses de contrato marcadas `VALIDAR NO TST01` — nunca precisão fingida
 
@@ -82,7 +96,9 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 - [ ] Pin de destino `PROTHEUS_REST_EXPECTED_BASE_URL` + `INTRANET_PARAMS_AMBIENTE`
       (dev/HML → TST01 `233:8701`; prod → `231:8061`) — escrita fail-closed se divergir
 - [ ] Identidade: `codusr`/`protheus_user_id` **resolvido via Core** (sub do JWT) —
-      nunca aceito do body/frontend
+      nunca aceito do body/frontend — **e obrigatoriamente propagado upstream**
+      como meta-campo `codusr` no body da rota ADVPL (auditoria `AIF_ZCDUSR`);
+      registrar só no ledger interno é insuficiente
 - [ ] Permissão route-specific registrada (`api_delpi_permissions.py` + route registry)
 - [ ] `tracker.start()` **antes** do call outbound; eventos de transição registrados
 - [ ] **Zero retry em escrita** — timeout/ambiguidade = `UNKNOWN`, investigação manual
@@ -128,6 +144,7 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 | `UPDATE SB1 SET ...` / `RecLock` direto | Rotina oficial comprovada: MATA010/ExecAuto, MATA061/MVC quando homologado |
 | PUT parcial em cadastro | representação completa (risco de zerar campos) |
 | `codusr` vindo do request | resolvido via Core a partir do `sub` do JWT |
+| Rota de escrita sem ator real na auditoria | meta-campo `codusr` + patch `AIF_ZCDUSR` pós-commit oficial (obrigatório quando disponível) |
 | Retry automático após timeout de escrita | `UNKNOWN` + investigação manual |
 | Gate default `true` "só pra testar" | `false` sempre; liga por env explícito |
 | `lMsErroAuto` declarado `LOCAL` | `PRIVATE` (a rotina não enxerga `LOCAL`) |
