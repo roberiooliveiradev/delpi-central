@@ -192,6 +192,123 @@ TST01 por ambiente** antes de promover contrato.
 - `JsonObject`: `o["k"]`, `GetJSonObject`, `GetNames`, `ToJson`; array de
   objetos vira array ADVPL; `FreeObj` obrigatório.
 
+### ADVPL — armadilhas e boas práticas comprovadas
+
+- `=` em comparação de strings é **fuzzy** (prefixo); `==` é exata — em
+  `dbSeek`/validação use `==` ou `AllTrim`.
+- Chaves de busca são **padded**: `dbSeek(xFilial("SB1") + PadR(cCod, 15))`
+  — espaço à direita faz parte da chave física.
+- `Empty()` detecta vazio em C/N/D/L — preferir a `== ""`/`== 0` por tipo.
+- Literais **ASCII puro** — binário em CP1252; acento em string literal =
+  mojibake na resposta HTTP.
+- `MSMM(cCampo)` lê campos memo; campo memo sem coluna física NÃO é
+  selecionável por SQL nem aceito pelo form.
+- `GetMv("MV_XXX")` lê parâmetro SX6; `PutSx1/PutSx3` criam dicionário em
+  atualizadores.
+- Arrays são 1-based; `aAdd`, `aScan`, `aSort`, `ASize`; hashes por nome
+  via `JsonObject` (não há map nativo clássico).
+- `dbSelectArea`/`dbSeek`/`While !Eof()`/`Skip` — navegação legada;
+  `SetDeleteme(.F./.T.)` filtra registros deletados manualmente;
+  `RestArea(aArea)` obrigatório ao sair.
+- `user function` para entry points; `static function` para helpers;
+  função pública inexistente no RPO = runtime error "function not found".
+
+### Dicionário SX3 em profundidade
+
+| Atributo | Papel |
+|---|---|
+| `X3_VALID` | expressão ADVPL avaliada na validação do campo (modelo/UI) |
+| `X3_RELACAO` | código retornado após validação (lookup/integridade) |
+| `X3_CBOX` | combo de valores válidos (`1=Sim;2=Nao`) — o modelo só aceita os valores listados |
+| `X3_F3` | consulta padrão SXB associada (lookup F3) |
+| `X3_PICTURE` | máscara de formato (`@!`, `999.99`) — afeta validação de estrutura |
+| `X3_WHEN` | expressão que habilita/desabilita edição do campo |
+| `X3_VISUAL` | campo editável na tela da rotina (S=sim) |
+| `X3_CONTEXT` | contexto de exibição do campo no browse |
+| `X3_PROPRI` | S=sistema (não alterar), U=usuário (editável), R=somente leitura |
+| `X3_RESERV`/`X3_BROWSE` | tamanho reservado/exibição em browse |
+
+Regra prática: campo `X3_VISUAL`/`X3_PROPRI=R` ou com `X3_CBOX` restrita
+pode existir no form mas falhar na gravação — classificar por
+comportamento do modelo, não por SX3 sozinho.
+
+### SXB (consultas padrão F3)
+
+`SXB` define consultas de lookup por alias (ex.: `SB1` → produto).
+`X3_F3` aponta o campo para a consulta certa — em integração, a FK do
+payload deve respeitar a mesma consulta (código existente na tabela
+relacionada) ou a validação oficial rejeita.
+
+### ExecAuto `aRotina` e contexto
+
+- `PRIVATE aRotina := {}` ou com entradas `{{"NOMEDOBRW",opcao,nivel}}`
+  quando a rotina consulta opções de menu — validar por rotina.
+- Terceiro elemento da tripla `{CAMPO,valor,NIL}` = slot reservado da
+  validação do ExecAuto (manter NIL).
+- Rotinas podem depender de `PREPARE ENVIRONMENT` (empresa/filial/módulo)
+  — ExecAuto herda o ambiente do processo; em REST o ambiente é o do
+  serviço (section `environment` do ini).
+
+### TLPP vs ADVPL (`.tlpp` vs `.prw`)
+
+- `.prw` = ADVPL clássico (funções, `user function`, pseudo-OO via
+  `#xcommand`) — todo o ecossistema DELPI existente.
+- `.tlpp` = TLPP moderno (classes reais, namespaces, tipagem) — compila
+  no mesmo RPO; REST/MVC funcionam igual.
+- Escolha: manter `.prw` enquanto o ecossistema e os includes do projeto
+  forem ADVPL — coerência com legado e com os guias.
+
+### Jobs e processamento assíncrono
+
+- `StartJob("u_Funcao", cEnv, .T., params)` — thread assíncrona com
+  ambiente próprio; `FWExecJob` = agendador de jobs no menu.
+- Job/thread não herda área nem transação do caller — abrir ambiente e
+  áreas próprias; `RestArea`/`ErrorBlock` por thread.
+
+### Atualizador (compatibilizador)
+
+- Mudanças de dicionário (campo SX3 novo, SXB, parâmetro SX6, gatilho
+  SX7) são entregues via **fonte de update** (`u_<nome>` executado pelo
+  compatibilizador no login) — `PutSx1`, `PutSx3`, `PutSx6`, `PutSx7`.
+- Nunca criar coluna física via SQL direto — dicionário e físico
+  dessincronizam (origem do caso B1_VM_* no TST01).
+
+### Triggers, gatilhos e user exits
+
+- `SX7` = gatilhos de campo/tabela (disparam em qualquer escrita — ExecAuto
+  incluso); modelo MVC chama `bVldPre`/`bVldPos`/`bCommit`/`bCancel` do
+  ModelDef.
+- User exits legados: `MTA*`/`M010*`/`A<VLD>` — pontos de customização que
+  podem interferir na gravação; investigar quando validação oficial
+  falhar sem causa aparente.
+
+### HTTP client outbound (Protheus → externo)
+
+- `FWRest():New(url)`/`RestClient` para callbacks/webhooks do ERP para
+  api-delpi; timeout obrigatório; secrets nunca em fonte (SX6 ou serviço
+  de configuração).
+
+### Segurança e contexto de execução
+
+- REST executa como **usuário de sistema do serviço** — não há usuário
+  final no Protheus; a identidade de negócio (`codusr`) é dado do
+  contrato/ledger, não autenticação ERP.
+- `TTALK "v1"` no WSMETHOD versiona o verbo — nova versão = PATH `/v2/`,
+  nunca quebrar `/v1/` em uso.
+- `SetRestFault(code, msg)` = erro HTTP nativo; envelope RETOBJ para o
+  contrato DELPI.
+
+### Ferramentas de desenvolvimento
+
+- **TDS VS Code**: compilação (RPO token), debug com breakpoints,
+  Inspetor de Objetos (diff/cópia entre RPOs), monitor de conexões.
+- **SIGAADV**: utilitários de dictionary (SDU/SDF), visualizador de
+  dados, Schedule, License Server.
+- **console.log** do serviço = saída de `ConOut`; `FWFileWriter`/`LogFile`
+  para arquivos de log.
+- Diagnóstico remoto: `tools/DLPDBG01.PRW` — padrão reutilizável: criar
+  `u_<nome>` + compilar + executar via TDS/smartclient + ler ConOut.
+
 ## Atualização de autoridade de fontes (2026-11)
 
 - **Fonte versionada primária ADVPL/TLPP:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, consultado no HEAD vigente via GitHub autorizado. Registrar `SOURCE_REPO/BRANCH/SHA/PATH/BLOB_SHA` em cada análise.
