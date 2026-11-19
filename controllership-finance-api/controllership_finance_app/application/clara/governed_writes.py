@@ -946,12 +946,20 @@ class ClaraGovernedWrites:
     def _template_version_state(
         self, template_id: Any, version: Any
     ) -> dict:
+        # Resolução canônica multi-série: a mesma de
+        # ClosingChecklistRepository.get_version — a versão N é a da
+        # série mais recente (UNIQUE é por (series_id, version), não
+        # por template).
         with plugins_db_connect() as conn:
             row = conn.execute(
                 f"""
-                SELECT status
-                  FROM {_SCHEMA}.checklist_template_version
-                 WHERE template_id = %s AND version = %s
+                SELECT v.status
+                  FROM {_SCHEMA}.checklist_template_version v
+                  JOIN {_SCHEMA}.checklist_template_series s
+                    ON s.series_id = v.series_id
+                 WHERE v.template_id = %s AND v.version = %s
+                 ORDER BY s.series_no DESC
+                 LIMIT 1
                 """,
                 (str(template_id), int(version)),
             ).fetchone()
@@ -976,13 +984,17 @@ class ClaraGovernedWrites:
         }
 
     def _latest_version_state(self, template_id: Any) -> dict:
+        # "Latest" canônico = maior versão da série mais recente —
+        # números reiniciam por série (UNIQUE(series_id, version)).
         with plugins_db_connect() as conn:
             row = conn.execute(
                 f"""
-                SELECT version, status, revision
-                  FROM {_SCHEMA}.checklist_template_version
-                 WHERE template_id = %s
-                 ORDER BY version DESC
+                SELECT v.version, v.status, v.revision
+                  FROM {_SCHEMA}.checklist_template_version v
+                  JOIN {_SCHEMA}.checklist_template_series s
+                    ON s.series_id = v.series_id
+                 WHERE v.template_id = %s
+                 ORDER BY s.series_no DESC, v.version DESC
                  LIMIT 1
                 """,
                 (str(template_id),),
@@ -2372,7 +2384,7 @@ class ClaraGovernedWrites:
                     self._template_version_state(
                         p["template_id"], p["version"]
                     ).get("status")
-                    == "IN_REVIEW"
+                    == "REVIEW"
                 ),
             },
             "checklist.version_return": {
