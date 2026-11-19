@@ -13,12 +13,14 @@
                   block chamava __ObjHasData — funcao INEXISTENTE neste
                   build (familia __Obj* fora do AppMap); qualquer throw
                   dentro do error handler aborta a thread sem recover.
-                  ErrorBlock reduzido a e:Description+Break; aSA5Form-
-                  Fields passa a enumerar por GetStruct():GetFields()
-                  AScan da guarda com == (match exato — '=' casa
-                  prefixo A5_PE/A5_PESO e recriaria o crash).
-                  (prova DLPDBG01 — id no elemento 3), nunca oGrid:
-                  aFields (propriedade invalida no submodelo).
+                  ErrorBlock reduzido a e:Description+Break. Guarda de
+                  campo fora do form por intersecao com
+                  GetStruct():GetFields() (prova DLPDBG01 — id no
+                  elemento 3), nunca oGrid:aFields (propriedade
+                  invalida no submodelo). AScan da guarda com ==
+                  (match exato — '=' casa prefixo A5_PE/A5_PESO).
+                  PROVEN_RUNTIME TST01: GET 200 data{} 119 campos,
+                  7 fora-do-form = "" (PLAM1/2, NIVEL1/2, NQA1/2, CCUSTO).
           0.8.2 = fix runtime GET 500: GetValue/SetValue em campo fora
                   do form aborta a thread sem recover (begin sequence
                   aninhado nao protege). Guarda trocada por intersecao
@@ -41,8 +43,10 @@
                   campo com guarda — campo fora do form MdGridSA5 e
                   rejeitado nominalmente (official_validation no write,
                   "" no read); conversao tipada N=Val()/D=StoD().
-                  VALIDAR NO TST01: intersecao real catalogo x formulario
-                  (dump DLPDBG01 pendente) e tipos N/D na saida do GET.
+                  Intersecao catalogo x formulario PROVEN_RUNTIME:
+                  106/113 campos no form; 7 fora (PLAM1/2, NIVEL1/2,
+                  NQA1/2, CCUSTO) devolvem ""/rejeitam nominal. N/D provados
+                  na saida do GET (A5_LEAD_T=15, A5_DTCOM01='20140205').
           0.7.1 = identidade: A5_FABR/A5_FALOJA aceitam vazio — vinculos
           reais sem fabricante proprio guardam '' (regressao do teste
           negativo: GET em vinculo FABR='' retornava 400 indevido).
@@ -100,17 +104,17 @@
    CLASSIFICACAO POR OPERACAO (sem fingimento de contrato):
      CREATE (POST)  = PROVEN_RUNTIME TST01 (2026-11-19) — SA5 gravada
                       via modelo MATA061 headless + read-back SQL.
-     UPDATE (PUT)   = SOURCE_CANDIDATE — posiciona SA5 no documento do
-                      produto (indice 2), Activate em UPDATE, localiza a
-                      linha na grade pela identidade e SetValue so nos
-                      atributos editaveis (A5_NOMEFOR/A5_CODPRF/A5_DESCPRF).
-                      Carga por posicao de alias = VALIDAR NO TST01.
-     READ (GET)     = SOURCE_CANDIDATE — mesma carga em operacao VIEW,
-                      GetValue nos campos da linha localizada; resposta
-                      em data{}. Metodos GetValue/GoLine/IsDeleted do
-                      FWFormModel = VALIDAR NO TST01.
-     DELETE         = SOURCE_CANDIDATE — mesma carga em UPDATE +
-                      DeleteLine() na linha localizada. SEMANTICA
+     UPDATE (PUT)   = PROVEN_RUNTIME TST01 (0.7.0-0.8.3) — posiciona
+                      SA5 (indice 2), Activate UPDATE, linha na grade
+                      por identidade, SetValue no subconjunto enviado
+                      do catalogo (113 campos; fora-do-form rejeitado
+                      como official_validation nominal).
+     READ (GET)     = PROVEN_RUNTIME TST01 (0.8.3) — mesma carga em
+                      VIEW, GetValue filtrado por GetStruct():GetFields();
+                      data{} com 119 campos (fora-do-form = "").
+     DELETE         = PROVEN_RUNTIME TST01 (0.7.0) — mesma carga em
+                      UPDATE + DeleteLine() na linha localizada.
+                      SEMANTICA
                       OFICIAL: a060VldGrv rejeita salvar modelo com
                       todas as linhas excluidas — o ultimo vinculo do
                       produto nao pode ser removido por esta rota
@@ -125,10 +129,9 @@
      oficial do modelo (contexto empresa/filial da sessao REST).
 
    LIMITES / VALIDAR NO TST01:
-     - Carga por posicao de alias (dbSetOrder(2)+MsSeek produto) como
-       ancoragem do documento em UPDATE/VIEW = hipotese padrao MVC,
-       nao comprovada; GoLine/IsDeleted/DeleteLine/GetValue = ids do
-       padrao FWFormModel, nao comprovados neste RPO.
+     - Carga por posicao de alias (dbSetOrder(2)+MsSeek produto) =
+       PROVEN_RUNTIME 0.7.0+; GoLine/IsDeleted/DeleteLine/GetValue do
+       FWFormModel = PROVEN_RUNTIME 0.7.0/0.8.3 neste RPO.
      - Produtos com grade (A5_REFGRD != ""): o documento e ancorado
        pelo registro posicionado — multiplos REFGRD do mesmo produto
        = VALIDAR NO TST01 (pode 404 legitimo).
@@ -139,10 +142,11 @@
        M-> e indefinido — dup-check pode validar chave incompleta ou
        falhar. Sem preencher memvars artificialmente (proibido pela
        task); comportamento exato = VALIDAR NO TST01.
-     - a060VldGrv chama Help() (UI): comportamento fora de tela =
-       VALIDAR NO TST01.
+     - a060VldGrv chama Help() (UI): DELETE/UPDATE executaram o hook
+       sem crash fora de tela — Help() nao-fatal neste RPO (0.7.0).
      - API de erro do modelo (GetErrorMessage) = VALIDAR NO TST01.
-     - Presenca compilada do modelo 'MATA061' e PEs ativos no RPO.
+     - Modelo 'MATA061' presente e operacional no RPO = PROVEN_RUNTIME;
+       PEs ativos conforme cadastro oficial.
      - Compilacao/homologacao: pendente (TST01, equipe ERP).
    ======================================================================== */
 
@@ -530,7 +534,6 @@ static function lExecSA5(oSelf)
     Local lActivated := .F.
     Local cErro      := ""
     Local cErroBlk   := ""
-    Local cErroEnv   := ""
     Local cMdlId     := ""
     Local cFldId     := ""
     Local cGrdId     := ""
@@ -753,9 +756,6 @@ static function lExecSA5(oSelf)
     if !Empty(cErroBlk)
         ConOut("DLP04I02 error: " + cErroBlk)
     endif
-    if !Empty(cErroEnv)
-        ConOut("DLP04I02 err-env: " + cErroEnv)
-    endif
     if !Empty(cErroLog)
         ConOut("DLP04I02 model: " + cErroLog)
     endif
@@ -793,8 +793,8 @@ Return lExecSA5(self)
    identidade FORNECE+LOJA+FABR+FALOJA (4 campos definitivos da grid).
    REFGRD e validado contra o header do documento carregado.
    Retorna o numero da linha (>0) ou 0.
-   VALIDAR NO TST01: nomes dos metodos da grid do modelo 'MATA061'
-   (GetValue/IsDeleted) presumidos pelo padrao FWFormModel.
+   Metodos da grid (GetValue/IsDeleted/GoLine) = PROVEN_RUNTIME
+   0.7.0/0.8.3 — assinaturas do padrao FWFormModel confirmadas.
    ----------------------------------------------------------------------- */
 static function lFindSA5Line(oGrid, oDados)
 
@@ -849,8 +849,8 @@ Return {oModel, cMdlId, cFldId, cGrdId}
    Mecanismo oficial: posiciona SA5 no documento do produto (indice 2:
    FILIAL+PRODUTO+...), ativa o modelo na operacao correspondente e
    navega a grade ate a linha do vinculo. Sem RecLock/SQL/DbWrite.
-   VALIDAR NO TST01: carga por posicao de alias + GoLine/DeleteLine/
-   GetValue do FWFormModel — assinaturas presumidas do padrao MVC.
+   Carga por posicao de alias + GoLine/DeleteLine/GetValue =
+   PROVEN_RUNTIME 0.7.0/0.8.3 neste RPO.
    DELETE: a060VldGrv oficial rejeita modelo com todas as linhas
    excluidas — ultimo vinculo do produto nao pode ser removido por esta
    rota (rejeicao oficial, fail-closed — semantica da rotina).
@@ -862,7 +862,6 @@ static function lExecSA5Op(oSelf, cOp)
     Local lActivated := .F.
     Local cErro      := ""
     Local cErroBlk   := ""
-    Local cErroEnv   := ""
     Local cMdlId     := ""
     Local cFldId     := ""
     Local cGrdId     := ""
@@ -1121,9 +1120,6 @@ static function lExecSA5Op(oSelf, cOp)
     endif
     if !Empty(cErroBlk)
         ConOut("DLP04I02 error: " + cErroBlk)
-    endif
-    if !Empty(cErroEnv)
-        ConOut("DLP04I02 err-env: " + cErroEnv)
     endif
     if !Empty(cErroLog)
         ConOut("DLP04I02 model: " + cErroLog)

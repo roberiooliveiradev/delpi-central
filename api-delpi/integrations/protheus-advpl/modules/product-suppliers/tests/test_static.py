@@ -140,22 +140,17 @@ class StaticSourceTests(unittest.TestCase):
         # 0.8.3: causa raiz do GET 500 (log TST01) — o error block
         # chamava __ObjHasData, funcao INEXISTENTE neste build; throw
         # dentro do handler aborta a thread sem recover. Pina: nenhum
-        # uso de __Obj* em codigo, enumeracao por GetStruct():GetFields()
-        # (prova DLPDBG01 — id no elemento 3), intersecao nos loops e
-        # begin sequence somente nas posicoes esperadas (5 em codigo:
-        # outer+DeActivate por handler + recover do aSA5FormFields).
-        code_lines = [
-            l for l in self.code.splitlines()
-            if not l.strip().startswith("//")
-        ]
-        self.assertFalse(any("__OBJ" in l for l in code_lines))
+        # uso de __Obj* em codigo (self.code ja vem sem comentarios),
+        # enumeracao por GetStruct():GetFields() (prova DLPDBG01 — id
+        # no elemento 3), intersecao nos loops e begin sequence somente
+        # nas posicoes esperadas (5: outer+DeActivate por handler +
+        # recover do aSA5FormFields).
+        self.assertNotIn("__OBJ", self.code)
         self.assertIn("STATIC FUNCTION ASA5FORMFIELDS", self.code)
         self.assertIn("OGRID:GETSTRUCT():GETFIELDS()", self.code)
         self.assertIn("AF[NI][3]", self.code)
         self.assertEqual(self.code.count("ASCAN(AFORM, {|X| X == AATTR[NI]})"), 3)
-        self.assertEqual(
-            sum("BEGIN SEQUENCE" in l for l in code_lines), 5
-        )
+        self.assertEqual(self.code.count("BEGIN SEQUENCE"), 5)
 
     def test_catalog_single_arg_aadd(self):
         # 0.8.1: aadd multi-arg so grava o 1o item em ADVPL — regressao
