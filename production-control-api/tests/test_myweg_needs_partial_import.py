@@ -13,10 +13,7 @@ from production_control_app.jobs.myweg_needs_publisher.payload_builder import (
     _split_unidentified_materials,
     build_ingest_payload,
 )
-from tests.test_myweg_needs_e2 import (
-    InMemoryMyWegNeedsRepository,
-    _build_payload,
-)
+from tests.test_myweg_needs_e2 import InMemoryMyWegNeedsRepository
 
 
 def _rows():
