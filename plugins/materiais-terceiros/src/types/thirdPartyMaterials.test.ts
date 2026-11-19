@@ -10,6 +10,8 @@ describe("hasUsefulScope", () => {
       true,
     );
     expect(hasUsefulScope({ ...EMPTY_QUERY, branch: "01", onlyWithBalance: true })).toBe(true);
+    expect(hasUsefulScope({ ...EMPTY_QUERY, branch: "01", partnerCode: "001692" })).toBe(true);
+    expect(hasUsefulScope({ ...EMPTY_QUERY, branch: "01", status: "partial" })).toBe(true);
     expect(hasUsefulScope({ ...EMPTY_QUERY, product: "10211413" })).toBe(false);
   });
 });

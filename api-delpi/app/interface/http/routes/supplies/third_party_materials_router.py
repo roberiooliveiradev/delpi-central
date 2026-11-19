@@ -35,7 +35,7 @@ from app.interface.http.routes.supplies.third_party_materials_route_helpers impo
     ISSUED_TO_QUERY,
     ONLY_WITH_BALANCE_QUERY,
     PAGE_QUERY,
-        PARTNER_CODE_QUERY,
+    PARTNER_CODE_QUERY,
     PARTNER_STORE_QUERY,
     PRODUCT_QUERY,
     RECEIPT_NUMBER_QUERY,

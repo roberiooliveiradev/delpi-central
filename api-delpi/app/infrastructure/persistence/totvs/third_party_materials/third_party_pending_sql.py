@@ -117,4 +117,4 @@ def build_pending_export_sql(
     {SUPPLIER_FROM}
     ORDER BY C.supplier_code, C.supplier_store, C.product_code
     """
-    return sql, tuple([*params, limit])
+    return sql, tuple([limit, *params])
