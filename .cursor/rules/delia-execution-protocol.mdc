@@ -1,6 +1,7 @@
 ---
 description: DÉLIA — protocolo especializado de execução GPT↔Cursor↔GitHub; owner primário platform-quality-testing.mdc; carregar para qualquer tarefa DÉLIA, C0–C7, docs/.../delia ou namespace técnico minha-delpi-copilot*
 alwaysApply: false
+governanceSizeJustification: "Protocolo DÉLIA (C0–C7, authorities, evidence vocabulary, Abstraction/Contract/Action Gates, safety industrial e decisão Product Master 2026-11-19 sobre perfis de avaliação) precisa permanecer coeso num único arquivo; fatiar gera drift de handoff GPT↔Cursor↔GitHub. Owner: platform-quality-testing.mdc."
 ---
 
 # DÉLIA — protocolo especializado de execução
