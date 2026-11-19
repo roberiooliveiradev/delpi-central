@@ -11,7 +11,7 @@
 | **P1** | 0 (inventário) + 1 | Inventário técnico + campo de texto com marcadores destacados no PluginUI (D3) | PluginUI: **PROD e HML** (componente genérico) | **ACEITO COM RESÍDUOS** — commit `52eecc38e0`, deploy PROD e HML em 18/11/2026; verificação r3 dispensada pelo solicitante (ver §4) |
 | **P2** | 2 | Lista de campanhas (ajustes 1–5) | Comercial: **somente HML** | **ACEITO COM RESÍDUOS** — commit `243c463652`, HML em 19/11/2026 (ver §5.8) |
 | ~~P3a~~ | 3 (parte do kit) | ~~Números do bloco de título acompanham a quantidade~~ | — | **CANCELADO** em 19/11/2026: desnecessário, porque o `CommercialPageHero` usa `density="compact"`, que já põe 4 números numa linha (ver §6.0) |
-| **P3b** | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | Comercial: **somente HML** | **A executar** (ver §7) |
+| **P3b** | 3 | Detalhe da campanha: bloco de título, abas no endereço, Participantes (4, 6–9, 15) | Comercial: **somente HML** | **Declaração aprovada com ajustes** em 19/11/2026 (ver §7.7) — em execução |
 | P4 | 4 | Abas Mensagem padrão e Dados (10–14) | **Somente HML** | A gerar |
 | P5 | 5 | Detalhe do participante (4, 16) | **Somente HML** | A gerar |
 | P6 | 6 | Limpeza, celular e tema claro | **Somente HML** | A gerar |
@@ -574,3 +574,36 @@ Refazer a composição de `SatisfactionCampaignDetailPage` e `CampaignParticipan
 | A5 | Escopo e commit só dos arquivos do §7.3 | `git diff --cached --stat` |
 | A6 | Deploy **somente HML** (`commercial`); risco de PROD do I7 registrado | Resultado |
 | A7 | Verificador independente aprovado | Veredito sem edição |
+
+### 7.7 Revisão da declaração do P3b (19/11/2026)
+
+**Veredito:** ACCEPT_WITH_ADJUSTMENTS.
+
+**Decisões da declaração que foram aceitas:**
+
+- `campaignTabDeepLink.ts` fica na pasta da Pesquisa.
+- O quadro único é a própria `CommercialDataTableSection`, com `toolbarFilters` e sem o `CommercialSectionCard` por fora.
+- A ordenação dos participantes fica em `satisfactionSort.ts` via `serverSort`, com contato vazio sempre no fim.
+- Empresa e Contato em duas linhas no molde do P2.
+- `pluginRoutes.ts` não muda: a rota só olha o caminho, e `buildSatisfactionCampaignDetailPath` já aceita `search`.
+- O PluginUI não muda, e o P3a não tinha nada local a descartar.
+
+**Ajustes obrigatórios**, todos conferidos no código atual (`SatisfactionCampaignDetailPage.tsx:44,140–170`):
+
+1. **Uma fonte só para a aba.**
+   - A aba ativa é **derivada do endereço a cada renderização** (`parseCampaignTab(window.location.search)`), com a atualização pelo mecanismo do `usePluginRouterPath` (`popstate`/época de rota).
+   - Remover o `useState<CampaignTab>` atual, em vez de manter estado e endereço em paralelo.
+   - `onSelect` só chama `navigatePluginPath` com push.
+   - `buildCampaignTabSearch("participants")` gera endereço **sem** `?tab=`, para a URL ficar limpa.
+2. **Trocar de aba não pode apagar trabalho em andamento** (UI-02 §3.2).
+   - Hoje cada aba é **desmontada** ao trocar (`{tab === "…" ? … : null}`). Isso perde a busca e a seleção de “Adicionar clientes” e as alterações não salvas da mensagem.
+   - Manter as três abas **montadas**, escondendo as inativas (`hidden`), com `role="tabpanel"` e a ligação ao `CommercialUnderlineNav` que o componente já oferecer (declarar se ele não oferecer).
+   - Teste: digitar na mensagem, trocar para Participantes e voltar mantém o texto e o aviso “Alterações não salvas”.
+3. **Números atualizados sem piscar.**
+   - Depois de incluir clientes (`onParticipantsChanged` → `reload`), os quatro números do bloco de título refletem a campanha recarregada.
+   - Na recarga, o conteúdo e as abas **continuam na tela**, com “· Atualizando…” no “Atualizado em”.
+   - O estado “carregando” e o “—” nos números valem só para a primeira carga.
+   - Teste: recarga não desmonta as abas.
+4. **Coluna Situação:** a ordem é Pendente → Respondida, e o filtro continua o mesmo de hoje.
+5. **Texto secundário com `<small>`** é aceito, como precedente do P2. Se o kit ou o `commercialUi` já tiver tom de texto secundário para célula, preferir esse.
+6. **Relatório:** mostrar `git diff --cached --stat` antes do commit, sem a pasta de documentação da Pesquisa, e listar as falhas `.mjs` antes e depois pelo nome.
