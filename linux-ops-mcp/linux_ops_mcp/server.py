@@ -26,8 +26,17 @@ from .reader import (
     ItPortalReader, ReadError, deployment_revision, host_health,
     managed_services, service_health, Settings,
 )
+from .windows_service_actions import (
+    confirm_windows_service_action,
+    prepare_windows_service_action,
+)
 
 REQUIRED_PERMISSIONS = ("it-portal.access", "it-portal.servers.view")
+CONTROL_PERMISSIONS = (
+    "it-portal.access",
+    "it-portal.servers.view",
+    "it-portal.host-services.control",
+)
 
 READ_TOOLS = frozenset((
     "get_host_health",
@@ -39,6 +48,14 @@ READ_TOOLS = frozenset((
     "get_infrastructure_health",
     "get_server_services",
 ))
+CONTROL_TOOLS = frozenset((
+    "start_windows_service",
+    "stop_windows_service",
+    "restart_windows_service",
+    "prepare_windows_service_action",
+    "confirm_windows_service_action",
+))
+APPROVED_TOOLS = READ_TOOLS | CONTROL_TOOLS
 OAUTH_SECURITY_SCHEMES = [{"type": "oauth2", "scopes": list(MCP_TRANSPORT_SCOPES)}]
 
 
@@ -51,10 +68,11 @@ class LinuxOpsMCPServer(MCPServer):
     async def list_tools(self) -> list[MCPTool]:
         result: list[MCPTool] = []
         for info in self._tool_manager.list_tools():
-            if info.name not in READ_TOOLS:
+            if info.name not in APPROVED_TOOLS:
                 raise RuntimeError("Unapproved MCP tool registered")
             meta = dict(info.meta or {})
-            meta[DELPI_META_TOOL_CLASS] = "READ"
+            tool_class = "ACT" if info.name in CONTROL_TOOLS else "READ"
+            meta[DELPI_META_TOOL_CLASS] = tool_class
             meta.update(security_schemes_meta(OAUTH_SECURITY_SCHEMES))
             result.append(_LinuxOpsWireTool.model_validate({
                 "name": info.name,
@@ -70,17 +88,20 @@ class LinuxOpsMCPServer(MCPServer):
         return result
 
 
-def _tool_annotations(title: str) -> ToolAnnotations:
+def _tool_annotations(title: str, *, read_only: bool = True, destructive: bool = False) -> ToolAnnotations:
     return ToolAnnotations(
         title=title,
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
+        readOnlyHint=read_only,
+        destructiveHint=destructive,
+        idempotentHint=read_only,
         openWorldHint=False,
     )
 
 
-async def _context_authorization() -> str:
+async def _context_authorization(
+    *,
+    required_permissions: tuple[str, ...] = REQUIRED_PERMISSIONS,
+) -> str:
     """Require a fresh Core decision, not stale cached RBAC from an earlier call."""
     context = require_mcp_context()
     user = context.user
@@ -104,7 +125,7 @@ async def _context_authorization() -> str:
         permissions=list(rbac.get("permissions") or ()),
         is_superadmin=rbac.get("is_superadmin") is True,
     )
-    if not all(has_permission(fresh_user, permission) for permission in REQUIRED_PERMISSIONS):
+    if not all(has_permission(fresh_user, permission) for permission in required_permissions):
         raise ReadError("forbidden")
     return context.authorization
 
@@ -149,17 +170,26 @@ def security_settings():
     )
 
 
+async def _control(operation) -> dict[str, Any]:
+    try:
+        bearer = await _context_authorization(required_permissions=CONTROL_PERMISSIONS)
+        return await operation(bearer)
+    except Exception as exc:
+        return _safe_error(exc)
+
+
 def create_mcp_server() -> MCPServer:
     mcp = LinuxOpsMCPServer(
         "delpi-linux-ops",
         instructions=(
-            "Read-only host observations from IT Portal for all registered servers. "
+            "Host observations and governed Windows service control via IT Portal. "
             "Prefer list_servers, get_server_health, get_infrastructure_health and "
-            "get_server_services for multiserver diagnosis. Legacy single-server tools "
-            "still target LINUX_OPS_SERVER_ID. Data can be stale or absent. "
-            "No deployment, shell, Docker commands, writes, or remote execution. "
-            "Always report observed_at, collection_status and health_status; missing "
-            "data is unknown."
+            "get_server_services for diagnosis. Windows control requires prepare then "
+            "explicit confirm_windows_service_action with user_confirmed=true; never "
+            "treat the original request as confirmation. control_allowed marks "
+            "controllable services. No deployment PREPARE/ACT, shell, Docker, or "
+            "arbitrary PowerShell. Always report observed evidence; never claim success "
+            "from queue acceptance alone."
         ),
     )
 
@@ -343,5 +373,152 @@ def create_mcp_server() -> MCPServer:
                 include_windows_dashboard=include_windows_dashboard,
             )
         return await _multiread(operation)
+
+    @mcp.tool(
+        name="prepare_windows_service_action",
+        description=(
+            "Prepare a Windows service start/stop/restart against IT Portal allowlist. "
+            "Returns confirmation_id; does not execute. Requires host-services.control."
+        ),
+        annotations=_tool_annotations(
+            "Preparar acao de servico Windows", read_only=False, destructive=True,
+        ),
+        meta={"delpi/toolClass": "ACT"},
+    )
+    async def prepare_windows_service_action_tool(
+        action: Literal["start", "stop", "restart"],
+        service_name: str,
+        server_id: str | None = None,
+        hostname: str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        async def operation(bearer):
+            return await prepare_windows_service_action(
+                authorization=bearer,
+                action=action,
+                server_id=server_id,
+                hostname=hostname,
+                service_name=service_name,
+                include_archived=include_archived,
+            )
+        return await _control(operation)
+
+    @mcp.tool(
+        name="start_windows_service",
+        description=(
+            "Prepare start of an allowlisted Windows service. Never executes alone; "
+            "returns confirmation_id for confirm_windows_service_action."
+        ),
+        annotations=_tool_annotations(
+            "Preparar inicio de servico Windows", read_only=False, destructive=True,
+        ),
+        meta={"delpi/toolClass": "ACT"},
+    )
+    async def start_windows_service_tool(
+        service_name: str,
+        server_id: str | None = None,
+        hostname: str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        async def operation(bearer):
+            return await prepare_windows_service_action(
+                authorization=bearer,
+                action="start",
+                server_id=server_id,
+                hostname=hostname,
+                service_name=service_name,
+                include_archived=include_archived,
+            )
+        return await _control(operation)
+
+    @mcp.tool(
+        name="stop_windows_service",
+        description=(
+            "Prepare stop of an allowlisted Windows service. Never executes alone; "
+            "returns confirmation_id for confirm_windows_service_action."
+        ),
+        annotations=_tool_annotations(
+            "Preparar parada de servico Windows", read_only=False, destructive=True,
+        ),
+        meta={"delpi/toolClass": "ACT"},
+    )
+    async def stop_windows_service_tool(
+        service_name: str,
+        server_id: str | None = None,
+        hostname: str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        async def operation(bearer):
+            return await prepare_windows_service_action(
+                authorization=bearer,
+                action="stop",
+                server_id=server_id,
+                hostname=hostname,
+                service_name=service_name,
+                include_archived=include_archived,
+            )
+        return await _control(operation)
+
+    @mcp.tool(
+        name="restart_windows_service",
+        description=(
+            "Prepare restart of an allowlisted Windows service. Never executes alone; "
+            "returns confirmation_id for confirm_windows_service_action."
+        ),
+        annotations=_tool_annotations(
+            "Preparar reinicio de servico Windows", read_only=False, destructive=True,
+        ),
+        meta={"delpi/toolClass": "ACT"},
+    )
+    async def restart_windows_service_tool(
+        service_name: str,
+        server_id: str | None = None,
+        hostname: str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        async def operation(bearer):
+            return await prepare_windows_service_action(
+                authorization=bearer,
+                action="restart",
+                server_id=server_id,
+                hostname=hostname,
+                service_name=service_name,
+                include_archived=include_archived,
+            )
+        return await _control(operation)
+
+    @mcp.tool(
+        name="confirm_windows_service_action",
+        description=(
+            "Execute a previously prepared Windows service action after explicit human "
+            "confirmation. Requires confirmation_id and user_confirmed=true. Revalidates "
+            "permissions and polls IT Portal for proven state_after."
+        ),
+        annotations=_tool_annotations(
+            "Confirmar acao de servico Windows", read_only=False, destructive=True,
+        ),
+        meta={"delpi/toolClass": "ACT"},
+    )
+    async def confirm_windows_service_action_tool(
+        confirmation_id: str,
+        user_confirmed: bool,
+        action: Literal["start", "stop", "restart"],
+        service_name: str,
+        server_id: str | None = None,
+        hostname: str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        async def operation(bearer):
+            return await confirm_windows_service_action(
+                authorization=bearer,
+                confirmation_id=confirmation_id,
+                user_confirmed=user_confirmed,
+                server_id=server_id,
+                hostname=hostname,
+                service_name=service_name,
+                action=action,
+                include_archived=include_archived,
+            )
+        return await _control(operation)
 
     return mcp
