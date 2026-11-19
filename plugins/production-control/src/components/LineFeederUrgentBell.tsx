@@ -4,23 +4,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   fetchLineFeederUrgentRequests,
+  fetchLatestMyWegNeedBatch,
   patchLineFeederUrgentRequest,
 } from "../api/ppcApi";
 import { copy } from "../content/copy";
-import type { LineFeederUrgentRequest, PpcBranch } from "../types";
+import type { LineFeederUrgentRequest, MyWegNeedsBatchSummary, PpcBranch } from "../types";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 
 const POLL_MS = 30_000;
 
 type Props = {
   branch: PpcBranch;
+  canViewUrgent?: boolean;
+  canViewMyWeg?: boolean;
 };
 
 /**
  * Sino de urgentes no header do Alimentador (C5).
  * Substitui o card de página — mesma fila, superfície compacta em popover.
  */
-export function LineFeederUrgentBell({ branch }: Props) {
+export function LineFeederUrgentBell({ branch, canViewUrgent = true, canViewMyWeg = false }: Props) {
   const labels = copy.lineFeeder.urgent;
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineFeederUrgentRequest[]>([]);
@@ -28,11 +31,19 @@ export function LineFeederUrgentBell({ branch }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [qualityBatch, setQualityBatch] = useState<MyWegNeedsBatchSummary | null>(null);
+  const [qualityError, setQualityError] = useState<string | null>(null);
   const requestSeq = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
+    if (!canViewUrgent) {
+      setItems([]);
+      setSummary({ total: 0, pending: 0, picked: 0 });
+      setLoading(false);
+      return;
+    }
     const seq = ++requestSeq.current;
     setLoading(true);
     try {
@@ -47,7 +58,7 @@ export function LineFeederUrgentBell({ branch }: Props) {
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [branch, labels.loadError]);
+  }, [branch, canViewUrgent, labels.loadError]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -60,6 +71,39 @@ export function LineFeederUrgentBell({ branch }: Props) {
     }, POLL_MS);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (!canViewMyWeg || branch !== "02") {
+      queueMicrotask(() => {
+        setQualityBatch(null);
+        setQualityError(null);
+      });
+      return;
+    }
+    let active = true;
+    const refresh = async () => {
+      try {
+        const batch = await fetchLatestMyWegNeedBatch();
+        if (active) {
+          setQualityBatch(batch.quality?.excludedCount ? batch : null);
+          setQualityError(null);
+        }
+      } catch (err: unknown) {
+        if (active) {
+          // Sem lote aceito ainda: painel sem avisos, sem expor detalhes da API.
+          setQualityError(err instanceof Error ? err.message : "Falha ao consultar MyWEG.");
+        }
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refresh();
+    }, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [branch, canViewMyWeg]);
 
   const update = async (
     item: LineFeederUrgentRequest,
@@ -83,8 +127,9 @@ export function LineFeederUrgentBell({ branch }: Props) {
     }
   };
 
-  const count = summary.total;
+  const count = (canViewUrgent ? summary.total : 0) + (qualityBatch ? 1 : 0);
   const hasUrgent = count > 0;
+  const bellLabel = `Avisos do Portal PCP${count ? ` (${count})` : ""}`;
 
   return (
     <div
@@ -96,10 +141,10 @@ export function LineFeederUrgentBell({ branch }: Props) {
       <button
         type="button"
         className="ppc-icon-btn ppc-feeder-urgent-bell__trigger"
-        aria-label={labels.bellAria(count)}
+        aria-label={bellLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
-        title={labels.bellAria(count)}
+        title={bellLabel}
         onClick={() => setOpen((current) => !current)}
       >
         <Bell size={16} strokeWidth={1.75} aria-hidden />
@@ -117,7 +162,7 @@ export function LineFeederUrgentBell({ branch }: Props) {
         className="ppc-feeder-urgent-bell__panel"
         variant="bare"
         role="dialog"
-        aria-label={labels.panelTitle}
+        aria-label="Avisos operacionais do Portal PCP"
         preferredPlacement="bottom"
         horizontalAlign="end"
         gap={8}
@@ -125,9 +170,34 @@ export function LineFeederUrgentBell({ branch }: Props) {
         onDismiss={() => setOpen(false)}
       >
         <header className="ppc-feeder-urgent-bell__head">
-          <h3 className="ppc-feeder-urgent-bell__title">{labels.panelTitle}</h3>
-          <p className="ppc-feeder-urgent-bell__hint">{labels.hint}</p>
+          <h3 className="ppc-feeder-urgent-bell__title">Avisos do Portal PCP</h3>
+          <p className="ppc-feeder-urgent-bell__hint">Pendências da integração e solicitações operacionais.</p>
         </header>
+
+        {qualityBatch?.quality ? (
+          <section className="ppc-feeder-urgent-bell__item" aria-label="Pendências de integração MyWEG">
+            <p className="ppc-feeder-urgent-bell__item-title">
+              <strong>MyWEG: coleta com pendências</strong>
+            </p>
+            <p className="ppc-feeder-urgent-bell__meta">
+              {qualityBatch.collectionDate}: {qualityBatch.quality.excludedCount} registros
+              sem identificação de material ({qualityBatch.quality.excludedQuantityUn} UN).
+              Não computados na demanda por produto.
+            </p>
+            <p className="ppc-feeder-urgent-bell__meta">
+              Linhas de origem: {qualityBatch.quality.excludedRecords
+                .map((item) => item.sourceLine || String(item.index + 1))
+                .join(", ")}
+            </p>
+            <a className="ppc-feeder-urgent-bell__action" href="/apps/production-control/myweg-needs?branch=02">
+              Abrir Necessidades WEG
+            </a>
+          </section>
+        ) : null}
+
+        {qualityError && !qualityBatch ? (
+          <p className="ppc-state ppc-state--error" role="status">{qualityError}</p>
+        ) : null}
 
         {error ? (
           <p className="ppc-state ppc-state--error" role="alert">
@@ -135,13 +205,15 @@ export function LineFeederUrgentBell({ branch }: Props) {
           </p>
         ) : null}
 
-        {loading && items.length === 0 ? (
+        {!canViewUrgent ? (
+          !qualityBatch && !qualityError ? <p className="ppc-feeder-urgent-bell__empty">Nenhum aviso ativo.</p> : null
+        ) : loading && items.length === 0 ? (
           <p className="ppc-feeder-urgent-bell__empty" role="status">
             <Loader2 className="ppc-icon-btn__spin" size={15} aria-hidden />
             {labels.loading}
           </p>
         ) : items.length === 0 ? (
-          <p className="ppc-feeder-urgent-bell__empty">{labels.empty}</p>
+          !qualityBatch ? <p className="ppc-feeder-urgent-bell__empty">{labels.empty}</p> : null
         ) : (
           <ul className="ppc-feeder-urgent-bell__list">
             {items.map((item) => {
