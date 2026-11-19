@@ -144,3 +144,7 @@ A pasta é documentação permanente. Arquivos `.cursor/plans/*.plan.md` são es
 - [PRC-TRACK — Proposta G1 de ratificação de contratos](./PRC-TRACK-G1-CONTRACT-RATIFICATION-PROPOSAL.md): CR-01–CR-07 para Coordination, contratos B1/B2/B3, projeção RESOLVED na revisão do evento e REMOVED ausente imediatamente, cenários de HML, gates e rollback. **PROPOSED_FOR_COORDINATION / ARCHITECTURE_DECISION_REQUIRED; sem ratificação ou implementação.**
 
 - [PRC-TRACK — Coordenação de implementação e prompts para Devin](./PRC-TRACK-DEVIN-IMPLEMENTATION-COORDINATION-AND-PROMPTS.md): **Devin executa exclusivamente código e testes; ChatGPT/EVA coordena, revisa evidências e prepara prompts**. Inclui sequência produto → bandeiras → homologação multiusuário → frontend completo → deploy governado e primeiro brief `DEVIN-PROD-00`. **PROMPT_READY / NOT_DISPATCHED / IMPLEMENTATION_NOT_STARTED**.
+
+## Evolução PRC — GLPI #1621 (19/11/2026)
+
+- [Plano integrado — valores padrão, duplicação e cancelamento pré-atendimento](./PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-IMPLEMENTATION-PLAN-2026-11-19.md): origem GLPI #1621; owner de produto Portal Engenharia; Engineering API dona de workflow, permissões, estados e auditoria; Portal Engenharia e My Requests consumidores do mesmo formulário e caso. Pacotes G0/S1 (defaults CREATE), S2 (duplicação CREATE), S3 (cancelamento submitted) e S4 (homologação), com S2b UPDATE condicionado a contrato próprio. **PLANNED / DOCUMENTATION_ONLY / NO_CODE_CHANGE / NO_DEPLOY**. Não criar fluxo paralelo em requests-api.
