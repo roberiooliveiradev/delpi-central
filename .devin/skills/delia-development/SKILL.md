@@ -37,6 +37,13 @@ Antes de capability, port, adapter, service, registry, engine, provider ou workf
 - Comunicação de coordenação: responder prioritariamente `O QUE FUNCIONA HOJE → O QUE AINDA NÃO FOI IMPLEMENTADO → O QUE SERÁ ALTERADO AGORA → COMO PROVAR OUTCOME → BLOQUEIOS REAIS`. Restringir follow-up a decisão/execução que move runtime; não recomendar mais planejamento quando o próximo diff já está comprovado e autorizado.
 - Preservar reancoragem, tests/safety/generalization, `verify.py`, owners, contratos, gates de commit e deploy. **Delivery-first não é exceção a segurança, aprovação, verificações independentes ou autorização de deploy**.
 
+## Perfil de avaliação DEV e testes pontuais (Product Master 2026-11-19)
+- Avaliações reais de compreensão, INT-1/INT-2, tool calling e grounded outcome usam **Qwen 14B via LLM EXTERNO**, preferencialmente o perfil existente `openrouter_qwen` / `qwen/qwen3-14b`, após confirmar provider, egress e credenciais autorizados. Nunca escolher Qwen 8B local como fallback, nem trocar silenciosamente para Kimi/outro modelo. Perfil de avaliação não altera perfil de produção.
+- Ollama local DEV: **Qwen 4B somente smoke tests simples**. Hardware atual não comporta Qwen 8B/14B locais para esta avaliação; não instalar GPU/toolkit nem aumentar timeout indefinidamente como solução à escolha errada de perfil.
+- **Primeiro uma pergunta READ pontual** e seu outcome completo (modelo → capability → args válidos → owner → evidence → resposta). Uma tentativa inicialmente, sem bateria A-D ou matriz grande. Depois de PASS, no máximo um teste de continuidade/P1 e um holdout conforme necessidade e budget. Se falhar, parar expansão, reproduzir defeito bounded, corrigir e repetir a mesma pergunta.
+- Reutilizar harness externo e filtros de cenário existentes; validar efeitos antes de executar scripts que criem containers, proxies, modifiquem env ou recriem stack. Não copiar segredos de produção; limitar egress/custo/tokens/latência, preservar AuthZ, Keycloak e LEASE. REPORT: `EXPECTED_MODEL_PROFILE`, `ACTUAL_MODEL_PROFILE`, `SCENARIO_COUNT`, `EXTERNAL_LLM_CALLS`, `COST`, `GROUNDED_OUTCOME`.
+- Divergência de perfil (`MODEL_PROFILE_MISMATCH`) bloqueia a avaliação antes do primeiro turno; não confundir NON_GROUNDED honesto com sucesso funcional. Seguir a regra superior `.cursor/rules/delia-execution-protocol.mdc` e Doc 16; autorização de egress/teste não autoriza deploy ou mudança de modelo produtivo.
+
 ## Ciclo por task
 1. Fixar objetivo, RQ-n e AC-n verificáveis, fase e allowed diff. Fazer inventário factual antes da edição.
 2. Teste RED para defeito reproduzido; menor correção; GREEN, regressão, segurança, generalização e outcome quando IA. Provar no SHA/model/config/policy/dataset efetivos.
