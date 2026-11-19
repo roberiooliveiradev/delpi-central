@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.4 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.4-diag"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.5 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.5-diag"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -213,6 +213,7 @@ static function lExecSA5(oSelf)
     Local nQry       := 0
     Local oModel     := NIL
     Local oGrid      := NIL
+    Local xVal       := NIL
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, ;
@@ -300,9 +301,15 @@ static function lExecSA5(oSelf)
             ConOut("DLP04I02 s4 activate ok")
 
             // header: produto (+ref. grade) — relation oficial aplica
-            // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid
+            // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid.
+            // A5_REFGRD tem X3_WHEN ("Ref Grd Cfg") que rejeita ate
+            // atribuicao vazia — omitir o SetValue quando vazio e deixar
+            // o modelo derivar (regressao TST01 0.5.4: FWWHEN
+            // "Modo edicao nao respeitado").
             oModel:GetModel(cFldId):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
-            oModel:GetModel(cFldId):SetValue("A5_REFGRD",  oDados:GetJSonObject("A5_REFGRD"))
+            if !Empty(oDados:GetJSonObject("A5_REFGRD"))
+                oModel:GetModel(cFldId):SetValue("A5_REFGRD", oDados:GetJSonObject("A5_REFGRD"))
+            endif
             ConOut("DLP04I02 s5 header ok")
 
             oGrid := oModel:GetModel(cGrdId)
@@ -310,13 +317,21 @@ static function lExecSA5(oSelf)
             oGrid:AddLine()
             ConOut("DLP04I02 s7 addline ok")
 
-            // linha corrente: identidade restante + atributos
+            // linha corrente: identidade restante + atributos; vazio =
+            // omitir (init do modelo) — WHEN de campo calculado/protegido
+            // rejeita atribuicao mesmo de "" (mesma classe do A5_REFGRD)
             for nI := 2 to len(aIdent)   // A5_PRODUTO vem do header
-                oGrid:SetValue(aIdent[nI], oDados:GetJSonObject(aIdent[nI]))
+                xVal := oDados:GetJSonObject(aIdent[nI])
+                if !Empty(xVal)
+                    oGrid:SetValue(aIdent[nI], xVal)
+                endif
             next nI
             ConOut("DLP04I02 s8 grid-ident ok")
             for nI := 1 to len(aAttr)
-                oGrid:SetValue(aAttr[nI], oDados:GetJSonObject(aAttr[nI]))
+                xVal := oDados:GetJSonObject(aAttr[nI])
+                if !Empty(xVal)
+                    oGrid:SetValue(aAttr[nI], xVal)
+                endif
             next nI
             ConOut("DLP04I02 s9 grid-attrs ok")
 
@@ -492,7 +507,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.4-diag"
+Return "dlp04i02-0.5.5-diag"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
