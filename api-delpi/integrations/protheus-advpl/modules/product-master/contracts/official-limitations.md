@@ -22,6 +22,8 @@ que a equipe ERP deve validar antes de qualquer escrita real.
 | 5 campos memo (`CONDITIONAL`) | gravação de conteúdo memo via ExecAuto não homologada; aceitos como string, validação real pendente |
 | DELETE (op 5 MATA010) | sem fonte MATA010 disponível; vínculos SA5/SB2/movimentações não inventariados — **método publicado retorna 501 e não executa nada** |
 | Semântica de representação completa no op 4 | política fail-closed assumida por contrato (bug conhecido de zeramento); confirmar comportamento por campo no TST01 |
+| Formato de valor `D` no ExecAuto | candidato envia string `AAAAMMDD` e string vazia para data em branco (vazio é legítimo — SB1 grava blank); confirmar se a rotina aceita string ou exige tipo data — validar um campo `D` preenchido e um vazio no TST01 |
+| Serialização do GET metadados | `fields[]` monta array de `JsonObject` aninhados — confirmar renderização JSON na compilação (fallback: array de pares `{field,kind}`) |
 | PEs/gatilhos ativos na MATA010 do ambiente | `A010TOK` existe como PE; efeitos sobre campos SB1 não mapeados — inventário RPO pendente |
 | Campo `B1_YDLPDSC` (referenciado por PE) | **ausente do SX3 do TST01** — divergência de dicionário; campo não entra no catálogo até existir no SX3 |
 
@@ -58,6 +60,8 @@ que a equipe ERP deve validar antes de qualquer escrita real.
         confirmar gravação ou marcar `NOT_SUPPORTED`.
 12. [ ] Verificar que campos protegidos/sistema permanecem intactos após
         UPDATE (B1_MSBLQL, saldos, custos, datas de sistema).
+12b.[ ] `PUT` em produto com data em branco (ex.: `B1_DTCORTE`) → `200` —
+        data vazia trafega como `""` e não pode ser rejeitada.
 13. [ ] Registrar evidência em `handoffs/` e atualizar `module.yaml`
         (`status` → `PROVEN_RUNTIME` parcial/total conforme resultado).
 

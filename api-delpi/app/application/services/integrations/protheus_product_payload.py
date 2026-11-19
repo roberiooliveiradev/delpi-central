@@ -16,6 +16,7 @@ não tem campo codusr: a atribuição vive no ledger de tracking.
 from __future__ import annotations
 
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from app.application.services.integrations.protheus_product_field_catalog import (
@@ -116,14 +117,21 @@ def _normalize_value(field: str, value: Any) -> str:
 
     normalized = text.strip()
 
-    if kind == "N" and normalized:
-        try:
-            float(normalized)
-        except ValueError:
+    if kind == "N":
+        if not normalized:
             raise _err(
-                f"Campo {field} deve ser numérico.",
+                f"Campo {field} é numérico — envie um valor (ex.: 0), "
+                "não texto vazio.",
                 "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-            ) from None
+            )
+        # Mesma regra estrita do upstream (lIsNumStr): sinal só na
+        # primeira posição, dígitos e no máximo um ponto — sem notação
+        # científica, separador de milhar nem espaços internos.
+        if not re.fullmatch(r"[+-]?\d+(\.\d+)?", normalized):
+            raise _err(
+                f"Campo {field} deve ser numérico (ex.: 12.5, -3, 0).",
+                "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+            )
     if kind == "D" and normalized:
         if not re.fullmatch(r"\d{8}", normalized):
             raise _err(
@@ -185,6 +193,55 @@ def normalize_product_update_fields(raw: Mapping[str, Any] | None) -> dict[str, 
     return {str(k): _normalize_value(str(k), v) for k, v in raw.items()}
 
 
+def _canonical_number(value: Any) -> str:
+    """Número em texto simples — nunca notação científica (lIsNumStr).
+
+    ``str(1e-7)``/``str(Decimal('1E-5'))`` produziriam expoente e seriam
+    rejeitados no upstream. ``Decimal.normalize()`` remove zeros à direita
+    da parte fracionária sem tocar em dígitos significativos; ``format(f)``
+    expande o expoente sem truncar precisão (Decimal(10) → "10",
+    Decimal("1E-7") → "0.0000001").
+    """
+    d = value if isinstance(value, Decimal) else Decimal(str(value))
+    text = format(d.normalize(), "f")
+    return text if text not in ("", "-0") else "0"
+
+
+def snapshot_body_text(current: Any) -> str:
+    """Serialização canônica de um valor lido da SB1 para o body upstream.
+
+    Mesma forma que ``merge_product_update_fields`` produz — usada também
+    no read-back para comparar intenção x persistido sem falsa divergência
+    (``"5"`` enviado ≡ ``5.0`` gravado; ``"        "`` ≡ ``""``).
+    """
+    if current is None:
+        return ""
+    if isinstance(current, bool):
+        # pyodbc nunca devolve bool p/ coluna numérica; guarda defensiva.
+        return "1" if current else "0"
+    if isinstance(current, (int, float, Decimal)):
+        return _canonical_number(current)
+    return str(current).rstrip()
+
+
+def snapshot_value_matches(field: str, current: Any, expected: str) -> bool:
+    """True quando o valor persistido na SB1 confere com a intenção enviada.
+
+    Numéricos comparam por ``Decimal`` (``"5.50"`` enviado ≡ ``5.5``
+    gravado); demais espécies comparam a serialização canônica do snapshot
+    contra o texto enviado (``"        "`` ≡ ``""``; padding à direita
+    ignorado).
+    """
+    if PRODUCT_FIELD_SPECS[field]["kind"] == "N":
+        try:
+            return Decimal(expected or "0") == Decimal(
+                snapshot_body_text(current) or "0"
+            )
+        except (InvalidOperation, TypeError, ValueError):
+            return False
+    return snapshot_body_text(current) == expected
+
+
 def merge_product_update_fields(
     *, snapshot: Mapping[str, Any], changes: Mapping[str, str]
 ) -> dict[str, str]:
@@ -205,13 +262,7 @@ def merge_product_update_fields(
         if field in changes:
             merged[field] = changes[field]
             continue
-        current = snapshot.get(field)
-        if current is None:
-            merged[field] = ""
-        elif isinstance(current, (int, float)):
-            merged[field] = str(current)
-        else:
-            merged[field] = str(current).rstrip()
+        merged[field] = snapshot_body_text(snapshot.get(field))
     return merged
 
 

@@ -184,3 +184,82 @@ def test_product_update_url_fails_closed_without_marker() -> None:
     with pytest.raises(ProtheusRestError) as exc:
         product_update_url(config)
     assert exc.value.code == "PROTHEUS_CONFIG_INVALID"
+
+
+# --- revisão independente: strict numeric, canonical merge, read-back ---
+
+
+def test_normalize_rejects_scientific_and_empty_numeric() -> None:
+    # lIsNumStr upstream: sem expoente, sem separador, sem vazio p/ N.
+    for bad in ("1e-5", "1.2.3", "12,5", "", " ", "abc"):
+        with pytest.raises(ProtheusRestError) as exc:
+            normalize_product_update_fields(
+                {**FULL_PRODUCT, "B1_PICMRET": bad}
+            )
+        assert exc.value.code == "PROTHEUS_PRODUCT_PAYLOAD_INVALID", bad
+    for good in ("5.50", "-3", "0"):
+        out = normalize_product_update_fields(
+            {**FULL_PRODUCT, "B1_PICMRET": good}
+        )
+        assert out["B1_PICMRET"] == good
+
+
+def test_merge_snapshot_numeric_canonical_form() -> None:
+    from decimal import Decimal
+
+    snapshot = {field: "" for field in PRODUCT_FIELD_SPECS}
+    snapshot["B1_PICMRET"] = 5.0            # float -> "5"
+    snapshot["B1_ESTSEG"] = Decimal("1E-5")  # pyodbc -> "0.00001"
+    snapshot["B1_PESO"] = 0.00001            # float pequeno -> "0.00001"
+    snapshot["B1_EMIN"] = 2                  # int -> "2"
+    merged = merge_product_update_fields(snapshot=snapshot, changes={})
+    assert merged["B1_PICMRET"] == "5"
+    assert merged["B1_ESTSEG"] == "0.00001"
+    assert merged["B1_PESO"] == "0.00001"
+    assert merged["B1_EMIN"] == "2"
+
+
+def test_canonical_number_never_corrupts_significant_digits() -> None:
+    # Regressão OC-1: format(..,"f") truncava em 6 casas e rstrip("0")
+    # comia zeros significativos de integrais (Decimal(10) virava "1").
+    from decimal import Decimal
+
+    from app.application.services.integrations.protheus_product_payload import (
+        _canonical_number,
+    )
+
+    assert _canonical_number(Decimal("10")) == "10"
+    assert _canonical_number(Decimal("100")) == "100"
+    assert _canonical_number(10) == "10"
+    assert _canonical_number(Decimal("1E-7")) == "0.0000001"
+    assert _canonical_number(0.0000001) == "0.0000001"
+    assert _canonical_number(Decimal("5.50")) == "5.5"
+    assert _canonical_number(-3.25) == "-3.25"
+    assert _canonical_number(0) == "0"
+
+
+def test_merge_snapshot_none_stays_empty() -> None:
+    snapshot = {field: "" for field in PRODUCT_FIELD_SPECS}
+    snapshot["B1_DTCORTE"] = None  # data NULL -> "" (vazio legítimo)
+    merged = merge_product_update_fields(snapshot=snapshot, changes={})
+    assert merged["B1_DTCORTE"] == ""
+
+
+def test_snapshot_value_matches_numeric_and_padded() -> None:
+    from decimal import Decimal
+
+    from app.application.services.integrations.protheus_product_payload import (
+        snapshot_value_matches,
+    )
+
+    # "5.50" enviado ≡ 5.5 gravado; "" ≡ NULL/" " numericamente zero.
+    assert snapshot_value_matches("B1_PICMRET", 5.5, "5.50")
+    assert snapshot_value_matches("B1_PICMRET", Decimal("0"), "")
+    assert snapshot_value_matches("B1_PICMRET", None, "")
+    assert not snapshot_value_matches("B1_PICMRET", 6.0, "5.50")
+    # caractere: padding à direita do banco é ignorado.
+    assert snapshot_value_matches("B1_DESC", "TEXTO   ", "TEXTO")
+    assert not snapshot_value_matches("B1_DESC", "OUTRO", "TEXTO")
+    # data: vazio persistido ≡ "" enviado.
+    assert snapshot_value_matches("B1_DTCORTE", "        ", "")
+    assert snapshot_value_matches("B1_DTCORTE", "20260101", "20260101")

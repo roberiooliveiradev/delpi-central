@@ -47,6 +47,15 @@
      DELETE /v1/IncProduto/excluir    -> bloqueado por contrato (501)
      GET    /v1/IncProduto/metadados  -> catalogo da integracao (JSON)
 
+   REVISAO v2.1 (EVA independent review):
+     - campos D aceitam valor vazio (data em branco e legitima na SB1;
+       sem isso o PUT completo falharia em qualquer produto com data
+       vazia). Semantica do vazio no ExecAuto: VALIDAR NO TST01.
+     - GetContent/SetContentType dentro do Begin Sequence (throw em
+       init de Local nao e recuperavel fora dela).
+     - GetAutoGrLog sem separador pendente; consulta ao catalogo sem
+       rebuild por campo; literais de resposta 100% ASCII.
+
    LIMITES CONHECIDOS:
      - Compilacao/homologacao TST01: pendente (equipe ERP).
      - JsonObject:GetNames() — metodo assumido do padrao TOTVS;
@@ -158,13 +167,14 @@ Return { ;
     {"B1_ZINVDLP","C"}, {"B1_ZDESREV","C"}, {"B1_XBLQCOM","C"} ;}
 
 /* -----------------------------------------------------------------------
-   lFieldSpec — retorna a especie do campo no catalogo, ou "" se ausente.
+   cFieldKind — retorna a especie do campo no catalogo, ou "" se ausente.
+   aFields vem materializado pelo caller (evita rebuild do catalogo a
+   cada consulta).
    ----------------------------------------------------------------------- */
-static function cFieldKind(cField)
+static function cFieldKind(cField, aFields)
 
-    local aFields := aB1Fields()
-    local nI      := 0
-    local cKind   := ""
+    local nI    := 0
+    local cKind := ""
 
     for nI := 1 to len(aFields)
         if aFields[nI][1] == cField
@@ -264,7 +274,7 @@ static function lPrepSB1(oDados, nOp, aSB1, cErro)
     // 1) rejeita campo desconhecido/protegido e valida tipos informados
     for nI := 1 to len(aNames)
         cField := aNames[nI]
-        cKind  := cFieldKind(cField)
+        cKind  := cFieldKind(cField, aFields)
 
         if Empty(cKind)
             aadd(aBad, cField)
@@ -282,10 +292,14 @@ static function lPrepSB1(oDados, nOp, aSB1, cErro)
                 aadd(aBad, cField + "(numerico)")
             endif
         elseif cKind == "D"
-            if ValType(xVal) == "C" .and. lIsDateStr(xVal)
+            if ValType(xVal) == "C" .and. (lIsDateStr(xVal) .or. Empty(xVal))
+                // Empty(xVal): data vazia e legitima (SB1 grava blank) —
+                // sem ela o PUT completo falharia em todo produto com
+                // data em branco. Semantica do valor vazio no ExecAuto:
+                // VALIDAR NO TST01.
                 aadd(aSB1, {cField, xVal, NIL})
             else
-                aadd(aBad, cField + "(data AAAAMMDD)")
+                aadd(aBad, cField + "(data AAAAMMDD ou vazio)")
             endif
         else
             // C e M: somente string — sem conversao de tipo
@@ -322,7 +336,7 @@ static function lPrepSB1(oDados, nOp, aSB1, cErro)
 
     if len(aMiss) > 0
         if nOp == 4
-            cErro := "Alteracao exige representacao completa — campos ausentes (" + ;
+            cErro := "Alteracao exige representacao completa - campos ausentes (" + ;
                      AllTrim(Str(len(aMiss))) + "): " + ;
                      lJoin(aMiss, ", ") + "."
         else
@@ -340,18 +354,18 @@ Return .T.
    ----------------------------------------------------------------------- */
 static function cSanitLog(aLogAuto)
 
-    local cTxt := ""
+    local aLin := {}
     local nI   := 0
     local cLin := ""
 
     for nI := 1 to len(aLogAuto)
         cLin := StrTran(StrTran(AllTrim(aLogAuto[nI]), Chr(13), " "), Chr(10), " ")
         if !Empty(cLin)
-            cTxt += cLin + iif(nI < len(aLogAuto), " | ", "")
+            aadd(aLin, cLin)
         endif
     next nI
 
-Return SubStr(cTxt, 1, 2000)
+Return SubStr(lJoin(aLin, " | "), 1, 2000)
 
 /* -----------------------------------------------------------------------
    lExecSB1 — corpo comum de POST/PUT: parse, validacao, ExecAuto, retorno.
@@ -362,12 +376,11 @@ static function lExecSB1(oSelf, nOp)
     Local aArea      := GetArea()
     Local lRet       := .T.
     Local cErro      := ""
-    Local cJSON      := oSelf:GetContent()
+    Local cJSON      := ""
     Local cErroBlk   := ""
     Local cErrType   := "server_error"
     Local aSB1       := {}
     Local aLogAuto   := {}
-    Local nY         := 0
     Local nStatus    := 400
     Local oJsonRet   := JsonObject():New()
     Local oDados     := JsonObject():New()
@@ -377,9 +390,10 @@ static function lExecSB1(oSelf, nOp)
     PRIVATE lMsHelpAuto    := .T.
     PRIVATE lAutoErrNoFile := .T.
 
-    oSelf:SetContentType("application/json")
-
     Begin Sequence
+
+        oSelf:SetContentType("application/json")
+        cJSON := oSelf:GetContent()
 
         if !oDados:FromJson(cJSON)
             lRet     := .F.

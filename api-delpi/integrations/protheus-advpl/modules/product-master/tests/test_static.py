@@ -260,5 +260,58 @@ class ModuleConsistencyTests(unittest.TestCase):
         self.assertIn("cdb68b0487222823a96162c0e493e442648e21f7", text)
 
 
+class V21ReviewGuards(unittest.TestCase):
+    """Guards da revisão independente (v2.1) — defeitos corrigidos."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = SRC.read_text(encoding="utf-8")
+        cls.upper = cls.text.upper()
+
+    def test_empty_date_is_legitimate(self):
+        # D vazio e legitimo na SB1; sem o aceite o PUT completo falharia
+        # em todo produto com data em branco (defeito comprovado).
+        self.assertRegex(
+            self.upper, r'LISDATESTR\(XVAL\)\s*\.OR\.\s*EMPTY\(XVAL\)')
+
+    def test_string_literals_are_ascii(self):
+        # Respostas HTTP compiladas em CP1252: literal nao-ASCII = mojibake.
+        in_block = False
+        for n, line in enumerate(self.text.split("\n"), 1):
+            s = line.strip()
+            if s.startswith("/*") and "*/" not in s and not s.startswith("/*/"):
+                in_block = True
+            elif "*/" in s:
+                in_block = False
+                continue
+            if in_block or s.startswith("//"):
+                continue
+            code = s.split("//")[0]
+            for m in re.finditer(r'"([^"]*)"', code):
+                self.assertTrue(m.group(1).isascii(), f"linha {n}: {m.group(1)}")
+
+    def test_body_read_inside_sequence(self):
+        # GetContent dentro do Begin Sequence (throw fora nao recupera).
+        seq = self.upper.index("BEGIN SEQUENCE")
+        self.assertLess(seq, self.upper.index("OSELF:GETCONTENT()"))
+        self.assertLess(seq, self.upper.index("OSELF:SETCONTENTTYPE"))
+
+    def test_sanitlog_no_trailing_separator(self):
+        block = self.upper[
+            self.upper.index("CSANITLOG(ALOGAUTO)"):self.upper.index("LEXECSB1(OSELF")
+        ]
+        self.assertIn("LJOIN(ALIN", block)
+        self.assertIn("AADD(ALIN", block)
+
+    def test_no_dead_locals(self):
+        self.assertNotRegex(self.upper, r"LOCAL\s+NY\s*:=")
+
+    def test_catalog_lookup_without_rebuild(self):
+        # cFieldKind recebe o catalogo materializado — sem rebuild por campo.
+        self.assertRegex(self.upper, r"CFIELDKIND\(CFIELD,\s*AFIELDS\)")
+        self.assertNotRegex(
+            self.upper, r"STATIC\s+FUNCTION\s+CFIELDKIND\(CFIELD\)")
+
+
 if __name__ == "__main__":
     unittest.main()

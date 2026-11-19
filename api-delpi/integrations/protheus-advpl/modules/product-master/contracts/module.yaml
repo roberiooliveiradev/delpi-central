@@ -41,6 +41,7 @@ candidate_source:
     - "DELETE excluir publicado e BLOQUEADO (501 not_homologated) — semantica oficial pendente"
     - "GET metadados publicado — autodescricao do catalogo (field+kind, 291 entradas)"
     - "RETOBJ v2 com errorType (client_error/official_validation/server_error/not_homologated)"
+    - "v2.1 revisao independente: campos D aceitam vazio legitimo; GetContent dentro do Begin Sequence; sanitlog sem separador pendente; lookup de catalogo sem rebuild; literais ASCII"
   pending_validation:
     - "compilacao e homologacao TST01 pela equipe ERP"
     - "pontos de entrada ativos na MATA010 do ambiente"

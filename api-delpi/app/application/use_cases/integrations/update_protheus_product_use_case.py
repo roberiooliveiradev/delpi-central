@@ -33,6 +33,7 @@ from app.application.services.integrations.protheus_product_payload import (
     merge_product_update_fields,
     normalize_product_update_fields,
     product_update_url,
+    snapshot_value_matches,
     validate_product_code,
 )
 from app.application.services.integrations.protheus_token_service import (
@@ -172,28 +173,23 @@ class UpdateProtheusProductUseCase:
         )
 
         # Read-back: divergência mantém ACKNOWLEDGED; match promove CONFIRMED.
+        # Compara TODOS os campos merged (representação completa enviada),
+        # não só o delta — campo não alterado zerado/corrompido pelo
+        # ExecAuto também é divergência a investigar.
         confirmation = "ACKNOWLEDGED"
         divergent: list[str] = []
         try:
             after = self._product_repository.get_product_snapshot(normalized_code)
             if after is None:
-                divergent = sorted(fields.keys())
+                divergent = sorted(merged.keys())
             else:
-                for field in fields:
-                    current = after.get(field)
-                    current_txt = (
-                        ""
-                        if current is None
-                        else str(current).rstrip()
-                        if not isinstance(current, (int, float))
-                        else str(current)
-                    )
-                    if current_txt != fields[field]:
+                for field, expected in merged.items():
+                    if not snapshot_value_matches(field, after.get(field), expected):
                         divergent.append(field)
             if not divergent:
                 confirmation = "CONFIRMED"
         except Exception:  # noqa: BLE001 — read-back failure never hides the write
-            divergent = sorted(fields.keys())
+            divergent = sorted(merged.keys())
 
         result: dict[str, Any] = {
             "product_code": normalized_code,

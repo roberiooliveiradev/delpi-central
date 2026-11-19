@@ -423,3 +423,70 @@ def test_readback_divergence_stays_acknowledged(monkeypatch) -> None:
     )
     assert result["confirmation"] == "ACKNOWLEDGED"
     assert result["readback_divergent_fields"] == ["B1_GRUPO"]
+
+
+def test_readback_flags_zeroed_untouched_field(monkeypatch) -> None:
+    """Anti-zeramento: divergência em campo NÃO alterado também barra o
+    CONFIRMED — a pós-condição da representação completa é verificada
+    por inteiro, não só no delta do cliente."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    snap = _snapshot()
+    calls = {"n": 0}
+
+    repo = MagicMock()
+
+    def _get(_code):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return snap
+        after = dict(snap)
+        after["B1_GRUPO"] = "9999"   # alteração pedida, persistida
+        after["B1_DESC"] = ""        # campo não tocado zerado pelo ERP
+        return after
+
+    repo.get_product_snapshot.side_effect = _get
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_GRUPO": "9999"}
+    )
+    assert result["confirmation"] == "ACKNOWLEDGED"
+    assert result["readback_divergent_fields"] == ["B1_DESC"]
+
+
+def test_readback_numeric_equivalence_confirms(monkeypatch) -> None:
+    """"5.50" enviado ≡ 5.5 persistido: numérico compara por valor, não
+    por texto — sem falsa divergência."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    snap = _snapshot()
+    calls = {"n": 0}
+
+    repo = MagicMock()
+
+    def _get(_code):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return snap
+        after = dict(snap)
+        after["B1_PICMRET"] = 5.5  # gravado como float
+        return after
+
+    repo.get_product_snapshot.side_effect = _get
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_PICMRET": "5.50"}
+    )
+    assert result["confirmation"] == "CONFIRMED"
