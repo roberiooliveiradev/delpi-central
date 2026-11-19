@@ -83,12 +83,6 @@ Para análises de prazo de reposição/entrega cadastrada por filial, consultar 
 
 ---
 
-## Inventário integral de campos
-
-A seção acima cobre os campos **recorrentes** de negócio. O inventário **completo** de campos do cadastro de produto — 318 colunas físicas `SB1010`, 319 campos SX3 `SB1`, 123/125 da `SA5`, contratos do handler `delpiproduto` (CREATE op3 / UPDATE op4, array de 22 campos), façade api-delpi e gaps contra o catálogo PRC — está no playbook canônico:
-
-- **[playbook-cadastro-produto-sb1-sx3-sa5.md](./playbooks/playbook-cadastro-produto-sb1-sx3-sa5.md)** (EVA-PRC G0-A, 18/11/2026; §12 acrescenta o inventário RESTALL autenticado G0-B, 19/11/2026 — classes nativas × customizadas, CREATE/UPDATE SB1, veredito SA5 e matriz de reuso)
-
 ## Referências
 
 - Refugos: [scrap-monitoring.md](../scrap-monitoring.md)
