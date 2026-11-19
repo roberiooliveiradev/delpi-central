@@ -973,3 +973,16 @@ Fluxo autorizado: `Portal ou EVA -> Engineering API (REST ou mesma application u
 ## Trilha executável Devin — refatoração integral do MFE (2026-11-07)
 
 **Plano canônico de execução:** [MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md](./MFE-PRODUCT-REGISTRATION-DEVIN-IMPLEMENTATION-PLAN.md), cobrindo `MFE-PRC-UX0..UX5`, componentes confirmados em `@delpi/plugin-ui`/façade `engineeringUi.ts`, wireframes 01–07, mapa de arquivos, REST real (inclusive intake CREATE/UPDATE), responsividade, testes, screenshots e critérios de aceite. O executor Devin deve implementar a trilha inteira em DEV, com backend e owners preservados, sem inventar API/export. **`PRODUCTION_DEPLOY_SUSPENDED` até refatoração + QA visual real + aceite PO e gates funcionais separados.** Este adendo é documentação/plano, não implementação nem autorização produtiva.
+
+## Evolução PRC — GLPI #1621 (19/11/2026)
+
+> **Estado:** PLANNED / DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN. Este adendo registra a demanda nova sem reclassificar entregas PRC anteriores ou autorizar deploy.
+
+A demanda GLPI #1621 (Criação de Matéria-prima) será implementada no **bounded context do Portal Engenharia/Engineering API**, com **paridade efetiva em Portal Engenharia e My Requests**. Os dois portais utilizam o mesmo caso na Engineering API e o formulário compartilhado `@delpi/plugin-ui`; proibido duplicar workflow, criar nova fonte de verdade ou gravar em `requests-api`.
+
+- **S1 — defaults CREATE:** preenchimento inicial de `defaultWarehouse=01` e `accountingAccount=11401002` conforme comportamento comprovado no Controle MP legado, condicionado à ratificação do owner por filial/tipo. Preservar alteração manual, UPDATE, edição e correção.
+- **S2 — duplicação de CREATE:** nova ficha editável a partir de dados autorizados do caso original; envio pelo intake já existente, novo ID, autoria e histórico. Sem copiar status, anexos, flags, revisões ou verificações. Duplicação de UPDATE fica em S2b posterior, condicionada a leitura oficial fresca e contrato de rebase.
+- **S3 — cancelamento:** proposta de transição terminal `submitted → cancelled` apenas pelo requester autorizado, antes do `start`, com `expectedVersion`, idempotência, auditoria e ajuste de fila/histórico nas duas interfaces. Cancelamento lógico, nunca hard delete. Ratificar marco formal do atendimento versus primeira visualização.
+- **S4 — validação:** testes unitários, contrato, integração, permissões por objeto, concorrência start × cancel, regressão PRC, E2E autenticado em ambas superfícies e verificador independente; release governado separadamente.
+
+**Contrato e execução completos:** [PRC-GLPI-1621 — Plano integrado dos dois portais](./PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-IMPLEMENTATION-PLAN-2026-11-19.md), incluindo RQ-1621, AC-1621, owners, pontos de decisão, gates e escopo dos menores diffs por pacote. **Próxima execução bounded:** G0 curto de contrato/default por filial e S1; nenhuma mudança de runtime foi realizada por este registro.
