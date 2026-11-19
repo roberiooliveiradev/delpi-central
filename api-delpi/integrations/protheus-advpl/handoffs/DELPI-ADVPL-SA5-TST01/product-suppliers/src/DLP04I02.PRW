@@ -208,14 +208,15 @@ static function lExecSA5(oSelf)
     Local oDados     := JsonObject():New()
     Local oException := ErrorBlock({|e| cErroBlk := e:Description, Break(e) })
 
-    oSelf:SetContentType("application/json")
-
     Begin Sequence
 
-        // body primeiro: "vazio/indisponivel" e "JSON invalido" sao
+        // GetContent SEMPRE antes de SetContentType — este consome o
+        // buffer do request no HTTPREST (regressao comprovada TST01
+        // 2026-11-19). "vazio/indisponivel" e "JSON invalido" sao
         // diagnosticos diferentes — o primeiro prova que o runtime nao
         // entregou o corpo (falha de ambiente), o segundo que chegou.
         cJSON := oSelf:GetContent()
+        oSelf:SetContentType("application/json")
 
         if ValType(cJSON) <> "C" .or. Empty(cJSON)
             lRet := .F.

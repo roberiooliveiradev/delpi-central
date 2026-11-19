@@ -52,7 +52,9 @@
        sem isso o PUT completo falharia em qualquer produto com data
        vazia). Semantica do vazio no ExecAuto: VALIDAR NO TST01.
      - GetContent/SetContentType dentro do Begin Sequence (throw em
-       init de Local nao e recuperavel fora dela).
+       init de Local nao e recuperavel fora dela); GetContent SEMPRE
+       antes de SetContentType — este consome o buffer do request no
+       HTTPREST (regressao comprovada em TST01 2026-11-19).
      - GetAutoGrLog sem separador pendente; consulta ao catalogo sem
        rebuild por campo; literais de resposta 100% ASCII.
 
@@ -612,8 +614,8 @@ static function lExecSB1(oSelf, nOp)
 
     Begin Sequence
 
-        oSelf:SetContentType("application/json")
         cJSON := oSelf:GetContent()
+        oSelf:SetContentType("application/json")
 
         if !oDados:FromJson(cJSON)
             lRet     := .F.
