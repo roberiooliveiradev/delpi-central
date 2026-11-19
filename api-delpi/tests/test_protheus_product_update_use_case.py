@@ -47,7 +47,7 @@ FULL_PRODUCT = {
 
 
 def _snapshot() -> dict:
-    """Linha SB1 completa (286 colunas elegíveis) — valores atuais do cadastro."""
+    """Linha SB1 completa (285 colunas elegíveis) — valores atuais do cadastro."""
     from app.application.services.integrations.protheus_product_field_catalog import (
         PRODUCT_FIELD_SPECS,
     )
@@ -170,7 +170,7 @@ def test_enabled_sends_flat_b1_body_without_codusr(monkeypatch) -> None:
     assert body["B1_COD"] == "ABC123"
     assert body["B1_DESC"] == "NOVO"
     assert body["B1_TIPO"] == "MC"
-    assert len(body) == 286  # catálogo completo (merge inclui B1_COD)
+    assert len(body) == 285  # catálogo completo (merge inclui B1_COD)
     assert "codusr" not in body
     assert call.kwargs["url"].endswith("/delpiproduto/v1/IncProduto/alterar")
     assert result["product_code"] == "ABC123"
@@ -311,9 +311,9 @@ def test_partial_update_merges_snapshot(monkeypatch) -> None:
     body = gateway.update_product.call_args.kwargs["body"]
     assert body["B1_GRUPO"] == "9999"
     assert body["B1_DESC"] == "PESO PARA TESTE 6KG"  # preservado do snapshot
-    assert len(body) == 286
+    assert len(body) == 285
     assert result["fields_sent"] == ["B1_GRUPO"]
-    assert result["fields_merged"] == 285
+    assert result["fields_merged"] == 284
 
 
 def test_protected_field_rejected(monkeypatch) -> None:

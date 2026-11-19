@@ -19,7 +19,7 @@ que a equipe ERP deve validar antes de qualquer escrita real.
 | Item | Bloqueio |
 |---|---|
 | Compilação do candidato no RPO TST01 | requer TDS na conexão `233:2001` (REST `:8061/restall`) + restart do REST — exclusivo equipe ERP. Registro 2026-11-19: daemon `:8061` não entrega body ao WSRESTFUL; validação funcional de escrita em avaliação via TDS `233:2002` (`:8701`) |
-| 5 campos memo (`TO_INVENTORY`) | `B1_VM_I`, `B1_VM_GI`, `B1_VM_P`, `B1_OBS`, `B1_VM_PROC` — SX3 declara, mas sem coluna física na SB1010 do TST01; removidos do catálogo (286) até materialização |
+| 5 campos memo (`TO_INVENTORY`) | `B1_VM_I`, `B1_VM_GI`, `B1_VM_P`, `B1_OBS`, `B1_VM_PROC` — SX3 declara, mas sem coluna física na SB1010 do TST01; removidos do catálogo; + B1_GRADE (modelo SB1MASTER nao expoe — FWFormFieldsModel TST01 2026-11-19) => catalogo 285 até materialização |
 | DELETE (op 5 MATA010) | sem fonte MATA010 disponível; vínculos SA5/SB2/movimentações não inventariados — **método publicado retorna 501 e não executa nada** |
 | Semântica de representação completa no op 4 | política fail-closed assumida por contrato (bug conhecido de zeramento); confirmar comportamento por campo no TST01 |
 | Formato de valor `D` no ExecAuto | candidato envia string `AAAAMMDD` e string vazia para data em branco (vazio é legítimo — SB1 grava blank); confirmar se a rotina aceita string ou exige tipo data — validar um campo `D` preenchido e um vazio no TST01 |
@@ -31,7 +31,7 @@ que a equipe ERP deve validar antes de qualquer escrita real.
 
 - Nunca `RecLock`/`INSERT`/`UPDATE`/`DELETE` direto em `SB1*` — escrita
   exclusiva via `MSExecAuto` + MATA010.
-- PUT exige os **286 campos**; a atualização parcial do cliente é
+- PUT exige os **285 campos**; a atualização parcial do cliente é
   expandida na api-delpi via read-merge-write — nunca enviar delta ao
   ExecAuto.
 - `B1_COD` é identidade: obrigatório no contrato, imutável como valor.
@@ -45,7 +45,7 @@ que a equipe ERP deve validar antes de qualquer escrita real.
 1. [ ] Compilar `src/DLP04I01.PRW` na conexão TDS `233:2001` (RPO custom do REST `:8061`; alternativa funcional `233:2002` enquanto `:8061` não entrega body).
 2. [ ] Reiniciar o REST do ambiente compilado e confirmar no catálogo REST:
        `POST/PUT/DELETE/GET /v1/IncProduto/*`.
-3. [ ] `GET /v1/IncProduto/metadados` → `fields_count = 286`, `entity=SB1`.
+3. [ ] `GET /v1/IncProduto/metadados` → `fields_count = 285`, `entity=SB1`.
 4. [ ] `DELETE /v1/IncProduto/excluir` → `501 not_homologated` (sem efeito ERP).
 5. [ ] `PUT` com payload parcial → `400` "representacao completa".
 6. [ ] `PUT` com representação completa em produto de teste dedicado →

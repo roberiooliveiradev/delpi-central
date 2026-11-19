@@ -24,7 +24,7 @@ conforme regra — SQL de leitura não define nem substitui mecanismo ADVPL.
 
 ## Catálogo de campos — contrato upstream v2
 
-O `.PRW` carrega o catálogo completo de campos elegíveis: **286 campos**
+O `.PRW` carrega o catálogo completo de campos elegíveis: **285 campos**
 (285 `READ_WRITE_ELIGIBLE` + `B1_COD` como chave; 5 campos memo SX3 sem coluna física classificados `TO_INVENTORY`, fora do contrato).
 Os **28 protegidos** (`SYSTEM_MANAGED`/`IMMUTABLE`, exceto `B1_COD`) são
 rejeitados explicitamente se enviados.
@@ -42,7 +42,7 @@ rejeitados explicitamente se enviados.
 ### product.update (PUT) — representação completa
 
 - `B1_COD` **obrigatório** para localizar o registro.
-- A fachada ADVPL exige **todos os 286 campos do catálogo** (campo
+- A fachada ADVPL exige **todos os 285 campos do catálogo** (campo
   ausente → `400` com a lista). Representação completa é invariante:
   omitir campo em ExecAuto de alteração pode zerar o cadastro.
 - **Atualização parcial é responsabilidade do consumidor governado**:
@@ -57,7 +57,7 @@ Autodescrição do contrato (não lê dados do ERP):
 ```json
 {"entity":"SB1","routine":"MATA010","mechanism":"MSExecAuto",
  "fields":[{"field":"B1_COD","kind":"C"}, ...],
- "fields_count":286,"matrix_ref":"contracts/sb1-field-matrix.json"}
+ "fields_count":285,"matrix_ref":"contracts/sb1-field-matrix.json"}
 ```
 
 `kind` ∈ `C|N|D|M`. A fonte única de verdade completa (descrição, size,

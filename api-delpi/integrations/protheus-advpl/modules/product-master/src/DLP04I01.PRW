@@ -162,7 +162,9 @@ static function aB1Fields()
     aAdd(aRet, {"B1_CONTSOC","C"})
     aAdd(aRet, {"B1_COMIS","N"})
     aAdd(aRet, {"B1_CODBAR","C"})
-    aAdd(aRet, {"B1_GRADE","C"})
+    // B1_GRADE fora do contrato: o modelo SB1MASTER nao tem o
+    // formulario B1_GRADE neste ambiente (FWFormFieldsModel
+    // "id de formulario nao e valido" — TST01 2026-11-19).
     aAdd(aRet, {"B1_FORMLOT","C"})
     aAdd(aRet, {"B1_MONO","C"})
     aAdd(aRet, {"B1_FPCOD","C"})
