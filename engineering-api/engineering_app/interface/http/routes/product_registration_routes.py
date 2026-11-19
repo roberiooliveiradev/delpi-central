@@ -1691,6 +1691,9 @@ async def _delegated_get(user, op: str, path: str, params: dict):
     from engineering_app.infrastructure.gateways.downstream_client import (
         DownstreamClient,
     )
+    from engineering_app.infrastructure.gateways.s2s_token import (
+        get_s2s_service_token,
+    )
 
     access_token = str(getattr(user, "access_token", "") or "")
     if not access_token:
@@ -1700,9 +1703,16 @@ async def _delegated_get(user, op: str, path: str, params: dict):
         )
     client = DownstreamClient(settings.DELPI_API_URL, timeout_seconds=15.0)
     try:
+        service_token = get_s2s_service_token()
+    except Exception:
+        return None, fail(
+            "Fonte oficial indisponível.", 503, operation_id=op,
+        )
+    try:
         return await client.get(
             path, params=params,
             access_token=access_token, request_id=get_request_id(),
+            service_token=service_token,
         ), None
     except Exception as exc:
         return None, fail(

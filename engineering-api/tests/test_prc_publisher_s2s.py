@@ -131,3 +131,103 @@ class TestAuxiliaryS2SPropagation:
         aux = ApiDelpiDelegatedAuxiliary(client)
         await aux.fetch_product_detail(_Ctx(), code="X")
         assert client.calls[0][2] is None
+
+
+class TestDelegatedGetS2S:
+    """OC (r2): helpers _delegated_get (REST 16b/16c e ações semânticas
+    EVA) devem enviar X-Delpi-Service-Authorization nas rotas S2S."""
+
+    @pytest.mark.asyncio
+    async def test_rest_delegated_get_sends_service_token(self, monkeypatch):
+        from engineering_app.interface.http.routes import (
+            product_registration_routes as routes,
+        )
+
+        captured = {}
+
+        class _FakeClient:
+            def __init__(self, *a, **kw):
+                pass
+
+            async def get(self, path, *, params=None, access_token, request_id, service_token=None):
+                captured["service_token"] = service_token
+                return {"items": []}
+
+        monkeypatch.setattr(
+            "engineering_app.infrastructure.gateways.downstream_client.DownstreamClient",
+            _FakeClient,
+        )
+        monkeypatch.setattr(
+            "engineering_app.infrastructure.gateways.s2s_token.get_s2s_service_token",
+            lambda: "svc-jwt",
+        )
+
+        class _User:
+            access_token = "user-jwt"
+
+        data, err = await routes._delegated_get(
+            _User(), "op", "/engineering/product-registration/suppliers", {}
+        )
+        assert err is None and data == {"items": []}
+        assert captured["service_token"] == "svc-jwt"
+
+    @pytest.mark.asyncio
+    async def test_semantic_delegated_get_sends_service_token(self, monkeypatch):
+        from engineering_app.interface.mcp import prc_semantic
+
+        captured = {}
+
+        class _FakeClient:
+            def __init__(self, *a, **kw):
+                pass
+
+            async def get(self, path, *, params=None, access_token, service_token=None):
+                captured["service_token"] = service_token
+                return {"items": []}
+
+        monkeypatch.setattr(
+            "engineering_app.infrastructure.gateways.downstream_client.DownstreamClient",
+            _FakeClient,
+        )
+        monkeypatch.setattr(
+            "engineering_app.infrastructure.gateways.s2s_token.get_s2s_service_token",
+            lambda: "svc-jwt",
+        )
+
+        class _Entry:
+            action = "supplier_search"
+
+        class _Context:
+            class user:
+                access_token = "user-jwt"
+
+        out = await prc_semantic._delegated_get(
+            _Context(), _Entry(), {"query": "forn"}
+        )
+        assert out.structured_content["success"] is True
+        assert captured["service_token"] == "svc-jwt"
+
+    @pytest.mark.asyncio
+    async def test_semantic_delegated_get_s2s_failure_is_unavailable(self, monkeypatch):
+        from engineering_app.interface.mcp import prc_semantic
+
+        def _broken():
+            raise RuntimeError("kc down")
+
+        monkeypatch.setattr(
+            "engineering_app.infrastructure.gateways.s2s_token.get_s2s_service_token",
+            _broken,
+        )
+
+        class _Entry:
+            action = "catalog_items"
+
+        class _Context:
+            class user:
+                access_token = "user-jwt"
+
+        out = await prc_semantic._delegated_get(
+            _Context(), _Entry(), {"catalog": "units"}
+        )
+        assert out.structured_content["success"] is False
+        assert out.structured_content["error_code"] == "unavailable"

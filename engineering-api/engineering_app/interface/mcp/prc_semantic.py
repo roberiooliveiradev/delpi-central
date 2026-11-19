@@ -555,6 +555,9 @@ async def _delegated_get(context, entry, args):
     from engineering_app.infrastructure.gateways.downstream_client import (
         DownstreamClient,
     )
+    from engineering_app.infrastructure.gateways.s2s_token import (
+        get_s2s_service_token,
+    )
 
     token = str(getattr(context.user, "access_token", "") or "").strip()
     if not token:
@@ -584,8 +587,16 @@ async def _delegated_get(context, entry, args):
         message = "Fornecedores carregados."
     client = DownstreamClient(settings.DELPI_API_URL, timeout_seconds=15.0)
     try:
+        service_token = get_s2s_service_token()
+    except Exception:
+        return _err(
+            "Fonte oficial indisponível.",
+            code="unavailable", status=503,
+        )
+    try:
         data = await client.get(
-            path, params=params, access_token=token
+            path, params=params, access_token=token,
+            service_token=service_token,
         )
     except Exception:
         return _err(
