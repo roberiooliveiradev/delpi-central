@@ -11,7 +11,9 @@
 
 - **My Requests / Nova solicitação → Matéria-prima / produto / CREATE:** o campo **Tipo** (`productKind`) deve iniciar com `MP` (`MP — Matéria-prima`) como terceira sugestão inicial, juntamente com Armazém padrão `01` e Conta contábil `11401002`.
 - **A seleção continua editável e o dropdown permanece com todas as opções autorizadas pelo catálogo** (incluindo PA/PI, quando a API as oferece). A demanda **não** solicita bloqueio de edição, nem forçar `MP` no backend.
-- **Portal Engenharia / CREATE:** não adicionar `productKind=MP` por padrão; o usuário da Engenharia mantém a escolha manual do tipo de produto, inclusive MP/PA/PI. Os defaults de armazém `01` e conta `11401002` do S1 permanecem inalterados.
+- **Portal Engenharia / CREATE:** não adicionar `productKind=MP` por padrão; o usuário da Engenharia mantém a escolha manual do tipo de produto, inclusive MP/PA/PI, de acordo com os tipos oficialmente suportados. Os defaults de armazém `01` e conta `11401002` do S1 permanecem inalterados.
+- **EVA / Engenharia (capacidade semântica autorizada):** a EVA pode apoiar a solicitação/criação de **qualquer tipo de produto suportado** por contrato e permissão oficiais da Engineering API; **não recebe o default de UI `MP` do My Requests**. Não assumir nova tool MCP nem nova autorização por esta decisão; capacidade real de escrita/ação permanece sujeita ao contrato e à aprovação existentes.
+- **Posicionamento de produto:** My Requests é a jornada de **cadastro e alteração de matéria-prima**; Portal Engenharia e EVA representam a **jornada de Engenharia mais ampla**. O campo `productKind` continua sendo dado validado pela Engineering API, não derivado de autoridade do `source` no frontend. Um default visual não cria nem altera uma restrição de domínio.
 - **UPDATE em ambos os portais:** nunca inserir um default de CREATE, inclusive `productKind=MP`, nem contaminar o diff com valores sugeridos. Contexto oficial prevalece.
 - **Edição de caso existente, devolução/correção e duplicação futura:** não substituir dados do caso nem valores digitados. A partir de um draft existente, somente os valores do próprio draft.
 - **Sem alteração de contrato, API, backend, Core/RBAC, banco, TOTVS, manifests, rotas ou estado do workflow.** A validação existente permanece na Engineering API.
@@ -49,7 +51,7 @@ A string `source` é um sinal de composição da UI, **não** uma permissão/aut
 ### RQ obrigatórios
 
 - **RQ-1621-S1B-01:** somente novo CREATE `my-requests`, sem `editCase`, inicia `productKind="MP"`; os defaults existentes `defaultWarehouse="01"` e `accountingAccount="11401002"` permanecem.
-- **RQ-1621-S1B-02:** em CREATE no Portal Engenharia (`source="portal-engineering"`), `productKind` inicia não selecionado; campo oferece as opções autorizadas MP, PA e PI e o usuário pode escolher qualquer uma. Armazém/conta permanecem conforme S1.
+- **RQ-1621-S1B-02:** em CREATE no Portal Engenharia (`source="portal-engineering"`), `productKind` inicia não selecionado; campo oferece as opções autorizadas MP, PA e PI e o usuário pode escolher qualquer uma. A camada EVA, quando houver capacidade autorizada para CREATE, permanece regida pela Engineering API para qualquer tipo de produto suportado — sem herdar o default exclusivo do My Requests. Armazém/conta permanecem conforme S1.
 - **RQ-1621-S1B-03:** mesmo em My Requests, a seleção MP é **sugestão**, nunca bloqueio; opções diferentes continuam selecionáveis, sem sobrescrita em refetch, navegação de etapas, troca CREATE↔UPDATE ou revisão.
 - **RQ-1621-S1B-04:** UPDATE e `editCase` CREATE/UPDATE em ambos os portais não recebem `MP` como default e não geram diff espúrio; valor oficial/draft tem precedência, inclusive vazio, e campos manuais são preservados.
 - **RQ-1621-S1B-05:** `buildCreateIntakeBody` e `submitIntake` mantêm payload atual; `requestedData.productKind` é MP quando não alterado no My Requests e reflete escolha do usuário quando alterado. Nada na API/RBAC/ERP muda.
