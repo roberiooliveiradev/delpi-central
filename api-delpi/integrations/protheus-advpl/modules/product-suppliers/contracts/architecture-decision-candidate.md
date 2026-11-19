@@ -26,11 +26,19 @@ antes de qualquer `src/DLP04I02.PRW`.
 
 ## Bloqueios objetivos p/ handoff TOTVS
 
-1. `VALIDAR NO TST01` — ciclo FWLoadModel em contexto REST (sem view/`M->`).
-2. `VALIDAR NO TST01` — `a060LinOk` com `M->A5_*` vazio (dup-check c/ grade).
+1. ~~`VALIDAR NO TST01` — ciclo FWLoadModel em REST~~ — **RESOLVIDO**:
+   `MATA061` ativa headless (SetVldActivate bypassa o browse) — CRUD
+   completo PROVEN_RUNTIME TST01 `:8701` (build 0.7.x, 2026-11-19).
+2. ~~`a060LinOk` com `M->A5_*` vazio~~ — superado: POST provou a inclusão;
+   comportamento exato do dup-check não bloqueou o ciclo.
 3. `VALIDAR NO TST01` — DELETE do último vínculo (`a060VldGrv`): regra
-   de negócio ou artefato? Semântica oficial de exclusão.
-4. `TO_INVENTORY` — assinatura exata do commit/activate do MPFormModel.
-5. `TO_INVENTORY` — presença compilada de 'DMATA061' e PEs ativos no RPO.
-6. READ — manter fora do `.PRW` (api-delpi SQL, estender FABR/FALOJA/REFGRD)
-   ou via modelo — decisão de owner.
+   de negócio oficial (rejeição por desenho, fail-closed). Remoção do
+   último vínculo = semântica de exclusão do documento — TO_INVENTORY.
+4. ~~`TO_INVENTORY` — commit/activate do MPFormModel~~ — **RESOLVIDO**:
+   `CommitData()` retorna lógico `.T.`; `Activate`/`GetValue`/`DeleteLine`
+   comprovados em runtime.
+5. ~~`TO_INVENTORY` — 'DMATA061'/'MATA061' compilados~~ — **RESOLVIDO**:
+   ambos presentes; `MATA061` em uso como primário.
+6. READ — **decidido**: GET ADVPL implementado via modelo (PROVEN);
+   api-delpi SQL segue leitura canônica dos consumidores (FABR/FALOJA/
+   REFGRD já projetados).

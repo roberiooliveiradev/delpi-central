@@ -84,6 +84,20 @@ class StaticSourceTests(unittest.TestCase):
     def test_refgrd_empty_allowed(self):
         self.assertIn('AREQ[NI] <> "A5_REFGRD"', self.code)
 
+    def test_fabr_faloja_empty_allowed_both_validators(self):
+        # isencao de vazios p/ A5_FABR/A5_FALOJA (vinculos reais sem
+        # fabricante proprio — regressao TST01 0.7.1) deve existir nos
+        # DOIS validadores: lPrepSA5 (POST) e lPrepSA5Ident (GET/PUT/DEL)
+        for fn in ("lPrepSA5(oDados", "lPrepSA5Ident(oDados"):
+            m = re.search(
+                r'static function ' + fn.split("(")[0] + r'\(.*?\n(.*?)Return lOk',
+                self.text, re.S)
+            self.assertIsNotNone(m, fn)
+            body = m.group(1).upper()
+            self.assertIn('AREQ[NI] <> "A5_FABR"', body, fn)
+            self.assertIn('AREQ[NI] <> "A5_FALOJA"', body, fn)
+            self.assertIn('AREQ[NI] <> "A5_REFGRD"', body, fn)
+
     def test_mvc_lifecycle_calls(self):
         for call in ("SETOPERATION", "ACTIVATE()", "VLDDATA",
                      "COMMITDATA", "DEACTIVATE", "ADDLINE"):

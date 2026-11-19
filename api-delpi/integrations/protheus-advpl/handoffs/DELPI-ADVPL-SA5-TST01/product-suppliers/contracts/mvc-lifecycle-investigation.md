@@ -123,7 +123,8 @@ oModel:Activate()                     // carrega header + grade do doc
 
 Em seguida `lFindSA5Line` navega a grade (`Length/GoLine/IsDeleted/
 GetValue`) casando a identidade FORNECE+LOJA+FABR+FALOJA; `REFGRD`
-comparado no header (campo do documento). Status: `VALIDAR NO TST01` —
-a ancoragem do documento por posição de alias e os métodos da grade
-são o padrão documentado do FWFormModel, não provados neste RPO.
-Produtos com múltiplos `A5_REFGRD` = caso de borda pendente.
+comparado no header (campo do documento). Status: **PROVEN_RUNTIME
+TST01 `:8701` (build 0.7.0/0.7.1, 2026-11-19)** — a ancoragem por
+posição de alias e os métodos da grade funcionaram: GET 200 `data{}`,
+PUT 200 + read-back, DELETE 200 + read-back, 404 correto pós-delete.
+Produtos com múltiplos `A5_REFGRD` = caso de borda ainda pendente.
