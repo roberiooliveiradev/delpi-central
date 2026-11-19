@@ -65,9 +65,13 @@ def build_get_lmp_history_use_case(*, view: str) -> GetLmpHistoryUseCase:
 
 
 def build_delegated_auxiliary_source() -> ApiDelpiDelegatedAuxiliary:
+    # DR-1 (r1): leituras delegadas (EVA/MCP/PRC) também carregam a
+    # credencial S2S — autorização é o contrato BFF engineering-api,
+    # sem exigir permissão api-delpi replicada no usuário.
     return ApiDelpiDelegatedAuxiliary(
         DownstreamClient(
             settings.DELPI_API_URL,
             timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
-        )
+        ),
+        service_token_getter=_s2s_service_token,
     )
