@@ -30,19 +30,23 @@ class StaticSourceTests(unittest.TestCase):
             self.assertIn(m, self.upper)
 
     def test_official_model_only(self):
+        # MATA061 primario (headless comprovado) + fallback DMATA061
+        self.assertIn('FWLOADMODEL("MATA061")', self.upper)
         self.assertIn('FWLOADMODEL("DMATA061")', self.upper)
-        self.assertIn("DMdFieldSA5", self.text)
-        self.assertIn("DMdGridSA5", self.text)
+        self.assertIn("MdFieldSA5", self.text)
+        self.assertIn("MdGridSA5", self.text)
         self.assertIn("MODEL_OPERATION_INSERT", self.upper)
-        # UPDATE bloqueado: sem fluxo executavel de update
-        self.assertNotIn("MODEL_OPERATION_UPDATE", self.code)
 
-    def test_update_blocked_no_commit_path(self):
-        # PUT nao executa CommitData — indisponibilidade explicita
-        self.assertIn("CONTRACT_CANDIDATE", self.upper)
-        # CommitData existe exatamente uma vez (fluxo CREATE)
-        self.assertEqual(self.code.count("COMMITDATA()"), 1)
-        self.assertNotIn("LLOADSA5LINE", self.upper)
+    def test_crud_all_ops_via_model(self):
+        # CRUD completo: INSERT (POST) + UPDATE (PUT/DELETE) + VIEW (GET)
+        for op in ("MODEL_OPERATION_INSERT", "MODEL_OPERATION_UPDATE",
+                   "MODEL_OPERATION_VIEW"):
+            self.assertIn(op, self.code)
+        # CommitData nos fluxos de escrita (CREATE, PUT, DELETE)
+        self.assertGreaterEqual(self.code.count("COMMITDATA()"), 3)
+        # helpers compartilhados do ciclo
+        for fn in ("LLOADSA5MODEL", "LFINDSA5LINE", "LEXECSA5OP"):
+            self.assertIn(fn, self.upper)
 
     def test_commit_result_checked(self):
         # Nenhum 200 sem retorno logico .T. de CommitData
@@ -112,14 +116,18 @@ class StaticSourceTests(unittest.TestCase):
         self.assertIn("LPREPSA5", self.upper)
         self.assertIn("IDENTIDADE COMPLETA", self.upper)
 
-    def test_delete_blocked_returns_501(self):
-        self.assertIn('"501"', self.text)
+    def test_delete_via_model_deleteline(self):
+        # DELETE via modelo oficial — DeleteLine na linha localizada;
+        # limite a060VldGrv (ultimo vinculo nao-removivel) documentado
+        self.assertIn("DELETELINE()", self.upper)
         self.assertIn("A060VLDGRV", self.upper)
-        self.assertIn("BLOQUEADO", self.upper)
+        self.assertNotIn('"501"', self.code)
 
-    def test_read_returns_501_not_implemented(self):
-        self.assertIn("NAO IMPLEMENTADO", self.upper)
-        self.assertIn("TO_INVENTORY", self.upper)
+    def test_read_via_model_view(self):
+        # GET via modelo oficial — operacao VIEW + navegacao da grade
+        self.assertIn("MODEL_OPERATION_VIEW", self.upper)
+        self.assertIn("LEXECSA5OP(SELF", self.upper)
+        self.assertNotIn("501", self.code)
 
     def test_errorblock_restored(self):
         self.assertGreaterEqual(self.upper.count("ERRORBLOCK(OEXCEPTION)"), 2)
@@ -166,27 +174,27 @@ class ModuleConsistencyTests(unittest.TestCase):
         self.assertIn("DLP04I02.PRW", self.manifest["sources"])
         self.assertEqual(
             self.manifest["development_status"],
-            "SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE")
+            "PROVEN_RUNTIME / TST01_VALIDATED")
 
     def test_operation_classification(self):
         ops = self.manifest["candidate_source"]["operations"]
-        self.assertIn("SOURCE_CANDIDATE", ops["CREATE"])
-        self.assertIn("TST01_VALIDATION_PENDING", ops["CREATE"])
-        self.assertIn("BLOCKED", ops["UPDATE"])
-        self.assertIn("OFFICIAL_LOAD_CONTRACT_PENDING", ops["UPDATE"])
-        self.assertIn("TO_INVENTORY", ops["READ_ADVPL"])
+        for op in ("CREATE", "UPDATE", "READ_ADVPL", "DELETE"):
+            self.assertIn("PROVEN_RUNTIME", ops[op], op)
         self.assertIn("PROVEN_CODE", ops["READ_API_DELPI"])
-        self.assertIn("BLOCKED", ops["DELETE"])
-        self.assertIn("ERP_DECISION_REQUIRED", ops["DELETE"])
+        # limite oficial do delete (ultimo vinculo) documentado
+        self.assertIn("a060VldGrv", ops["DELETE"])
 
     def test_pending_operations_consistency(self):
         ops = {o["op"]: o["status"] for o in
                self.manifest["operations"]["pending"]}
-        self.assertIn("TST01_VALIDATION_PENDING", ops["SA5_ADD"])
-        self.assertIn("OFFICIAL_LOAD_CONTRACT_PENDING", ops["SA5_UPDATE"])
-        self.assertIn("TO_INVENTORY", ops["SA5_READ_ADVPL"])
-        self.assertIn("ERP_DECISION_REQUIRED", ops["SA5_REMOVE"])
+        self.assertIn("PROVEN_RUNTIME", ops["SA5_ADD"])
+        self.assertIn("PROVEN_RUNTIME", ops["SA5_UPDATE"])
+        self.assertIn("PROVEN_RUNTIME", ops["SA5_READ_ADVPL"])
+        self.assertIn("PROVEN_RUNTIME", ops["SA5_REMOVE"])
 
+    @unittest.skipUnless(
+        (MODULE.parents[0] / "product-master" / "src").exists(),
+        "sibling product-master ausente neste layout (ex.: handoff)")
     def test_other_module_untouched(self):
         other = MODULE.parents[0] / "product-master" / "src"
         # product-master source exists from G2-A — must be unchanged file

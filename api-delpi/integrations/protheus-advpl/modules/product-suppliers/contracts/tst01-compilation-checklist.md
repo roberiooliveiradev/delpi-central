@@ -9,8 +9,11 @@ homologação; define o que a equipe ERP deve executar e registrar.
 - Proveniência: `Delpi-ti/protheus-erp@master` —
   `73. CRM/Dmata061.prx` (blob `b45cc9333c410a58d5836f78b79a140c6056c9c6`),
   `73. CRM/MATA010M_DLP.PRW` (blob `a56c2a5079991742a544c39dd75fde8f3e9eda48`)
-- Escopo executável: somente POST `/v1/ProdForn/incluir`. PUT, GET e
-  DELETE retornam 501 por contrato.
+- Escopo executável (0.7.x): CRUD completo — POST `/v1/ProdForn/incluir`,
+  PUT `/v1/ProdForn/alterar`, GET `/v1/ProdForn/consultar`, DELETE
+  `/v1/ProdForn/excluir` — todos pelo modelo oficial `MATA061`
+  (fallback `DMATA061`), carga por posição de alias (`dbSetOrder(2)` +
+  `MsSeek` produto) e navegação da grade pela identidade.
 
 ## Etapa A — Pré-compilação
 
@@ -66,7 +69,13 @@ RESULT | EVIDENCE`
 | C-12 | Read-back independente pela PK integral SA5 | confirma `PERSISTENCE_CONFIRMED` |
 | C-13 | Comparativo antes/depois em TST01 | apenas SA5 alterado, nada mais |
 | C-14 | PROD intacta | nenhuma alteração produtiva |
-| C-15 | PUT/GET/DELETE | HTTP 501, sem mutação |
+| C-15 | GET `/consultar` vínculo existente | HTTP 200 + `data{}` completo |
+| C-16 | GET vínculo inexistente/excluído | HTTP 404 `not_found` |
+| C-17 | PUT `/alterar` atributos + read-back | HTTP 200; apenas attrs mudam; identidade intacta |
+| C-18 | DELETE `/excluir` vínculo não-último | HTTP 200; linha removida; demais intactas |
+| C-19 | DELETE último vínculo do produto | rejeição oficial `a060VldGrv` (400) — limite por desenho |
+| C-20 | GET/PUT/DELETE com `A5_FABR`/`A5_FALOJA` vazios (vínculo real) | aceito (0.7.1); vínculo localizado |
+| C-21 | Carga por posição de alias (`dbSetOrder(2)+MsSeek`) | documento correto carregado em VIEW/UPDATE |
 
 Restrições: não usar registros produtivos; testes mutáveis só com
 autorização; se `M->`/`a060LinOk` falhar sem view, resultado = `FAIL` e a
@@ -100,7 +109,12 @@ TST01_COMPILED → TST01_RUNTIME_VALIDATED → TST01_WRITE_VALIDATED
 3. `Help()` do callback oficial em contexto REST headless.
 4. API exata de `GetErrorMessage()` no MPFormModel.
 5. Regra efetiva do SX3/modelo para `A5_REFGRD` vazio.
-6. Mecanismo oficial de carga do vínculo pela PK integral (UPDATE —
-   hoje bloqueado/501).
-7. Semântica de exclusão SA5 (DELETE — bloqueado; `a060VldGrv` rejeita
-   todas-linhas-excluídas e grid vazio).
+6. ~~Mecanismo oficial de carga do vínculo pela PK integral~~ —
+   RESOLVIDO 0.7.0: posição de alias (`dbSetOrder(2)` + `MsSeek` produto)
+   + Activate VIEW/UPDATE + navegação da grade (PROVEN_RUNTIME TST01).
+7. Semântica de exclusão SA5 — PARCIAL: `DeleteLine` funciona (PROVEN);
+   último vínculo é rejeitado pelo `a060VldGrv` oficial por desenho —
+   remoção do último vínculo exige semântica de exclusão do documento
+   (TO_INVENTORY).
+8. Produtos com grade — múltiplos `A5_REFGRD` no mesmo produto: âncora
+   do documento por posição pode exigir seek na chave completa (VALIDAR).

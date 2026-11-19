@@ -4,9 +4,9 @@
 |---|---|---|---|---|
 | Reuso rotina oficial | Modelo oficial do cadastro SA5 | Grid dentro do cadastro de produto | Canal EAI oficial | — |
 | CREATE | header produto + linha grid — encaixa | exige modelo MATA010 inteiro | indisponível (não configurado) | proibido |
-| READ | `TO_INVENTORY` (FWLoadModel) | idem acoplado | n/a | fora do .PRW |
-| UPDATE | linha do grid pela PK — plausível | acoplado ao produto | n/a | proibido |
-| DELETE | **último vínculo bloqueado por `a060VldGrv`** — semântica a ratificar | idem | n/a | proibido |
+| READ | **PROVEN_RUNTIME** (VIEW op + posição de alias + grade — 0.7.0) | idem acoplado | n/a | fora do .PRW |
+| UPDATE | **PROVEN_RUNTIME** (UPDATE op + linha localizada — 0.7.0) | acoplado ao produto | n/a | proibido |
+| DELETE | **PROVEN_RUNTIME** (`DeleteLine` — 0.7.0); **último vínculo bloqueado por `a060VldGrv`** (desenho oficial) | idem | n/a | proibido |
 | Acoplamento | baixo — recurso independente | alto — SA5 dentro de SB1 | alto (infra EAI) | n/a |
 | Dependências | FWMVCDEF, modelo 'DMATA061' no RPO | MATA010 completa + `MV_CADPROD`+acessos | app/integração/adapter/canal | n/a |
 | Riscos | `M->` em `a060LinOk`; ciclo de vida REST | `SetUniqueLine` sem REFGRD (colisão c/ grade) | custo de infra EAI | violação de invariante |

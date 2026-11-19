@@ -19,9 +19,11 @@ sa5_identity:
 official_routines:
 - id: MATA061
   mechanism: MVC Model-2 (SetPrimaryKey/SetUniqueLine)
-  status: PROVEN_SOURCE
-  note: MSExecAuto com arrays de MATA010 NAO se aplica; ativacao Model-2 = VALIDAR
-    NO TST01
+  status: PROVEN_RUNTIME
+  note: modelo da rotina automatica (TDN PCOM10001) — headless comprovado
+    TST01 2026-11-19 (Activate sem browse + CRUD completo). DMATA061 = wrapper
+    CRM cujo vld-activate instancia FWMBrowse (causa raiz do srvobject;
+    bypass via SetVldActivate({||.T.}) — fallback apenas)
 reference_source:
   repo: Delpi-ti/protheus-erp
   branch: master
@@ -35,17 +37,20 @@ reference_source:
   mirror_commit: be614649b7
 candidate_source:
   name: DLP04I02.PRW
-  status: SOURCE_CANDIDATE
+  status: PROVEN_RUNTIME
   path: src/DLP04I02.PRW
-  mechanism: FWLoadModel('DMATA061') — MPFormModel Model-2 oficial
+  mechanism: FWLoadModel('MATA061') fallback 'DMATA061' — MPFormModel
+    Model-2 oficial; SetVldActivate({||.T.}); carga por posicao de alias
+    (dbSetOrder(2)+MsSeek produto)
   operations:
-    CREATE: SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (commit so .T. logico;
-      M-> VALIDAR NO TST01)
-    UPDATE: BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING (carga pela PK nao
-      comprovada; PUT retorna 501, nunca CommitData)
-    READ_ADVPL: TO_INVENTORY (GET retorna 501 explicito; sem SELECT no .PRW)
+    CREATE: PROVEN_RUNTIME TST01 :8701 2026-11-19 (SA5 gravada + read-back)
+    UPDATE: PROVEN_RUNTIME TST01 :8701 0.7.0 (PUT alterou A5_NOMEFOR +
+      read-back)
+    READ_ADVPL: PROVEN_RUNTIME TST01 :8701 0.7.0 (GET 200 data{} + 404
+      correto pos-delete)
     READ_API_DELPI: PROVEN_CODE (ProductSuppliersRepository.get_supplier_link)
-    DELETE: BLOCKED / ERP_DECISION_REQUIRED (a060VldGrv; DELETE retorna 501)
+    DELETE: PROVEN_RUNTIME TST01 :8701 0.7.0 (DeleteLine removeu vinculo;
+      ultimo vinculo nao-removivel por a060VldGrv oficial — desenho)
   provenance:
     erp_repo: Delpi-ti/protheus-erp
     erp_branch: master
@@ -53,7 +58,7 @@ candidate_source:
     model_path: 73. CRM/Dmata061.prx
     mirror_blob_sha: b45cc9333c410a58d5836f78b79a140c6056c9c6
     mirror_commit: be614649b7
-development_status: SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE
+development_status: PROVEN_RUNTIME / TST01_VALIDATED
 operations:
   known:
   - op: MODEL_INVENTORY
@@ -66,33 +71,43 @@ operations:
       (evidencia auxiliar, separada da fachada ADVPL)
   pending:
   - op: SA5_ADD
-    status: SOURCE_CANDIDATE / TST01_VALIDATION_PENDING
-    note: POST /v1/ProdForn/incluir — header+AddLine+VldData+CommitData(.T. logico);
-      M-> a060LinOk = VALIDAR NO TST01
+    status: PROVEN_RUNTIME
+    note: POST /v1/ProdForn/incluir — SA5 10080010x999999/01 gravada +
+      read-back (TST01 2026-11-19)
   - op: SA5_UPDATE
-    status: BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING
-    note: PUT /v1/ProdForn/alterar retorna 501 — carga do vinculo pela PK
-      integral = VALIDAR NO TST01; nenhum CommitData executavel
+    status: PROVEN_RUNTIME
+    note: PUT /v1/ProdForn/alterar — A5_NOMEFOR alterado + read-back
+      (TST01 2026-11-19, build 0.7.0)
   - op: SA5_READ_ADVPL
-    status: TO_INVENTORY
-    note: GET 501; leitura permanece fora do .PRW
+    status: PROVEN_RUNTIME
+    note: GET /v1/ProdForn/consultar — 200 data{} completo; 404 not_found
+      correto pos-delete (TST01 2026-11-19, build 0.7.0)
   - op: SA5_REMOVE
-    status: BLOCKED / ERP_DECISION_REQUIRED
-    note: DELETE 501 — semantica de exclusao pendente de ratificacao (a060VldGrv)
+    status: PROVEN_RUNTIME / LIMITED_SEMANTICS
+    note: "DELETE /v1/ProdForn/excluir — DeleteLine removeu o vinculo
+      (TST01 2026-11-19, build 0.7.0). Limite oficial: a060VldGrv rejeita
+      modelo sem linhas ativas — o ultimo vinculo do produto nao e
+      removivel por esta rota (fail-closed por desenho)"
+  - op: SA5_EDGE_REFGRD
+    status: VALIDAR_NO_TST01
+    note: produtos com grade (A5_REFGRD != vazio/multiplos docs) — caminho
+      nao exercitado
 dependencies: []
 rest_contracts:
-- id: DelpiProdForn (candidato)
+- id: DelpiProdForn
   uris:
-  - POST /v1/ProdForn/incluir
-  - PUT /v1/ProdForn/alterar (501 — OFFICIAL_LOAD_CONTRACT_PENDING)
-  - GET /v1/ProdForn/consultar (501 — TO_INVENTORY)
-  - DELETE /v1/ProdForn/excluir (501 — ERP_DECISION_REQUIRED)
-  status: CONTRACT_CANDIDATE
-  note: nomes/paths candidatos a ratificacao; sem compilacao; nao e CRUD
-    publicado
+  - POST /v1/ProdForn/incluir (PROVEN_RUNTIME TST01)
+  - PUT /v1/ProdForn/alterar (PROVEN_RUNTIME TST01)
+  - GET /v1/ProdForn/consultar (PROVEN_RUNTIME TST01)
+  - DELETE /v1/ProdForn/excluir (PROVEN_RUNTIME TST01 — ultimo vinculo
+    nao-removivel por a060VldGrv oficial)
+  status: PROVEN_RUNTIME (TST01 :8701, build 0.7.0; regressao
+    FABR/FALOJA vazios fixada em 0.7.1 — recompile pendente)
+  note: CRUD completo via modelo oficial; identidade aceita FABR/FALOJA/
+    REFGRD vazios (vinculos reais sem fabricante/grande — 0.7.1)
 restrictions:
-  erp_write: proibida — decisao de arquitetura pendente de ratificacao (Integracoes
-    TOTVS + ERP + Coordination)
+  erp_write: homologada em TST01; PRD exige autorizacao PO + gates
+    (Integracoes TOTVS + ERP + Coordination)
   rpo_compile: exclusivo da equipe ERP
   direct_sql_reclock: FORBIDDEN
 sources:

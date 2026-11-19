@@ -38,12 +38,12 @@ class DocsConsistencyTests(unittest.TestCase):
         self.assertEqual(self.manifest["sources"], ["DLP04I02.PRW"])
         self.assertEqual(
             self.manifest["development_status"],
-            "SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE")
+            "PROVEN_RUNTIME / TST01_VALIDATED")
 
-    def test_delete_blocked_pending_semantics(self):
+    def test_delete_proven_limited_semantics(self):
         ops = {o["op"]: o for o in self.manifest["operations"]["pending"]}
-        self.assertIn("BLOCKED", ops["SA5_REMOVE"]["status"])
-        self.assertIn("ERP_DECISION_REQUIRED", ops["SA5_REMOVE"]["status"])
+        self.assertIn("PROVEN_RUNTIME", ops["SA5_REMOVE"]["status"])
+        # limite oficial documentado: ultimo vinculo nao-removivel
         self.assertIn("a060VldGrv", ops["SA5_REMOVE"]["note"])
 
     def test_docs_reference_official_model(self):
