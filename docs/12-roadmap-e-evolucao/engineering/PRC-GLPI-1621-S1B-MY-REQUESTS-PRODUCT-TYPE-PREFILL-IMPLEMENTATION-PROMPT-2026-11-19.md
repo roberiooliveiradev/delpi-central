@@ -68,6 +68,29 @@ A string `source` é um sinal de composição da UI, **não** uma permissão/aut
 - **AC-1621-S1B-08:** testes de componente e `PrcCreatePage.unification.test.ts` comprovam uma única fonte de formulário e paridade dos dois consumidores; suites e builds pertinentes de `plugin-ui`, `plugins/engineering` e `plugins/my-requests` passam.
 - **AC-1621-S1B-09:** residual search, diffs staged, gates transversais, RED/GREEN e verificador independente até 3 rodadas com RQ/AC completos, SHA-bound; nenhuma mudança em API, contratos, migrations, ERP, Core ou S2/S3; validar UI real nos dois portais ou reportar `TEST_NOT_RUN`.
 
+### Paridade de Engenharia e correções condicionais nesta mesma iteração
+
+**A tarefa contempla explicitamente a revisão do Portal Engenharia**, mas NÃO presume defeito nessa superfície. A decisão PO diferencia os três campos pelo canal:
+
+| Campo | My Requests / novo CREATE MP | Portal Engenharia / novo CREATE de qualquer produto |
+|---|---|---|
+| Armazém padrão (`defaultWarehouse`) | `01` inicialmente, editável | `01` inicialmente, editável, conforme S1 já aceito |
+| Conta contábil (`accountingAccount`) | `11401002` inicialmente, editável | `11401002` inicialmente, editável, conforme S1 já aceito |
+| Tipo (`productKind`) | `MP` inicialmente, **editável** | **sem pré-seleção**, escolha livre das opções oficialmente suportadas |
+
+**Verificação obrigatória da Engenharia:** montar/abrir o `PrcCreatePage` real (não apenas um mock com outra `source`) e confirmar a tripla acima, a troca entre CREATE/UPDATE, o preenchimento manual de `PA` ou `PI`, o payload e o fluxo de edição. A EVA não é objeto de mudança de runtime nesta task e deve manter o contrato sem default de canal.
+
+**Se a Engenharia apresentar regressão real causada pelo estado compartilhado**, criar teste RED que a reproduza e corrigir **na mesma tarefa** o menor diff necessário: preferencialmente na lógica comum do `PrcRequestForm`; alterar `plugins/engineering` apenas para corrigir wiring/adapter/composição comprovadamente defeituoso, sem segunda cópia dos defaults e sem mudar seu escopo de tipos. Registrar motivo e arquivos extras sob lease antes de qualquer mudança. Se for bug de domínio/API, migração, RBAC, fonte oficial, ferramenta EVA, permissão ou incompatibilidade de contrato **não fazer mudança de backend nesta S1b**: reportar `EXECUTION_DRIFT`/gate e propor novo pacote ao owner adequado.
+
+**Critérios adicionais de regressão:**
+- **AC-1621-S1B-10:** integração real do `PrcCreatePage` comprova armazém `01`, conta `11401002`, Tipo vazio inicialmente, seleção manual `PA/PI` e envio de `productKind` sem forced MP; My Requests comprova os três valores sem travar Tipo.
+- **AC-1621-S1B-11:** qualquer correção necessária no Portal Engenharia vem acompanhada de RED/GREEN e menor diff auditável; **se não houver defeito**, reportar `NO_ENGINEERING_DIFF_NEEDED` com testes/provas e manter wrapper intocado.
+- **AC-1621-S1B-12:** a entrega distingue `COMPONENT_TEST_PASS`, `ENGINEERING_INTEGRATION_PASS` e `BROWSER_PO_ACCEPTANCE`. Não declarar S1b concluída em HML/PROD somente porque o bundle compilou ou o source contém "MP".
+
+### Prontidão para as próximas fatias do GLPI #1621
+
+Ao encerrar, **não implementar S2/S3**. Apenas anexar ao `EXECUTION REPORT` um **handoff curto** para a próxima iteração, recuperando do plano existente: **S2 = duplicação CREATE** via novo intake, sem copiar IDs/histórico/anexos; **S3 = cancelamento terminal submitted antes de start**, pendente ratificação formal do marco de cancelamento e das alterações da Engineering API. Registrar próximos arquivos/owners, contratos a revisar, decisões pendentes e residuals sem criar novas pastas, endpoints, tarefas de discovery redundantes nem alterar código de S2/S3.
+
 ### Implementação bounded / qualidade
 
 - Escrever testes RED antes do código; estender ou criar spec em `plugins/plugin-ui/src/components/prc/` (por exemplo, `PrcRequestForm.createDefaults.test.tsx`) com os cenários positivos, siblings e negativos acima.
@@ -78,6 +101,6 @@ A string `source` é um sinal de composição da UI, **não** uma permissão/aut
 - Executar testes focalizados, regressão S1, build do kit, build dos dois MFEs, checagem dos exports federados e gates relevantes de `test-and-commit.mdc`.
 - Preservar autoria do intake, source, revisão, idempotência e permissões; não fazer submissões reais não autorizadas. O valor sugerido não é garantia de compatibilidade com produto oficial.
 - Registrar execução e outcome na documentação já existente **somente após evidências**; sem novas pastas. Não declarar deploy ou comportamento de produção apenas com build.
-- Finalizar com `EXECUTION REPORT`: BASE_HEAD, EVALUATED/VERIFIED_SHA, FINAL_HEAD quando houver, branches/worktrees/lease, files changed, RQ/AC um a um, RED/GREEN, testes, verificador, estado de HML/PROD, comprovação no browser se houver, residuals, NEXT. Seguir política de commit/push/deploy efetivamente vigente no `AGENTS.md`, sem deploy por inferência deste documento. Não autoaprovar.
+- Finalizar com `EXECUTION REPORT`: BASE_HEAD, EVALUATED/VERIFIED_SHA, FINAL_HEAD quando houver, branches/worktrees/lease, files changed, **RQ-1621-S1B-01..05 e AC-1621-S1B-01..12** individualizados, RED/GREEN, testes, verificador, estado de HML/PROD, comprovação no browser se houver, `NO_ENGINEERING_DIFF_NEEDED` ou correção demonstrada, residuals e handoff S2/S3 (sem implementá-los). Seguir política de commit/push/deploy efetivamente vigente no `AGENTS.md`, sem deploy por inferência deste documento. Não autoaprovar.
 
 VERIFICAÇÃO: antes do EXECUTION REPORT e do commit/push/deploy, siga o ciclo da seção 'Verificação (delpi-verifier)' do AGENTS.md (verify.py, até 3 rodadas), com o objetivo contendo exatamente estes RQ/AC. Anexe a tabela de rodadas e o relatório final sem edição.
