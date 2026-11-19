@@ -1,7 +1,8 @@
 """Catálogo de campos SB1 elegíveis para escrita via DELPIPRODUTO v2.
 
 GERADO de api-delpi/integrations/protheus-advpl/modules/product-master/
-contracts/sb1-field-matrix.json (SX3 DELPI_TST01 == DELPI, 319 campos).
+contracts/sb1-field-matrix.json (SX3 DELPI_TST01 == DELPI, 319 campos;
+catálogo de escrita = SX3 elegível ∩ formulário SB1MASTER — dump u_DLPDBG01).
 Não editar à mão — regerar pela matriz. Teste de sincronia:
 tests/test_protheus_product_field_catalog.py
 """
@@ -156,7 +157,6 @@ PRODUCT_FIELD_SPECS: dict[str, dict[str, object]] = {
     "B1_VLRSELO": {"kind": "N", "max_length": 15, "decimals": 2},
     "B1_CODNOR": {"kind": "C", "max_length": 3, "decimals": 0},
     "B1_LOTVEN": {"kind": "N", "max_length": 12, "decimals": 2},
-    "B1_OK": {"kind": "C", "max_length": 4, "decimals": 0},
     "B1_CPOTENC": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_MSBLQL": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_POTENCI": {"kind": "N", "max_length": 6, "decimals": 2},
@@ -250,7 +250,6 @@ PRODUCT_FIELD_SPECS: dict[str, dict[str, object]] = {
     "B1_GDODIF": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_MARKUP": {"kind": "N", "max_length": 5, "decimals": 2},
     "B1_PRODSBP": {"kind": "C", "max_length": 1, "decimals": 0},
-    "B1_CARGAE": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_VALEPRE": {"kind": "C", "max_length": 1, "decimals": 0},
     "B1_LOTESBP": {"kind": "N", "max_length": 12, "decimals": 2},
     "B1_TIPOBN": {"kind": "C", "max_length": 2, "decimals": 0},

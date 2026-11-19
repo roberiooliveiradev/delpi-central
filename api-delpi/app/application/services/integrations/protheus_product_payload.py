@@ -1,6 +1,6 @@
 """Normalize PUT product fields and build the delpiproduto upstream body.
 
-Upstream contract v2 (DLP04I01.PRW — full-field catalog, 285 campos): a
+Upstream contract v2 (DLP04I01.PRW — full-field catalog, 283 campos): a
 classe lê um JSON flat e mapeia cada chave B1_* validada para o array
 ExecAuto da MATA010 (op 4). PUT exige representação completa upstream —
 a atualização parcial do cliente é expandida aqui via snapshot do

@@ -14,8 +14,8 @@
    "artifact_type": "source",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/src/DLP04I01.PRW",
-   "sha256": "eb0e3e16964f547d0affd0e404af0ea3f6efdf3def2246c53807c7910d92de88",
-   "size_bytes": 28099,
+   "sha256": "d2026d140a8654d2b0785457e216729221dc43e68bbac063e37710a925341f9b",
+   "size_bytes": 29458,
    "source_origin": "delpi-central"
   },
   {
@@ -38,8 +38,8 @@
    "artifact_type": "contract",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/create-update-contract.md",
-   "sha256": "c4a2956e94bcb8305dce2c4295594f7e1c780f7c6999e930f3391d0da31a4ddc",
-   "size_bytes": 6418,
+   "sha256": "9ea3d24c994a1402d4361e368ab4b38c708d3e474145c0a9722aafc8cb24079b",
+   "size_bytes": 6516,
    "source_origin": "delpi-central"
   },
   {
@@ -54,24 +54,24 @@
    "artifact_type": "contract",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/official-limitations.md",
-   "sha256": "e5f548a1ab0b61187056ed3451c29ae87a0a0cb06633064f14721e69616119d5",
-   "size_bytes": 5526,
+   "sha256": "7b702e8c82cc003e1674b4dfeffed9f7ed754202b77b7b087744a990754aeb65",
+   "size_bytes": 5707,
    "source_origin": "delpi-central"
   },
   {
    "artifact_type": "contract",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/sb1-field-matrix.json",
-   "sha256": "50ba9d85842d47866bfeee7eacaa3b9125b51e1173723e49c21f9567c2fb74e2",
-   "size_bytes": 123244,
+   "sha256": "bc86687f5b5c3165ef4f826f7853c9ae01126077697463623cf8d51f76e11a45",
+   "size_bytes": 123560,
    "source_origin": "delpi-central"
   },
   {
    "artifact_type": "contract",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/sb1-field-matrix.md",
-   "sha256": "9b5ebdd8aee919ff101d24e4186c33190f73803bf4060741ab9c92a7f06bdb29",
-   "size_bytes": 38853,
+   "sha256": "11be36f6c9233604a4617eb033d380fba1db874d290459ff94f093f3d535da42",
+   "size_bytes": 39054,
    "source_origin": "delpi-central"
   }
  ],

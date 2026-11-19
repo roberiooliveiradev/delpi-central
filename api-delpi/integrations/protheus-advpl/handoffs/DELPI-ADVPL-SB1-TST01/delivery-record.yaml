@@ -29,7 +29,7 @@ references:
 
 operation_states:
   CREATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (POST exige B1_COD; demais campos -> defaults oficiais MATA010)"
-  UPDATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (PUT exige representacao completa 286 campos; parcial via read-merge-write na api-delpi)"
+  UPDATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (PUT exige representacao completa 283 campos; parcial via read-merge-write na api-delpi)"
   METADATA: "SOURCE_CANDIDATE (GET /v1/IncProduto/metadados — autodescricao estatica, sem leitura ERP)"
   READ: "OUT_OF_SCOPE_PRW — ficha completa permanece na superficie de leitura governada api-delpi"
   DELETE: "BLOCKED / OFFICIAL_SEMANTICS_PENDING (DELETE 501 not_homologated)"

@@ -14,8 +14,10 @@
                  verificada 2026-11-18) — contracts/sb1-field-matrix.json
 
    EVOLUCAO vs v1 (22 campos fixos):
-     1. Catalogo completo de campos elegiveis: 286 campos B1_* gravaveis
-        (285 READ_WRITE_ELIGIBLE + B1_COD identidade (5 memo sem coluna fisica no TST01 removidos)),
+     1. Catalogo completo de campos elegiveis: 283 campos B1_* gravaveis
+        (SX3 elegivel ∩ formulario SB1MASTER — dump u_DLPDBG01 de
+        317 campos em 2026-11-19; fora do modelo: B1_GRADE, B1_OK,
+        B1_CARGAE; fora por fisica: 5 memo sem coluna em SB1010),
         derivados do SX3 real — contracts/sb1-field-matrix.json e a fonte.
      2. Validacao dinamica por nome: campos fora do catalogo sao rejeitados
         (desconhecido) e campos protegidos/imutaveis/sistema sao rejeitados
@@ -24,7 +26,7 @@
         D=data "AAAAMMDD"; M=memo como string (VALIDAR NO TST01).
      4. POST incluir: B1_COD obrigatorio + campos elegiveis informados;
         obrigatoriedade de negocio fica com a MATA010 oficial.
-     5. PUT alterar: representacao completa obrigatoria — TODOS os 286
+     5. PUT alterar: representacao completa obrigatoria — TODOS os 283
         campos do catalogo (politica fail-closed anti-zeramento; a
         api-delpi faz merge read-modify-write para o cliente mandar so
         o delta).
@@ -86,14 +88,16 @@ WSRESTFUL DelpiProduto DESCRIPTION "Api REST para Tratativa de produtos" FORMAT 
 END WSRESTFUL
 
 /* -----------------------------------------------------------------------
-   Catalogo oficial de campos gravaveis (gerado do SX3 — 286 entradas; 5 memo sem coluna fisica no TST01 removidos).
+   Catalogo oficial de campos gravaveis (SX3 elegivel ∩ formulario
+   SB1MASTER — 283 entradas; 5 memo sem coluna fisica e B1_GRADE/B1_OK/
+   B1_CARGAE fora do modelo removidos; dump u_DLPDBG01 TST01 2026-11-19).
    {CAMPO, especie} — especie: C=caractere, N=numerico, D=data, M=memo.
    Campos fora desta lista (imutaveis, sistema, espelhos de movimento,
    B1_FILIAL, B1_CODITE) sao rejeitados como protegidos.
    ----------------------------------------------------------------------- */
 static function aB1Fields()
 
-    /* Catalogo montado com aAdd() — literal unico de 286 sub-arrays
+    /* Catalogo montado com aAdd() — literal unico de sub-arrays
        excedia o limite de array literal do compilador ADVPL (erro
        de compilacao no fechamento do literal). Pares {campo,
        especie} identicos ao catalogo anterior. */
@@ -162,9 +166,10 @@ static function aB1Fields()
     aAdd(aRet, {"B1_CONTSOC","C"})
     aAdd(aRet, {"B1_COMIS","N"})
     aAdd(aRet, {"B1_CODBAR","C"})
-    // B1_GRADE fora do contrato: o modelo SB1MASTER nao tem o
-    // formulario B1_GRADE neste ambiente (FWFormFieldsModel
-    // "id de formulario nao e valido" — TST01 2026-11-19).
+    // B1_GRADE, B1_OK e B1_CARGAE fora do contrato: o modelo
+    // SB1MASTER nao expoe esses formularios neste ambiente
+    // (FWFormFieldsModel "id de formulario nao e valido"; dump
+    // u_DLPDBG01 317 campos — TST01 2026-11-19).
     aAdd(aRet, {"B1_FORMLOT","C"})
     aAdd(aRet, {"B1_MONO","C"})
     aAdd(aRet, {"B1_FPCOD","C"})
@@ -247,7 +252,6 @@ static function aB1Fields()
     aAdd(aRet, {"B1_VLRSELO","N"})
     aAdd(aRet, {"B1_CODNOR","C"})
     aAdd(aRet, {"B1_LOTVEN","N"})
-    aAdd(aRet, {"B1_OK","C"})
     aAdd(aRet, {"B1_CPOTENC","C"})
     aAdd(aRet, {"B1_MSBLQL","C"})
     aAdd(aRet, {"B1_POTENCI","N"})
@@ -341,7 +345,6 @@ static function aB1Fields()
     aAdd(aRet, {"B1_GDODIF","C"})
     aAdd(aRet, {"B1_MARKUP","N"})
     aAdd(aRet, {"B1_PRODSBP","C"})
-    aAdd(aRet, {"B1_CARGAE","C"})
     aAdd(aRet, {"B1_VALEPRE","C"})
     aAdd(aRet, {"B1_LOTESBP","N"})
     aAdd(aRet, {"B1_TIPOBN","C"})
@@ -640,11 +643,11 @@ static function lExecSB1(oSelf, nOp)
                 "Corpo da requisicao nao e um JSON valido (valtype=" + ;
                 ValType(cJSON) + ",len=" + ;
                 iif(ValType(cJSON) == "C", cValToChar(Len(cJSON)), "n/a") + ")", ;
-                "dlp-v053-fj", cErrType)
+                "dlp-v054-m283", cErrType)
         elseif !lPrepSB1(oDados, nOp, @aSB1, @cErro)
             lRet     := .F.
             cErrType := "client_error"
-            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp", cErrType)
+            oJsonRet := RETOBJ(oJsonRet, "400", "Erro", cErro, "dlp-v054-m283", cErrType)
         else
             MSExecAuto({|x,y| Mata010(x,y)}, aSB1, nOp)
 
@@ -653,11 +656,11 @@ static function lExecSB1(oSelf, nOp)
                 cErrType := "official_validation"
                 aLogAuto := GetAutoGrLog()
                 oJsonRet := RETOBJ(oJsonRet, "400", "Erro", ;
-                    cSanitLog(aLogAuto), "dlp", cErrType)
+                    cSanitLog(aLogAuto), "dlp-v054-m283", cErrType)
             else
                 cErrType := ""
                 oJsonRet := RETOBJ(oJsonRet, "200", "OK", ;
-                    "Registro integrado com sucesso!", "dlp", "")
+                    "Registro integrado com sucesso!", "dlp-v054-m283", "")
             endif
         endif
 
@@ -668,7 +671,7 @@ static function lExecSB1(oSelf, nOp)
         nStatus  := 500
         oJsonRet := RETOBJ(oJsonRet, "500", "Erro interno", ;
             iif(Empty(cErroBlk), "Falha nao tratada na integracao", ;
-                SubStr(cErroBlk, 1, 400)), "dlp", cErrType)
+                SubStr(cErroBlk, 1, 400)), "dlp-v054-m283", cErrType)
     End sequence
 
     // finalizacao unica: restaura o handler anterior em TODO caminho
@@ -703,7 +706,7 @@ static function lExcBlocked(oSelf)
     oJsonRet := RETOBJ(oJsonRet, "501", "Nao homologado", ;
         "Exclusao de produto nao habilitada: semantica oficial de " + ;
         "exclusao da MATA010 pendente de comprovacao (TO_INVENTORY). " + ;
-        "Nenhuma operacao foi executada no ERP.", "dlp", "not_homologated")
+        "Nenhuma operacao foi executada no ERP.", "dlp-v054-m283", "not_homologated")
 
     oSelf:setStatus(501)
     oSelf:setResponse(oJsonRet:toJson())
@@ -763,7 +766,7 @@ Return lExecSB1(self, 3)
 
 /*/{Protheus.doc} incProd (PUT)
     Alteracao de produto SB1 via rotina oficial MATA010 (ExecAuto op 4).
-    Representacao completa obrigatoria: todos os 286 campos do catalogo
+    Representacao completa obrigatoria: todos os 283 campos do catalogo
     (politica fail-closed contra perda por omissao).
 /*/
 WSMETHOD PUT incProd WSRECEIVE WSRESTFUL DelpiProduto

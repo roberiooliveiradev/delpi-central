@@ -1176,10 +1176,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "Modelo SB1MASTER nao expoe B1_GRADE (FWFormFieldsModel invalid id) — TST01 2026-11-19",
-   "create": true,
+   "note": "Modelo SB1MASTER nao expoe B1_GRADE (FWFormFieldsModel invalid id; dump u_DLPDBG01) — TST01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -1352,10 +1352,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "TO_INVENTORY — sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao",
-   "create": true,
+   "note": "Modelo SB1MASTER expoe (tipo M), mas sem coluna fisica em SB1010 TST01 — fora do contrato ate materializacao; dump u_DLPDBG01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -1368,10 +1368,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "TO_INVENTORY — sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao",
-   "create": true,
+   "note": "Modelo SB1MASTER expoe (tipo M), mas sem coluna fisica em SB1010 TST01 — fora do contrato ate materializacao; dump u_DLPDBG01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -1384,10 +1384,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "TO_INVENTORY — sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao",
-   "create": true,
+   "note": "Modelo SB1MASTER expoe (tipo M), mas sem coluna fisica em SB1010 TST01 — fora do contrato ate materializacao; dump u_DLPDBG01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -1608,10 +1608,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "TO_INVENTORY — sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao",
-   "create": true,
+   "note": "Modelo SB1MASTER expoe (tipo M), mas sem coluna fisica em SB1010 TST01 — fora do contrato ate materializacao; dump u_DLPDBG01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -2615,11 +2615,11 @@
    "required_sx3": true,
    "editable_ui": true,
    "propri": "S",
-   "classification": "READ_WRITE_ELIGIBLE",
-   "note": "X3_VISUAL=(default) — editável MATA010",
-   "create": true,
+   "classification": "TO_INVENTORY",
+   "note": "Modelo SB1MASTER nao expoe B1_OK (dump u_DLPDBG01, 317 campos) — TST01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -3160,10 +3160,10 @@
    "editable_ui": true,
    "propri": "S",
    "classification": "TO_INVENTORY",
-   "note": "TO_INVENTORY — sem coluna fisica na SB1010 do TST01 — fora do contrato de escrita ate materializacao",
-   "create": true,
+   "note": "Modelo SB1MASTER expoe (tipo M), mas sem coluna fisica em SB1010 TST01 — fora do contrato ate materializacao; dump u_DLPDBG01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
@@ -4247,11 +4247,11 @@
    "required_sx3": true,
    "editable_ui": true,
    "propri": "S",
-   "classification": "READ_WRITE_ELIGIBLE",
-   "note": "X3_VISUAL=(default) — editável MATA010",
-   "create": true,
+   "classification": "TO_INVENTORY",
+   "note": "Modelo SB1MASTER nao expoe B1_CARGAE (dump u_DLPDBG01, 317 campos) — TST01 2026-11-19",
+   "create": false,
    "read": true,
-   "update": true,
+   "update": false,
    "source": "SX3@DELPI_TST01=DELPI (idênticos)"
   },
   {
