@@ -82,6 +82,7 @@ export function HrIdentityReviewTab() {
     setAccount(item);
     setRegistration("");
     setPerson(null);
+    setLookupLoading(false);
     setModalError(null);
     setConfirmOpen(false);
   };
@@ -92,6 +93,7 @@ export function HrIdentityReviewTab() {
     setAccount(null);
     setPerson(null);
     setRegistration("");
+    setLookupLoading(false);
     setModalError(null);
     setConfirmOpen(false);
   };
