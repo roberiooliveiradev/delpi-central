@@ -80,7 +80,7 @@ def test_partial_ingest_preserves_valid_demand_and_audits_380_un():
 def test_other_invalid_rows_remain_fail_closed():
     rows = _rows()
     rows[1]["unidade"] = "MIL"
-    with pytest.raises(ValueError, match="Unidade não suportada"):
+    with pytest.raises(ValueError, match="material_weg_tratado"):
         build_ingest_payload(_artifacts(rows))
     rows = _rows()
     rows[0]["quantidade"] = "-1"
