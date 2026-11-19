@@ -587,7 +587,9 @@ static function cSanitLog(aLogAuto)
         endif
     next nI
 
-Return SubStr(lJoin(aLin, " | "), 1, 2000)
+// erros de validacao do ExecAuto ficam no FIM do log — manter a
+    // cauda, nao o inicio (o erro real morria truncado na v053)
+    Return Right(lJoin(aLin, " | "), 2000)
 
 /* -----------------------------------------------------------------------
    lExecSB1 — corpo comum de POST/PUT: parse, validacao, ExecAuto, retorno.

@@ -262,7 +262,12 @@ def merge_product_update_fields(
         if field in changes:
             merged[field] = changes[field]
             continue
-        merged[field] = snapshot_body_text(snapshot.get(field))
+        text = snapshot_body_text(snapshot.get(field))
+        if PRODUCT_FIELD_SPECS[field]["kind"] == "N" and not text:
+            # Numerico SB1 nunca e NULL no Protheus — ausencia persistida
+            # equivale a 0; "" seria rejeitado pelo upstream (kind=N).
+            text = "0"
+        merged[field] = text
     return merged
 
 
