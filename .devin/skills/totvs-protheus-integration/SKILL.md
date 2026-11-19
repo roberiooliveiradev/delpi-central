@@ -309,6 +309,155 @@ relacionada) ou a validação oficial rejeita.
 - Diagnóstico remoto: `tools/DLPDBG01.PRW` — padrão reutilizável: criar
   `u_<nome>` + compilar + executar via TDS/smartclient + ler ConOut.
 
+### Catálogo de erros comprovados (modelo/runtime)
+
+| Erro | Origem | Significado/correção |
+|---|---|---|
+| `FWNOSTRUCT` | FWFormFieldsModel | valor difere do tipo do campo — tipar com `StoD`/`Val` antes da tripla/`SetValue` |
+| `O id de formulario 'X' nao e valido` | FWFormFieldsModel | campo fora do form do modelo — remover do contrato (SX3 ∩ form) |
+| `VLDDATA_POST` | VldData/CommitData | validação de negócio pós-carga (X3_VALID/bVldPos) — investigar a regra, não o transporte |
+| `Erro -->` no `GetAutoGrLog` | ExecAuto | bloco de erro fica no FIM do log — ler a cauda, não a cabeça |
+| `THREAD ERROR` | console appserver | exceção não tratada; corpo do erro no `console.log`/`error.log` |
+| `variable does not exist`/`function not found` | runtime | PRIVATE errado / função ausente no RPO (compilação ≠ carga) |
+| `array out of bounds` | runtime | array é 1-based; tripla `{CAMPO,val,NIL}` mal formada |
+| `type mismatch` | runtime | atribuição de tipo errado (`""` em N/D) |
+| `Cannot find method` | runtime | objeto NIL ou método ausente no build |
+
+### MVC — anatomia de ModelDef/ViewDef (fonte: `Dmata061.prx`, `MATA632_DLP`, `MATA010M_DLP`)
+
+- `ModelDef()` retorna `oModel := MPFormModel():New(<id>, bVldPre, bVldPos,
+  bCommit, bCancel)`; submodelos: `AddFields('ID',NIL,oStru)` (fields) /
+  `AddGrid('GRID','PAI',oStru,,{|o|bLinhaOk(o)})` (grid Model-2);
+  `SetRelation('GRID', {{'FIL','xFilial("SA5")'},{'CAMPO','CAMPO'}},
+  ALIAS->(IndexKey(n)))`; `SetPrimaryKey({...})`.
+- `ViewDef()` retorna `FWFormView():New()`; `AddField('VIEW_X',oStru,'MOD_ID')`
+  / `AddGrid('GRID_X',oStru,'MOD_ID')` mapeiam struct → id de model.
+- Delegação oficial: `ModelDef()`/`ViewDef()` custom podem devolver
+  `FWLoadModel("ROTINA")`/`FWLoadView("ROTINA")` (MATA632_DLP).
+- ExecAuto MVC: `FWMVCRotAuto(oModel,"ALIAS",nOp,{{"FORM_ID",aCampos}},,.T.)`
+  — caminho oficial dentro de `A010Auto`; retorna lógico, erros via
+  `GetErrorMessage`.
+- Em evento/hook do modelo: `FWModelActive()` = modelo corrente
+  (ex.: `Mta010Ceme` acessa `SB5DETAIL` via `oModel:GetModel`).
+- Eventos oficiais de MATA010 vivem na classe `MATA010EVDEF` — customizações
+  seguem o mesmo formato (`<ROTINA>EVDEF`).
+
+### User exits e pontos de entrada oficiais
+
+- Convenção: a rotina chama `ExistBlock("NOME")` + `ExecBlock("NOME",...)`
+  ou função fixa (`MT010CAN`, `NMt010Can`, `MT061MN`, `MTA010MNU`,
+  `MA650BUT`) — existem só se compilados no RPO.
+- Menu: `MT<rot>MNU`/`MT061MN` injetam opções em `aRotina`; o menu MVC é
+  montado por `MenuDef()` com `ADD OPTION`.
+- Eventos MVC customizáveis: `bVldPre/bVldPos/bCommit/bCancel` +
+  `bLinePre/bLinePost` nas grids do ModelDef.
+- Gatilhos SX7 e `X3_RELACAO` disparam também sob ExecAuto — investigá-los
+  quando a validação oficial falhar sem causa no contrato.
+- Descoberta: `grep "ExistBlock"` no fonte oficial da rotina + página TDN
+  "pontos de entrada <rotina>".
+
+### aRotina — os dois formatos
+
+- **Clássico**: `{"Titulo","FUNCAO",nReserv,nOperacao,nAcesso,lBmp}`.
+- **MVC**: `ADD OPTION aRotina TITLE "X" ACTION "VIEWDEF.ROTINA" OPERATION n
+  ACCESS n` — construído em `MenuDef()`; códigos de operação vistos no
+  espelho: 2=visualizar, 3=incluir, 4=alterar, 5=excluir, 9=copiar.
+- **MVC**: `ADD OPTION aRotina TITLE "X" ACTION "VIEWDEF.ROTINA" OPERATION n
+  ACCESS n` — construído em `MenuDef()`.
+- ExecAuto pode herdar `aRotina` do caller (`PRIVATE aRotina`) — rotinas com
+  dependência de menu precisam do array correto.
+
+### EAI — mensagem única TOTVS (adapter oficial alternativo)
+
+- `Dmata061.prx` expõe `IntegDef(cXML,nTypeTrans,cTypeMessage,cVersion)`
+  chamando `MATI060(...)` — o **adapter EAI do SA5**: integração por
+  mensagem única (XML) em vez de escrita direta no form.
+- Exige EAI configurado no ambiente (canais/schedule) — TST01 não tinha;
+  classificar `TO_INVENTORY` antes de eleger como mecanismo.
+- Descobrir adapters de outras rotinas por `IntegDef`/`MATI*` no fonte
+  oficial — presença no fonte ≠ configurado no ambiente.
+
+### SOAP — WSSERVICE (servidor) e WSCLIENT (cliente)
+
+- Servidor: `WSSERVICE <Nome> DESCRIPTION ".." NAMESPACE ".."` + `WSDATA
+  <campo> AS <Tipo>` + `WSMETHOD <Metodo>` + `END WSSERVICE` — publica WSDL
+  no endpoint SOAP do appserver; hoje o padrão DELPI novo é REST.
+- Cliente: bloco gerado `WSCLIENT <Nome>`/`ENDWSCLIENT` + `WSMETHOD <M>
+  WSCLIENT <Nome>` (ver `10. PCP/apsws/MTPURCHASESREQUEST.PRW`) — o ERP
+  consome WSDL externo.
+- Checagem de dependência de build: `FindFunction("XMLCHILDEX")`,
+  `Type("FUNCAO")`, `ExistBlock("NOME")` — evitar runtime error por
+  função inexistente no RPO.
+
+### Compatibilizador — dicionário via fonte (nunca DDL)
+
+- Mudança de dicionário entra por fonte `u_<nome>` executado no updater:
+  `PutSx1` (perguntas SX1), `PutSx2` (tabelas), `PutSx3` (campos), `PutSx6`
+  (parâmetros), `PutSx7` (gatilhos), `PutSXB` (consultas) — assinatura
+  posicional longa; ver `10. PCP/DIGR850.prw` e `BoletoActvs.prw`.
+- Idempotente: checar existência antes de gravar; registrar no cabeçalho
+  release/parâmetros afetados. Coluna física criada por SQL fora do
+  dicionário dessincroniza SX3×físico (origem do caso B1_VM_* no TST01).
+
+### SQL embutida — somente leitura
+
+- `TCGenQry`/`TCQuery`/`TopConn` + `dbUseArea(.T.,"TOPCONN",cQry,"TRB")`
+  aparecem no espelho para **consulta** (relatórios/buscas) — aceitável como
+  leitura auxiliar dentro do PRW; **nunca** INSERT/UPDATE/DELETE e nunca
+  como substituto de rotina oficial (regra mandatória do projeto).
+- Alias de trabalho: `CriaTrab()`/`Select("TRB")`; fechar com `dbCloseArea`.
+
+### Transações, locks e escrita custom
+
+- `Begin Transaction`/`End Transaction`/`DisarmTransaction` envolvem
+  operação composta; o modelo MVC já controla TTS própria — transação
+  externa só quando múltiplas rotinas precisam de atomicidade.
+- `RecLock`/`MsUnLock`/`SoftLock`/`MsAppend`: **proibidos em `S*`** no
+  padrão DELPI; válidos apenas em tabela custom `Z*` ou dentro de user
+  exit oficial.
+
+### Parâmetros SX1/SX6 e `mv_par`
+
+- Rotinas com parâmetros de execução leem SX1 (`Pergunte(cPerg,.T.)`) —
+  em ExecAuto/job, definir `mv_par01..mv_parNN` (PRIVATE) antes da chamada
+  em vez de abrir pergunta.
+- `PutSx1` cria grupo de perguntas; `GetMv("MV_*")`/`PutMV`/`SuperGetMV`
+  para parâmetros SX6 por filial.
+
+### Funções clássicas — referência rápida
+
+| Domínio | Funções |
+|---|---|
+| String | `AllTrim/At/RAt/SubStr/Left/Right/StrTran/PadR/PadL/Space/Replicate/Asc/Chr/Len` |
+| Data | `Date()/dDataBase/DtoS/StoD/CtoD/Day/Month/Year/ElapTime` |
+| Número | `Val/Str/cValToChar/Round/Int/Abs/Max/Min/Mod` |
+| Array/hash | `aAdd/aSize/aScan/aSort/aClone/aEval/Array` ; hash por nome = `JsonObject` |
+| Tipo/nil | `ValType/Type/Empty/Iif/IsNil` |
+| DB navegação | `dbSelectArea/dbSetOrder/dbSeek/dbFound/Eof/Bof/Skip/RecNo/LastRec/dbGoTop` |
+| DB estrutura | `dbStruct/FieldName/FieldPos/FieldGet/FieldPut`; meta `SX3->(dbSeek)` |
+| Índices | `IndexKey(n)/OrdSetFocus/IndRegua/dbSetIndex` |
+| Arquivo/temp | `CriaTrab/Select("TRB")/File()/fErase/FT_FUse/FT_FReadLn/MemoWrit/MemoRead` |
+| Ambiente | `GetEnv/GetEnvServer/GetSrvProfString/RetCodUsr/__cUserId` |
+| Parâmetro | `GetMv/PutMV/SuperGetMV/Pergunte` |
+| Introspecção | `ExecBlock/ExistBlock/FindFunction/Type/FunName/ProcName/IsInCallStack` |
+| Job/agenda | `StartJob/FWExecJob/CheckSched` |
+| HTTP out | `FWRest():New()/HttpGet/HttpPost` |
+| JSON | `JsonObject/FWJsonSerialize/FWJsonDeserialize` |
+| Encoding | `FwCutOff/OemToAnsi/EncodeUTF8/DecodeUTF8/Encode64/Decode64` |
+| Log/diag | `ConOut/FWFileWriter/VarInfo/GetCodeBlock/MsgStop` |
+| Tempo | `Seconds()/Time()/Sleep` |
+| Erro | `ErrorBlock/Break` + `oError:Description` |
+
+### Contexto de execução e flags MVC
+
+- `INCLUI`/`ALTERA`/`EXCLUI` = flags do fluxo dentro de validações de campo
+  (ex.: `M010IniQtdSer` em `MATA010M_DLP` ramifica por `INCLUI`).
+- `M->CAMPO` = valor da linha corrente em validação/gatilho; na API do
+  modelo usar `oSubModel:LoadValue("CAMPO",valor)`.
+- `PREPARE ENVIRONMENT EMPRESA e FILIAL f MODULO "FAT" [TABLES "SA1"]` +
+  `RESET ENVIRONMENT` — jobs/processos sem login (DLP02J01/J02, DLP73F03);
+  em REST o ambiente vem da `environment=` do ini do serviço.
+
 ## Atualização de autoridade de fontes (2026-11)
 
 - **Fonte versionada primária ADVPL/TLPP:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, consultado no HEAD vigente via GitHub autorizado. Registrar `SOURCE_REPO/BRANCH/SHA/PATH/BLOB_SHA` em cada análise.
