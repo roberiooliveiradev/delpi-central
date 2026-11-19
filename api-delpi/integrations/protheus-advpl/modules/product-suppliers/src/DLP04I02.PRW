@@ -2,8 +2,8 @@
    DLP04I02.PRW — Api REST para Produto x Fornecedor (SA5) via modelo MVC
    oficial DMATA061 (MATA061 — cadastro Produto x Fornecedor, Model-2).
    -----------------------------------------------------------------------
-   VERSAO: 0.5.3 — identificavel em runtime pelo campo 'id' das respostas
-          ("dlp04i02-0.5.3-diag"); comparar com o objeto compilado no RPO.
+   VERSAO: 0.5.4 — identificavel em runtime pelo campo 'id' das respostas
+          ("dlp04i02-0.5.4-diag"); comparar com o objeto compilado no RPO.
    ESTADO: SOURCE_CANDIDATE — aguardando revisao e compilacao pela equipe ERP.
    EVIDENCIA TST01 (2026-11-19, ambiente auxiliar REST :8061):
      - 4 URNs registradas; PUT/GET/DELETE responderam 501 do contrato
@@ -196,6 +196,8 @@ static function lExecSA5(oSelf)
     Local cErro      := ""
     Local cErroBlk   := ""
     Local cErroEnv   := ""
+    Local cFldId     := ""
+    Local cGrdId     := ""
     Local cErroLog   := ""
     Local cErrType   := "client_error"
     Local nStatus    := 400
@@ -264,32 +266,46 @@ static function lExecSA5(oSelf)
             // Temporario — remover quando a causa estiver isolada.
             ConOut("DLP04I02 s1 pre-model")
 
-            // Ciclo MVC oficial — modelo Model-2 'DMATA061'
-            // (FWLoadModel comprovado na ViewDef do fonte oficial;
-            //  GetModel/GetValue/Length/GoLine usados pelos callbacks)
-            oModel := FWLoadModel("DMATA061")
-            ConOut("DLP04I02 s2 loadmodel ok")
+            // Ciclo MVC oficial — DIAG 0.5.4 dupla hipotese:
+            // (a) modelo 'MATA061' = rotina automatica documentada no
+            //     TDN (EXECAUTO, componentes MdFieldSA5/MdGridSA5);
+            // (b) fallback 'DMATA061' (componentes DMd* — o que lancou
+            //     FWMBrowse via U_DMATA061 no FWVLDACTIVATE).
+            // SetVldActivate({||.T.}) substitui a validacao de ativacao
+            // que ExecBlock-ava a user function do browse (causa raiz
+            // comprovada por THREAD ERROR TST01 15:40).
+            oModel := FWLoadModel("MATA061")
+            if ValType(oModel) == "O"
+                cFldId := "MdFieldSA5"
+                cGrdId := "MdGridSA5"
+                ConOut("DLP04I02 s2 model MATA061 ok")
+            else
+                oModel := FWLoadModel("DMATA061")
+                cFldId := "DMdFieldSA5"
+                cGrdId := "DMdGridSA5"
+                ConOut("DLP04I02 s2 model DMATA061 ok")
+            endif
             oModel:SetOperation(MODEL_OPERATION_INSERT)
             ConOut("DLP04I02 s3 setop ok")
-            // DIAG TEMP 0.5.3: o throw dentro de Activate() era engolido
-            // pelo recover (so Description, sem stack). Restaurar o
-            // handler anterior deixa o erro virar THREAD ERROR nativo
-            // com stack de chamadas (.PRX/linha) no console.log —
-            // evidencia necessaria p/ nomear o bloco/PE que instancia
-            // componente visual (suspeito: leitura XXJ010 no Activate).
+            oModel:SetVldActivate({|| .T.})
+            ConOut("DLP04I02 s3a vldactivate bypass")
+            // handler default mantido p/ expor stack nativa de qualquer
+            // residual dentro do Activate (THREAD ERROR no console)
             ErrorBlock(oException)
             oModel:Activate()
-            ErrorBlock({|e| cErroBlk := e:Description, Break(e)})
+            ErrorBlock({|e| cErroBlk := e:Description, ;
+                cErroEnv := iif(__ObjHasData(e, "ERRORENV"), ;
+                    cValToChar(e:ErrorEnv), ""), Break(e)})
             lActivated := .T.
             ConOut("DLP04I02 s4 activate ok")
 
             // header: produto (+ref. grade) — relation oficial aplica
             // xFilial("SA5") e propaga A5_PRODUTO/A5_REFGRD ao grid
-            oModel:GetModel("DMdFieldSA5"):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
-            oModel:GetModel("DMdFieldSA5"):SetValue("A5_REFGRD",  oDados:GetJSonObject("A5_REFGRD"))
+            oModel:GetModel(cFldId):SetValue("A5_PRODUTO", oDados:GetJSonObject("A5_PRODUTO"))
+            oModel:GetModel(cFldId):SetValue("A5_REFGRD",  oDados:GetJSonObject("A5_REFGRD"))
             ConOut("DLP04I02 s5 header ok")
 
-            oGrid := oModel:GetModel("DMdGridSA5")
+            oGrid := oModel:GetModel(cGrdId)
             ConOut("DLP04I02 s6 getgrid ok")
             oGrid:AddLine()
             ConOut("DLP04I02 s7 addline ok")
@@ -476,7 +492,7 @@ Return .T.
 /*/
 static function cVerTag()
 
-Return "dlp04i02-0.5.3-diag"
+Return "dlp04i02-0.5.4-diag"
 
 /*/{Protheus.doc} RETOBJ
     Padroniza o retorno JSON da API (mesmo contrato do product-master:
