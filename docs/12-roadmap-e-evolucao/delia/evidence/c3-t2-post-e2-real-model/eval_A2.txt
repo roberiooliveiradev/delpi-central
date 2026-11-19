@@ -1,0 +1,30 @@
+2026-11-19 08:10:24,436 INFO app.composition.root_composer cri_presentation_resource id=delia.cri.presentation_vocabulary version=7 sha256=89b05035ca0569c81342bd15a5673210cf62c26ac95dcc2903aba254e8c11cf7
+2026-11-19 08:10:24,522 INFO app.composition.root_composer delia_orchestration_engine selected=pydantic_ai surface=configured runtime_sha=30ac7cbb4467f2d4703f266a701979747857a54c model_id=qwen3:8b(' config_profile=local_ollama config_fingerprint=8599c328b501ecf1',)
+2026-11-19 08:10:24,541 INFO delia-api delia_api_started service=delia-api version=0.0.1 env=development
+2026-11-19 08:11:27,109 INFO app.application.capability_provision.semantic_capability_support orchestration stage=model_propose decision=ok purpose=delia.capability_orchestration.interaction_admission timing_ms=57043 correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+2026-11-19 08:11:27,113 INFO app.application.capability_provision.semantic_capability_support orchestration stage=interaction_admission decision=owner_surface class=operational correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+2026-11-19 08:11:33,539 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_tool_catalog decision=project actor=572e5d23-0449-4b5b-9725-f14b5aa80d16 catalog_len=12 catalog_total=12 catalog_overflow=False owners=api-delpi:4,transformometro-api:4,tv-dashboard-api:4 failures=- correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+2026-11-19 08:11:33,576 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=dynamic_toolset catalog_len=12 instruction_version=generalist-semantic-v2-7-page-continuation instruction_base_fingerprint=725917efe2221d47 instruction_fingerprint=725917efe2221d47 correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+2026-11-19 08:11:33,739 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=native_mcp_toolsets groups=mcp:davi,mcp:teo,mcp:vista catalog_caps=davi.analyze,davi.get_context,davi.knowledge,davi.read,teo.analyze,teo.get_context,teo.knowledge,teo.read,vista.analyze,vista.get_context,vista.knowledge,vista.read toolsets=3 correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+2026-11-19 08:16:58,420 INFO app.application.capability_provision.semantic_capability_support orchestration stage=turn_budget decision=turn_budget_exhausted attempt=1 correlation_id=0098e0b6-84d2-4663-94c6-1403b6ca0842
+{"id": "A", "text": "Qual a descrição do produto de código 90260147?", "elapsed_s": 389.9, "result_type": "InteractiveTurnResult", "status": "None", "epistemic_class": "EpistemicClass.HYPOTHESIS", "grounding_status": "GroundingStatus.NON_GROUNDED", "governed_attempts": 0, "attempt_statuses": [], "limitations": ["delpi_source_unverified"], "usage": {}, "content_head": "O processamento da sua solicitação demorou além do limite e a tentativa foi interrompida. Não identifiquei uma falha na fonte de dados — nenhum dado operacional foi verificado. Você pode tentar novame"}
+=== SUMMARY ===
+{
+ "head": "e09f9884ac8621b03750bd7f68524651b9aa502d",
+ "runtime_profile": "local_ollama",
+ "llm_model": "qwen3:8b",
+ "two_agent_experiment": false,
+ "parallel_mcp_discovery": false,
+ "scenarios": [
+  "A"
+ ],
+ "outcomes": {
+  "A": {
+   "result_type": "InteractiveTurnResult",
+   "grounding_status": "GroundingStatus.NON_GROUNDED",
+   "governed_attempts": 0,
+   "elapsed_s": 389.9
+  }
+ }
+}
+EXIT=0
