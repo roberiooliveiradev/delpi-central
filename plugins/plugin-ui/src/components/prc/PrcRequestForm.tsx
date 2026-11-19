@@ -251,6 +251,16 @@ const FIELD_GROUPS = PRC_FIELD_GROUPS.map((g) => ({
 const CATALOG_UNAVAILABLE =
   "Não foi possível consultar as opções oficiais no TOTVS. Tente novamente.";
 
+/* GLPI #1621 / S1 — valores iniciais aprovados pelo PO (19/11/2026)
+ * somente para NOVO CREATE de matéria-prima (`!editCase`): sugestões
+ * editáveis da UI herdadas do aplicativo legado — não são regra
+ * autorizativa, prova de cadastro ERP nem política do backend.
+ * UPDATE, edição de caso e correção nunca recebem estes valores. */
+const CREATE_FIELD_DEFAULTS: Record<string, string> = {
+  defaultWarehouse: "01",
+  accountingAccount: "11401002",
+};
+
 const LEGACY_NOTE_RE = /\b(B1_|A5_|legado|legado\s*['"]|cta_contabil)\b/i;
 
 /** Help funcional do path — nota técnica/legado nunca vaza na UI. */
@@ -330,7 +340,7 @@ export function PrcRequestForm({
   );
 
   const [values, setValues] = useState<Record<string, string>>(() => {
-    if (!editCase) return {};
+    if (!editCase) return { ...CREATE_FIELD_DEFAULTS };
     const out: Record<string, string> = {};
     for (const [k, v] of Object.entries(editCase.draft || {})) {
       if (
@@ -1154,6 +1164,23 @@ export function PrcRequestForm({
               setRequestType(v);
               setEditCtx(null);
               setError("");
+              setValues((s) => {
+                if (v === "create") {
+                  /* Retorno ao CREATE: repõe sugestões só onde não há
+                   * entrada atual — valor digitado/limpo pelo usuário
+                   * nunca é sobreposto. */
+                  return { ...CREATE_FIELD_DEFAULTS, ...s };
+                }
+                /* UPDATE trabalha só com baseline oficial
+                 * (fetchEditContext): sugestões de CREATE intactas são
+                 * retiradas para jamais aparecerem como alteração
+                 * proposta, mesmo com a consulta lenta ou falha. */
+                return Object.fromEntries(
+                  Object.entries(s).filter(
+                    ([k, val]) => CREATE_FIELD_DEFAULTS[k] !== val,
+                  ),
+                );
+              });
             }}
             options={[
               {

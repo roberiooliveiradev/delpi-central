@@ -2,7 +2,7 @@
 
 > **Data:** 2026-11-19  
 > **TASK_ID:** ENG-PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-PLAN-01  
-> **Estado:** PLANNED / S1_FRONTEND_ONLY_PO_APPROVED / S1_IMPLEMENTATION_NOT_STARTED / S2_S3_PLANNED / TEST_NOT_RUN / NO_DEPLOY_BY_THIS_DOC  
+> **Estado:** PLANNED / S1_FRONTEND_ONLY_PO_APPROVED / S1_IMPLEMENTED_TESTS_GREEN / S2_S3_PLANNED / NO_DEPLOY_BY_THIS_DOC  
 > **Origem funcional:** GLPI #1621 — “Sugestões para o App de Criação de Matéria-prima”, aberto por Julielle Jaques e atribuído a Robério Oliveira (18/11/2026).  
 > **Owner de produto:** Portal Engenharia DELPI. **Owner de workflow/dados/AuthZ do caso:** Engineering API. **Consumers:** Portal Engenharia e My Requests (Minhas Solicitações).  
 > **Escopo:** incremento PRC para CREATE, duplicação segura e cancelamento pré-atendimento; preservar o ciclo de UPDATE, correção, anexos, verificação, revisão e conclusão já existente.  
@@ -56,7 +56,9 @@ A API permanece responsável pela validação e rejeita a operação mesmo quand
 
 ## 4. S1 — Valores iniciais no CREATE: **frontend-only** (PRC-1621-RQ01/RQ02)
 
-> **Decisão PO ratificada em 19/11/2026 — S1_APPROVED_FRONTEND_ONLY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN.** `S1` não exige nem permite implementar defaults na Engineering API. A autorização vale apenas para esta pequena modificação de UI; a API mantém validações, fonte oficial e autoridade sobre a solicitação.
+> **Decisão PO ratificada em 19/11/2026 — S1_APPROVED_FRONTEND_ONLY / IMPLEMENTED_TESTS_GREEN (19/11/2026).** `S1` não exige nem permite implementar defaults na Engineering API. A autorização vale apenas para esta pequena modificação de UI; a API mantém validações, fonte oficial e autoridade sobre a solicitação.
+>
+> **Ledger S1 — execução registrada (19/11/2026):** diff de produção restrito a `plugins/plugin-ui/src/components/prc/PrcRequestForm.tsx` (+28/−1: `CREATE_FIELD_DEFAULTS` semeando `values` apenas sem `editCase`; alternância CREATE/UPDATE não injeta nem carrega sugestões). Spec `PrcRequestForm.createDefaults.test.tsx` (7 testes, AC-1621-S1-01..06) RED no HEAD (4/7 falhas — campos vazios) e GREEN no diff; regressões verdes: plugin-ui 2837/2837, engineering product-registration 264/264, my-requests 21/21; builds dos três pacotes OK. Verificação independente delpi-verifier registrada sob `eng-prc-glpi-1621-s1`. Runtime nos portais depende do deploy canônico pós-push — `RUNTIME_CHANGED` só após publicação efetiva.
 
 ### Comportamento aprovado
 

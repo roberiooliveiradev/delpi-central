@@ -1,6 +1,6 @@
 # Prompt executável — PRC GLPI #1621 / S1 — valores iniciais no formulário compartilhado
 
-> **Status:** PROMPT_READY / NOT_DISPATCHED / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN  
+> **Status:** EXECUTED / IMPLEMENTED_TESTS_GREEN (19/11/2026) / INDEPENDENT_VERIFICATION_REGISTERED — ver ledger no plano GLPI #1621 §4  
 > **Data:** 2026-11-19  
 > **TASK_ID:** ENG-PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-01  
 > **Tipo:** CODE + TEST (executor: Devin ou Cursor)  
