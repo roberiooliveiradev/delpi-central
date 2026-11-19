@@ -168,11 +168,14 @@ export function MateriaisTerceirosPage({
     shipments.data,
   ]);
 
+  const { reload: reloadSummary } = summary;
+  const { reload: reloadShipments } = shipments;
+  const { reload: reloadPending } = pending;
   const handleRefresh = useCallback(() => {
-    summary.reload();
-    shipments.reload();
-    pending.reload();
-  }, [summary.reload, shipments.reload, pending.reload]);
+    reloadSummary();
+    reloadShipments();
+    reloadPending();
+  }, [reloadSummary, reloadShipments, reloadPending]);
 
   const handlePageSizeChange = useCallback((next: number) => {
     setPageSize(Math.min(next, MAX_PAGE_SIZE));

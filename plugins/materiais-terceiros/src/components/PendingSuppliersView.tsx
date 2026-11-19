@@ -98,7 +98,7 @@ export function PendingSuppliersView({
                   <td className="mt-pending-num">{formatQuantity(item.received_quantity, item.unit)}</td>
                   <td className="mt-pending-num">{formatQuantity(item.returned_quantity, item.unit)}</td>
                   <td className="mt-pending-num"><span className="mt-pending-balance">{formatQuantity(item.pending_quantity, item.unit)}</span></td>
-                  <td><button type="button" className="mt-pending-drill" onClick={() => onDrillDown(item)} aria-label={\`Ver remessas do produto \${item.product_code} do fornecedor \${item.supplier_name || item.supplier_code}\`} title="Ver remessas"><ArrowUpRight size={18} /></button></td>
+                  <td><button type="button" className="mt-pending-drill" onClick={() => onDrillDown(item)} aria-label={`Ver remessas do produto ${item.product_code} do fornecedor ${item.supplier_name || item.supplier_code}`} title="Ver remessas"><ArrowUpRight size={18} /></button></td>
                 </tr>
               ))}
               {!loading && !error && !data?.items.length ? <tr><td colSpan={7} className="mt-pending-empty"><SearchX size={22} aria-hidden="true" /> Nenhuma pendência de fornecedor encontrada para os filtros selecionados.</td></tr> : null}
