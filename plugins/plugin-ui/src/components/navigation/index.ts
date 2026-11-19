@@ -7,3 +7,5 @@ export {
   type InlineNavLinkClassNames,
   type InlineNavLinkProps,
 } from "./InlineNavLink";
+
+export { CollapsibleToolRail, type CollapsibleToolRailProps, type ToolRailGroup, type ToolRailItem } from "./CollapsibleToolRail";

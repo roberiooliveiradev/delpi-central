@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "require_lease": true,
+  "overlap": "block",
+  "lease_ttl_hours": 12,
+  "contexts_file": "agent-kit/scope/contexts.json",
+  "notes": "Opt-in do agent-scope: sem este arquivo o pre-commit hook é no-op. Política em .cursor/rules/agent-session-scope.mdc."
+}

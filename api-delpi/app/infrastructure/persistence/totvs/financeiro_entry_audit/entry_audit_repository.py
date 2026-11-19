@@ -98,6 +98,42 @@ class EntryAuditRepository(BaseRepository):
         with self:
             return self.execute_query(sql, params)
 
+    def fetch_reform_taxes(
+        self, *, branch: str, received_from: str, received_to: str, species: list[str], offset: int, page_size: int
+    ) -> list[dict[str, Any]]:
+        sql, _names = entry_audit_sql.reform_taxes_sql(species)
+        params = (branch, received_from, received_to, *species, offset, page_size)
+        with self:
+            return self.execute_query(sql, params)
+
+    def fetch_reform_taxes_by_access_keys(
+        self, *, branch: str, access_keys: list[str]
+    ) -> list[dict[str, Any]]:
+        if not access_keys:
+            return []
+        sql, _names = entry_audit_sql.reform_taxes_by_access_keys_sql(len(access_keys))
+        params = (branch, *access_keys)
+        with self:
+            return self.execute_query(sql, params)
+
+    def fetch_reform_book(
+        self, *, branch: str, received_from: str, received_to: str, species: list[str], offset: int, page_size: int
+    ) -> list[dict[str, Any]]:
+        sql, _names = entry_audit_sql.reform_book_sql(species)
+        params = (branch, received_from, received_to, *species, offset, page_size)
+        with self:
+            return self.execute_query(sql, params)
+
+    def fetch_reform_book_by_access_keys(
+        self, *, branch: str, access_keys: list[str]
+    ) -> list[dict[str, Any]]:
+        if not access_keys:
+            return []
+        sql, _names = entry_audit_sql.reform_book_by_access_keys_sql(len(access_keys))
+        params = (branch, *access_keys)
+        with self:
+            return self.execute_query(sql, params)
+
     def fetch_tes(self, *, offset: int, page_size: int) -> list[dict[str, Any]]:
         with self:
             return self.execute_query(entry_audit_sql.tes_sql(), (offset, page_size))

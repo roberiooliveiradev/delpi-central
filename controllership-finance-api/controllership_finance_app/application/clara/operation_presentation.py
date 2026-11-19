@@ -869,6 +869,89 @@ def _present_tpl_doc_requirement(p: dict) -> dict:
     )
 
 
+def _present_checklist_series_start(p: dict) -> dict:
+    reason = " ".join(str(p.get("reason") or "").split())
+    return _simple(
+        "Iniciar uma nova série de versões do checklist",
+        f"template {_short(p.get('template_id'))}",
+        effect=(
+            "a série vigente é encerrada e uma nova série é aberta "
+            "com numeração reiniciada em V1; versões e competências "
+            "históricas são preservadas."
+        ),
+        motivation=reason or None,
+    )
+
+
+def _present_checklist_catalog_initialize(p: dict) -> dict:
+    items = p.get("items") or []
+    return _simple(
+        "Inicializar o catálogo de itens da versão",
+        f"versão {_short(p.get('version_id'))}",
+        effect=(
+            f"registra {len(items)} itens iniciais na versão; "
+            "itens já existentes são mesclados por item_key."
+        ),
+        motivation=" ".join(str(p.get("reason") or "").split())
+        or None,
+    )
+
+
+def _present_checklist_revision_apply(p: dict) -> dict:
+    changes = p.get("changes") or []
+    ops = ", ".join(
+        sorted({str(ch.get("op")) for ch in changes if isinstance(ch, dict)})
+    )
+    return _simple(
+        "Aplicar revisão ao catálogo publicado do checklist",
+        f"versão {_short(p.get('version_id'))}",
+        effect=(
+            f"registra {len(changes)} alterações "
+            f"({ops or 'sem op'}) e dispara a sincronização das "
+            "competências elegíveis."
+        ),
+        motivation=" ".join(str(p.get("reason") or "").split())
+        or None,
+    )
+
+
+def _present_checklist_revision_revert(p: dict) -> dict:
+    return _simple(
+        "Reverter uma revisão do checklist",
+        f"revisão {_short(p.get('revision_id'))}",
+        effect=(
+            "cria a revisão compensatória das alterações da "
+            "revisão original e dispara nova sincronização."
+        ),
+        motivation=" ".join(str(p.get("reason") or "").split())
+        or None,
+    )
+
+
+def _present_checklist_sync_retry(p: dict) -> dict:
+    return _simple(
+        "Reprocessar uma sincronização de checklist",
+        f"evento {_short(p.get('event_id'))}",
+        effect=(
+            "reenfileira o evento de sincronização para nova "
+            "tentativa nas competências divergentes."
+        ),
+    )
+
+
+def _present_checklist_completion_assess(p: dict) -> dict:
+    return _simple(
+        "Avaliar a conclusão histórica de uma competência",
+        f"competência {_short(p.get('competence_id'))}",
+        effect=(
+            "registra a avaliação de conclusão na competência — "
+            "efeito permanente sobre o marcador de conclusão."
+        ),
+        motivation=" ".join(str(p.get("reason") or "").split())
+        or None,
+    )
+
+
 _PRESENTERS: dict[str, Callable[[dict], dict]] = {
     "evidence.decide_version": _evidence_version,
     "evidence.decide_item_set": _evidence_item_set,
@@ -922,6 +1005,16 @@ _PRESENTERS: dict[str, Callable[[dict], dict]] = {
     "checklist.version_inactivate": _present_tpl_inactivate,
     "checklist.version_delete": _present_tpl_version_delete,
     "checklist.doc_requirement": _present_tpl_doc_requirement,
+    "checklist.series_start": _present_checklist_series_start,
+    "checklist.catalog_initialize": (
+        _present_checklist_catalog_initialize
+    ),
+    "checklist.revision_apply": _present_checklist_revision_apply,
+    "checklist.revision_revert": _present_checklist_revision_revert,
+    "checklist.sync_retry": _present_checklist_sync_retry,
+    "checklist.completion_assess": (
+        _present_checklist_completion_assess
+    ),
     **LNF_PRESENTERS,
 }
 

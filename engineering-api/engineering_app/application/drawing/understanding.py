@@ -2073,10 +2073,6 @@ def _detect_balloon_candidates(
 # ponta, nunca por cruzamento no meio do segmento. A região de destino
 # é evidência candidata — POINTS_TO permanece NOT_CHECKED.
 _LEADER_ATTACH_PX = 18.0
-# Ponta na faixa de borda conta como anexo: o detector de linhas
-# corta o líder no traço do anel, de modo que a extremidade pode
-# cair sobre a borda da caixa ou alguns px dentro dela (COMP-01).
-_LEADER_EDGE_INSET_PX = 4.0
 _LEADER_CLUSTER_PX = 8.0
 _LEADER_MAX_SEGMENTS = 4
 _LEADER_TARGET_NEAR_PX = 22.0
@@ -2128,22 +2124,19 @@ def _leader_roots(
 ) -> list[int]:
     """Índices dos segmentos anexados à fronteira do balão.
 
-    Exatamente uma ponta deve estar na faixa de fronteira (dentro da
-    caixa expandida, fora do interior da caixa — a faixa de borda de
-    _LEADER_EDGE_INSET_PX conta como anexo) e a outra fora da caixa
-    expandida. Segmentos dentro de caixas de cota não são líderes.
+    Exatamente uma ponta deve estar dentro da caixa expandida
+    (faixa de borda ou interior — líderes reais são traçados por
+    baixo do anel e sua extremidade detectada pode cair dentro da
+    caixa) e a outra fora da caixa expandida. Segmentos dentro de
+    caixas de cota não são líderes.
     """
     def _attach(px: float, py: float) -> bool:
-        si = _LEADER_EDGE_INSET_PX
-        shrunk = (
-            cb[0] + si, cb[1] + si, cb[2] - si, cb[3] - si
-        )
-        in_interior = (
-            shrunk[0] <= px <= shrunk[2] and shrunk[1] <= py <= shrunk[3]
-        )
-        return _pt_in_expanded_box(px, py, cb, _LEADER_ATTACH_PX) and not (
-            in_interior
-        )
+        # Faixa de fronteira OU interior do balão: o desenho real
+        # costuma traçar o líder por baixo do anel — a ponta pode cair
+        # dentro da caixa (VAL-02: ramo do leque cuja raiz termina no
+        # interior). A exigência de exatamente uma ponta anexada já
+        # rejeita os traços do próprio anel (as duas dentro).
+        return _pt_in_expanded_box(px, py, cb, _LEADER_ATTACH_PX)
 
     roots: list[int] = []
     for i, (x1, y1, x2, y2) in enumerate(segs):
@@ -2209,12 +2202,27 @@ def _merge_cluster(
     segs: list[tuple[float, float, float, float]],
     cl: list[int],
 ) -> tuple[float, float, float, float]:
-    xs = [segs[i][0] for i in cl] + [segs[i][2] for i in cl]
-    ys = [segs[i][1] for i in cl] + [segs[i][3] for i in cl]
-    ref = segs[cl[0]]
-    if abs(ref[2] - ref[0]) <= abs(ref[3] - ref[1]):
-        return (sum(xs) / len(xs), min(ys), sum(xs) / len(xs), max(ys))
-    return (min(xs), sum(ys) / len(ys), max(xs), sum(ys) / len(ys))
+    """Par de pontas mais distante do cluster (B2-R2).
+
+    Runs paralelos da mesma linha (espessura do traço) compartilham a
+    direção: a espinha é o par de extremidades mais afastado — correto
+    para segmentos eixo-alinhados E diagonais. O colapso anterior por
+    eixo dominante deslocava a extremidade de traços inclinados para
+    fora da linha (endpoint/encadeamento corrompidos)."""
+    pts = [
+        (segs[i][0], segs[i][1]) for i in cl
+    ] + [
+        (segs[i][2], segs[i][3]) for i in cl
+    ]
+    best = (pts[0], pts[-1])
+    best_d2 = -1.0
+    for a in pts:
+        for b in pts:
+            d2 = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+            if d2 > best_d2:
+                best_d2 = d2
+                best = (a, b)
+    return (best[0][0], best[0][1], best[1][0], best[1][1])
 
 
 def _target_regions(

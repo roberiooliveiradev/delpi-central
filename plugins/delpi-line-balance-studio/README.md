@@ -36,3 +36,11 @@ Abra `http://localhost:8080`. No GitHub, selecione **GitHub Actions** em **Setti
 A decisão visual do Product Owner em **2026-11-18** foi documentada em [UX V4: cards de origem e sidebar retrátil](docs/ux-v4-study-entry-and-method-sidebar.md). O início do Studio terá **dois cards grandes com ícones próprios** (`Produto DELPI` / `Estudo manual`), uma **sidebar secundária interna e recolhível** com ícone de cada método M1–M6, e **contexto de estudo compartilhado** entre métodos. Após iniciar um estudo, os cards dão lugar a um cabeçalho compacto e ao workspace. Os métodos planejados ficam em grupo discreto e não são executáveis. **Status: APPROVED_PRODUCT_DESIGN / TARGET_IMPLEMENTATION / TEST_NOT_RUN** — não é funcionalidade já entregue pela v0.1.
 
 **Inventário Plugin UI para UX V4:** [componentes existentes, lacunas, fronteiras e ordem de desenvolvimento](docs/plugin-ui-v4-component-inventory.md). Esta etapa define contratos candidatos e não altera a interface executável.
+
+## UX V4.1 — bancada unificada
+
+A evolução V4.1 está documentada em [UX V4.1: bancada unificada](docs/ux-v41-unified-workspace.md). A bancada ocupa a largura útil do host (sem limite de 1280px), concentra contexto, ações (`Mais ações`), KPIs, método ativo, detalhes oficiais do roteiro e a análise oficial M1 **dentro** do Studio. O host deixa de renderizar cartões de conteúdo ao redor do elemento e passa a operar por contrato público: `analysisState`, `officialOperations`, `draftSave` e os eventos `studio-analysis-run`, `studio-export` e `studio-clear-study` (ver [contracts.md](docs/contracts.md)). O cálculo oficial M1 permanece no BFF/domínio do host.
+
+## UX V4.2 — ajuda contextual e design tokens
+
+A evolução V4.2 está documentada em [UX V4.2: ajuda contextual e design tokens](docs/ux-v42-contextual-help-and-design-tokens.md). A bancada passa a explicar-se: família help do Plugin UI (`HelpTooltip`, `HintAction`, `FieldLabel`, `SectionCard.hint`, `titleHint`, `headerHint`, `ToolRailItem.description`) cobre labels, ações, KPIs, tabelas e rail; o disclosure `Como usar este método` traz guias M1/M5; e todo o texto técnico vive no catálogo de domínio `src/ui/helpCatalog.ts`. Avisos, estados vazios e validações orientam o próximo passo, e o contraste WCAG AA é medido por `tests/contrast-audit.mjs` nos dois temas. Nenhum contrato do elemento mudou.

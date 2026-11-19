@@ -27,10 +27,12 @@ import {
 } from "./inviteMessage";
 import { absolutizeInvite } from "./inviteLink";
 import {
+  formatSurveyUpdatedAt,
   isoToLocalInput,
   localInputToIso,
   surveyYearOf,
 } from "./satisfactionDates";
+import { SATISFACTION_CONTENT } from "../../content/satisfactionSurveysContent";
 import { resolveCanManageSatisfaction } from "./satisfactionAccess";
 import {
   campaignYearOptions,
@@ -40,6 +42,12 @@ import {
   hasActiveCampaignFilters,
   recipientKeys,
 } from "./satisfactionFilters";
+import {
+  EMPTY_CAMPAIGN_SORT,
+  isCampaignSortKey,
+  nextCampaignSortState,
+  sortCampaigns,
+} from "./satisfactionSort";
 
 const BASE = "/apps/commercial";
 
@@ -270,5 +278,172 @@ describe("resultado parcial da inclusão em lote", () => {
 
   it("nada incluído gera feedback vazio (a tela avisa separadamente)", () => {
     expect(describeAddRecipientsResult(base)).toEqual({ success: null, info: null, failures: [] });
+  });
+});
+
+describe("ordenação da lista de campanhas (UI-02 P2)", () => {
+  const a = campaign({ id: "a", name: "Água viva", starts_at: "2026-01-10T03:00:00Z", status: "scheduled", counts: { participants: 5, responded: 1, pending: 4 }, response_rate: 20 });
+  const b = campaign({ id: "b", name: "banana", starts_at: "2026-02-10T03:00:00Z", status: "open", counts: { participants: 30, responded: 20, pending: 10 }, response_rate: null });
+  const c = campaign({ id: "c", name: "campanha 10", starts_at: "2026-03-10T03:00:00Z", status: "closed", counts: { participants: 8, responded: 8, pending: 0 }, response_rate: 100 });
+  const d = campaign({ id: "d", name: "campanha 2", starts_at: "2026-04-10T03:00:00Z", status: "closed", counts: { participants: 8, responded: 4, pending: 4 }, response_rate: 50 });
+
+  const ids = (rows: readonly SatisfactionCampaign[]) => rows.map((row) => row.id);
+
+  it("sem chave preserva a ordem recebida (a do filterCampaigns)", () => {
+    const rows = [d, a, c, b];
+    expect(ids(sortCampaigns(rows, null, "asc"))).toEqual(["d", "a", "c", "b"]);
+    expect(ids(sortCampaigns(rows, null, "desc"))).toEqual(["d", "a", "c", "b"]);
+  });
+
+  it("nome usa collation pt-BR (acentos e números) nas duas direções", () => {
+    const rows = [a, b, c, d];
+    expect(ids(sortCampaigns(rows, "name", "asc"))).toEqual(["a", "b", "d", "c"]);
+    expect(ids(sortCampaigns(rows, "name", "desc"))).toEqual(["c", "d", "b", "a"]);
+  });
+
+  it("período ordena pelo início nas duas direções", () => {
+    const rows = [c, a, d, b];
+    expect(ids(sortCampaigns(rows, "period", "asc"))).toEqual(["a", "b", "c", "d"]);
+    expect(ids(sortCampaigns(rows, "period", "desc"))).toEqual(["d", "c", "b", "a"]);
+  });
+
+  it("situação segue o ciclo Agendada → Aberta → Encerrada (empate estável)", () => {
+    const rows = [d, b, a, c];
+    // c e d são ambas «closed»: a ordem de entrada é preservada no empate.
+    expect(ids(sortCampaigns(rows, "status", "asc"))).toEqual(["a", "b", "d", "c"]);
+    expect(ids(sortCampaigns(rows, "status", "desc"))).toEqual(["d", "c", "b", "a"]);
+  });
+
+  it("participantes e respostas ordenam numericamente", () => {
+    const rows = [b, a, c];
+    expect(ids(sortCampaigns(rows, "participants", "asc"))).toEqual(["a", "c", "b"]);
+    expect(ids(sortCampaigns(rows, "participants", "desc"))).toEqual(["b", "c", "a"]);
+    expect(ids(sortCampaigns(rows, "responded", "asc"))).toEqual(["a", "c", "b"]);
+    expect(ids(sortCampaigns(rows, "responded", "desc"))).toEqual(["b", "c", "a"]);
+  });
+
+  it("taxa de resposta ordena numericamente e vazia fica sempre por último", () => {
+    const rows = [b, c, a, d];
+    expect(ids(sortCampaigns(rows, "response_rate", "asc"))).toEqual(["a", "d", "c", "b"]);
+    expect(ids(sortCampaigns(rows, "response_rate", "desc"))).toEqual(["c", "d", "a", "b"]);
+  });
+
+  it("clique na mesma chave inverte; chave nova começa ascendente", () => {
+    expect(nextCampaignSortState(EMPTY_CAMPAIGN_SORT, "status")).toEqual({
+      sortKey: "status",
+      sortDirection: "asc",
+    });
+    expect(nextCampaignSortState({ sortKey: "status", sortDirection: "asc" }, "status")).toEqual({
+      sortKey: "status",
+      sortDirection: "desc",
+    });
+    expect(nextCampaignSortState({ sortKey: "status", sortDirection: "desc" }, "name")).toEqual({
+      sortKey: "name",
+      sortDirection: "asc",
+    });
+    expect(isCampaignSortKey("period")).toBe(true);
+    expect(isCampaignSortKey("hack")).toBe(false);
+  });
+});
+
+describe("preferências salvas da DataTableSection (formato vigente)", () => {
+  const LAYOUT_KEY = "commercial:satisfaction-campaigns:layout";
+  const COLUMNS_KEY = "commercial:satisfaction-campaigns:columns:v1";
+  const FONT_KEY = "commercial:satisfaction-campaigns:table-font-size:v1";
+
+  it("lê visão cards, coluna oculta e fonte gravados pela Section", async () => {
+    // React/react-dom resolvidos do plugin-ui: mesma instância usada pelos hooks do kit
+    // (senão o dispatcher de hooks vem nulo — "two Reacts").
+    const { createElement } = await import("../../../../plugin-ui/node_modules/react/index.js");
+    const { renderToString } = await import(
+      "../../../../plugin-ui/node_modules/react-dom/server.js"
+    );
+    const { usePersistedViewLayout } = await import(
+      "../../../../plugin-ui/src/hooks/usePersistedViewLayout"
+    );
+    const { useTableColumnVisibility } = await import(
+      "../../../../plugin-ui/src/hooks/useTableColumnVisibility"
+    );
+    const { useTableFontSize } = await import(
+      "../../../../plugin-ui/src/hooks/useTableFontSize"
+    );
+
+    const store = new Map<string, string>([
+      [LAYOUT_KEY, "cards"],
+      [
+        COLUMNS_KEY,
+        JSON.stringify({
+          visibility: {
+            name: true,
+            status: true,
+            participants: true,
+            responded: false,
+            response_rate: true,
+          },
+          order: ["name", "status", "participants", "responded", "response_rate"],
+        }),
+      ],
+      [FONT_KEY, "15"],
+    ]);
+    const fakeWindow = {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: () => undefined,
+        removeItem: () => undefined,
+      },
+      matchMedia: () => ({ matches: false }),
+    };
+    (globalThis as Record<string, unknown>).window = fakeWindow;
+
+    const catalog = [
+      { key: "name", label: "Campanha / período" },
+      { key: "status", label: "Situação" },
+      { key: "participants", label: "Participantes" },
+      { key: "responded", label: "Respostas" },
+      { key: "response_rate", label: "Taxa de resposta" },
+    ];
+
+    let captured: { layout?: string; respondedVisible?: boolean; fontSize?: number } = {};
+    function Probe() {
+      const { layout } = usePersistedViewLayout({
+        storageKey: LAYOUT_KEY,
+        defaultMode: "table",
+        mobileMaxWidthPx: 768,
+      });
+      const { visibility } = useTableColumnVisibility({
+        storageKey: COLUMNS_KEY,
+        columns: catalog,
+      });
+      const { fontSize } = useTableFontSize({ storageKey: FONT_KEY });
+      captured = { layout, respondedVisible: visibility.responded, fontSize };
+      return null;
+    }
+
+    try {
+      renderToString(createElement(Probe));
+      expect(captured.layout).toBe("cards");
+      expect(captured.respondedVisible).toBe(false);
+      expect(captured.fontSize).toBe(15);
+    } finally {
+      delete (globalThis as Record<string, unknown>).window;
+    }
+  });
+});
+
+describe("«Atualizado em» / «Atualizando…» (UI-02 P2 §5)", () => {
+  it("updatedAt monta «Atualizado em dd/mm/aaaa, hh:mm» e updating é «Atualizando…»", () => {
+    expect(SATISFACTION_CONTENT.updatedAt("18/11/2026, 14:35")).toBe(
+      "Atualizado em 18/11/2026, 14:35",
+    );
+    expect(SATISFACTION_CONTENT.updating).toBe("Atualizando…");
+  });
+
+  it("formatSurveyUpdatedAt formata no fuso do Portal em dd/mm/aaaa, hh:mm", () => {
+    expect(formatSurveyUpdatedAt("2026-11-18T17:35:00Z")).toMatch(
+      /^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/,
+    );
+    expect(formatSurveyUpdatedAt("2026-11-18T17:35:00Z")).toBe("18/11/2026, 14:35");
+    expect(formatSurveyUpdatedAt(null)).toBe("—");
+    expect(formatSurveyUpdatedAt("lixo")).toBe("—");
   });
 });

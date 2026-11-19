@@ -46,6 +46,31 @@ FULL_PRODUCT = {
 }
 
 
+def _snapshot() -> dict:
+    """Linha SB1 completa (286 colunas elegíveis) — valores atuais do cadastro."""
+    from app.application.services.integrations.protheus_product_field_catalog import (
+        PRODUCT_FIELD_SPECS,
+    )
+
+    snap = {field: "" for field in PRODUCT_FIELD_SPECS}
+    snap.update(
+        {
+            "B1_COD": "ABC123",
+            "B1_DESC": "PESO PARA TESTE 6KG",
+            "B1_TIPO": "MC",
+            "B1_UM": "PC",
+            "B1_GRUPO": "1045",
+        }
+    )
+    return snap
+
+
+def _repo(*, missing: bool = False) -> MagicMock:
+    repo = MagicMock()
+    repo.get_product_snapshot.return_value = None if missing else _snapshot()
+    return repo
+
+
 def _uc(**overrides) -> UpdateProtheusProductUseCase:
     params = MagicMock()
     params.load_raw_params.return_value = {}
@@ -56,6 +81,7 @@ def _uc(**overrides) -> UpdateProtheusProductUseCase:
         token_service=token,
         gateway=MagicMock(),
         identity_gateway=MagicMock(),
+        product_repository=_repo(),
         tracker=MagicMock(),
     )
     kwargs.update(overrides)
@@ -144,7 +170,7 @@ def test_enabled_sends_flat_b1_body_without_codusr(monkeypatch) -> None:
     assert body["B1_COD"] == "ABC123"
     assert body["B1_DESC"] == "NOVO"
     assert body["B1_TIPO"] == "MC"
-    assert len(body) == 22  # full representation: B1_COD + 21 client fields
+    assert len(body) == 286  # catálogo completo (merge inclui B1_COD)
     assert "codusr" not in body
     assert call.kwargs["url"].endswith("/delpiproduto/v1/IncProduto/alterar")
     assert result["product_code"] == "ABC123"
@@ -218,6 +244,7 @@ def test_write_target_unverified_blocks_before_upstream(monkeypatch) -> None:
         token_service=MagicMock(),
         gateway=gateway,
         identity_gateway=identity,
+        product_repository=_repo(),
         tracker=tracker,
     )
     monkeypatch.setattr(settings, "PROTHEUS_PRODUCT_UPDATE_ENABLED", True)
@@ -248,6 +275,7 @@ def test_write_target_mismatch_blocks_before_upstream(monkeypatch) -> None:
         token_service=MagicMock(),
         gateway=gateway,
         identity_gateway=identity,
+        product_repository=_repo(),
         tracker=MagicMock(),
     )
     monkeypatch.setattr(settings, "PROTHEUS_PRODUCT_UPDATE_ENABLED", True)
@@ -265,3 +293,200 @@ def test_write_target_mismatch_blocks_before_upstream(monkeypatch) -> None:
         )
     assert exc.value.code == "PROTHEUS_REST_TARGET_MISMATCH"
     gateway.update_product.assert_not_called()
+
+
+def test_partial_update_merges_snapshot(monkeypatch) -> None:
+    """Delta do cliente expande para representação completa via snapshot."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {
+        "write_outcome": "accepted_by_upstream",
+        "update_acknowledged": True,
+        "persistence_proven": False,
+    }
+    result = _enabled_uc(monkeypatch, gateway).execute(
+        actor_user_id=ACTOR,
+        product_code="ABC123",
+        product={"B1_GRUPO": "9999"},  # um único campo — contrato parcial
+    )
+    body = gateway.update_product.call_args.kwargs["body"]
+    assert body["B1_GRUPO"] == "9999"
+    assert body["B1_DESC"] == "PESO PARA TESTE 6KG"  # preservado do snapshot
+    assert len(body) == 286
+    assert result["fields_sent"] == ["B1_GRUPO"]
+    assert result["fields_merged"] == 285
+
+
+def test_protected_field_rejected(monkeypatch) -> None:
+    gateway = MagicMock()
+    with pytest.raises(ProtheusRestError) as exc:
+        _enabled_uc(monkeypatch, gateway).execute(
+            actor_user_id=ACTOR,
+            product_code="ABC123",
+            product={"B1_USERLGA": "hacker"},
+        )
+    assert exc.value.code == "PROTHEUS_PRODUCT_FIELD_PROTECTED"
+    gateway.update_product.assert_not_called()
+
+
+def test_unknown_field_rejected(monkeypatch) -> None:
+    gateway = MagicMock()
+    with pytest.raises(ProtheusRestError) as exc:
+        _enabled_uc(monkeypatch, gateway).execute(
+            actor_user_id=ACTOR,
+            product_code="ABC123",
+            product={"B1_INVENTED": "x"},
+        )
+    assert exc.value.code == "PROTHEUS_PRODUCT_FIELD_UNKNOWN"
+    gateway.update_product.assert_not_called()
+
+
+def test_empty_update_rejected(monkeypatch) -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        _enabled_uc(monkeypatch, MagicMock()).execute(
+            actor_user_id=ACTOR,
+            product_code="ABC123",
+            product={},
+        )
+    assert exc.value.code == "PROTHEUS_PRODUCT_PAYLOAD_INVALID"
+
+
+def test_product_not_found_404(monkeypatch) -> None:
+    from app.application.use_cases.integrations import (
+        update_protheus_product_use_case as uc_mod,
+    )
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "PROTHEUS_PRODUCT_UPDATE_ENABLED", True)
+    monkeypatch.setattr(
+        settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url
+    )
+    monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
+    gateway = MagicMock()
+    with pytest.raises(ProtheusRestError) as exc:
+        _uc(
+            product_repository=_repo(missing=True),
+            identity_gateway=_identity_mapped(),
+            gateway=gateway,
+        ).execute(
+            actor_user_id=ACTOR, product_code="ABC123", product=FULL_PRODUCT
+        )
+    assert exc.value.code == "PROTHEUS_PRODUCT_NOT_FOUND"
+    assert exc.value.status_code == 404
+    gateway.update_product.assert_not_called()
+
+
+def test_readback_confirms_persisted_change(monkeypatch) -> None:
+    """Read-back igual ao enviado → CONFIRMED (prova além do ACK)."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    snap = _snapshot()
+    calls = {"n": 0}
+
+    repo = MagicMock()
+
+    def _get(_code):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return snap  # pré-write
+        after = dict(snap)
+        after["B1_GRUPO"] = "9999"  # pós-write já refletido
+        return after
+
+    repo.get_product_snapshot.side_effect = _get
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_GRUPO": "9999"}
+    )
+    assert result["confirmation"] == "CONFIRMED"
+    assert "readback_divergent_fields" not in result
+
+
+def test_readback_divergence_stays_acknowledged(monkeypatch) -> None:
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    repo = _repo()  # snapshot estático: valor antigo não muda → divergente
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_GRUPO": "9999"}
+    )
+    assert result["confirmation"] == "ACKNOWLEDGED"
+    assert result["readback_divergent_fields"] == ["B1_GRUPO"]
+
+
+def test_readback_flags_zeroed_untouched_field(monkeypatch) -> None:
+    """Anti-zeramento: divergência em campo NÃO alterado também barra o
+    CONFIRMED — a pós-condição da representação completa é verificada
+    por inteiro, não só no delta do cliente."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    snap = _snapshot()
+    calls = {"n": 0}
+
+    repo = MagicMock()
+
+    def _get(_code):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return snap
+        after = dict(snap)
+        after["B1_GRUPO"] = "9999"   # alteração pedida, persistida
+        after["B1_DESC"] = ""        # campo não tocado zerado pelo ERP
+        return after
+
+    repo.get_product_snapshot.side_effect = _get
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_GRUPO": "9999"}
+    )
+    assert result["confirmation"] == "ACKNOWLEDGED"
+    assert result["readback_divergent_fields"] == ["B1_DESC"]
+
+
+def test_readback_numeric_equivalence_confirms(monkeypatch) -> None:
+    """"5.50" enviado ≡ 5.5 persistido: numérico compara por valor, não
+    por texto — sem falsa divergência."""
+    gateway = MagicMock()
+    gateway.update_product.return_value = {"update_acknowledged": True}
+    snap = _snapshot()
+    calls = {"n": 0}
+
+    repo = MagicMock()
+
+    def _get(_code):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return snap
+        after = dict(snap)
+        after["B1_PICMRET"] = 5.5  # gravado como float
+        return after
+
+    repo.get_product_snapshot.side_effect = _get
+    result = _enabled_uc(monkeypatch, gateway).__class__(
+        params_repository=MagicMock(**{"load_raw_params.return_value": {}}),
+        token_service=MagicMock(**{"get_valid_token.return_value": "tok"}),
+        gateway=gateway,
+        identity_gateway=_identity_mapped(),
+        product_repository=repo,
+        tracker=MagicMock(),
+    ).execute(
+        actor_user_id=ACTOR, product_code="ABC123", product={"B1_PICMRET": "5.50"}
+    )
+    assert result["confirmation"] == "CONFIRMED"

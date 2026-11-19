@@ -1,0 +1,42 @@
+2026-11-19 08:28:00,946 INFO app.composition.root_composer cri_presentation_resource id=delia.cri.presentation_vocabulary version=7 sha256=89b05035ca0569c81342bd15a5673210cf62c26ac95dcc2903aba254e8c11cf7
+2026-11-19 08:28:01,050 INFO app.composition.root_composer delia_orchestration_engine selected=pydantic_ai surface=configured runtime_sha=30ac7cbb4467f2d4703f266a701979747857a54c model_id=qwen3:8b(' config_profile=local_ollama config_fingerprint=8599c328b501ecf1',)
+2026-11-19 08:28:01,057 INFO delia-api delia_api_started service=delia-api version=0.0.1 env=development
+2026-11-19 08:28:54,663 INFO app.application.capability_provision.semantic_capability_support orchestration stage=model_propose decision=ok purpose=delia.capability_orchestration.interaction_admission timing_ms=52545 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:28:54,666 INFO app.application.capability_provision.semantic_capability_support orchestration stage=interaction_admission decision=owner_surface class=operational correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:28:57,390 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_tool_catalog decision=project actor=572e5d23-0449-4b5b-9725-f14b5aa80d16 catalog_len=12 catalog_total=12 catalog_overflow=False owners=api-delpi:4,transformometro-api:4,tv-dashboard-api:4 failures=- correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:28:57,397 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=dynamic_toolset catalog_len=12 instruction_version=generalist-semantic-v2-7-page-continuation instruction_base_fingerprint=725917efe2221d47 instruction_fingerprint=725917efe2221d47 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:28:57,477 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=native_mcp_toolsets groups=mcp:davi,mcp:teo,mcp:vista catalog_caps=davi.analyze,davi.get_context,davi.knowledge,davi.read,teo.analyze,teo.get_context,teo.knowledge,teo.read,vista.analyze,vista.get_context,vista.knowledge,vista.read toolsets=3 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:28,552 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=arg_type_gate capability=davi.get_context declared={'action': 'string', 'capability': ['null', 'string']} args={'action': 'str'} correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:28,558 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=tool_call_args capability=davi.get_context outer_keys=action inner_keys=- correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:28,558 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_tool_invoke decision=start capability=davi.get_context actor=572e5d23-0449-4b5b-9725-f14b5aa80d16 session=f16fbb74-711e-4b96-ad40-d92a5c1c9916 prepare_only=False correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:29,142 INFO app.application.capability_provision.semantic_capability_support orchestration stage=provider_invoke decision=ok capability=davi.get_context class=DISCOVERY arg_keys=action timing_ms=253 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:29,148 INFO app.application.capability_provision.semantic_capability_support orchestration stage=discovery_terminal decision=CAPABILITY_NOT_MATCHED eligible=118 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:29:29,153 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=tool_observed capability=davi.get_context action=get_context root=None uncovered=90260147 progress=DISCOVERY_ONLY status=SUCCESS error=- correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:30:09,378 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=arg_type_gate capability=davi.read declared={'capability': 'string', 'arguments': ['null', 'object']} args={'capability': 'str', 'arguments': 'dict'} correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:31:01,028 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=arg_type_gate capability=davi.read declared={'capability': 'string', 'arguments': ['null', 'object']} args={'capability': 'str', 'arguments': 'dict'} correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:31:01,044 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_plan decision=invalid_expected_delivery correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:31:27,960 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_plan decision=invalid_expected_delivery correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:31:53,043 INFO app.application.capability_provision.semantic_capability_support orchestration stage=semantic_plan decision=invalid_expected_delivery correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:32:12,647 INFO app.infrastructure.orchestration.pydantic_ai_investigation orchestration engine=pydantic_ai stage=investigation decision=arg_type_gate capability=davi.get_context declared={'action': 'string', 'capability': ['null', 'string']} args={'action': 'str'} correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+2026-11-19 08:33:23,012 INFO app.application.capability_provision.semantic_capability_support orchestration stage=turn_budget decision=turn_budget_exhausted attempt=1 correlation_id=71c8a9fa-ba64-47f4-8297-192f46f650ee
+{"id": "A", "text": "Qual a descrição do produto de código 90260147?", "elapsed_s": 320.9, "result_type": "InteractiveTurnResult", "status": "None", "epistemic_class": "EpistemicClass.HYPOTHESIS", "grounding_status": "GroundingStatus.NON_GROUNDED", "governed_attempts": 0, "attempt_statuses": [], "limitations": ["delpi_source_unverified"], "usage": {}, "content_head": "O processamento da sua solicitação demorou além do limite e a tentativa foi interrompida. Não identifiquei uma falha na fonte de dados — nenhum dado operacional foi verificado. Você pode tentar novame"}
+=== SUMMARY ===
+{
+ "head": "e09f9884ac8621b03750bd7f68524651b9aa502d",
+ "runtime_profile": "local_ollama",
+ "llm_model": "qwen3:8b",
+ "two_agent_experiment": false,
+ "parallel_mcp_discovery": false,
+ "scenarios": [
+  "A"
+ ],
+ "outcomes": {
+  "A": {
+   "result_type": "InteractiveTurnResult",
+   "grounding_status": "GroundingStatus.NON_GROUNDED",
+   "governed_attempts": 0,
+   "elapsed_s": 320.9
+  }
+ }
+}
+EXIT=0

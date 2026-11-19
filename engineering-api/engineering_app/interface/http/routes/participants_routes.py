@@ -1,11 +1,13 @@
 """BFF de participantes — proxy governado do avatar canônico do Portal
 (Core ``/integrations/person-profiles`` via S2S). Ownership da foto
 permanece na Core; aqui só autorização do módulo + repasse de bytes.
-Mesmo contrato do requests-api (``/participants``)."""
+Mesmo contrato do requests-api (``/participants``).
 
-from __future__ import annotations
+Sem ``from __future__ import annotations``: endpoints decorados por
+``require_any_permission`` resolvem ForwardRefs no globalns do wrapper
+(delpi_auth), não do módulo — anotações precisam ser objetos reais."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -28,7 +30,7 @@ class ParticipantLookupBody(BaseModel):
 
 @router.post("/v1/participants/lookup", operation_id="participants_lookup")
 @require_any_permission(_PARTICIPANT_PERMS)
-def participants_lookup(body: ParticipantLookupBody):
+def participants_lookup(body: ParticipantLookupBody = Body(...)):
     """Batch has_photo da Core person-profile (S2S). Sem PII privada."""
     adapter = CorePersonProfileAdapter()
     ids = [uid for uid in (str(i).strip() for i in body.ids) if uid]

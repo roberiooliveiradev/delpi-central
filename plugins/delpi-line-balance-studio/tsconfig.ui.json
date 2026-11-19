@@ -11,6 +11,7 @@
     "emitDeclarationOnly": true,
     "paths": {
       "@delpi/plugin-ui/native-controls": ["../plugin-ui/src/native-controls.ts"],
+      "@delpi/plugin-ui/workspace-controls": ["../plugin-ui/src/workspace-controls.ts"],
       "react": ["./node_modules/@types/react/index.d.ts"],
       "react/*": ["./node_modules/@types/react/*"],
       "react-dom": ["./node_modules/@types/react-dom/index.d.ts"],

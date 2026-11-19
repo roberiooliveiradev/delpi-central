@@ -1,0 +1,80 @@
+module_id: product-master
+package_tag: SB1
+name: "Product Master — SB1"
+responsibility: "Integração de escrita do cadastro de produtos (SB1) via MATA010/MSExecAuto."
+owners:
+  technical: "DELPI Integrações (api-delpi)"
+  erp: "Equipe Protheus (Delpi-ti)"
+entities: [SB1]
+official_routines:
+  - id: MATA010
+    mechanism: MSExecAuto
+    status: PROVEN_SOURCE
+reference_source:
+  repo: "Delpi-ti/protheus-erp"
+  branch: master
+  path: "04. Estoque/DLP04I01.PRW"
+  upstream_sha: INCONCLUSIVE
+  mirror_path: "docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW"
+  mirror_blob_sha: "cdb68b0487222823a96162c0e493e442648e21f7"
+  mirror_commit: "be614649b7"
+candidate_source:
+  name: "DLP04I01.PRW"
+  status: SOURCE_CANDIDATE
+  path: "src/DLP04I01.PRW"
+  provenance:
+    erp_repo: "Delpi-ti/protheus-erp"
+    erp_branch: "master"
+    erp_head: "INCONCLUSIVE (repo privado nao revalidado nesta sessao; ultima referencia 86616df50b17)"
+    erp_path: "04. Estoque/DLP04I01.PRW"
+    erp_blob_sha: "cdb68b0487222823a96162c0e493e442648e21f7 (espelho; parity com master nao revalidada)"
+    mirror_path: "docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW"
+    mirror_commit: "be614649b7"
+    note: "SHA do candidato = commit do delpi-central que o contem; distinto do SHA upstream"
+  changes:
+    - "catalogo completo SB1: 286 campos gerados de contracts/sb1-field-matrix.json (SX3 TST01, parity PROD)"
+    - "rejeicao explicita de campos desconhecidos/protegidos (28 SYSTEM_MANAGED/IMMUTABLE exceto B1_COD)"
+    - "PUT exige representacao completa do catalogo (fail-closed contra zeramento); parcial resolvido na api-delpi via read-merge-write"
+    - "POST exige apenas B1_COD; demais campos recebem defaults oficiais da MATA010"
+    - "tipos por SX3: C estrito, N nativo ou lIsNumStr, D AAAAMMDD, M string (5 memo SX3 TO_INVENTORY — sem coluna fisica na SB1010 do TST01, fora do catalogo)"
+    - "ErrorBlock restaurado em todos os caminhos (finalizacao unica); GetAutoGrLog sanitizado; sem ErrorStack na resposta"
+    - "DELETE excluir publicado e BLOQUEADO (501 not_homologated) — semantica oficial pendente"
+    - "GET metadados publicado — autodescricao do catalogo (field+kind, 286 entradas)"
+    - "RETOBJ v2 com errorType (client_error/official_validation/server_error/not_homologated)"
+    - "v2.1 revisao independente: campos D aceitam vazio legitimo; GetContent dentro do Begin Sequence; sanitlog sem separador pendente; lookup de catalogo sem rebuild; literais ASCII"
+  pending_validation:
+    - "compilacao e homologacao TST01 pela equipe ERP"
+    - "pontos de entrada ativos na MATA010 do ambiente"
+development_status: SOURCE_CANDIDATE
+operations:
+  known:
+    - op: CREATE
+      status: PROVEN_SOURCE
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO POST PROVEN_RUNTIME (contrato v2: catalogo completo, B1_COD obrigatorio)"
+    - op: UPDATE
+      status: PROVEN_SOURCE
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (v2: representacao completa 286 campos; parcial via read-merge-write na api-delpi)"
+    - op: METADATA
+      status: SOURCE_CANDIDATE
+      evidence: "GET /v1/IncProduto/metadados no candidato — autodescricao estatica, sem leitura ERP"
+  pending:
+    - op: READ
+      note: "ficha completa permanece na superficie governada de leitura api-delpi (SELECT SB1) — nao implementar SQL no .PRW"
+    - op: DELETE
+      note: "BLOCKED (501): semantica oficial MATA010 op 5 TO_INVENTORY — exige fonte + inventario de vinculos antes de implementar"
+dependencies: []
+rest_contracts:
+  - id: DELPIPRODUTO
+    uris:
+      - "POST /v1/IncProduto/incluir"
+      - "PUT /v1/IncProduto/alterar"
+      - "DELETE /v1/IncProduto/excluir (501 blocked)"
+      - "GET /v1/IncProduto/metadados"
+    status: SOURCE_CANDIDATE
+    note: "POST/PUT PROVEN_RUNTIME no contrato de 22 campos; catalogo v2 aguarda recompilacao TST01"
+restrictions:
+  erp_write: "proibida fora de gate+pin (default OFF) — ver protheus-write-integration-playbook.md"
+  rpo_compile: "exclusivo da equipe ERP; nunca por efeito colateral de commit"
+  direct_sql_reclock: FORBIDDEN
+sources:
+  - "DLP04I01.PRW"

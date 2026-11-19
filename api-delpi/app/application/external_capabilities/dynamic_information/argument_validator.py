@@ -641,7 +641,11 @@ def validate_arguments(
 
     unknown = [k for k in raw if k not in properties]
     if unknown:
-        raise ArgumentValidationError(f"Unknown argument(s): {', '.join(sorted(unknown))}")
+        accepted = ", ".join(sorted(properties)) or "<none>"
+        raise ArgumentValidationError(
+            f"Unknown argument(s): {', '.join(sorted(unknown))}. "
+            f"Accepted arguments for this capability: {accepted}"
+        )
 
     _apply_governed_defaults(raw, properties, constraints)
 

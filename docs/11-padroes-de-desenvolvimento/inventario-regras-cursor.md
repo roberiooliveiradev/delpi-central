@@ -176,6 +176,7 @@ Racional: composição visual, integração federada, design system, estados, ac
 
 Owner: `platform-quality-testing.mdc`
 
+- `agent-session-scope.mdc`
 - `ai-intelligence-evaluation.mdc`
 - `architecture-ci-enforcement.mdc`
 - `cursor-rules-governance.mdc`

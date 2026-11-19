@@ -26,7 +26,6 @@ export function formatDateTimeBr(value: string | null | undefined): string {
 /** Agenda com nextRunAt no passado — worker não reivindicou o slot. */
 export function isScheduleOverdue(
   nextRunAt: string | null | undefined,
-  *,
   now: Date = new Date(),
 ): boolean {
   if (!nextRunAt) return false;
@@ -37,7 +36,6 @@ export function isScheduleOverdue(
 
 export function formatNextRunLabel(
   nextRunAt: string | null | undefined,
-  *,
   now: Date = new Date(),
 ): string {
   const formatted = formatDateTimeBr(nextRunAt);

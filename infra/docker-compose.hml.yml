@@ -227,15 +227,18 @@ services:
       - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/drawing-pdfs:/drawing-pdfs:ro
       - ${DELPI_HML_DATA_HOST_DIR:-./hml-data}/api-delpi-logs:/app/logs
     environment:
-      # TOTVS permanece inalcançável até a cópia sanitizada autorizada.
-      # Estes valores vencem env_file e o shell: não há caminho de escrita
-      # para o SQL Server de produção a partir deste Compose.
+      # HML lê/escreve SEMPRE no TOTVS de teste (TST01): o seletor
+      # TOTVS_TARGET_ENV trava o catálogo (DELPI_TST01 + AMBIENTE=2 + pin
+      # REST 192.168.1.233:8061) e falha fechado em qualquer divergência.
+      # Host/credenciais vêm das TOTVS_DB_* do ambiente de deploy (mesmo
+      # SQL Server); a base de dados é literal — nunca DELPI produtiva.
       API_DELPI_ENV: homologation
-      DB_HOST: totvs-disabled.hml.invalid
-      DB_PORT: "1433"
-      DB_USER: hml_disabled
-      DB_PASSWORD: hml_disabled
-      DB_DATABASE: DISABLED
+      TOTVS_TARGET_ENV: "TST01"
+      DB_HOST: ${TOTVS_DB_HOST:-}
+      DB_PORT: ${TOTVS_DB_PORT:-1433}
+      DB_USER: ${TOTVS_DB_USER:-}
+      DB_PASSWORD: ${TOTVS_DB_PASSWORD:-}
+      DB_DATABASE: "DELPI_TST01"
       # Leitura da auditoria de entradas. Não altera DB_HOST: as rotas de
       # escrita continuam no host desabilitado. Vazio = sem prova HML.
       ENTRY_AUDIT_DB_HOST: ${TOTVS_DB_HOST:-}
@@ -257,11 +260,12 @@ services:
       # alvo continua travado no pin TST abaixo (fail-closed).
       PROTHEUS_PRODUCT_UPDATE_ENABLED: ${PROTHEUS_PRODUCT_UPDATE_ENABLED:-false}
       # HML sempre resolve o Protheus de TESTE: AMBIENTE=2 seleciona os
-      # parâmetros do REST de homologação (192.168.1.233:8701 → DELPI_TST01)
+      # parâmetros do REST de homologação (192.168.1.233:8061 → DELPI_TST01)
       # e o pin abaixo trava o único alvo de escrita permitido. Se os
       # parâmetros driftarem para produção, o write guard falha fechado.
       INTRANET_PARAMS_AMBIENTE: "2"
-      PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8701/rest"
+      # PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8701/rest"
+      PROTHEUS_REST_EXPECTED_BASE_URL: "http://192.168.1.233:8061"
       OPENAPI_CONSUMER_NOTIFY_ON_STARTUP: "false"
       OPENAPI_CONSUMER_NOTIFY_ENABLED: "false"
       OPENAPI_CONSUMER_CHAT_SYNC_URL: ""
@@ -841,6 +845,9 @@ services:
       ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED: ${ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED:-true}
       ENTRY_AUDIT_INPUT_TES: ${ENTRY_AUDIT_INPUT_TES:-018,052,069,106,166,169,406}
       ENTRY_AUDIT_CAUSE_GROUPING_ENABLED: ${ENTRY_AUDIT_CAUSE_GROUPING_ENABLED:-true}
+      ENTRY_AUDIT_IBSCBS_ENABLED: ${ENTRY_AUDIT_IBSCBS_ENABLED:-true}
+      ENTRY_AUDIT_IBSCBS_EXCEPTIONS: ${ENTRY_AUDIT_IBSCBS_EXCEPTIONS:-}
+      ENTRY_AUDIT_IBSCBS_BOOK_FROM: ${ENTRY_AUDIT_IBSCBS_BOOK_FROM:-}
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       # LNF hosted — dark no boot; ensaio liga via .env.hml / override.
       LNF_HOSTED_ENABLED: ${LNF_HOSTED_ENABLED:-true}

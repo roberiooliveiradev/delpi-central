@@ -57,6 +57,44 @@ class ListEntryAuditUseCase:
         )
         return page_payload(rows, page=query.page, page_size=query.page_size)
 
+    def reform_taxes(self, query: EntryAuditPeriodQuery) -> dict:
+        rows = self._repository.fetch_reform_taxes(
+            branch=query.branch,
+            received_from=query.received_from,
+            received_to=query.received_to,
+            species=list(query.species),
+            offset=query.offset,
+            page_size=query.page_size,
+        )
+        return page_payload(rows, page=query.page, page_size=query.page_size)
+
+    def reform_taxes_by_access_keys(self, query: EntryAuditAccessKeyQuery) -> dict:
+        rows = self._repository.fetch_reform_taxes_by_access_keys(
+            branch=query.branch,
+            access_keys=list(query.access_keys),
+        )
+        page_size = max(len(rows), 1)
+        return page_payload(rows, page=1, page_size=page_size)
+
+    def reform_book(self, query: EntryAuditPeriodQuery) -> dict:
+        rows = self._repository.fetch_reform_book(
+            branch=query.branch,
+            received_from=query.received_from,
+            received_to=query.received_to,
+            species=list(query.species),
+            offset=query.offset,
+            page_size=query.page_size,
+        )
+        return page_payload(rows, page=query.page, page_size=query.page_size)
+
+    def reform_book_by_access_keys(self, query: EntryAuditAccessKeyQuery) -> dict:
+        rows = self._repository.fetch_reform_book_by_access_keys(
+            branch=query.branch,
+            access_keys=list(query.access_keys),
+        )
+        page_size = max(len(rows), 1)
+        return page_payload(rows, page=1, page_size=page_size)
+
     def tes(self, *, page: int, page_size: int) -> dict:
         rows = self._repository.fetch_tes(offset=(page - 1) * page_size, page_size=page_size)
         return page_payload(rows, page=page, page_size=page_size)

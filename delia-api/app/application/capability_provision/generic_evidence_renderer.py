@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -1198,11 +1198,7 @@ class CountResolutionKind(str, Enum):
     PAGE_SLICE_NOT_TOTAL = "PAGE_SLICE_NOT_TOTAL"
 
 
-# Default operational bound for governed page walks (R5).
-DEFAULT_MAX_PAGES = 20
-
 _TOTAL_KEYS = ("total_count", "total", "totalcount", "count_total")
-_ID_KEYS = ("id", "ticket_id", "ticketid")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1215,21 +1211,6 @@ class PaginationEnvelope:
 
     @property
     def returned_count(self) -> int:
-        return len(self.items)
-
-
-@dataclass(frozen=True, slots=True)
-class PageAggregationResult:
-    items: tuple[Mapping[str, Any], ...]
-    pages_fetched: int
-    complete: bool
-    duplicate_ids: tuple[str, ...]
-    failed: bool
-    failure_reason: str | None
-    authoritative_total: int | None
-
-    @property
-    def unique_count(self) -> int:
         return len(self.items)
 
 
@@ -1371,15 +1352,6 @@ def extract_pagination_envelope(
     return None
 
 
-def item_stable_id(item: Mapping[str, Any]) -> str | None:
-    for key in _ID_KEYS:
-        if key in item and item[key] is not None:
-            text = str(item[key]).strip()
-            if text:
-                return text
-    return None
-
-
 def _is_first_page(page: int | None) -> bool:
     """True when the envelope is the first page of a query.
 
@@ -1389,245 +1361,10 @@ def _is_first_page(page: int | None) -> bool:
     """
     return page is None or page <= 1
 
-def aggregate_paginated_pages(
-    pages: Sequence[Mapping[str, Any] | PaginationEnvelope | None],
-    *,
-    max_pages: int = DEFAULT_MAX_PAGES,
-) -> PageAggregationResult:
-    """Merge ordered owner pages with integrity checks.
-
-    ``complete`` requires explicit evidence of a finished walk:
-
-    - authoritative owner total, or
-    - walk that starts at the first page, contiguous page numbers (when
-      present), last page ``has_more is False``, no duplicate ids, no
-      page failures, and no missing stable ids when counting.
-
-    ``has_more is None`` never proves completion. An isolated last page
-    (``page>1``) never proves the full query total.
-    """
-    merged: list[Mapping[str, Any]] = []
-    seen: set[str] = set()
-    duplicates: list[str] = []
-    pages_fetched = 0
-    authoritative: int | None = None
-    last_has_more: bool | None = None
-    started_at_first = False
-    expected_page: int | None = None
-    seen_page_numbers: set[int] = set()
-    missing_stable_ids = 0
-    failure_reason: str | None = None
-
-    bounded = list(pages)[: max(0, max_pages)]
-    for raw in bounded:
-        if raw is None:
-            return PageAggregationResult(
-                items=tuple(merged),
-                pages_fetched=pages_fetched,
-                complete=False,
-                duplicate_ids=tuple(duplicates),
-                failed=True,
-                failure_reason="page_failure",
-                authoritative_total=authoritative,
-            )
-        envelope = (
-            raw
-            if isinstance(raw, PaginationEnvelope)
-            else extract_pagination_envelope(raw)
-        )
-        if envelope is None:
-            return PageAggregationResult(
-                items=tuple(merged),
-                pages_fetched=pages_fetched,
-                complete=False,
-                duplicate_ids=tuple(duplicates),
-                failed=True,
-                failure_reason="malformed_page",
-                authoritative_total=authoritative,
-            )
-
-        page_num = envelope.page
-        if pages_fetched == 0:
-            started_at_first = _is_first_page(page_num)
-            if page_num is not None:
-                expected_page = page_num
-        if page_num is not None:
-            if page_num in seen_page_numbers:
-                failure_reason = "duplicate_page"
-            elif expected_page is not None and page_num != expected_page:
-                failure_reason = (
-                    "out_of_order"
-                    if page_num < expected_page
-                    else "missing_intermediate_page"
-                )
-            seen_page_numbers.add(page_num)
-            expected_page = page_num + 1
-
-        if failure_reason is not None:
-            return PageAggregationResult(
-                items=tuple(merged),
-                pages_fetched=pages_fetched,
-                complete=False,
-                duplicate_ids=tuple(duplicates),
-                failed=True,
-                failure_reason=failure_reason,
-                authoritative_total=authoritative,
-            )
-
-        pages_fetched += 1
-        if envelope.total_count is not None:
-            if (
-                authoritative is not None
-                and envelope.total_count != authoritative
-            ):
-                return PageAggregationResult(
-                    items=tuple(merged),
-                    pages_fetched=pages_fetched,
-                    complete=False,
-                    duplicate_ids=tuple(duplicates),
-                    failed=True,
-                    failure_reason="authoritative_total_conflict",
-                    authoritative_total=authoritative,
-                )
-            authoritative = envelope.total_count
-        last_has_more = envelope.has_more
-        for item in envelope.items:
-            item_id = item_stable_id(item)
-            if item_id is None:
-                missing_stable_ids += 1
-                merged.append(item)
-                continue
-            if item_id in seen:
-                duplicates.append(item_id)
-                continue
-            seen.add(item_id)
-            merged.append(item)
-        if envelope.has_more is False:
-            break
-
-    if missing_stable_ids and authoritative is None:
-        # Without stable ids we cannot prove uniqueness → never exact.
-        return PageAggregationResult(
-            items=tuple(merged),
-            pages_fetched=pages_fetched,
-            complete=False,
-            duplicate_ids=tuple(duplicates),
-            failed=False,
-            failure_reason="missing_stable_ids",
-            authoritative_total=authoritative,
-        )
-
-    if duplicates:
-        return PageAggregationResult(
-            items=tuple(merged),
-            pages_fetched=pages_fetched,
-            complete=False,
-            duplicate_ids=tuple(duplicates),
-            failed=False,
-            failure_reason="duplicate_ticket_ids",
-            authoritative_total=authoritative,
-        )
-
-    if authoritative is not None:
-        # Owner total is authoritative even mid-walk; uniqueness still
-        # required above. Do not recompute from page lengths.
-        return PageAggregationResult(
-            items=tuple(merged),
-            pages_fetched=pages_fetched,
-            complete=True,
-            duplicate_ids=(),
-            failed=False,
-            failure_reason=None,
-            authoritative_total=authoritative,
-        )
-
-    # Explicit last-page signal only closes a walk that started at page 1.
-    if (
-        last_has_more is False
-        and started_at_first
-        and pages_fetched > 0
-    ):
-        return PageAggregationResult(
-            items=tuple(merged),
-            pages_fetched=pages_fetched,
-            complete=True,
-            duplicate_ids=(),
-            failed=False,
-            failure_reason=None,
-            authoritative_total=None,
-        )
-
-    reason = "partial_unknown"
-    if last_has_more is None:
-        reason = "unsigned_completeness"
-    elif not started_at_first:
-        reason = "not_started_at_first_page"
-    elif pages_fetched >= max_pages and last_has_more is True:
-        reason = "max_pages_exceeded"
-    elif last_has_more is True:
-        reason = "has_more_remaining"
-
-    return PageAggregationResult(
-        items=tuple(merged),
-        pages_fetched=pages_fetched,
-        complete=False,
-        duplicate_ids=(),
-        failed=False,
-        failure_reason=reason,
-        authoritative_total=None,
-    )
-
-
 def resolve_count_semantics(
     envelope: PaginationEnvelope | None,
-    *,
-    aggregation: PageAggregationResult | None = None,
 ) -> CountResolution:
-    """Map owner page / aggregation evidence to count wording."""
-    if aggregation is not None:
-        if aggregation.failed:
-            return CountResolution(
-                kind=CountResolutionKind.PARTIAL_UNKNOWN,
-                total=None,
-                returned_on_page=aggregation.unique_count,
-                has_more=True,
-                message=UNKNOWN_TOTAL_MESSAGE,
-            )
-        if aggregation.authoritative_total is not None:
-            return CountResolution(
-                kind=CountResolutionKind.AUTHORITATIVE_TOTAL,
-                total=aggregation.authoritative_total,
-                returned_on_page=aggregation.unique_count,
-                has_more=False,
-                message=AUTHORITATIVE_COUNT_MESSAGE.format(
-                    total=aggregation.authoritative_total
-                ),
-            )
-        if aggregation.complete and not aggregation.duplicate_ids:
-            total = aggregation.unique_count
-            if total == 0:
-                return CountResolution(
-                    kind=CountResolutionKind.EMPTY,
-                    total=0,
-                    returned_on_page=0,
-                    has_more=False,
-                    message=EMPTY_COUNT_MESSAGE,
-                )
-            return CountResolution(
-                kind=CountResolutionKind.COMPLETE_AGGREGATE,
-                total=total,
-                returned_on_page=total,
-                has_more=False,
-                message=COMPLETE_COUNT_MESSAGE.format(total=total),
-            )
-        return CountResolution(
-            kind=CountResolutionKind.PARTIAL_UNKNOWN,
-            total=None,
-            returned_on_page=aggregation.unique_count,
-            has_more=True,
-            message=UNKNOWN_TOTAL_MESSAGE,
-        )
-
+    """Map owner page evidence to count wording."""
     if envelope is None:
         return CountResolution(
             kind=CountResolutionKind.PARTIAL_UNKNOWN,

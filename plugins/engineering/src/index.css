@@ -1013,13 +1013,6 @@
  * Composição da ferramenta — grids/gaps com tokens do design system;
  * nenhum componente do kit é replicado. */
 
-.engineering-processes__lookup {
-  display: grid;
-  gap: var(--en-grid-gap);
-  grid-template-columns: minmax(200px, 2fr) auto repeat(2, minmax(160px, 1fr));
-  align-items: end;
-}
-
 .engineering-processes__tool-row {
   display: flex;
   flex-wrap: wrap;
@@ -1079,18 +1072,12 @@
 }
 
 @media (max-width: 1024px) {
-  .engineering-processes__lookup {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .engineering-processes__yamazumi-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .engineering-processes__lookup {
-    grid-template-columns: 1fr;
-  }
   .engineering-processes__unassigned-item {
     grid-template-columns: 1fr;
   }

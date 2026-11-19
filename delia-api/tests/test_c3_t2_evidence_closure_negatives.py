@@ -27,8 +27,10 @@ from app.application.capability_provision.contracts import (
 )
 from app.application.capability_provision.generic_evidence_renderer import (
     CountResolutionKind,
-    aggregate_paginated_pages,
-    resolve_count_semantics,
+)
+from app.application.capability_provision.semantic_capability_support import (
+    MaterialObligation,
+    _joint_collection_coverage,
 )
 from app.application.capability_provision.semantic_capability_support import (
     OBLIGATION_SATISFIED,
@@ -235,93 +237,80 @@ def test_g2_complete_without_bound_evidence_is_overridden():
 
 
 # ---------------- R5 pagination negatives -----------------------------
+# E2: the standalone page oracle was retired — the wired evaluator is
+# ``_joint_collection_coverage`` (record-union == single declared total).
+
+from tests.test_f2_native_refactor_e1 import _paged_attempt as _r5_att
+
+
+def _r5_recs(start: int, n: int) -> list[dict]:
+    return [{"id": i} for i in range(start, start + n)]
+
+
+def _r5_cov(attempts) -> bool:
+    obl = MaterialObligation(
+        description="enumerate items", evidence_source="items"
+    )
+    return bool(_joint_collection_coverage(obl, tuple(attempts)))
 
 
 def test_r5_n1_duplicate_page_does_not_inflate_collection():
-    agg = aggregate_paginated_pages(
-        [
-            _page(page=1, n=40, has_more=True, total_count=109, id_offset=0),
-            _page(page=1, n=40, has_more=False, total_count=109, id_offset=0),
-        ]
-    )
-    assert agg.failed is True
-    assert agg.failure_reason == "duplicate_page"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Re-observed page contributes nothing: union < declared total.
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 40), 109),
+        _r5_att(_r5_recs(1, 40), 109),
+    ])
 
 
 def test_r5_n2_duplicate_record_rejects_false_total():
     # Without owner total: duplicate ids keep the walk incomplete and
     # must not invent a recomputed total from merged lengths.
-    p2 = _page(page=2, n=5, has_more=False, id_offset=10)
-    p2["items"][0]["id"] = 1
-    agg = aggregate_paginated_pages(
-        [_page(page=1, n=10, has_more=True, id_offset=0), p2]
-    )
-    assert agg.complete is False
-    assert agg.duplicate_ids
-    assert agg.failure_reason == "duplicate_ticket_ids"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 10), 15),
+        _r5_att([{"id": 1}, *_r5_recs(11, 4)], 15),
+    ])
 
 
 def test_r5_n6_authoritative_total_conflict():
-    agg = aggregate_paginated_pages(
-        [
-            _page(page=1, n=40, has_more=True, total_count=109, id_offset=0),
-            _page(page=2, n=40, has_more=False, total_count=99, id_offset=40),
-        ]
-    )
-    assert agg.failed is True
-    assert agg.failure_reason == "authoritative_total_conflict"
+    # Contradictory declared totals → no authoritative total exists.
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 40), 109),
+        _r5_att(_r5_recs(41, 40), 99),
+    ])
 
 
 def test_r5_n7_missing_page_incomplete():
-    agg = aggregate_paginated_pages(
-        [
-            _page(page=1, n=40, has_more=True, total_count=109, id_offset=0),
-            _page(page=3, n=29, has_more=False, total_count=109, id_offset=80),
-        ]
-    )
-    assert agg.failed is True
-    assert agg.failure_reason == "missing_intermediate_page"
+    # Union 69 < declared 109 → incomplete.
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 40), 109),
+        _r5_att(_r5_recs(81, 29), 109),
+    ])
 
 
 def test_r5_n8_truncated_walk_without_total_not_complete():
     # Truncation without authoritative total must stay partial. When the
     # owner publishes total_count, count completeness is authoritative
     # (see aggregator contract); enumeration delivery is gated in R5-N10.
-    agg = aggregate_paginated_pages(
-        [
-            _page(page=1, n=40, has_more=True, id_offset=0),
-            _page(page=2, n=40, has_more=True, id_offset=40),
-        ]
-    )
-    assert agg.complete is False
-    assert resolve_count_semantics(None, aggregation=agg).kind is (
-        CountResolutionKind.PARTIAL_UNKNOWN
-    )
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 40), None),
+        _r5_att(_r5_recs(41, 40), None),
+    ])
 
 
 def test_r5_n9_budget_partial_honest():
-    pages = [
-        _page(page=i, n=40, has_more=True, id_offset=(i - 1) * 40)
-        for i in range(1, 6)
-    ]
-    agg = aggregate_paginated_pages(pages, max_pages=2)
-    assert agg.complete is False
-    assert agg.failure_reason == "max_pages_exceeded"
+    assert not _r5_cov([
+        _r5_att(_r5_recs(1, 40), 200),
+        _r5_att(_r5_recs(41, 40), 200),
+    ])
 
 
 def test_r5_positive_three_page_walk_109():
     """Sibling of live R5: 40+40+29 with stable total 109."""
-    pages = [
-        _page(page=1, n=40, has_more=True, total_count=109, id_offset=0),
-        _page(page=2, n=40, has_more=True, total_count=109, id_offset=40),
-        _page(page=3, n=29, has_more=False, total_count=109, id_offset=80),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.complete is True
-    assert agg.unique_count == 109
-    assert resolve_count_semantics(None, aggregation=agg).total == 109
+    assert _r5_cov([
+        _r5_att(_r5_recs(1, 40), 109),
+        _r5_att(_r5_recs(41, 40), 109),
+        _r5_att(_r5_recs(81, 29), 109),
+    ])
 
 
 def test_r5_n10_enumeration_not_satisfied_by_aggregate_total_alone():

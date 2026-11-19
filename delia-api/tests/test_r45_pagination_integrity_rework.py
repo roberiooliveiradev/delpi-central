@@ -2,10 +2,18 @@
 
 TASK: DELIA-C3-R45-PAGINATION-INTEGRITY-AND-PRODUCTION-SSH-VALIDATION-01
 
-Locks unsafe edges from independent review:
-- has_more=None never proves complete aggregate
-- isolated page>1 with has_more=False is not the query total
-- gaps/duplicates/failures/budget => unknown, never fabricated total
+Locks unsafe edges from independent review, re-anchored on the wired
+authoritative mechanisms (E2: the standalone ``aggregate_paginated_pages``
+oracle was retired — it had zero application consumers):
+
+- ``_joint_collection_coverage`` is the connected multipage evaluator:
+  a collection is complete only when the deduplicated record union of
+  successful, scope-consistent attempts equals a single owner-declared
+  total. Order, page arithmetic and ``has_more`` narration never prove
+  completeness by themselves.
+- ``extract_pagination_envelope`` + ``resolve_count_semantics`` carry
+  count honesty: ``has_more=None`` never proves complete, an isolated
+  page>1 is not the query total, and gaps/failures never fabricate one.
 """
 
 from __future__ import annotations
@@ -15,10 +23,18 @@ from typing import Any
 from app.application.capability_provision.generic_evidence_renderer import (
     CountResolutionKind,
     UNKNOWN_TOTAL_MESSAGE,
-    aggregate_paginated_pages,
     extract_pagination_envelope,
     resolve_count_semantics,
 )
+from app.application.capability_provision.semantic_capability_support import (
+    MaterialObligation,
+    _joint_collection_coverage,
+)
+from app.application.interaction.capability_attempt import (
+    GovernedCapabilityStatus,
+)
+
+from tests.test_f2_native_refactor_e1 import _paged_attempt
 
 
 def _page(
@@ -49,6 +65,22 @@ def _page(
     return payload
 
 
+def _records(start: int, n: int, *, ids: bool = True) -> list[dict]:
+    if ids:
+        return [{"id": i} for i in range(start, start + n)]
+    return [{"title": f"r{i}"} for i in range(start, start + n)]
+
+
+def _obl() -> MaterialObligation:
+    return MaterialObligation(
+        description="enumerate items", evidence_source="items"
+    )
+
+
+def _coverage(attempts) -> bool:
+    return bool(_joint_collection_coverage(_obl(), tuple(attempts)))
+
+
 def test_r45r_t01_no_has_more_no_total():
     envelope = extract_pagination_envelope(
         {"items": [{"id": 1}, {"id": 2}], "page": 1, "page_size": 2}
@@ -59,12 +91,9 @@ def test_r45r_t01_no_has_more_no_total():
     assert resolution.total is None
     assert resolution.kind is CountResolutionKind.PAGE_SLICE_NOT_TOTAL
 
-    agg = aggregate_paginated_pages(
-        [{"items": [{"id": 1}, {"id": 2}], "page": 1, "page_size": 2}]
-    )
-    assert agg.complete is False
-    assert agg.failure_reason == "unsigned_completeness"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # An unmarked collection (no declared total) is unverifiable —
+    # the wired evaluator must not promote it to complete.
+    assert not _coverage([_paged_attempt(_records(1, 2), None)])
 
 
 def test_r45r_t02_last_page_only():
@@ -78,90 +107,79 @@ def test_r45r_t02_last_page_only():
 
 
 def test_r45r_t03_complete_two_page_walk():
-    pages = [
-        _page(page=1, n=10, has_more=True, id_offset=0),
-        _page(page=2, n=10, has_more=False, id_offset=10),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.complete is True
-    assert agg.unique_count == 20
-    assert resolve_count_semantics(None, aggregation=agg).total == 20
+    # 1-10 + 11-20 with a single consistent declared total of 20 —
+    # union == total ⇒ complete.
+    assert _coverage([
+        _paged_attempt(_records(1, 10), 20),
+        _paged_attempt(_records(11, 10), 20),
+    ])
 
 
 def test_r45r_t04_missing_intermediate_page():
-    pages = [
-        _page(page=1, n=10, has_more=True, id_offset=0),
-        _page(page=3, n=5, has_more=False, id_offset=20),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.failed is True
-    assert agg.failure_reason == "missing_intermediate_page"
-    assert agg.complete is False
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Owner total 25 but union covers 15 → never complete.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 25),
+        _paged_attempt(_records(21, 5), 25),
+    ])
 
 
 def test_r45r_t05_duplicate_page():
-    pages = [
-        _page(page=1, n=5, has_more=True, id_offset=0),
-        _page(page=1, n=5, has_more=False, id_offset=100),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.failed is True
-    assert agg.failure_reason == "duplicate_page"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Same records re-observed: union 5 ≠ declared 10 → not complete.
+    assert not _coverage([
+        _paged_attempt(_records(1, 5), 10),
+        _paged_attempt(_records(1, 5), 10),
+    ])
 
 
 def test_r45r_t06_duplicate_ticket_id():
-    p2 = _page(page=2, n=5, has_more=False, id_offset=10)
-    p2["items"][0]["id"] = 1
-    agg = aggregate_paginated_pages(
-        [_page(page=1, n=10, has_more=True, id_offset=0), p2]
-    )
-    assert agg.complete is False
-    assert "1" in agg.duplicate_ids
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Overlapping identity shrinks the union below the declared total.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 15),
+        _paged_attempt([{"id": 1}, *_records(11, 4)], 15),
+    ])
 
 
 def test_r45r_t07_malformed_page():
-    agg = aggregate_paginated_pages(
-        [_page(page=1, has_more=True), {"not": "a page"}]
-    )
-    assert agg.failed is True
-    assert agg.failure_reason == "malformed_page"
+    # An attempt without declared total is unverifiable — paired with a
+    # partial slice it can never prove completeness.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 10),
+        _paged_attempt(_records(11, 5), None),
+    ])
 
 
 def test_r45r_t08_page_failure():
-    agg = aggregate_paginated_pages(
-        [_page(page=1, has_more=True), None]
+    # A failed attempt contributes nothing; a single partial slice
+    # cannot satisfy the declared total.
+    import dataclasses as _dc
+
+    failed = _dc.replace(
+        _paged_attempt(_records(11, 5), 15),
+        status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
     )
-    assert agg.failed is True
-    assert agg.failure_reason == "page_failure"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 15),
+        failed,
+    ])
 
 
 def test_r45r_t09_max_pages_exceeded():
-    pages = [
-        _page(page=i, has_more=True, id_offset=(i - 1) * 10)
-        for i in range(1, 6)
-    ]
-    agg = aggregate_paginated_pages(pages, max_pages=3)
-    assert agg.pages_fetched == 3
-    assert agg.complete is False
-    assert agg.failure_reason == "max_pages_exceeded"
+    # Budget-capped walk: collected pages are a strict subset of the
+    # declared total → never complete (the bound lives in the governed
+    # orchestration loop, not in the evaluator).
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 50),
+        _paged_attempt(_records(11, 10), 50),
+        _paged_attempt(_records(21, 10), 50),
+    ])
 
 
 def test_r45r_t10_budget_exhausted_same_as_partial():
-    # Orchestrator stops walk early; aggregation of partial pages must
-    # remain incomplete when last has_more is still True.
-    pages = [
-        _page(page=1, has_more=True, id_offset=0),
-        _page(page=2, has_more=True, id_offset=10),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.complete is False
-    assert resolve_count_semantics(None, aggregation=agg).kind is (
-        CountResolutionKind.PARTIAL_UNKNOWN
-    )
+    # Two pages with has_more still open and union < total → partial.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 20),
+        _paged_attempt(_records(11, 5), 20),
+    ])
 
 
 def test_r45r_t11_authoritative_total():
@@ -174,24 +192,21 @@ def test_r45r_t11_authoritative_total():
 
 
 def test_r45r_t12_authoritative_total_conflict():
-    pages = [
-        _page(page=1, n=10, has_more=True, total_count=47, id_offset=0),
-        _page(page=2, n=10, has_more=False, total_count=50, id_offset=10),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.failed is True
-    assert agg.failure_reason == "authoritative_total_conflict"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Two attempts declaring different totals for the same collection —
+    # no single authoritative total ⇒ never complete.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 47),
+        _paged_attempt(_records(11, 10), 50),
+    ])
 
 
 def test_r45r_t13_missing_stable_ids():
-    pages = [
-        _page(page=1, n=3, has_more=False, omit_ids=True),
-    ]
-    agg = aggregate_paginated_pages(pages)
-    assert agg.complete is False
-    assert agg.failure_reason == "missing_stable_ids"
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Records without stable identity cannot be unioned reliably —
+    # fail closed.
+    assert not _coverage([
+        _paged_attempt(_records(1, 3, ids=False), 3),
+        _paged_attempt(_records(4, 3, ids=False), 3),
+    ])
 
 
 def test_r45r_t14_filter_consistency_status_preserved():
@@ -205,14 +220,12 @@ def test_r45r_t14_filter_consistency_status_preserved():
 
 
 def test_r45r_t15_concurrent_mutation_via_duplicate_overlap():
-    # Concurrent set change that reintroduces ids across pages ⇒ unknown.
-    p2 = _page(page=2, n=10, has_more=False, id_offset=5)
-    agg = aggregate_paginated_pages(
-        [_page(page=1, n=10, has_more=True, id_offset=0), p2]
-    )
-    assert agg.complete is False
-    assert agg.duplicate_ids
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # Overlap that collapses the union below the declared total ⇒
+    # unknown, never a recomputed total from merged lengths.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 20),
+        _paged_attempt(_records(6, 10), 20),
+    ])
 
 
 def test_r45r_t18_no_material_act():
@@ -287,3 +300,74 @@ def test_r45r_t22_truncated_false_stays_unsigned_or_complete():
     envelope = extract_pagination_envelope(structured)
     assert envelope is not None
     assert envelope.has_more is not True
+
+
+# ---------------- R5 pagination negatives -----------------------------
+
+
+def test_r5_n1_duplicate_page_does_not_inflate_collection():
+    # Re-observing the same page adds nothing: union stays below the
+    # declared total → never complete.
+    assert not _coverage([
+        _paged_attempt(_records(1, 40), 109),
+        _paged_attempt(_records(1, 40), 109),
+    ])
+
+
+def test_r5_n2_duplicate_record_rejects_false_total():
+    # Duplicate identity across pages ⇒ union < total → no fabricated
+    # total from merged lengths.
+    assert not _coverage([
+        _paged_attempt(_records(1, 10), 15),
+        _paged_attempt([{"id": 1}, *_records(11, 4)], 15),
+    ])
+
+
+def test_r5_n6_authoritative_total_conflict():
+    # Contradictory declared totals ⇒ no authoritative total at all.
+    assert not _coverage([
+        _paged_attempt(_records(1, 40), 109),
+        _paged_attempt(_records(41, 40), 99),
+    ])
+
+
+def test_r5_n7_missing_page_incomplete():
+    # Union 69 < declared 109 → incomplete, period.
+    assert not _coverage([
+        _paged_attempt(_records(1, 40), 109),
+        _paged_attempt(_records(81, 29), 109),
+    ])
+
+
+def test_r5_n8_truncated_walk_without_total_not_complete():
+    # No declared total at all → unverifiable → never complete.
+    assert not _coverage([
+        _paged_attempt(_records(1, 40), None),
+        _paged_attempt(_records(41, 40), None),
+    ])
+
+
+def test_r5_n9_budget_partial_honest():
+    # A capped walk that collected 80 of 109 stays partial — the bound
+    # is enforced by the governed loop; the evaluator only sees the
+    # union.
+    assert not _coverage([
+        _paged_attempt(_records(1, 40), 109),
+        _paged_attempt(_records(41, 40), 109),
+    ])
+
+
+def test_r5_positive_three_page_walk_109():
+    """Sibling of live R5: 40+40+29 with stable total 109."""
+    assert _coverage([
+        _paged_attempt(_records(1, 40), 109),
+        _paged_attempt(_records(41, 40), 109),
+        _paged_attempt(_records(81, 29), 109),
+    ])
+
+
+def test_r5_n10_enumeration_not_satisfied_by_aggregate_total_alone():
+    """Authoritative total alone does not prove enumeration delivery."""
+    # The enumeration obligation requires the record union — an attempt
+    # that only reports a total without items cannot satisfy it.
+    assert not _coverage([_paged_attempt([], 109)])

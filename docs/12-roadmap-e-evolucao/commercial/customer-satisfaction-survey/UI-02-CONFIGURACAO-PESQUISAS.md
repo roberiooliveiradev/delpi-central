@@ -1,588 +1,207 @@
-# Página 02 — Configuração de Pesquisas e Campanhas
+# UI-02 — Páginas internas da Pesquisa no Portal Comercial (especificação vigente)
 
-> **Estado:** ESPECIFICAÇÃO DE UI / WIREFRAME PROPOSTO — **NÃO IMPLEMENTADO**. Entrega 1. Ref observada: `main` / `c135a9823e054ce1234f73eee627548043737264` em 11/11/2026; confirmar HEAD/branch/working tree antes de implementar. Owner visual: `plugins/commercial` ou `plugins/public-hub` conforme indicado. Autoridade de regra e dados: `commercial-api`.
+> **Estado:** ESPECIFICAÇÃO VIGENTE, aprovada em 18/11/2026 junto com a maquete. As páginas **já existem em HML**, com o visual anterior. O novo visual segue o [plano de implementação](./UI-02-PLANO-IMPLEMENTACAO.md) e os [pedidos de execução](./UI-02-PROMPTS-DEVIN.md). Nada da Pesquisa vai para PROD sem o gate do [README](./README.md#regra-obrigatória-de-ambientes-e-promoção-decisão-13112026).
 >
-> **Fontes:** [índice mestre](./REQUIREMENTS-INDEX.md), [contrato da primeira entrega](./SURVEY-FIRST-RELEASE-CONTRACT.md), [plano de frontend](./FRONTEND-FIRST-RELEASE-PLAN.md) e plano Word integral; código existente: `plugins/commercial/src/features/home/HomePage.tsx`, `features/administration/AdministrationHomePage.tsx`, `features/analytics/AnalyticsOtdPage.tsx`.
+> **Referência visual:** maquete de seis telas, tema escuro — <https://claude.ai/artifact/7sw5awGxjUydGU7MhzuRUk>.
+>
+> **Decisões:** [Q24](./BUSINESS-DECISIONS.md#q24--novo-visual-das-páginas-internas-18112026). Este documento substitui o texto anterior, que acumulava decisões datadas de 11 a 13/11/2026. As regras daquele texto que continuam valendo estão incorporadas aqui. O texto integral anterior está no histórico do repositório (commit `ed4ededc6`).
+>
+> **Autoridades:** TOTVS é a fonte do cadastro de clientes. A `commercial-api` é a autoridade de campanhas, participantes, situação, links, contato do convite, mensagem padrão, permissões e gravação. O MFE `plugins/commercial` apresenta, navega e copia.
 
-**Regra visual obrigatória:** reaproveitar exclusivamente componentes de `@delpi/plugin-ui/index` e wrappers/compostos já usados no Portal, sem implementar novo componente visual nativo da página. Layout semântico e ligação de dados React são permitidos; se uma necessidade realmente não estiver coberta, registrar lacuna e passar pelo Abstraction Gate antes de alterar o PluginUI. Não criar CSS/kit de design paralelo.
+## 1. Objetivo, acesso e rotas
 
-## 1. Objetivo e navegação
+**Para que servem as páginas:** o Marketing cria campanhas, inclui clientes do TOTVS, configura uma mensagem padrão por campanha e copia o convite de cada empresa para enviar por conta própria (e-mail, WhatsApp, Teams). As páginas também mostram quem respondeu e quem está pendente. **O Portal não envia mensagens** e não rastreia entrega.
 
-Criar campanhas e selecionar clientes existentes no TOTVS para que o usuário possa **copiar e enviar manualmente** convites; acompanhar pendentes/respondidos para gestão. **Consulta completa de respostas por empresa** fica na [UI-06](./UI-06-RESPOSTAS-POR-EMPRESA.md), página de leitura independente. A página é interna ao MFE, exclusivamente para `commercial.marketing` OU `commercial.manage`. `commercial.access` não deve ver operações de gestão.
+**Quem acessa:** `commercial.marketing` ou `commercial.manage`. Sem essas permissões, a página mostra “Acesso restrito”. A autorização final é sempre da `commercial-api`; esconder um botão não é autorização.
 
-**Rotas de UI previstas:** `/apps/commercial/satisfaction-surveys` (lista/configuração) e `/apps/commercial/satisfaction-surveys/{campaignId}` (detalhe como continuação da mesma área). Entrada pela ação **Configuração** do Hero de Resultados, não outro MFE; a gestão pode voltar a Resultados sem perder contexto básico. A UI-06 tem navegação contextual para esta página e vice-versa, sem outra topbar.
-
-## Regra de composição visual — Hero da gestão (11/11/2026)
-
-**Os filtros globais e botões de ação da página de Configuração também ficam no `CommercialPageHero`**, com `density="compact"`, título/descrição e ações superiores. Na listagem: **Nova campanha**, **Ver resultados**, acesso autorizado a **Respostas por empresa** e filtros de ano/situação/busca/limpar. No detalhe: **Ver resultados**, eventual **Editar datas** permitido e filtros globais da lista de participantes. O `CommercialPagePath` continua acima do Hero. A cláusula sobre ações na linha (`Copiar link`, `Copiar mensagem`, `Consultar respostas por empresa`) foi **superseded pela decisão de 13/11/2026**: a lista de participantes tem exatamente **Empresa, Contato e Situação**, sem coluna Ação — a linha/card abre o detalhe (UI-02C), onde ficam as ações de cópia; **Respostas por empresa** é ação do Hero. Botões `Cancelar`/`Criar` ficam no diálogo, por serem ações do formulário. Ações indisponíveis por estado/permissão não são renderizadas como controles ativos. **Não criar barra de filtros solta abaixo do Hero nem componente próprio de cabeçalho.** A validação visual final será feita na revisão desta página; decisão de princípio aprovada, implementação ainda pendente.
-
-### Fluxo consolidado — criar, configurar e ampliar uma campanha (11/11/2026)
-
-**CONFIRMADO PELO SOLICITANTE:** a configuração é **por campanha**, iniciada quando o usuário autorizado aciona **Nova campanha**. Após criar e persistir nome/período da campanha, abrir **o detalhe/configuração dessa mesma campanha** para: (a) selecionar e adicionar empresas oficiais TOTVS, inclusive **múltiplas de uma vez**; (b) configurar e salvar **a mensagem padrão da campanha** com `{nome_empresa}` e `{link_pesquisa}`; (c) consultar a **lista acumulada de participantes**; (d) abrir **detalhe de um participante** e copiar o convite resolvido para colar manualmente em e-mail, WhatsApp, Teams ou outro canal. Não impor conclusão única do cadastro: a campanha pode receber novos participantes depois.
-
-- **Campanha aberta:** o usuário de gestão pode **voltar a uma campanha ainda aberta** e adicionar novos clientes ao conjunto existente, com busca por nome/código e multiseleção, individualmente ou em lote; participantes anteriores e seus links permanecem estáveis. A inclusão posterior **não reinicia a campanha**, não altera respostas já registradas e **não estende** a data final. O backend revalida situação/janela e permissão antes de cada escrita.
-- **Campanha agendada:** já se prevê configurar o conjunto inicial ao criar a campanha, que pode estar agendada. O que ainda exige contrato/testes é a política de alterações posteriores em agendadas; não inferir autorização irrestrita. **Campanha encerrada:** inclusão de participantes após o término **não foi autorizada**; na proposta, a ação fica indisponível e a API deve rejeitar novas inclusões, preservando histórico.
-- **Seleção:** múltiplos registros podem ser marcados numa mesma busca, inclusive após alterar termos/filtros e paginação; mostrar contagem da seleção e confirmação antes de gravar. A `commercial-api` executa inclusão parcial aprovada, devolve incluídas/já existentes/falhas por empresa, valida código+loja/autorizações e não dispara convites.
-- **Detalhe/configuração da campanha:** organizar de forma enxuta os controles de **Dados e datas**, **Mensagem padrão** e **Participantes** usando navegação/seções oficiais já previstas, sem novo MFE, sem cadastro paralelo de cliente nem assistente obrigatório. O detalhe do participante permite consultar situação **Pendente/Respondido**, editar contato em diálogo e copiar mensagem/link, não responder em nome do cliente.
-- **Dados e ownership:** TOTVS é fonte oficial do cliente; `commercial-api` é autoridade de campanhas, participantes, estado, vínculos, tokens, modelo de mensagem salvo e escritas; UI mostra apenas estado confirmado. Roteiros de testes: adicionar na criação, voltar com campanha aberta, adicionar em lote, validar parcial/duplicados, trocar participante e copiar nome/link corretos, não alterar histórico/respostas e negar escrita quando encerrada ou sem permissão.
-- **Status:** fluxo operacional **CONFIRMADO E DOCUMENTADO**; telas, contratos e execução ainda **PENDING**.
-
-## 1.1 Blueprint consolidado da UI-02 — telas para refinamento de cima para baixo (11/11/2026)
-
-> **Status:** consolidação das decisões aprovadas e proposta detalhada de composição visual. **NÃO IMPLEMENTADO**. Os fluxos marcados APROVADO são decisões do usuário; ordenação final de campos, densidade, ações e apresentação de cada tela são referências **A REFINAR VISUALMENTE**, não aprovação integral. Não transformar dados dos wireframes em valores reais.
-
-### Mapa de telas e responsabilidades
-
-| Tela | Função e relação |
+| Tela | Rota no MFE Comercial |
 |---|---|
-| **UI-02A — Campanhas (inicial)** | Lista, pesquisa, filtros, Nova campanha, navegação para Configurar e Resultados |
-| **UI-02A.1 — Nova campanha** | Diálogo oficial com nome e datas; após criação confirmada abre configuração |
-| **UI-02B — Configuração da campanha** | Trilha, Hero, situação/período, Participantes, Mensagem padrão, Dados |
-| **UI-02B.1 — Adicionar participantes** | Pesquisa TOTVS e multiseleção; inclusão parcial por lote e relatório individual |
-| **UI-02B.2 — Mensagem padrão** | Editor único com duas chaves dinâmicas, texto persistido por campanha |
-| **UI-02C — Detalhe do participante** | Empresa, contato, resposta pendente/respondida, prévia e cópia de convite/link |
-| **UI-02C.1 — Editar contato** | Diálogo por empresa; nome/e-mail opcionais apenas do convite |
-| **UI-01 — Resultados** | Página analítica independente; entrada global ou por campanha |
-| **UI-06/UI-07 — Respostas privadas** | Página de participantes/respondentes e página de resposta individual; não duplicar na UI-02 |
-
-### Regra aprovada de navegação UI-02 → UI-01
-
-**APROVADO, opção A:** no Hero da **listagem UI-02A**, o botão global **Ver resultados** abre **UI-01 na visão geral padrão**, sem recuperar a última campanha visitada. Na linha de uma campanha, **Resultados**, e no seu detalhe **Ver resultados desta campanha**, abrem a **UI-01 com aquela campanha explicitamente selecionada** no filtro, e ano correspondente. O filtro global e os filtros operacionais da UI-02 não migram para os filtros de análise. A volta à Configuração pela UI-01 fica restrita a gestores e utiliza os helpers oficiais de navegação/retorno, preservando o detalhe de origem quando seguro/conhecido, senão a lista. Rotas são propostas e ainda **NÃO IMPLEMENTADAS**.
-
-### UI-02A — Página inicial, de cima para baixo
-
-1. **Trilha:** CommercialPagePath, Comercial / Marketing / Pesquisa de Satisfação / Configuração; sem topbar duplicada.
-2. **Hero compacto:** CommercialPageHero, título **Configuração das Pesquisas**, descrição sobre campanhas, participantes e convites. Ações **Ver resultados (global)** e **Nova campanha**; acesso autorizado a Respostas por empresa quando contextualizado.
-3. **Filtros no próprio Hero:** **Ano**, **Situação** (Agendada/Aberta/Encerrada), **Pesquisar campanha** e **Limpar filtros**, com aplicação automática. As situações vêm da API, não de botão ativar/desativar.
-4. **Corpo:** seção **Campanhas**, total de registros, tabela oficial em desktop com **Campanha/período**, **Situação**, **Participantes cadastrados**, **Respostas** e **Taxa de resposta** se autorizada/disponível; contexto e ações **Abrir/configurar** e **Resultados** por linha. Não usar "convites enviados" nem "entregues".
-5. **Base:** ordenação e paginação oficiais (20 por página como referência do Portal), seletor de tamanho quando aplicável; cards no celular; estados vazio, falha, carregamento, acesso negado e ausência de filtro, diferenciados. Personalização de colunas/fonte/tabela-cards somente se apropriada e coberta pelo kit.
-
-### UI-02A.1 — Diálogo Nova campanha
-
-1. **Cabeçalho:** Nova campanha, orientação breve.
-2. **Campos:** nome obrigatório; data e hora de **Início**; data e hora de **Término**; indicação **Questionário oficial fixo de 15 perguntas**.
-3. **Rodapé:** Cancelar / Criar campanha. Backend valida dados, permissão e período; falha preserva campos e mostra erro. Somente após persistência confirmada o diálogo fecha e abre UI-02B para configurar empresas e mensagem. **Não** colocar busca TOTVS nem editor de mensagem dentro do diálogo; não ativar/encerrar manualmente.
-
-### UI-02B — Detalhe/configuração de campanha
-
-1. **Topo:** CommercialPagePath Configuração / Nome da campanha, retorno à lista; Hero oficial com nome, período e status derivado do backend.
-2. **Ações do Hero:** **Ver resultados desta campanha** (UI-01 contextual), **Respostas por empresa** (UI-06, somente gestão) e **Editar datas** somente onde backend permitir. Filtros globais da lista de participantes no Hero, sem toolbar paralela.
-3. **Navegação de seções:** **Participantes**, **Mensagem padrão**, **Dados da campanha** via componente oficial de abas/underline navigation; padrão inicial Participantes. Alternar seção sem apagar pesquisas/seleções e sem gravar automaticamente.
-4. **Participantes, resumo:** três cards compactos Participantes cadastrados / Respondidas / Pendentes, todos com contagens retornadas pela API. Pendente significa ausência de resposta, não prova de falta de envio.
-5. **Participantes, adicionar:** busca de cliente TOTVS por nome, código/loja; múltiplas seleções e ação Adicionar selecionadas. A lista de participantes é **acumulativa**; o gestor pode voltar e adicionar durante a campanha **ABERTA**, sem alterar respostas, links existentes ou prazo. Configuração inicial agendada prevista; detalhes de edições posteriores em agendadas PENDING. Encerrada não recebe inclusão na proposta, validada pelo backend.
-6. **Resultado de inclusão:** o backend diferencia **incluídas, já existentes e falhas por empresa** (código/loja e motivo seguro). **Apresentação SUPERSEDED em 13/11/2026:** não exibir painel permanente de contadores Incluídas/Já existentes/Com falha — inclusões confirmadas atualizam a lista e falhas usam os avisos flutuantes oficiais no canto superior direito (ver seção 3, decisão do card Adicionar clientes). Válidas são incluídas mesmo com outras falhando; duplicadas preservam vínculo/token, erro global não pode ser rotulado sucesso parcial.
-7. **Lista acumulada:** pesquisa por nome/código/loja, filtro Pendente/Respondido, tabela/cards oficiais, ordenação e paginação. **Conteúdo aprovado em 13/11/2026 — exatamente três informações: Empresa** (nome oficial TOTVS + código/loja), **Contato** (opcional) e **Situação** (Pendente/Respondida) — **sem coluna Ação e sem botão Abrir**; a própria linha/card abre **UI-02C**. Copiar link e Copiar mensagem são ações do detalhe do participante, não da linha. Sem status Enviado/Entregue.
-8. **Mensagem padrão:** ver UI-02B.2. Mostrar situação Configurada/A configurar apenas conforme dado real, não como sucesso fictício.
-9. **Dados:** nome, janela, estado, versão de questionário fixo; edição de datas sob regras de backend, sem invalidar respostas. Sem criar editor de perguntas ou flag de ativação.
-
-### UI-02B.1 — Inclusão múltipla: interação e estados
-
-- Busca autorizada commercial-api → api-delpi/TOTVS; exibir empresa e **par código+loja preservando zeros iniciais**. Seleção múltipla, contagem, confirmação do lote, manter seleção entre pesquisas/paginação conforme padrão existente.
-- Após resposta confirmada, o backend diferencia **incluídas, já existentes e falhas por empresa**; a apresentação segue a decisão de 13/11/2026 (lista atualizada + avisos flutuantes oficiais, **sem** painel de contadores). Não repetir gravações bem-sucedidas ou regenerar tokens. Campos/contrato HTTP de lote e transação por item ainda PENDING do backend.
-- Estados: carregando, nenhuma empresa localizada, permissão insuficiente, indisponibilidade TOTVS, duplicidade, erro global, validação por item, retentativa segura. Nunca envia convite nem cria cliente no Portal.
-
-### UI-02B.2 — Mensagem padrão da campanha
-
-1. **Cabeçalho:** Mensagem padrão da campanha, texto de ajuda e indicação de alteração pendente/salva conforme backend.
-2. **Editor único simples:** assunto para e-mail e corpo textual; o Marketing escreve como deseja. Somente dois campos dinâmicos definidos em código: **{nome_empresa}** e **{link_pesquisa}**. Pode digitar os tokens ou usar **Inserir campo** na posição do cursor. Reconhecimento/destaque no editor ou equivalente compatível com kit, sem editor rico complexo nem cadastro de tokens.
-3. **Validação e prévia:** mostrar como nome e link serão substituídos; dados fictícios identificados na configuração ou participante autorizado. Conteúdo final precisa nome e URL corretos; política exata para texto sem algum token (bloqueio ou composição segura) segue PENDING técnico/UX. Escapar conteúdo e proibir HTML/script arbitrário.
-4. **Rodapé:** Cancelar/Reverter, Salvar mensagem. Persistir **uma mensagem por campanha**, confirmada pela commercial-api; não salvar links/tokens de participantes dentro do modelo. Futuras cópias usam texto atualizado; convites encaminhados fora do Portal não são rastreados.
-5. **Formatos de saída:** e-mail com HTML formatado e alternativa texto; WhatsApp/Teams/outros como texto simples — **consolidados em dois modos de prévia (Correio eletrônico | Mensageiro) pela decisão de 13/11/2026**. A cópia HTML rica e compatibilidade com Outlook continuam PENDING de testes. Não há envio automático nem três editores independentes.
-
-### Decisão visual — editor acima e prévia HTML abaixo (13/11/2026)
-
-**DEFINIDO PELO SOLICITANTE:** na seção **Mensagem padrão** de UI-02B, apresentar o **campo de edição acima** e uma **prévia HTML renderizada abaixo**, em fluxo vertical contínuo. Isso substitui qualquer proposta de mostrar só o editor ou de deixar a prévia em outra tela/coluna. **Não são dois editores:** a prévia é somente leitura e reflete o assunto e corpo em edição.
-
-**Ordem visual, de cima para baixo:**
-1. Título **Mensagem padrão** e instrução curta, seguindo `CommercialSectionCard` ou composição equivalente já existente.
-2. Campo **Assunto do e-mail** (`CommercialTextField`).
-3. Campo **Mensagem do convite** (`CommercialTextAreaField`) com controle próximo ao editor para inserir exatamente `{nome_empresa}` ou `{link_pesquisa}` na posição do cursor. O editor permanece textual e simples; não autorizar WYSIWYG novo.
-4. Cabeçalho **Prévia do e-mail (HTML)** e área de apresentação **abaixo do editor**, não editável, visualizando parágrafos, saudação, link e formatação final. O texto em edição alimenta a prévia sem salvar automaticamente. Em modo de configuração geral, substituir tokens por **valores fictícios claramente identificados** (empresa-exemplo e URL-exemplo não funcional); somente na UI-02C a prévia usa o nome e link reais do participante autorizado. Nunca exibir token real de outro cliente.
-5. Rodapé com ações oficiais **Reverter alterações** e **Salvar mensagem** abaixo da prévia. Persistir a configuração somente após confirmação da `commercial-api`; avisos e falhas pelo `CommercialFloatingNoticeProvider` já usado no Comercial.
-
-**Segurança/contrato:** o HTML é gerado de modo seguro a partir do texto; escapar dados, não executar HTML/script arbitrário escrito no campo. A formatação e apresentação devem corresponder ao formato rico que se pretende copiar para e-mail, sem afirmar compatibilidade com Outlook antes de testes. Uma fonte textual por campanha continua valendo para e-mail (HTML com alternativa texto), WhatsApp e Teams (texto simples). Não enviar convites.
-
-**Dimensões e responsividade:** editor e prévia ocupam a largura útil da seção no desktop/tablet/celular; **ordem vertical idêntica em todos os tamanhos**, sem layout lado a lado no desktop. As dimensões exatas do campo, área de prévia, padding, margins, gap, raio, fonte, altura mínima, overflow e breakpoints devem ser herdados dos componentes/tokens oficiais do PluginUI. **TO_INVENTORY** de seletores CSS, valores reais e componente/estratégia existente para renderização segura da prévia antes de implementar. Não criar medidas arbitrárias nem editor HTML próprio.
-
-**Status:** disposição **EDITOR ACIMA → PRÉVIA HTML ABAIXO APROVADA** como solicitação explícita; solução técnica para prévia, CSS e implementação **PENDING**.
-
-### Decisão de UX — dois modos de prévia: Correio eletrônico e Mensageiro (13/11/2026)
-
-**SOLICITADO PELO USUÁRIO:** manter o **editor textual único acima** e oferecer **dois modos de prévia abaixo**, alternáveis por controle de seleção/abas oficial do Comercial/PluginUI: **Correio eletrônico** e **Mensageiro**. Não criar editores separados nem configuração por plataforma. Os nomes WhatsApp e Teams são canais de uso do mesmo modo Mensageiro (texto simples), não novas abas e não integrações de envio.
-
-- **Correio eletrônico:** prévia do conteúdo HTML seguro e visual formatado, com assunto do e-mail; corresponder ao conteúdo que futuramente será copiado como HTML rico com alternativa em texto. HTML é **saída renderizada**, não entrada HTML livre. Compatibilidade de colagem no Outlook é **PENDING de testes**.
-- **Mensageiro:** prévia de texto simples com quebras de linha e link legível, compatível conceitualmente com copiar e colar em WhatsApp, Teams e outros mensageiros. **Sem** assunto de e-mail na prévia de mensageiro, sem HTML e sem simular interface, bolhas, marca de mensagens ou estilos específicos dos aplicativos.
-- **Editor e dados:** assunto e corpo permanecem editáveis uma única vez na campanha. `{nome_empresa}` e `{link_pesquisa}` são os **únicos dois campos dinâmicos**; prévias da configuração usam empresa e URL de exemplo claramente marcadas como fictícias. No detalhe UI-02C, usar somente nome TOTVS e link estável oficiais autorizados para o participante ativo. Alterar o modo de prévia não grava nem altera o texto.
-- **Ordem de composição:** cabeçalho → assunto → editor de mensagem e Inserir campo → **seletor Correio eletrônico | Mensageiro** → **uma única área de prévia de leitura** correspondente ao modo selecionado → Reverter e Salvar mensagem. O seletor fica **acima da área de prévia, abaixo do editor**; rodapé permanece após a prévia. Salvar uma mensagem padrão por campanha sob autoridade da `commercial-api`. Não há envio automático ou rastreamento de entrega.
-- **Padrão visual e responsividade:** inventariar e reutilizar controle de alternância/abas oficialmente usado no Comercial (nome de wrapper, props, tokens e consumidor real **TO_INVENTORY**); não inventar novas abas próprias. Em desktop/tablet/celular, editor e prévia seguem **empilhados verticalmente**. O seletor, as dimensões, largura/altura, padding, margins, gaps, tipografia, bordas e comportamento móvel vêm do PluginUI, com valores concretos a extrair de CSS/props (**TO_INVENTORY**) e sem overrides exclusivos para Pesquisa.
-- **Segurança:** converter texto em HTML por renderização segura/escape; prévia não deve executar markup, imagens remotas ou scripts vindos do campo. A ação de cópia por canal acontece na UI-02C com autorização, não nesta seleção de prévia; nenhuma conexão com WhatsApp ou Teams.
-
-**Status:** organização com dois modos de prévia **DEFINIDA PELO SOLICITANTE**; controle visual concreto, medidas CSS, representação de HTML, testes e implementação **PENDING/TO_INVENTORY**.
-
-### Decisão aprovada — preview do correio eletrônico com RichTextEditor (13/11/2026)
-
-**APROVADO:** manter um único editor textual simples da mensagem, em cima (`CommercialTextAreaField`, assunto em `CommercialTextField`). Abaixo, o seletor de prévias **Correio eletrônico | Mensageiro**. No primeiro modo, reutilizar o componente existente `RichTextEditor` do PluginUI com `mode="preview"` e `value` HTML seguro, estritamente somente leitura. No segundo, mostrar texto simples com quebras de linha preservadas, útil para WhatsApp, Teams e outros mensageiros. Não criar editor rico novo nem um renderizador customizado.
-
-**Evidência:** `plugins/plugin-ui/src/components/rich-text/RichTextEditor.tsx` define `RichTextEditorMode = "edit" | "preview"` e renderiza `resolvedHtml` via `dangerouslySetInnerHTML` no modo de prévia. A sanitização usada em caminhos de edição **não garante sanitização integral do `value` em preview**. **GATE DE SEGURANÇA:** nunca passar HTML arbitrário ou interpolação não escapada. Gerar HTML seguro a partir de texto e tokens, com escape de valores, validação de links e testes anti-XSS antes de implementar; se não for possível comprovar proteção, **PENDING**, não liberar a prévia. Não executar HTML escrito pelo usuário.
-
-**Regras preservadas:** somente `{nome_empresa}` e `{link_pesquisa}`; em configuração, mostrar dados fictícios identificados e URL não funcional; em detalhe autorizado UI-02C, usar apenas participante ativo. Assunto só no modo Correio eletrônico. Alternar modos não grava nem envia. Persistência única por campanha depende da `commercial-api`; feedback pelo aviso flutuante padrão.
-
-**Layout:** editor acima → seletor → prévia embaixo → ações Salvar/Reverter. Empilhado em desktop/tablet/celular. Reutilizar CSS e tokens de `RichTextEditor`/PluginUI para padding, margem, tipografia, gaps, largura, altura, foco e quebras. Medidas e seletores concretos **TO_INVENTORY** antes da implementação. Validar HTML copiado no Outlook, responsividade, teclado e acessibilidade; não presumir compatibilidade já testada.
-
-**Status:** decisão técnica **APROVADA E DOCUMENTADA**; implementação, estilos CSS exatos, segurança ponta a ponta e testes **PENDING**.
-
-### UI-02C — Detalhe do participante
-
-1. **Topo/trilha:** voltar à campanha e à lista no mesmo contexto; nome oficial, código e loja TOTVS; situação Pendente/Respondida oriunda da API.
-2. **Contato do convite:** nome e e-mail auxiliares, opcionais; ação **Editar contato**, abrindo UI-02C.1. Não mudar cadastro TOTVS e não identificar pessoa física respondente.
-3. **Mensagem:** texto **salvo da campanha**, resolvido exclusivamente para esta empresa; chaves {nome_empresa} e {link_pesquisa} tornam-se nome TOTVS e URL estável retornada pela commercial-api. Se falta configuração, orientar a voltar à seção de mensagem, sem fingir que já foi salva.
-4. **Prévia/cópia:** seletor de dois modos **Correio eletrônico | Mensageiro** (decisão de 13/11/2026, que supersede o seletor anterior E-mail/WhatsApp/Teams), com Copiar mensagem no formato correspondente e Copiar link independente. Correio eletrônico: conteúdo rico text/html via `RichTextEditor` em `mode="preview"` (somente leitura) e alternativa text/plain quando suportado; mensageiro: texto simples para WhatsApp, Teams e outros. Não enviar, não marcar entregue, não abrir app externo automaticamente.
-5. **Estados:** só confirmar cópia após clipboard realmente aceitar; quando negado, oferecer seleção/cópia manual. Nenhum token em logs, analytics ou conteúdo de terceiros. Não incorporar resposta privada completa no detalhe operacional; UI-06/UI-07 são áreas distintas.
-
-### Confirmação de navegação e composição — UI-02C página dedicada (13/11/2026)
-
-**APROVADO PELO SOLICITANTE:** UI-02C é **página dedicada de detalhe do participante**, **não modal**. Acesso por clique na linha da tabela ou toque no card da UI-02B, preservando contexto da campanha, identidade inequívoca `customer_code+customer_store` e retorno navegável à campanha pelos padrões oficiais de navegação do MFE Comercial. **Somente Editar contato (UI-02C.1) abre um diálogo oficial**, não o detalhe completo.
-
-**Ordem de apresentação aprovada:** (1) empresa oficial TOTVS com `CustomerAvatar`, nome, código/loja e situação Pendente/Respondida; (2) contato do convite opcional (nome/e-mail) e acionamento do diálogo Editar contato; (3) convite personalizado **em leitura**, resolvido exclusivamente para o participante ativo a partir de **uma mensagem padrão salva na campanha**, com modos **Correio eletrônico** (HTML seguro em `RichTextEditor mode="preview"`) e **Mensageiro** (texto simples); (4) ações **Copiar mensagem** no formato do modo selecionado e **Copiar link** independentes, abaixo da prévia. Não duplicar editor, não abrir canais externos e não enviar convite.
-
-**Layout:** usar padrões existentes de página, breadcrumb, hero compacto/seções, tipografia, padding, gap, margens, responsividade e feedback/toasts oficiais do Comercial/PluginUI. **TO_INVENTORY** dos valores CSS exatos/consumidores reais antes de implementar; não inventar largura/modalização ou medidas específicas. No desktop, tablet e celular, manter leitura confortável do convite e ações acessíveis. **Segurança:** backend autoriza acesso ao participante e vínculo antes de revelar link; conteúdo interpolado escapado antes de renderizar HTML, cópia rica só após testes de segurança e compatibilidade.
-
-**Status:** página dedicada e ordem visual **APROVADAS**; implementação, contratos e testes **PENDING**.
-
-### UI-02C.1 — Diálogo Editar contato
-
-- Dialog oficial com empresa/código/loja somente leitura; campos opcionais **Nome do contato** e **E-mail do contato**, pré-preenchidos.
-- Cancelar não grava; Salvar contato valida e-mail, autorização e vínculo na commercial-api, mantém diálogo em erro e atualiza detalhe após confirmação; nenhuma gravação TOTVS, alteração de token ou envio de convite.
-
-### UI-01, UI-06 e UI-07 — fronteiras das páginas
-
-- **UI-01:** resultados **agregados**, filtros e KPIs próprios, evolução, dimensões, comparações. Entrada global abre geral; ação de campanha abre filtrada. Nenhuma gestão de participantes ou cópia na página de resultados.
-- **UI-06:** respostas por empresa, restritas a Marketing/Manage, com os próprios padrões aprovados de filtros, tabela/cards, ordenação e paginação. Não duplicar inteira na aba Participantes.
-- **UI-07:** resposta individual **imutável e somente leitura**; não confundir com UI-02C, que é detalhe operacional para convite e contato.
-
-### Componentes, estados, segurança e roteiro de refinamento
-
-**Padrões oficiais a reutilizar:** CommercialPagePath, CommercialPageHero, CommercialActionButton, CommercialSectionCard, CommercialUnderlineNav, CommercialDataTable, CommercialPagination, cards móveis, filtros, CommercialHostDialog, campos e banners do PluginUI. Validar nomes/props atuais antes de implementar. Hero concentra filtros e ações globais; ações de linhas/diálogos ficam com seu conteúdo. Não criar cabeçalho visual ou kit paralelo. Desktop usa tabelas, celular usa cards, acessibilidade com teclado, foco, contraste e zoom.
-
-**Owners:** TOTVS é fonte oficial de cliente; commercial-api detém campanha, participantes, link, texto salvo, autorização, auditoria e persistência; plugin Comercial apresenta/navega/copia. Gestão para commercial.marketing OU commercial.manage (ainda sujeita a implementação/validação); commercial.access isolado recebe somente agregados protegidos, não convites/contatos/respostas individuais. Nenhuma ação do navegador substitui autorização backend.
-
-**PENDÊNCIAS técnicas:** endpoint/persistência do texto por campanha, transporte e retorno de lote, compatibilidade do clipboard HTML, política exata de tokens ausentes, contratos de retorno e seleção em campanhas agendadas. **NÃO IMPLEMENTADO**: páginas, backend e testes. Não declarar recurso pronto pela existência da especificação.
-
-**Ordem futura de refinamento visual:** (1) UI-02A lista — trilha, Hero, filtros, tabela e base; (2) UI-02A.1 criação; (3) UI-02B Hero/abas/resumo; (4) UI-02B.1 seleção e resultado do lote; (5) UI-02B.2 mensagem; (6) UI-02C detalhe e cópia; (7) UI-02C.1 contato; (8) revisão de transições UI-01/UI-06/UI-07. Atualizar esta fonte canônica, sem duplicar documentos.
-
-## 1.2 Refinamento visual de UI-02A — listagem de campanhas (proposta para revisão, 11/11/2026)
-
-> **Status:** especificação visual **PROPOSTA, PENDING aprovação do solicitante**, sem código executado. Componente/props abaixo examinados em `main` HEAD `e2b341d87785345ffcabf784bd6314c3ce0115d7`: `plugins/commercial/src/app/commercialUi.ts` e `plugins/plugin-ui/src/components/layout/PageHero.tsx`; `CommercialPageHero` envolve `createDashboardPageHero` com `density="compact"` por padrão. Tamanhos em px são **alvos de layout** a confrontar com tokens/CSS do PluginUI e captura real; não afirmar que são dimensões já implementadas. Este bloco inicia a rodada de refinamento da página, do topo para baixo.
-
-### 1.2.1 Estrutura e componentes oficiais (do topo para a base)
-
-| Ordem | Componente/owner | Localização e função | Dimensão/spacing alvo PROPOSTO |
-|---|---|---|---|
-| 1 | `CommercialPagePath` (factory em `commercialUi.ts`, PluginUI) | Trilha acima do Hero: Comercial / Marketing / Pesquisa de Satisfação / Configuração; respeitar roteamento oficial | Distância inferior até Hero: **12px**; altura intrínseca, sem fixar |
-| 2 | `CommercialPageHero` (wrapper do `PageHero` real) | Hero único, `density="compact"`, `variant="surface"`; título, descrição, ações e filhos (filtros) | Padding alvo **20–24px desktop**, **16px mobile**; raio e sombra herdados do kit (não customizar) |
-| 3 | `CommercialActionButton` | No `actions` do Hero, à direita no desktop: **Ver resultados** (secundária, visão global padrão) e **Nova campanha** (primária) | Alvo mínimo de toque **44px**; gap **8px**; texto completo e sem truncar |
-| 4 | `CommercialSelectField`, `CommercialTextField`, `CommercialClearFiltersButton` / `CommercialFilterBarShell` | No `children` do Hero: Ano, Situação, Pesquisa por nome, Limpar filtros; atualização automática | Grade de filtros: desktop **4 colunas lógicas ou 3 campos + limpar alinhado**; gap **12px**. Altura dos campos conforme kit, alvo **40–44px** |
-| 5 | `CommercialSectionCard` (ou wrapper oficial validado) | Abaixo do Hero: seção **Campanhas**, título à esquerda e contador de registros à direita | Gap Hero→seção **16–20px**; padding seção **16–20px** |
-| 6 | `CommercialDataTable` | Colunas: campanha/período, situação, participantes, respostas, taxa (se API oficial), ações **Abrir** e **Resultados**. Ordenação remota quando paginada | Densidade compacta do kit, alvos de altura de linha **52–64px**, números alinhados à direita; não fixar largura de nome rígida |
-| 7 | `CommercialPagination` de `dataTableUi.ts`/comercialUi | Rodapé da listagem, total/posição, páginas e tamanho de página se componente existente suportar | Alvo gap superior **12px** e rodapé **12–16px**, default **20 registros**, tamanho pela fonte de dados |
-| 8 | `CommercialDataCardsGrid` e `CommercialDataCardsSortBar` | Alternativa em mobile, preservando nome/período/status, contagens e ações; respeitar controle de visualização existente quando aplicável | Cards com padding alvo **12–16px**, espaço entre cards **12px**, sem rolagem horizontal na página |
-| 9 | `CommercialStateBanner`, `EmptyState`, loading kit | Estados de carregar, sem campanhas, sem resultados no filtro, erro/indisponível, sem permissão | Dentro do espaço da seção, com ações pertinentes e sem criar zeros fictícios |
-
-**Nota de comprovação do PluginUI:** `PageHeroProps` realmente suporta `eyebrow`, `title`, `description`, `badge`, `actions`, `children`, `density` e `variant`; o wrapper Comercial define `compact`. Os valores exatos de padding, fontes, bordas e breakpoints **não foram provados pelo TSX** e devem ser obtidos do CSS/tokens reais antes de implementar. **Não criar CSS próprio para imitar o Hero**.
-
-### Decisão visual aprovada — topo e Hero da UI-02A (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** composição de topo da página de Campanhas. **CommercialPagePath** aparece antes do **CommercialPageHero compacto**. No desktop, **título e descrição alinhados à esquerda**, e **ações do Hero alinhadas à direita**; em larguras menores, as ações quebram para uma linha abaixo do título sem truncamento ou sobreposição. **Filtros continuam no corpo inferior do mesmo Hero**, reorganizados em duas colunas na faixa intermediária/tablet e uma coluna no celular. Não criar segundo cabeçalho, segunda barra de ações ou barra de filtros externa.
-
-- **Componentes confirmados por inspeção:** `CommercialPagePath` (factory do `commercialUi.ts`), `CommercialPageHero` (wrapper de `PageHero` com `density="compact"` por padrão), `CommercialActionButton`, `CommercialSelectField`, `CommercialTextField` e `CommercialClearFiltersButton`. **Posicionamento e responsividade aprovados**; não afirmar que o CSS existente já entrega os tamanhos propostos.
-- **Hierarquia das ações:** **Nova campanha** = ação principal; **Ver resultados** = secundária e global, abrindo UI-01 na visão geral padrão. Ambas permanecem dentro de `actions` do Hero, sem mudar o efeito da navegação contextual por campanha.
-- **Medidas de referência discutidas:** trilha → Hero **12px**; Hero padding alvo **20–24px desktop**, **16px mobile**; gap entre ações **8px**; alvo tocável dos botões **44px**. Esses números são **alvos de refinamento**, sujeitos a compatibilidade com tokens, CSS e testes do PluginUI antes de virarem contrato de código. Raio, sombra, font-size e margens da página seguem o kit.
-- **Faixas de verificação propostas:** desktop útil a partir de 1200px; intermediário 768–1199px; celular abaixo de 768px. Esses pontos **não são breakpoints implementados comprovados**; verificar faixas oficiais e zoom/teclado. A disposição detalhada e medidas **dos filtros** serão refinadas na próxima etapa, embora sua permanência no Hero e 2/1 colunas já tenham aceite.
-- **Status:** composição **APROVADA**, valores CSS concretos e implementação **PENDING**.
-
-### Decisão visual aprovada — filtros no corpo do Hero da UI-02A (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** organizar os filtros globais no `children` do `CommercialPageHero`, sem barra independente. **Ano** e **Situação** ocupam campos mais estreitos; **Pesquisar campanha** ocupa a largura restante; **Limpar filtros** permanece alinhado à direita no desktop e na faixa intermediária e abaixo dos campos no celular. Filtros se aplicam automaticamente; limpar restaura os valores iniciais sem navegar nem afetar dados de campanha.
-
-| Elemento | Desktop largo — meta aprovada para refinamento | Tablet/intermediário | Mobile |
-|---|---|---|---|
-| `CommercialSelectField` — Ano | **160px** alvo | 1 de 2 colunas iguais | 100% da largura útil |
-| `CommercialSelectField` — Situação | **180px** alvo | 1 de 2 colunas iguais | 100% da largura útil |
-| `CommercialTextField` — Pesquisar campanha | Flexível, ocupando espaço restante; **min-width 240px** alvo | Ocupa a linha inteira | 100% da largura útil |
-| `CommercialClearFiltersButton` — Limpar filtros | À direita na mesma composição de filtros | Alinhado à direita abaixo dos campos | Abaixo dos campos, sem overflow |
-| Espaçamento entre filtros | **12px** alvo | **12px** alvo | **12px** alvo |
-
-- **Alinhamento:** labels sobre os campos de filtro; controles usam altura, padding interno, borda, tipografia e foco das primitivas oficiais do PluginUI, sem CSS paralelo. **Faixa de altura 40–44px** citada no blueprint continua alvo de teste, não confirmação de CSS real.
-- **Dados e comportamento:** pesquisa por nome, situação `Agendada/Aberta/Encerrada` oriunda do backend e seleção de ano disponível; filtros automáticos com tratamento apropriado de busca e paginação no servidor. Ao alterar filtro, atualizar o conjunto consultado e ajustar página atual quando necessário. Mostrar estado sem resultados, carregamento e falha sem inventar contagens.
-- **Responsividade:** desktop em composição horizontal com campos 160/180/flexível; tablet com 2 colunas para selects e linha seguinte de busca; celular em coluna única. Quebra por largura real sem truncar rótulos nem criar rolagem horizontal. Testar com teclado, zoom e faixas/breakpoints do PluginUI.
-- **Status:** distribuição, posicionamento e comportamento **APROVADOS**; os tamanhos informados são **alvos visuais aprovados para checagem de compatibilidade**, não CSS implementado, e os breakpoints/contratos do kit ainda exigem inspeção e testes antes de codificar.
-
-### 1.2.2 Layout responsivo PROPOSTO, a testar com kit real
-
-| Área | Desktop largo (>=1200px úteis) | Intermediário (768–1199px úteis) | Mobile (<768px úteis) |
-|---|---|---|---|
-| Trilha | Uma linha, quebra se necessário | Quebra sem ellipsis de contexto relevante | Voltar + trilha compacta acessível |
-| Hero título/descrição | Texto esquerda; ações na direita | Ações podem quebrar para nova linha dentro do Hero | Título e descrição sobre ações; primária visível, ações quebram sem overflow |
-| Filtros | Ano e situação menores + pesquisa maior + limpar; alinhamento consistente | Grade de duas colunas; busca ocupa linha inteira se necessário | **Uma coluna**, campos em largura total; Limpar filtros no próprio Hero |
-| Campanhas | Tabela oficial de largura útil | Tabela responsiva oficial ou cards quando sem legibilidade | **Cards**, sem mini tabela ilegível nem rolagem horizontal da página |
-| Colunas | Campanha/período flexível, status, contagens e ações | Reduzir colunas secundárias somente conforme kit | Cards com nome, período, status, participantes, respostas, ações |
-| Paginação | Rodapé oficial e tamanho por página | Controles refluem | Paginação compacta conforme kit, alvos táteis adequados |
-
-Os limiares acima são **faixas de teste propostas**, não equivalem automaticamente aos media queries/tokens atuais; validar nos tamanhos reais do Portal, inclusive zoom 200%, teclado e modo claro/escuro. A largura da página é a **largura útil do shell Comercial**, não `100vw` nem um novo `max-width` arbitrário. Respeitar `cm-page-stack` e tokens/camadas de spacing que realmente existam; medidas explicitadas aqui servem como metas de revisão, não autorização para override CSS.
-
-### Diretriz aprovada — paridade exata com tabelas e gráficos existentes no Comercial (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** na UI-02 e demais páginas da Pesquisa, **inventariar a tabela/gráfico de referência já em uso no microfrontend Comercial e reproduzir o mesmo conjunto de funcionalidades, composição e comportamento**, somente quando aplicáveis ao caso. **Não criar funcionalidade adicional**, configuração exclusiva, novo componente nem controle visual inventado. A prévia de Campanhas com 5 colunas e controles de fonte/colunas foi **ilustração**, e NÃO aprovação de controles ou estrutura inédita. Não repetir perguntas sobre funcionalidades já padronizadas; revisar apenas conteúdo/semântica e lacunas comprovadas.
-
-**Inventário inicial confirmado no código do HEAD `7f66ff0c824017806744e35fd26ff051364e920d`** (é evidência de componentes e consumidores, **não** comprovação de funcionamento de toda a UI em runtime):
-
-| Área | Evidência verificada | Regra de adoção |
-|---|---|---|
-| Tabela e lista de clientes | `plugins/commercial/src/features/customers/components/CustomersTable.tsx` usa `CommercialDataListToolbar`, `CommercialDataTable`, `CommercialDataCardsGrid`, `CommercialDataCardsSortBar`, `CommercialTableColumnVisibilityMenu`, `CommercialTableFontSizeControls` e `CommercialExcelExportButton` | É **referência principal de inventário**, não licença para incluir exportação de campanha/participantes ou todas as ações sem autorização e objetivo explícitos |
-| Ordenação/paginação de tabela analítica | `plugins/commercial/src/features/analytics/AnalyticsOtdPage.tsx` usa `CommercialDataTable` e `CommercialPagination`, ordenação e parâmetros remotos `sort_by`/`sort_dir` | Reutilizar semântica remota, tamanho/paginação oficial e estados; conferir contratos antes de transportar |
-| Kit de tabela | `plugins/commercial/src/app/commercialUi.ts` exporta os wrappers e `app/dataTableUi.ts` exporta `CommercialDataTableSection` e `TABLE_PAGE_SIZE_OPTIONS` | Usar nomes, props, estilos, tokens e ferramentas reais; não criar toolbar própria ou replicar CSS |
-| Gráficos temporais em Analytics | `plugins/commercial/src/features/analytics/components/AnalyticsClosingRateSeriesChart.tsx` e `AnalyticsRolSeriesChart.tsx` usam `ChartViewShell`, `MultiTypeSeriesChart`, `usePersistedChartPreferences` e controles de séries/exportação | Na **UI-01** reutilizar ferramentas reais de gráfico conforme tipo de visualização. Não adicionar alternância de gráfico em ranking fixo ou funções sem aderência; cálculos e dados oficiais seguem backend |
-
-**Critérios de paridade para tabela UI-02A, a inventariar por consumidor antes de fechar especificação visual:** toolbar oficial e conteúdo real; alternância tabela/cards se for padrão aplicável; ordenação e colunas efetivamente suportadas; fonte; paginação e tamanhos oficiais; comportamento mobile, vazios, erro e loading. **Exportação Excel NÃO está aprovada especificamente para UI-02A**: ter o botão existente em Clientes não aprova divulgar dados de campanhas/participantes. Colunas concretas dependem de dados oficiais, utilidade operacional e autorizações; não forçar cinco colunas do protótipo. As dimensões/padding/margens devem **herdar do componente original**; medir e registrar CSS/tokens concretos durante refinamento, sem sobrescrever para fazer parecer igual.
-
-**Gráficos:** UI-02A não precisa de gráfico novo. A UI-01 já contém especificações de `ChartViewShell`/séries e gráficos de dimensão apropriados; verificar cada tipo e controle de apresentação em seus consumidores canônicos antes de implementar. Filtros de dados continuam no Hero; ajustes de apresentação permanecem no contêiner original do gráfico. **A regra aprovada é reutilizar, não transplantar indiscriminadamente todos os controles para todo gráfico.**
-
-**PENDING técnico:** inspeção dos estilos CSS e breakpoints exatos do PluginUI, comparação visual em execução e testes de equivalência com Clientes/Analytics; nenhuma implementação foi executada por esta decisão.
-
-### Decisão aprovada — conteúdo da tabela de campanhas UI-02A (12/11/2026)
-
-**APROVADO PELO SOLICITANTE:** a tabela de Campanhas apresenta cinco **informações** (não presumir cinco colunas físicas quando o padrão do kit exige separar ações): **(1) Campanha / Período** (nome principal + início e término em segunda linha), **(2) Situação** (Agendada/Aberta/Encerrada, calculada pela `commercial-api`), **(3) Participantes** (empresas cadastradas na campanha), **(4) Respostas** (empresas que responderam), **(5) Taxa de resposta** (indicador oficial, sem cálculos improvisados no frontend). Ações contextuais padrão do Comercial: **Abrir configuração** → UI-02B e **Resultados** → UI-01 filtrada pela campanha explícita. Não acrescentar nesta etapa responsável, data de criação, mensagens enviadas, última atualização ou outras colunas não solicitadas.
-
-- **Padrão obrigatório:** reutilizar `CommercialDataTable` e seus padrões reais de linha, toolbar, ordenação, paginação e responsividade observados nos consumidores existentes do microfrontend, especialmente `CustomersTable` e Analytics. Não construir toolbar ou controles adicionais, nem assumir que todos os recursos de outras tabelas são aplicáveis por padrão. `ExcelExportButton` não fica automaticamente autorizado.
-- **Semântica:** a taxa e as contagens devem vir da autoridade de resultados/participantes; `Pendente` e número de participantes não significam convite entregue/enviado. Para zero participantes, exibir `—` como taxa indisponível, não taxa inventada. Tratamento de privacidade e grupos pequenos permanece responsabilidade do backend quando aplicável.
-- **Identificação e interação:** nome da campanha é elemento principal, período na linha secundária; a ação Abrir leva à configuração; Resultados é contextual e não modifica o comportamento do botão global Ver resultados no Hero. A apresentação exata das ações (coluna/menu/ações por card) deve **seguir o padrão comprovado do microfrontend**, não ser inventada aqui.
-- **Responsividade, padding, margens e dimensões:** herdados dos wrappers e tokens reais do PluginUI. A disposição mobile, tamanhos de células e ações serão verificados na próxima rodada contra os consumidores existentes; **não fixar números arbitrários**.
-- **Status:** informações e ações funcionais **APROVADAS**; contrato de dados, aplicação concreta dos componentes e teste visual **PENDING**. Especificação, não implementação.
-
-### Decisão aprovada — responsividade idêntica à lista de Clientes (12/11/2026)
-
-**APROVADO PELO SOLICITANTE:** na UI-02A, a listagem de Campanhas deve adotar **o mesmo comportamento responsivo da listagem de Clientes do microfrontend Comercial**, com os componentes oficiais já utilizados no consumidor `plugins/commercial/src/features/customers/components/CustomersTable.tsx`. Não criar variante própria de tabela ou cards para a Pesquisa.
-
-- **Desktop:** `CommercialDataTable` com a identidade visual, células, alinhamentos, hierarquia, seleção/ações e densidade que o padrão de Clientes efetivamente suportar, respeitando apenas as cinco informações aprovadas para campanhas e as duas ações contextuais.
-- **Celular:** `CommercialDataCardsGrid` e, quando a listagem de Clientes utiliza, `CommercialDataCardsSortBar`, preservando informações e ações com a organização, toque, foco e espaçamentos do padrão existente. Sem novo breakpoint ou CSS específico para simular a tabela.
-- **Tablet e transições:** adotar a alternância/reflow existente no consumidor de Clientes, não inventar intervalo fixo de largura. Verificar os breakpoints reais no CSS e os tokens do PluginUI durante a implementação; documentar os valores reais quando inspecionados.
-- **Toolbar, paginação e estados:** manter os controles reutilizáveis efetivamente aplicáveis já previstos no Comercial; não acrescentar exportação ou outras capacidades não aprovadas por existir botão em Clientes. Ordenação e paginação devem consultar a fonte oficial de campanhas quando remotas.
-- **Dimensões, paddings e margens:** herdar valores reais dos componentes e da composição do microfrontend; os números ilustrativos do blueprint não autorizam overrides. A confirmação exata de medidas, CSS e comportamento em execução continua **PENDING de inventário técnico/testes**.
-- **Status:** paridade responsiva com Clientes **APROVADA e DOCUMENTADA**, implementação não executada. Próximo refinamento será **paginação e estados da listagem**, sem solicitar nova aprovação do padrão já existente.
-
-### Refinamento da base da UI-02A — paginação e estados alinhados ao kit (12/11/2026)
-
-**Padrão reaproveitado, sem nova funcionalidade a aprovar:** o código atual `plugins/commercial/src/app/dataTableUi.ts` configura `createDashboardDataTableKit` com `CommercialPagination`, `TablePageSizeSelect`, `TABLE_PAGE_SIZE_OPTIONS` e padrão **20 itens por página**, além dos rótulos reais de paginação e dos estados de loading. `plugins/commercial/src/features/customers/components/CustomersTable.tsx` já usa `CommercialDataListToolbar`, `CommercialDataTable` e `CommercialDataCardsGrid`. Usar a **mesma composição apropriada** à listagem de campanhas, sem duplicar widgets ou inventar rodapé.
-
-- **Localização:** paginação no rodapé da listagem (tabela/cards), não dentro dos filtros do Hero. Seguir `CommercialDataTableSection`/kit quando adequado, com total e intervalo oficiais. `TABLE_PAGE_SIZE_OPTIONS` permanece a fonte dos tamanhos disponíveis; **não codificar opções 10/20/50/100 sem inventário do valor real**.
-- **Rótulos reais do kit, comprovados no código:** `Exibindo [início]–[fim] de [total] · Página [atual] de [total]`; ações `Anterior`, `Próxima`, `Ir para` e `Itens por página` conforme o componente. Tratamento previsto de página inválida/fora do intervalo usa mensagens oficiais, não implementação própria.
-- **Dados e filtros:** total, página, tamanho, ordenação e filtro devem refletir a consulta autorizada à `commercial-api`, com paginação/ordenação remotas quando a fonte for paginada. Mudança de filtros deve colocar a página em intervalo válido (normalmente primeira página); não paginar apenas registros locais parciais.
-- **Estados a distinguir:** (1) primeiro carregamento — componente de loading padrão; (2) atualização dos filtros com dados antigos — indicador oficial de atualização sem mascarar eventual dado desatualizado; (3) nenhuma campanha cadastrada — estado vazio com ação Nova campanha; (4) filtros sem correspondência — estado vazio com Limpar filtros; (5) falha da API — aviso de erro com ação de tentar novamente conforme kit, não zero fictício; (6) autorização insuficiente — acesso negado; (7) dados recebidos com campos não disponíveis — não inventar zeros/taxa. Verificar mensagens e políticas oficiais durante implementação.
-- **Responsividade:** mesmo rodapé e rearranjo de controles dos consumidores canônicos da listagem de Clientes; sem alturas, padding, margens, breakpoints ou largura máxima criados especificamente para Campanhas. Registrar valores reais de CSS/tokens na execução quando conferidos. A ação Nova campanha e filtros permanecem no Hero aprovado.
-- **Status:** **CONSOLIDAÇÃO de padrão existente** e complemento de especificação da UI-02A; não afirma novo layout implementado e não altera requisitos aprovados. A UI-02A fica suficientemente descrita para iniciar o refinamento de **Nova campanha (UI-02A.1)**.
-
-### 1.2.3 Navegação e comportamentos
-
-- **APROVADO:** **Ver resultados** global no Hero → UI-01 geral padrão. **Resultados** contextual em linha/card → UI-01 filtrada naquela campanha. **Abrir** → UI-02B; **Nova campanha** → diálogo oficial UI-02A.1.
-- Ano, situação e busca aplicam automaticamente. **Limpar filtros** redefine apenas os filtros da lista. Paginação e ordenação da tabela devem refletir a consulta da API, nunca somente os 20 itens locais.
-- Situação **Agendada/Aberta/Encerrada** deriva do backend, não cor fixa por lógica local. Participantes significa cadastro na campanha, não convite enviado. `commercial.access` isolado não gerencia/consulta participantes privados.
-- **PENDING implementação:** confirmar CSS/tokens/props exatos dos componentes, comportamento de filtro e paginação remotos, modo cards do kit, acessibilidade e testes nos três intervalos.
-
-### 1.2.4 Ordem da revisão visual proposta
-
-**Passo 1:** trilha + Hero + título/descrição + posição e hierarquia de ações. **Passo 2:** filtros no Hero. **Passo 3:** cabeçalho e tabela de campanhas. **Passo 4:** paginação/estados/desktop e mobile. Cada aprovação deve atualizar este bloco com os valores confirmados, marcando decisões em vez de tratar todos os alvos como aprovados.
-
-## 2. Wireframe A — lista e criação
-
-```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ Marketing / Pesquisa de satisfação                                        │
-│ [CommercialPageHero compacto]                                             │
-│ Configuração das pesquisas                [Ver resultados] [+ Nova]        │
-│ [Pesquisar campanha] [Situação ▼] [Ano ▼] [Limpar filtros]                │
-├───────────────────────────────────────────────────────────────────────────┤
-│ CAMPANHAS                                                                  │
-│                                                                           │
-│ Nome / período        Situação    Participantes  Respostas  Taxa  Ações         │
-│ Satisfação 2026/2     Aberta      100            72         72%   Abrir·Result. │
-│ Satisfação 2026/1     Encerrada    90            70         78%   Abrir·Result. │
-│ Satisfação 2025/2     Encerrada    80            74         93%   Abrir·Result. │
-│                                               [Página 1 de N]             │
-└───────────────────────────────────────────────────────────────────────────┘
-                                     │
-                         clique [+ Nova campanha]
-                                     ▼
-                  ┌─ Dialog oficial do PluginUI ─────────┐
-                  │ Nome da campanha                     │
-                  │ [________________________]           │
-                  │ Início [data/hora]   Fim [data/hora]  │
-                  │ Questionário oficial fixo (15)       │
-                  │ [Cancelar]               [Criar]     │
-                  └──────────────────────────────────────┘
-```
-
-Números das linhas **ilustrativos**; não codificar no frontend. Situação vem do backend, derivada da janela. “Participantes” significa cadastrados na campanha, não convites efetivamente enviados; o sistema não comprova contato.
-
-### Decisão visual aprovada — diálogo Nova campanha, UI-02A.1 (12/11/2026)
-
-**APROVADO PELO SOLICITANTE:** a criação é um **diálogo curto**, seguindo os componentes, tokens e comportamento responsivo já existentes no Portal Comercial, sem nova tela ou formulário complexo. O conteúdo editável inicial limita-se a **Nome da campanha**, **Data de início** e **Data de término**, todos obrigatórios; participantes e mensagem serão configurados no detalhe da campanha **após** criação confirmada.
-
-**Ordem visual do topo à base:**
-1. **Cabeçalho do diálogo oficial:** título **Nova campanha** à esquerda e fechamento conforme padrão de `CommercialHostDialog`; descrição curta imediatamente abaixo, orientando que mensagem e participantes vêm depois.
-2. **Nome da campanha:** campo obrigatório, largura útil completa, rótulo visível, exemplo de nome no placeholder sem substituir o rótulo.
-3. **Datas:** **Data de início** e **Data de término**, rótulos e indicadores obrigatórios, **lado a lado em desktop** e **empilhados no celular**, respeitando componente/calendário real e fuso/contrato da API. Não inventar formatação independente do kit.
-4. **Informação de questionário:** bloco informativo discreto — **Questionário oficial: 15 perguntas fixas** — sem edição, seleção ou cadastro de perguntas nesta versão.
-5. **Rodapé do diálogo:** **Cancelar** (secundária) e **Criar campanha** (primária), alinhados à direita conforme padrão do modal. Não posicionar ações globais da página dentro do corpo do formulário.
-
-**Comportamentos:** botão Criar indisponível enquanto os três campos obrigatórios não forem válidos; término posterior ao início, com validação final na `commercial-api`. Exibir carregamento/erro usando feedback oficial sem duplicar criação; manter dados preenchidos quando houver falha. **Somente após confirmação persistida** fechar o diálogo e navegar à **UI-02B, configuração da campanha criada** (Participantes / Mensagem padrão / Dados), onde se adicionam clientes TOTVS e se salva mensagem por campanha. Cancelar descarta a criação sem gerar campanha local falsa.
-
-**Dimensões, padding, margens, fonte e responsividade:** herdar dos tokens e da implantação real do `CommercialHostDialog` e controles oficiais; duas colunas de datas somente quando comportadas, uma em mobile. **PENDING inventário de CSS/props exatos e teste visual** antes de fixar medidas numéricas; não inventar overrides.
-
-**Status:** composição e três campos **APROVADOS**; contratos técnicos, implementação e validação em dispositivos **PENDING**. Não incluir envio automático, editor de questionário, inclusão de empresas ou mensagem padrão dentro do diálogo.
-
-### Decisão visual aprovada — topo e navegação da UI-02B (12/11/2026)
-
-**APROVADO PELO SOLICITANTE:** na página de detalhe/configuração de campanha, exibir **CommercialPagePath** acima de um único **CommercialPageHero** do Portal; o Hero apresenta **nome da campanha** como título principal, **período início–término** como informação secundária e **situação derivada pela commercial-api** em badge oficial. Ações contextuais de gestão no Hero: **Ver resultados** (UI-01 já filtrada pela campanha) e **Respostas por empresa** (UI-06 restrita a gestão). O retorno da trilha leva à lista de campanhas. Não criar segundo cabeçalho nem menu de navegação paralelo.
-
-**Logo abaixo do Hero:** usar o padrão oficial **CommercialUnderlineNav** para três seções: **Participantes** (selecionada ao entrar), **Mensagem padrão** e **Dados**. Alternar seções na mesma área de configuração, sem mudar a campanha, duplicar páginas, perder contexto sem necessidade ou gravar mudanças implicitamente. Abaixo da navegação aparece somente o conteúdo da seção ativa. `Editar datas`, quando admitido pelo contrato do backend, permanece ação contextual autorizada; não presumir uma edição livre para todos os estados.
-
-#### Matriz visual e responsiva — contrato de composição
-
-| Região | Componente de referência | Desktop largo | Tablet / largura intermediária | Celular |
-|---|---|---|---|---|
-| Trilha acima do Hero | `CommercialPagePath` | Trilha com retorno e identificação da campanha | Quebra/compactação seguindo kit | Retorno acessível, sem overflow |
-| Hero e título | `CommercialPageHero` (`density="compact"`) | Título e período à esquerda; situação no badge do próprio Hero | Refluxo nativo do componente | Título pode quebrar em linhas, mantendo identificação |
-| Ações | `CommercialActionButton` no slot `actions` | Alinhadas à direita da linha do título | Quebram para linha inferior quando faltar espaço | Ordem lógica e alvos de toque herdados do kit, sem truncar |
-| Navegação abaixo do Hero | `CommercialUnderlineNav` | Seções em faixa horizontal, Participantes inicialmente ativa | Refluxo ou navegação do kit | Mesmo padrão responsivo de navegação já usado no Comercial, sem abas inventadas |
-| Conteúdo da seção | Cards, tabelas e campos oficiais conforme função | Ocupa largura útil do shell | Adapta ao container | Empilha conforme componente real, sem rolagem horizontal de página |
-
-#### Dimensões, spacing, margens, tipografia e regras de evidência
-
-- **Regra de padronização reiterada pelo solicitante:** para **cada região e componente** da UI-02B e próximas páginas, documentar explicitamente **owner, componente PluginUI ou wrapper Comercial, props e variantes, localização/hierarquia, largura/altura, padding interno, margens externas, gap, alinhamentos, fonte, peso, raio/sombra, estados, foco/teclado e comportamento por largura de tela**. Quando um valor vier de token CSS ou media query existente, citar **arquivo e símbolo/selector com valor real**; se ainda não inspecionado, indicar **TO_INVENTORY**, nunca inventar medida ou chamar proposta de existente.
-- **Herança visual:** `CommercialPageHero`, `CommercialPagePath`, `CommercialActionButton` e `CommercialUnderlineNav` devem utilizar tokens/estilos/componentes oficiais do microfrontend. Não criar paddings, margins, font-size, breakpoints, bordas, alturas mínimas ou sombras específicos da Pesquisa apenas para reproduzir a prévia. O wrapper `CommercialPageHero` já adota `density="compact"` por padrão em `plugins/commercial/src/app/commercialUi.ts`; seus valores CSS efetivos e os da navegação **TO_INVENTORY** antes de implementação.
-- **Contexto e responsabilidades:** frontend organiza visual e navegação; `commercial-api` é autoridade para nome/período/situação/contagens e autorização de gestão. Nenhuma preferência visual autoriza informação restrita. Exigir `commercial.marketing` OU `commercial.manage` com validação final no backend. UI-01 mantém resultados agregados segundo autorização e UI-06 não pode ser acessada por `commercial.access` isolado.
-- **Status:** composição e seção inicial **APROVADAS**; inventário numérico de CSS/spacing e implementação **PENDING/TO_INVENTORY**. Próximo refinamento: seção **Participantes**, do topo ao rodapé, reutilizando padrões do Comercial.
-
-### Decisão visual aprovada — indicadores de Participantes empilhados no celular (12/11/2026)
-
-**APROVADO PELO SOLICITANTE:** na seção **Participantes** da UI-02B, apresentar as três métricas **Participantes cadastrados**, **Respondidas** e **Pendentes** em **três cartões empilhados verticalmente no celular**, nesta ordem, mantendo componentes, estilos e medidas oficiais do PluginUI/Comercial. A mudança é exclusivamente de **composição responsiva**, não modifica cálculos, contrato dos dados ou permissões.
-
-- **Desktop:** três cartões compactos na mesma linha quando houver largura útil e legibilidade, com a estrutura oficial de cartão/indicador do Comercial.
-- **Tablet/intermediário:** utilizar o comportamento responsivo do componente real; conservar três na linha quando couber, mas permitir reorganização conforme tokens e breakpoints já existentes, sem fixar regra nova arbitrária.
-- **Celular:** uma coluna, três cartões em sequência (Participantes cadastrados → Respondidas → Pendentes), cada cartão usando a largura útil do contêiner e o padding/margens/gap/tipografia/raio oficiais. Não criar grid, componente ou CSS próprio que replique o PluginUI. Evitar rolagem horizontal e truncamento de rótulos ou valores.
-- **Componentes a confirmar no código de implementação:** wrapper de cartões/indicadores apropriado (por exemplo, `CommercialMetricCard` se suas propriedades e semântica forem adequadas) e layout/grid já empregado pelo Comercial. **TO_INVENTORY:** CSS real, tokens exatos de largura, gap, padding, margin, altura, fonte, raio, media queries e comportamento com zoom; documentar arquivo e seletor antes de codificar. Não atribuir valores em pixels sem evidência.
-- **Dados e segurança:** métricas com valores oficiais da `commercial-api`; pendentes = participantes sem resposta, não convidados não enviados. Tratamento de loading, falha, ausência de dados e autorização segue componentes oficiais; valores do protótipo são fictícios.
-- **Aceite visual posterior:** conferir desktop, tablet, celular e zoom, mantendo ordem, alinhamento, foco acessível e paridade com o kit. **Status:** decisão responsiva **APROVADA E DOCUMENTADA**; medidas efetivas/implementação/testes **PENDING**.
-
-### Decisão vigente — UI-02B.1 card expansível de adição de clientes (13/11/2026)
-
-**DECISÃO MAIS RECENTE DO SOLICITANTE — SUBSTITUI A OPÇÃO ANTERIOR DE DIÁLOGO:** o botão **Adicionar novo** (ou **Adicionar clientes**, conforme rótulo aprovado na seção) na UI-02B, seção **Participantes**, **expande um card completo dentro da própria página**, acima da listagem de empresas já participantes. **NÃO usar modal, drawer ou navegação para outra tela** nessa operação. O fluxo é similar ao de **adicionar clientes às carteiras**: busca TOTVS por nome ou código, resultado com avatar oficial, seleção acumulada de vários clientes, revisão visível da lista selecionada e ação final explícita para **Adicionar à pesquisa**. Ao terminar, o card pode voltar ao estado colapsado, preservando participantes confirmados na lista abaixo.
-
-**Referências canônicas comprovadas no código** (inventariadas em `main`; manter validação em HEAD da implementação):
-
-- `plugins/commercial/src/features/seller-portfolios/SellerPortfolioDetail.tsx`: adiciona clientes em **seção embutida**, com `CustomerSearchPicker`, `excludeKeys={linkedKeys}`, `renderOptionLeading` e `renderSelectedChip` com `CustomerAvatar size="sm"`, e botão de confirmação. Esse padrão embutido é a referência principal, não o `CommercialHostDialog`. O `maxSelected={20}` é uma escolha local de Carteiras, **não** um limite confirmado para a Pesquisa.
-- `plugins/commercial/src/features/customers/components/CustomerSearchPicker.tsx`: `value/onChange` guardam seleção acumulada; `excludeKeys` e seleção atual são retirados dos resultados por `customerKey(code,store)`; há seleção múltipla, ação `Selecionar todos filtrados`, chips selecionados, remoção, busca e estados de carregamento/erro/vazio. A pesquisa usa atualmente `useActiveCustomerSearch({pageSize:12})`; verificar limites/cobertura do contrato para Pesquisa antes de implementar.
-- `plugins/commercial/src/features/customers/components/CustomerAvatar.tsx`: avatar real de cliente com `createInitialsAvatar("cm")` do PluginUI, opção de foto e iniciais como fallback; usar nos resultados/chips sem inventar componente visual paralelo.
-- **Card expansível:** procurar primeiro o padrão de `CommercialSectionCard` e o controle de expansão/colapso efetivamente existente no Comercial/PluginUI; **TO_INVENTORY** do consumidor de expansão e de suas props antes de fixar wrapper; não criar componente novo nem afirmar que `CommercialSectionCard` por si já implementa colapso.
-
-**Ordem no card expandido:** (1) título **Adicionar clientes** e controle oficial de recolher; (2) texto curto de instrução; (3) campo de busca **Nome ou código do cliente**; (4) resultados do TOTVS com avatar, nome e **código + loja**; (5) seleção acumulada, visível em lista/chips com avatar e ação de remover, mesmo após nova pesquisa; (6) contagem de selecionados; (7) ações **Cancelar** (recolhe sem gravar; descarte da seleção ainda pendente conforme confirmação de UX, se necessária) e **Adicionar à pesquisa** (confirma lote). A lista de participantes **confirmados** permanece abaixo do card e é atualizada somente após confirmação da API.
-
-**Sem duplicidade nos dois sentidos:** os resultados **disponíveis** excluem o conjunto oficial de **já participantes da campanha** e os itens **selecionados ainda não confirmados**. Ao desmarcar item pendente, ele volta a ser pesquisável; ao incluir com sucesso, migra para o conjunto oficial de participantes e deixa de ser elegível nas próximas aberturas. A identificação é pelo par exato de strings `customer_code` + `customer_store`, **preservando zeros à esquerda**. Um cliente já participante não pode ficar selecionável apenas por abrir outro card ou trocar a busca. O backend revalida todos os vínculos no momento da inclusão, prevenindo corrida/duplicidade.
-
-**Inclusão e retorno:** a `commercial-api` valida permissão (`commercial.marketing` OU `commercial.manage`), status/janela de campanha, clientes TOTVS e unicidade. Manter decisão anterior de **sucesso parcial em lote**: incluídas, já existentes e falhas individualizadas; não reenviar convites nem reemitir links de participantes antigos. Em falha, apresentar feedback oficial e não simular sucesso; seleção pendente deve ser recuperável para revisão segura.
-
-**Layout, dimensões e responsividade:** o card ocupa a largura útil da seção Participantes dentro do shell aprovado; **colapsado** exibe apenas affordance oficial para abrir; **expandido** contém busca, resultados, selecionados e ações. Desktop: organização conforme seção de Carteiras e componentes originais. Tablet: reflow do kit. Celular: busca/lists/chips e botões ajustam-se à largura disponível, sem overflow horizontal e com alvos acessíveis. **TO_INVENTORY obrigatório:** componentes concretos de expansão, seletores CSS, largura/altura, espaçamento entre card e lista, padding, margens, gap, tipo/tamanho de fonte, raio, breakpoints e foco/teclado. Registrar arquivos, valores e tokens **reais**, sem fixar pixels arbitrários ou CSS exclusivo para Pesquisa.
-
-**Distinção de escopo:** este veto a modal vale **somente para a inclusão de clientes na UI-02B**; não altera as decisões separadas sobre **Nova campanha (UI-02A.1)** e **Editar contato (UI-02C.1)**.
-
-**Status:** substituição da decisão de modal **CONFIRMADA**; componente exato de expansão e detalhes CSS **TO_INVENTORY**, contrato de inclusão e implementação **PENDING**. A especificação não significa que a funcionalidade já esteja implementada.
-
-### Refinamento de retorno de inclusão — sem painel de contadores (13/11/2026)
-
-**ORIENTAÇÃO EXPRESSA DO SOLICITANTE, substitui propostas visuais anteriores:** **não** exibir indicadores adicionais permanentes de **Incluídas / Já existentes / Com falha** no card de adicionar clientes. A inclusão bem-sucedida fica visível na **lista de participantes** imediatamente abaixo, atualizada com dados confirmados pela `commercial-api`. Clientes já vinculados à campanha **não devem aparecer na pesquisa de disponíveis**, assim como os já selecionados na operação atual; o `CustomerSearchPicker` comprovadamente admite `excludeKeys`. Não confundir a especificação de um **retorno de lote por item no backend** com obrigação de mostrar três cards de contagem no frontend.
-
-**Fluxo visual simplificado:** card expansível → busca nome/código TOTVS → avatares de empresas elegíveis não vinculadas → seleção acumulada → botão Adicionar à pesquisa → atualização oficial da lista de participantes. Sem relatório de sucesso ou modal adicional na operação normal; feedback discreto do kit quando necessário. Em erro, mostrar mensagem **somente se houve falha confirmada** e vinculada a uma causa confiável. Exemplos de **hipóteses, não erros comprovados do contrato**: concorrência (outra pessoa inclui o mesmo cliente antes da gravação), término da campanha entre consulta e confirmação, perda de autorização, falha de rede ou mudança de elegibilidade TOTVS. A frase `Cadastro indisponível para inclusão` do protótipo anterior foi **fictícia e genérica**; não padronizar nem assumir que o TOTVS emite isso.
-
-**Backend ainda precisa tratar corretamente:** unicidade por `customer_code+customer_store`, escrita concorrente, retorno parcial por empresa, idempotência, autorização e auditoria. Se a API não puder confirmar o resultado da operação (erro de comunicação), a UI deve consultar o estado oficial antes de repetir a gravação; não afirmar inclusão nem repetição segura sem evidência. Se um item específico falhar, mostrar mensagem contextual e identidade dessa empresa, **sem painel fixo de três contadores**. Condições/códigos de erro efetivos **PENDING** do contrato da `commercial-api`.
-
-**Padronização visual:** mesmo card expansível e mesmos componentes de busca/avatar/seleção do Comercial; usar o componente oficial de feedback apenas em exceções, preservando tokens, dimensões, margens, padding, gap e breakpoints reais (**TO_INVENTORY**) em desktop/tablet/celular. Nenhuma nova visualização, badge ou gráfico de resultado de lote.
-
-**Decisão visual mais recente APROVADA (13/11/2026) — SUBSTITUI feedback no card:** erros e avisos da inclusão devem usar **o toast/aviso flutuante já existente no canto superior direito do Portal Comercial**, **não** uma mensagem dentro do card expansível, painel de indicadores, relatório de erros separado ou modal. Evidência do código em `plugins/commercial/src/app/CommercialFloatingNoticeProvider.tsx`: `CommercialFloatingNoticeProvider`, `useCommercialFloatingNotice`, `notifyError`, `notifyWarning`, `notifySuccess`, baseados no `createFloatingNoticeStack`/`useFloatingNotices` do PluginUI. Consumidor real: `plugins/commercial/src/features/seller-portfolios/SellerPortfolioDetailPage.tsx` invoca `notifyError`, `notifyWarning` e `notifySuccess` na inclusão de clientes em carteiras. A posição percebida no canto superior direito foi informada pelo solicitante; posição, largura, margens, animação e duração específicas **TO_INVENTORY** no CSS e configuração real do stack antes de qualquer alteração.
-
-- **Sucesso normal:** atualizar os participantes confirmados na lista abaixo; opcional feedback padrão de sucesso do fluxo existente, **sem** cards de Incluídas/Já existentes/Com falha.
-- **Erro real individual ou parcial:** usar `notifyError` ou `notifyWarning` conforme severidade do fluxo oficial; quando houver identidade/motivo confiáveis e seguros, incluir nome ou código/loja e razão na mensagem; não inventar `cadastro indisponível` ou outros motivos do TOTVS sem contrato real. Quantidades extensas de erros exigem avaliar legibilidade/limites do toast existente; não criar lista de falhas nova sem decisão.
-- **Falha de comunicação/estado incerto:** aviso de que a inclusão não pôde ser confirmada, reconciliar participantes oficiais antes de novo envio. Preservar seleção pendente quando seguro, retirando empresas comprovadamente incluídas; não duplicar vínculos nem tokens.
-- **Dados e responsividade:** o toast segue tokens e breakpoints do Provider/PluginUI em desktop, tablet e celular, **sem overrides visuais específicos**. O card permanece apenas para buscar, selecionar e confirmar. O backend mantém retorno técnico por empresa e validação de unicidade/autorização, mesmo sem exibir relatório separado.
-
-**Status:** filtragem de já participantes, ausência dos três indicadores e **notificação pelo toast oficial do Portal APROVADAS**; valores CSS, contrato de falhas e implementação da Pesquisa **PENDING**. Não implementado.
-
-### Ajuste de interação da lista de participantes — linha/card clicáveis, sem botão Abrir (13/11/2026)
-
-**CORREÇÃO SOLICITADA:** na lista de participantes da UI-02B, **a própria linha de tabela no desktop e o próprio card no celular** são os controles de navegação para o detalhe **UI-02C**. **Não criar coluna `Ação`, botão `Abrir` ou affordance redundante para essa navegação.** **CONTEÚDO DA LISTA APROVADO PELO SOLICITANTE (13/11/2026):** a tabela terá **exatamente três colunas de informação**: **Empresa** (avatar oficial `CustomerAvatar`, nome oficial TOTVS e par código/loja preservando zeros iniciais), **Contato** (nome de contato informado para o convite, quando disponível; ausência exibida com padrão oficial) e **Situação** (**Pendente** ou **Respondida**, conforme autoridade da `commercial-api`). **Sem coluna Ação nem botão Abrir.** No card mobile, preservar as mesmas três informações e abrir o detalhe ao tocar no próprio card.
-
-**Padrão comprovado no código:** `plugins/commercial/src/features/customers/components/CustomersTable.tsx` já utiliza `CommercialDataTable onRowClick={openCustomer} rowClickRole="button"`; na versão de cards, `CommercialDataCardsGrid` renderiza `CustomerListCard onOpenDetail={openCustomer}`. Reutilizar essa semântica real, incluindo foco, teclado, indicação de interatividade e toque conforme o PluginUI; **não inventar botão explícito nem implementações ad hoc de clique**. A navegação deve preservar contexto da campanha e carregar o participante correto, com autorização de backend.
-
-**Composição visual:** adotar tamanho, padding, gap, margens, hover/focus, altura da linha, dimensões do avatar, breakpoint tabela/cards e tipografia da lista de Clientes como referência. **TO_INVENTORY** de valores e tokens CSS exatos antes da implementação, registrando fonte/seletor. Desktop, tablet e celular obedecem à responsividade real do kit. Ações secundárias eventuais que exijam operação diferente de abrir detalhe deverão ser analisadas separadamente e não justificam coluna de abertura.
-
-**Status:** as três informações e o clique/toque na linha/card **APROVADOS**; medidas CSS, contratos exatos, implementação e testes **PENDING/TO_INVENTORY**. Manter tabela/cards, paginação, busca/filtros e estados exclusivamente nos padrões oficiais do Comercial; sem controles extras nem criação de componente próprio.
-
-## 3. Wireframe B — detalhe de campanha
-
-```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ Marketing / Configuração / Satisfação 2026/2                             │
-│ Satisfação 2026/2 · [Aberta]      [Editar datas]*  [Ver resultados]       │
-│ Janela: DD/MM/AAAA a DD/MM/AAAA                                          │
-├───────────────────────────────────────────────────────────────────────────┤
-│ [Participantes]   [Mensagem padrão]   [Dados]                             │
-├───────────────────────────────────────────────────────────────────────────┤
-│ PARTICIPANTES         cadastrados: 100  respondidos: 72   pendentes: 28  │
-│ ▸ Adicionar clientes (card expansível na página, nunca modal)            │
-│ [Buscar na lista] [Pendente / Respondido ▼]                              │
-│                                                                           │
-│ Empresa                    Contato             Situação                   │
-│ Empresa A — 001/01         contato opcional    Pendente                   │
-│ Empresa B — 002/01         contato opcional    Respondido                 │
-│ (clique/toque na linha ou card abre o detalhe — sem coluna Ação)         │
-├───────────────────────────────────────────────────────────────────────────┤
-│ [Consultar respostas por empresa] → UI-06 (com campanha selecionada)      │
-│ Consulta detalhada não se duplica aqui                                     │
-└───────────────────────────────────────────────────────────────────────────┘
-
-*Editar datas apenas segundo regras do backend, sem invalidar respostas.
-```
-
-## 4. Mapa real de componentes
-
-| Região/ação | Componente existente | Arquivo/padrão |
-|---|---|---|
-| Hero, breadcrumbs e voltar | `CommercialPageHero`, `CommercialPagePath`, `CommercialActionButton` | `commercialUi.ts` |
-| Seção de campanhas e participantes | `SectionCard`/`CommercialSectionCard` | PluginUI/Portal Comercial |
-| Seções do detalhe | `CommercialUnderlineNav` | Wrapper PluginUI no Comercial |
-| Tabela de campanhas, participantes e respostas | `CommercialDataTable`, `CommercialPagination` | `commercialUi.ts`, exemplo `AnalyticsOtdPage.tsx` |
-| Busca de cliente/campanha | `CommercialTextField`, `CommercialFilterBarShell` | `commercialUi.ts` |
-| Data e filtros | `CommercialDateField`, `CommercialSelectField`, `CommercialMultiSelectField` | `commercialUi.ts` |
-| Nome/contato/e-mail ajustável | `CommercialTextField`, `CommercialDetailFieldGrid` | `commercialUi.ts` |
-| Criar/editar campanha | `CommercialHostDialog`, `CommercialActionButton` | Modal host-contained do PluginUI |
-| Leitura da resposta | [UI-06](./UI-06-RESPOSTAS-POR-EMPRESA.md) → [UI-07](./UI-07-DETALHES-RESPOSTA.md) | Página independente, sem drawer nem editor |
-| Status | `CommercialStatusBadge` | Wrapper PluginUI; não usar status `enviado` |
-| Cópia link/mensagem | `CommercialActionButton` + API nativa de clipboard como comportamento | Visual 100% kit; sem botão HTML estilizado custom |
-| Feedback | `CommercialStateBanner`, `CommercialLoadingCard`, `EmptyState` | Portal Comercial |
-
-**Não reutilizar** componentes de `commercial.tasks` como mecanismo para a pesquisa nesta entrega. Na entrega 2 serão avaliados somente se respeitarem isolamento e ownership; o plano de ação continua obrigatório no produto completo.
-
-## 5. Estados, validações e regras de interação
-
-### Criar campanha
-- Nome, início e fim; formulário oficial com perguntas **fixas e não editáveis**.
-- Erro de datas, conflito e falha de rede aparecem no diálogo sem gerar campanha local falsa; fechar/navegar somente após sucesso de persistência.
-- `Agendada`, `Aberta`, `Encerrada` são estados derivados no backend; não deixar o usuário mudar uma flag manual de “ativa”.
-- Edição de datas deve respeitar imutabilidade das respostas e validações do backend.
-
-### Decisão aprovada — seleção múltipla e inclusão em lote (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** na configuração de participantes da UI-02, o usuário de gestão poderá **pesquisar e selecionar várias empresas oficiais do TOTVS** (cada uma identificada pelo par `customer_code` + `customer_store`) e **confirmar a inclusão em uma única operação**. Não limitar a interface a uma empresa por vez e não interpretar o lote como envio de convites.
-
-- **Fluxo da interface:** busca autorizada na fonte oficial via `commercial-api → api-delpi/TOTVS`, seleção múltipla visível com quantidade de empresas selecionadas, revisão da seleção e ação explícita **“Adicionar à campanha”**. Preservar a seleção ao pesquisar/navegar pelos resultados conforme os padrões oficiais do Portal; não cadastrar empresas paralelas.
-- **Autoridade e escrita:** a `commercial-api` valida o lote inteiro no momento da gravação (campanha, permissão `commercial.marketing` OU `commercial.manage`, identidade código/loja, existência/elegibilidade consultável no TOTVS, unicidade e demais invariantes). O frontend **não** substitui validação nem gera token de convite. Utilizar o contrato REST oficial de participantes, com suporte real a lote **PENDING de especificação técnica/implementação**; não presumir que o POST atual já aceita coleção.
-- **Duplicidades e retorno — decisão posterior aprovada:** **inclusão parcial**: incluir as empresas válidas, manter as que já eram participantes sem qualquer alteração de token, e devolver falhas específicas por empresa, com totais e motivo para cada falha. A semântica funcional é **APROVADA**; formato REST, limites do lote, tratamento transacional por item e contrato de erro são **PENDING do backend**. Não mostrar sucesso antes da confirmação real de cada inclusão; proteger contra repetição concorrente.
-- **Nenhum disparo:** inclusão em lote **não envia e-mail/WhatsApp/Teams**, não gera status “Enviado”/“Entregue”, não dispara lembretes e não equivale a contato comprovado. Após inclusão, os links continuam disponíveis somente para **cópia manual** e distribuição externa pelo usuário autorizado.
-- **Acessibilidade e testes:** teclado, multiseleção, filtros/paginação preservando selecionados, zeros iniciais em código/loja, duplicidades, lote parcialmente inválido, erro de rede, autorização negativa para `commercial.access`, feedback pós-gravação e nenhuma distribuição automática.
-- **Status:** decisão de negócio/UX **APROVADA E DOCUMENTADA**; suporte de endpoint em lote, política de erro e implementação **PENDING**.
-
-### Decisão aprovada — inclusão parcial com resultado por empresa (11/11/2026)
-
-**APROVADO PELO SOLICITANTE — OPÇÃO A:** quando um lote tiver empresas válidas, empresas já incluídas e empresas inválidas, **incluir as válidas sem bloquear o lote inteiro**; **preservar sem alterações** as já participantes; e informar **as falhas por empresa** com identificação código/loja, motivo e orientação de correção quando segura — **apresentação ajustada em 13/11/2026: avisos flutuantes oficiais no canto superior direito e lista atualizada, sem painel permanente de contadores**. Não exigir repetição de toda a seleção devido a uma falha isolada.
-
-- A `commercial-api` revalida autorização, campanha, identidade e elegibilidade para **cada item**. O resultado do lote diferencia, no mínimo, `incluída`, `já existente` e `falhou`; os nomes exatos e o formato do contrato HTTP são **PENDING técnico**, não existentes comprovados. Fornecer contagens e itens classificados, sem listar sucesso de gravação que não foi confirmada. Cada inclusão bem-sucedida é durável; uma falha em outro item não desfaz essas inclusões.
-- Empresas já existentes conservam exatamente o mesmo vínculo e link/token. Impedir duplicidade no banco e manter comportamento idempotente inclusive sob cliques repetidos/concorrência. Itens repetidos dentro do mesmo lote não viram convites duplicados.
-- Falhas precisam identificar a empresa selecionada, sem expor dados privados, tokens, detalhes internos ou dados de outras campanhas. A seleção que falhou pode permanecer disponível para correção/nova tentativa; não reenviar automaticamente todos os itens já processados.
-- Se uma **falha global** inviabilizar a operação (por exemplo, falta de autorização ou indisponibilidade completa da API), **não** interpretar o caso como sucesso parcial confirmado; mostrar estado adequado e conferir o resultado com a autoridade antes de permitir tentativa insegura. Definir política detalhada no contrato do caso de uso.
-- **Sem envio de convites** por consequência da inclusão; copiar links/mensagens continua manual. Autorizar writes somente a `commercial.marketing` ou `commercial.manage`, com validação final e auditoria no backend; `commercial.access` isolado não pode incluir participantes.
-- **Aceite:** lote misto, todos válidos, todos duplicados, todos inválidos, duplicados no próprio lote, falha global, concorrência, retentativa, contagens corretas, auditoria, ausência de disparos e testes de permissão.
-- **Status:** decisão funcional **APROVADA e documentada**; endpoint, atomicidade por item, infraestrutura, autorização em execução e testes **NÃO IMPLEMENTADOS/TO_INVENTORY**.
-
-### Selecionar participante
-- Busca usa `commercial-api` (BFF já existente) e a fonte TOTVS; seleção conserva `customer_code+customer_store`, inclusive códigos com zeros iniciais.
-- Ao incluir duplicado, carregar participante já existente e **preservar o mesmo token**; nunca gerar link no browser.
-- O e-mail/contato copiado do ERP é informação auxiliar ajustável só neste convite; não editar cadastro TOTVS nem exigir e-mail para copiar link.
-
-### Decisão aprovada — diálogo de edição de contato por participante (11/11/2026)
-
-**APROVADO PELO SOLICITANTE — OPÇÃO B:** na lista de participantes da campanha, a ação **“Editar contato”** abre **diálogo oficial do Portal/PluginUI** específico da empresa escolhida. A tabela permanece em leitura, exibindo o contato disponível; não criar edição de células em linha. No diálogo, apresentar empresa e código/loja em leitura, além de campos editáveis **nome do contato** e **e-mail do contato**, restritos **ao convite desta empresa nesta campanha**.
-
-- Pré-preencher os campos com os dados de contato já registrados para o convite (inicialmente derivados da fonte oficial quando disponíveis); ambos continuam **opcionais**. Não exigir e-mail para gerar/copiar link. Salvar campos após validação do formato quando informados e confirmação de persistência da `commercial-api`; erro de validação ou rede mantém o diálogo e valores preenchidos, sem afirmar sucesso.
-- **Autoridade e fronteira:** `PATCH /satisfaction-surveys/campaigns/{id}/recipients/{recipientId}` é a proposta de contrato existente no planejamento, **ainda não implementada**. O backend revalida permissão `commercial.marketing` OU `commercial.manage`, campanha, participante e campos autorizados, aplica auditoria e confirma estado persistido; `commercial.access` isolado não edita. Nenhum write direto da UI ao TOTVS/`api-delpi`; não modificar cadastro mestre, nome da empresa, código/loja, token ou resposta definitiva.
-- **Interação:** botões **Cancelar** e **Salvar contato** no diálogo; Cancelar não persiste mudanças. Após sucesso, fechar diálogo e atualizar apenas o participante correspondente com dados confirmados pelo servidor. Reutilizar `CommercialHostDialog`, campos e feedback existentes; não criar novo modal ou editor visual.
-- **Privacidade e processo:** contato/e-mail são auxiliares da distribuição **manual** de convites, não identidade do respondente; não enviar convite nem registrar situação “Enviado/Entregue” por editar contato. Não expor contato a usuários sem autorização.
-- **Testes:** pré-preenchimento, valores vazios, e-mail inválido, cancelar, sucesso/erro de PATCH, concorrência, permissões, auditoria, teclado/foco e preservação do mesmo link exclusivo.
-- **Status:** decisão de experiência **APROVADA E DOCUMENTADA**; endpoint, autorizações reais e testes **PENDING**.
-
-### Decisão aprovada — editor único e mensagem personalizada por empresa (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** oferecer **um editor único de convite personalizável**, com prévia e **cópia por canal**: e-mail como **HTML formatado** (mais alternativa de texto simples), WhatsApp como **texto** e Teams como **texto**. Nenhum canal é enviado automaticamente pelo Portal. Cada convite deve mencionar **automaticamente o nome real da empresa participante** — vindo do cadastro oficial TOTVS via consulta autorizada e/ou nome-snapshot validado pela `commercial-api` — em lugar da expressão genérica “sua empresa”. O vínculo inequívoco é `customer_code` + `customer_store`; não tentar identificar empresa pelo texto do nome.
-
-- **Experiência:** ao abrir o detalhe do participante (UI-02C), exibir empresa e campanha e a **prévia resolvida em leitura** — assunto e corpo **não são editáveis no detalhe**: a edição ocorre somente na seção **Mensagem padrão** da campanha (UI-02B). A prévia/cópia é consolidada em **dois modos aprovados em 13/11/2026 — Correio eletrônico | Mensageiro** (supersede a proposta anterior de três prévias E-mail/WhatsApp/Teams e de edição no detalhe). Há **uma fonte textual compartilhada**, não três editores independentes. **“Copiar link”** isolado continua acessível. Empregar componentes oficiais do Portal/PluginUI, sem editor visual paralelo nem segundo editor no detalhe.
-- **Campos dinâmicos obrigatórios:** usar placeholders internos **`{nome_empresa}`** e **`{link_pesquisa}`** (nomes de exibição propostos; representação técnica a definir) com resolução **para o participante atual** antes de cada prévia e cópia. A interface deve mostrar o nome efetivo no resultado e não permitir troca manual do nome oficial ou do link exclusivo dentro do editor. Se um usuário alterar/remover tokens no texto livre, o fluxo deve garantir por composição segura que **nome e URL corretos sempre estejam presentes no convite final**, sem duplicação. Se o nome oficial estiver ausente ou inconsistente, **não inventar nome nem copiar convite associado a outra empresa**: bloquear a cópia personalizada e orientar correção/consulta ao dado oficial.
-- **Link e segurança:** o URL exclusivo estável é fornecido pela `commercial-api` somente após validação de permissão `commercial.marketing` ou `commercial.manage` e vínculo campanha/participante; nunca criar link no frontend. Evitar cache compartilhado entre participantes, token em logs/analytics, exposição de URLs de outras empresas e conteúdo inseguro no HTML. Sanitizar/escapar texto do Marketing, nome oficial e URL.
-- **Saída E-mail:** montar HTML simples de comunicação visual aprovada (parágrafos, identidade e link/CTA) e `text/plain`; copiar **conteúdo formatado**, não markup bruto, via clipboard suportado pelo navegador, com fallback de texto e cópia manual quando necessário. Suporte real à colagem rica depende do cliente de e-mail externo; testar com os clientes DELPI. O assunto é definido na seção **Mensagem padrão** da campanha e integra a cópia; não há envio.
-- **WhatsApp e Teams:** a mesma mensagem resolvida é convertida para texto simples com quebras de linha e URL visível; não assumir interpretação de HTML ou Markdown. A ação é copiar/colar externamente; nenhuma abertura/envio automático.
-- **Decisão posterior do solicitante (11/11/2026):** substituir a proposta de editor apenas temporário por **área padrão de configuração do texto do convite**. O usuário autorizado define o texto e o utiliza para preparar/copy convites a várias empresas. O modelo configurado deve ser recuperável para uso posterior; **escopo aprovado: uma mensagem padrão salva POR CAMPANHA, reutilizada para seus participantes**. Não presumir uma versão por participante nem guardar o token exclusivo no modelo. Armazenamento, endpoints e autoria/auditoria são **PENDING de desenho mínimo do owner `commercial-api`**, sem criar CRUD genérico de templates.
-- **Validação e testes:** verificar dois clientes com nomes diferentes e códigos/lojas distintos, mudanças de seleção, prevenção de link/nome cruzados, caracteres especiais/HTML malicioso, falta de nome oficial, equivalência entre os dois modos de prévia, clipboard negado, compatibilidade Outlook/WhatsApp/Teams, fluxo por teclado e **ausência completa de disparo**.
-- **Estado:** decisão funcional/UX **APROVADA e documentada**; implementação, representação de placeholders, compatibilidade HTML e aprovação do texto institucional por Marketing **PENDING**.
-
-### Decisão complementar — configuração simples e inserção de campos dinâmicos (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** disponibilizar na UI-02 **área de configuração de mensagem padrão**, funcional e deliberadamente simples. O usuário escreve e ajusta o texto, pode **digitar manualmente as chaves** ou usar um pequeno botão/lista de **“Inserir campo”** para colocar a chave na **posição atual do cursor**, mantendo a seleção/foco quando possível. O sistema **reconhece e destaca visualmente** as ocorrências das chaves no editor (ou fornece marcação equivalente compatível com os componentes oficiais, sem criar editor rico do zero). Não criar ferramenta para o usuário cadastrar/renomear campos dinâmicos.
-
-- **Exatamente dois campos dinâmicos disponíveis nesta entrega**, definidos em código: **`{nome_empresa}`** (nome oficial do participante TOTVS) e **`{link_pesquisa}`** (link estável e exclusivo obtido da `commercial-api`). Não implementar campos extras sem requisito futuro. Inserir campo deve respeitar cursor/seleção; validar ocorrências e avisar se houver chave desconhecida ou sintaxe incorreta, sem interpretar conteúdo do usuário como código.
-- **Prévia por participante:** resolver as chaves exclusivamente no momento da prévia/cópia, com contexto da campanha e empresa selecionadas e validação de autorização no backend. Exibir valores reais na prévia; não guardar valores sensíveis resolvidos dentro do modelo configurado. Impedir misturar nome/link de empresas diferentes. Ao trocar participante, renderizar novamente a mesma mensagem e atualizar ambos os dados.
-- **Obrigatoriedade da composição:** o convite final precisa conter corretamente o nome oficial e o link exclusivo. Se o texto configurado não tiver uma das chaves, orientar a inserção ou compor a informação obrigatória com segurança, sem duplicação; critério exato de bloqueio versus composição automática **PENDING técnico/UX**. Não alterar manualmente os valores resolvidos de nome e URL.
-- **Formatos mantidos:** mesma fonte textual alimenta **cópia HTML formatada para e-mail** (com `text/plain` alternativo), **texto para mensageiros** (WhatsApp, Teams e outros); dois modos de prévia (decisão de 13/11/2026), mas **sem três editores** e sem envio automático. Evitar WYSIWYG avançado, editor HTML livre, novos componentes visuais ou ferramenta de gestão de tokens. Assunto de e-mail pode seguir o editor simples já previsto.
-- **Responsabilidades:** frontend controla campo, destaque/validação de sintaxe e inserção na posição do cursor; backend é autoridade da configuração persistida (quando definido escopo), permissão, link e vínculo com cliente. Tratar conteúdo como dado: escape/sanitização do HTML final, sem scripts/HTML arbitrário e sem registrar tokens em logs.
-- **Testes:** inserção no meio do texto e substituição de seleção, digitação manual e destaque das duas chaves, chaves inválidas, texto simples/multilinha, nomes com caracteres especiais, troca de participantes, cópia HTML/texto, teclado e colagem em Outlook/WhatsApp/Teams.
-- **Status:** fluxo/editor, dois campos dinâmicos e escopo por campanha **APROVADOS**; contrato de persistência, suporte técnico do componente e testes **PENDING**. Não implementado.
-
-### Decisão aprovada — configuração por campanha e cópia no detalhe do participante (11/11/2026)
-
-**APROVADO PELO SOLICITANTE:** o gestor configura e salva **uma mensagem padrão da pesquisa/campanha**, não um modelo geral comum a todas as campanhas. Volta à **lista pesquisável de empresas participantes**, abre o **detalhe da empresa selecionada**, visualiza a mensagem com nome e link próprios e **copia** no formato adequado para colar manualmente no e-mail, WhatsApp, Teams ou outro meio.
-
-- **Percurso:** detalhar campanha → **Configurar mensagem** (texto e dois campos dinâmicos em código) → salvar na autoridade `commercial-api` → voltar à lista de participantes → buscar empresa por nome ou código/loja → abrir detalhe do participante → escolher o modo de prévia/cópia **Correio eletrônico** (HTML seguro com texto simples alternativo) ou **Mensageiro** (texto simples para WhatsApp/Teams/outros) → copiar. A ação separada **Copiar link** permanece.
-- **Responsabilidades visuais:** o editor de configuração fica **na campanha**; no detalhe do participante fica **prévia e cópia**, não outro editor completo. O corpo configurado é reutilizado para os participantes daquela campanha; modificar a configuração altera apenas futuras cópias, não contatos já encaminhados fora do Portal.
-- **Resolução segura:** `{nome_empresa}` = nome oficial TOTVS do participante; `{link_pesquisa}` = URL estável exclusiva fornecida pela `commercial-api`. Os valores são resolvidos novamente para o participante selecionado; nunca salvar URL/token real no modelo nem misturar dados de empresas diferentes. Acesso e escrita de gestão exigem `commercial.marketing` OU `commercial.manage` no backend.
-- **Persistência:** texto configurado permanece disponível ao retornar à campanha. O contrato e armazenamento mínimo sob ownership da `commercial-api`, validações, auditoria e testes continuam **PENDING**; não afirmar que há endpoint/tabela pronto nem criar CRUD genérico de templates.
-- **Processo:** nenhuma cópia dispara mensagem; o usuário cola e encaminha externamente. Nenhum status “Enviado/Entregue” é inferido. Testar busca, detalhe, retorno à configuração, alteração do texto, cópia multi-canal, duas empresas e dois links, permissões, falhas de clipboard e zero disparos.
-- **Status:** fluxo e escopo **APROVADOS**, implementação **PENDING**.
-
-### Copiar convite
-- **Copiar link** solicita ao backend o mesmo URL estável e copia; **Copiar mensagem** copia o **convite resolvido exibido na prévia de leitura do detalhe** (UI-02C), com **nome oficial da empresa e link específico inseridos automaticamente**, no formato do modo selecionado (**Correio eletrônico**: HTML com texto alternativo; **Mensageiro**: texto simples). A edição da mensagem ocorre somente na seção **Mensagem padrão** da campanha — o detalhe não tem editor. Não disparar nada.
-- Toast/estado de sucesso só após confirmação da cópia; falha de clipboard oferece seleção/cópia manual. Não incluir `Enviar e-mail`, `Reenviar`, `WhatsApp direto`, `Entregue`, `Enviado`, disparo em lote ou contador de tentativas.
-- Recópia não indica que houve contato com o cliente; mostrar **Pendente/Respondido** com base na submissão.
-
-### Consultar respostas
-- Resposta individual é somente leitura; notas, NPS, 10 dimensões e até três comentários, data e vínculo empresa. Nada de `Editar`, `Excluir` ou “Responder em nome do cliente”.
-- Nenhuma página ou componente público recebe dados de outros participantes.
-
-## 6. APIs, permissões e fluxo
-
-| Interação | REST planejado | Requer |
-|---|---|---|
-| Listar/criar/abrir/editar campanha | `GET/POST /satisfaction-surveys/campaigns`, `GET/PATCH /satisfaction-surveys/campaigns/{id}` | Gestão |
-| Busca cliente | `GET /customers/search` existente; via BFF | Autorização da operação e validação no backend |
-| Listar/adicionar participantes | `GET/POST /satisfaction-surveys/campaigns/{id}/recipients` | Gestão |
-| Ajustar contato | `PATCH /satisfaction-surveys/campaigns/{id}/recipients/{recipientId}` | Gestão |
-| Copiar mesmo link | `GET /satisfaction-surveys/campaigns/{id}/recipients/{recipientId}/link` | Gestão; resposta sensível |
-| Listar/detalhar respostas | `GET /satisfaction-surveys/campaigns/{id}/responses`, `GET /satisfaction-surveys/responses/{id}` | Gestão |
-| Enviar e-mail | **INEXISTENTE nesta experiência** | Usuário usa seu canal fora do Portal |
-
-`commercial.marketing` será registrado durante implementação, junto com RBAC do frontend/host, backend e CAIO. **Não** inventar `commercial.survey.write` ou outros códigos.
-
-## 7. Responsividade, testes e critérios de aceite
-
-- Desktop: tabela com paginação e colunas essenciais; tablet/mobile: filtros reorganizados com kit e tabela rolável/adaptativa do PluginUI; ações acessíveis pelo teclado e rótulos claros.
-- Estado vazio inicial oferece `Nova campanha`, sem dados fictícios; acesso negado tem mensagem específica; falha de consulta não se apresenta como `0 participantes`.
-- O link não aparece em logs, navegação indevida ou analytics; Clipboard é ação explícita.
-- Testar via UI e backend: criação, datas, duplicidade, edição controlada, pares TOTVS, link estável, cópia sem envio, pendência, restrição de acesso, leitura imutável e responsividade.
-- Testar `read`/`execute` no CAIO com os mesmos casos de uso e limites de autorização; teste REST/CAIO na **mesma etapa**. Conferir HEAD, arquivos, mudanças, residual search, outcome e gaps em execution report.
-
-**Entrega 2:** classificação e plano de ação **não aparecem agora**, mas estão previstos e obrigatórios segundo o [Word/índice](./REQUIREMENTS-INDEX.md). Não antecipar telas de ações nesta página enquanto a pesquisa não estiver entregue.
+| A — Lista de campanhas | `satisfaction-surveys` |
+| B — Detalhe da campanha | `satisfaction-surveys/{campaignId}?tab=participants\|message\|data` |
+| C — Detalhe do participante | `satisfaction-surveys/{campaignId}/recipients/{recipientId}` |
+
+**Fora destas páginas:** Resultados (UI-01, UI-05), Respostas por empresa (UI-06) e Detalhe da resposta (UI-07). Os botões “Ver resultados” e “Respostas por empresa” entram junto com essas páginas; até lá não aparecem.
+
+## 2. Princípios visuais
+
+1. **Igual ao restante do Portal Comercial:** trilha, bloco de título (`CommercialPageHero`), quadros (`CommercialSectionCard`), tabela e cards (`CommercialDataTableSection`), avisos flutuantes. Nada de visual próprio da Pesquisa.
+2. **Só componentes do PluginUI e wrappers do Comercial.** CSS da página só para layout em `styles/satisfaction.css`. Quando faltar um componente, ele é criado no PluginUI, genérico, depois de passar pela avaliação de nova abstração (ex.: `TokenHighlightField`, P1).
+3. **Temas claro e escuro do Portal**, só com tokens. Trocar o tema muda só cores, nunca posição ou espaçamento.
+4. **Ações e filtros globais ficam no bloco de título.** Ações de um conteúdo ficam no quadro desse conteúdo.
+5. **Linguagem de negócio.** Nada de “escopo parcial”, “etapas A/B”, identificador técnico do questionário ou termos como “placeholder” e “token” na tela.
+6. **Sem avisos permanentes que não pedem ação.** Avisos só quando mudam o que a pessoa pode fazer: campanha encerrada, empresa que já respondeu, erro.
+
+## 3. Telas
+
+### 3.1 A — Lista de campanhas
+
+Ordem, de cima para baixo:
+
+1. **Trilha:** “← Portal Comercial / Pesquisa de Satisfação”.
+2. **Bloco de título:**
+   - etiqueta “MARKETING · PESQUISA DE SATISFAÇÃO” acima do título;
+   - título “Configuração das Pesquisas”;
+   - descrição “Campanhas, participantes e convites da Pesquisa de Satisfação de Clientes. Os convites são copiados e enviados por você — o Portal não dispara mensagens.”;
+   - à direita: “Atualizado em dd/mm/aaaa, hh:mm”, Atualizar e **Nova campanha** (principal).
+   - No corpo do bloco, os filtros: **Ano** (Todos + anos), **Situação** (Todas, Agendada, Aberta, Encerrada) e **Pesquisar campanha** (marcador “Nome da campanha”). Os filtros se aplicam sozinhos; “Limpar filtros” aparece quando há filtro ativo.
+3. **Quadro “Campanhas”:**
+   - barra da tabela no padrão de Clientes: Tabela/Cards, Itens por página (20), Fonte, Colunas e total de registros;
+   - **Tabela:** colunas Campanha / período (nome em destaque e período abaixo), Situação (selo), Participantes, Respostas e Taxa de resposta. **Todos os cabeçalhos ordenam.** Números alinhados à direita. A linha inteira abre a campanha;
+   - **Cards:** barra “Ordenar por” (campo e sentido) no padrão de `CustomersTable.tsx`. Em cada card: nome da campanha como título, selo de situação, “PERÍODO” com o período e os três números (Participantes, Respostas, Taxa de resposta). O card inteiro abre a campanha;
+   - paginação “Página X de Y · N registro(s)”.
+4. **Diálogo Nova campanha** (sem mudança de fluxo):
+   - campos Nome, Início e Término (data e hora), com a nota “Questionário oficial fixo de 15 perguntas”;
+   - Cancelar / Criar campanha;
+   - só depois da confirmação da API o diálogo fecha e a campanha criada abre.
+
+**Taxa de resposta:** valor `response_rate` da API, com no máximo uma casa decimal (“60%”, “66,7%”, “100%”), como já é hoje; “—” quando a API não informa. A maquete mostra “60,0%” só como exemplo e não muda essa regra.
+
+### 3.2 B — Detalhe da campanha
+
+**Topo, comum às três abas:**
+
+1. **Trilha:** “← Portal Comercial / Pesquisa de Satisfação / {nome da campanha}”.
+2. **Bloco de título:**
+   - etiqueta “MARKETING · PESQUISA DE SATISFAÇÃO”, nome da campanha como título e “Janela de resposta: {início} → {término}”;
+   - à direita: “Atualizado em…”, selo de situação e Atualizar;
+   - **números** no corpo do bloco (`highlights`): PARTICIPANTES, RESPONDIDAS, PENDENTES e TAXA DE RESPOSTA, vindos da API. “Pendente” significa sem resposta registrada, não “não enviado”.
+3. **Abas:** Participantes, Mensagem padrão e Dados da campanha (`CommercialUnderlineNav`).
+   - A aba aberta fica no endereço (`?tab=`). Sem valor ou com valor inválido, abre Participantes.
+   - Trocar de aba cria uma entrada no histórico, para o “voltar” do navegador funcionar.
+   - Trocar de aba não grava nada e não apaga a busca ou a seleção em andamento.
+
+**Aba Participantes:**
+
+1. **Quadro recolhível “Adicionar clientes”:**
+   - Fechado: “Buscar no cadastro TOTVS e incluir empresas nesta campanha.” e o botão **Adicionar clientes**.
+   - Aberto: busca no TOTVS por código ou nome, seleção de várias empresas (mantida entre buscas), Adicionar à pesquisa e Cancelar.
+   - O resultado vem por avisos flutuantes (incluídas, já existentes, falhas por empresa) e a lista se atualiza. Não há painel de contadores.
+   - Campanha encerrada: o quadro mostra “Campanha encerrada não recebe novos participantes.” e não permite incluir.
+2. **Um único quadro “Participantes”**, com tudo dentro:
+   - filtros Situação (Todas, Pendente, Respondida) e Pesquisar participante (“Empresa, código/loja ou contato”);
+   - barra da tabela;
+   - tabela e cards com **exatamente três colunas**:
+     - **Empresa:** avatar, nome em destaque e “Código/loja 000232/01” abaixo, com os zeros à esquerda preservados;
+     - **Contato:** nome em cima e e-mail embaixo. Sem contato, “Sem contato” em tom secundário;
+     - **Situação:** selo Respondida (verde) ou Pendente (amarelo).
+   - Todos os cabeçalhos ordenam. A linha ou o card inteiro abre o participante; **não há coluna Ação nem botões na linha**.
+   - paginação.
+
+**Aba Mensagem padrão:**
+
+1. **Quadro “Mensagem padrão da campanha”**, com a descrição “Uma única mensagem por campanha. Cada empresa recebe o próprio nome e o link exclusivo ao abrir o participante.”
+   - **Assunto do e-mail** e **Mensagem do convite**, os dois com `TokenHighlightField`. `{nome_empresa}` e `{link_pesquisa}` aparecem destacados enquanto se digita.
+   - Legenda: “Campos destacados são preenchidos para cada empresa: {nome_empresa} e {link_pesquisa}.”
+   - Botões **Inserir nome da empresa** e **Inserir link da pesquisa**: inserem o marcador na posição do cursor (pelo `inputRef`, sem `document.getElementById`).
+   - Avisos dentro do quadro, só quando necessários: falta de `{nome_empresa}` ou `{link_pesquisa}`; marcador não permitido (“Use apenas {nome_empresa} e {link_pesquisa}.”); “Alterações não salvas.”; conflito de edição com “Recarregar campanha”.
+   - **Rodapé do quadro**, alinhado à direita: Reverter alterações e **Salvar mensagem**. Salvar só depois da confirmação da API, com aviso flutuante “Mensagem padrão salva.”
+2. **Quadro “Prévia”**, com a descrição “Como a mensagem chega à empresa, com nome e link de exemplo. O convite real de cada empresa fica no detalhe do participante.”
+   - Alternância **Correio eletrônico | Mensageiro**.
+     - **Correio eletrônico:** “Assunto:” e a mensagem em HTML seguro, gerado a partir do texto, com `RichTextEditor` em modo de prévia.
+     - **Mensageiro:** texto simples com quebras de linha, sem assunto.
+   - Empresa e link de exemplo (“Empresa Exemplo”, link `.invalid` que não funciona).
+   - **Sem botão de copiar.** A prévia é só para ver.
+
+**Aba Dados da campanha:**
+
+- Quadro “Dados da campanha”, com **Editar dados** no cabeçalho do quadro.
+- Grade de leitura:
+  - Nome, Janela de resposta e Situação (selo);
+  - **Questionário:** “Questionário oficial”;
+  - **Versão do questionário:** “Versão de 11/11/2026”, tirando a data do sufixo `@AAAA-MM-DD` de `questionnaire_version`. Sem sufixo válido, mostrar só “Questionário oficial”, sem linha de versão. O identificador técnico nunca aparece;
+  - Criada em e Atualizada em.
+- Aviso informativo: “As datas não podem ser alteradas depois que alguma empresa responder.”
+- **Editar dados** abre o diálogo da campanha (mesmo do 3.1). A API valida e recusa o que não pode mudar.
+
+### 3.3 C — Detalhe do participante
+
+1. **Trilha:** “← Portal Comercial / Pesquisa de Satisfação / {campanha} / {empresa} · {código/loja}”.
+2. **Bloco de título:**
+   - avatar grande, etiqueta “PARTICIPANTE DA PESQUISA”, nome da empresa como título e “Código/loja {x} · Campanha {nome}”;
+   - à direita: “Atualizado em…”, selo Pendente ou Respondida e Atualizar.
+3. **Aviso, só quando respondida:** “Esta empresa já respondeu à pesquisa.” A resposta individual não aparece aqui (UI-07).
+4. **Quadro “Contato do convite”:**
+   - Nome do contato e E-mail do contato (“Não informado” quando vazio), com **Editar contato** no cabeçalho do quadro;
+   - o diálogo tem empresa e código/loja só para leitura e os dois campos opcionais. Cancelar não grava; Salvar só depois da confirmação da API. Não altera o TOTVS nem o link.
+5. **Quadro “Convite personalizado”:**
+   - descrição “Mensagem padrão da campanha com o nome e o link exclusivos desta empresa. Copie e envie por conta própria.”;
+   - alternância Correio eletrônico | Mensageiro; assunto (só no correio); mensagem com o nome e o link reais desta empresa; linha “Link exclusivo:” com o link;
+   - botões **Copiar mensagem** (principal, no formato da alternância), Copiar assunto e Copiar link;
+   - a cópia só é confirmada quando o navegador aceita. Se o navegador recusar, aparece a área “Cópia manual” com o texto selecionável;
+   - se a mensagem não puder ser montada: “A mensagem padrão ainda não pôde ser resolvida para esta empresa. Volte à campanha e configure a mensagem padrão.”
+
+## 4. Regras funcionais preservadas
+
+| Regra | Origem |
+|---|---|
+| Configuração por campanha. A lista de participantes é acumulativa, e incluir mais tarde não muda respostas, links nem o prazo | Decisões de 11/11/2026 |
+| Inclusão em lote com resultado parcial: incluídas, já existentes e falhas por empresa | 11/11 e 13/11/2026 |
+| Campanha encerrada não recebe inclusão; a API recusa | 11/11/2026 |
+| Só dois campos dinâmicos: `{nome_empresa}` e `{link_pesquisa}`. Uma mensagem por campanha, sem links de participante dentro dela | 11/11/2026 |
+| HTML da prévia e da cópia gerado de forma segura a partir de texto, sem executar HTML escrito pelo usuário | 13/11/2026 |
+| Sem envio, sem “Enviado/Entregue”, sem abrir aplicativo externo | Contrato da primeira entrega |
+| Participante é página própria; só Editar contato é diálogo | 13/11/2026 |
+| Situação da campanha vem da API (Agendada, Aberta, Encerrada); não existe ativar ou desativar | 11/11/2026 |
+
+## 5. Estados
+
+Cada tela tem estados distintos para carregando, vazio, vazio por filtro, erro com “Atualizar” e acesso restrito, usando `CommercialLoadingCard`, `CommercialEmptyState` e `CommercialStateBanner`. O conteúdo de cada estado é o já existente em `content/satisfactionSurveysContent.ts`, exceto as mudanças da §6.
+
+“Atualizado em” mostra a hora da última leitura feita com sucesso, e “· Atualizando…” enquanto recarrega. É o mesmo comportamento de Clientes.
+
+## 6. Mudanças de texto
+
+| Chave hoje | Mudança |
+|---|---|
+| `list.partialScope` | **Remover** (lista e campanha) |
+| — (novo) `list.eyebrow`, `recipient.eyebrow` | “MARKETING · PESQUISA DE SATISFAÇÃO” e “PARTICIPANTE DA PESQUISA” |
+| — (novo) `updatedAt(data)` | “Atualizado em {dd/mm/aaaa, hh:mm}” |
+| — (novo) `list.cardPeriod`, `list.sortBy` | “Período” e “Ordenar por” |
+| `detail.metricParticipants` | “Participantes” |
+| — (novo) `detail.metricResponseRate` | “Taxa de resposta” |
+| `message.intro` | “Uma única mensagem por campanha. Cada empresa recebe o próprio nome e o link exclusivo ao abrir o participante.” |
+| — (novo) `message.tokenLegend` | “Campos destacados são preenchidos para cada empresa:” |
+| `message.unknownTokens` | “Campos não permitidos: … Use apenas {nome_empresa} e {link_pesquisa}.” (sem “Placeholders”) |
+| `message.previewSampleNote` | “Como a mensagem chega à empresa, com nome e link de exemplo. O convite real de cada empresa fica no detalhe do participante.” |
+| `message.copyPreview`, `message.copiedPreview` | **Remover** |
+| `data.fieldQuestionnaireValue` | “Questionário oficial” |
+| — (novo) `data.versionFrom(data)` | “Versão de {dd/mm/aaaa}” |
+| `data.editHint` | “As datas não podem ser alteradas depois que alguma empresa responder.” |
+| `recipient.heroDescription` | “Código/loja {x} · Campanha {nome}” |
+| `recipient.responded` | “Esta empresa já respondeu à pesquisa.” |
+
+## 7. Layout, temas e acessibilidade
+
+- **Larguras:** computador 1280 px ou mais; tablet 768 px; celular 360 px. Tabela no computador e cards no celular, igual a Clientes.
+- **Números do bloco de título:**
+  - computador: os quatro numa linha;
+  - abaixo de 900 px: dois por linha;
+  - celular: empilhados (decisão de 12/11/2026).
+  - Hoje a grade do `PageHero` tem três colunas fixas (I4): o ajuste é do PluginUI, no P3, sem mudar páginas com três números.
+- **Filtros** no bloco de título em grade que se ajusta sozinha. No celular, um por linha.
+- **Temas:** conferir claro e escuro em todas as telas. Selos, avisos, destaque de marcadores e números só com tokens.
+- **Acessibilidade:**
+  - trilha como navegação;
+  - abas com `role="tab"` e seleção anunciada;
+  - linha e card clicáveis também por teclado (Enter);
+  - camada de destaque oculta ao leitor de tela;
+  - foco visível;
+  - zoom de 200% sem cortar ações;
+  - “Atualizado em” com `aria-live="polite"`.
+
+## 8. Componentes por tela
+
+| Tela | Componentes |
+|---|---|
+| A | `CommercialPagePath`, `CommercialPageHero`, `CommercialSelectField`, `CommercialTextField`, `CommercialClearFiltersButton`, `CommercialActionButton`, `CommercialDataTableSection`, `CommercialDataCardsSortBar`, `CommercialInteractiveDataCard`, `SatisfactionStatusBadge`, `CampaignFormDialog` |
+| B | `CommercialPagePath`, `CommercialPageHero` (`highlights`), `CommercialUnderlineNav`, `CommercialSectionCard`, `CommercialDataTableSection`, `CustomerAvatar`, `CommercialStatusBadge`, `TokenHighlightField` (via fábrica do Comercial), `RichTextEditor` (prévia), `CommercialStateBanner` |
+| C | `CommercialPagePath`, `CommercialPageHero`, `CustomerAvatar`, `CommercialSectionCard`, `InvitePreview`, `CommercialActionButton`, `RecipientContactDialog`, `CommercialStateBanner` |
+
+## 9. Critérios de aceite
+
+1. As seis telas da maquete reproduzidas no tema escuro, e com a mesma composição no claro.
+2. Os ajustes 1–16 da [§4 do plano](./UI-02-PLANO-IMPLEMENTACAO.md#4-catálogo-de-mudanças-o-que-muda-em-cada-tela) cobertos por teste ou por captura de tela.
+3. Os fluxos de criar campanha, incluir clientes, editar contato, salvar e reverter mensagem, copiar convite e cópia manual com o mesmo comportamento de antes, com os testes existentes verdes.
+4. Aba no endereço: atualizar a página e usar o “voltar” do navegador funcionam.
+5. Nenhum CSS de componente novo fora do PluginUI e nenhuma cor literal nova na página.
+6. Homologação em HML com o aceite do solicitante; nada em PROD.

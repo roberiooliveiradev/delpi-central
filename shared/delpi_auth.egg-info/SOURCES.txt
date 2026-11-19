@@ -56,8 +56,12 @@ delpi_character_profiles/tests/test_models.py
 delpi_character_profiles/tests/test_projection.py
 delpi_character_profiles/tests/test_serialization.py
 delpi_character_profiles/tests/test_validation.py
+delpi_freight/__init__.py
+delpi_freight/freight.json
+delpi_freight/freight_allocation_service.py
 delpi_mcp/__init__.py
 delpi_mcp/auth.py
+delpi_mcp/avatar_image.py
 delpi_mcp/conformance.py
 delpi_mcp/errors.py
 delpi_mcp/identity.py
@@ -78,5 +82,6 @@ delpi_mcp/tests/test_transport.py
 strategic_indicators_client/__init__.py
 strategic_indicators_client/client.py
 tests/test_delpi_api_client_query_params.py
+tests/test_freight_financial_parity.py
 transformometro_client/__init__.py
 transformometro_client/client.py

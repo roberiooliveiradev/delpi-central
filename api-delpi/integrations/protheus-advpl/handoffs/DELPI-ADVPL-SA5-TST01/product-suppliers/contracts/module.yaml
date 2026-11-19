@@ -1,0 +1,107 @@
+module_id: product-suppliers
+package_tag: SA5
+name: Product Suppliers — SA5
+responsibility: Integração do vínculo Produto x Fornecedor (SA5) via MATA061 (MVC
+  Model-2).
+owners:
+  technical: DELPI Integrações (api-delpi)
+  erp: Equipe Protheus (Delpi-ti)
+entities:
+- SA5
+sa5_identity:
+- A5_FILIAL
+- A5_FORNECE
+- A5_LOJA
+- A5_PRODUTO
+- A5_FABR
+- A5_FALOJA
+- A5_REFGRD
+official_routines:
+- id: MATA061
+  mechanism: MVC Model-2 (SetPrimaryKey/SetUniqueLine)
+  status: PROVEN_SOURCE
+  note: MSExecAuto com arrays de MATA010 NAO se aplica; ativacao Model-2 = VALIDAR
+    NO TST01
+reference_source:
+  repo: Delpi-ti/protheus-erp
+  branch: master
+  paths:
+  - 73. CRM/Dmata061.prx
+  - 73. CRM/MATA010M_DLP.PRW
+  upstream_sha: INCONCLUSIVE
+  mirror_paths:
+    docs/13-fontes-totvs-protheus/73. CRM/Dmata061.prx: b45cc9333c410a58d5836f78b79a140c6056c9c6
+    docs/13-fontes-totvs-protheus/73. CRM/MATA010M_DLP.PRW: a56c2a5079991742a544c39dd75fde8f3e9eda48
+  mirror_commit: be614649b7
+candidate_source:
+  name: DLP04I02.PRW
+  status: SOURCE_CANDIDATE
+  path: src/DLP04I02.PRW
+  mechanism: FWLoadModel('DMATA061') — MPFormModel Model-2 oficial
+  operations:
+    CREATE: SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (commit so .T. logico;
+      M-> VALIDAR NO TST01)
+    UPDATE: BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING (carga pela PK nao
+      comprovada; PUT retorna 501, nunca CommitData)
+    READ_ADVPL: TO_INVENTORY (GET retorna 501 explicito; sem SELECT no .PRW)
+    READ_API_DELPI: PROVEN_CODE (ProductSuppliersRepository.get_supplier_link)
+    DELETE: BLOCKED / ERP_DECISION_REQUIRED (a060VldGrv; DELETE retorna 501)
+  provenance:
+    erp_repo: Delpi-ti/protheus-erp
+    erp_branch: master
+    erp_head: INCONCLUSIVE (nao revalidado; ultima ref 86616df50b17)
+    model_path: 73. CRM/Dmata061.prx
+    mirror_blob_sha: b45cc9333c410a58d5836f78b79a140c6056c9c6
+    mirror_commit: be614649b7
+development_status: SOURCE_CANDIDATE / COMPILATION_REVIEW_CANDIDATE
+operations:
+  known:
+  - op: MODEL_INVENTORY
+    status: PROVEN_SOURCE
+    evidence: contracts/official-model-inventory.md — DMATA061 ModelDef/SetPrimaryKey
+      7 campos/a060VldGrv/a060LinOk
+  - op: SA5_READ_API_DELPI
+    status: PROVEN_CODE
+    note: ProductSuppliersRepository.get_supplier_link — leitura SQL governada
+      (evidencia auxiliar, separada da fachada ADVPL)
+  pending:
+  - op: SA5_ADD
+    status: SOURCE_CANDIDATE / TST01_VALIDATION_PENDING
+    note: POST /v1/ProdForn/incluir — header+AddLine+VldData+CommitData(.T. logico);
+      M-> a060LinOk = VALIDAR NO TST01
+  - op: SA5_UPDATE
+    status: BLOCKED / OFFICIAL_LOAD_CONTRACT_PENDING
+    note: PUT /v1/ProdForn/alterar retorna 501 — carga do vinculo pela PK
+      integral = VALIDAR NO TST01; nenhum CommitData executavel
+  - op: SA5_READ_ADVPL
+    status: TO_INVENTORY
+    note: GET 501; leitura permanece fora do .PRW
+  - op: SA5_REMOVE
+    status: BLOCKED / ERP_DECISION_REQUIRED
+    note: DELETE 501 — semantica de exclusao pendente de ratificacao (a060VldGrv)
+dependencies: []
+rest_contracts:
+- id: DelpiProdForn (candidato)
+  uris:
+  - POST /v1/ProdForn/incluir
+  - PUT /v1/ProdForn/alterar (501 — OFFICIAL_LOAD_CONTRACT_PENDING)
+  - GET /v1/ProdForn/consultar (501 — TO_INVENTORY)
+  - DELETE /v1/ProdForn/excluir (501 — ERP_DECISION_REQUIRED)
+  status: CONTRACT_CANDIDATE
+  note: nomes/paths candidatos a ratificacao; sem compilacao; nao e CRUD
+    publicado
+restrictions:
+  erp_write: proibida — decisao de arquitetura pendente de ratificacao (Integracoes
+    TOTVS + ERP + Coordination)
+  rpo_compile: exclusivo da equipe ERP
+  direct_sql_reclock: FORBIDDEN
+sources:
+- DLP04I02.PRW
+architecture:
+  recommendation: EXTEND
+  decision: DECISION_REQUIRED
+  doc: contracts/architecture-decision-candidate.md
+  owners:
+  - Integracoes TOTVS
+  - ERP
+  - Coordination

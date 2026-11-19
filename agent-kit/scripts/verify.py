@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import re
+import select
 import shutil
 import subprocess
 import sys
@@ -328,19 +329,231 @@ def launch_devin(binary: str, repo: Path, prompt_file: Path, model: str, install
         if isinstance(install.get("devin"), dict)
         else None
     ) or DEFAULT_DEVIN_PERMISSION_MODE
-    cmd = [
-        binary,
-        "-p",
-        "--prompt-file",
-        str(prompt_file),
-        "--model",
-        model,
-        "--respect-workspace-trust",
-        "false",
-        "--permission-mode",
-        str(permission),
-    ]
-    return run_engine(cmd, repo, timeout)
+    # `devin -p` está indisponível (gate standalone quebrado nestas builds); o caminho suportado é `devin acp`.
+    try:
+        return launch_devin_acp(binary, repo, prompt_file, model, permission, timeout)
+    except Exception as exc:
+        return 1, f"[verify.py] falha ao lançar motor (devin acp: {type(exc).__name__}: {exc})"
+
+
+def _devin_credentials() -> Optional[Dict[str, str]]:
+    path = Path.home() / ".local" / "share" / "devin" / "credentials.toml"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    def field(name: str) -> Optional[str]:
+        match = re.search(rf"^{name}\s*=\s*[\"'](.+?)[\"']\s*$", text, re.M)
+        return match.group(1) if match else None
+
+    api_key = field("windsurf_api_key") or field("api_key")
+    if not api_key:
+        return None
+    return {
+        "api_key": api_key,
+        "api_server_url": field("api_server_url") or "https://server.codeium.com",
+    }
+
+
+def _acp_send(proc: subprocess.Popen, obj: dict) -> None:
+    assert proc.stdin is not None
+    proc.stdin.write((json.dumps(obj) + "\n").encode("utf-8"))
+    proc.stdin.flush()
+
+
+def _acp_read(proc: subprocess.Popen, buf: bytearray, deadline: float) -> Optional[dict]:
+    assert proc.stdout is not None
+    while True:
+        nl = buf.find(b"\n")
+        if nl >= 0:
+            line = bytes(buf[:nl])
+            del buf[: nl + 1]
+            try:
+                msg = json.loads(line.decode("utf-8", errors="replace"))
+            except json.JSONDecodeError:
+                continue
+            if isinstance(msg, dict):
+                return msg
+            continue
+        remaining = deadline - time.time()
+        if remaining <= 0 or proc.poll() is not None:
+            return None
+        ready, _, _ = select.select([proc.stdout], [], [], min(remaining, 5.0))
+        if not ready:
+            continue
+        chunk = os.read(proc.stdout.fileno(), 65536)
+        if not chunk:
+            return None
+        buf += chunk
+
+
+def _acp_handle_incoming(proc: subprocess.Popen, msg: dict, sink: List[str]) -> None:
+    method = msg.get("method")
+    if method == "session/request_permission" and msg.get("id") is not None:
+        options = (msg.get("params") or {}).get("options") or []
+        pick = next(
+            (o for o in options if "allow" in str(o.get("optionId", "")).lower()),
+            options[0] if options else {},
+        )
+        try:
+            _acp_send(
+                proc,
+                {
+                    "jsonrpc": "2.0",
+                    "id": msg["id"],
+                    "result": {
+                        "outcome": {"outcome": "selected", "optionId": pick.get("optionId", "allow")}
+                    },
+                },
+            )
+        except (OSError, ValueError):
+            pass
+        return
+    if method == "session/update":
+        update = (msg.get("params") or {}).get("update") or {}
+        kind = update.get("sessionUpdate")
+        if kind == "agent_message_chunk":
+            sink.append(str((update.get("content") or {}).get("text") or ""))
+        elif kind == "tool_call":
+            sink.append(f"\n[tool] {update.get('title', '')}\n")
+
+
+def _acp_call(
+    proc: subprocess.Popen,
+    req_id: int,
+    method: str,
+    params: dict,
+    deadline: float,
+    sink: List[str],
+    buf: bytearray,
+) -> Tuple[Optional[dict], Optional[str]]:
+    _acp_send(proc, {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params})
+    while True:
+        msg = _acp_read(proc, buf, deadline)
+        if msg is None:
+            return None, f"[verify.py] devin acp sem resposta em `{method}`"
+        if msg.get("id") == req_id and ("result" in msg or "error" in msg):
+            error = msg.get("error")
+            if error:
+                detail = error.get("message", error) if isinstance(error, dict) else error
+                return None, f"[verify.py] devin acp `{method}` falhou: {detail}"
+            return msg.get("result") or {}, None
+        _acp_handle_incoming(proc, msg, sink)
+
+
+def launch_devin_acp(
+    binary: str,
+    repo: Path,
+    prompt_file: Path,
+    model: str,
+    permission: str,
+    timeout: int,
+) -> Tuple[int, str]:
+    creds = _devin_credentials()
+    if creds is None:
+        return 1, "[verify.py] falha ao lançar motor (devin acp: credenciais ausentes em ~/.local/share/devin/credentials.toml)"
+    env = os.environ.copy()
+    env["DELPI_VERIFIER_ACTIVE"] = "1"
+    cmd = [binary, "acp"] + (["--model", model] if model else [])
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(repo),
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            bufsize=0,
+        )
+    except OSError as exc:
+        return 1, f"[verify.py] falha ao lançar motor (devin acp: {type(exc).__name__}: {exc})"
+    deadline = time.time() + timeout
+    sink: List[str] = []
+    buf = bytearray()
+    session: Optional[dict] = None
+    mode = {
+        "auto": "accept-edits",
+        "accept-edits": "accept-edits",
+        "smart": "smart",
+        "dangerous": "bypass",
+    }.get(str(permission), "smart")
+    try:
+        _, err = _acp_call(
+            proc,
+            1,
+            "initialize",
+            {"protocolVersion": 1, "clientCapabilities": {}},
+            deadline,
+            sink,
+            buf,
+        )
+        if err is None:
+            _acp_send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
+            _, err = _acp_call(
+                proc,
+                2,
+                "authenticate",
+                {
+                    "methodId": "windsurf-api-key",
+                    "_meta": {
+                        "api_key": creds["api_key"],
+                        "api_server_url": creds["api_server_url"],
+                    },
+                },
+                deadline,
+                sink,
+                buf,
+            )
+        if err is None:
+            session, err = _acp_call(
+                proc,
+                3,
+                "session/new",
+                {"cwd": str(repo), "mcpServers": []},
+                deadline,
+                sink,
+                buf,
+            )
+        if err is None:
+            session_id = (session or {}).get("sessionId")
+            if not session_id:
+                err = "[verify.py] devin acp `session/new` sem sessionId"
+            else:
+                _acp_call(
+                    proc,
+                    4,
+                    "session/set_mode",
+                    {"sessionId": session_id, "modeId": mode},
+                    deadline,
+                    sink,
+                    buf,
+                )
+                prompt = prompt_file.read_text(encoding="utf-8", errors="replace")
+                _, err = _acp_call(
+                    proc,
+                    5,
+                    "session/prompt",
+                    {
+                        "sessionId": session_id,
+                        "prompt": [{"type": "text", "text": prompt}],
+                    },
+                    deadline,
+                    sink,
+                    buf,
+                )
+    finally:
+        try:
+            proc.kill()
+            proc.wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    text = "".join(sink).strip()
+    if err is None:
+        return 0, text
+    if time.time() >= deadline:
+        return 124, text + "\n\n[verify.py] timeout\n"
+    return 1, err + (("\n\n" + text) if text else "")
 
 
 def launch_cursor(binary: str, repo: Path, prompt_file: Path, model: str, timeout: int) -> Tuple[int, str]:

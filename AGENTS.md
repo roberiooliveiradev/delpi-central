@@ -52,6 +52,12 @@ Em tarefas que envolvam ADVPL/TLPP, rotinas MATA/FINA, RESTALL, RPO, cadastro SB
 - **Espelho de referência:** `docs/13-fontes-totvs-protheus/` neste repositório; comparar blob SHA com o upstream. Bibliotecas e contratos: `api-delpi/docs/api/padroes-totvs/` e `api-delpi/docs/integrations/`.
 - **Runtime:** nem o GitHub nem o RESTALL provam versão compilada no RPO; exigir evidência de ambiente/compilação ou marcar `INCONCLUSIVE`/`TO_INVENTORY`. Acesso ao repositório não autoriza compilação, RPO write, deploy ou ERP write.
 - **Rotinas:** MATA010/ExecAuto é um contrato específico; MATA061/SA5 tem modelo MVC, não presumir ExecAuto. Antes de nova API, inventariar equivalentes, permissões, reuso e read-back integral; respeitar PREPARE/ACT, owner ERP e Core AuthZ.
+- **Separação SQL × ADVPL:** rotas READ SQL/repositories da API DELPI e SX3 são apoio de schema/auditoria, nunca implementação nem contrato funcional para arquivos PRW/TLPP. Todo handler ADVPL deve usar rotina padrão TOTVS ou customização comprovada no repositório ERP @SHA; proibir copiar SELECT/joins/filtros da API, preencher payload por SQL ou contornar validações via DML/RecLock. READ ADVPL novo também exige mecanismo oficial próprio; sem evidência, `TO_INVENTORY`.
+
+
+## Workspace ADVPL — decisão de escopo do PO
+
+Fontes ADVPL novos/evoluídos de integrações DELPI serão desenvolvidos e versionados somente em `api-delpi/integrations/protheus-advpl/` (ver `README.md` local e módulos por capacidade). O repositório privado `Delpi-ti/protheus-erp` é **referência READ-ONLY** até autorização futura explícita. O espelho `docs/13-fontes-totvs-protheus/` não é workspace de novas alterações. Pacotes de compilação ZIP são gerados de commits aprovados e entregues à equipe ERP; compilação no TST01/PRD, alterações do RPO e escritas ERP requerem gates independentes. Commits de fonte/documentação nesta pasta não autorizam deploy da API ou do Protheus; se o protocolo geral de deploy entrar em conflito, escalar ao owner antes de executar.
 
 ## Verificação (delpi-verifier)
 
@@ -162,6 +168,76 @@ Regra 10 — Conflito de instruções. Se outra instrução recomendar
 criar worktree ou branch automaticamente para preservar
 concorrência, a criação passa a exigir autorização do usuário.
 Não resolver o conflito silenciosamente — reportar a divergência.
+
+## Escopo de sessão (agent-scope)
+
+Cada sessão de trabalho — agente ou humano — registra um **lease de
+escopo** antes do primeiro commit, declarando os caminhos que a task
+toca. O pre-commit hook bloqueia commit sem lease, arquivo fora do
+escopo e arquivo dentro do escopo de outra sessão ativa (commit por
+cima). Regra canônica: `.cursor/rules/agent-session-scope.mdc`;
+mecanismo: `agent-kit/scope/session_scope.py`.
+
+```bash
+# no início da sessão (dentro do worktree da task):
+python3 agent-kit/scope/session_scope.py register \
+  --session <id-da-task> --context <ctx> [--path '<glob>'] \
+  --agent devin|cursor|claude|human --note '<tarefa>'
+
+# verificação prévia do stage, sem commitar:
+python3 agent-kit/scope/session_scope.py check --staged
+
+# ao encerrar a sessão:
+python3 agent-kit/scope/session_scope.py release --session <id-da-task>
+```
+
+- Contextos/globs disponíveis: `agent-kit/scope/contexts.json`
+  (`ctx:<domínio>` = plugin+API, `plugin:<nome>`, `dir:<topdir>`,
+  `meta:*`). Contextos `restricted` (`infra`, `shared`, `.cursor`,
+  `.github`, `agent-kit`, `gateway`, `core-api`) exigem
+  `--allow-restricted` e justificativa em `--note`.
+- Múltiplas sessões no mesmo worktree: exportar `AGENT_SESSION=<id>`
+  para o hook desambiguar o lease.
+- Commit bloqueado não se resolve com `--no-verify` (escape excepcional
+  a reportar): corrigir o stage, ampliar o próprio lease com
+  `register`, ou coordenar com a sessão dona do arquivo.
+- Auditoria multi-worktree (sentinela `.devin/skills/agent-sentinel/`):
+  `python3 agent-kit/scope/session_scope.py audit`.
+
+## Escopo de sessão (agent-scope)
+
+Cada sessão de trabalho — agente ou humano — registra um **lease de
+escopo** antes do primeiro commit, declarando os caminhos que a task
+toca. O pre-commit hook bloqueia commit sem lease, arquivo fora do
+escopo e arquivo dentro do escopo de outra sessão ativa (commit por
+cima). Regra canônica: `.cursor/rules/agent-session-scope.mdc`;
+mecanismo: `agent-kit/scope/session_scope.py`.
+
+```bash
+# no início da sessão (dentro do worktree da task):
+python3 agent-kit/scope/session_scope.py register \
+  --session <id-da-task> --context <ctx> [--path '<glob>'] \
+  --agent devin|cursor|claude|human --note '<tarefa>'
+
+# verificação prévia do stage, sem commitar:
+python3 agent-kit/scope/session_scope.py check --staged
+
+# ao encerrar a sessão:
+python3 agent-kit/scope/session_scope.py release --session <id-da-task>
+```
+
+- Contextos/globs disponíveis: `agent-kit/scope/contexts.json`
+  (`ctx:<domínio>` = plugin+API, `plugin:<nome>`, `dir:<topdir>`,
+  `meta:*`). Contextos `restricted` (`infra`, `shared`, `.cursor`,
+  `.github`, `agent-kit`, `gateway`, `core-api`) exigem
+  `--allow-restricted` e justificativa em `--note`.
+- Múltiplas sessões no mesmo worktree: exportar `AGENT_SESSION=<id>`
+  para o hook desambiguar o lease.
+- Commit bloqueado não se resolve com `--no-verify` (escape excepcional
+  a reportar): corrigir o stage, ampliar o próprio lease com
+  `register`, ou coordenar com a sessão dona do arquivo.
+- Auditoria multi-worktree (sentinela `.devin/skills/agent-sentinel/`):
+  `python3 agent-kit/scope/session_scope.py audit`.
 
 ## Exceção operacional ATLAS | MCP Linux (decisão específica do owner, 17/11/2026)
 

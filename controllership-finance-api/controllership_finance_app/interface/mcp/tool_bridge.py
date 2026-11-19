@@ -1290,7 +1290,15 @@ def tool_checklist_preview_revision(
         admin_checklist_routes as _r,
     )
 
-    body = _r.PreviewRevisionRequest(changes=list(changes or []))
+    try:
+        body = _r.PreviewRevisionRequest(changes=list(changes or []))
+    except Exception as exc:  # noqa: BLE001 — schema tipado do contrato
+        return _error(
+            f"Parâmetros da revisão inválidos: {exc}",
+            status_code=400,
+            data={"error": {"code": "validation_error"}},
+            error_code="validation_error",
+        )
     return _call_route(
         admin_checklist_routes.preview_checklist_revision, request,
         template_id=template_id, version_id=version_id, body=body,

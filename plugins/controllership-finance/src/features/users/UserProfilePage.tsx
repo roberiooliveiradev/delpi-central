@@ -203,6 +203,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         classNames={cfEmptyStateClassNames}
         title="Perfil indisponível"
         message="Só é possível abrir o próprio perfil neste portal."
+        defaultMessage="Só é possível abrir o próprio perfil neste portal."
       />
     );
   }
@@ -213,6 +214,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         classNames={cfEmptyStateClassNames}
         title="Não foi possível carregar o perfil"
         message={error ?? "Tente novamente em instantes."}
+        defaultMessage="Não foi possível carregar o perfil."
       />
     );
   }

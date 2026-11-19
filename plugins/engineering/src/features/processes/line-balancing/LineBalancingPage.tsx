@@ -11,28 +11,19 @@
  * hipóteses nunca são apresentadas como dimensionamento aprovado. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  exportTableFormat,
-  TabularExportButtons,
-} from "@delpi/plugin-ui/index";
+import { exportTableFormat } from "@delpi/plugin-ui/index";
 import type { StudioStudyInput } from "@delpi/line-balance-studio";
+import type {
+  StudioAnalysisState,
+  StudioDraftSaveState,
+  StudioOfficialOperation,
+  StudioRoutingState,
+} from "@delpi/line-balance-studio/ui";
 
 import { getCurrentAccessToken, HomeApiError } from "../../../api/httpClient";
 import { getSubjectFromAccessToken } from "../../../app/authDisplayName";
-import {
-  EngineeringActionButton,
-  EngineeringEmptyState,
-  EngineeringFilterSelect,
-  EngineeringFormActions,
-  EngineeringKpiCard,
-  EngineeringLoadingActivityCard,
-  EngineeringSectionCard,
-  EngineeringStateBanner,
-  EngineeringStatusBadge,
-  EngineeringTextField,
-} from "../../../ui/engineeringUi";
+import { EngineeringStateBanner } from "../../../ui/engineeringUi";
 import { EngineeringConfirmDialog } from "../../../ui/EngineeringConfirmDialog";
-import { DataTable, type DataTableColumn } from "../../products/components/dataTableUi";
 import {
   fetchProductRouting,
   postProductLineBalance,
@@ -42,11 +33,8 @@ import type {
   ProductRoutingResult,
 } from "../../products/types";
 import {
-  formatHours,
-  formatMinutes,
   groupRoutingRows,
   stageLabel,
-  type RoutingOperationView,
 } from "../../products/routing/routingGrouping";
 import type { BalanceRunParams } from "../../products/routing/useRoutingStudyDraft";
 import { LineBalanceStudioMount } from "./LineBalanceStudio";
@@ -91,27 +79,7 @@ function isNotFound(error: unknown): boolean {
   return error instanceof HomeApiError && error.status === 404;
 }
 
-const OP_COLUMNS: DataTableColumn<RoutingOperationView>[] = [
-  { key: "op", header: "Operação", render: (op) => op.operation_code || "—" },
-  { key: "desc", header: "Descrição", render: (op) => op.operation_description ?? "—" },
-  { key: "ct", header: "CT", render: (op) => op.work_center ?? "—" },
-  { key: "resource", header: "Recurso", render: (op) => op.resource_code ?? "—" },
-  {
-    key: "time",
-    header: "Tempo padrão (min/peça)",
-    align: "right",
-    render: (op) => (op.time_minutes_piece != null ? formatMinutes(op.time_minutes_piece) : "UNKNOWN"),
-  },
-  {
-    key: "setup",
-    header: "Setup (h)",
-    align: "right",
-    render: (op) => (op.setup_hours != null ? formatHours(op.setup_hours) : "—"),
-  },
-];
-
 export function LineBalancingPage() {
-  const [productCode, setProductCode] = useState("");
   const [queriedCode, setQueriedCode] = useState("");
   const [branch, setBranch] = useState("");
   const [branches, setBranches] = useState<string[]>([]);
@@ -242,10 +210,13 @@ export function LineBalancingPage() {
     [draftContext, identity],
   );
 
-  /* Estudo manual — mesmo fluxo de rascunho, contexto neutro. */
-  const startManualStudy = useCallback(() => {
+  /* Estudo manual — mesmo fluxo de rascunho, contexto neutro; o nome
+   * informado na entrada do Studio aplica-se apenas a rascunho novo. */
+  const startManualStudy = useCallback((name?: string) => {
     const restored = loadStudioDraft(studioDraftKey(identity, MANUAL_CONTEXT), MANUAL_CONTEXT);
-    const seed = restored.status === "ok" ? restored.study : buildManualStudyInput();
+    const seed = restored.status === "ok"
+      ? restored.study
+      : { ...buildManualStudyInput(), ...(name ? { name } : {}) };
     setStudySeed(seed);
     setLiveStudy(seed);
     liveStudyRef.current = seed;
@@ -254,10 +225,7 @@ export function LineBalancingPage() {
     setBalanceError(null);
   }, [identity]);
 
-  const showStudio = Boolean(studySeed) && (Boolean(stage) || Boolean(studySeed));
-
-  const searchRouting = useCallback(() => {
-    const code = productCode.trim();
+  const searchRouting = useCallback((code: string) => {
     if (!code) return;
     setQueriedCode(code);
     setBranch("");
@@ -267,7 +235,28 @@ export function LineBalancingPage() {
     setBalanceResult(null);
     setClearedNotice(false);
     setStaleNotice(null);
-  }, [productCode]);
+  }, []);
+
+  /* Troca de origem — encerra a sessão; o rascunho local salvo do
+   * contexto permanece em storage e é restaurado ao retornar. */
+  const resetOrigin = useCallback(() => {
+    setQueriedCode("");
+    setBranch("");
+    setBranches([]);
+    setStageKey(null);
+    setStudySeed(undefined);
+    setLiveStudy(undefined);
+    liveStudyRef.current = undefined;
+    setBalanceError(null);
+    setBalanceResult(null);
+    setClearedNotice(false);
+    setStaleNotice(null);
+  }, []);
+
+  const onRoutingContext = useCallback(({ branch: nextBranch, stage: nextStage }: { branch: string; stage: string }) => {
+    if (nextBranch !== branch) setBranch(nextBranch);
+    setStageKey(nextStage || null);
+  }, [branch]);
 
   const confirmClear = useCallback(() => {
     let removed = false;
@@ -337,6 +326,45 @@ export function LineBalancingPage() {
     [grouped],
   );
 
+  /* Estado da consulta oficial apresentado pelo Studio — a mesma
+   * informação que antes dirigia os estados do host, agora serializada
+   * no contrato público do elemento. */
+  const studioRoutingState: StudioRoutingState = useMemo(() => {
+    if (!queriedCode) return { phase: "idle" };
+    if (routingLoading) return { phase: "searching", productCode: queriedCode };
+    if (routingError) {
+      return {
+        phase: "error",
+        productCode: queriedCode,
+        message: isForbidden(routingError)
+          ? "Acesso negado pela fonte oficial — você não tem autorização para consultar o roteiro."
+          : isNotFound(routingError)
+            ? "Produto não encontrado ou sem roteiro na fonte oficial."
+            : routingError instanceof HomeApiError
+              ? routingError.message
+              : "Fonte oficial de roteiro indisponível.",
+      };
+    }
+    if (!grouped.stages.length) {
+      return {
+        phase: "error",
+        productCode: queriedCode,
+        message: "Roteiro oficial vazio para este contexto — nenhuma operação retornada.",
+      };
+    }
+    return {
+      phase: "awaiting-stage",
+      productCode: queriedCode,
+      branch,
+      branchOptions,
+      stage: stage?.key ?? "",
+      stageOptions,
+      message: stage
+        ? undefined
+        : "Selecione a filial e o estágio produtivo para visualizar as operações oficiais e iniciar o estudo.",
+    };
+  }, [queriedCode, routingLoading, routingError, grouped.stages.length, branch, branchOptions, stage, stageOptions]);
+
   const exportStudy = useCallback(
     (format: "csv" | "xlsx" | "pdf") => {
       const study = liveStudyRef.current ?? studySeed;
@@ -354,184 +382,83 @@ export function LineBalancingPage() {
     [queriedCode, branch, stage, studySeed],
   );
 
+  /* Análise oficial M1 — execução permanece aqui (BFF/domínio); o Studio
+   * recebe o estado serializado para apresentá-la na bancada do método. */
+  const studioAnalysisState: StudioAnalysisState | undefined = useMemo(() => {
+    if (!queriedCode || !stage || studySeed?.source !== "OBSERVED_ROUTING") return undefined;
+    if (balanceRunning) return { phase: "running" };
+    if (balanceError) {
+      return {
+        phase: "error",
+        message: isForbidden(balanceError)
+          ? "Acesso negado pela análise oficial — autorização insuficiente."
+          : isNotFound(balanceError)
+            ? "Produto ou estágio não encontrado pela análise oficial."
+            : balanceError instanceof HomeApiError
+              ? balanceError.message
+              : "Serviço de análise oficial indisponível.",
+      };
+    }
+    if (balanceResult) {
+      return {
+        phase: "result",
+        result: {
+          taktMinutes: stageBalance?.takt_minutes ?? null,
+          workContentMinutes: stageBalance?.work_content_minutes ?? null,
+          theoreticalMinStations: stageBalance?.theoretical_min_stations ?? null,
+          bottleneckOperation: stageBalance?.bottleneck_candidate?.operation_code ?? null,
+          operationsMissingTime: stageBalance?.operations_missing_time?.length ?? 0,
+          stageCovered: Boolean(stageBalance),
+        },
+      };
+    }
+    return { phase: "idle", issues: balanceParams.ok ? [] : balanceParams.issues };
+  }, [queriedCode, stage, studySeed, balanceRunning, balanceError, balanceResult, stageBalance, balanceParams]);
+
+  /* Metadados oficiais do roteiro — detalhe técnico sob demanda dentro da
+   * bancada (sem segunda tabela concorrente fora do Studio). */
+  const officialOperations: StudioOfficialOperation[] | undefined = useMemo(() => {
+    if (!stage || studySeed?.source !== "OBSERVED_ROUTING") return undefined;
+    return stage.operations.map((op) => ({
+      key: op.key,
+      code: op.operation_code,
+      description: op.operation_description,
+      workCenter: op.work_center,
+      resource: op.resource_code,
+      timeMinutesPiece: op.time_minutes_piece,
+      setupHours: op.setup_hours,
+    }));
+  }, [stage, studySeed]);
+
+  const draftSave: StudioDraftSaveState | undefined = useMemo(
+    () => saveStatus === "idle"
+      ? undefined
+      : { label: SAVE_LABEL[saveStatus] ?? saveStatus, tone: saveStatus === "saved" ? "success" : "warning" },
+    [saveStatus],
+  );
+
   return (
     <>
-      <EngineeringSectionCard
-        title="Balanceamento de Linha"
-        subtitle="Consulte o roteiro oficial de fabricação e construa estudos de balanceamento no Line Balance Studio — hipóteses locais nunca alteram o roteiro oficial."
-      >
-        <div className="engineering-processes__lookup" role="group" aria-label="Consulta do roteiro oficial">
-          <EngineeringTextField
-            id="lb-product-code"
-            label="Código do produto"
-            value={productCode}
-            onChange={setProductCode}
-            hint="Código oficial do produto na fonte autorizada."
-          />
-          <EngineeringActionButton
-            variant="primary"
-            disabled={!productCode.trim() || routingLoading}
-            onClick={searchRouting}
-          >
-            {routingLoading ? "Consultando…" : "Buscar roteiro"}
-          </EngineeringActionButton>
-          {queriedCode ? (
-            <>
-              <EngineeringFilterSelect
-                label="Filial"
-                options={branchOptions}
-                value={branch}
-                onChange={setBranch}
-              />
-              <EngineeringFilterSelect
-                label="Estágio produtivo"
-                options={stageOptions}
-                value={stage?.key ?? ""}
-                onChange={(v) => setStageKey(v || null)}
-                disabled={!grouped.stages.length}
-              />
-            </>
-          ) : null}
-          <EngineeringActionButton variant="default" onClick={startManualStudy}>
-            Novo estudo manual
-          </EngineeringActionButton>
-        </div>
-      </EngineeringSectionCard>
-
       {staleNotice ? <EngineeringStateBanner variant="default">{staleNotice}</EngineeringStateBanner> : null}
       {clearedNotice ? (
         <EngineeringStateBanner variant="default">Rascunho local do contexto atual limpo — o roteiro oficial permanece intacto.</EngineeringStateBanner>
       ) : null}
 
-      {!queriedCode && !studySeed ? (
-        <EngineeringEmptyState message="Informe o código do produto e acione Buscar roteiro para consultar a fonte oficial — ou inicie um estudo manual." />
-      ) : queriedCode && routingLoading ? (
-        <EngineeringLoadingActivityCard title="Consultando" description="Consultando o roteiro oficial…" />
-      ) : queriedCode && routingError ? (
-        isForbidden(routingError) ? (
-          <EngineeringEmptyState message="Acesso negado pela fonte oficial — você não tem autorização para consultar o roteiro." />
-        ) : isNotFound(routingError) ? (
-          <EngineeringEmptyState message="Produto não encontrado ou sem roteiro na fonte oficial." />
-        ) : (
-          <EngineeringStateBanner variant="error">
-            {routingError instanceof HomeApiError ? routingError.message : "Fonte oficial de roteiro indisponível."}
-          </EngineeringStateBanner>
-        )
-      ) : queriedCode && !grouped.stages.length ? (
-        <EngineeringEmptyState message="Roteiro oficial vazio para este contexto — nenhuma operação retornada." />
-      ) : null}
-
-      {queriedCode && !routingLoading && !routingError && grouped.stages.length > 0 && !stage && !studySeed ? (
-        <EngineeringEmptyState message="Selecione a filial e o estágio produtivo para visualizar as operações oficiais e iniciar o estudo." />
-      ) : null}
-
-      {stage && studySeed?.source === "OBSERVED_ROUTING" ? (
-        <>
-          <EngineeringSectionCard
-            title="Operações oficiais do roteiro"
-            subtitle={`${queriedCode} · ${stage.operations.length} operação(ões) deduplicada(s) por identidade de operação${routing?.truncated ? " · resultado truncado pela fonte" : ""}`}
-          >
-            {routing?.truncated ? (
-              <EngineeringStateBanner variant="default">
-                A fonte retornou resultado paginado incompleto — o estudo considera somente as operações efetivamente recebidas.
-              </EngineeringStateBanner>
-            ) : null}
-            <DataTable
-              columns={OP_COLUMNS}
-              rows={stage.operations}
-              rowKey={(op) => op.key}
-              layout="embedded"
-              compact
-              emptyMessage="Nenhuma operação neste estágio."
-            />
-          </EngineeringSectionCard>
-        </>
-      ) : null}
-
-      {showStudio ? (
-        <EngineeringSectionCard
-          title="Estudo de balanceamento"
-          subtitle="Line Balance Studio — organização DRAFT_LOCAL de postos e cenários SIMULATION sobre a fonte oficial ou entradas manuais."
-          actions={
-            saveStatus !== "idle" ? (
-              <EngineeringStatusBadge
-                label={SAVE_LABEL[saveStatus] ?? saveStatus}
-                variant={saveStatus === "saved" ? "success" : "warning"}
-              />
-            ) : undefined
-          }
-        >
-          <LineBalanceStudioMount study={studySeed} onStudyChange={onStudyChange} />
-          <EngineeringFormActions>
-            <EngineeringActionButton variant="default" onClick={() => setClearOpen(true)}>
-              Limpar estudo
-            </EngineeringActionButton>
-            <TabularExportButtons onExport={exportStudy} />
-          </EngineeringFormActions>
-        </EngineeringSectionCard>
-      ) : null}
-
-      {queriedCode && stage && studySeed?.source === "OBSERVED_ROUTING" ? (
-        <EngineeringSectionCard
-          title="Análise oficial M1 — capacidade e takt"
-          subtitle="Métricas CALCULATED do domínio EVA sobre o roteiro OBSERVED com os parâmetros PROVIDED das condições do estudo."
-        >
-          {!balanceParams.ok ? (
-            <ul className="engineering-routing__limitations" role="alert">
-              {balanceParams.issues.map((issue, i) => (
-                <li key={i}>{issue}</li>
-              ))}
-            </ul>
-          ) : null}
-          <EngineeringFormActions>
-            <EngineeringActionButton
-              variant="primary"
-              disabled={!balanceParams.ok || balanceRunning}
-              onClick={runBalance}
-            >
-              {balanceRunning ? "Calculando…" : "Executar análise oficial"}
-            </EngineeringActionButton>
-          </EngineeringFormActions>
-          {balanceError ? (
-            <EngineeringStateBanner variant="error">
-              {isForbidden(balanceError)
-                ? "Acesso negado pela análise oficial — autorização insuficiente."
-                : isNotFound(balanceError)
-                  ? "Produto ou estágio não encontrado pela análise oficial."
-                  : balanceError instanceof HomeApiError
-                    ? balanceError.message
-                    : "Serviço de análise oficial indisponível."}
-            </EngineeringStateBanner>
-          ) : null}
-          {stageBalance ? (
-            <div className="engineering-routing__balance-grid">
-              <EngineeringKpiCard title="Takt" value={formatMinutes(stageBalance.takt_minutes)} subtitle="min/peça — CALCULATED" />
-              <EngineeringKpiCard
-                title="Conteúdo de trabalho"
-                value={formatMinutes(stageBalance.work_content_minutes)}
-                subtitle="min — CALCULATED"
-              />
-              <EngineeringKpiCard
-                title="Mínimo teórico de postos"
-                value={stageBalance.theoretical_min_stations != null ? String(stageBalance.theoretical_min_stations) : "—"}
-                subtitle="CALCULATED"
-              />
-              <EngineeringKpiCard
-                title="Gargalo candidato"
-                value={stageBalance.bottleneck_candidate?.operation_code ?? "—"}
-                subtitle="CALCULATED"
-              />
-            </div>
-          ) : balanceResult ? (
-            <EngineeringEmptyState message="O resultado oficial não inclui o estágio selecionado." />
-          ) : null}
-          {stageBalance?.operations_missing_time?.length ? (
-            <EngineeringStateBanner variant="default">
-              {stageBalance.operations_missing_time.length} operação(ões) sem tempo oficial — UNKNOWN, nunca assumidas como zero.
-            </EngineeringStateBanner>
-          ) : null}
-        </EngineeringSectionCard>
-      ) : null}
+      <LineBalanceStudioMount
+        study={studySeed}
+        routingState={studioRoutingState}
+        analysisState={studioAnalysisState}
+        officialOperations={officialOperations}
+        draftSave={draftSave}
+        onStudyChange={onStudyChange}
+        onRoutingSearch={searchRouting}
+        onRoutingContext={onRoutingContext}
+        onManualStudy={startManualStudy}
+        onOriginReset={resetOrigin}
+        onAnalysisRun={runBalance}
+        onExport={exportStudy}
+        onClearStudy={() => setClearOpen(true)}
+      />
 
       <EngineeringConfirmDialog
         open={clearOpen}

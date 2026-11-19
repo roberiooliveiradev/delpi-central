@@ -238,3 +238,71 @@ def test_generic_service_token_never_grants_admin_access(client, monkeypatch):
         headers={"X-Delpi-Service-Token": "integration-token"},
     )
     assert response.status_code == 401
+
+
+def test_weekly_app_session_average_is_per_session_not_per_open():
+    user = uuid4()
+    team = MagicMock()
+    team.get_team.return_value = {"members": [_member("00001", user_id=user)]}
+    repo = MagicMock()
+    repo.consented_active_user_ids.return_value = {user}
+    repo.app_opens.return_value = [{
+        "userId": str(user), "appId": "rhdelpi",
+        "appName": "Portal RH", "count": 15,
+    }]
+    repo.app_session_durations.return_value = [{
+        "userId": str(user), "appId": "rhdelpi",
+        "sessionCount": 2, "totalDurationSeconds": 240,
+    }]
+    payload = OrganizationWeeklyUsageService(
+        team, repo
+    ).get_weekly_report(
+        "20001", details=True, include_indirect=False,
+        now_utc=datetime(2026, 11, 18, 15, tzinfo=timezone.utc),
+    )
+    app = payload["members"][0]["apps"][0]
+    assert app["recordedOpens"] == 15
+    assert app["recordedSessions"] == 2
+    assert app["totalDurationSeconds"] == 240
+    assert app["avgSessionSeconds"] == 120  # 240 / 2, not 240 / 15
+
+
+def test_weekly_no_session_does_not_claim_zero_duration():
+    user = uuid4()
+    team = MagicMock()
+    team.get_team.return_value = {"members": [_member("00001", user_id=user)]}
+    repo = MagicMock()
+    repo.consented_active_user_ids.return_value = {user}
+    repo.app_opens.return_value = [{
+        "userId": str(user), "appId": "rhdelpi",
+        "appName": "Portal RH", "count": 5,
+    }]
+    repo.app_session_durations.return_value = []
+    payload = OrganizationWeeklyUsageService(
+        team, repo
+    ).get_weekly_report(
+        "20001", details=True, include_indirect=False,
+        now_utc=datetime(2026, 11, 18, 15, tzinfo=timezone.utc),
+    )
+    assert payload["members"][0]["apps"][0]["avgSessionSeconds"] is None
+    assert payload["members"][0]["apps"][0]["recordedSessions"] == 0
+
+
+def test_weekly_rejects_duration_for_user_outside_consented_team():
+    user = uuid4()
+    team = MagicMock()
+    team.get_team.return_value = {"members": [_member("00001", user_id=user)]}
+    repo = MagicMock()
+    repo.consented_active_user_ids.return_value = {user}
+    repo.app_opens.return_value = []
+    repo.app_session_durations.return_value = [{
+        "userId": str(uuid4()), "appId": "rhdelpi",
+        "sessionCount": 1, "totalDurationSeconds": 120,
+    }]
+    with pytest.raises(ValueError, match="não autorizado"):
+        OrganizationWeeklyUsageService(
+            team, repo
+        ).get_weekly_report(
+            "20001", details=True, include_indirect=False,
+            now_utc=datetime(2026, 11, 18, 15, tzinfo=timezone.utc),
+        )

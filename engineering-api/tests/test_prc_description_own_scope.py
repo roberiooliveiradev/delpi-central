@@ -126,6 +126,24 @@ class TestCreatePayloadDescription:
         )
         assert out["customerReference"] == ""
 
+    def test_customer_reference_absent_accepted(self):
+        """Opcional: campo ausente no intake não falha — antes era
+        ``required`` (obrigatório artificial; B1_REFEREN é opcional)."""
+        payload = _valid_payload()
+        del payload["customerReference"]
+        out = catalog.validate_create_payload(payload)
+        assert "customerReference" not in out
+
+    def test_required_fields_still_enforced(self):
+        """Sibling negativo: campos required continuam bloqueando."""
+        payload = _valid_payload()
+        del payload["description"]
+        del payload["unit"]
+        with pytest.raises(PrcValidationError) as exc:
+            catalog.validate_create_payload(payload)
+        assert exc.value.fields["description"] == "required"
+        assert exc.value.fields["unit"] == "required"
+
 
 class TestDraftChangeDescription:
     def test_blank_rejected(self):
@@ -147,6 +165,14 @@ class TestDraftChangeDescription:
     def test_customer_reference_blank_allowed(self):
         path, value = catalog.validate_draft_change(
             "customerReference", ""
+        )
+        assert (path, value) == ("customerReference", "")
+
+    def test_customer_reference_none_allowed(self):
+        """Opcional: remoção explícita (None) limpa o campo — antes
+        rejeitada como 'campo obrigatório não pode ser removido'."""
+        path, value = catalog.validate_draft_change(
+            "customerReference", None
         )
         assert (path, value) == ("customerReference", "")
 

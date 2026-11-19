@@ -32,7 +32,7 @@ import logging
 import os
 import re
 import time
-from contextlib import asynccontextmanager
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import (
@@ -79,6 +79,7 @@ from app.application.capability_provision.semantic_capability_support import (
     _emit_activity,
     _evaluate_material_obligations,
     _is_business_evidence_attempt,
+    _listing_failure_is_transient,
     _plan_delivery_mode,
     classify_investigation_progress,
     observation_content_fingerprint,
@@ -114,8 +115,6 @@ from app.application.specialist_interop.errors import (
     OWNER_ARGUMENT_REJECTED,
     SpecialistInteropError,
 )
-from pydantic_ai.models.wrapper import WrapperModel
-from pydantic_ai.toolsets import WrapperToolset
 from pydantic_ai.usage import RunUsage
 
 _logger = logging.getLogger(__name__)
@@ -281,9 +280,23 @@ class ObligationProposal(TypedDict):
     required_args: NotRequired[dict]
 
 
-@dataclass
-class _EnvelopeHintedToolset(WrapperToolset):
-    """Wrapper toolset adding bounded, schema-derived usage guidance.
+def _tool_prop_declares_object(prop: Any) -> bool:
+    if not isinstance(prop, Mapping):
+        return False
+    if prop.get("type") == "object":
+        return True
+    for key in ("anyOf", "oneOf"):
+        alts = prop.get(key)
+        if not isinstance(alts, Sequence):
+            continue
+        for alt in alts:
+            if isinstance(alt, Mapping) and alt.get("type") == "object":
+                return True
+    return False
+
+
+def _prepare_tool_definitions_envelope_hints(ctx: Any, tool_defs: list) -> list:
+    """Schema-derived usage guidance via the native ``prepared()`` seam.
 
     The old synthesized Python tools carried ``Pass arguments as an
     object / do not invent candidate_token`` in their descriptions —
@@ -291,94 +304,68 @@ class _EnvelopeHintedToolset(WrapperToolset):
     ``arguments`` envelope. The hint is derived ONLY from the
     published inputSchema (presence of ``candidate_token`` /
     ``arguments``): never owner-specific, never fabricated args.
-
-    Must subclass ``WrapperToolset`` (not a duck-typed ``__getattr__``
-    proxy): ``Agent.for_run`` / ``for_run_step`` rebind wrapped leaves
-    via ``dataclasses.replace``. A plain proxy forwarded those methods
-    to the inner MCP toolset and dropped the hint layer before the
-    provider request (B3).
+    ``prepared()`` participates in ``Agent.for_run`` / ``for_run_step``
+    rebinding natively, so the hint layer survives the per-run toolset
+    rebuild that dropped plain proxies (B3).
 
     Live owner schemas often publish nullable objects as
     ``anyOf: [{type: object}, {type: null}]``; hint detection must
     recognize that shape or EnvelopeHint stays silent on B3.
     """
+    import dataclasses as _dc
 
-    @staticmethod
-    def _schema_declares_object(prop: Any) -> bool:
-        if not isinstance(prop, Mapping):
-            return False
-        if prop.get("type") == "object":
-            return True
-        for key in ("anyOf", "oneOf"):
-            alts = prop.get(key)
-            if not isinstance(alts, Sequence):
-                continue
-            for alt in alts:
-                if isinstance(alt, Mapping) and alt.get("type") == "object":
-                    return True
-        return False
-
-    async def get_tools(self, ctx):
-        import dataclasses as _dc
-
-        tools = await self.wrapped.get_tools(ctx)
-        hinted = {}
-        for name, tt in tools.items():
-            tdef = getattr(tt, "tool_def", None)
-            schema = getattr(tdef, "parameters_json_schema", None)
-            props = (
-                schema.get("properties")
-                if isinstance(schema, Mapping)
-                else None
-            )
-            if tdef is not None and isinstance(props, Mapping):
-                desc = (tdef.description or "").strip()
-                hints: list[str] = []
-                if "candidate_token" in props:
-                    hints.append(
-                        " Arguments: pass candidate_token verbatim "
-                        "from a prior discovery result (never invent "
-                        "it) and arguments as a non-empty object built "
-                        "from that candidate's "
-                        "argument_schema/required_arguments "
-                        "(e.g. {\"code\": \"50220013\"})."
-                    )
-                if (
-                    "capability" in props
-                    and "arguments" in props
-                    and self._schema_declares_object(props.get("arguments"))
-                ):
-                    hints.append(
-                        " Business fields declared by the selected "
-                        "capability schema belong inside the "
-                        "arguments object — not as top-level siblings "
-                        "of capability."
-                    )
-                if any(
-                    self._schema_declares_object(prop)
-                    for prop in props.values()
-                ):
-                    hints.append(
-                        " Object-typed parameters must be real JSON "
-                        "objects — never JSON-encoded strings."
-                    )
-                hint = "".join(hints)
-                if hint and hint.strip() not in desc:
-                    # Preserve the published MCP description in full.
-                    # Truncating ``(desc + hint)[:500]`` destroyed owner
-                    # semantic discrimination (long TEO/DAVI contracts).
-                    # Hints stay schema-derived and length-bounded; the
-                    # owner text is never shortened to make room for them.
-                    hint_bounded = hint[:280]
-                    tt = _dc.replace(
-                        tt,
-                        tool_def=_dc.replace(
-                            tdef,
-                            description=desc + hint_bounded,
-                        ),
-                    )
-            hinted[name] = tt
-        return hinted
+    prepared = []
+    for tdef in tool_defs:
+        schema = tdef.parameters_json_schema
+        props = (
+            schema.get("properties")
+            if isinstance(schema, Mapping)
+            else None
+        )
+        if isinstance(props, Mapping):
+            desc = (tdef.description or "").strip()
+            hints: list[str] = []
+            if "candidate_token" in props:
+                hints.append(
+                    " Arguments: pass candidate_token verbatim "
+                    "from a prior discovery result (never invent "
+                    "it) and arguments as a non-empty object built "
+                    "from that candidate's "
+                    "argument_schema/required_arguments "
+                    '(e.g. {"code": "50220013"}).'
+                )
+            if (
+                "capability" in props
+                and "arguments" in props
+                and _tool_prop_declares_object(props.get("arguments"))
+            ):
+                hints.append(
+                    " Business fields declared by the selected "
+                    "capability schema belong inside the "
+                    "arguments object — not as top-level siblings "
+                    "of capability."
+                )
+            if any(
+                _tool_prop_declares_object(prop)
+                for prop in props.values()
+            ):
+                hints.append(
+                    " Object-typed parameters must be real JSON "
+                    "objects — never JSON-encoded strings."
+                )
+            hint = "".join(hints)
+            if hint and hint.strip() not in desc:
+                # Preserve the published MCP description in full.
+                # Truncating ``(desc + hint)[:500]`` destroyed owner
+                # semantic discrimination (long TEO/DAVI contracts).
+                # Hints stay schema-derived and length-bounded; the
+                # owner text is never shortened to make room for them.
+                tdef = _dc.replace(
+                    tdef,
+                    description=desc + hint[:280],
+                )
+        prepared.append(tdef)
+    return prepared
 
 
 @dataclass
@@ -424,67 +411,17 @@ class InvestigationDeps:
     # while user identifiers remain uncovered — never forces an owner
     # or capability; asks the model to re-select from live contracts.
     no_progress_continuity_retry_used: bool = False
+    # Per-fingerprint transient retry budget: an identical call after a
+    # transient owner failure (timeout/unavailable/transport/connection)
+    # may re-reach the owner ONCE. Terminal, AUTHZ and unknown failures
+    # stay fail-closed — same classification contract as listing.
+    transient_invoke_retries: set[str] = field(default_factory=set)
     # Measured provider usage for the whole turn (both legs in variant
     # B) — populated by the counting model wrapper so consumption is
     # accounted even when a run ends on an exception.
     turn_usage: RunUsage | None = None
 
 
-class _TurnUsageCountingModel(WrapperModel):
-    """Per-turn provider-usage meter for the shared turn budget.
-
-    The native ``UsageLimits`` enforcement lives inside each Agent run;
-    usage measured by ``result.usage`` only exists on successful runs.
-    Counting every completed provider request here — including runs that
-    die on exceptions — lets the coordination layer subtract real
-    consumption instead of presuming zero when a specialist run fails
-    after accepting its artifact. Observability only: never alters the
-    model contract or the per-run limit enforcement.
-    """
-
-    def __init__(self, wrapped: Any, turn_usage: RunUsage):
-        super().__init__(wrapped)
-        self._turn_usage = turn_usage
-
-    def _accumulate(self, usage: Any | None) -> None:
-        self._turn_usage.requests += 1
-        if usage is not None:
-            self._turn_usage.incr(usage)
-
-    async def request(
-        self,
-        messages: Any,
-        model_settings: Any,
-        model_request_parameters: Any,
-    ) -> Any:
-        response = await super().request(
-            messages, model_settings, model_request_parameters
-        )
-        self._accumulate(getattr(response, "usage", None))
-        return response
-
-    @asynccontextmanager
-    async def request_stream(
-        self,
-        messages: Any,
-        model_settings: Any,
-        model_request_parameters: Any,
-        run_context: Any = None,
-    ) -> Any:
-        async with super().request_stream(
-            messages,
-            model_settings,
-            model_request_parameters,
-            run_context=run_context,
-        ) as stream:
-            try:
-                yield stream
-            finally:
-                try:
-                    usage = stream.usage()
-                except Exception:
-                    usage = None
-                self._accumulate(usage)
 
 
 def _is_authorization_denial(attempt: GovernedCapabilityAttempt) -> bool:
@@ -2018,7 +1955,13 @@ class PydanticAiInvestigationOrchestrator:
             invoke_text = focused_query or ctx.deps.input_text
             fingerprint = _invocation_fingerprint(cap_key, raw_args)
             previous = ctx.deps.non_progress_calls.get(fingerprint)
-            if previous is not None:
+            if previous is not None and not (
+                previous.get("error_code")
+                and _listing_failure_is_transient(
+                    str(previous.get("error_code") or "")
+                )
+                and fingerprint not in ctx.deps.transient_invoke_retries
+            ):
                 # Identical capability+arguments only — a material arg
                 # change is a new fingerprint and must reach the owner.
                 repeated = dict(previous)
@@ -2030,6 +1973,15 @@ class PydanticAiInvestigationOrchestrator:
                         INVESTIGATION_PROGRESS_NONE
                     )
                 return _proj(repeated)
+            if (
+                previous is not None
+                and previous.get("error_code")
+                and _listing_failure_is_transient(
+                    str(previous.get("error_code") or "")
+                )
+                and fingerprint not in ctx.deps.transient_invoke_retries
+            ):
+                ctx.deps.transient_invoke_retries.add(fingerprint)
             inner_keys = (
                 ",".join(sorted(str(k) for k in raw_args["arguments"]))[
                     :200
@@ -2667,9 +2619,7 @@ class PydanticAiInvestigationOrchestrator:
             # do not invent candidate_token" in their description —
             # without it the model calls execute tools empty. Appended
             # per-tool, derived only from the published inputSchema.
-            ts = ts.visit_and_replace(
-                lambda leaf: _EnvelopeHintedToolset(leaf)
-            )
+            ts = ts.prepared(_prepare_tool_definitions_envelope_hints)
             extra_toolsets.append(ts)
         _logger.info(
             "orchestration engine=pydantic_ai "
@@ -2825,7 +2775,7 @@ class PydanticAiInvestigationOrchestrator:
         # real comprehension consumption, never a presumed zero.
         turn_usage = RunUsage()
         deps.turn_usage = turn_usage
-        run_model = _TurnUsageCountingModel(model, turn_usage)
+        run_model = model
         agent_capabilities = ()
         if self._context_window_tokens:
             from pydantic_ai.capabilities import ProcessHistory
@@ -3267,6 +3217,7 @@ class PydanticAiInvestigationOrchestrator:
                         model_settings=_investigation_model_settings(
                             self._max_output_tokens
                         ),
+                        usage=turn_usage,
                         usage_limits=UsageLimits(
                             request_limit=investigation_request_limit,
                             tool_calls_limit=investigation_tool_limit,
@@ -3612,6 +3563,7 @@ class PydanticAiInvestigationOrchestrator:
                 model_settings=_investigation_model_settings(
                     self._max_output_tokens
                 ),
+                usage=turn_usage,
                 usage_limits=UsageLimits(
                     request_limit=request_limit,
                     tool_calls_limit=tool_calls_limit,

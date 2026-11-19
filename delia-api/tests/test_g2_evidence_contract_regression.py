@@ -18,12 +18,10 @@ from __future__ import annotations
 from app.application.capability_provision.generic_evidence_renderer import (
     REDACTION_MARKER,
     CountResolutionKind,
-    PageAggregationResult,
     PaginationEnvelope,
     _mapping_items_excluding_control,
     _redact_text,
     _sanitize_renderable,
-    aggregate_paginated_pages,
     extract_pagination_envelope,
     resolve_count_semantics,
 )
@@ -163,30 +161,14 @@ def test_page_slice_without_total_never_resolves_to_total():
 
 
 def test_incomplete_aggregation_never_fabricates_total():
-    agg = PageAggregationResult(
-        items=({"id": "1"}, {"id": "2"}),
-        pages_fetched=1,
-        complete=False,
-        duplicate_ids=(),
-        failed=False,
-        failure_reason=None,
-        authoritative_total=None,
-    )
-    resolution = resolve_count_semantics(None, aggregation=agg)
+    # An envelope without a declared owner total never resolves to one.
+    resolution = resolve_count_semantics(None)
     assert resolution.total is None
 
 
 def test_failed_aggregation_never_fabricates_total():
-    agg = PageAggregationResult(
-        items=({"id": "1"},),
-        pages_fetched=1,
-        complete=False,
-        duplicate_ids=(),
-        failed=True,
-        failure_reason="owner_error",
-        authoritative_total=None,
-    )
-    assert resolve_count_semantics(None, aggregation=agg).total is None
+    # A failed fetch yields no envelope — count stays unproven.
+    assert resolve_count_semantics(None).total is None
 
 
 def test_owner_declared_total_is_the_only_authoritative_total():

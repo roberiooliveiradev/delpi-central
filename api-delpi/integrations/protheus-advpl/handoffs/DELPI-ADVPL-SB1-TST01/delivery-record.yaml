@@ -1,0 +1,44 @@
+# Registro de entrega — DELPI-ADVPL-SB1-TST01-v0.5.2
+# Estados: PREPARED -> SENT -> RECEIVED -> COMPILED -> TESTED -> APPROVED
+
+delivery:
+  package_id: "DELPI-ADVPL-SB1-TST01-v0.5.2"
+  package_version: "0.5.2"
+  zip_sha256: "(nao gerado — layout unzipped; ver manifest v0.5.2)"
+  source_repository: "roberiooliveiradev/delpi-central"
+  source_commit: "8462aacbcb53b9a4e9654cf949699c2b2125bd96"
+  modules: [product-master]
+  target_environment: "TST01"
+  layout: "unzipped — conteudo por modulo; zip removido em 2026-11-19"
+  package_status: "COMPILATION_REVIEW_CANDIDATE"
+  supersedes: "DELPI-ADVPL-SB1-TST01-v0.5.0 (fonte pre-review — nao compilar)"
+
+tracking:
+  status: PREPARED
+  events:
+    - state: PREPARED
+      at: "2026-11-19"
+      by: "Devin — Especialista TOTVS (EVA-TOTVS-SB1-FULL-CRUD-ADVPL-INDEPENDENT-REVIEW-AND-REWORK-01)"
+      note: "Revisao independente: 9 defeitos corrigidos (data vazia D, numerico canonico, read-back full-rep Decimal, ASCII, Begin Sequence). Verifier ACCEPT_WITH_RESIDUAL r2; 41 estaticos + 39 pytest do escopo verdes; runtime nao executado."
+
+references:
+  manifest_path: "handoffs/DELPI-ADVPL-SB1-TST01/DELPI-ADVPL-SB1-TST01-v0.5.2.manifest.json"
+  erp_source_refs:
+    - {repo: Delpi-ti/protheus-erp, branch: master, sha: UPSTREAM_ACCESS_BLOCKED, path: "04. Estoque/DLP04I01.PRW", blob_sha: cdb68b0487222823a96162c0e493e442648e21f7}
+  compilation_checklist: "modules/product-master/contracts/official-limitations.md (secao 4 — checklist TST01, item 12b p/ data vazia)"
+
+operation_states:
+  CREATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (POST exige B1_COD; demais campos -> defaults oficiais MATA010)"
+  UPDATE: "SOURCE_CANDIDATE / TST01_VALIDATION_PENDING (PUT exige representacao completa 286 campos; parcial via read-merge-write na api-delpi)"
+  METADATA: "SOURCE_CANDIDATE (GET /v1/IncProduto/metadados — autodescricao estatica, sem leitura ERP)"
+  READ: "OUT_OF_SCOPE_PRW — ficha completa permanece na superficie de leitura governada api-delpi"
+  DELETE: "BLOCKED / OFFICIAL_SEMANTICS_PENDING (DELETE 501 not_homologated)"
+
+runtime_blockers:
+  - "compilacao no RPO do ambiente AMBIENTE=2 (TDS 233:2001, REST :8061/restall) + restart do REST — exclusivo equipe ERP; registro 2026-11-19: :8061 nao entrega body ao WSRESTFUL — validacao funcional alternativa TDS 233:2002 (:8701) em curso"
+  - "formato do valor D no ExecAuto (string AAAAMMDD / vazio): VALIDAR NO TST01 — item novo do checklist"
+  - "5 campos memo SX3 sem coluna fisica na SB1010 do TST01 (B1_VM_I/GI/P, B1_OBS, B1_VM_PROC) → TO_INVENTORY, fora do catalogo v0.5.2"
+  - "serializacao de JsonObject aninhados no GET metadados: validar na compilacao"
+  - "semantica oficial de exclusao MATA010 op 5: TO_INVENTORY (fonte + vinculos SA5/SB2)"
+  - "PEs ativos na MATA010 do ambiente (A010TOK etc.): efeitos sobre SB1 nao mapeados"
+  - "objeto DELPIPRODUTO compilado em PRD diverge do fonte versionado (responde 'nao e um JSON valido' a payload valido) — recompilar a partir DESTE pacote (v0.5.2) antes de homologar"

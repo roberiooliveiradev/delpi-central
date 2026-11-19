@@ -23,6 +23,7 @@
 @import "./styles/display-format.css";
 @import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
+@import "./styles/token-highlight-field.css";
 @import "./styles/chart-segment-button.css";
 @import "./styles/stacked-column-chart.css";
 @import "./styles/select-control.css";
@@ -31,6 +32,8 @@
 @import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";
 @import "./styles/number-stepper.css";
+@import "./styles/navigation-card.css";
+@import "./styles/collapsible-tool-rail.css";
 @import "./styles/range-field.css";
 @import "./styles/kpi-card.css";
 @import "./styles/card-shell.css";
@@ -132,7 +135,6 @@
 @import "./components/conversation/AgentNavigation.css";
 @import "./components/conversation/PluginNavigation.css";
 @import "./styles/page-header.css";
-@import "./styles/navigation-card.css";
 @import "./styles/section-route-card.css";
 @import "./styles/catalog-search-bar.css";
 @import "./styles/hub-route-chips.css";
@@ -157,96 +159,7 @@
 @import "./styles/document-reader.css";
 @import "./styles/markdown-document.css";
 @import "./styles/questionnaire.css";
-
-.delpi-ui-help-tooltip {
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  vertical-align: middle;
-}
-
-.delpi-ui-help-tooltip--wrap {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  width: max-content;
-  max-width: 100%;
-}
-
-.delpi-ui-help-tooltip__trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  min-height: 1.25rem;
-  padding: 0.05rem 0.35rem;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
-  cursor: help;
-  opacity: 0.78;
-  flex-shrink: 0;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  text-transform: lowercase;
-  transition: color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
-}
-
-.delpi-ui-help-tooltip__trigger-label {
-  display: inline-block;
-}
-
-.delpi-ui-help-tooltip__trigger--icon {
-  width: 1.25rem;
-  min-width: 1.25rem;
-  min-height: 1.25rem;
-  padding: 0;
-  border-radius: 999px;
-  font-size: 0;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.delpi-ui-help-tooltip__trigger--icon svg {
-  display: block;
-  flex-shrink: 0;
-}
-
-.delpi-ui-help-tooltip__trigger:hover,
-.delpi-ui-help-tooltip__trigger:focus-visible {
-  opacity: 1;
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
-  outline: none;
-}
-
-.delpi-ui-help-tooltip__bubble {
-  width: max-content;
-  max-width: min(280px, calc(100vw - 24px));
-  border-radius: 10px;
-  padding: 8px 10px;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  color: var(--delpi-ui-text, var(--text, #111111));
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: pre-line;
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-  transition: opacity 0.15s ease;
-}
-
-/* Impressão — esconde triggers/balões (onda 7.1/7.4; sem seletor no MFE). */
-@media print {
-  .delpi-ui-help-tooltip,
-  .delpi-ui-help-tooltip__trigger,
-  .delpi-ui-help-tooltip__bubble {
-    display: none !important;
-  }
-}
+@import "./styles/help.css";
 
 /* --- KeyTip (atalhos Alt / letras F) --- */
 .delpi-ui-keytip-anchor {
@@ -332,46 +245,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.delpi-ui-field-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--delpi-ui-text, var(--text, #111111));
-}
-
-.delpi-ui-field-label__icon {
-  display: inline-flex;
-  flex-shrink: 0;
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
-}
-
-.delpi-ui-field-label__icon svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* Label/título é o trigger do help (sem ícone ?): cursor + foco de teclado. */
-.delpi-ui-field-label__text {
-  cursor: help;
-}
-
-.delpi-ui-section-hint-label {
-  cursor: help;
-}
-
-.delpi-ui-field-label__text[tabindex],
-.delpi-ui-section-hint-label[tabindex] {
-  border-radius: 4px;
-}
-
-.delpi-ui-field-label__text:focus-visible,
-.delpi-ui-section-hint-label:focus-visible {
-  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
-  outline-offset: 2px;
 }
 
 .delpi-ui-tab-cell {

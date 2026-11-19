@@ -1,4 +1,4 @@
-@import "@delpi/plugin-ui/native-controls.css";
+@import "@delpi/plugin-ui/workspace-controls.css";
 :host {
   display: block;
   color-scheme: inherit;
@@ -27,27 +27,85 @@
 table.delpi-ui-table th { --delpi-ui-title: var(--secundary, #003866); }
 *, *::before, *::after { box-sizing: border-box; }
 .studio { background: var(--app-canvas, Canvas); min-width: 0; }
-.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px max(18px, calc((100% - 1220px) / 2)); background: var(--surface-2, Canvas); color: var(--text, CanvasText); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; background: var(--surface-2, Canvas); color: var(--text, CanvasText); }
 .brand { min-width: 0; }
 .brand strong { font-size: 17px; font-weight: 680; letter-spacing: -.025em; }
 .brand small { display: block; }
 .brand small { color: var(--text-muted); font-size: 11px; }
-.workspace { width: min(calc(100% - 36px), 1220px); margin: auto; padding: 25px 0 38px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* V4.1 — bancada fluida: usa toda a largura útil fornecida pelo host,
+ * mantendo apenas as margens corporativas laterais. */
+.layout { display: flex; align-items: flex-start; gap: 14px; width: calc(100% - 36px); margin: 0 18px; padding: 25px 0 38px; }
+.layout > .delpi-ui-tool-rail { flex: 0 0 auto; position: sticky; top: 12px; }
+.main { flex: 1 1 auto; min-width: 0; display: grid; gap: 16px; align-content: start; }
+.entry { display: grid; gap: 14px; align-content: start; }
+.entry-head h2 { margin: 0; font-size: 16px; font-weight: 660; }
+.entry-head p { margin: 2px 0 0; color: var(--text-muted); font-size: 12.5px; }
+.origin-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.origin-cards .delpi-ui-nav-card { width: 100%; height: 100%; }
+.origin-panel { display: grid; gap: 10px; }
+.origin-form { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; padding: 13px 14px; border: 1px solid var(--border, #d4dce5); border-radius: 12px; background: var(--surface, #fff); }
+.study-head { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 16px; padding: 11px 14px; border: 1px solid var(--border, #d4dce5); border-radius: 12px; background: var(--surface, #fff); }
+.study-id { display: grid; gap: 2px; min-width: 200px; flex: 1 1 auto; }
+.study-id > strong { font-size: 15px; font-weight: 660; }
+.study-sub { color: var(--text-muted); font-size: 12px; }
+.study-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.confirm-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; border: 1px solid var(--border, #d4dce5); border-radius: 10px; background: var(--surface, #fff); font-size: 13px; }
+.confirm-bar > span { flex: 1 1 260px; color: var(--text-muted); }
 .edit-name { display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--text-muted); font-size: 12px; }
 .scenario-control { min-width: 0; }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
 .fields { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; margin: 10px 0; }
 .field { display: grid; gap: 3px; color: var(--text-muted); font-size: 12px; }
+/* Em telas estreitas o trilho vira rail de ícones mesmo expandido — o
+ * workspace mantém prioridade e nunca gera overflow horizontal. */
+@media (max-width: 900px) {
+  .layout > .delpi-ui-tool-rail {
+    --delpi-ui-tool-rail-expanded-width: var(--delpi-ui-tool-rail-collapsed-width, 58px);
+    padding-inline: 6px;
+  }
+  .layout > .delpi-ui-tool-rail .delpi-ui-tool-rail__copy,
+  .layout > .delpi-ui-tool-rail .delpi-ui-tool-rail__heading,
+  .layout > .delpi-ui-tool-rail .delpi-ui-tool-rail__group-label,
+  .layout > .delpi-ui-tool-rail .delpi-ui-tool-rail__group-toggle { display: none; }
+  .layout > .delpi-ui-tool-rail .delpi-ui-tool-rail__item { justify-content: center; padding: 7px 4px; }
+}
 @media (max-width: 650px) {
-  .workspace { width: calc(100% - 24px); padding-top: 16px; gap: 12px; }
+  .layout { width: calc(100% - 24px); padding-top: 16px; gap: 10px; }
   .top { padding-inline: 12px; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-
+  .study-actions { width: 100%; }
+  /* O grupo de ações do SectionCard é flex-shrink:0 — em tela estreita
+   * ele excede a largura do cartão e clipa o último botão. Basis 100%
+   * o leva para a linha seguinte, onde os itens quebram em duas linhas. */
+  .delpi-ui-section-card__actions { flex-basis: 100%; flex-shrink: 1; }
 }
 @media (max-width: 385px) {
   .brand strong { font-size: 15px; }
 }
-.badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.context { margin: 0; padding: 8px max(18px, calc((100% - 1220px) / 2)); font-size: 12px; color: var(--text-muted); background: var(--surface-2, Canvas); border-top: 1px solid var(--border-subtle, transparent); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.study-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.study-title-row > strong { font-size: 15px; font-weight: 660; }
+.more-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 9px 14px; border: 1px solid var(--border, #d4dce5); border-radius: 10px; background: var(--surface-2, Canvas); }
+.more-actions__sep { width: 1px; align-self: stretch; background: var(--border, #d4dce5); }
+.empty-bench { display: grid; gap: 6px; justify-items: start; padding: 14px 16px; border: 1px dashed var(--border, #d4dce5); border-radius: 10px; }
+.empty-bench p { margin: 0 0 4px; color: var(--text-muted); font-size: 12.5px; }
+.official-analysis { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border, #d4dce5); }
+.official-analysis__head { display: grid; gap: 2px; }
+.official-analysis__head span { color: var(--text-muted); font-size: 12px; }
+/* Aviso de impedimentos da análise — mesma receita canônica do state-box
+ * warning do kit (accent color-mix sobre a superfície), legível em light e dark. */
+.analysis-issues { margin: 0; padding: 9px 12px 9px 28px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--delpi-ui-warning, var(--warning, #f59e0b)) 40%, var(--delpi-ui-border, var(--border, #e6e6e6))); background: color-mix(in srgb, var(--delpi-ui-warning, var(--warning, #f59e0b)) 14%, var(--delpi-ui-surface, var(--surface, #ffffff))); color: var(--delpi-ui-text, var(--text, #111111)); font-size: 12.5px; }
+.official-details { display: grid; gap: 6px; margin-bottom: 10px; }
+.official-details__cap { color: var(--text-muted); font-size: 12px; }
 .op-cell { display: flex; flex-direction: column; gap: 2px; }
 .op-ref { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+/* V4.2 — ajuda contextual: pares título/balão e painel do guia de método. */
+.badge-with-help { display: inline-flex; align-items: center; gap: 3px; }
+.title-with-help { display: inline-flex; align-items: center; gap: 5px; }
+.scenario-control { display: flex; align-items: center; gap: 7px; }
+.method-help { display: grid; gap: 12px; padding: 13px 15px; border: 1px solid var(--border, #d4dce5); border-radius: 12px; background: var(--surface-2, Canvas); }
+.method-help__head { display: grid; gap: 3px; }
+.method-help__head p { margin: 0; color: var(--text-muted); font-size: 12.5px; }
+.method-help__columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 20px; }
+.method-help__columns h3 { margin: 0 0 5px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.method-help__columns ol, .method-help__columns ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12.5px; }

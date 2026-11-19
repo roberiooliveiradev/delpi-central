@@ -553,6 +553,32 @@ def test_sync_retire_cancels_item_and_closes_records(repo):
         )
         assert cur.fetchone() == ("DISMISSED", "catalog_retire")
 
+    # Doc 176: o encerramento administrativo apresenta-se como
+    # closed_administrative — nunca rejected — preservando o status bruto.
+    from controllership_finance_app.infrastructure.persistence.closing_validation_repository import (
+        ClosingValidationRepository,
+    )
+    corrections = ClosingValidationRepository().list_corrections("2026-06")
+    retired = [c for c in corrections if c["snapshot_item_id"] == snap]
+    assert retired and all(
+        c["status"] == "CLOSED_REQUIREMENT_RETIRED"
+        and c["status_class"] == "closed_administrative"
+        for c in retired
+    )
+
+
+def test_correction_status_class_mapping():
+    from controllership_finance_app.infrastructure.persistence.closing_validation_repository import (
+        ClosingValidationRepository as Repo,
+    )
+    classify = Repo._correction_status_class
+    assert classify("CLOSED_REQUIREMENT_RETIRED") == "closed_administrative"
+    assert classify("PENDING") == "pending"
+    assert classify("APPROVED") == "approved"
+    assert classify("REJECTED") == "rejected"
+    assert classify("UNKNOWN_X") == "unknown_x"
+    assert classify(None) is None
+
 
 def test_sync_reactivate_restores_catalog_retired(repo):
     from controllership_finance_app.infrastructure.persistence.plugins_db import (

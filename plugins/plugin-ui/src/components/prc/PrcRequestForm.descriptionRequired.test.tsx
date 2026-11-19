@@ -26,7 +26,7 @@ const REF_DATA: PrcReferenceData = {
     {
       path: "customerReference",
       kind: "text",
-      requiredCreateIntake: true,
+      requiredCreateIntake: false,
       allowBlank: true,
       verifiable: true,
       maxLength: 60,

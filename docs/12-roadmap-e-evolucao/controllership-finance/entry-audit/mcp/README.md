@@ -44,6 +44,7 @@ Formato: **fichas** em markdown, no mesmo padrão das fichas R01–R15 (`fichas/
 | **AE-13** | Como ler o dashboard | os 4 KPIs e a conta de cada um; conformidade (4 grupos); temas e severidades; comparação com o período anterior; filtros da execução × da análise; resolvido por chave estável; reexecução | front-end README e páginas 01–03 | `TARGET` → `CURRENT_IMPLEMENTATION` após E5/E7 |
 | **AE-14** | Como a CLARA conduz a auditoria | roteiro do §5, em forma citável (o mesmo texto, resumido, vai para as diretivas) | SKILL.md «Como apresentar» + plano | `APPROVED_RULE` |
 | **AE-15** | Casos reais | exemplos de ocorrências típicas da Delpi com a correção feita (fornecedor, NF, o que estava errado, como foi corrigido) | **owner + primeira execução real** | `TO_INVENTORY` |
+| **AE-16** | IBS e CBS (reforma tributária) | quatro regras `ibscbs.*` (todas Alta): XML sem cálculo, item sem cálculo, valor divergente, livro CD2 divergente; fontes (F2D/F2B, CD2, `IBSCBS`/`IBSCBSTot` do XML); gates (`ENTRY_AUDIT_IBSCBS_ENABLED`, `IBSCBS_BOOK_FROM`, exceções) | track T19 + FA-8 a FA-12 | `CURRENT_IMPLEMENTATION` (atrás de flag) |
 
 ## 3. Formato de cada regra (AE-01 a AE-08)
 

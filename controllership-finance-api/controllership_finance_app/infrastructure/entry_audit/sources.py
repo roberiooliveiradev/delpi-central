@@ -55,6 +55,12 @@ class ProtheusEntriesGateway:
     def fiscal_book(self, *, branch, received_from, received_to, species):
         return self._collect("/financeiro/entry-audit/fiscal-book", branch, received_from, received_to, species)
 
+    def reform_taxes(self, *, branch, received_from, received_to, species):
+        return self._collect("/financeiro/entry-audit/tax-items", branch, received_from, received_to, species)
+
+    def reform_book(self, *, branch, received_from, received_to, species):
+        return self._collect("/financeiro/entry-audit/tax-book", branch, received_from, received_to, species)
+
     def tes(self):
         return self._collect("/financeiro/entry-audit/tes", None, None, None, None)
 

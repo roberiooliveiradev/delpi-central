@@ -10,6 +10,10 @@ import time
 import pyodbc
 
 from app.config import settings
+from app.infrastructure.providers.totvs.environment import (
+    TotvsEnvironmentProfile,
+    resolve_totvs_environment,
+)
 
 logger = logging.getLogger("totvs.pool")
 if not logger.handlers:
@@ -28,11 +32,53 @@ TOTVS_POOL_MAX_WAITERS = int(os.getenv("TOTVS_POOL_MAX_WAITERS", "30") or "30")
 _pool: TotvsConnectionPool | None = None
 _pool_lock = threading.Lock()
 
+# O destino TOTVS é imutável durante a vida do processo: o perfil é
+# congelado na primeira conexão e qualquer resolução divergente posterior
+# falha fechada — uma conexão DELPI nunca pode ser reutilizada como
+# DELPI_TST01 (e vice-versa).
+_frozen_profile: "TotvsEnvironmentProfile | None" = None
+_frozen_profile_lock = threading.Lock()
+
+
+def _reset_totvs_environment_freeze() -> None:
+    """Test-only helper — production code must never call this."""
+    global _frozen_profile
+    with _frozen_profile_lock:
+        _frozen_profile = None
+
+
+def _totvs_profile() -> TotvsEnvironmentProfile:
+    global _frozen_profile
+    resolved = resolve_totvs_environment()
+    with _frozen_profile_lock:
+        if _frozen_profile is None:
+            _frozen_profile = resolved
+            return resolved
+        if resolved != _frozen_profile:
+            raise RuntimeError(
+                "Configuração TOTVS alterada em runtime: o destino do pool "
+                "é imutável por processo. Falha fechada."
+            )
+        return _frozen_profile
+
 
 def build_totvs_connection_string() -> str:
+    profile = _totvs_profile()
+    if not profile.sql_read_enabled:
+        raise RuntimeError(
+            "Leitura SQL TOTVS desabilitada neste ambiente "
+            "(banco DISABLED/ausente). Nenhuma conexão será aberta."
+        )
     host = settings.TOTVS_DB_HOST or settings.DB_HOST
     port = settings.TOTVS_DB_PORT or settings.DB_PORT
-    database = settings.TOTVS_DB_DATABASE or settings.DB_DATABASE
+    # Legacy: TOTVS_DB_DATABASE → DB_DATABASE. Com TOTVS_TARGET_ENV, o
+    # catálogo aprovado governa o banco (divergência falha fechada).
+    database = profile.sql_database or settings.DB_DATABASE
+    if (database or "").strip().upper() in ("", "DISABLED"):
+        raise RuntimeError(
+            "Banco TOTVS não resolvido com segurança. Falha fechada: "
+            "nenhuma conexão será aberta."
+        )
     user = settings.TOTVS_DB_USER or settings.DB_USER
     password = settings.TOTVS_DB_PASSWORD or settings.DB_PASSWORD
 

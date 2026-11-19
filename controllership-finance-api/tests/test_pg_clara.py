@@ -13,6 +13,7 @@ CF_TEST_PG_ALLOW_DESTRUCTIVE=1 — banco efêmero com prova de ownership.
 from __future__ import annotations
 
 import os
+import tempfile
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -140,8 +141,12 @@ def _configure_db():
             "PLUGINS_DB_PASSWORD",
             "PLUGINS_DB_SSLMODE",
             "PLUGINS_DB_CONNECT_TIMEOUT",
+            "CF_DOCUMENT_UPLOAD_DIR",
         )
     }
+    cfg.settings.CF_DOCUMENT_UPLOAD_DIR = tempfile.mkdtemp(
+        prefix="cf-doc-upload-"
+    )
     cfg.settings.PLUGINS_DB_HOST = os.environ["CF_TEST_PG_HOST"]
     cfg.settings.PLUGINS_DB_PORT = os.getenv("CF_TEST_PG_PORT", "5432")
     cfg.settings.PLUGINS_DB_NAME = owned.name

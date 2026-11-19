@@ -708,7 +708,7 @@ Autorização técnica pendente: decisão entre EAI/MATI060 vs .PRW-modelo → `
 | E8 | Read-back | products.detail + SX3 | `CONFIRMED` ≠ ACK | — |
 | E9 | UNKNOWN | timeout induzido | sem retry, estado investigável | reconciliação manual |
 
-Gates do protocolo: identidade de serviço autorizada, `PROTHEUS_REST_EXPECTED_BASE_URL` pinado TST01 (`233:8701`), `AMBIENTE=2`, snapshot pré-ensaio, zero escrita fora dos objetos `TESTEPRC*`, confirmação de PRD intacto ao final.
+Gates do protocolo: identidade de serviço autorizada, `PROTHEUS_REST_EXPECTED_BASE_URL` pinado TST01 (`233:8061`; ex-`8701`, transição 2026-11-19), `AMBIENTE=2`, snapshot pré-ensaio, zero escrita fora dos objetos `TESTEPRC*`, confirmação de PRD intacto ao final.
 
 ---
 

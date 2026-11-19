@@ -15,6 +15,7 @@ import pytest
 from controllership_finance_app.application.clara.governed_writes import (
     ClaraGovernedWrites,
     OperationForbidden,
+    ProposalStale,
 )
 from controllership_finance_app.application.clara.step_up_consent import (
     ConsentRequired,
@@ -446,10 +447,36 @@ def test_dependency_added_after_prepare_is_rejected(migrated, monkeypatch):
             (competence_id, f"late-{uuid.uuid4()}", "0" * 64, ACTOR),
         )
         conn.commit()
-    with pytest.raises(CompetenceDeleteBlocked):
+    # O manifesto de dependências integra o estado selado no PREPARE:
+    # dependência nova torna a proposta stale e exige re-PREPARE —
+    # fail-closed sem mutação.
+    with pytest.raises(ProposalStale):
         writes.commit(
             handle=proposal["proposal_handle"],
             actor_sub=ACTOR,
             confirmation=True,
         )
     assert _exists(period)
+    # Re-PREPARE re-diagnostica: documento é dependência EXCLUSIVE
+    # (removida na exclusão) — manifesto re-selado inclui a nova
+    # dependência e o ACT exclui competência + dependente.
+    proposal2 = writes.prepare(
+        capability="competence.delete",
+        params={
+            "period": period,
+            "expected_competence_id": competence_id,
+            "reason": "Exclusão de teste autorizada.",
+            "idempotency_key": "clara-delete-key-02b",
+        },
+        actor_sub=ACTOR,
+    )
+    manifest = (
+        proposal2["expected_state"]["competence"]["dependents"]
+    )
+    assert manifest.get("closing_document", 0) >= 1
+    writes.commit(
+        handle=proposal2["proposal_handle"],
+        actor_sub=ACTOR,
+        confirmation=True,
+    )
+    assert not _exists(period)

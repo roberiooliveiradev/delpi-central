@@ -790,3 +790,108 @@ def test_registry_direct_count_matches_the_catalog():
     assert "checklist.draft_create" in direct
     assert "checklist.draft_update" in direct
     assert len(direct) == 15
+
+
+def test_version_discard_postcondition_expects_missing(monkeypatch):
+    """CF-CLARA-RUNTIME-001: `version_discard` faz hard-delete da linha
+    (tombstone = evento VERSION_DISCARDED). A pós-condição deve exigir
+    `MISSING`, como `version_delete` — antes exigia `DISCARDED`,
+    impossível de satisfazer e todo ACT retornava 502 após commit."""
+    gw = ClaraGovernedWrites()
+    spec = gw._capability_table()["checklist.version_discard"]
+    states = iter([{"status": "MISSING"}, {"status": "DRAFT"}])
+    monkeypatch.setattr(
+        gw, "_template_version_state", lambda *_a: next(states)
+    )
+    params = {"template_id": "t1", "version": 5}
+    assert spec["postcondition"](params, {"deleted": True}, "actor") is True
+    assert spec["postcondition"](params, {"deleted": True}, "actor") is False
+
+
+def test_checklist_vivo_caps_have_real_snapshots(monkeypatch):
+    """CF-CLARA-RUNTIME-001: as capabilities do Checklist Vivo usam
+    ids próprios (version_id/revision_id/event_id/competence_id), não
+    (template_id, version). Antes caíam no fallback genérico e todo
+    PREPARE retornava 503 `snapshot_unavailable`."""
+    gw = ClaraGovernedWrites()
+    monkeypatch.setattr(gw, "_template_state", lambda _t: {"status": "EXISTS"})
+    monkeypatch.setattr(gw, "_active_series_state", lambda _t: {"status": "MISSING"})
+    monkeypatch.setattr(gw, "_latest_version_state", lambda _t: {"status": "PUBLISHED"})
+    monkeypatch.setattr(gw, "_checklist_version_state", lambda _v: {"status": "PUBLISHED"})
+    monkeypatch.setattr(gw, "_revision_state", lambda _r: {"status": "EXISTS"})
+    monkeypatch.setattr(gw, "_sync_event_state", lambda _e: {"status": "FAILED"})
+    monkeypatch.setattr(gw, "_competence_id_state", lambda _c: {"status": "OPEN"})
+
+    cases = {
+        "checklist.series_start": {"template_id": "t"},
+        "checklist.catalog_initialize": {"version_id": "v"},
+        "checklist.revision_apply": {"version_id": "v"},
+        "checklist.revision_revert": {"revision_id": "r"},
+        "checklist.sync_retry": {"event_id": "e"},
+        "checklist.completion_assess": {"competence_id": "c"},
+        "checklist.doc_requirement": {"template_id": "t", "item_key": "k"},
+    }
+    for cap, params in cases.items():
+        snap = gw._snapshot(cap, params)
+        assert snap, f"{cap} snapshot vazio"
+        assert "MISSING" not in str(snap.get("template", {})), cap
+
+
+def test_checklist_vivo_snapshot_fail_closed_on_missing_id():
+    """Sem o id do recurso o snapshot é vazio → PREPARE bloqueado."""
+    gw = ClaraGovernedWrites()
+    for cap in (
+        "checklist.series_start",
+        "checklist.catalog_initialize",
+        "checklist.revision_apply",
+        "checklist.revision_revert",
+        "checklist.sync_retry",
+        "checklist.completion_assess",
+        "checklist.doc_requirement",
+    ):
+        assert gw._snapshot(cap, {}) == {}, cap
+
+
+def test_checklist_vivo_caps_have_presenters():
+    """CF-CLARA-RUNTIME-001: sem presenter a operação não é
+    `displayable` e o canal conversacional rejeita o ACT com
+    `consent_required` — toda capability governada do Checklist
+    Vivo precisa de representação clara."""
+    from controllership_finance_app.application.clara.operation_presentation import (
+        present_operation,
+    )
+
+    cases = {
+        "checklist.series_start": {"template_id": "t", "reason": "r"},
+        "checklist.catalog_initialize": {"version_id": "v", "items": [{}]},
+        "checklist.revision_apply": {
+            "version_id": "v",
+            "reason": "r",
+            "changes": [{"op": "ADD", "item_key": "k"}],
+        },
+        "checklist.revision_revert": {"revision_id": "r1", "reason": "r"},
+        "checklist.sync_retry": {"event_id": "e"},
+        "checklist.completion_assess": {"competence_id": "c"},
+    }
+    for cap, params in cases.items():
+        pres = present_operation(cap, params)
+        assert pres.get("displayable"), cap
+        assert pres.get("summary"), cap
+
+
+def test_preview_revision_invalid_changes_returns_validation_error(
+    actor,
+):
+    """CF-CLARA-RUNTIME-001: payload inválido em
+    `checklist.revision_preview` deve retornar `validation_error`
+    (cliente, ARGUMENT_VALIDATION) — nunca 500 interno."""
+    result = tool_bridge.tool_checklist_preview_revision(
+        template_id="t1",
+        version_id="v1",
+        changes=[{"op": "add_item", "item": {"item_key": "K"}}],
+    )
+    payload = _payload(result)
+    assert payload["success"] is False
+    assert payload["status_code"] == 400
+    assert payload["data"]["error_code"] == "validation_error"
+    assert payload["code"] == "ARGUMENT_VALIDATION"

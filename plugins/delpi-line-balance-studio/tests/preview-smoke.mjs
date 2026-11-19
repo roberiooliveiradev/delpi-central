@@ -22,6 +22,92 @@ try {
   page.on("request", request => { if (!request.url().startsWith(origin)) external.push(request.url()); });
   await page.goto(origin);
   const host = page.locator("delpi-line-balance-studio");
+  /* V4 — entrada: cards de origem + rail de métodos sem estudo ativo. */
+  await host.getByRole("button", { name: /Produto DELPI/ }).waitFor();
+  assert.equal(await host.locator(".delpi-ui-nav-card").count(), 2);
+  assert.equal(await host.locator(".delpi-ui-tool-rail").getAttribute("data-expanded"), "true");
+  await host.getByRole("button", { name: /M5 · Yamazumi/ }).waitFor();
+  await host.getByRole("button", { name: "Próximos métodos" }).click();
+  assert.equal(await host.getByRole("button", { name: /M2 · FFD/ }).isDisabled(), true);
+  await host.getByRole("button", { name: "Próximos métodos" }).click();
+  /* Estudo manual: card → formulário → fallback local sem host. */
+  await host.getByRole("button", { name: /Estudo manual/ }).click();
+  await host.getByLabel("Nome do estudo", { exact: true }).fill("Linha hipotética");
+  await host.getByRole("button", { name: "Criar estudo", exact: true }).click();
+  await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
+  assert.match(await host.locator(".study-head").textContent(), /Linha hipotética/);
+  /* Troca de método preserva o estudo — painel M1 compartilha o contexto. */
+  await host.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+  await host.getByRole("heading", { name: "Capacidade e takt" }).waitFor();
+  assert.match(await host.locator(".study-head").textContent(), /Linha hipotética/);
+  await host.getByRole("button", { name: /M5 · Yamazumi/ }).click();
+  await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
+  /* Rail recolhida preserva seleção e largura menor. */
+  await host.getByRole("button", { name: "Recolher métodos" }).click();
+  assert.equal(await host.locator(".delpi-ui-tool-rail").getAttribute("data-expanded"), "false");
+  await host.getByRole("button", { name: "Expandir métodos" }).click();
+  /* Trocar origem pede confirmação e retorna aos cards. */
+  await host.getByRole("button", { name: "Mais ações" }).click();
+  await host.getByRole("button", { name: "Trocar origem" }).click();
+  await host.getByRole("button", { name: "Sim, trocar origem" }).click();
+  await host.getByRole("button", { name: /Produto DELPI/ }).waitFor();
+  /* Fluxo oficial: card → busca → filial/estágio → estudo OBSERVED. */
+  await host.getByRole("button", { name: /Produto DELPI/ }).click();
+  await host.locator("#lb-product-code").fill("90264302");
+  await host.getByRole("button", { name: "Buscar roteiro" }).click();
+  const stageTrigger = host.getByRole("combobox", { name: "Estágio produtivo", exact: true });
+  await stageTrigger.waitFor();
+  await stageTrigger.click();
+  await host.getByRole("listbox").getByRole("option", { name: "Estágio 10 · Montagem" }).click();
+  await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
+  assert.match(await host.locator(".study-head").textContent(), /Produto 90264302/);
+  assert.match(await host.locator(".study-head").textContent(), /OBSERVED/);
+  /* V4.2 — ajuda contextual: badges de proveniência com balão, guia de
+   * método, tooltips por teclado e Escape, e aviso legível nos dois temas. */
+  assert.ok(await host.locator(".delpi-ui-help-tooltip__trigger").count() >= 2);
+  await host.getByRole("button", { name: "Ajuda: rascunho DRAFT_LOCAL" }).focus();
+  const bubble = page.locator(".delpi-ui-help-tooltip__bubble");
+  await bubble.waitFor();
+  assert.match(await bubble.textContent(), /rascunho local/i);
+  await page.keyboard.press("Escape");
+  await bubble.waitFor({ state: "hidden" });
+  const guideButton = host.getByRole("button", { name: "Como usar este método" });
+  await guideButton.click();
+  assert.equal(await guideButton.getAttribute("aria-expanded"), "true");
+  assert.equal(await guideButton.getAttribute("aria-controls"), "method-guide");
+  assert.match(await host.locator("#method-guide").textContent(), /Yamazumi/i);
+  assert.match(await host.locator("#method-guide").textContent(), /SIMULATION/);
+  await host.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+  assert.match(await host.locator("#method-guide").textContent(), /análise oficial/i);
+  assert.match(await host.locator("#method-guide").textContent(), /UNKNOWN/);
+  await guideButton.click();
+  await host.locator("#method-guide").waitFor({ state: "hidden" });
+  /* Impedimento da análise: aviso com receita warning do kit e botão
+   * soft-disabled que permanece focável para a explicação. */
+  await host.evaluate(element => {
+    element.analysisState = { phase: "idle", issues: ["Demanda por turno ausente."] };
+  });
+  await host.locator(".analysis-issues").waitFor();
+  assert.match(await host.locator(".analysis-issues").textContent(), /Demanda/);
+  const runAnalysis = host.getByRole("button", { name: "Executar análise oficial" });
+  assert.equal(await runAnalysis.getAttribute("aria-disabled"), "true");
+  await host.evaluate(element => { element.analysisState = { phase: "idle", issues: [] }; });
+  /* V4.1 — bancada unificada: detalhes oficiais sob demanda, ações
+   * secundárias em "Mais ações" e análise M1 dentro do método. */
+  await host.getByRole("button", { name: "Detalhes oficiais" }).click();
+  assert.match(await host.locator("#official-details").textContent(), /Tempo padrão/);
+  assert.match(await host.locator("#official-details").textContent(), /OP010/);
+  await host.getByRole("button", { name: "Mais ações" }).click();
+  await host.getByRole("button", { name: "Exportar CSV" }).waitFor();
+  assert.equal(await host.locator("#study-more-actions").getByRole("button").count(), 5);
+  await host.getByRole("button", { name: "Mais ações" }).click();
+  await host.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+  await host.getByRole("heading", { name: "Capacidade e takt" }).waitFor();
+  await host.getByRole("button", { name: "Executar análise oficial" }).click();
+  await host.locator(".delpi-ui-kpi-card").filter({ hasText: "Mínimo teórico de postos" }).waitFor();
+  assert.match(await host.locator(".official-analysis").textContent(), /CALCULATED/);
+  await host.getByRole("button", { name: /M5 · Yamazumi/ }).click();
+  await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
   const metric = name => host.locator(".delpi-ui-kpi-card").filter({ hasText: name }).locator("strong");
   const selectTrigger = name => host.getByRole("combobox", { name, exact: true });
   const options = host.getByRole("listbox");
@@ -33,6 +119,7 @@ try {
     await options.waitFor({ state: "hidden" });
     assert.equal((await trigger.textContent()).trim(), option);
   };
+  await page.locator("#example").click();
   await host.getByRole("heading", { name: "Yamazumi" }).waitFor();
   assert.equal(await page.title(), "Balanceamento de Linha · DELPI");
   assert.match(await host.locator(".top").textContent(), /Balanceamento de Linha/);
@@ -90,7 +177,7 @@ try {
   await host.getByRole("button", { name: "+ Adicionar pausa", exact: true }).click();
   assert.equal(await metric("Tempo produtivo").textContent(), "225 min");
   await page.locator("#new").click();
-  await host.getByText("Adicione uma operação para começar.").waitFor();
+  await host.getByText("Nenhuma operação no estudo. Use «+ Adicionar operação» para começar.").waitFor();
   await host.getByRole("button", { name: "+ Adicionar operação", exact: true }).click();
   const name = host.getByLabel("Nome da operação 1", { exact: true });
   await name.evaluate(element => {

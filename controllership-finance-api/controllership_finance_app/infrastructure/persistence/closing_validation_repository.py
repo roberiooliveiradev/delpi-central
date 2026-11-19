@@ -1093,6 +1093,14 @@ class ClosingValidationRepository:
             "reviewed_by": actor,
         }
 
+    @staticmethod
+    def _correction_status_class(status: str | None) -> str | None:
+        """Classificação de apresentação (doc 176): o encerramento
+        administrativo por retirada do requisito nunca é 'rejected'."""
+        if status == "CLOSED_REQUIREMENT_RETIRED":
+            return "closed_administrative"
+        return status.lower() if isinstance(status, str) else status
+
     def list_corrections(
         self,
         period: str,
@@ -1123,7 +1131,12 @@ class ClosingValidationRepository:
                 params,
             )
             return [
-                row
+                {
+                    **row,
+                    "status_class": self._correction_status_class(
+                        row.get("status")
+                    ),
+                }
                 for row in cur.fetchall()
                 if scope_in_context(
                     request_scope=request_scope,

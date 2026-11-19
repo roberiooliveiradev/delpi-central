@@ -25,6 +25,9 @@ def audit_config() -> AuditConfig:
         participant_by_type_enabled=bool(settings.ENTRY_AUDIT_PARTICIPANT_BY_TYPE_ENABLED),
         input_tes=settings.ENTRY_AUDIT_INPUT_TES,
         cause_grouping_enabled=bool(settings.ENTRY_AUDIT_CAUSE_GROUPING_ENABLED),
+        ibscbs_enabled=bool(settings.ENTRY_AUDIT_IBSCBS_ENABLED),
+        ibscbs_exceptions=settings.ENTRY_AUDIT_IBSCBS_EXCEPTIONS,
+        ibscbs_book_from=settings.ENTRY_AUDIT_IBSCBS_BOOK_FROM,
     )
 
 

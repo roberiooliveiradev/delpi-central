@@ -69,21 +69,24 @@ async function chooseOption(
   }
 }
 
-/** Abre a ferramenta, carrega o roteiro oficial e seleciona o
- * primeiro estágio disponível (contexto sempre explícito). */
+/** Abre a ferramenta, escolhe a origem oficial no card do Studio, carrega
+ * o roteiro e seleciona o primeiro estágio (contexto sempre explícito). */
 async function openToolAndLoadRouting(page: Page) {
   await page.goto(TOOL);
   await expect(
-    page.getByRole("heading", { name: "Balanceamento de Linha" }),
+    page.getByRole("button", { name: /Produto DELPI/ }),
   ).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: /Produto DELPI/ }).click();
   await page.locator("#lb-product-code").fill(PRODUCT_WITH_ROUTING);
   await page.getByRole("button", { name: "Buscar roteiro" }).click();
   await expect(
     page.getByText(/Selecione a filial e o estágio produtivo/),
   ).toBeVisible({ timeout: 45_000 });
   await chooseOption(page, "Estágio produtivo", /^Estágio /);
+  /* V4.1 — o detalhe oficial entra na bancada do Studio; o host não
+   * renderiza mais cartões de conteúdo fora do elemento. */
   await expect(
-    page.getByRole("heading", { name: "Operações oficiais do roteiro" }),
+    page.getByRole("button", { name: "Detalhes oficiais" }),
   ).toBeVisible({ timeout: 15_000 });
 }
 
@@ -129,8 +132,8 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await page.getByRole("button", { name: "Abrir ferramenta" }).click();
     await expect(page).toHaveURL(/processes\/line-balancing/);
     await expect(
-      page.getByRole("heading", { name: "Balanceamento de Linha" }),
-    ).toBeVisible();
+      page.getByRole("button", { name: /Produto DELPI/ }),
+    ).toBeVisible({ timeout: 30_000 });
 
     /* Hub compacto: só a ferramenta operacional — planejadas não ocupam a tela. */
     await page.goto("/apps/engineering/processes");
@@ -147,11 +150,16 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
   }) => {
     const pageErrors = trackPageErrors(page);
     await page.goto(TOOL);
+    /* Entrada V4: dois cards grandes de origem + rail de métodos. */
     await expect(
-      page.getByText(/Informe o código do produto/),
+      page.getByRole("button", { name: /Produto DELPI/ }),
     ).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.getByRole("button", { name: /Estudo manual/ }),
+    ).toBeVisible();
     await shot(page, "lb-tool-idle");
 
+    await page.getByRole("button", { name: /Produto DELPI/ }).click();
     await page.locator("#lb-product-code").fill(PRODUCT_WITH_ROUTING);
     await page.getByRole("button", { name: "Buscar roteiro" }).click();
 
@@ -161,11 +169,24 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     ).toBeVisible({ timeout: 45_000 });
     await chooseOption(page, "Estágio produtivo", /^Estágio /);
     await expect(
-      page.getByRole("heading", { name: "Operações oficiais do roteiro" }),
+      page.getByRole("button", { name: "Detalhes oficiais" }),
     ).toBeVisible({ timeout: 15_000 });
+    /* V4.1 — nenhuma tabela oficial concorrente fora do Studio. */
+    await expect(
+      page.getByRole("heading", { name: "Operações oficiais do roteiro" }),
+    ).toHaveCount(0);
+    /* Metadados oficiais sob demanda dentro da seção Operações. */
+    await page.getByRole("button", { name: "Detalhes oficiais" }).click();
+    await expect(
+      page.getByText(/Metadados do roteiro oficial OBSERVED/),
+    ).toBeVisible();
     await shot(page, "lb-routing-loaded");
 
     /* Produto inexistente → estado honesto, nunca dados fictícios. */
+    await page.getByRole("button", { name: "Mais ações" }).click();
+    await page.getByRole("button", { name: "Trocar origem" }).click();
+    await page.getByRole("button", { name: "Sim, trocar origem" }).click();
+    await page.getByRole("button", { name: /Produto DELPI/ }).click();
     await page.locator("#lb-product-code").fill("00000000-INEXISTENTE");
     await page.getByRole("button", { name: "Buscar roteiro" }).click();
     await expect(
@@ -190,14 +211,40 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.getByText(/Roteiro oficial · OBSERVED/),
     ).toBeVisible({ timeout: 15_000 });
 
-    /* Entrada enxuta: listagem extensa de métodos não domina a primeira
-     * tela (catálogo funcional preservado para a sidebar futura). */
+    /* Rail interna de métodos: M5 ativo por padrão, recolhível. */
+    const rail = page.locator(".delpi-ui-tool-rail");
+    await expect(rail).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /M5 · Yamazumi/ }),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Métodos de balanceamento" }),
     ).toHaveCount(0);
+    if ((await rail.getAttribute("data-expanded")) === "true") {
+      await page.getByRole("button", { name: "Recolher métodos" }).click();
+      await expect(rail).toHaveAttribute("data-expanded", "false");
+      await page.getByRole("button", { name: "Expandir métodos" }).click();
+    }
     await shot(page, "lb-tool-entry");
 
-    /* Condições no Studio → análise oficial M1 pelo contrato do domínio. */
+    /* Troca de método conserva o estudo — painel M1 compartilha o
+     * contexto (takt/cargas do mesmo estudo). */
+    await page.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Capacidade e takt", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/Produto 90264302/).first()).toBeVisible();
+    await page.getByRole("button", { name: /M5 · Yamazumi/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Yamazumi" }),
+    ).toBeVisible();
+
+    /* Condições no Studio → análise oficial M1 na bancada do método
+     * (execução permanece no BFF do host via studio-analysis-run). */
+    await page.getByRole("button", { name: /M1 · Capacidade e takt/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Capacidade e takt", exact: true }),
+    ).toBeVisible();
     await page
       .getByRole("button", { name: "Condições de produção" })
       .click();
@@ -214,16 +261,22 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     });
     await expect(runBtn).toBeEnabled({ timeout: 10_000 });
     await runBtn.click();
+    /* V4.1 — resultado oficial dentro da bancada M1, sem cartão do host. */
+    await expect(page.getByText("Análise oficial M1")).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /Análise oficial M1/ }),
-    ).toBeVisible();
-    await expect(page.getByText("Takt").first()).toBeVisible({
+      page.getByRole("heading", { name: "Análise oficial M1 — capacidade e takt" }),
+    ).toHaveCount(0);
+    await expect(page.getByText("Mínimo teórico de postos").first()).toBeVisible({
       timeout: 45_000,
     });
     await shot(page, "lb-m1-result");
 
     /* Yamazumi — postos e atribuição de operações (nome fica no input
      * CommitInput, não em texto). */
+    await page.getByRole("button", { name: /M5 · Yamazumi/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Yamazumi" }),
+    ).toBeVisible();
     await page
       .getByRole("button", { name: /Adicionar posto/ })
       .click();
@@ -255,6 +308,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
 
     /* F5 → estudo restaurado no mesmo contexto (sessionStorage). */
     await page.reload();
+    await page.getByRole("button", { name: /Produto DELPI/ }).click();
     await page.locator("#lb-product-code").fill(PRODUCT_WITH_ROUTING);
     await page.getByRole("button", { name: "Buscar roteiro" }).click();
     await expect(
@@ -273,6 +327,7 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
     await shot(page, "lb-restored-after-f5");
 
     /* Limpar estudo → confirmação → rascunho removido. */
+    await page.getByRole("button", { name: "Mais ações" }).click();
     await page.getByRole("button", { name: "Limpar estudo" }).click();
     await expect(
       page.getByText(/roteiro oficial consultado permanece intacto/),
@@ -282,6 +337,23 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       .click();
     await expect(page.getByText("Cenário B")).toHaveCount(0);
     await shot(page, "lb-cleared");
+
+    /* Estudo manual — segundo card, sem SKU, mesmo workspace. */
+    await page.getByRole("button", { name: "Mais ações" }).click();
+    await page.getByRole("button", { name: "Trocar origem" }).click();
+    await page.getByRole("button", { name: "Sim, trocar origem" }).click();
+    await page.getByRole("button", { name: /Estudo manual/ }).click();
+    await page
+      .getByLabel("Nome do estudo", { exact: true })
+      .fill("Estudo manual E2E");
+    await page.getByRole("button", { name: "Criar estudo" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Yamazumi" }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByText(/Estudo manual E2E/).first(),
+    ).toBeVisible();
+    await shot(page, "lb-manual-study");
 
     await setTheme(page, "light");
     await shot(page, "lb-tool-light");
@@ -299,7 +371,9 @@ test.describe("Processos > Balanceamento de Linha — Yamazumi V3", () => {
       page.locator("delpi-line-balance-studio"),
     ).toBeAttached({ timeout: 15_000 });
 
-    /* CSV / Excel / PDF pelo padrão corporativo de exportação. */
+    /* CSV / Excel / PDF pelo padrão corporativo — agora dentro do
+     * disclosure "Mais ações" da barra contextual do Studio. */
+    await page.getByRole("button", { name: "Mais ações" }).click();
     const csvBtn = page.getByRole("button", { name: /CSV/ }).first();
     const xlsxBtn = page.getByRole("button", { name: /Excel/ }).first();
     const pdfBtn = page.getByRole("button", { name: /PDF/ }).first();

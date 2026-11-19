@@ -107,6 +107,10 @@ export function pluginUiTestAliases(pluginDir: string) {
       find: "@delpi/plugin-ui/native-controls",
       replacement: path.join(uiRoot, "native-controls.ts"),
     },
+    {
+      find: "@delpi/plugin-ui/workspace-controls",
+      replacement: path.join(uiRoot, "workspace-controls.ts"),
+    },
     { find: "@delpi/plugin-ui/signature", replacement: path.join(uiRoot, "components/signature/index.ts") },
     { find: "@delpi/plugin-ui/screen-loading", replacement: path.join(uiRoot, "exposes/screenLoading.ts") },
     { find: "@delpi/plugin-ui/styles", replacement: stylesCss },

@@ -11,6 +11,8 @@ import tempfile
 import textwrap
 import time
 import unittest
+from typing import Optional
+from unittest import mock
 from pathlib import Path
 
 KIT = Path(__file__).resolve().parents[1]
@@ -126,14 +128,12 @@ class VerifyTests(unittest.TestCase):
 
     def test_engine_order_devin_then_cursor(self):
         self.write_install(engines=["devin", "cursor"])
-        self.stub(
-            "devin",
-            'printf "%s\\n" "# Relatório" "motor: ignored" "veredito: ACCEPT" "resumo: ok"',
-        )
+        self._stub_devin_acp(self._write_fake_acp(chunk="veredito: ACCEPT\nresumo: ok"))
         self.stub("agent", "echo cursor-should-not-run; exit 1")
-        code = verify.main(
-            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "auto"]
-        )
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "auto"]
+            )
         self.assertEqual(code, 0)
 
     def test_fallback_when_devin_absent(self):
@@ -173,13 +173,13 @@ class VerifyTests(unittest.TestCase):
     def test_report_without_verdict_retries_then_inconclusive(self):
         self.write_install()
         counter = self.root / "calls.txt"
-        self.stub(
-            "devin",
-            f'echo x >> "{counter}"; echo "relatório sem linha de veredito"',
+        self._stub_devin_acp(
+            self._write_fake_acp(chunk="relatório sem linha de veredito"), count_file=counter
         )
-        code = verify.main(
-            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
-        )
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
         self.assertEqual(code, 0)
         self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 2)
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
@@ -190,21 +190,19 @@ class VerifyTests(unittest.TestCase):
     def test_retry_invalid_then_valid_uses_second(self):
         self.write_install()
         counter = self.root / "calls2.txt"
-        self.stub(
-            "devin",
-            f'''
-n=$(wc -l < "{counter}" 2>/dev/null || echo 0)
-echo x >> "{counter}"
-if [ "$n" -lt 1 ]; then
-  printf '%s\\n' '# Relatório' 'veredito: PASS' 'resumo: errado'
-else
-  printf '%s\\n' '# Relatório' 'veredito: ACCEPT' 'resumo: ok'
-fi
-''',
+        fake = self._write_fake_acp(
+            chunk=None,
+            on_prompt=(
+                f"n = len(Path('{counter}').read_text().splitlines()) if Path('{counter}').exists() else 0\n"
+                "text = 'veredito: PASS\\nresumo: errado' if n < 2 else 'veredito: ACCEPT\\nresumo: ok'\n"
+                "emit({'jsonrpc': '2.0', 'method': 'session/update', 'params': {'update': {'sessionUpdate': 'agent_message_chunk', 'content': {'text': text}}}})"
+            ),
         )
-        code = verify.main(
-            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
-        )
+        self._stub_devin_acp(fake, count_file=counter)
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
         self.assertEqual(code, 0)
         self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 2)
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
@@ -215,19 +213,97 @@ fi
     def test_first_valid_verdict_single_launch(self):
         self.write_install()
         counter = self.root / "calls3.txt"
-        self.stub(
-            "devin",
-            f'echo x >> "{counter}"; printf "%s\\n" "# Relatório" "veredito: ACCEPT" "resumo: ok"',
+        self._stub_devin_acp(
+            self._write_fake_acp(chunk="veredito: ACCEPT\nresumo: ok"), count_file=counter
         )
-        code = verify.main(
-            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
-        )
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
         self.assertEqual(code, 0)
         self.assertEqual(len(counter.read_text(encoding="utf-8").strip().splitlines()), 1)
         reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
         text = reports[0].read_text(encoding="utf-8")
         self.assertIn("veredito: ACCEPT", text)
         self.assertNotIn("tentativas:", text)
+
+    def _write_fake_acp(
+        self,
+        name: str = "fake_acp.py",
+        chunk: Optional[str] = "veredito: ACCEPT\nresumo: via acp",
+        on_prompt: str = "",
+    ) -> Path:
+        chunk_emit = (
+            "        emit({'jsonrpc': '2.0', 'method': 'session/update', 'params': {'update': "
+            "{'sessionUpdate': 'agent_message_chunk', 'content': {'text': " + repr(chunk) + "}}}})\n"
+            if chunk is not None
+            else ""
+        )
+        extra = "".join("        " + line + "\n" for line in on_prompt.splitlines())
+        path = self.root / name
+        path.write_text(
+            "import sys, json, os, time\n"
+            "from pathlib import Path\n"
+            "def emit(o): print(json.dumps(o), flush=True)\n"
+            "for line in sys.stdin:\n"
+            "    try: m = json.loads(line)\n"
+            "    except json.JSONDecodeError: continue\n"
+            "    req_id = m.get('id')\n"
+            "    if req_id is None: continue\n"
+            "    method = m.get('method')\n"
+            "    result = {}\n"
+            "    if method == 'session/new':\n"
+            "        result = {'sessionId': 'fake-sess'}\n"
+            "    elif method == 'session/prompt':\n"
+            + extra
+            + chunk_emit
+            + "        result = {'stopReason': 'end_turn'}\n"
+            "    emit({'jsonrpc': '2.0', 'id': req_id, 'result': result})\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def _stub_devin_acp(self, fake: Path, count_file: Optional[Path] = None) -> Path:
+        count = f'echo x >> "{count_file}"; ' if count_file else ""
+        return self.stub(
+            "devin",
+            f'{count}if [ "$1" = "acp" ]; then exec python3 "{fake}"; fi\n'
+            'echo "unexpected devin invocation" 1>&2; exit 1',
+        )
+
+    def _patch_devin_creds(self):
+        return mock.patch.object(
+            verify,
+            "_devin_credentials",
+            return_value={"api_key": "k", "api_server_url": "https://server.codeium.com"},
+        )
+
+    def test_devin_uses_acp_engine(self):
+        self.write_install()
+        self._stub_devin_acp(self._write_fake_acp())
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
+        self.assertEqual(code, 0)
+        reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
+        text = reports[0].read_text(encoding="utf-8")
+        self.assertIn("veredito: ACCEPT", text)
+        self.assertIn("resumo: via acp", text)
+
+    def test_devin_acp_engine_failure_inconclusive(self):
+        self.write_install()
+        fake_acp = self.root / "fake_acp_fail.py"
+        fake_acp.write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+        self._stub_devin_acp(fake_acp)
+        with self._patch_devin_creds():
+            verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
+        reports = list((self.repo / ".git" / "delpi-verifier" / "reports").glob("*.md"))
+        text = reports[0].read_text(encoding="utf-8")
+        self.assertIn("veredito: INCONCLUSIVE", text)
+        self.assertIn("devin acp", text)
 
     def test_prompt_contains_report_format_once(self):
         self.write_install()
@@ -241,28 +317,18 @@ fi
         self.write_install()
         marker_log = self.root / "marker-log.txt"
         orphan_name = "verifier" + "-active.json"
-        self.stub(
-            "devin",
-            f"""
-python3 - <<'PY'
-import json, os
-from pathlib import Path
-home = Path(os.environ["DELPI_AGENT_KIT_HOME"])
-marker = home / "state" / "{orphan_name}"
-env = os.environ.get("DELPI_VERIFIER_ACTIVE")
-Path("{marker_log}").write_text(json.dumps({{
-  "marker": marker.exists(),
-  "env": env,
-  "self_pid": os.getpid(),
-}}))
-print("# Relatório")
-print("veredito: ACCEPT")
-PY
-""",
+        fake = self._write_fake_acp(
+            on_prompt=(
+                "home = Path(os.environ['DELPI_AGENT_KIT_HOME'])\n"
+                f"marker = home / 'state' / '{orphan_name}'\n"
+                f"Path('{marker_log}').write_text(json.dumps({{'marker': marker.exists(), 'env': os.environ.get('DELPI_VERIFIER_ACTIVE'), 'self_pid': os.getpid()}}))"
+            ),
         )
-        code = verify.main(
-            ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
-        )
+        self._stub_devin_acp(fake)
+        with self._patch_devin_creds():
+            code = verify.main(
+                ["--request-file", str(self.request_file()), "--repo", str(self.repo), "--engine", "devin"]
+            )
         self.assertEqual(code, 0)
         data = json.loads(marker_log.read_text(encoding="utf-8"))
         self.assertFalse(data["marker"])
@@ -271,8 +337,9 @@ PY
 
     def test_marker_not_written_on_timeout(self):
         self.write_install()
-        self.stub("devin", "sleep 30")
-        code = verify.main(
+        self._stub_devin_acp(self._write_fake_acp(on_prompt="time.sleep(30)"))
+        with self._patch_devin_creds():
+            code = verify.main(
             [
                 "--request-file",
                 str(self.request_file()),
@@ -283,7 +350,7 @@ PY
                 "--timeout",
                 "1",
             ]
-        )
+            )
         self.assertIn(code, (0, 1))
         self.assertFalse(self.orphan_marker_path().exists())
 
@@ -291,20 +358,20 @@ PY
         self.write_install()
         ready = self.root / "ready"
         done = self.root / "done"
-        self.stub(
-            "devin",
-            f"""
-touch "{ready}"
-while [ ! -f "{done}" ]; do sleep 0.05; done
-printf "%s\\n" "# Relatório" "veredito: ACCEPT"
-""",
+        fake = self._write_fake_acp(
+            on_prompt=(
+                f"Path('{ready}').touch()\n"
+                f"while not Path('{done}').exists(): time.sleep(0.05)"
+            ),
         )
+        self._stub_devin_acp(fake)
         import threading
 
         result: dict = {}
 
         def run():
-            result["code"] = verify.main(
+            with self._patch_devin_creds():
+                result["code"] = verify.main(
                 [
                     "--request-file",
                     str(self.request_file()),
@@ -379,16 +446,14 @@ printf "%s\\n" "# Relatório" "veredito: ACCEPT"
 
     def test_request_file_unc_path(self):
         self.write_install()
-        self.stub(
-            "devin",
-            'printf "%s\\n" "# Relatório" "veredito: ACCEPT" "resumo: unc"',
-        )
+        self._stub_devin_acp(self._write_fake_acp(chunk="veredito: ACCEPT\nresumo: unc"))
         pedido = self.request_file()
         rel = str(pedido.resolve()).lstrip("/")
         unc = f"\\\\wsl.localhost\\Ubuntu\\{rel.replace('/', chr(92))}"
         normalized = vh.normalize_agent_path(unc)
         self.assertEqual(normalized, pedido.resolve())
-        code = verify.main(["--request-file", unc, "--repo", str(self.repo), "--engine", "devin"])
+        with self._patch_devin_creds():
+            code = verify.main(["--request-file", unc, "--repo", str(self.repo), "--engine", "devin"])
         self.assertEqual(code, 0)
 
 

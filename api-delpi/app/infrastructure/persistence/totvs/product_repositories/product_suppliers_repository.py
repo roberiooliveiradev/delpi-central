@@ -82,9 +82,13 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 SB1.B1_DESC     AS product_description,
                 SB1.B1_UM       AS unit,
 
-                -- Supplier
+                -- Supplier (SA5 full identity — G2-B)
+                SA5.A5_FILIAL   AS branch,
                 SA5.A5_FORNECE  AS supplier_code,
                 SA5.A5_LOJA     AS supplier_store,
+                SA5.A5_FABR     AS manufacturer_code,
+                SA5.A5_FALOJA   AS manufacturer_store,
+                SA5.A5_REFGRD   AS grade_reference,
                 SA2.A2_NOME     AS supplier_name,
 
                 -- Supplier product codes
@@ -158,6 +162,11 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 catalog_code=r["catalog_code"],
                 barcode=r["barcode"],
 
+                branch=r["branch"],
+                manufacturer_code=r["manufacturer_code"],
+                manufacturer_store=r["manufacturer_store"],
+                grade_reference=r["grade_reference"],
+
                 registered_lead_time_days=r["registered_lead_time_days"],
                 real_avg_lead_time_days=r["real_avg_lead_time_days"],
                 real_min_lead_time_days=r["real_min_lead_time_days"],
@@ -212,8 +221,12 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
             SB1.B1_COD      AS product_code,
             SB1.B1_DESC     AS product_description,
             SB1.B1_UM       AS unit,
+            SA5.A5_FILIAL   AS branch,
             SA5.A5_FORNECE  AS supplier_code,
             SA5.A5_LOJA     AS supplier_store,
+            SA5.A5_FABR     AS manufacturer_code,
+            SA5.A5_FALOJA   AS manufacturer_store,
+            SA5.A5_REFGRD   AS grade_reference,
             SA2.A2_NOME     AS supplier_name,
             SA5.A5_CODPRF   AS supplier_part_number,
             SA5.A5_CODPRCA  AS catalog_code,
@@ -292,8 +305,12 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
             SB1.B1_COD      AS product_code,
             SB1.B1_DESC     AS product_description,
             SB1.B1_UM       AS unit,
+            SA5.A5_FILIAL   AS branch,
             SA5.A5_FORNECE  AS supplier_code,
             SA5.A5_LOJA     AS supplier_store,
+            SA5.A5_FABR     AS manufacturer_code,
+            SA5.A5_FALOJA   AS manufacturer_store,
+            SA5.A5_REFGRD   AS grade_reference,
             SA2.A2_NOME     AS supplier_name,
             RTRIM(SA5.A5_CODPRF) AS supplier_part_number,
             SA5.A5_CODPRCA  AS catalog_code,
@@ -331,6 +348,10 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
                 supplier_part_number=r["supplier_part_number"],
                 catalog_code=r["catalog_code"],
                 barcode=r["barcode"],
+                branch=r["branch"],
+                manufacturer_code=r["manufacturer_code"],
+                manufacturer_store=r["manufacturer_store"],
+                grade_reference=r["grade_reference"],
                 registered_lead_time_days=r["registered_lead_time_days"],
                 real_avg_lead_time_days=None,
                 real_min_lead_time_days=None,
@@ -348,3 +369,66 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
             page=paging["page"],
             page_size=paging["page_size"],
         )
+
+    def get_supplier_link(
+        self,
+        *,
+        product_code: str,
+        supplier_code: str,
+        supplier_store: str,
+        manufacturer_code: str,
+        manufacturer_store: str,
+        grade_reference: str,
+        branch: str,
+    ) -> dict | None:
+        """Read a single SA5 link by its complete seven-field identity.
+
+        Read-only SELECT — never a substitute for the official Protheus
+        write path. Returns None when the link does not exist.
+        """
+        sql = """
+        SELECT
+            SA5.A5_FILIAL   AS branch,
+            SA5.A5_FORNECE  AS supplier_code,
+            SA5.A5_LOJA     AS supplier_store,
+            SA5.A5_PRODUTO  AS product_code,
+            SA5.A5_FABR     AS manufacturer_code,
+            SA5.A5_FALOJA   AS manufacturer_store,
+            SA5.A5_REFGRD   AS grade_reference,
+            SA5.A5_NOMEFOR  AS supplier_product_name,
+            SA5.A5_CODPRF   AS supplier_part_number,
+            SA5.A5_DESCPRF  AS supplier_part_description,
+            SA5.A5_LEAD_T   AS registered_lead_time_days
+        FROM SA5010 SA5 WITH (NOLOCK)
+        WHERE
+            SA5.D_E_L_E_T_ = ''
+            AND SA5.A5_FILIAL  = ?
+            AND SA5.A5_PRODUTO = ?
+            AND SA5.A5_FORNECE = ?
+            AND SA5.A5_LOJA    = ?
+            AND SA5.A5_FABR    = ?
+            AND SA5.A5_FALOJA  = ?
+            AND SA5.A5_REFGRD  = ?
+        """
+
+        params = (
+            branch,
+            product_code,
+            supplier_code,
+            supplier_store,
+            manufacturer_code,
+            manufacturer_store,
+            grade_reference,
+        )
+
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        # A PK SA5 garante no máximo um registro; mais de uma linha é
+        # anomalia de dados e nunca deve devolver a "primeira" arbitrária.
+        if len(rows) > 1:
+            raise RuntimeError(
+                "Anomalia de identidade SA5: múltiplos vínculos para a "
+                "mesma chave completa. Registro não retornado."
+            )
+        return rows[0] if rows else None

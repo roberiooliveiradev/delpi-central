@@ -15,7 +15,10 @@ equipe TOTVS e está fora do escopo deste documento.
 > **A API nunca escreve direto no banco. A API chama a rotina oficial do ERP.**
 
 Toda rota REST que escreve dados no Protheus é uma **fachada fina** sobre uma rotina oficial
-(`MATA***`, `FINA***`, `CTBA***`…) executada via `MSExecAuto`. A rotina oficial é a mesma que a
+(`MATA***`, `FINA***`, `CTBA***`…) executada pelo **mecanismo oficial daquela rotina** —
+`MSExecAuto` quando a rotina o suporta (ex.: `MATA010`), ou o **modelo MVC oficial** quando a
+rotina é MVC (ex.: `MATA061`/SA5, `FWLoadModel`+`ModelCommit`, cuja ativação Model-2 exige
+validação). A rotina oficial é a mesma que a
 tela do ERP executa — ela valida, aplica gatilhos, dispara pontos de entrada e grava as tabelas
 relacionadas. Nosso `.PRW` só faz:
 
@@ -41,7 +44,7 @@ Consequências:
 ## 2. Anatomia de uma rota WSRESTFUL
 
 Referência de produção: `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW`
-(serviço `delpiproduto`, publicado em `192.168.1.233:8701/rest/delpiproduto/v1/...`).
+(serviço `delpiproduto`, publicado em `192.168.1.233:8061/restall/delpiproduto/v1/...`; `:8701` é REST alternativo datado 2026-11-19).
 
 ### 2.1 Declaração do serviço — é isto que publica a rota
 
@@ -123,9 +126,11 @@ Checklist do handler (seguir sempre, nesta ordem):
 MSExecAuto({|x,y,z| MATA460(x,y,z)}, aItens, aCabec, aParam)
 ```
 
-- **Code block**: recebe os argumentos e chama a rotina oficial. **Sempre** `MSExecAuto`,
-  nunca chamada direta (`MATA460(...)`) — o ExecAuto prepara o ambiente automático
-  (empresa/filial, supressão de telas, captura de erros).
+- **Code block**: recebe os argumentos e chama a rotina oficial. Para rotinas com suporte a
+  ExecAuto, **sempre** `MSExecAuto`, nunca chamada direta (`MATA460(...)`) — o ExecAuto
+  prepara o ambiente automático (empresa/filial, supressão de telas, captura de erros).
+  Rotinas **MVC** (ex.: `MATA061`) **não** usam arrays ExecAuto: a persistência vai pelo
+  modelo oficial instanciado (`FWLoadModel`), preservando validações e pontos de entrada.
 - **Arrays**: cada rotina tem o seu formato. O elemento atômico é a tripla:
 
   ```advpl

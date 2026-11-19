@@ -3,9 +3,14 @@
 Every attempt is registered in the integration execution tracker BEFORE the
 upstream call (fail closed). The upstream delpiproduto route has no codusr
 field, so the resolved actor identity is kept in our tracking ledger for
-attribution; the upstream body carries only flat B1_* fields. ACK is never
-presented as persistence proof — read-after-write stays out of this surface
-until a product read-back is homologated.
+attribution; the upstream body carries only flat B1_* fields.
+
+Partial-update contract (v2): the client sends only the fields to change;
+this surface reads the current SB1 snapshot (governed SQL read), merges
+the delta and always sends the complete representation upstream — the
+ExecAuto never receives an omission that could zero a column. After the
+upstream ACK we read the record back: matching changed fields promote the
+result to CONFIRMED; divergence stays ACKNOWLEDGED for manual review.
 """
 
 from __future__ import annotations
@@ -25,8 +30,10 @@ from app.application.services.integrations.protheus_path_resolver import (
 )
 from app.application.services.integrations.protheus_product_payload import (
     build_upstream_product_update_body,
+    merge_product_update_fields,
     normalize_product_update_fields,
     product_update_url,
+    snapshot_value_matches,
     validate_product_code,
 )
 from app.application.services.integrations.protheus_token_service import (
@@ -57,12 +64,14 @@ class UpdateProtheusProductUseCase:
         token_service: ProtheusTokenService,
         gateway: ProtheusRestGateway,
         identity_gateway: CoreProtheusIdentityGateway,
+        product_repository,
         tracker: IntegrationTrackingService | None = None,
     ) -> None:
         self._params_repository = params_repository
         self._token_service = token_service
         self._gateway = gateway
         self._identity_gateway = identity_gateway
+        self._product_repository = product_repository
         self._write_tracker = ProtheusWriteTracker(tracker)
 
     def execute(
@@ -103,9 +112,22 @@ class UpdateProtheusProductUseCase:
         environment_key = environment_key_from_config(
             config, settings.INTRANET_PARAMS_AMBIENTE or ""
         )
+
+        # Snapshot governado (read-only SQL) → merge do delta → body completo.
+        # A representação parcial nunca vai ao ExecAuto (risco de zeramento).
+        snapshot = self._product_repository.get_product_snapshot(normalized_code)
+        if snapshot is None:
+            raise ProtheusRestError(
+                "Produto não encontrado na base TOTVS deste ambiente.",
+                code="PROTHEUS_PRODUCT_NOT_FOUND",
+                status_code=404,
+                recoverable=False,
+            )
+        merged = merge_product_update_fields(snapshot=snapshot, changes=fields)
+
         token = self._token_service.get_valid_token(config)
         body = build_upstream_product_update_body(
-            product_code=normalized_code, fields=fields
+            product_code=normalized_code, fields=merged
         )
         url = product_update_url(config)
 
@@ -149,13 +171,37 @@ class UpdateProtheusProductUseCase:
             f"actor_user_id={actor_user_id} product_code={normalized_code} "
             f"operation_id={operation_id}"
         )
+
+        # Read-back: divergência mantém ACKNOWLEDGED; match promove CONFIRMED.
+        # Compara TODOS os campos merged (representação completa enviada),
+        # não só o delta — campo não alterado zerado/corrompido pelo
+        # ExecAuto também é divergência a investigar.
+        confirmation = "ACKNOWLEDGED"
+        divergent: list[str] = []
+        try:
+            after = self._product_repository.get_product_snapshot(normalized_code)
+            if after is None:
+                divergent = sorted(merged.keys())
+            else:
+                for field, expected in merged.items():
+                    if not snapshot_value_matches(field, after.get(field), expected):
+                        divergent.append(field)
+            if not divergent:
+                confirmation = "CONFIRMED"
+        except Exception:  # noqa: BLE001 — read-back failure never hides the write
+            divergent = sorted(merged.keys())
+
         result: dict[str, Any] = {
             "product_code": normalized_code,
             "codusr": codusr,
             "fields_sent": sorted(fields.keys()),
+            "fields_merged": len(merged),
+            "confirmation": confirmation,
             "operation_id": operation_id,
             **upstream,
         }
+        if divergent:
+            result["readback_divergent_fields"] = divergent
         if not ack_recorded:
             result["tracking_warning"] = "acknowledgement_record_failed"
         return result

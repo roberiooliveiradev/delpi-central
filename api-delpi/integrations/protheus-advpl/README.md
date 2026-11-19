@@ -1,0 +1,64 @@
+# Integrações ADVPL Protheus — workspace DELPI
+
+**Decisão de escopo (PO):** todos os fontes ADVPL/TLPP *candidatos* produzidos pela DELPI para novas integrações ficam versionados **neste repositório**, em `api-delpi/integrations/protheus-advpl/`. **Não modificar nem publicar** no repositório da equipe ERP `Delpi-ti/protheus-erp` durante esta fase. Aquele repositório é fonte de consulta versionada para dependências/customizações, não destino dos nossos commits.
+
+**Responsabilidade:** workspace de entrega de fontes + contratos e manifestos; não é um runtime de API Python, serviço REST ativo, RPO ou autorização para compilar. A API Python permanece em `api-delpi/app/` sob suas camadas existentes e a integração é por contratos oficiais, nunca por import do código ADVPL.
+
+## Organização (materializada na fundação)
+
+```text
+api-delpi/integrations/protheus-advpl/
+  README.md
+  modules/
+    product-master/           # SB1 — MATA010/ExecAuto; ver README + contracts/module.yaml
+      src/                    # DLP04I01.PRW = PLANNED; não copiar legado automaticamente
+      contracts/module.yaml   # contrato declarativo do módulo
+      tests/
+    product-suppliers/        # SA5 — MATA061 MVC Model-2; ver README + contracts/module.yaml
+      src/                    # DLP04I02.PRW = PLANNED (nome: INCONCLUSIVE p/ colisão no ERP)
+      contracts/module.yaml
+      tests/
+  shared/                     # somente docs; código exige Abstraction Gate + 2 consumers
+  packaging/
+    package.py                # ZIP determinístico a partir de commit aprovado
+    manifest.schema.json      # schema do manifesto consolidado
+    out/                      # artefatos gerados — git-ignored, nunca commitar ZIPs
+    tests/test_package.py     # 15 testes: positivos, segurança, determinismo
+  handoffs/
+    templates/compilation-checklist.md   # equipe ERP preenche na compilação
+    templates/delivery-record.yaml       # PREPARED→SENT→RECEIVED→COMPILED→TESTED→APPROVED
+```
+
+Organizar por **capacidade de negócio**, não por HTTP verb. Cada módulo possui suas rotas, contratos e testes; não importar fontes de outro módulo. Utilitários compartilhados somente com owner, consumer, necessidade e testes reais. `openai-plugin/` é integração independente e não deve ser alterada.
+
+## Primeira entrega — PRC SB1 / SA5
+
+- `product-master`: REUSE/EXTEND `DLP04I01.PRW` (upstream `DELPIPRODUTO`, MATA010/ExecAuto), preservando contratos publicados. CREATE/UPDATE já têm fonte; operações adicionais exigem inventário/contrato e autorização.
+- `product-suppliers`: avaliar primeiro submodelo `Model061` em `MATA010M_DLP.PRW` e o `Dmata061.prx` MVC antes de NEW; fachada REST SA5 candidata independente, somente após ratificação do modelo, identidade completa e operações suportadas.
+- **DELETE:** nunca implementar sem semântica ERP aprovada. **READ:** rotas de leitura Python/SQL existentes permanecem para consumidores proprios e podem fornecer evidencia auxiliar de diagnostico, mas **nao** definem nem implementam o contrato ADVPL. Novo GET em PRW exige rotina/mecanismo Protheus oficial comprovado. Read-back SA5 requer chave integral e verificacao governada separada.
+- Cobertura de CRUD = operações de negócio contratadas, não exposição indiscriminada dos campos físicos.
+
+## Fontes e evidência
+
+1. **Fonte de referência da equipe ERP:** `Delpi-ti/protheus-erp`, `master`@SHA; registrar caminho e blob SHA de cada rotina estudada. Não efetuar escrita nesse repositório.
+2. **Workspace autoral deste projeto:** fontes novos/evoluídos em `modules/*/src/`, versionados pelo SHA do `delpi-central`. Cada arquivo deve ter provenance da base original, licença/permissão aplicável, mudanças DELPI e status `SOURCE_CANDIDATE`. Não sobrescrever o espelho histórico `docs/13-fontes-totvs-protheus/`.
+3. **Biblioteca canônica de regras:** `api-delpi/docs/api/padroes-totvs/` e `api-delpi/docs/integrations/`; manter um único contrato por capacidade.
+4. **Runtime:** RESTALL indica rota publicada, SX3 indica metadados, RPO/compilação/homologação com owner ERP comprova versão em execução. Fonte GitHub não prova deploy.
+
+## Versionamento e pacote de compilação
+
+- Cada entrega fixa **SHA do delpi-central**, `source_repo/ref/sha/path/blob` de dependências, hashes SHA-256 dos fontes/contratos, lista de arquivos, contrato API, mudança e rollback, permissões e versão do pacote.
+- Rótulos de estado: `SOURCE_CANDIDATE → SOURCE_REVIEWED → COMPILATION_PENDING → TST01_COMPILED → TST01_VALIDATED → PRD_APPROVED → PRD_PUBLISHED`. Nenhuma promoção por inferência.
+- `packaging/` futuramente gera ZIP determinístico **a partir de um commit aprovado**, com `manifest.json`, `fontes/`, `contratos/`, `homologacao/`. ZIP é artefato de distribuição, não fonte de verdade e não é mantido como cópia divergente no Git.
+- `handoffs/` guarda a referência do artefato/issue, SHA-256 do ZIP, responsável, ambiente e resultado da equipe ERP. Separar pacote TST01 de promoção PRD sem duplicar código por ambiente.
+- Configuração de destino **não** é hardcoded em `.PRW`: a equipe compila no RPO/ambiente escolhido; API DELPI aplica feature gate default OFF e pin fail-closed, ver `protheus-write-integration-playbook.md`.
+
+## Gates e ownership
+
+Keycloak = identidade; Core = AuthZ/RBAC; `api-delpi` = integração; Engenharia = workflow PRC; equipe ERP = compilação/publicação/rotinas e regras oficiais. Sem SQL/RecLock direto no ERP. Nunca executar ERP write, RPO compile ou deploy por consequência de commit de fonte/documentação. Se `AGENTS.md` exigir deploy geral, resolver conflito de escopo com owner **antes** de ação que afetaria runtime.
+
+**Próxima tarefa permitida:** criar módulos/contratos e primeiros fontes candidatos em `modules/`, com revisão técnica e testes estáticos; a compilação TST01 depende de aprovação/handoff separado.
+
+## Invariante obrigatoria: SQL e READ da API DELPI sao auxiliares, nao implementacao ADVPL
+
+Todos os fontes `.PRW`/`.TLPP` candidatos devem ancorar cada operacao em rotina padrao TOTVS ou customizacao real do repositorio ERP @SHA; respeitar validacoes e mecanismos oficiais (MATA010/ExecAuto, MATA061/MVC somente quando comprovado). Dados SQL/SX3 e rotas READ da `api-delpi` servem **apenas** para entendimento de schema, campos, diagnostico e auditoria de consistencia em fluxo separado. E vedado copiar SELECT/joins/filtros/payloads SQL para ADVPL, preencher dados ausentes consultando API SQL ou substituir persistencia oficial por `RecLock`/DML. Sem contrato oficial, marcar `TO_INVENTORY`; nao implementar fallback. Preservar as rotas existentes de leitura nos seus limites atuais.

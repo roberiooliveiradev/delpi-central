@@ -127,6 +127,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_product_purchases": RouteContract("product_purchases", "paged_list"),
     "get_product_sales_summary": RouteContract("product_sales", "scalar"),
+    "get_product_sales_analytics": RouteContract("product_sales_analytics", "scalar"),
     "get_product_sales_open_orders": RouteContract("product_open_orders", "paged_list"),
     "get_product_sales_billing": RouteContract("product_billing", "scalar"),
     "get_product_pricing": RouteContract("product_pricing", "scalar"),
@@ -820,6 +821,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "list_entry_audit_fiscal_book": RouteContract(
         "entry_audit_fiscal_book_line", "paged_list"
+    ),
+    "list_entry_audit_tax_items": RouteContract(
+        "entry_audit_reform_tax", "paged_list"
+    ),
+    "list_entry_audit_tax_book": RouteContract(
+        "entry_audit_reform_book_line", "paged_list"
     ),
     "list_entry_audit_tes": RouteContract(
         "entry_audit_tes", "paged_list"

@@ -6862,4 +6862,180 @@ Análise do predicado `codes >= 2` por caminho:
 
 **Verificação independente (delpi-verifier, cursor/Composer, r1):** `ACCEPT_WITH_RESIDUAL` sobre `de1954a00c..12bc12535f`, zero OCs — 5/5 ACs PASS; residuais não-bloqueadores: byte-identical dos irmãos é evidência executor-side (verificador não reexecuta pipeline real) e premissa SLANet-intratabular documentada.
 
-**Estado:** código consolidado e verificado em `origin/main`. Gates de imagem/deploy em andamento; `DEPLOY_EXECUTED` e `CHATGPT_LIVE_VALIDATION` pendentes — `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`.
+**Deploy produtivo (srv-api, autorização DEPLOY-02 da Coordination, modo GATED_PRODUCTION_DEPLOY):**
+
+- **Baseline:** repo `6d39cda37f99`, imagem `sha256:aecbf6056c54`; rollback tagueado `infra-engineering-api:pre-deploy02-6d39cda-rollback`.
+- **Candidata:** `infra-engineering-api:deploy02-2872465309` → `latest`, digest `sha256:bb5d05c74c02`, fonte `2872465309` (ff-only; WIP prod preservado).
+- **Container:** `delpi-engineering-api` healthy no digest novo; código verificado in-container (`code_bearing_cols` presente); limits preservados (RLIMIT 16GB, CPU 900s, `ENG_DRAWING_OCR_MAX_CONCURRENCY=1`, isolation=subprocess); gateway `/apps/engineering-api/mcp` unauth → 401.
+- **Prova interna no container (pipeline isolado + understanding, PDF real SHA `9b64ae20…`):** 15 candidatos (p1: 10 — A3,A7,A1×2,A6×2,A2×2,AA,A5; p2: A8,AA,A9,A4 + E ambíguo); `60`/`LL` excluídos; líderes A3/A8 `CANDIDATE` (fix de borda ativo em produção), A2/A6 `AMBIGUOUS`, A5/A9/A4/E `NOT_FOUND` (limitação diagonal/leque documentada); tabela 10 linhas com códigos limpos; `balloon_table_validation.v1`: **14 BALLOON_LABEL_IDENTIFIED** + E `NOT_LOCATED`, `automatic_approval=false`, `review_required=true`.
+- **CHATGPT_LIVE_VALIDATION=PENDING_COORDINATION** — prova por identidade delegada cabe à Coordination.
+
+**Estado:** `DEPLOY02_PRODUCTION_EXPERIMENT_ACTIVE_LIVE_MCP_PENDING` — experimento operacional, não homologação; `GROUND_TRUTH_APPROVED=NO`, `AUTOMATIC_NC=false`, `BUSINESS_DATA_WRITES=0`. Issue #131 pendente (`gh` sem auth).
+
+### 94.42.16 E1/VAL-01 — B2-R2: Diagonal and Fan Leader Tracing
+
+**TASK_ID:** `EVA-E1-VAL01-BALLOON-B2R2-DIAGONAL-FAN-LEADER-TRACING-AND-VISUAL-VALIDATION-01`
+
+**Baseline produtivo confirmado pela Coordination (ChatGPT MCP, job `aj-51121cd45a9142e7`, digest `bb5d05c74c02`):** 90480120 — 15 candidatos, 14 matches, B3 14 INCONCLUSIVE + 1 NOT_COMPARABLE; líderes A3/A8 `CANDIDATE`, A5/A9/A4 `NOT_FOUND` (diagonais/leque), E `NOT_FOUND`.
+
+**RQ-B2R2-02 — primeiro ponto de falha (CONFIRMADO_NO_CODIGO + CONFIRMADO_EM_TESTE):** `detect_graphic_primitives` (opencv_adapter) só emitia corridas morfológicas eixo-alinhadas — os kernels retos `(kh,1)`/`(1,kv)` destroem traços inclinados por construção. O canal `segments` já existia no contrato do Understanding e o B2 já era orientação-agnóstico (ancoragem por caixa, encadeamento por proximidade de ponta `_LEADER_ATTACH_PX`, destino por endpoint) — a perda ocorria no adapter, antes do Understanding. Sonda HoughLinesP no residual provou no desenho real: A5 leque multi-ramo (~30–56°), A9 ~44°, A4 ~71°.
+
+**Implementação (commit `3d5c489aa8`, diff mínimo, sem hardcodes):**
+
+- `opencv_adapter.detect_graphic_primitives`: `HoughLinesP` sobre o residual (`bin ∧ ¬(h∪v)`), janela angular aguda 8°–82° (não duplica os canais h/v), `threshold=40`, `maxLineGap=6`, cap determinístico de 400 segmentos mais longos, campo `source="hough_lines_p_residual"` (proveniência; evidência candidata, nunca verdade técnica).
+- `understanding._merge_cluster`: colapso por projeção de eixo → **par de pontas mais distante do cluster**. Correto para diagonais e preserva a semântica eixo-alinhada (efeito observado: endpoints ±1px = ponta real do traço em vez de projeção).
+- Sem biblioteca nova; grafo não necessário — encadeamento por ponta já sustentava multi-segmento.
+
+**Testes RED→GREEN (8 novos):** diagonal → `SINGLE_REGION`; traços paralelos fundem; leque 3 ramos → `AMBIGUOUS` com multiplicidade preservada; dobra diagonal→vertical encadeia; cruzamento sem contato de ponta **não** conecta; diagonal próxima sem toque → `NOT_FOUND`; adapter emite `segments` com proveniência e abstém sem diagonais (skipif cv2).
+
+**Resultado real 90480120 (container produtivo, imagem `86bf8f6953f6`, fonte `0bbfa241f3` ⊃ `3d5c489aa8`):**
+
+| Ocorrência | Antes | Depois |
+|---|---|---|
+| A5 p1 (leque) | NOT_FOUND | **CANDIDATE**, caminho de 4 segmentos, tgt `NOT_IDENTIFIED` |
+| A9 p2 (diagonal) | NOT_FOUND | **CANDIDATE**, tgt `AMBIGUOUS_REGIONS` |
+| A4 p2 (diagonal) | NOT_FOUND | **CANDIDATE**, tgt `AMBIGUOUS_REGIONS` |
+| E p2 | NOT_FOUND | **AMBIGUOUS** (2 raízes — honesto) |
+| A2 p1 (vista 2) | CANDIDATE | `AMBIGUOUS` (2ª raiz plausível — rebaixamento conservador) |
+
+Invariantes: 15 candidatos / 9 excluídos / 10 linhas de tabela; `balloon_table_validation.v1` 14 `BALLOON_LABEL_IDENTIFIED` + E `NOT_LOCATED`, `automatic_approval=False` — B3 não inflou confiança. Primitivas: p1 86 segs / p2 134 segs.
+
+**Regressão cruzada (pipeline completo, imagem produtiva ± mounts, irmãos):** 90261723, 90261731, 90264311 — estados, alvos e contagens de líderes **idênticos**; única variação `endpoint_px` ±1 em 9 líderes (ponta real vs projeção — efeito esperado do merge). Suíte completa: **1708 pass / 23 skip**; audits architecture-phase3 + platform-guardrails: 0 findings.
+
+**Verificação independente (delpi-verifier):** `INCONCLUSIVE` por indisponibilidade ambiental — motor `devin` sem autenticação CLI (`devin auth login` interativo pendente); motor `cursor` com limite de uso da conta (reset 02/12/2026). Exceção ao gate autorizada explicitamente pelo owner; verificação diferida registrada como pendência de governança.
+
+**Deploy (canônico, srv-api):** rollback tagueado `infra-engineering-api:pre-b2r2-bb5d05c7-rollback`; prod pull ff-only → `0bbfa241f3` (⊃ `3d5c489aa8`, WIP prod preservado); rebuild sequencial; `delpi-engineering-api` healthy, digest `86bf8f6953f6`, tag `b2r2-3d5c489aa8`; código verificado in-container; `/health` 200; limites preservados (subprocess, 16GB, 900s, concorrência 1).
+
+**Estado:** `B2R2_FIX_VERIFIED_LIVE_MCP_PENDING` — experimental, não homologação. Resíduos: leque do A5 converge num único ramo anexado (ramos não ancorados na borda não viram raiz); destino `NOT_IDENTIFIED` quando a extremidade não toca região registrada; endpoints ±1px; `ENGINEERING_APPROVAL=DRAFT`, `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`.
+
+### 94.42.17 E1/VAL-01 — B2-R2 / VAL-02: Retrospective Verification and Visual Target Evaluation
+
+**TASK_ID:** `EVA-E1-VAL01-B2R2-VAL02-INDEPENDENT-VERIFICATION-AND-VISUAL-TARGET-VALIDATION-01`
+
+**Baseline MCP (Coordination, job `aj-9a41ca4c69794678`, digest `86bf8f6953f6`, fonte `0bbfa241f3` ⊃ `3d5c489aa8`):** 15 candidatos / 14 matches / B3 14 INC + 1 NC; A5 CANDIDATE(4 segs, ep 2092,801, NOT_IDENTIFIED), A9 CANDIDATE(ep 2005,1086), A4 CANDIDATE(ep 2047,1216), A3/A8 CANDIDATE, E AMBIGUOUS.
+
+**RQ-VAL02-02 — verificação retroativa:** `devin` segue sem auth CLI; `cursor`/`auto`/`composer` seguem em usage limit (reset 02/12/2026). Pedido re-executado → `INCONCLUSIVE` (evidência atualizada preservada; veredito anterior não promovido).
+
+**RQ-VAL02-03/05 — inspeção visual Devin (render 200dpi, overlays orig×EVA; DEVIN_VISUAL_OBSERVATION, não GT):**
+
+| Balão | EVA (baseline) | Verdade visual | Veredito |
+|---|---|---|---|
+| A5 p1 | CANDIDATE→vértece peça | **leque de 3 ramos → 3 dots**; EVA encadeou ramo ~15° nas arestas da haste até vértice | PATH_MISMATCH + FALSE_CONNECTION + MISSED_BRANCH×2 |
+| A9 p2 | CANDIDATE (2005,1086) | diagonal→dot (1997,1085) | MATCH (~8px) |
+| A4 p2 | CANDIDATE (2047,1216) | líder real ~5°→dot (1990,1105); chanfro de peça anexou | FALSE_CONNECTION + líder perdido |
+| A3 p1 | CANDIDATE (148,599) | vertical contínua→2º dot (150,595) | MATCH (convenção multi-dot) |
+| A8 p2 | CANDIDATE (1045,1107) | vertical→dot (1045,1105) | MATCH (~2px) |
+| E p2 | AMBIGUOUS | arestas de região de detalhe | ambiguidade justificada |
+
+**Causas raiz provadas:**
+
+1. **Raiz sob o anel (understanding `_leader_roots`):** ponta dentro do interior do balão era rejeitada; líderes reais são traçados por baixo do anel (ramo A5 ~48° com raiz em (1897,922)). Fix: ponta dentro da caixa expandida (banda OU interior) conta como anexo; a regra "exatamente uma ponta anexada" continua rejeitando traços do próprio anel. `_LEADER_EDGE_INSET_PX` removido (semântica absorvida).
+2. **Líder quebrado na binarização (adapter):** o líder do A4 (~5°, tinta verde clara) fragmenta em 2 corridas ~30px com lacuna ~15px < `maxLineGap`; nenhuma chega a `minLineLength`. Fix: `maxLineGap` 6→12 — reconstrói como composto dentro da janela angular vigente. Zona cega ~2–8° permanece documentada (residual).
+3. **Avaliado e descartado:** máscara de saturação para líderes coloridos — inundaria segmentos com marcas de peças (vermelho/azul saturados); discriminação de matiz seria desenho-específica.
+
+**Resultado pós-fix no desenho real (container descartável, mesma imagem + mounts):**
+
+- **A4:** CANDIDATE, endpoint **(1990,1103) = dot real** — PATH corrigido (antes: falso endpoint no chanfro).
+- **A5:** **AMBIGUOUS, 4 raízes** ≈ os 3 ramos do leque + fragmento — multiplicidade preservada, sem endpoint falso promovido.
+- **A9/A3/A6/A7/A2(p1):** CANDIDATE→AMBIGUOUS — raízes extras são traços reais anexáveis (arestas de peça/compostos gap-bridged); ambiguidade geométrica honesta, não falso anexo.
+- **E:** AMBIGUOUS (9 raízes — região densa).
+- **Invariantes:** 15 candidatos / 9 excluídos / 10 linhas de tabela / a1,aa,a8,aa(p2) inalterados; `automatic_approval=False`.
+
+**Testes:** +3 B2 (raiz sob o anel CANDIDATE, leque raiz-interior AMBIGUOUS, negativo ambas-pontas-dentro) + 1 adapter (diagonal quebrada→composto, skipif cv2); teste histórico `interior_not_leader` atualizado para a premissa corrigida pela evidência real. RED→GREEN demonstrado. Suíte: **1711 pass / 24 skip**. Audits: 0 findings.
+
+**Regressão cruzada (pipeline completo, imagem produtiva ± mounts):** 90261723/90261731/90264311 — **zero diferença** em estados/endpoints/alvos de líderes.
+
+**B3/B1/tabela:** contagens baseline preservadas; nenhuma promoção de confiança.
+
+**Estado:** correção local verificada + deploy canônico conforme AGENTS.md; verificação independente `INCONCLUSIVE` por indisponibilidade ambiental (documentada, exceção owner reutilizada da B2-R2); `LIVE_MCP_VALIDATION` pela Coordination; pacote de revisão visual (overlays `/tmp/val02_*`, SHA `9b64ae20…`) para GT owner — `HUMAN_DRAFT_OBSERVATION`, não homologado.
+
+### 94.42.18 E1/VAL-01 — VAL-03: Independent Verification and Dot/Endpoint Evidence
+
+**TASK_ID:** `EVA-E1-VAL01-VAL03-B2-INDEPENDENT-VERIFICATION-DOT-ENDPOINT-EVIDENCE-AND-GEOMETRIC-VALIDATION-01`
+
+**Reancoragem:** HEAD `45884cc440` (commits alheios posteriores à VAL-02; `61fa461be0`/`45811bb4cf` ancestors confirmados), WIP alheio preservado, digest prod `80fad8fc12c6` ⊃ VAL-02.
+
+**RQ-VAL03-02 — verificação retroativa (motor cursor, composer-2.5):** re-executada em 18/11/2026 — `ActionRequiredError: usage limit … reset 12/2/2026`. Motor `devin` indisponível e não-independent (mesmo modelo do executor). Veredito `INCONCLUSIVE` r2 registrado (`val03-retro-b2r2-val02-r2.md`); **não promovido** — bloqueio ambiental comprovado, não aprovação.
+
+**RQ-VAL03-03/05 — spike de dots (DEVIN_VISUAL_OBSERVATION):** os terminadores são discos verde-puro (RGB≈0,255,0) ~10–26px, detectáveis pela **mesma máscara de saturação** de `enclosures` + opening morfológico (kernel 5×5 > espessura de linha ~3px). Resultado: p1 16 blobs / p2 4 blobs, **zero falsos positivos** no desenho; cada endpoint CANDIDATE coincide com um dot a 1–6px.
+
+**Matriz endpoint × dot (sem threshold arbitrário — distâncias observadas):**
+
+| Balão | Estado | Endpoint/ponta | Dot real | Dist | Veredito |
+|---|---|---|---|---|---|
+| A8 p2 | CANDIDATE | (1045,1107) | (1045,1108) | 1.0px | MATCH |
+| A4 p2 | CANDIDATE | (1990,1103) | (2000,1113) | ~rim | MATCH (líder entra no dot) |
+| AA p2 | CANDIDATE | (1597,1065) | (1597,1069) | 4.0px | MATCH |
+| AA p1 | CANDIDATE | (1843,711) | cluster (1839,710) | 4.1px | MATCH |
+| A1 p1 ×2 | CANDIDATE | eps → dots (646,565)/(891,1337) | — | 4–6px | MATCH |
+| A9 p2 | AMBIGUOUS | tips → dot (2003,1087) | — | 5–19px | dot confirma o ramo; E converge ao mesmo dot → ambiguidade real |
+| A3 p1 | AMBIGUOUS | tip (148,599) | (149,595) | 4.1px | líder real confirmado; raízes extras = tinta cruzada |
+| A5 p1 | AMBIGUOUS | 4 raízes | 3 dots (2005,803)(1928,828)(2008,874) | ver análise | leque 3 ramos→3 dots; raiz do meio **overshoot** 61px além do dot |
+| E p2 | AMBIGUOUS | tips → dot (2003,1087) | — | 5–17px | ambiguidade justificada (raízes convergentes) |
+
+**RQ-VAL03-06 — topologia A5 revisada:** 3 ramos reais → 3 dots. EVA emite 4 raízes: ramo esquerdo fragmentado em 2 raízes, ramo direito → rim do dot, ramo do meio **atravessa o dot** e termina em vértice da peça 61px adiante. Dots como evidência de terminador permitiriam ancorar os 3 destinos reais sem escolha arbitrária — mas não identificam componente (nível `DOT_CANDIDATE`, não `COMPONENT_IDENTITY`).
+
+**Abstraction Gate (RQ-VAL03-04):** NECESSITY=terminador geométrico do próprio desenho; OWNER=opencv_adapter→graphic_primitives→Understanding; EXISTING_EQUIVALENT=nenhum (`circles`/HoughCircles não detecta discos pequenos preenchidos; `enclosures`=regiões livres, semântica distinta); REUSE_DECISION=**EXTEND** — canal aditivo `dots` derivado do canal de cor existente (sem detector paralelo); CONTRACT_IMPACT=chave aditiva retrocompatível; AUTHORITY_IMPACT=nenhum; ROLLBACK=trivial (consumidores ignoram chave desconhecida). **Decisão:** extensão válida em evidência, mas **implementação retida** — §15 VAL-03 proíbe push que dispare deploy com verificação `INCONCLUSIVE` e sem exceção específica. Pendente: Coordination decide promoção (EXTEND contrato) + verificador disponível.
+
+**Sem alteração de código nesta task** — runtime inalterado, nenhum deploy. `ENGINEERING_GT_APPROVED=NO`, anotações `DEVIN_VISUAL_OBSERVATION`/`HUMAN_DRAFT`.
+
+**Pacote de revisão Engenharia:** overlays `/tmp/val03_overlay_{a5,a3,a9a4e,a8}_*.png` (magenta=balão EVA, laranja=raízes, vermelho=caminho CANDIDATE, azul=endpoint, ciano=dot detectado), matriz endpoint×dot acima, zooms `/tmp/val03_a4a9_zoom.png` e `/tmp/val03_a5fan_zoom.png`, PDF SHA `9b64ae20…`. Perguntas ao reviewer por ocorrência: `BALLOON_LABEL_CORRECT? LEADER_PATH_CORRECT? ENDPOINT_CORRECT? TARGET_REGION_CORRECT? COMPONENT_ASSOCIATION_CORRECT?`
+
+**Estado:** `VAL03_INCONCLUSIVE_VERIFIER_UNAVAILABLE` — spike de dots validado como evidência (não GT); decisão de EXTEND pendente de Coordination; verificação retroativa reagendada para motor disponível (reset cursor 02/12/2026 ou `devin auth login` por identidade distinta do executor).
+
+### 94.42.19 E1/VAL-01 — VAL-04: Dot Endpoint Detection and Leader Termination (implementação)
+
+**Task:** `EVA-E1-VAL01-VAL04-DOT-ENDPOINT-DETECTION-AND-LEADER-TERMINATION-IMPLEMENTATION-01` — Coordination autorizou `DOT_DESIGN_GATE=APPROVED_FOR_BOUNDED_PREPARATION`, `REUSE_DECISION=EXTEND`, canal `graphic_primitives.dots` no owner `opencv_adapter` + `understanding`. Sem novo bounded context, framework ou fonte de verdade.
+
+**Reancoragem (AC-01):** BASE `a3d4b8c8d5` → HEAD avançou para `2dbe75b51a` durante a sessão (commits TOTVS de outras sessões — `engineering-api/` intocado, diff `a3d4b8..2dbe75` no escopo = vazio). WIP alheio (AGENTS.md, controllership-finance-api/*) preservado; worktrees e stash `autostash` de outras sessões intocados. `git stash`+`pop` foi usado uma vez apenas para provar que falhas de suíte são ambientais — diferença confirmada, conteúdo restaurado.
+
+**Canal `dots` (AC-02):** implementado em `engineering-api/engineering_app/infrastructure/extraction/opencv_adapter.py`, reutilizando a mesma máscara de saturação de `enclosures`. Duas proveniências: `saturation_opening` (opening morfológico com kernel > espessura de linha → connected components → filtro geométrico) e `distance_transform` (fallback para discos compactos fundidos em geometria saturada conectada — caso real do dot A9/E). Contrato aditivo, por item: `type:"dot"`, `center_px`, `bounding_box_px`, `radius_px`, `source`, `evidence_state:"CANDIDATE"`. Filtros relativos à página (fração de área, compacidade/aspecto, preenchimento), agrupamento determinístico de fragmentos, cap 200, ordenação determinística, `count.dots` no resumo. **Retrocompatibilidade provada:** replay de `graphic_primitives` legado (rec sem chave `dots`) produz `terminator_dots_px:[]` e `termination` ausente/`OPEN` — consumidores antigos ignoram a chave.
+
+**Integração B2 (AC-05/06/07/09):** `understanding.py` anexa por ocorrência `terminator_dots_px` (dots geometricamente em contato com segmentos/raízes daquele balão — associação conservadora, raio+tolerância sobre a geometria real do segmento) e `termination:{state,dot_px,overshoot_px}` quando uma cadeia CANDIDATE alcança um dot: `DOT_TERMINATED` (término no dot) ou `DOT_OVERSHOOT` (dot atravessado com ≥~15px de continuação — evidência registrada, caminho não reescrito silenciosamente). O endpoint físico da linha não é substituído pelo centro do dot (distinção borda/centro preservada). Em multi-raiz `AMBIGUOUS` nenhuma raiz é escolhida: o leque fica exposto via `terminator_dots_px` e `uncertainty_reason` intacta. Semânticas `CANDIDATE`/`AMBIGUOUS`/`NOT_FOUND`/`NOT_IDENTIFIED` inalteradas; dot nunca vira identidade de componente (B3 intocado).
+
+**Resultado no desenho real (AC-06/07/08/11):** `90480120` SHA `9b64ae20…`, 2 páginas, run fresco in-container (OCR 207 tokens): p1 **81 dots** (`saturation_opening`), p2 **67 dots** (64 `saturation_opening` + 3 `distance_transform` — inclui o dot A9/E antes falso-negativo em ~(2002,1086)).
+
+| Ocorrência | Antes (VAL-02/03) | Depois (VAL-04) |
+|---|---|---|
+| A4 p2 | CANDIDATE ep (1990,1103) | CANDIDATE ep (1990,1103) **inalterado** + `DOT_TERMINATED` dot (2001,1113) — líder confirmado entrando no dot |
+| A8 p2 | CANDIDATE ep (1045,1107) | idem + `DOT_TERMINATED` dot (1044,1109) |
+| AA p1/p2, A1 p1 ×2 | CANDIDATE | idem + `DOT_TERMINATED` (dots reais adjacentes) |
+| A5 p1 | AMBIGUOUS 4 raízes, ramo do meio overshoot 61px | AMBIGUOUS preservado + `terminator_dots_px` = 3 dots reais (2005,803)(1928,828)(2008,873) — fan inteiro exposto sem escolha |
+| A9 p2 / E p2 | AMBIGUOUS, dot fora do canal | AMBIGUOUS preservado; **dot (2002,1086) recuperado via `distance_transform` e compartilhado pelas duas ocorrências** — ambiguidade justificada, não removida |
+| A3 p1 | AMBIGUOUS | AMBIGUOUS + 3 dots (raízes reais múltiplas preservadas) |
+
+B1: 15 candidatos / 9 excluídos (inalterado). Tabela: 10 linhas / 14 matches (inalterado). B3: 14 `BALLOON_LABEL_IDENTIFIED` + 1 `NOT_LOCATED`, `automatic_approval=false` (inalterado — replay e run fresco).
+
+**Regressão cruzada (AC-11):** `90261723`/`90261731`/`90264311` com o novo código — zero diffs de estado/endpoint/alvo vs baseline; novo: B×2 `DOT_TERMINATED` nos dois primeiros; `90264311`: A1 e A4×2 `DOT_TERMINATED`, **A2 `DOT_OVERSHOOT` dot (490,957) overshoot 61px** — inspeção visual do recorte confirmou overshoot real (dot verde no vértice da peça; a "linha" seguinte é aresta preta do componente — mesmo fenômeno do A5). A3 permanece `OPEN` (sem dot — não fabrica término).
+
+**Testes (AC-10):** `tests/test_visual_perception_r7.py` +5 (detecção sintética, contrato/proveniência, negativos: anel/traço/texto, fragmentação/dedup, cap), `tests/test_balloon_b1.py` +8 (associação endpoint↔dot, parada de travessia, overshoot, fan A5, dot compartilhado A9/E, alinhamento A4, regressões A3/A8, ausência de dot não fabrica término, payload legado). Fixture VAL-02 `bridges_broken_diagonal` corrigida (asserção media lacuna errada — nunca exercitada em ambiente com cv2). Suíte completa engineering-api: **1713 pass / 29 skip / 6 fail ambientais pré-existentes** (`test_ocr_isolation_r71`×5 + `test_visual_benchmark_unknown_pipeline` — reproduzidas idênticas com o diff stasheado; venv local sem cv2/paddle derruba o worker, `worker_no_output:rc=1`). Nos dois arquivos de teste no container (cv2 real): **111 pass**.
+
+**Desempenho/recursos (AC-12):** run fresco completo em container (207 tokens, 2 páginas): `benchmark_extract` ≈97s inclui render+OCR+todas as primitivas; canal dots é fração pequena (morfologia+CC+DT sobre máscara já computada); `understanding` 0.78s. Cap 200 dots/página, associação geométrica O(raízes×dots) com cardinalidade pequena. Limites `OCR_*` inalterados; `BUSINESS_DATA_WRITES=0`, `AUTOMATIC_NC=false`, `AUTOMATIC_APPROVAL=false`.
+
+**Falsos positivos/negativos (AC-03/04):** sem novo falso positivo observado no desenho (revisão por overlays; dot (205,517) e (157,539) seguem como candidatos não associados a raiz — evidência exposta, não promovida). Falso negativo provado e corrigido: dot A9/E fundido em região saturada → `distance_transform`. Cluster AA fragmentado agrupa em 1 dot por dilatação+distance-merge determinística.
+
+**Verificação independente (AC-13):** `delpi-verifier` r1 escopo working tree — `INCONCLUSIVE` (cursor `ActionRequiredError: usage limit … reset 12/2/2026`, evidência nova; motor `devin` indisponível e não-independente do executor). Escopo A retroativo segue `INCONCLUSIVE`. Sem autoaceite.
+
+**Estado de release (AC-15):** `CODE_IMPLEMENTED=YES`, `LOCAL_TESTS=PASS` (escopo), `INDEPENDENT_VERIFICATION=INCONCLUSIVE`, `DEPLOY_EXECUTED=NO`. Conforme §15 da task, o diff **não é commitado nem publicado** — permanece no working tree governado em `engineering-api/engineering_app/infrastructure/extraction/opencv_adapter.py`, `engineering-api/engineering_app/application/drawing/understanding.py`, `engineering-api/tests/test_balloon_b1.py`, `engineering-api/tests/test_visual_perception_r7.py`. Rollback do baseline produtivo mantido (`pre-val02-86bf8f69-rollback`).
+
+**Pacote de evidência (AC-14):** `docs/12-roadmap-e-evolucao/engineering/eva-val01-g1/val04-dots-review-package.md` — manifesto reproduzível (PDF SHA, rec JSON, JSONs de understanding, script de sonda `/tmp/val04_probe.py`, overlay A2/90264311, método de reexecução in-container). Imagens do desenho do cliente **não** são versionadas; o pacote referencia artefatos e o procedimento que os regenera.
+
+**Riscos residuais / próximo bounded step:** (1) overshoot só é anotado em cadeia CANDIDATE escolhida — em multi-raiz AMBIGUOUS o ramo que atravessa o dot permanece candidato com o dot exposto (refinamento: anotar overshoot por raiz sem promover destino — decisão de Engenharia); (2) reagendar verificador quando cursor destravar (02/12/2026) ou identidade distinta do executor existir; (3) revisão GT do owner sobre o pacote; (4) Issue #131 pendente — `gh` sem auth (draft atualizado em `eva-val01-g1/issue-131-comment-draft.md`).
+
+### 94.42.20 E1/VAL-01 — VAL-04R: Dot Evidence Consolidation and Independent Release Gate
+
+**Task:** `EVA-E1-VAL01-VAL04R-DOT-IMPLEMENTATION-CONSOLIDATION-INDEPENDENT-REVIEW-AND-RELEASE-GATE-01` — consolidação do diff VAL-04 (não novo spike). HEAD reancorado `6eaa8bc890` (commits de terceiros em engineering-api tocaram outros arquivos — escopo limpo). Lease `devin-val04-dots` renovado. Diff fingerprint `cc1bd570…` (+564/−16, 4 arquivos); pacote auditável em `~/eva-val04-evidence/` (`val04r_code_diff.patch` + manifest com BASE_SHA/TREE/fingerprint — reproduzível por `git apply`).
+
+**Auditoria dos 148 candidatos (AC-03/04):** matriz completa em `dot_audit_90480120.json` + contact sheets por página. Classes: **19 associados** a líderes (`LIKELY_TERMINATOR`), **78 não-associados dentro de caixas OCR** (fragmentos de glifo — 'i' dots, miolos densos), **51 fora de texto** (pontas de seta de cotas/features — `AMBIGUOUS` de revisão), 0 duplicatas observadas. Métricas diskiness/circularity/fill **não separam** associado de não-associado (sobreposição quase total); text-overlap removeria 2 terminadores reais → **nenhum filtro seguro demonstrado, nada removido**. Os 128 candidatos extras vs VAL-03 explicados: o spike VAL-03 media blobs "visualmente relevantes"; o canal emite candidatos geométricos honestos — discriminação de terminador é jusante (contato com líder), por design `CANDIDATE`.
+
+**Terminação por ramo (AC-05):** `leader_line.branch_terminations[]` aditivo — por raiz: `endpoint_px` + `termination{state,dot_px,overshoot_px}` usando o mesmo critério da cadeia CANDIDATE (dot de contato mais próximo da ponta do balão; overshoot = tinta ≥15px além do dot). Estado global AMBIGUOUS preservado. Desenho real: **A5** `[DOT_OVERSHOOT, DOT_TERMINATED, DOT_TERMINATED, OPEN]` — overshoot de ~61px do ramo do meio agora anotado por raiz exatamente como observado na VAL-03; **A9** `[OPEN, DOT_OVERSHOOT]`; E 9 ramos anotados. Irmão `90264311-A2` `DOT_OVERSHOOT` 61px (controle positivo, validado visualmente).
+
+**Preservação (AC-06):** A4 ep físico (1990,1103) inalterado + `DOT_TERMINATED` dot (2001,1113); A8 idem (dot 1044,1109); A9/E AMBIGUOUS com dot compartilhado — sem `SINGLE_REGION` fabricada. B1/tabela/B3 idênticos; irmãos com zero diff de estado/endpoint.
+
+**Testes (AC-07/10):** +14 testes (adapter+B2+branchwise overshoot RED→GREEN — primeiro RED pegou geometria de fixture errada no próprio teste, corrigida). **Suíte no ambiente correto (container cv2/paddle, mounts /docs+/api-delpi): 1721 pass / 21 skip / 0 fail** — as 7 falhas do container eram mounts ausentes e as 6 do venv local eram dependências OCR ausentes; todas classificadas como ambientais, nenhuma regressão real.
+
+**Verificador (AC-10):** `delpi-verifier` r1 escopo working tree — `INCONCLUSIVE` (`cursor` usage limit, reset 02/12/2026; `devin` sem auth e não-independente do executor). Pedidos em `.git/delpi-verifier/requests/val04r-*`. Sem autoaceite.
+
+**Release (AC-11):** `RELEASE_GATE=BLOCKED` — código não-commitado no working tree governado; pacote auditável entregue; digest produtivo inalterado. Doc-only commit permitido.
+
+**Riscos residuais:** (1) `branch_terminations` opera sobre o segmento mesclado da raiz (representação vigente) — encadeamento além do cluster por ramo é refinamento possível, não defeito provado; (2) 51 candidatos fora de texto pendentes de revisão GT; (3) verificador reagendado para motor disponível.

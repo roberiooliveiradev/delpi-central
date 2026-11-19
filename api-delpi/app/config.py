@@ -65,6 +65,9 @@ class Settings:
     TOTVS_DB_USER: str | None = _get_env("TOTVS_DB_USER")
     TOTVS_DB_PASSWORD: str | None = _get_env("TOTVS_DB_PASSWORD")
     TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
+    # Logical TOTVS target selector (backend-governed): TST01|PROD.
+    # Unset = legacy per-variable behavior. See providers/totvs/environment.py.
+    TOTVS_TARGET_ENV: str | None = _get_env("TOTVS_TARGET_ENV")
 
     # ==========================
     # Intranet SQL Server (PARAMETROS_MINHADELPI — Protheus REST)
@@ -438,6 +441,14 @@ class Settings:
     GRAPH_HTTP_TIMEOUT_SECONDS: str = _get_env(
         "GRAPH_HTTP_TIMEOUT_SECONDS",
         default="15",
+    )
+    # GLPI #887: OFF until recipients, purpose and S2S credentials are approved.
+    CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN: str | None = _get_env(
+        "CORE_REPORTS_DIRECT_USAGE_SERVICE_TOKEN", default=None
+    )
+    REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED: bool = (
+        str(_get_env("REPORTS_DIRECT_WEEKLY_DELIVERY_ENABLED", default="false")).lower()
+        in ("true", "1", "yes", "on")
     )
     REPORTS_MAIL_BATCH_SIZE: int = int(
         _get_env("REPORTS_MAIL_BATCH_SIZE", default="40") or "40"

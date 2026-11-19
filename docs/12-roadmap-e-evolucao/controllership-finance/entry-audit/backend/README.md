@@ -38,6 +38,8 @@ Prefixo no padrão dos relatórios financeiros: `/financeiro/entry-audit`. Só l
 | `POST /financeiro/entry-audit/documents/by-access-key` | body `{branch, access_keys}` até 500 chaves. Sem filtro de data. Nota com `D_E_L_E_T_` não volta: conta como não lançada | os mesmos campos, inclusive chave, número, série, fornecedor, recebimento e espécie |
 | `GET /financeiro/entry-audit/items` | mesmos filtros | itens SD1 dos mesmos documentos |
 | `GET /financeiro/entry-audit/fiscal-book` | mesmos filtros | itens do livro fiscal (SFT) dos mesmos documentos |
+| `GET /financeiro/entry-audit/tax-items` | mesmos filtros (+ `access_keys`) | IBS/CBS calculados por item (SD1→F2D→F2B) |
+| `GET /financeiro/entry-audit/tax-book` | mesmos filtros (+ `access_keys`) | IBS/CBS do livro digital (CD2) por item |
 | `GET /financeiro/entry-audit/tes` | — | cadastro de TES (SF4) inteiro |
 | `GET /financeiro/entry-audit/branches` | — | filiais com CNPJ e UF |
 
@@ -380,6 +382,8 @@ Filtros comuns de `documents`, `items` e `fiscal-book`: `branch` (`01`|`02`), `r
 | `/documents` | `list_entry_audit_documents` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `supplier_name`, `supplier_tax_id`, `supplier_state`, `species`, `invoice_type`, `own_form`, `access_key`, `issue_date`, `received_date`, `freight_amount`, `expense_amount`, `icms_base`, `icms_amount`, `ipi_base`, `ipi_amount`, `goods_amount`, `gross_amount`, `discount_amount`, `st_base`, `st_amount`, `insurance_amount` |
 | `/items` | `list_entry_audit_items` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `product_code`, `cfop`, `tax_situation`, `tes`, `quantity`, `unit_price`, `total_amount`, `icms_base`, `icms_rate`, `icms_amount`, `ipi_base`, `ipi_rate`, `ipi_amount`, `st_amount`, `discount_amount` |
 | `/fiscal-book` | `list_entry_audit_fiscal_book` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `access_key`, `movement_type`, `icms_amount`, `icms_exempt_amount`, `icms_other_amount`, `ipi_amount`, `cancelled_on`, `entered_on` |
+| `/tax-items` | `list_entry_audit_tax_items` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `tes`, `tax` (`CBSFED`/`IBSEST`/`IBSMUN`), `rule_code` (`F2B_REGRA`), `base`, `rate`, `amount` |
+| `/tax-book` | `list_entry_audit_tax_book` | `branch`, `document_number`, `series`, `supplier_code`, `supplier_store`, `item`, `tax`, `cst`, `base`, `rate`, `amount` |
 | `/tes` | `list_entry_audit_tes` | `code`, `description`, `calculates_icms`, `credits_icms`, `icms_book`, `calculates_ipi`, `credits_ipi`, `ipi_book`, `consumption_material`, `tes_type` (`F4_TIPO`), `fiscal_code` (`F4_CF`) — cadastro inteiro, sem filtro de período. Acréscimo aditivo da T5; os campos anteriores permanecem. |
 | `/branches` | `list_entry_audit_branches` | `code`, `company_code` (`01`), `name`, `state`, `tax_id` — só `SYS_COMPANY` com `M0_CODIGO = '01'` |
 
@@ -502,6 +506,10 @@ Uma linha de `references/regras.md`. O nome gravado na ocorrência continua o da
 | `fiscal_book.credit_against_tes` | Crédito no livro fiscal em TES que não credita |
 | `fiscal_book.credit_missing` | Crédito previsto na TES fora do livro fiscal |
 | `fiscal_book.amount_mismatch` | ICMS do livro fiscal diferente do item |
+| `ibscbs.xml_not_posted` | IBS/CBS no XML sem cálculo no Protheus (alta) |
+| `ibscbs.posting_missing` | Item sem cálculo de IBS/CBS, XML também sem (alta) |
+| `ibscbs.value_mismatch` | IBS/CBS divergente entre XML e lançamento (alta) |
+| `ibscbs.book_mismatch` | IBS/CBS calculado divergente do livro CD2 (alta) |
 | `cte.service_amount_mismatch` | CT-e: valor da prestação diverge |
 | `cte.cfop_mismatch` | CT-e: CFOP divergente |
 | `cte.credit_without_right` | CT-e: crédito de ICMS em frete sem direito |

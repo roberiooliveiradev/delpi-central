@@ -2,7 +2,7 @@
 
 RED/GREEN for defects proven from stab-v2-5b0e914eb9 (Documento 298):
 
-1. ``_EnvelopeHintedToolset`` truncated published MCP descriptions to
+1. ``_prepare_tool_definitions_envelope_hints`` truncated published MCP descriptions to
    ``[:500]`` when appending schema-derived hints, destroying owner
    semantic discrimination (e.g. TEO ``read`` entity contract).
 2. ``_attempt_projection`` surfaced ``result_truncated`` without the
@@ -33,14 +33,17 @@ from app.domain.specialist_interop.model import (
     SpecialistResultProvenance,
     SpecialistResultStatus,
 )
+from pydantic_ai.toolsets import AbstractToolset
+
 from app.infrastructure.orchestration.pydantic_ai_investigation import (
-    _EnvelopeHintedToolset,
+    _prepare_tool_definitions_envelope_hints,
     _attempt_projection,
 )
 
 
 @dataclasses.dataclass
 class _FakeDef:
+    name: str
     description: str
     parameters_json_schema: dict
 
@@ -61,12 +64,17 @@ def test_envelope_hint_preserves_long_owner_tool_description():
     )
     assert len(long_desc) > 500
 
-    class _Wrapped:
+    class _Wrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         async def get_tools(self, ctx):
             return {
                 "teo.read": _FakeTool(
                     _FakeDef(
-                        long_desc,
+                                                "teo.read", long_desc,
                         {
                             "type": "object",
                             "properties": {
@@ -84,7 +92,12 @@ def test_envelope_hint_preserves_long_owner_tool_description():
         async def __aexit__(self, *args):
             return None
 
-    tools = asyncio.run(_EnvelopeHintedToolset(_Wrapped()).get_tools(None))
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
+    tools = asyncio.run(_Wrapped().prepared(_prepare_tool_definitions_envelope_hints).get_tools(None))
     desc = tools["teo.read"].tool_def.description
     assert marker in desc, (
         "owner description tail was truncated away by envelope hints"
@@ -97,12 +110,17 @@ def test_envelope_hint_preserves_long_owner_tool_description():
 
 
 def test_envelope_hint_preserves_short_description_and_adds_hint():
-    class _Wrapped:
+    class _Wrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         async def get_tools(self, ctx):
             return {
                 "davi.read": _FakeTool(
                     _FakeDef(
-                        "Read DELPI business data through one governed capability.",
+                                                "davi.read", "Read DELPI business data through one governed capability.",
                         {
                             "type": "object",
                             "properties": {
@@ -120,7 +138,12 @@ def test_envelope_hint_preserves_short_description_and_adds_hint():
         async def __aexit__(self, *args):
             return None
 
-    tools = asyncio.run(_EnvelopeHintedToolset(_Wrapped()).get_tools(None))
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
+    tools = asyncio.run(_Wrapped().prepared(_prepare_tool_definitions_envelope_hints).get_tools(None))
     desc = tools["davi.read"].tool_def.description
     assert desc.startswith(
         "Read DELPI business data through one governed capability."
@@ -164,14 +187,19 @@ def test_envelope_hint_recognizes_nullable_object_anyof_live_schema():
         "required": ["entity"],
     }
 
-    class _Wrapped:
+    class _Wrapped(AbstractToolset):
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
         async def get_tools(self, ctx):
             return {
                 "davi.read": _FakeTool(
-                    _FakeDef("DAVI read owner text.", live_davi_schema)
+                    _FakeDef("davi.read", "DAVI read owner text.", live_davi_schema)
                 ),
                 "teo.read": _FakeTool(
-                    _FakeDef("TEO read owner text.", live_teo_schema)
+                    _FakeDef("teo.read", "TEO read owner text.", live_teo_schema)
                 ),
             }
 
@@ -181,7 +209,12 @@ def test_envelope_hint_recognizes_nullable_object_anyof_live_schema():
         async def __aexit__(self, *args):
             return None
 
-    tools = asyncio.run(_EnvelopeHintedToolset(_Wrapped()).get_tools(None))
+        id = None
+
+        async def call_tool(self, *a, **k):
+            raise NotImplementedError
+
+    tools = asyncio.run(_Wrapped().prepared(_prepare_tool_definitions_envelope_hints).get_tools(None))
     davi = tools["davi.read"].tool_def.description
     teo = tools["teo.read"].tool_def.description
     assert davi.startswith("DAVI read owner text.")

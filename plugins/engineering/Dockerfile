@@ -13,10 +13,9 @@ COPY engineering ./engineering
 COPY vite ./vite
 # Line Balance Studio — fonte compilada pelo vite do MFE (path aliases).
 COPY delpi-line-balance-studio ./delpi-line-balance-studio
-# CSS canônico dos controles do kit — fonte de build real do Studio
-# (native-controls.css + cadeia ./styles/*), sem empacotar o MFE do kit.
-COPY plugin-ui/src/native-controls.css ./plugin-ui/src/native-controls.css
-COPY plugin-ui/src/styles ./plugin-ui/src/styles
+# Fonte do kit consumida via path aliases (workspace-controls + CSS) —
+# o vite do MFE resolve somente os módulos importados pelo Studio.
+COPY plugin-ui/src ./plugin-ui/src
 
 WORKDIR /app/engineering
 RUN npx vite build

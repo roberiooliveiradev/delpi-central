@@ -1,5 +1,28 @@
 # Changelog — agent-kit
 
+## 0.4.0 — 2026-11-18
+
+- **`agent-kit/scope/session_scope.py` (novo):** governança de escopo por sessão para
+  agentes concorrentes. Lease de sessão em `<git-common-dir>/agent-scope/sessions/`
+  (compartilhado por todos os worktrees, não commitado) sobre ownership fixo de
+  contextos (`agent-kit/scope/contexts.json`) e política opt-in (`agent-scope.json`
+  na raiz).
+- **Pre-commit hook** (`install-hook`): bloqueia commit sem lease, arquivo fora do
+  escopo da sessão e arquivo dentro do escopo de outra sessão ativa — vale para
+  agente, sessão headless e humano, em todos os worktrees (hooks dir comum).
+- **`audit`**: varre todos os worktrees em paralelo e classifica `foreign_scope`
+  (colisão real), `out_of_scope`, `unregistered_dirty` e `stale_leases`; saída
+  texto ou `--json`, exit 1 com violação. Base da skill sentinela
+  `.devin/skills/agent-sentinel/`.
+- Fallback de config/contexts em `<git-common-dir>/agent-scope/` cobre branches
+  antigas sem `agent-scope.json` versionado; o arquivo do worktree prevalece.
+- Regra canônica: `.cursor/rules/agent-session-scope.mdc` (owner
+  `platform-quality-testing.mdc`). 25 testes em `tests/test_session_scope.py`.
+- **Hardening pós-dogfood:** `register` recusa sobrescrever lease ativo sem
+  `--amend` e grava lease atomicamente; globs `--path` que tocam contextos
+  `restricted` também exigem `--allow-restricted`; mensagem de bloqueio do
+  pre-commit não sugere mais o id de sessão alheio.
+
 ## 0.3.1 — 2026-11-15
 
 - **OC-1 CI:** o smoke do workflow `agent-kit.yml` chama `build.py` só com `--out` (flags

@@ -99,6 +99,17 @@ class XmlItem:
     simple_rate: float = 0.0
     discount: float = 0.0
     other_amount: float = 0.0
+    # Reforma tributária (FA-8): grupo IBSCBS do item.
+    has_ibscbs: bool = False
+    ibscbs_cst: str = ""
+    ibscbs_class: str = ""
+    reform_base: float = 0.0
+    ibs_uf_rate: float = 0.0
+    ibs_uf_amount: float = 0.0
+    ibs_mun_rate: float = 0.0
+    ibs_mun_amount: float = 0.0
+    cbs_rate: float = 0.0
+    cbs_amount: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -138,6 +149,52 @@ class XmlDocument:
     linked_keys: tuple[str, ...] = ()
     taker_role: str = ""
     operation_nature: str = ""
+    # Reforma tributária (FA-8): IBSCBS do CT-e (imposto) e IBSCBSTot da NF-e.
+    has_ibscbs: bool = False
+    ibscbs_cst: str = ""
+    ibscbs_class: str = ""
+    reform_base: float = 0.0
+    ibs_uf_rate: float = 0.0
+    ibs_uf_amount: float = 0.0
+    ibs_mun_rate: float = 0.0
+    ibs_mun_amount: float = 0.0
+    cbs_rate: float = 0.0
+    cbs_amount: float = 0.0
+
+
+@dataclass(frozen=True)
+class ReformTaxLine:
+    """IBS/CBS calculado por item (SD1→F2D→F2B) — FA-8."""
+
+    branch: str
+    number: str
+    series: str
+    supplier_code: str
+    supplier_store: str
+    item: str
+    tes: str
+    tax_code: str
+    rule_code: str
+    base_amount: float
+    tax_rate: float
+    tax_amount: float
+
+
+@dataclass(frozen=True)
+class ReformBookLine:
+    """IBS/CBS no livro digital (CD2) — FA-12."""
+
+    branch: str
+    number: str
+    series: str
+    supplier_code: str
+    supplier_store: str
+    item: str
+    tax_code: str
+    cst: str
+    base_amount: float
+    tax_rate: float
+    tax_amount: float
 
 
 @dataclass(frozen=True)
@@ -156,6 +213,12 @@ class AuditConfig:
     input_tes: str = ""
     # FA-4 (onda 2): uma ocorrência por causa — itens dentro dela, acompanhantes como followers.
     cause_grouping_enabled: bool = False
+    # FA-8 (onda 3): IBS/CBS em todas as entradas, NF-e e CT-e.
+    ibscbs_enabled: bool = False
+    # FA-9: exceções «crt:X», «cfop:YYYY», «tes:ZZZ» separadas por vírgula; vazio = sem exceção.
+    ibscbs_exceptions: str = ""
+    # FA-12: regra do livro IBS/CBS só para documentos a partir desta data (ISO); vazio = desligada.
+    ibscbs_book_from: str = ""
 
 
 @dataclass(frozen=True)

@@ -961,6 +961,25 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 | `FormFieldShell` | Label + hint + slot children + `afterControl` opcional |
 | `formFieldShellKaizenClasses` | BEM `{prefix}-field`, `{prefix}-span-2` |
 
+### `TokenHighlightField` (`createDashboardTokenHighlightField`)
+
+Campo nativo (`<input>` ou `<textarea>` `.delpi-ui-native-control`) que destaca **ocorrências exatas** de marcadores (`tokens`) numa camada `aria-hidden` atrás do texto — cursor, seleção, colar, desfazer e leitor de tela funcionam como num campo comum. O espelho copia as métricas computadas do controle (fonte, padding, borda, quebra) e segue a rolagem; o `<mark>` não altera a largura do texto.
+
+| Prop / export | Tipo | Descrição |
+|---------------|------|-----------|
+| `tokens` | `readonly string[]` | Marcadores exatos, ex.: `["{cliente}", "{data}"]` |
+| `value` / `onChange` | `string` / `(v: string) => void` | Controlado |
+| `multiline` / `rows` | `boolean?` / `number?` | `input` (1 linha) × `textarea` |
+| `error` | `string?` | `role="alert"` + `aria-invalid` + `aria-describedby` |
+| `inputRef` | `Ref<HTMLInputElement \| HTMLTextAreaElement>` | Acesso a `selectionStart`/`setSelectionRange` (inserir marcador no cursor) |
+| `disabled` / `readOnly` / `required` / `fullWidth` / `placeholder` | — | Estados nativos; `fullWidth` = `span-2` do `FormFieldShell` |
+| `aria-label` / `aria-labelledby` / `aria-describedby` / `aria-details` / `aria-invalid` | — | Repassados ao controle |
+| `splitTokenHighlightSegments` | `(value, tokens) => Segment[]` | Segmentação pura (longest-match primeiro) |
+| `tokenHighlightFieldBemClasses(prefix)` | — | Classes `{prefix}-token-highlight-field*` + `delpi-ui-token-highlight-field*` |
+| `createDashboardTokenHighlightField({ prefix })` | — | Fábrica no padrão `createDashboardPageHero` |
+
+CSS: `styles/token-highlight-field.css`. O backdrop desenha o fundo do campo nos estados normal/desabilitado/somente-leitura com os mesmos tokens de `native-controls.css` (`--delpi-ui-field-*`/`--surface`); o destaque usa `--delpi-ui-token-highlight-bg`/`-border` (claro e escuro; `forced-colors` vira `outline`). Sem `ResizeObserver`/`matchMedia`: sincroniza em `scroll`, `input`, `pointerup` e `resize` da janela.
+
 ### `StateBanner` / `PageHeader`
 
 Feedback inline (`createDashboardStateBanner`) e cabeçalho de página com slots (`createDashboardPageHeader` — variantes `brand` / `titleRow` / `stack` / `hero`; hero usa `metaItems` para chips de contexto).

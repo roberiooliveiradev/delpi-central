@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://delpi.local/schemas/advpl-package-manifest.schema.json",
+  "title": "DELPI ADVPL compilation package manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "package_id",
+    "package_version",
+    "status",
+    "target_environment",
+    "created_at",
+    "source_repository",
+    "source_commit",
+    "modules",
+    "files",
+    "dependencies",
+    "contracts",
+    "approval_status",
+    "compilation_status",
+    "validation_status"
+  ],
+  "properties": {
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "SOURCE_CANDIDATE",
+        "SOURCE_REVIEWED",
+        "COMPILATION_PENDING",
+        "TST01_COMPILED",
+        "TST01_VALIDATED",
+        "PRD_APPROVED",
+        "PRD_PUBLISHED"
+      ]
+    },
+    "target_environment": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "source_repository": { "type": "string", "minLength": 1 },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["module_id", "package_tag", "development_status", "source_count"],
+        "properties": {
+          "module_id": { "type": "string", "minLength": 1 },
+          "package_tag": { "type": "string", "minLength": 1 },
+          "development_status": { "type": "string" },
+          "source_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "size_bytes", "module_id", "artifact_type", "source_origin"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "size_bytes": { "type": "integer", "minimum": 0 },
+          "module_id": { "type": "string", "minLength": 1 },
+          "artifact_type": { "type": "string", "enum": ["source", "contract", "doc"] },
+          "source_origin": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "dependencies": { "type": "array" },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["module_id", "path"],
+        "properties": {
+          "module_id": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "approval_status": { "type": "string" },
+    "compilation_status": { "type": "string" },
+    "validation_status": { "type": "string" }
+  }
+}

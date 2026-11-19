@@ -536,6 +536,67 @@ class ClaraGovernedWrites:
                     "revision": diagnosis.get("revision"),
                     "item_count": diagnosis.get("item_count"),
                 }
+            if capability == "checklist.series_start":
+                template_id = params.get("template_id")
+                if template_id is None:
+                    return {}
+                return {
+                    "template_id": str(template_id),
+                    "template": self._template_state(template_id),
+                    "active_series": self._active_series_state(
+                        template_id
+                    ),
+                }
+            if capability == "checklist.doc_requirement":
+                template_id = params.get("template_id")
+                if template_id is None:
+                    return {}
+                return {
+                    "template_id": str(template_id),
+                    "template": self._template_state(template_id),
+                    "latest_version": self._latest_version_state(
+                        template_id
+                    ),
+                }
+            if capability in (
+                "checklist.catalog_initialize",
+                "checklist.revision_apply",
+            ):
+                version_id = params.get("version_id")
+                if version_id is None:
+                    return {}
+                return {
+                    "version_id": str(version_id),
+                    "version": self._checklist_version_state(
+                        version_id
+                    ),
+                }
+            if capability == "checklist.revision_revert":
+                revision_id = params.get("revision_id")
+                if revision_id is None:
+                    return {}
+                return {
+                    "revision_id": str(revision_id),
+                    "revision": self._revision_state(revision_id),
+                }
+            if capability == "checklist.sync_retry":
+                event_id = params.get("event_id")
+                if event_id is None:
+                    return {}
+                return {
+                    "event_id": str(event_id),
+                    "event": self._sync_event_state(event_id),
+                }
+            if capability == "checklist.completion_assess":
+                competence_id = params.get("competence_id")
+                if competence_id is None:
+                    return {}
+                return {
+                    "competence_id": str(competence_id),
+                    "competence": self._competence_id_state(
+                        competence_id
+                    ),
+                }
             if capability.startswith("checklist."):
                 template_id = params.get("template_id")
                 version = params.get("version")
@@ -797,7 +858,15 @@ class ClaraGovernedWrites:
                 """,
                 (str(correction_id), period),
             ).fetchone()
-        return {"status": row[0] if row else None}
+        status = row[0] if row else None
+        return {
+            "status": status,
+            "status_class": (
+                ClosingValidationRepository._correction_status_class(
+                    status
+                )
+            ),
+        }
 
     def _request_state(self, period: str, request_id: Any) -> dict:
         with plugins_db_connect() as conn:
@@ -887,6 +956,104 @@ class ClaraGovernedWrites:
                 (str(template_id), int(version)),
             ).fetchone()
         return {"status": row[0] if row else "MISSING"}
+
+    def _active_series_state(self, template_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT series_id, series_no, status
+                  FROM {_SCHEMA}.checklist_template_series
+                 WHERE template_id = %s AND status = 'ACTIVE'
+                """,
+                (str(template_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {
+            "status": row[2],
+            "series_id": str(row[0]),
+            "series_no": row[1],
+        }
+
+    def _latest_version_state(self, template_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT version, status, revision
+                  FROM {_SCHEMA}.checklist_template_version
+                 WHERE template_id = %s
+                 ORDER BY version DESC
+                 LIMIT 1
+                """,
+                (str(template_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {
+            "status": row[1], "version": row[0], "revision": row[2]
+        }
+
+    def _checklist_version_state(self, version_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT version, status, revision
+                  FROM {_SCHEMA}.checklist_template_version
+                 WHERE version_id = %s
+                """,
+                (str(version_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {
+            "status": row[1], "version": row[0], "revision": row[2]
+        }
+
+    def _revision_state(self, revision_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT version_id, revision_no
+                  FROM {_SCHEMA}.checklist_version_revision
+                 WHERE revision_id = %s
+                """,
+                (str(revision_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {
+            "status": "EXISTS",
+            "version_id": str(row[0]),
+            "revision_no": row[1],
+        }
+
+    def _sync_event_state(self, event_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT state, attempts
+                  FROM {_SCHEMA}.checklist_sync_event
+                 WHERE event_id = %s
+                """,
+                (str(event_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {"status": row[0], "attempts": row[1]}
+
+    def _competence_id_state(self, competence_id: Any) -> dict:
+        with plugins_db_connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT period, status
+                  FROM {_SCHEMA}.monthly_competence
+                 WHERE competence_id = %s
+                """,
+                (str(competence_id),),
+            ).fetchone()
+        if row is None:
+            return {"status": "MISSING"}
+        return {"status": row[1], "period": row[0]}
 
     # -- read-back independente (S3) ------------------------------------------
     # `verify` confere o shape do retorno; `postcondition` relê o
@@ -2264,7 +2431,7 @@ class ClaraGovernedWrites:
                     self._template_version_state(
                         p["template_id"], p["version"]
                     ).get("status")
-                    == "DISCARDED"
+                    == "MISSING"
                 ),
             },
             "checklist.version_publish": {

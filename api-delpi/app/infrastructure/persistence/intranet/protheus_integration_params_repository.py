@@ -13,6 +13,9 @@ from app.domain.integrations.protheus_rest import (
     ProtheusRestError,
 )
 from app.infrastructure.providers.intranet.connection import create_intranet_connection
+from app.infrastructure.providers.totvs.environment import (
+    resolve_totvs_environment,
+)
 from app.utils.logger import log_error
 
 
@@ -48,7 +51,11 @@ class ProtheusIntegrationParamsRepository:
         )
         params: list[object] = list(selected_keys)
 
-        ambiente = (settings.INTRANET_PARAMS_AMBIENTE or "").strip()
+        # Ambiente efetivo vem do seletor lógico quando configurado
+        # (TOTVS_TARGET_ENV → catálogo); fallback = INTRANET_PARAMS_AMBIENTE.
+        ambiente = (
+            resolve_totvs_environment().rest_parameter_environment or ""
+        ).strip()
         if ambiente:
             if not ambiente.isdigit() or len(ambiente) > 8:
                 raise ProtheusRestError(

@@ -147,13 +147,14 @@ _PRODUCT_FIELDS: tuple[FieldSpec, ...] = (
     FieldSpec(
         path="customerReference",
         kind="text",
-        required_create_intake=True,
+        # PO: referência do cliente é opcional — B1_REFEREN não é
+        # obrigatório no ERP nem no intake (create/update).
+        required_create_intake=False,
         verifiable=True,
         official_field="customer_reference",
         official_source="products.detail",
         max_length=60,
-        note="B1_REFEREN — legado `ref_cliente`; string vazia aceita "
-        "quando owner não exige referência.",
+        note="B1_REFEREN — legado `ref_cliente`; opcional.",
         allow_blank=True,
     ),
     FieldSpec(

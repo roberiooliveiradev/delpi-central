@@ -10,7 +10,9 @@
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css",
     "./native-controls": "./src/native-controls.ts",
-    "./native-controls.css": "./src/native-controls.css"
+    "./native-controls.css": "./src/native-controls.css",
+    "./workspace-controls": "./src/workspace-controls.ts",
+    "./workspace-controls.css": "./src/workspace-controls.css"
   },
   "scripts": {
     "dev": "vite",

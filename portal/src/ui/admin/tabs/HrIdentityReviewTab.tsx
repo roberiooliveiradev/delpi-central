@@ -1,451 +1,368 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Link2, RefreshCw, Search } from "lucide-react";
-import { createPortal } from "react-dom";
 
 import type {
-  AdminUser,
-  HrIdentityReview,
-  HrIdentityReviewMember,
+  HrCollaboratorIdentityPreview,
+  HrIdentityDirectory,
+  HrIdentityDirectoryUser,
 } from "../../../data/adminApi";
 import { useAdminApi } from "../../../hooks/useAdminApi";
+import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { Modal } from "../../../components/Modal";
 import { Alert, Button, Input, Spinner } from "../../../ui-kit";
 
 import "./HrIdentityReviewTab.css";
 
-type ListFilter = "pending" | "suggested" | "linked" | "all";
+type Filter = "pending" | "linked" | "all";
 
-const normalizeText = (text: string) =>
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : "Falha ao consultar os cadastros.";
+}
+
+const normalize = (text: string) =>
   text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Não foi possível carregar os cadastros.";
-}
-
-function statusLabel(member: HrIdentityReviewMember): string {
-  if (member.verified) return "Vinculado";
-  if (member.status === "suggestion_by_name") return "Sugestão disponível";
-  if (member.status.startsWith("ambiguous")) return "Revisar nomes";
-  if (member.status === "already_assigned_to_other_registration") return "Conta já vinculada";
-  return "Sem conta sugerida";
-}
 
 export function HrIdentityReviewTab() {
   const api = useAdminApi();
-  const [managerRegistration, setManagerRegistration] = useState("20001");
-  const [includeIndirect, setIncludeIndirect] = useState(true);
-  const [review, setReview] = useState<HrIdentityReview | null>(null);
-  const [filter, setFilter] = useState<ListFilter>("pending");
-  const [memberSearch, setMemberSearch] = useState("");
+  const [directory, setDirectory] = useState<HrIdentityDirectory | null>(null);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<Filter>("pending");
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const [activeMember, setActiveMember] = useState<HrIdentityReviewMember | null>(null);
-  const [accountQuery, setAccountQuery] = useState("");
-  const [accounts, setAccounts] = useState<AdminUser[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<AdminUser | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [account, setAccount] = useState<HrIdentityDirectoryUser | null>(null);
+  const [registration, setRegistration] = useState("");
+  const [person, setPerson] = useState<HrCollaboratorIdentityPreview | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const lookupSequence = useRef(0);
 
-  const initialLoad = useRef(false);
-  const searchSequence = useRef(0);
-
-  // O modal fica no <body>; travar somente a rolagem da página por trás.
-  useEffect(() => {
-    if (!activeMember) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, [activeMember]);
-
-  const loadTeam = useCallback(async () => {
-    const registration = managerRegistration.trim();
-    if (!registration) {
-      setError("Informe a matrícula do gestor.");
-      return;
-    }
+  const loadDirectory = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getHrIdentityReview(registration, includeIndirect);
-      setReview(data);
+      const data = await api.getHrIdentityDirectory();
+      if (data.scope !== "all_core_accounts" || !Array.isArray(data.items)) {
+        throw new Error("O servidor não retornou o diretório geral.");
+      }
+      setDirectory(data);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [api, includeIndirect, managerRegistration]);
+  }, [api]);
 
-  // Carrega a equipe habitual ao entrar na aba. Editar a matrícula não
-  // dispara novas consultas até o administrador clicar em Atualizar.
   useEffect(() => {
-    if (initialLoad.current) return;
-    initialLoad.current = true;
-    void loadTeam();
-  }, [loadTeam]);
+    void loadDirectory();
+  }, [loadDirectory]);
 
-  const members = useMemo(() => {
-    const rows = [...(review?.members ?? [])];
-    const order = (item: HrIdentityReviewMember) =>
-      item.verified ? 3 : item.status === "suggestion_by_name" ? 0 : 1;
-    rows.sort((a, b) =>
-      order(a) - order(b) ||
-      a.fullName.localeCompare(b.fullName, "pt-BR"),
-    );
-    const needle = normalizeText(memberSearch);
-    return rows.filter((item) => {
-      if (filter === "pending" && item.verified) return false;
-      if (filter === "suggested" && item.status !== "suggestion_by_name") return false;
-      if (filter === "linked" && !item.verified) return false;
+  const visible = useMemo(() => {
+    const rows = (directory?.items ?? []).filter((item) => {
+      if (filter === "pending" && (item.registration || !item.active)) return false;
+      if (filter === "linked" && !item.registration) return false;
+      const needle = normalize(search);
       return !needle ||
-        normalizeText(item.fullName).includes(needle) ||
-        item.registration.includes(memberSearch.trim());
+        normalize(item.name).includes(needle) ||
+        normalize(item.email).includes(needle) ||
+        normalize(item.registration ?? "").includes(needle);
     });
-  }, [review, filter, memberSearch]);
+    return rows.sort((a, b) =>
+      Number(Boolean(a.registration)) - Number(Boolean(b.registration)) ||
+      a.name.localeCompare(b.name, "pt-BR")
+    );
+  }, [directory, filter, search]);
 
-  const fetchAccounts = async (term: string) => {
-    const searchId = ++searchSequence.current;
-    setAccountQuery(term);
-    setSelectedAccount(null);
-    setAccounts([]);
-    if (!term.trim()) return;
-    setSearching(true);
-    setError(null);
+  const openAccount = (item: HrIdentityDirectoryUser) => {
+    if (!item.active || item.registration) return;
+    lookupSequence.current += 1;
+    setAccount(item);
+    setRegistration("");
+    setPerson(null);
+    setLookupLoading(false);
+    setModalError(null);
+    setConfirmOpen(false);
+  };
+
+  const closeAccount = () => {
+    if (saving) return;
+    lookupSequence.current += 1;
+    setAccount(null);
+    setPerson(null);
+    setRegistration("");
+    setLookupLoading(false);
+    setModalError(null);
+    setConfirmOpen(false);
+  };
+
+  const verifyRegistration = async () => {
+    const value = registration.trim();
+    if (!value) {
+      setModalError("Informe a matrícula exata da pessoa no Portal RH.");
+      return;
+    }
+    const seq = ++lookupSequence.current;
+    setPerson(null);
+    setModalError(null);
+    setLookupLoading(true);
     try {
-      const response = await api.listUsers({
-        q: term.trim(),
-        page: 1,
-        pageSize: 20,
-      });
-      if (searchId === searchSequence.current) {
-        setAccounts((response.data ?? []).filter((user) => user.active !== false));
+      const result = await api.getHrCollaboratorIdentityPreview(value);
+      if (seq !== lookupSequence.current) return;
+      if (result.registration !== value) {
+        throw new Error("A matrícula retornada pelo RH não corresponde à informada.");
       }
+      if (!result.active) {
+        throw new Error("Esta matrícula está inativa no Portal RH.");
+      }
+      setPerson(result);
     } catch (err) {
-      if (searchId === searchSequence.current) setError(errorMessage(err));
+      if (seq === lookupSequence.current) setModalError(errorMessage(err));
     } finally {
-      if (searchId === searchSequence.current) setSearching(false);
+      if (seq === lookupSequence.current) setLookupLoading(false);
     }
   };
 
-  const openMember = (member: HrIdentityReviewMember) => {
-    if (member.verified) return;
-    setActiveMember(member);
-    setConfirmOpen(false);
-    setError(null);
-    setNotice(null);
-    // Busca a conta sugerida automaticamente. Não a seleciona sozinho.
-    void fetchAccounts(member.fullName);
-  };
-
-  const closeMember = () => {
-    searchSequence.current += 1;
-    setActiveMember(null);
-    setAccounts([]);
-    setSelectedAccount(null);
-    setSearching(false);
-    setConfirmOpen(false);
-    setError(null);
-  };
-
-  const linkAccount = async () => {
-    if (!activeMember || !selectedAccount || saving) return;
+  const saveMapping = async () => {
+    if (
+      saving || !account?.active || account.registration ||
+      !person?.active || person.registration !== registration.trim()
+    ) return;
     setConfirmOpen(false);
     setSaving(true);
-    setError(null);
-    const registration = activeMember.registration;
-    const account = selectedAccount;
+    setModalError(null);
     try {
-      // Rejeitar conflito antes do PUT; a Core também valida unicidade e
-      // existência/atividade das duas pontas e audita a confirmação.
-      const current = await api.getHrIdentityMapping(account.id);
-      if (current.mapping?.registration === registration) {
-        setNotice("Este cadastro já está vinculado. A lista foi atualizada.");
+      const current = await api.getHrIdentityMapping(account.userId);
+      if (current.mapping?.registration === person.registration) {
+        setNotice("Vínculo já existente e confirmado.");
       } else {
         if (current.mapping) {
           throw new Error(
-            `Esta conta já pertence à matrícula ${current.mapping.registration}. Nada foi alterado.`,
+            `Esta conta já está associada à matrícula ${current.mapping.registration}. Nenhuma alteração efetuada.`
           );
         }
-        await api.confirmHrIdentityMapping(account.id, registration);
-        setNotice(`${activeMember.fullName} vinculado à conta ${account.name}.`);
+        await api.confirmHrIdentityMapping(account.userId, person.registration);
+        setNotice(
+          `Vínculo confirmado: ${account.name} ↔ ${person.fullName} (${person.registration}).`
+        );
       }
-      closeMember();
-      // closeMember limpa o erro, mas não o aviso de sucesso.
-      await loadTeam();
+      lookupSequence.current += 1;
+      setAccount(null);
+      setPerson(null);
+      setRegistration("");
+      setModalError(null);
+      setConfirmOpen(false);
+      await loadDirectory();
     } catch (err) {
-      setError(errorMessage(err));
+      setModalError(errorMessage(err));
     } finally {
       setSaving(false);
     }
   };
 
-  const suggestedCount = review?.suggestionCount ?? 0;
-  const linkedCount = review?.verifiedCount ?? 0;
-  const pendingCount = (review?.teamCount ?? 0) - linkedCount;
+  const total = directory?.total ?? 0;
+  const linked = directory?.linked ?? 0;
+  const pendingActive = (directory?.items ?? []).filter(
+    (item) => item.active && !item.registration
+  ).length;
 
   return (
-    <section className="hr-identity-review">
-      <div className="hr-identity-review__heading">
+    <section className="hr-identity-directory">
+      <header className="hr-identity-directory__heading">
         <div>
-          <h2>Vincular cadastros</h2>
-          <p>Escolha um colaborador do RH e a conta correspondente na Minha Delpi.</p>
+          <h2>Vincular cadastros RH ↔ Minha Delpi</h2>
+          <p>
+            Todas as contas da Minha Delpi, sem filtro por gestor ou hierarquia.
+            Escolha uma conta e informe a matrícula oficial para confirmar a identidade.
+          </p>
         </div>
-      </div>
-
-      <div className="hr-identity-review__toolbar">
-        <label htmlFor="hr-manager-registration">Equipe do gestor</label>
-        <Input
-          id="hr-manager-registration"
-          value={managerRegistration}
-          onChange={(event) => setManagerRegistration(event.target.value)}
-          size="sm"
-          aria-label="Matrícula do gestor"
-        />
-        <label className="hr-identity-review__inline">
-          <input
-            type="checkbox"
-            checked={includeIndirect}
-            onChange={(event) => setIncludeIndirect(event.target.checked)}
-          />
-          Equipe completa
-        </label>
         <Button
+          size="sm"
           variant="secondary"
+          icon={<RefreshCw size={15} />}
           disabled={loading}
-          onClick={() => void loadTeam()}
-          icon={<RefreshCw size={14} />}
+          onClick={() => void loadDirectory()}
         >
           Atualizar
         </Button>
-      </div>
+      </header>
 
-      {!activeMember && error ? <Alert tone="danger">{error}</Alert> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
       {notice ? <Alert tone="success">{notice}</Alert> : null}
-      {loading ? <Spinner label="Carregando colaboradores…" /> : null}
+      {loading && !directory ? <Spinner label="Carregando contas da Minha Delpi…" /> : null}
 
-      {review ? (
+      {directory ? (
         <>
-          <div className="hr-identity-review__stats">
-            <div><strong>{linkedCount}</strong><span>Vinculados</span></div>
-            <div><strong>{pendingCount}</strong><span>Pendentes</span></div>
-            <div><strong>{suggestedCount}</strong><span>Com sugestão</span></div>
+          <div className="hr-identity-directory__stats">
+            <div><strong>{total}</strong><span>Contas no diretório</span></div>
+            <div><strong>{linked}</strong><span>Com matrícula vinculada</span></div>
+            <div><strong>{pendingActive}</strong><span>Ativas pendentes</span></div>
           </div>
-          <div className="hr-identity-review__toolbar hr-identity-review__filters">
-            <div className="hr-identity-review__search-field">
-              <Search size={15} aria-hidden="true" />
+
+          <div className="hr-identity-directory__toolbar">
+            <label className="hr-identity-directory__search">
+              <Search size={16} aria-hidden="true" />
               <Input
                 size="sm"
-                placeholder="Buscar colaborador ou matrícula"
-                aria-label="Buscar colaborador ou matrícula"
-                value={memberSearch}
-                onChange={(event) => setMemberSearch(event.target.value)}
+                aria-label="Buscar conta ou matrícula"
+                placeholder="Buscar nome, e-mail ou matrícula vinculada"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-            </div>
-            <label htmlFor="hr-identity-filter" className="hr-identity-review__sr-only">
-              Filtrar colaboradores
             </label>
+            <label htmlFor="hr-identity-directory-filter">Situação</label>
             <select
-              id="hr-identity-filter"
+              id="hr-identity-directory-filter"
               value={filter}
-              onChange={(event) => setFilter(event.target.value as ListFilter)}
+              onChange={(e) => setFilter(e.target.value as Filter)}
             >
-              <option value="pending">Pendentes</option>
-              <option value="suggested">Com sugestão</option>
-              <option value="linked">Vinculados</option>
-              <option value="all">Todos</option>
+              <option value="pending">Ativas pendentes</option>
+              <option value="linked">Vinculadas</option>
+              <option value="all">Todas as contas</option>
             </select>
           </div>
-          <div className="hr-identity-review__table-scroll">
-            <table className="hr-identity-review__table">
-              <thead><tr>
-                <th scope="col">Colaborador RH</th>
-                <th scope="col">Matrícula</th>
-                <th scope="col">Situação</th>
-                <th scope="col">Ação</th>
-              </tr></thead>
+
+          <div className="hr-identity-directory__scroll">
+            <table className="hr-identity-directory__table">
+              <thead>
+                <tr>
+                  <th scope="col">Conta Minha Delpi</th>
+                  <th scope="col">Matrícula RH</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col">Ação</th>
+                </tr>
+              </thead>
               <tbody>
-                {members.map((member) => (
-                  <tr key={member.registration}>
-                    <td>{member.fullName}</td>
-                    <td><code>{member.registration}</code></td>
-                    <td>{statusLabel(member)}</td>
+                {visible.map((item) => (
+                  <tr key={item.userId}>
                     <td>
-                      {member.verified ? (
-                        <span className="hr-identity-review__verified">
-                          <Check size={14} /> Vinculado
+                      <strong>{item.name || "Usuário sem nome"}</strong>
+                      <small>{item.email}</small>
+                    </td>
+                    <td>{item.registration ? <code>{item.registration}</code> : "Não vinculada"}</td>
+                    <td>
+                      {item.registration ? (
+                        <span className="hr-identity-directory__linked">
+                          <Check size={14} /> Vinculada
                         </span>
-                      ) : (
+                      ) : item.active ? "Pendente" : "Conta inativa"}
+                    </td>
+                    <td>
+                      {!item.registration && item.active ? (
                         <Button
                           size="sm"
                           variant="primary"
-                          onClick={() => openMember(member)}
                           icon={<Link2 size={14} />}
+                          onClick={() => openAccount(item)}
                         >
                           Vincular
                         </Button>
-                      )}
+                      ) : "—"}
                     </td>
                   </tr>
                 ))}
-                {!members.length ? (
-                  <tr><td colSpan={4}>Nenhum colaborador encontrado.</td></tr>
+                {!visible.length ? (
+                  <tr><td colSpan={4}>Nenhuma conta encontrada neste filtro.</td></tr>
                 ) : null}
               </tbody>
             </table>
           </div>
+          <p className="hr-identity-directory__hint">
+            Esta tela lista contas Core. A matrícula é validada diretamente no Portal RH,
+            inclusive para pessoas no topo da estrutura. Vínculos existentes são preservados;
+            nomes iguais nunca geram associação automática.
+          </p>
         </>
       ) : null}
 
-      {activeMember ? createPortal(
-        <div
-          className="hr-identity-review__modal-root"
-          onKeyDown={(event) => {
-            if (event.key === "Escape" && !saving) {
-              event.preventDefault();
-              event.stopPropagation();
-              closeMember();
-            }
-          }}
-        >
-          <Modal
-            open
-            title={confirmOpen ? "Confirmar vínculo" : "Vincular cadastro"}
-            size="md"
-            onClose={() => { if (!saving) closeMember(); }}
-            footer={
-              <div className="hr-identity-review__actions">
-                <Button
-                  variant="secondary"
-                  disabled={saving}
-                  onClick={confirmOpen ? () => setConfirmOpen(false) : closeMember}
-                >
-                  {confirmOpen ? "Voltar" : "Cancelar"}
-                </Button>
-                <Button
-                  variant="primary"
-                  disabled={!selectedAccount || searching || saving}
-                  loading={saving}
-                  onClick={confirmOpen ? () => void linkAccount() : () => setConfirmOpen(true)}
-                  icon={<Link2 size={14} />}
-                >
-                  {confirmOpen ? "Sim, vincular" : "Vincular conta"}
-                </Button>
+      <Modal
+        open={Boolean(account)}
+        size="md"
+        onClose={closeAccount}
+        title="Confirmar identidade RH"
+        footer={
+          <div className="hr-identity-directory__footer">
+            <Button variant="secondary" onClick={closeAccount} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Link2 size={14} />}
+              disabled={!person || lookupLoading || saving}
+              loading={saving}
+              onClick={() => setConfirmOpen(true)}
+            >
+              Vincular conta
+            </Button>
+          </div>
+        }
+      >
+        {account ? (
+          <div className="hr-identity-directory__form">
+            <p className="hr-identity-directory__account">
+              <strong>{account.name}</strong>
+              <span>{account.email}</span>
+            </p>
+            <p>Informe a matrícula exata desta pessoa no Portal RH.</p>
+            <form
+              className="hr-identity-directory__lookup"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void verifyRegistration();
+              }}
+            >
+              <Input
+                size="sm"
+                value={registration}
+                aria-label="Matrícula RH"
+                placeholder="Ex.: 10257 ou PJ - 004"
+                disabled={saving}
+                onChange={(event) => {
+                  lookupSequence.current += 1;
+                  setRegistration(event.target.value);
+                  setPerson(null);
+                  setModalError(null);
+                  setLookupLoading(false);
+                }}
+              />
+              <Button
+                type="submit"
+                variant="secondary"
+                disabled={!registration.trim() || lookupLoading || saving}
+                loading={lookupLoading}
+              >
+                Consultar RH
+              </Button>
+            </form>
+            {modalError ? <Alert tone="danger">{modalError}</Alert> : null}
+            {person ? (
+              <div className="hr-identity-directory__preview">
+                <strong>Cadastro oficial encontrado</strong>
+                <span>{person.fullName}</span>
+                <span>Matrícula {person.registration} · Filial {person.branchCode}</span>
+                <span>Situação RH: ativo</span>
               </div>
-            }
-          >
-            {error ? <Alert tone="danger">{error}</Alert> : null}
-            {confirmOpen ? (
-              <div className="hr-identity-review__modal-content">
-                <p className="hr-identity-review__helper">
-                  Confira se os cadastros abaixo pertencem à mesma pessoa.
-                </p>
-                <div className="hr-identity-review__confirmation">
-                  <div>
-                    <span>Colaborador RH</span>
-                    <strong>{activeMember.fullName}</strong>
-                    <small>Matrícula {activeMember.registration}</small>
-                  </div>
-                  <div>
-                    <span>Conta Minha Delpi</span>
-                    <strong>{selectedAccount?.name ?? "Conta não selecionada"}</strong>
-                    <small>{selectedAccount?.email ?? ""}</small>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="hr-identity-review__modal-content">
-                <div className="hr-identity-review__heading">
-                  <div>
-                    <h3>{activeMember.fullName}</h3>
-                    <p>Matrícula RH: <strong>{activeMember.registration}</strong></p>
-                  </div>
-                </div>
-                <p className="hr-identity-review__helper">
-                  Selecione a conta da Minha Delpi que pertence a esta pessoa.
-                </p>
-                <form
-                  className="hr-identity-review__toolbar"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void fetchAccounts(accountQuery);
-                  }}
-                >
-                  <Input
-                    autoFocus
-                    size="sm"
-                    placeholder="Buscar conta por nome ou e-mail"
-                    aria-label="Buscar conta por nome ou e-mail"
-                    value={accountQuery}
-                    disabled={saving}
-                    onChange={(event) => {
-                      searchSequence.current += 1;
-                      setAccountQuery(event.target.value);
-                      setSelectedAccount(null);
-                      setAccounts([]);
-                      setSearching(false);
-                    }}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={searching || saving || !accountQuery.trim()}
-                    loading={searching}
-                    icon={<Search size={14} />}
-                  >
-                    Buscar
-                  </Button>
-                </form>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
 
-                {searching ? <Spinner label="Procurando contas…" /> : null}
-                {!searching && accounts.length === 0 ? (
-                  <p className="hr-identity-review__helper">
-                    Nenhuma conta encontrada nesta busca. Tente um nome menor ou e-mail.
-                  </p>
-                ) : null}
-                {!searching && accounts.length > 0 ? (
-                  <div
-                    className="hr-identity-review__accounts"
-                    role="radiogroup"
-                    aria-label="Conta da Minha Delpi"
-                  >
-                    {accounts.map((account) => (
-                      <label
-                        key={account.id}
-                        className={
-                          "hr-identity-review__account" +
-                          (selectedAccount?.id === account.id ? " hr-identity-review__account--selected" : "")
-                        }
-                      >
-                        <input
-                          type="radio"
-                          name="hr-selected-core-user"
-                          checked={selectedAccount?.id === account.id}
-                          onChange={() => setSelectedAccount(account)}
-                          disabled={saving}
-                        />
-                        <span>
-                          <strong>{account.name || "Usuário sem nome"}</strong>
-                          <small>{account.email}</small>
-                        </span>
-                        {activeMember.suggestedCoreUserId === account.id ? (
-                          <span className="hr-identity-review__tag">Sugerido</span>
-                        ) : null}
-                      </label>
-                    ))}
-                    {accounts.length === 20 ? (
-                      <p className="hr-identity-review__helper">
-                        Mostrando 20 contas. Refine a busca se necessário.
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </Modal>
-        </div>,
-        document.body,
-      ) : null}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Vincular estes dois cadastros?"
+        message={
+          `Minha Delpi: ${account?.name ?? ""} (${account?.email ?? ""}). ` +
+          `Portal RH: ${person?.fullName ?? ""} (matrícula ${person?.registration ?? ""}). ` +
+          "Confirme apenas se verificou que pertencem à mesma pessoa. Esta ação será auditada."
+        }
+        confirmText="Sim, vincular"
+        danger={false}
+        loading={saving}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => void saveMapping()}
+      />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 ---
 description: Integração de escrita TOTVS/Protheus — protocolo do especialista para criar/revisar rotas REST ADVPL (WSRESTFUL/MSExecAuto) e superfícies api-delpi que escrevem no ERP
 globs:
+  - api-delpi/integrations/protheus-advpl/**
   - api-delpi/app/**/protheus*
   - api-delpi/app/**/integrations/**
   - api-delpi/tests/*protheus*
@@ -52,6 +53,16 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 - [ ] Escrita apenas por rotina oficial suportada: MATA010 via `MSExecAuto`; MATA061/SA5 via modelo MVC oficial sob contrato aprovado e teste TST01. Nunca `RecLock`/SQL direto em `S*`
 - [ ] Para `MSExecAuto`: `PRIVATE lMsErroAuto := .F.` (não `LOCAL`) + `lMsHelpAuto`/`lAutoErrNoFile`. MVC exige tratamento próprio comprovado
 - [ ] `ErrorBlock`+`Begin Sequence/Recover` cobrindo o handler inteiro
+- [ ] `GetContent()` **sempre antes** de `SetContentType()`, ambos **dentro** do `Begin Sequence`
+      (SetContentType consome o buffer do request no HTTPREST; GetContent no init de `Local`
+      gera throw não-recuperável — regressão comprovada TST01 2026-11-19)
+- [ ] `oDados:FromJson(cJSON)` — **retorno não confiável** no build 7.00.240223P
+      (retorna `.F.` mesmo populando o objeto; o legado ignora o retorno —
+      `DLP04I01`/`DLP05W01` no espelho 13-fontes). Validar o parse pelo
+      **conteúdo**: `Len(oDados:GetNames()) == 0` ⇒ JSON inválido
+- [ ] Tag de versão no `id` do envelope de resposta (ex.: `"dlp-v053-fj"`) —
+      distingue qual build está carregado no RPO durante homologação
+- [ ] Diagnóstico de body sem conteúdo (`valtype`/`len` apenas — nunca o corpo)
 - [ ] Somente para ExecAuto: arrays de triplas `{CAMPO, valor, Nil}`; representação completa quando contrato exigir
       (campo omitido pode ser zerado — bug real do `delpiproduto`)
 - [ ] Para ExecAuto: `GetAutoGrLog()`; para MVC: erros/validações do modelo; respostas normalizadas sem mascarar falhas
@@ -91,6 +102,18 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 5. Cruzar com docs canônicos — divergência entre diff e playbook/guia = drift a registrar
 ```
 
+## Runtime e compilação — lições comprovadas (TST01 2026-11-19)
+
+- Compilação TDS cai no RPO da **conexão ativa**: porta TDS × ambiente × serviço REST
+  devem ser confirmados antes do build (ex. TST01: `:2001`/`:2002` → `env_teste`;
+  `:72002` → `api`). Mesmo nome de ambiente em conexões diferentes **não** implica mesmo RPO.
+- REST `/rest` (HTTPREST clássico) e `/restall` (REST 2.0) podem ser **serviços Windows
+  distintos com RPOs distintos** — compilar num não afeta o outro.
+- Rota registrada (`401` auth em vez de `404`) ≠ operacional: objeto novo no RPO só vale
+  após **restart do serviço correto** (RPO é relido na subida).
+- Verificação externa por marcadores: count/catálogo de `metadados`, `id` de versão no
+  envelope, `errorType` por ramo — não inferir versão carregada só por "não deu 404".
+
 ## Anti-padrões (rejeitar na hora)
 
 | Anti-padrão | Correto |
@@ -102,6 +125,9 @@ qualquer integração TOTVS contra as invariantes abaixo — em qualquer agente,
 | Gate default `true` "só pra testar" | `false` sempre; liga por env explícito |
 | `lMsErroAuto` declarado `LOCAL` | `PRIVATE` (a rotina não enxerga `LOCAL`) |
 | Endpoint novo sem checar `/restall` | catálogo primeiro — pode já existir |
+| `!oDados:FromJson(cJSON)` como gate | retorno não confiável — validar por `Len(oDados:GetNames()) == 0` |
+| `GetContent` após `SetContentType` ou no init de `Local` | `GetContent` primeiro, dentro do `Begin Sequence` |
+| Assumir que compilou no RPO certo pelo log "success" | confirmar conexão TDS × ambiente × serviço × mtime do `custom.rpo` |
 
 ## Saída esperada do especialista
 
@@ -112,3 +138,16 @@ OPERAÇÃO | ROTINA OFICIAL | CONTRATO (confirmado/por validar) | GATE+PIN | IDE
 ```
 
 Item faltante = trabalho incompleto, não "opcional".
+
+## Local de desenvolvimento de novos fontes — decisão PO
+
+Para novos fontes candidatos de integrações DELPI, desenvolver **somente** em `api-delpi/integrations/protheus-advpl/modules/<capability>/src/`, com contrato/testes no módulo conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` continua fonte de consulta de versões upstream (`master`@SHA), **não destino de commits**. Não alterar o espelho `docs/13-fontes-totvs-protheus/`. Handoff ZIP gerado por SHA aprovado, sem publicações ERP/compilação/deploy nesta fase.
+
+## Separacao mandataria — READ por SQL versus implementacao ADVPL
+
+**O projeto usa rotas Python/SQL de leitura para consultar dados e entender tabelas. Elas NAO sao autoridade nem modelo de implementacao das novas rotas ADVPL.** Para qualquer `.PRW`/`.TLPP`, derivar cada operacao de rotina padrao TOTVS ou customizacao demonstrada em `Delpi-ti/protheus-erp` no SHA fixado. MATA010/ExecAuto e MATA061/MVC tem contratos diferentes. Sem contrato suportado comprovado, marcar `TO_INVENTORY` e nao implementar operacao funcional.
+
+- SQL/SX3/ODBC e endpoints de leitura existentes: **somente inventario de campos, schema, diagnostico e eventual corroboracao externa em superficie governada**. Nao converter queries/joins/filtros dos repositorios da `api-delpi` em fonte/algoritmo ADVPL nem fazer READ de Protheus por transplante de SQL da API.
+- Proibido implementar CREATE/UPDATE/DELETE usando DML direto ou `RecLock`; proibido preencher payload faltante consultando SQL da API DELPI, inferir obrigatoriedade de SX3 isolado ou replicar triggers e validacoes oficiais em Python/ADVPL.
+- Um endpoint READ SQL pode continuar existindo para seus consumidores legitimos; sua existencia nao autoriza nem especifica `WSMETHOD GET` no novo PRW. Um GET ADVPL requer contrato oficial proprio.
+- Pre-revisao obrigatoria: `OFFICIAL_ROUTINE + SOURCE_REPO/COMMIT/PATH + MECHANISM + SQL_AUXILIARY_ONLY + GAPS/TO_INVENTORY`. Toda dependencia funcional em query SQL para gerar `.PRW` e violacao bloqueante.

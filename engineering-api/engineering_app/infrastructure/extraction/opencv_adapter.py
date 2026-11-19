@@ -206,6 +206,53 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
                 if y - start >= kv:
                     v_lines.append([x, start, x, y - 1])
                 start = None
+    # E1/VAL-01 B2-R2 — segmentos arbitrários (diagonais/dobras): o
+    # opening com kernels retos destrói traços inclinados; HoughLinesP
+    # sobre o residual (binarização sem as máscaras h/v) recupera
+    # segmentos livres sem duplicar o canal eixo-alinhado. Ângulo
+    # agudo 8°–82° filtra o que já é coberto por h_lines/v_lines —
+    # fora dessa janela a zona cega residual é real, mas o gap de
+    # 12px do Hough reconstrói traços rasos quebrados como
+    # compostos dentro da janela (VAL-02: líder ~5° do A4).
+    # Evidência candidata com proveniência — nunca verdade técnica.
+    segments: list[dict] = []
+    try:
+        residual = cv2.bitwise_and(
+            bin_, cv2.bitwise_not(cv2.bitwise_or(horiz, vert))
+        )
+        det_lines = cv2.HoughLinesP(
+            residual, 1, np.pi / 180,
+            threshold=40,
+            minLineLength=max(30, kh),
+            # traços finos/coloridos quebram na binarização —
+            # 12px cobre lacunas reais sem fundir linhas distintas
+            # (VAL-02: líder com ~15px de quebra por cruzamento).
+            maxLineGap=12,
+        )
+        if det_lines is not None:
+            for l in det_lines[:, 0]:
+                x1, y1, x2, y2 = (float(v) for v in l)
+                dx, dy = x2 - x1, y2 - y1
+                length = float((dx * dx + dy * dy) ** 0.5)
+                if length <= 0:
+                    continue
+                ang = float(
+                    np.degrees(np.arctan2(abs(dy), abs(dx)))
+                )
+                if not (8.0 < ang < 82.0):
+                    continue
+                segments.append({
+                    "points_px": [x1, y1, x2, y2],
+                    "angle_deg": round(ang, 1),
+                    "length_px": round(length, 1),
+                    "source": "hough_lines_p_residual",
+                })
+            # cap determinístico: traços mais longos primeiro —
+            # líderes são linhas deliberadas, ruído de texto é curto.
+            segments.sort(key=lambda s: -s["length_px"])
+            segments = segments[:400]
+    except cv2.error:
+        segments = []
     # E1/VAL-01 B1 — primitivas circulares (balões de item): HoughCircles
     # sobre a imagem original em tons de cinza. O opening morfológico
     # acima usa kernels retos e descarta curvas; sem este canal a
@@ -367,6 +414,7 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
     return {
         "h_lines": h_lines[:400],
         "v_lines": v_lines[:400],
+        "segments": segments,
         "rects": rects_out,
         "circles": circles,
         "enclosures": enclosures,
@@ -375,5 +423,6 @@ def detect_graphic_primitives(image_bytes: bytes) -> dict | None:
             "h": len(h_lines), "v": len(v_lines), "rects": len(rects),
             "circles": len(circles), "enclosures": len(enclosures),
             "region_observations": len(region_observations),
+            "segments": len(segments),
         },
     }

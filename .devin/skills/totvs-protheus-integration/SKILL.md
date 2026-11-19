@@ -1,6 +1,6 @@
 ---
 name: totvs-protheus-integration
-description: Especialista TOTVS/Protheus para análise e integração ADVPL/TLPP, fonte versionada no Delpi-ti/protheus-erp, RESTALL, RPO, MATA010, MATA061, SB1/SA5 e api-delpi. Invoque para inventário de rotinas, CRUD, contratos, revisão, desenvolvimento e handoff de compilação ERP.
+description: Especialista TOTVS/Protheus para análise e integração ADVPL/TLPP, fonte versionada no Delpi-ti/protheus-erp, RESTALL, RPO, MATA010, MATA061, SB1/SA5 e api-delpi. USAR SEMPRE que a tarefa envolver integração TOTVS/Protheus — inventário de rotinas, CRUD, contratos, desenvolvimento de .PRW/.TLPP, revisão e handoff de compilação ERP.
 ---
 
 # Especialista — Integração TOTVS/Protheus (escrita)
@@ -26,6 +26,29 @@ Aplique o protocolo canônico completo definido em:
 
 Saída esperada: `OPERAÇÃO | ROTINA OFICIAL | CONTRATO | GATE+PIN | IDENTIDADE | RASTREIO | EVIDÊNCIA`.
 
+## Lições de runtime comprovadas — TST01 (2026-11-19)
+
+Depuração live do `delpiproduto`/`delpiprodforn` — tratar como conhecimento de
+primeira classe ao escrever QUALQUER handler de body:
+
+- **Body request**: `cJSON := oSelf:GetContent()` **antes** de
+  `oSelf:SetContentType("application/json")`, ambos dentro do `Begin Sequence`.
+  `SetContentType` consome o buffer do request no HTTPREST; `GetContent` no init
+  de `Local` gera throw não-recuperável. Ordem errada = body sempre vazio.
+- **Parse**: `oDados:FromJson(cJSON)` retorna `.F.` mesmo em sucesso no build
+  `7.00.240223P` — o legado do espelho (`04. Estoque/DLP04I01.PRW`,
+  `05. Faturamento/DLP05W01.PRW`) ignora o retorno. Validar pelo conteúdo:
+  `Len(oDados:GetNames()) == 0` ⇒ inválido. Nunca `!oDados:FromJson(...)` como gate.
+- **Topologia TST01**: `:2001`/`:2002` compilam em `env_teste`; `:72002` em `api`.
+  REST `:8061` (`/restall`) e `:8701` (`/rest`) são serviços/RPOs diferentes.
+  Build "success" no TDS não prova objeto carregado — restart do serviço certo
+  + probe por marcadores (`metadados` count, `id` de versão, `errorType`).
+- **Tag de versão no envelope**: `id` único por build (ex.: `"dlp-v053-fj"`)
+  torna a versão carregada auto-evidente na resposta — dispensando console.
+- **Referência viva**: implementação de referência do padrão legado =
+  `docs/13-fontes-totvs-protheus/04. Estoque/DLP04I01.PRW` (WSRESTFUL,
+  aadd triple `{CAMPO,valor,Nil}`, RETOBJ, FreeObj trio, RestArea).
+
 ## Atualização de autoridade de fontes (2026-11)
 
 - **Fonte versionada primária ADVPL/TLPP:** repositório privado `Delpi-ti/protheus-erp`, branch `master`, consultado no HEAD vigente via GitHub autorizado. Registrar `SOURCE_REPO/BRANCH/SHA/PATH/BLOB_SHA` em cada análise.
@@ -35,3 +58,15 @@ Saída esperada: `OPERAÇÃO | ROTINA OFICIAL | CONTRATO | GATE+PIN | IDENTIDADE
 - `MATA010M_DLP.PRW` contém submodelo `Model061` (grid SA5) condicionado a `MV_CADPROD` e permissões. Investigar essa alternativa de reuso antes de criar integração separada, sem inferir runtime.
 - Não há prova de rota REST de escrita SA5 publicada no último inventário; MATI060/EAI não estava configurado. Revalidar se houve mudança. Operações CRUD requerem contracts oficiais, autorização do owner e read-back pela chave completa.
 - Só escrever por rotina oficial validada: ExecAuto quando suportado; modelo MVC se aprovado e homologado. Jamais `RecLock` ou SQL de escrita direta. Separar `PROVEN_SOURCE`, `PROVEN_RUNTIME`, `TO_INVENTORY` e `TEST_NOT_RUN`.
+
+## Workspace de desenvolvimento — decisão PO
+
+Para os novos fontes ADVPL DELPI, **escrever e versionar somente em** `api-delpi/integrations/protheus-advpl/modules/<capability>/src/` no repositório `delpi-central`; contratos/testes junto do módulo; pacote gerado via `packaging/` e manifesto em `handoffs/` conforme `api-delpi/integrations/protheus-advpl/README.md`. `Delpi-ti/protheus-erp` permanece referência de leitura para upstream@SHA **sem push, alteração ou PR** neste ciclo. `docs/13-fontes-totvs-protheus/` é espelho referencial, não workspace editável. Não gerar ZIP de cópias manuais nem compilar/deploy por commit.
+
+## Regra vinculante — SQL e rotas de leitura NAO definem implementacao ADVPL
+
+- Para desenvolver, ampliar ou revisar qualquer `.PRW`/`.TLPP`, exigir rastreio `operacao → rotina oficial TOTVS ou customizacao comprovada → contrato suportado (ExecAuto/MVC/outro documentado) → fonte ERP repo@SHA → teste TST01 autorizado`. A ausencia de contrato oficial bloqueia o metodo candidato; nao preencher lacunas por inferencia SQL.
+- Consultas SQL/ODBC, SX3, `api-delpi/app` repositories e endpoints READ da API DELPI sao **evidencia auxiliar de schema, valores, consistencia e diagnostico**, nao contrato funcional de operacao ADVPL, nao fonte de regras de cadastro/persistencia e nao modelo para implementar `READ/CREATE/UPDATE/DELETE` de fachada Protheus. 
+- **Proibido** transplantar `SELECT`/joins/filtros/queries de repositories ou payloads das rotas SQL para os handlers `.PRW`; completar campos faltantes via consultas SQL; reproduzir validacoes, triggers ou efeitos colaterais por DML direto; usar `RecLock` como bypass das rotinas de negocio. Mesmo `READ` novo do lado Protheus exige mecanismo oficial validado, nunca copia de rota SQL.
+- Auditoria de consistencia por SELECT autorizado pode ocorrer **fora do fluxo ADVPL**, em superficie de leitura governada, explicitamente separada do contrato de escrita e sem promover resultado a postcondition suficiente. Preservar os endpoints existentes de leitura; esta regra nao proibe seu uso legitimo por outros consumers.
+- Revisao obrigatoria: `SQL_USED_AS_GROUNDING=YES|NO`, `OFFICIAL_ROUTINE`, `SOURCE_PATH+SHA`, `WRITE_MECHANISM`, `UNPROVEN_ASSUMPTIONS`. Falta de rota oficial: `TO_INVENTORY`, jamais fallback SQL.

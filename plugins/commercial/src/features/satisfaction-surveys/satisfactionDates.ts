@@ -16,6 +16,12 @@ const DISPLAY_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
   hour12: false,
 });
 
+const UPDATED_AT_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: SURVEY_TIME_ZONE,
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 const PARTS_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   timeZone: SURVEY_TIME_ZONE,
   year: "numeric",
@@ -42,6 +48,12 @@ export function formatSurveyPeriod(
   endsAt: string | null | undefined,
 ): string {
   return `${formatSurveyDateTime(startsAt)} → ${formatSurveyDateTime(endsAt)}`;
+}
+
+/** «Atualizado em dd/mm/aaaa, hh:mm» — hora da última leitura feita com sucesso. */
+export function formatSurveyUpdatedAt(value: Date | string | null | undefined): string {
+  const date = value instanceof Date ? value : parseIso(value);
+  return date ? UPDATED_AT_FORMATTER.format(date) : "—";
 }
 
 /** Ano (fuso do Portal) de um instante ISO — usado no filtro «Ano». */

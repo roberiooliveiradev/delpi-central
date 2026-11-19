@@ -1,0 +1,794 @@
+{
+ "version": 1,
+ "policy": "contexto = conjunto canônico de globs; lease de sessão = subconjunto declarado; restricted exige --allow-restricted no register",
+ "contexts": {
+  "ctx:chat-ai": {
+   "globs": [
+    "minha-delpi-ai-api/**",
+    "plugins/minha-delpi-chat/**"
+   ],
+   "description": "bounded context Chat AI"
+  },
+  "ctx:cipa": {
+   "globs": [
+    "plugins/cipa/**",
+    "cipa-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:comite-etica-conduta": {
+   "globs": [
+    "plugins/comite-etica-conduta/**",
+    "comite-etica-conduta-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:commercial": {
+   "globs": [
+    "plugins/commercial/**",
+    "commercial-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:controllership-finance": {
+   "globs": [
+    "plugins/controllership-finance/**",
+    "controllership-finance-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:customer-experience": {
+   "globs": [
+    "plugins/customer-experience/**",
+    "customer-experience-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:delia": {
+   "globs": [
+    "delia-api/**",
+    "minha-delpi-copilot/**",
+    "plugins/delia/**"
+   ],
+   "description": "bounded context DÉLIA (copilot standalone)"
+  },
+  "ctx:delpi-mes": {
+   "globs": [
+    "plugins/delpi-mes/**",
+    "delpi-mes-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:engineering": {
+   "globs": [
+    "plugins/engineering/**",
+    "engineering-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:financial": {
+   "globs": [
+    "plugins/financial/**",
+    "financial-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:helpdesk": {
+   "globs": [
+    "plugins/helpdesk/**",
+    "helpdesk-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:it-portal": {
+   "globs": [
+    "plugins/it-portal/**",
+    "it-portal-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:maintenance": {
+   "globs": [
+    "plugins/maintenance/**",
+    "maintenance-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:portal": {
+   "globs": [
+    "portal/**",
+    "plugins/public-hub/**",
+    "plugins/plugin-ui/**"
+   ],
+   "description": "Portal host + kit de componentes + public-hub"
+  },
+  "ctx:production-control": {
+   "globs": [
+    "plugins/production-control/**",
+    "production-control-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:production-pulse": {
+   "globs": [
+    "plugins/production-pulse/**",
+    "production-pulse-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:purchase-requests": {
+   "globs": [
+    "plugins/purchase-requests/**",
+    "purchase-requests-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:strategic-indicators": {
+   "globs": [
+    "plugins/strategic-indicators/**",
+    "strategic-indicators-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:supplies": {
+   "globs": [
+    "plugins/supplies/**",
+    "supplies-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:transformometro": {
+   "globs": [
+    "plugins/transformometro/**",
+    "transformometro-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:travel-expenses": {
+   "globs": [
+    "plugins/travel-expenses/**",
+    "travel-expenses-api/**"
+   ],
+   "description": "bounded context: plugin MFE + API própria"
+  },
+  "ctx:tv-dashboard": {
+   "globs": [
+    "plugins/tv-dashboard/**",
+    "plugins/tv-dashboard-presentation/**",
+    "tv-dashboard-api/**"
+   ],
+   "description": "bounded context TV Dashboard"
+  },
+  "dir:.cursor": {
+   "globs": [
+    ".cursor/**"
+   ]
+  },
+  "dir:.devin": {
+   "globs": [
+    ".devin/**"
+   ]
+  },
+  "dir:.github": {
+   "globs": [
+    ".github/**"
+   ]
+  },
+  "dir:.pytest_cache": {
+   "globs": [
+    ".pytest_cache/**"
+   ]
+  },
+  "dir:.tmp-helpdesk-venv": {
+   "globs": [
+    ".tmp-helpdesk-venv/**"
+   ]
+  },
+  "dir:.tools": {
+   "globs": [
+    ".tools/**"
+   ]
+  },
+  "dir:.venv": {
+   "globs": [
+    ".venv/**"
+   ]
+  },
+  "dir:agent-kit": {
+   "globs": [
+    "agent-kit/**"
+   ],
+   "restricted": true
+  },
+  "dir:api-delpi": {
+   "globs": [
+    "api-delpi/**"
+   ]
+  },
+  "dir:bpmn-modeler": {
+   "globs": [
+    "bpmn-modeler/**"
+   ]
+  },
+  "dir:cipa-api": {
+   "globs": [
+    "cipa-api/**"
+   ]
+  },
+  "dir:comite-etica-conduta-api": {
+   "globs": [
+    "comite-etica-conduta-api/**"
+   ]
+  },
+  "dir:commercial-api": {
+   "globs": [
+    "commercial-api/**"
+   ]
+  },
+  "dir:controllership-finance-api": {
+   "globs": [
+    "controllership-finance-api/**"
+   ]
+  },
+  "dir:core-api": {
+   "globs": [
+    "core-api/**"
+   ],
+   "restricted": true
+  },
+  "dir:customer-experience-api": {
+   "globs": [
+    "customer-experience-api/**"
+   ]
+  },
+  "dir:delia-api": {
+   "globs": [
+    "delia-api/**"
+   ]
+  },
+  "dir:delpi-mes-api": {
+   "globs": [
+    "delpi-mes-api/**"
+   ]
+  },
+  "dir:docs": {
+   "globs": [
+    "docs/**"
+   ]
+  },
+  "dir:engineering-api": {
+   "globs": [
+    "engineering-api/**"
+   ]
+  },
+  "dir:external-data-api": {
+   "globs": [
+    "external-data-api/**"
+   ]
+  },
+  "dir:financial-api": {
+   "globs": [
+    "financial-api/**"
+   ]
+  },
+  "dir:fixtures": {
+   "globs": [
+    "fixtures/**"
+   ],
+   "description": "zona compartilhada — preferir escopo mais específico"
+  },
+  "dir:gateway": {
+   "globs": [
+    "gateway/**"
+   ],
+   "restricted": true
+  },
+  "dir:helpdesk-api": {
+   "globs": [
+    "helpdesk-api/**"
+   ]
+  },
+  "dir:infra": {
+   "globs": [
+    "infra/**"
+   ],
+   "restricted": true
+  },
+  "dir:it-portal-api": {
+   "globs": [
+    "it-portal-api/**"
+   ]
+  },
+  "dir:linux-ops-mcp": {
+   "globs": [
+    "linux-ops-mcp/**"
+   ]
+  },
+  "dir:logs": {
+   "globs": [
+    "logs/**"
+   ],
+   "description": "zona compartilhada — preferir escopo mais específico"
+  },
+  "dir:maintenance-api": {
+   "globs": [
+    "maintenance-api/**"
+   ]
+  },
+  "dir:minha-delpi-ai-api": {
+   "globs": [
+    "minha-delpi-ai-api/**"
+   ]
+  },
+  "dir:minha-delpi-copilot": {
+   "globs": [
+    "minha-delpi-copilot/**"
+   ]
+  },
+  "dir:portal": {
+   "globs": [
+    "portal/**"
+   ]
+  },
+  "dir:production-control-api": {
+   "globs": [
+    "production-control-api/**"
+   ]
+  },
+  "dir:production-pulse-api": {
+   "globs": [
+    "production-pulse-api/**"
+   ]
+  },
+  "dir:purchase-requests-api": {
+   "globs": [
+    "purchase-requests-api/**"
+   ]
+  },
+  "dir:requests-api": {
+   "globs": [
+    "requests-api/**"
+   ]
+  },
+  "dir:scripts": {
+   "globs": [
+    "scripts/**"
+   ]
+  },
+  "dir:shared": {
+   "globs": [
+    "shared/**"
+   ],
+   "restricted": true
+  },
+  "dir:strategic-indicators-api": {
+   "globs": [
+    "strategic-indicators-api/**"
+   ]
+  },
+  "dir:supplies-api": {
+   "globs": [
+    "supplies-api/**"
+   ]
+  },
+  "dir:tests": {
+   "globs": [
+    "tests/**"
+   ],
+   "description": "zona compartilhada — preferir escopo mais específico"
+  },
+  "dir:transformometro-api": {
+   "globs": [
+    "transformometro-api/**"
+   ]
+  },
+  "dir:travel-expenses-api": {
+   "globs": [
+    "travel-expenses-api/**"
+   ]
+  },
+  "dir:tv-dashboard-api": {
+   "globs": [
+    "tv-dashboard-api/**"
+   ]
+  },
+  "meta:cursor-rules": {
+   "globs": [
+    ".cursor/**"
+   ],
+   "restricted": true,
+   "description": "regras .cursor (governança exige audit_cursor_rules)"
+  },
+  "meta:devin": {
+   "globs": [
+    ".devin/**"
+   ],
+   "description": "config/skills Devin"
+  },
+  "meta:github-ci": {
+   "globs": [
+    ".github/**"
+   ],
+   "restricted": true,
+   "description": "workflows e config CI"
+  },
+  "meta:plugins": {
+   "globs": [
+    "plugins/*.*",
+    "plugins/docker/**",
+    "plugins/docs/**",
+    "plugins/scripts/**",
+    "plugins/vite/**"
+   ],
+   "description": "arquivos e dirs de suporte direto em plugins/ (não um plugin)"
+  },
+  "plugin:api-delpi-console": {
+   "globs": [
+    "plugins/api-delpi-console/**"
+   ]
+  },
+  "plugin:auditoria-5s": {
+   "globs": [
+    "plugins/auditoria-5s/**"
+   ]
+  },
+  "plugin:bpmn-editor": {
+   "globs": [
+    "plugins/bpmn-editor/**"
+   ]
+  },
+  "plugin:bpmn-modeler": {
+   "globs": [
+    "plugins/bpmn-modeler/**"
+   ]
+  },
+  "plugin:canal-denuncia": {
+   "globs": [
+    "plugins/canal-denuncia/**"
+   ]
+  },
+  "plugin:central-agendamento": {
+   "globs": [
+    "plugins/central-agendamento/**"
+   ]
+  },
+  "plugin:cipa": {
+   "globs": [
+    "plugins/cipa/**"
+   ]
+  },
+  "plugin:cipa-meeting-minutes-presentation": {
+   "globs": [
+    "plugins/cipa-meeting-minutes-presentation/**"
+   ]
+  },
+  "plugin:codigo-etica": {
+   "globs": [
+    "plugins/codigo-etica/**"
+   ]
+  },
+  "plugin:comite-etica-conduta": {
+   "globs": [
+    "plugins/comite-etica-conduta/**"
+   ]
+  },
+  "plugin:commercial": {
+   "globs": [
+    "plugins/commercial/**"
+   ]
+  },
+  "plugin:controle-retrabalhos": {
+   "globs": [
+    "plugins/controle-retrabalhos/**"
+   ]
+  },
+  "plugin:controllership-finance": {
+   "globs": [
+    "plugins/controllership-finance/**"
+   ]
+  },
+  "plugin:cultura-delpi": {
+   "globs": [
+    "plugins/cultura-delpi/**"
+   ]
+  },
+  "plugin:customer-experience": {
+   "globs": [
+    "plugins/customer-experience/**"
+   ]
+  },
+  "plugin:dashboard-commercial": {
+   "globs": [
+    "plugins/dashboard-commercial/**"
+   ]
+  },
+  "plugin:dashboard-engineering": {
+   "globs": [
+    "plugins/dashboard-engineering/**"
+   ]
+  },
+  "plugin:dashboard-financial": {
+   "globs": [
+    "plugins/dashboard-financial/**"
+   ]
+  },
+  "plugin:dashboard-hr": {
+   "globs": [
+    "plugins/dashboard-hr/**"
+   ]
+  },
+  "plugin:dashboard-lmps": {
+   "globs": [
+    "plugins/dashboard-lmps/**"
+   ]
+  },
+  "plugin:dashboard-production": {
+   "globs": [
+    "plugins/dashboard-production/**"
+   ]
+  },
+  "plugin:dashboard-quality": {
+   "globs": [
+    "plugins/dashboard-quality/**"
+   ]
+  },
+  "plugin:dashboard-supplies": {
+   "globs": [
+    "plugins/dashboard-supplies/**"
+   ]
+  },
+  "plugin:delia": {
+   "globs": [
+    "plugins/delia/**"
+   ]
+  },
+  "plugin:delpi-line-balance-studio": {
+   "globs": [
+    "plugins/delpi-line-balance-studio/**"
+   ]
+  },
+  "plugin:delpi-mes": {
+   "globs": [
+    "plugins/delpi-mes/**"
+   ]
+  },
+  "plugin:docker": {
+   "globs": [
+    "plugins/docker/**"
+   ]
+  },
+  "plugin:docs": {
+   "globs": [
+    "plugins/docs/**"
+   ]
+  },
+  "plugin:eficiencia-fabril": {
+   "globs": [
+    "plugins/eficiencia-fabril/**"
+   ]
+  },
+  "plugin:engineering": {
+   "globs": [
+    "plugins/engineering/**"
+   ]
+  },
+  "plugin:estoque-seguranca": {
+   "globs": [
+    "plugins/estoque-seguranca/**"
+   ]
+  },
+  "plugin:financeiro-centro-custo": {
+   "globs": [
+    "plugins/financeiro-centro-custo/**"
+   ]
+  },
+  "plugin:financeiro-inadimplencia": {
+   "globs": [
+    "plugins/financeiro-inadimplencia/**"
+   ]
+  },
+  "plugin:financial": {
+   "globs": [
+    "plugins/financial/**"
+   ]
+  },
+  "plugin:guias-procedimentos": {
+   "globs": [
+    "plugins/guias-procedimentos/**"
+   ]
+  },
+  "plugin:helpdesk": {
+   "globs": [
+    "plugins/helpdesk/**"
+   ]
+  },
+  "plugin:idd_production": {
+   "globs": [
+    "plugins/idd_production/**"
+   ]
+  },
+  "plugin:inspecoes-entrada": {
+   "globs": [
+    "plugins/inspecoes-entrada/**"
+   ]
+  },
+  "plugin:inspecoes-processo": {
+   "globs": [
+    "plugins/inspecoes-processo/**"
+   ]
+  },
+  "plugin:invoice-issuance": {
+   "globs": [
+    "plugins/invoice-issuance/**"
+   ]
+  },
+  "plugin:it-portal": {
+   "globs": [
+    "plugins/it-portal/**"
+   ]
+  },
+  "plugin:kaizen-suggestion": {
+   "globs": [
+    "plugins/kaizen-suggestion/**"
+   ]
+  },
+  "plugin:kaizometro": {
+   "globs": [
+    "plugins/kaizometro/**"
+   ]
+  },
+  "plugin:lancamento-notas-fiscais": {
+   "globs": [
+    "plugins/lancamento-notas-fiscais/**"
+   ]
+  },
+  "plugin:maintenance": {
+   "globs": [
+    "plugins/maintenance/**"
+   ]
+  },
+  "plugin:materiais-terceiros": {
+   "globs": [
+    "plugins/materiais-terceiros/**"
+   ]
+  },
+  "plugin:metalography": {
+   "globs": [
+    "plugins/metalography/**"
+   ]
+  },
+  "plugin:minha-delpi-chat": {
+   "globs": [
+    "plugins/minha-delpi-chat/**"
+   ]
+  },
+  "plugin:mural-acessos": {
+   "globs": [
+    "plugins/mural-acessos/**"
+   ]
+  },
+  "plugin:my-requests": {
+   "globs": [
+    "plugins/my-requests/**"
+   ]
+  },
+  "plugin:planejamento-orcamentario": {
+   "globs": [
+    "plugins/planejamento-orcamentario/**"
+   ]
+  },
+  "plugin:plugin-ui": {
+   "globs": [
+    "plugins/plugin-ui/**"
+   ]
+  },
+  "plugin:production-appointments": {
+   "globs": [
+    "plugins/production-appointments/**"
+   ]
+  },
+  "plugin:production-control": {
+   "globs": [
+    "plugins/production-control/**"
+   ]
+  },
+  "plugin:production-pulse": {
+   "globs": [
+    "plugins/production-pulse/**"
+   ]
+  },
+  "plugin:public-hub": {
+   "globs": [
+    "plugins/public-hub/**"
+   ]
+  },
+  "plugin:purchase-requests": {
+   "globs": [
+    "plugins/purchase-requests/**"
+   ]
+  },
+  "plugin:quality-action-plans": {
+   "globs": [
+    "plugins/quality-action-plans/**"
+   ]
+  },
+  "plugin:quality-labels": {
+   "globs": [
+    "plugins/quality-labels/**"
+   ]
+  },
+  "plugin:reports": {
+   "globs": [
+    "plugins/reports/**"
+   ]
+  },
+  "plugin:scrap-monitoring": {
+   "globs": [
+    "plugins/scrap-monitoring/**"
+   ]
+  },
+  "plugin:scripts": {
+   "globs": [
+    "plugins/scripts/**"
+   ]
+  },
+  "plugin:strategic-indicators": {
+   "globs": [
+    "plugins/strategic-indicators/**"
+   ]
+  },
+  "plugin:supplies": {
+   "globs": [
+    "plugins/supplies/**"
+   ]
+  },
+  "plugin:transformometro": {
+   "globs": [
+    "plugins/transformometro/**"
+   ]
+  },
+  "plugin:transformometro-meeting-minutes-presentation": {
+   "globs": [
+    "plugins/transformometro-meeting-minutes-presentation/**"
+   ]
+  },
+  "plugin:travel-expenses": {
+   "globs": [
+    "plugins/travel-expenses/**"
+   ]
+  },
+  "plugin:tv-dashboard": {
+   "globs": [
+    "plugins/tv-dashboard/**"
+   ]
+  },
+  "plugin:tv-dashboard-presentation": {
+   "globs": [
+    "plugins/tv-dashboard-presentation/**"
+   ]
+  },
+  "plugin:vite": {
+   "globs": [
+    "plugins/vite/**"
+   ]
+  },
+  "root-meta": {
+   "globs": [
+    "*.md",
+    "*.json",
+    "*.yml",
+    "*.yaml",
+    "*.toml",
+    "*.txt",
+    "*.sh",
+    "*.cfg",
+    "*.ini",
+    ".gitignore",
+    ".env*",
+    "Dockerfile*",
+    "LICENSE*"
+   ],
+   "description": "arquivos soltos na raiz do monorepo"
+  }
+ }
+}

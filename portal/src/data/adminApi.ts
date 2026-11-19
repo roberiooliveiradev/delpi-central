@@ -45,35 +45,28 @@ export type ListAppsQueryOptions = ListQueryOptions & {
   type?: AppManifestType;
 };
 
-export type HrIdentityReviewStatus =
-  | "verified_mapping"
-  | "suggestion_by_name"
-  | "ambiguous_rh_name"
-  | "ambiguous_core_name"
-  | "already_assigned_to_other_registration"
-  | "no_exact_name_suggestion";
+export type HrIdentityDirectoryUser = {
+  userId: string;
+  name: string;
+  email: string;
+  active: boolean;
+  registration: string | null;
+};
 
-export type HrIdentityReviewMember = {
+export type HrIdentityDirectory = {
+  items: HrIdentityDirectoryUser[];
+  total: number;
+  linked: number;
+  readOnly: true;
+  scope: "all_core_accounts";
+};
+
+export type HrCollaboratorIdentityPreview = {
   registration: string;
   fullName: string;
   branchCode: string;
-  relationship: string;
-  status: HrIdentityReviewStatus;
-  mappedCoreUserId: string | null;
-  suggestedCoreUserId: string | null;
-  verified: boolean;
-};
-
-export type HrIdentityReview = {
-  managerRegistration: string;
-  teamCount: number;
-  verifiedCount: number;
-  suggestionCount: number;
-  statusCounts: Record<HrIdentityReviewStatus, number>;
+  active: boolean;
   readOnly: true;
-  automaticMappingsCreated: 0;
-  warning: string;
-  members?: HrIdentityReviewMember[];
 };
 
 export type HrIdentityMapping = {
@@ -624,33 +617,29 @@ export class AdminApi {
      RBAC - Users
   ========================= */
 
-  // GLPI #887: consulta administrativa. Nunca inferir vínculo pelo nome.
-  getHrIdentityReview(managerRegistration: string, includeIndirect = true) {
-    const params = new URLSearchParams({
-      include_indirect: String(includeIndirect),
-      details: "true",
-    });
-    return this.client.get<HrIdentityReview>(
-      `/core-api/admin/organization/managers/${encodeURIComponent(managerRegistration)}/identity-review?${params}`,
+  // GLPI #887: vínculo global sem dependência de matrícula de gestor.
+  getHrIdentityDirectory() {
+    return this.client.get<HrIdentityDirectory>(
+      "/core-api/admin/organization/identity-directory"
+    );
+  }
+
+  getHrCollaboratorIdentityPreview(registration: string) {
+    return this.client.get<HrCollaboratorIdentityPreview>(
+      `/core-api/admin/organization/collaborators/${encodeURIComponent(registration)}/identity-preview`
     );
   }
 
   getHrIdentityMapping(userId: string) {
     return this.client.get<{ mapping: HrIdentityMapping | null }>(
-      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
+      `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`
     );
   }
 
-  confirmHrIdentityMapping(userId: string, registration: string, verificationReference?: string) {
+  confirmHrIdentityMapping(userId: string, registration: string) {
     return this.client.put<{ mapping: HrIdentityMapping }>(
       `/core-api/admin/organization/users/${encodeURIComponent(userId)}/hr-registration`,
-      {
-        registration,
-        confirmIdentity: true,
-        ...(verificationReference?.trim()
-          ? { verificationReference: verificationReference.trim() }
-          : {}),
-      },
+      { registration, confirmIdentity: true }
     );
   }
 

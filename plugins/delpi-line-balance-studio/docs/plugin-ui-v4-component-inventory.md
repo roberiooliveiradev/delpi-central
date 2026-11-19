@@ -1,5 +1,8 @@
 # DELPI Line Balance Studio V4 — inventário de componentes e plano reuse-first
 
+> **ATUALIZAÇÃO DE EXECUÇÃO — 2026-11-18:** Foi criado em `@delpi/plugin-ui` o entrypoint genérico **`./workspace-controls`**, com stylesheet **`./workspace-controls.css`** e expose MF **`./workspace-controls`**. Ele reúne `NavigationCard featured` (agora com `selected` opcional), `CollapsibleToolRail` genérico controlado, `NumberStepperControl`, `SegmentToggle`, tabelas, ações, KPIs, badges, gráficos e entradas públicas existentes. Código, CSS e testes estão no GitHub; **build, Vitest, Verify, smoke e integração Studio V4 continuam `TEST_NOT_RUN`** nesta execução. [Contrato de consumo do kit](../../plugin-ui/docs/workspace-controls.md). Não confundir a presença no repositório com funcionamento certificado em HML.
+
+
 **Data:** 2026-11-18  
 **Estado:** `INVENTORIED / UX_DESIGN_APPROVED / IMPLEMENTATION_NOT_STARTED_IN_THIS_TASK`  
 **Contrato de UX:** [cards de origem + sidebar interna retrátil](ux-v4-study-entry-and-method-sidebar.md).  

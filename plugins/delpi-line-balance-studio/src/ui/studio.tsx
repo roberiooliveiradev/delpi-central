@@ -1,11 +1,17 @@
-import { Timer, Clock3, ChartColumn, CircleDashed } from "lucide-react";
+import {
+  Timer, Clock3, ChartColumn, CircleDashed,
+  PackageSearch, SquarePen, Gauge, ListOrdered, GitBranch, Columns3,
+  ChartNoAxesColumnIncreasing, UsersRound,
+} from "lucide-react";
 import { useRef, useState, type DragEvent as ReactDragEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import {
   ActionButton,
-  PageHeader,
-  pageHeaderTitleRowBemClasses,
+  NavigationCard,
+  navigationCardBemClasses,
+  CollapsibleToolRail,
+  type ToolRailGroup,
   DataTable,
   dataTableBemClasses,
   SectionCard,
@@ -21,20 +27,147 @@ import {
   NativeTextControl,
   NATIVE_CONTROL_COMPACT_CLASS,
   type NativeTextControlProps,
-} from "@delpi/plugin-ui/native-controls";
-import { createManualStudy, createObservedStudy, summarizeShift } from "../index.js";
+  HelpTooltip,
+  HintAction,
+  FieldLabel,
+} from "@delpi/plugin-ui/workspace-controls";
+import { createManualStudy, createObservedStudy, listMethods, summarizeShift } from "../index.js";
+import {
+  ACTION_HELP, BALANCE_HELP, METHOD_GUIDES, METHOD_HELP,
+  PRODUCTION_HELP, SOURCE_HELP, STATE_HELP, STUDY_HELP,
+} from "./helpCatalog.js";
 import studioStyles from "./studio.css?inline";
-import type { ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
+import type { MethodId, ProductionConditionsInput, ScenarioInput, ShiftInput, StudioStudyInput } from "../index.js";
 
-const pageHeaderClasses = pageHeaderTitleRowBemClasses("lbs");
-const pageHeaderLabels = { refresh: "Atualizar", refreshing: "Atualizando" };
+/** Origem do estudo escolhida nos cards de entrada. */
+export type StudioOrigin = "OBSERVED_ROUTING" | "MANUAL";
+
+/** Estado da consulta de roteiro oficial dirigida pelo host — o Studio só
+ * apresenta e emite intenções; HTTP, AuthZ, filial e estágio são do host. */
+export type StudioRoutingState = Readonly<{
+  phase: "idle" | "searching" | "awaiting-stage" | "error";
+  productCode?: string;
+  branch?: string;
+  branchOptions?: readonly { value: string; label: string }[];
+  stage?: string;
+  stageOptions?: readonly { value: string; label: string }[];
+  /** Mensagem resolvida pelo host (erro ou orientação) — nunca montada aqui. */
+  message?: string;
+}>;
+
+/** Resultado da análise oficial M1 executada pelo host (BFF/domínio) —
+ * o Studio só apresenta; nunca executa nem estima o cálculo oficial. */
+export type StudioAnalysisState = Readonly<{
+  phase: "idle" | "running" | "result" | "error";
+  /** Impedimentos de parâmetros — o host os resolve e o Studio os exibe. */
+  issues?: readonly string[];
+  /** Mensagem de erro resolvida pelo host (AuthZ, 404, indisponibilidade). */
+  message?: string;
+  result?: Readonly<{
+    taktMinutes?: number | null;
+    workContentMinutes?: number | null;
+    theoreticalMinStations?: number | null;
+    bottleneckOperation?: string | null;
+    /** Operações sem tempo oficial — UNKNOWN, nunca zero. */
+    operationsMissingTime?: number;
+    /** false → a resposta oficial não cobriu o estágio do estudo. */
+    stageCovered: boolean;
+  }>;
+}>;
+
+/** Linha oficial do roteiro OBSERVED — metadados técnicos (CT, recurso,
+ * tempo padrão, setup) apresentados sob demanda na bancada, sem virar uma
+ * segunda tabela concorrente. */
+export type StudioOfficialOperation = Readonly<{
+  key: string;
+  code?: string | null;
+  description?: string | null;
+  workCenter?: string | null;
+  resource?: string | null;
+  timeMinutesPiece?: number | null;
+  setupHours?: number | null;
+}>;
+
+/** Estado de persistência do rascunho local, resolvido pelo host. */
+export type StudioDraftSaveState = Readonly<{
+  label: string;
+  tone: "success" | "warning";
+}>;
+
+/** Eventos públicos emitidos pelo elemento (bubbles + composed). */
+export const STUDIO_EVENTS = {
+  originSelect: "studio-origin-select",
+  routingSearch: "studio-routing-search",
+  routingContext: "studio-routing-context",
+  manualStudy: "studio-manual-study",
+  originReset: "studio-origin-reset",
+  methodChange: "studio-method-change",
+  analysisRun: "studio-analysis-run",
+  exportRequest: "studio-export",
+  clearRequest: "studio-clear-study",
+} as const;
+
+const navCardClasses = navigationCardBemClasses("lbs");
+const UI_PREFS_KEY = "delpi-lbs:ui";
+const METHOD_ICONS: Record<MethodId, ReactNode> = {
+  M1: <Gauge size={18} />,
+  M2: <ListOrdered size={18} />,
+  M3: <GitBranch size={18} />,
+  M4: <Columns3 size={18} />,
+  M5: <ChartNoAxesColumnIncreasing size={18} />,
+  M6: <UsersRound size={18} />,
+};
+const METHOD_STATUS_TEXT: Record<MethodId, string> = {
+  M1: "Diagnóstico local",
+  M5: "Disponível",
+  M2: "Planejado",
+  M3: "Planejado",
+  M4: "Planejado",
+  M6: "Planejado",
+};
+const methodNames: Record<MethodId, string> = {
+  M1: "Capacidade e takt",
+  M2: "FFD / LCR",
+  M3: "Peso posicional",
+  M4: "Kilbridge–Wester",
+  M5: "Yamazumi",
+  M6: "Recursos",
+};
+const methodHelpOf = (id: MethodId) =>
+  METHOD_HELP[id.toLowerCase() as "m1" | "m2" | "m3" | "m4" | "m5" | "m6"].summary;
+const railGroups = (catalog: readonly { id: MethodId; status: string }[]): readonly ToolRailGroup[] => [
+  {
+    id: "methods",
+    items: catalog.filter(method => method.status !== "PLANNED").map(method => ({
+      id: method.id,
+      label: `${method.id} · ${methodNames[method.id]}`,
+      icon: METHOD_ICONS[method.id],
+      statusText: METHOD_STATUS_TEXT[method.id],
+      description: methodHelpOf(method.id),
+    })),
+  },
+  {
+    id: "upcoming",
+    label: "Próximos métodos",
+    collapsible: true,
+    defaultOpen: false,
+    items: catalog.filter(method => method.status === "PLANNED").map(method => ({
+      id: method.id,
+      label: `${method.id} · ${methodNames[method.id]}`,
+      icon: METHOD_ICONS[method.id],
+      statusText: METHOD_STATUS_TEXT[method.id],
+      description: `${methodHelpOf(method.id)} ${METHOD_HELP.planned.summary}`,
+      disabled: true,
+    })),
+  },
+];
 const sectionClasses = sectionCardKaizenBemClasses("lbs");
 const sectionLabels = { titleHelpAriaLabel: (title: string) => `Ajuda: ${title}` };
 const kpiClasses = simpleKpiCardBemClasses("lbs", "kpi", { withBody: true, withSubtitle: true });
 const badgeClasses = statusBadgeBemClasses("lbs");
 const tableClasses = dataTableBemClasses("lbs");
 const tableLabels = {
-  emptyMessage: "Adicione uma operação para começar.",
+  emptyMessage: "Nenhuma operação no estudo. Use «+ Adicionar operação» para começar.",
   loadingMessage: "Carregando operações…",
   sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
   headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
@@ -79,6 +212,22 @@ export class LineBalanceStudioElement extends HTMLElement {
   private reactRoot: Root | undefined;
   private studyRevision = 0;
   private shiftDrafts: Partial<Record<ShiftInput["mode"], ShiftInput>> = {};
+  private originChoice: StudioOrigin | null = null;
+  private routingSession: StudioRoutingState = { phase: "idle" };
+  private routingUnsupported = false;
+  private productCodeInput = "";
+  private manualNameInput = "";
+  private selectedMethod: MethodId = "M5";
+  private railExpanded = true;
+  private confirmReset = false;
+  private analysis: StudioAnalysisState = { phase: "idle" };
+  private officialOps: readonly StudioOfficialOperation[] = [];
+  private saveState: StudioDraftSaveState | undefined;
+  private showMoreActions = false;
+  private showOfficialDetails = false;
+  private showMethodGuide = false;
+  private routingWait: ReturnType<typeof setTimeout> | undefined;
+  private manualWait: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     super();
@@ -89,6 +238,24 @@ export class LineBalanceStudioElement extends HTMLElement {
     this.surface.addEventListener("dragover", this.onDragOver);
     this.surface.addEventListener("drop", this.onDrop);
     this.surface.addEventListener("dragend", this.clearDrag);
+    let prefs: { method?: string; railExpanded?: boolean } = {};
+    try { prefs = JSON.parse(globalThis.localStorage?.getItem(UI_PREFS_KEY) ?? "{}"); } catch { /* preferência corrompida não bloqueia */ }
+    if (prefs.method === "M1" || prefs.method === "M5") this.selectedMethod = prefs.method;
+    this.railExpanded = typeof prefs.railExpanded === "boolean"
+      ? prefs.railExpanded
+      : !globalThis.matchMedia?.("(max-width: 900px)").matches;
+  }
+
+  private saveUiPrefs(): void {
+    try {
+      globalThis.localStorage?.setItem(UI_PREFS_KEY, JSON.stringify({
+        method: this.selectedMethod, railExpanded: this.railExpanded,
+      }));
+    } catch { /* sem persistência de preferência o Studio continua usável */ }
+  }
+
+  private emit(type: string, detail: unknown): void {
+    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
   }
 
   connectedCallback(): void {
@@ -113,10 +280,111 @@ export class LineBalanceStudioElement extends HTMLElement {
     if (value?.source === "OBSERVED_ROUTING") {
       for (const operation of value.operations) this.observedBaseline.set(operation.id, operation.durationSeconds);
     }
+    if (value) this.originChoice = value.source === "OBSERVED_ROUTING" ? "OBSERVED_ROUTING" : "MANUAL";
     this.studyRevision += 1;
     this.showConditions = false;
+    this.confirmReset = false;
+    this.showMoreActions = false;
+    this.showOfficialDetails = false;
+    this.showMethodGuide = false;
+    /* Resultado oficial, detalhes do roteiro e estado de salvamento
+     * pertencem ao ciclo do estudo anterior — o host os republica. */
+    this.analysis = { phase: "idle" };
+    this.officialOps = [];
+    this.saveState = undefined;
     this.shiftDrafts = {};
     this.scenarioId = value?.scenarios[0]?.id ?? "";
+    this.render();
+  }
+
+  /** Consulta oficial em andamento — dirigida pelo host, refletida aqui. */
+  set routingState(value: StudioRoutingState | undefined) {
+    this.routingSession = value ?? { phase: "idle" };
+    this.routingUnsupported = false;
+    this.render();
+  }
+
+  /** Análise oficial M1 — executada pelo host/BFF, exibida na bancada M1. */
+  set analysisState(value: StudioAnalysisState | undefined) {
+    this.analysis = value ?? { phase: "idle" };
+    this.render();
+  }
+
+  /** Metadados oficiais do roteiro OBSERVED — detalhe técnico sob demanda. */
+  set officialOperations(value: readonly StudioOfficialOperation[] | undefined) {
+    this.officialOps = value ?? [];
+    this.render();
+  }
+
+  /** Estado do rascunho local, resolvido pelo host (saved/quota/erro). */
+  set draftSave(value: StudioDraftSaveState | undefined) {
+    this.saveState = value;
+    this.render();
+  }
+
+  private selectOrigin(origin: StudioOrigin): void {
+    if (this.draft) return;
+    this.originChoice = origin;
+    this.routingUnsupported = false;
+    this.emit(STUDIO_EVENTS.originSelect, { origin });
+    this.render();
+  }
+
+  private requestRoutingSearch(): void {
+    const productCode = this.productCodeInput.trim();
+    if (!productCode) return;
+    this.routingUnsupported = false;
+    this.emit(STUDIO_EVENTS.routingSearch, { productCode });
+    clearTimeout(this.routingWait);
+    this.routingWait = setTimeout(() => {
+      if (this.routingSession.phase === "idle" && !this.draft) {
+        this.routingUnsupported = true;
+        this.render();
+      }
+    }, 1600);
+  }
+
+  private requestManualStudy(): void {
+    const name = this.manualNameInput.trim() || "Estudo manual";
+    this.emit(STUDIO_EVENTS.manualStudy, { name });
+    clearTimeout(this.manualWait);
+    /* Sem host respondendo ao evento (demo independente, outro portal), o
+     * Studio semeia o rascunho manual pelo contrato local. */
+    this.manualWait = setTimeout(() => {
+      if (!this.draft && this.originChoice === "MANUAL") {
+        this.study = {
+          id: crypto.randomUUID(), name,
+          operations: [], stations: [],
+          scenarios: [{ id: "a", name: "Cenário A", assignments: [] }],
+        };
+        this.emit("study-change", { study: this.study });
+      }
+    }, 350);
+  }
+
+  private requestOriginReset(): void {
+    if (!this.confirmReset) {
+      this.confirmReset = true;
+      this.render();
+      return;
+    }
+    this.confirmReset = false;
+    this.draft = undefined;
+    this.originChoice = null;
+    this.productCodeInput = "";
+    this.manualNameInput = "";
+    this.scenarioId = "";
+    this.observedBaseline.clear();
+    this.emit(STUDIO_EVENTS.originReset, {});
+    this.render();
+  }
+
+  private selectMethod(id: string): void {
+    const method = listMethods().find(item => item.id === id);
+    if (!method || method.status === "PLANNED") return;
+    this.selectedMethod = method.id;
+    this.saveUiPrefs();
+    this.emit(STUDIO_EVENTS.methodChange, { method: method.id });
     this.render();
   }
 
@@ -341,22 +609,23 @@ export class LineBalanceStudioElement extends HTMLElement {
 
   private renderConditions(conditions: ProductionConditionsInput): ReactNode {
     const { shift, demandUnitsPerShift, batchUnits } = conditions;
-    const field = (label: string, type: "time" | "number", kind: string, value: string, id?: string) => (
+    const field = (label: string, type: "time" | "number", kind: string, value: string, id?: string, hint?: string) => (
       <label className="field">
-        {label}
+        <FieldLabel label={label} hint={hint} />
         <CommitInput type={type} value={value} {...(type === "number" ? { min: 1, step: 1 } : {})}
           onCommit={next => this.onField(kind, next, id)} />
       </label>
     );
     const shiftFields = shift.mode === "CLOCK"
-      ? <>{field("Início", "time", "start", shift.start)}{field("Fim", "time", "end", shift.end)}</>
-      : field("Duração (min)", "number", "shift-minutes", String(shift.durationMinutes || ""));
+      ? <>{field("Início", "time", "start", shift.start, undefined, PRODUCTION_HELP.shiftStart.summary)}
+          {field("Fim", "time", "end", shift.end, undefined, PRODUCTION_HELP.shiftEnd.summary)}</>
+      : field("Duração (min)", "number", "shift-minutes", String(shift.durationMinutes || ""), undefined, PRODUCTION_HELP.shiftMinutes.summary);
     const pauses = shift.mode === "CLOCK"
       ? shift.breaks.map((pause, i) => <>
-        {field(`Pausa ${i + 1} · início`, "time", "break-start", pause.start, String(i))}
-        {field("Fim", "time", "break-end", pause.end, String(i))}
+        {field(`Pausa ${i + 1} · início`, "time", "break-start", pause.start, String(i), PRODUCTION_HELP.pause.summary)}
+        {field("Fim", "time", "break-end", pause.end, String(i), PRODUCTION_HELP.pause.summary)}
       </>)
-      : shift.breaks.map((pause, i) => field(`Pausa ${i + 1} (min)`, "number", "break-minutes", String(pause || ""), String(i)));
+      : shift.breaks.map((pause, i) => field(`Pausa ${i + 1} (min)`, "number", "break-minutes", String(pause || ""), String(i), PRODUCTION_HELP.pause.summary));
     const summary = summarizeShift(shift);
     const labels: Record<string, string> = {
       BREAK_OVERLAP: "Há pausas sobrepostas.", BREAK_OUTSIDE_SHIFT: "Há uma pausa fora do turno.",
@@ -365,17 +634,18 @@ export class LineBalanceStudioElement extends HTMLElement {
       INVALID_NUMBER: "Use durações inteiras válidas.", NO_PRODUCTIVE_TIME: "Reserve tempo produtivo no turno.",
     };
     return (
-      <div id="conditions"><SectionCard title="Condições de produção" classNames={sectionClasses} labels={sectionLabels}>
+      <div id="conditions"><SectionCard title="Condições de produção" classNames={sectionClasses} labels={sectionLabels}
+        hint={ACTION_HELP.conditions.summary}>
         <div className="fields" key={shift.mode}>
           <div className="field">
-            <label htmlFor="shift-mode">Modo de turno</label>
+            <FieldLabel label="Modo de turno" hint={PRODUCTION_HELP.shiftMode.summary} htmlFor="shift-mode" />
             <ModernSelectControl id="shift-mode" ariaLabel="Modo de turno" portalWithinShadowRoot value={shift.mode}
               options={[{ value: "CLOCK", label: "Horários" }, { value: "MINUTES", label: "Minutos" }]}
               onChange={value => this.onField("mode", value)} />
           </div>
           {shiftFields}
-          {field("Demanda por turno", "number", "demand", String(demandUnitsPerShift ?? ""))}
-          {field("Tamanho do lote", "number", "batch", String(batchUnits ?? ""))}
+          {field("Demanda por turno", "number", "demand", String(demandUnitsPerShift ?? ""), undefined, PRODUCTION_HELP.demand.summary)}
+          {field("Tamanho do lote", "number", "batch", String(batchUnits ?? ""), undefined, PRODUCTION_HELP.batch.summary)}
         </div>
         {pauses.map((pause, i) => (
           <div className="fields pause" key={`${shift.mode}:${i}`}>
@@ -385,19 +655,274 @@ export class LineBalanceStudioElement extends HTMLElement {
         ))}
         <ActionButton id="add-break" onClick={() => this.onAction("add-break")}>+ Adicionar pausa</ActionButton>
         {demandUnitsPerShift !== undefined && (!Number.isSafeInteger(demandUnitsPerShift) || demandUnitsPerShift < 1)
-          && <StateBox variant="warning" dismissible={false}>Informe uma demanda inteira positiva.</StateBox>}
+          && <StateBox variant="warning" dismissible={false}>A demanda precisa ser um inteiro positivo — ela define o takt de referência.</StateBox>}
         {batchUnits !== undefined && (!Number.isSafeInteger(batchUnits) || batchUnits < 1)
           && <StateBox variant="warning" dismissible={false}>Informe um tamanho de lote inteiro positivo.</StateBox>}
         {summary.ok
-          ? <StateBox>{format(summary.value.grossMinutes)} min brutos · {format(summary.value.breakMinutes)} min de pausa</StateBox>
-          : <StateBox variant="warning" dismissible={false}>{[...new Set(summary.issues.map(issue => labels[issue.code] ?? "Revise as condições do turno."))].join(" ")}</StateBox>}
+          ? <StateBox>{format(summary.value.grossMinutes)} min brutos · {format(summary.value.breakMinutes)} min de pausa · {format(summary.value.productiveMinutes)} min produtivos</StateBox>
+          : <StateBox variant="warning" dismissible={false}>{[...new Set(summary.issues.map(issue => labels[issue.code] ?? "Revise as condições do turno."))].join(" ")} Ajuste os campos acima para obter o tempo produtivo e o takt.</StateBox>}
       </SectionCard></div>
+    );
+  }
+
+  private renderRail(): ReactNode {
+    return (
+      <CollapsibleToolRail
+        groups={railGroups(listMethods())}
+        activeId={this.selectedMethod}
+        expanded={this.railExpanded}
+        ariaLabel="Métodos"
+        expandLabel="Expandir métodos"
+        collapseLabel="Recolher métodos"
+        onExpandedChange={expanded => { this.railExpanded = expanded; this.saveUiPrefs(); this.render(); }}
+        onSelect={id => this.selectMethod(id)}
+      />
+    );
+  }
+
+  private renderEntry(): ReactNode {
+    const routing = this.routingSession;
+    return (
+      <section className="entry" aria-label="Novo estudo">
+        <div className="entry-head">
+          <h2>Novo estudo</h2>
+          <p>{this.originChoice ? "Configure a origem selecionada para iniciar." : "Como deseja começar?"}</p>
+        </div>
+        <div className="origin-cards">
+          <NavigationCard
+            density="featured"
+            selected={this.originChoice === "OBSERVED_ROUTING"}
+            icon={<PackageSearch size={36} />}
+            title="Produto DELPI"
+            description="Consultar roteiro oficial"
+            classNames={navCardClasses}
+            aria-label="Produto DELPI — consultar roteiro oficial"
+            onClick={() => this.selectOrigin("OBSERVED_ROUTING")}
+          />
+          <NavigationCard
+            density="featured"
+            selected={this.originChoice === "MANUAL"}
+            icon={<SquarePen size={36} />}
+            title="Estudo manual"
+            description="Criar processo do zero"
+            classNames={navCardClasses}
+            aria-label="Estudo manual — criar processo do zero"
+            onClick={() => this.selectOrigin("MANUAL")}
+          />
+        </div>
+        {this.originChoice === "OBSERVED_ROUTING" && this.renderRoutingForm(routing)}
+        {this.originChoice === "MANUAL" && (
+          <div className="origin-form">
+            <label className="field">
+              <FieldLabel label="Nome do estudo" hint={STUDY_HELP.manualStudy.summary} />
+              <NativeTextControl id="lb-study-name" value={this.manualNameInput}
+                placeholder="Ex.: Montagem hipotética" aria-label="Nome do estudo"
+                onChange={value => { this.manualNameInput = value; this.render(); }}
+                onKeyDown={event => { if (event.key === "Enter") this.requestManualStudy(); }} />
+            </label>
+            <HintAction hint={ACTION_HELP.createStudy.summary} ariaLabel="Ajuda: Criar estudo">
+              <ActionButton id="lb-create-manual" variant="primary" onClick={() => this.requestManualStudy()}>
+                Criar estudo
+              </ActionButton>
+            </HintAction>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  private renderRoutingForm(routing: StudioRoutingState): ReactNode {
+    const searching = routing.phase === "searching";
+    return (
+      <div className="origin-panel">
+        <div className="origin-form">
+          <label className="field">
+            <FieldLabel label="Código do produto" hint={STUDY_HELP.product.summary} />
+            <NativeTextControl id="lb-product-code" value={this.productCodeInput}
+              aria-label="Código do produto"
+              onChange={value => { this.productCodeInput = value; this.render(); }}
+              onKeyDown={event => { if (event.key === "Enter") this.requestRoutingSearch(); }} />
+          </label>
+          <HintAction hint={ACTION_HELP.searchRouting.summary} ariaLabel="Ajuda: Buscar roteiro">
+            <ActionButton id="lb-search-routing" variant="primary"
+              disabled={!this.productCodeInput.trim() || searching}
+              onClick={() => this.requestRoutingSearch()}>
+              {searching ? "Consultando…" : "Buscar roteiro"}
+            </ActionButton>
+          </HintAction>
+        </div>
+        {searching && <StateBox>Consultando o roteiro oficial…</StateBox>}
+        {routing.phase === "error" && (
+          <StateBox variant="warning" dismissible={false}>
+            {routing.message ?? "Fonte oficial de roteiro indisponível."}
+          </StateBox>
+        )}
+        {this.routingUnsupported && routing.phase === "idle" && (
+          <StateBox variant="warning" dismissible={false}>
+            A consulta oficial de roteiro é fornecida pelo portal host — indisponível neste ambiente.
+          </StateBox>
+        )}
+        {routing.phase === "awaiting-stage" && (
+          <div className="origin-form">
+            <div className="field">
+              <FieldLabel label="Filial" hint={STUDY_HELP.branch.summary} />
+              <ModernSelectControl ariaLabel="Filial" portalWithinShadowRoot
+                value={routing.branch ?? ""} options={routing.branchOptions ?? []}
+                onChange={value => this.emit(STUDIO_EVENTS.routingContext, { branch: value, stage: "" })} />
+            </div>
+            <div className="field">
+              <FieldLabel label="Estágio produtivo" hint={STUDY_HELP.stage.summary} />
+              <ModernSelectControl ariaLabel="Estágio produtivo" portalWithinShadowRoot
+                value={routing.stage ?? ""} options={routing.stageOptions ?? []}
+                disabled={!routing.stageOptions?.length}
+                onChange={value => this.emit(STUDIO_EVENTS.routingContext, { branch: routing.branch ?? "", stage: value })} />
+            </div>
+          </div>
+        )}
+        {routing.phase === "awaiting-stage" && routing.message && <StateBox>{routing.message}</StateBox>}
+      </div>
+    );
+  }
+
+  /** Análise oficial M1 — execução sempre no host/domínio; aqui só a
+   * apresentação tipada recebida por `analysisState`. */
+  private renderOfficialAnalysis(analysis: StudioAnalysisState): ReactNode {
+    const running = analysis.phase === "running";
+    const issues = analysis.issues ?? [];
+    const blocked = issues.length > 0;
+    const result = analysis.result;
+    const kpis: { title: string; value: string; subtitle: string; icon: ReactNode }[] = result ? [
+      { title: "Takt", icon: <Timer size={18} />, subtitle: "min/peça · CALCULATED",
+        value: result.taktMinutes != null ? format(result.taktMinutes) : "—" },
+      { title: "Conteúdo de trabalho", icon: <Clock3 size={18} />, subtitle: "min · CALCULATED",
+        value: result.workContentMinutes != null ? format(result.workContentMinutes) : "—" },
+      { title: "Mínimo teórico de postos", icon: <ChartColumn size={18} />, subtitle: "CALCULATED",
+        value: result.theoreticalMinStations != null ? String(result.theoreticalMinStations) : "—" },
+      { title: "Gargalo candidato", icon: <Gauge size={18} />, subtitle: "CALCULATED",
+        value: result.bottleneckOperation ?? "—" },
+    ] : [];
+    return (
+      <div className="official-analysis">
+        <div className="official-analysis__head">
+          <span className="title-with-help">
+            <strong>Análise oficial M1</strong>
+            <HelpTooltip content={ACTION_HELP.runAnalysis.summary} ariaLabel="Ajuda: Análise oficial M1" placement="bottom" />
+          </span>
+          <span>Calculada pelo domínio autorizado do portal sobre o roteiro OBSERVED — o Studio nunca estima esse resultado.</span>
+        </div>
+        {blocked && (
+          <ul className="analysis-issues" role="alert">
+            {issues.map((issue, index) => <li key={index}>{issue}</li>)}
+          </ul>
+        )}
+        <HintAction hint={blocked
+          ? "A análise exige os parâmetros listados acima — ajuste as condições de produção."
+          : ACTION_HELP.runAnalysis.summary} ariaLabel="Ajuda: Executar análise oficial">
+          <ActionButton id="lb-run-analysis" variant="primary"
+            disabled={blocked || running} softDisabled
+            onClick={() => this.emit(STUDIO_EVENTS.analysisRun, {})}>
+            {running ? "Calculando…" : "Executar análise oficial"}
+          </ActionButton>
+        </HintAction>
+        {analysis.phase === "error" && (
+          <StateBox variant="warning" dismissible={false}>
+            {analysis.message ?? "Serviço de análise oficial indisponível — tente novamente mais tarde."}
+          </StateBox>
+        )}
+        {analysis.phase === "result" && result && !result.stageCovered && (
+          <StateBox>{STATE_HELP.stageNotCovered.summary}</StateBox>
+        )}
+        {analysis.phase === "result" && result?.stageCovered && (
+          <section className="metrics" aria-label="Resultado oficial M1" aria-live="polite">
+            {kpis.map(kpi => (
+              <SimpleKpiCard key={kpi.title} classNames={kpiClasses} title={kpi.title}
+                valueTag="strong" icon={kpi.icon} value={kpi.value} subtitle={kpi.subtitle} />
+            ))}
+          </section>
+        )}
+        {analysis.phase === "result" && (result?.operationsMissingTime ?? 0) > 0 && (
+          <StateBox>
+            {result?.operationsMissingTime} operação(ões) sem tempo oficial — UNKNOWN, nunca assumidas como zero.
+          </StateBox>
+        )}
+      </div>
+    );
+  }
+
+  /** Painel "Como usar este método" — conteúdo extenso do catálogo,
+   * disclosure inline que não sai do estudo nem cobre a bancada. */
+  private renderMethodGuide(): ReactNode {
+    const guide = this.selectedMethod === "M1" || this.selectedMethod === "M5"
+      ? METHOD_GUIDES[this.selectedMethod]
+      : undefined;
+    if (!guide) return null;
+    return (
+      <div id="method-guide" className="method-help">
+        <div className="method-help__head">
+          <strong>Como usar este método — {guide.title.replace(/^M\d — /, "")}</strong>
+          <p>{guide.objective}</p>
+        </div>
+        <div className="method-help__columns">
+          <section aria-label="Passos">
+            <h3>Como usar</h3>
+            <ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol>
+          </section>
+          <section aria-label="Interpretação">
+            <h3>Como interpretar</h3>
+            <ul>{guide.interpretation.map((item, index) => <li key={index}>{item}</li>)}</ul>
+          </section>
+          <section aria-label="Limitações">
+            <h3>Limitações</h3>
+            <ul>{guide.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  private renderCapacityPanel(stations: { id: string; name: string; load: number; unknown: number }[], takt: number | null, observed: boolean): ReactNode {
+    return (
+      <SectionCard title="Capacidade e takt" subtitle="Diagnóstico local do estudo · CALCULATED local"
+        classNames={sectionClasses} labels={sectionLabels} hint={METHOD_HELP.m1.summary}>
+        <DataTable rows={stations} rowKey={station => station.id} classNames={tableClasses}
+          labels={tableLabels} layout="scroll" compact
+          columns={[
+            { key: "station", header: "Posto", headerHint: BALANCE_HELP.station.summary, render: station => station.name },
+            { key: "load", header: "Carga conhecida", headerHint: BALANCE_HELP.stationLoad.summary, align: "right", render: station =>
+              `${format(station.load)} s${station.unknown ? ` · ${station.unknown} sem tempo` : ""}` },
+            { key: "takt", header: "vs takt", headerHint: BALANCE_HELP.taktVsLoad.summary, render: station =>
+              takt === null ? "—" : station.load > takt ? `+${format(station.load - takt)} s acima` : "Dentro do takt" },
+          ]}
+        />
+        {takt === null && (
+          <StateBox>{STATE_HELP.noTakt.summary} Ação: «Condições de produção».</StateBox>
+        )}
+        {observed
+          ? this.renderOfficialAnalysis(this.analysis)
+          : <StateBox>{STATE_HELP.manualNoOfficial.summary}</StateBox>}
+      </SectionCard>
     );
   }
 
   private render(): void {
     const study = this.draft;
-    if (!study) { this.reactRoot?.render(null); return; }
+    if (!study) {
+      this.reactRoot?.render(
+        <div className="studio">
+          <header className="top">
+            <div className="brand">
+              <strong>Balanceamento de Linha</strong>
+              <small>DELPI · Engenharia de Processos</small>
+            </div>
+          </header>
+          <div className="layout">
+            {this.renderRail()}
+            <div className="main">{this.renderEntry()}</div>
+          </div>
+        </div>,
+      );
+      return;
+    }
     const scenario = this.scenario;
     const assignment = new Map(scenario?.assignments.map(item => [item.operationId, item.stationId]));
     const operations = study.operations.map((operation, index) => ({
@@ -437,49 +962,126 @@ export class LineBalanceStudioElement extends HTMLElement {
             <strong>Balanceamento de Linha</strong>
             <small>DELPI · Engenharia de Processos</small>
           </div>
-          <div className="badges">
-            {observed && <StatusBadge classNames={badgeClasses}
-              label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />}
-            <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
-          </div>
         </header>
-        {observed && <p className="context">
-          Produto {observed.productCode} · Filial {observed.branchCode} · {observed.stageLabel ?? `Estágio ${observed.stageId}`}
-          {observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}
-          {observed.truncated ? " — resultado truncado pela fonte oficial" : ""}
-        </p>}
-        <div className="workspace">
-          <PageHeader layout="titleRow" title={study.name} classNames={pageHeaderClasses} labels={pageHeaderLabels}
-            subtitle={<label className="edit-name">Nome do estudo
-              <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
-            </label>}
-            actions={<>
-              {study.scenarios.length > 1 && (
-                <div className="scenario-control">
-                  <ModernSelectControl ariaLabel="Cenário" portalWithinShadowRoot
-                    value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
-                    onChange={value => this.onField("scenario", value)} />
+        <div className="layout">
+          {this.renderRail()}
+          <div className="main">
+            <div className="study-head">
+              <div className="study-id">
+                <div className="study-title-row">
+                  <strong>{observed ? `Produto ${observed.productCode}` : study.name}</strong>
+                  {observed && (
+                    <span className="badge-with-help">
+                      <StatusBadge classNames={badgeClasses}
+                        label={`Roteiro oficial · OBSERVED${observed.truncated ? " · truncado" : ""}`} variant="success" />
+                      <HelpTooltip content={SOURCE_HELP.observed.summary} ariaLabel="Ajuda: origem OBSERVED" placement="bottom" />
+                    </span>
+                  )}
+                  <span className="badge-with-help">
+                    <StatusBadge classNames={badgeClasses} label={observed ? "Estudo local · DRAFT_LOCAL" : "Rascunho manual · DRAFT_LOCAL"} variant="info" />
+                    <HelpTooltip content={SOURCE_HELP.draftLocal.summary} ariaLabel="Ajuda: rascunho DRAFT_LOCAL" placement="bottom" />
+                  </span>
                 </div>
-              )}
-              {study.scenarios.length < 4 && (
-                <ActionButton onClick={() => this.onAction("add-scenario")}>+ Novo cenário</ActionButton>
-              )}
-              <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
-                onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
-            </>} />
-          {this.showConditions && this.renderConditions(conditions)}
+                <span className="study-sub">
+                  {observed
+                    ? `Filial ${observed.branchCode} · ${observed.stageLabel ?? `Estágio ${observed.stageId}`}${observed.routeCode ? ` · Roteiro ${observed.routeCode}` : ""}`
+                    : "Estudo manual · sem vínculo com produto oficial"}
+                </span>
+                <label className="edit-name">Nome do estudo
+                  <CommitInput value={study.name} onCommit={value => this.onField("study-name", value)} />
+                </label>
+              </div>
+              <div className="study-actions">
+                {study.scenarios.length > 1 && (
+                  <div className="scenario-control">
+                    <FieldLabel label="Cenário" hint={STUDY_HELP.scenario.summary} />
+                    <ModernSelectControl ariaLabel="Cenário" portalWithinShadowRoot
+                      value={scenario?.id ?? ""} options={study.scenarios.map(item => ({ value: item.id, label: item.name }))}
+                      onChange={value => this.onField("scenario", value)} />
+                  </div>
+                )}
+                {study.scenarios.length < 4 && (
+                  <HintAction hint={ACTION_HELP.newScenario.summary} ariaLabel="Ajuda: Novo cenário">
+                    <ActionButton onClick={() => this.onAction("add-scenario")}>+ Novo cenário</ActionButton>
+                  </HintAction>
+                )}
+                <HintAction hint={ACTION_HELP.conditions.summary} ariaLabel="Ajuda: Condições de produção">
+                  <ActionButton aria-expanded={this.showConditions} aria-controls={this.showConditions ? "conditions" : undefined}
+                    onClick={() => this.onAction("conditions")}>Condições de produção</ActionButton>
+                </HintAction>
+                <HintAction hint={ACTION_HELP.methodGuide.summary} ariaLabel="Ajuda: Como usar este método">
+                  <ActionButton aria-expanded={this.showMethodGuide} aria-controls={this.showMethodGuide ? "method-guide" : undefined}
+                    onClick={() => { this.showMethodGuide = !this.showMethodGuide; this.render(); }}>
+                    Como usar este método
+                  </ActionButton>
+                </HintAction>
+                <HintAction hint={ACTION_HELP.moreActions.summary} ariaLabel="Ajuda: Mais ações">
+                  <ActionButton aria-expanded={this.showMoreActions} aria-controls={this.showMoreActions ? "study-more-actions" : undefined}
+                    onClick={() => { this.showMoreActions = !this.showMoreActions; this.render(); }}>
+                    Mais ações ▾
+                  </ActionButton>
+                </HintAction>
+                {this.saveState && (
+                  <span className="badge-with-help">
+                    <StatusBadge classNames={badgeClasses} label={this.saveState.label} variant={this.saveState.tone} />
+                    <HelpTooltip content={STUDY_HELP.draftSave.summary} ariaLabel="Ajuda: salvamento do rascunho" placement="bottom" />
+                  </span>
+                )}
+              </div>
+            </div>
+            {this.showMoreActions && (
+              <div className="more-actions" id="study-more-actions" role="group" aria-label="Ações secundárias do estudo">
+                <HintAction hint={ACTION_HELP.switchOrigin.summary} ariaLabel="Ajuda: Trocar origem">
+                  <ActionButton onClick={() => this.requestOriginReset()}>Trocar origem</ActionButton>
+                </HintAction>
+                <span className="more-actions__sep" aria-hidden="true" />
+                <HintAction hint={ACTION_HELP.exportCsv.summary} ariaLabel="Ajuda: Exportar CSV">
+                  <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "csv" })}>Exportar CSV</ActionButton>
+                </HintAction>
+                <HintAction hint={ACTION_HELP.exportXlsx.summary} ariaLabel="Ajuda: Exportar Excel">
+                  <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "xlsx" })}>Exportar Excel</ActionButton>
+                </HintAction>
+                <HintAction hint={ACTION_HELP.exportPdf.summary} ariaLabel="Ajuda: Exportar PDF">
+                  <ActionButton onClick={() => this.emit(STUDIO_EVENTS.exportRequest, { format: "pdf" })}>Exportar PDF</ActionButton>
+                </HintAction>
+                <span className="more-actions__sep" aria-hidden="true" />
+                <HintAction hint={ACTION_HELP.clearStudy.summary} ariaLabel="Ajuda: Limpar estudo">
+                  <ActionButton onClick={() => this.emit(STUDIO_EVENTS.clearRequest, {})}>Limpar estudo</ActionButton>
+                </HintAction>
+              </div>
+            )}
+            {this.confirmReset && (
+              <div className="confirm-bar" role="alertdialog" aria-label="Confirmar troca de origem">
+                <span>Trocar a origem encerra a sessão atual do estudo — o rascunho local salvo deste contexto permanece disponível.</span>
+                <ActionButton variant="primary" onClick={() => this.requestOriginReset()}>Sim, trocar origem</ActionButton>
+                <ActionButton onClick={() => { this.confirmReset = false; this.render(); }}>Manter estudo</ActionButton>
+              </div>
+            )}
+            {this.showMethodGuide && this.renderMethodGuide()}
+            {this.showConditions && this.renderConditions(conditions)}
           <section className="metrics" aria-label="Indicadores" aria-live="polite">
-            <SimpleKpiCard classNames={kpiClasses} title="Takt de referência" valueTag="strong" icon={<Timer size={18} />}
+            <SimpleKpiCard classNames={kpiClasses} title="Takt de referência" titleHint={PRODUCTION_HELP.takt.summary}
+              valueTag="strong" icon={<Timer size={18} />}
               value={takt === null ? "—" : `${format(takt)} s`} subtitle="por unidade" />
-            <SimpleKpiCard classNames={kpiClasses} title="Tempo produtivo" valueTag="strong" icon={<Clock3 size={18} />}
+            <SimpleKpiCard classNames={kpiClasses} title="Tempo produtivo" titleHint={PRODUCTION_HELP.productiveTime.summary}
+              valueTag="strong" icon={<Clock3 size={18} />}
               value={productive === null ? "—" : `${format(productive)} min`} subtitle="por turno" />
-            <SimpleKpiCard classNames={kpiClasses} title="Maior carga" valueTag="strong" icon={<ChartColumn size={18} />}
+            <SimpleKpiCard classNames={kpiClasses} title="Maior carga" titleHint={BALANCE_HELP.maxLoad.summary}
+              valueTag="strong" icon={<ChartColumn size={18} />}
               value={stations.length ? `${format(maxLoad)} s` : "—"} subtitle={incomplete ? "carga conhecida · parcial" : "por posto"} />
-            <SimpleKpiCard classNames={kpiClasses} title="Sem posto" valueTag="strong" icon={<CircleDashed size={18} />}
+            <SimpleKpiCard classNames={kpiClasses} title="Sem posto" titleHint={BALANCE_HELP.unassigned.summary}
+              valueTag="strong" icon={<CircleDashed size={18} />}
               value={String(unassigned)} subtitle={`de ${operations.length} operações`} />
           </section>
-          <SectionCard title="Yamazumi" subtitle="Carga por posto · segundos" classNames={sectionClasses} labels={sectionLabels}
-            actions={<ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>}>
+          {this.selectedMethod === "M1" && this.renderCapacityPanel(stations, takt, Boolean(observed))}
+          {this.selectedMethod === "M5" && (
+          <SectionCard title="Yamazumi" subtitle="Carga por posto · segundos · SIMULATION" classNames={sectionClasses} labels={sectionLabels}
+            hint={BALANCE_HELP.yamazumi.summary}
+            actions={stations.length > 0
+              ? <HintAction hint={ACTION_HELP.addStation.summary} ariaLabel="Ajuda: Adicionar posto">
+                  <ActionButton id="add-station" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>
+                </HintAction>
+              : undefined}>
             {stations.length > 0 ? (
               <StackedColumnChart
                 columns={stations.map((station, index) => ({
@@ -488,14 +1090,20 @@ export class LineBalanceStudioElement extends HTMLElement {
                     id: item.id, label: item.name, value: item.seconds, color: item.color,
                   }]),
                   footer: <>
-                    <IconButton aria-label={`Mover ${station.name} para cima`} disabled={index === 0}
-                      onClick={() => this.onAction("move-station-up", station.id)}>↑</IconButton>
-                    <IconButton aria-label={`Mover ${station.name} para baixo`} disabled={index === stations.length - 1}
-                      onClick={() => this.onAction("move-station-down", station.id)}>↓</IconButton>
+                    <HintAction hint="Reordena o posto no gráfico — não altera o conteúdo da carga." ariaLabel={`Ajuda: mover ${station.name}`}>
+                      <IconButton aria-label={`Mover ${station.name} para cima`} disabled={index === 0}
+                        onClick={() => this.onAction("move-station-up", station.id)}>↑</IconButton>
+                    </HintAction>
+                    <HintAction hint="Reordena o posto no gráfico — não altera o conteúdo da carga." ariaLabel={`Ajuda: mover ${station.name}`}>
+                      <IconButton aria-label={`Mover ${station.name} para baixo`} disabled={index === stations.length - 1}
+                        onClick={() => this.onAction("move-station-down", station.id)}>↓</IconButton>
+                    </HintAction>
                     <CommitInput value={station.name} aria-label={`Nome do posto ${index + 1}`}
                       onCommit={value => this.onField("station-name", value, station.id)} />
-                    <IconButton aria-label={`Remover posto ${index + 1}`}
-                      onClick={() => this.onAction("remove-station", station.id)}>×</IconButton>
+                    <HintAction hint="Remove o posto do cenário; as operações voltam a ficar sem atribuição." ariaLabel={`Ajuda: remover posto ${index + 1}`}>
+                      <IconButton aria-label={`Remover posto ${index + 1}`}
+                        onClick={() => this.onAction("remove-station", station.id)}>×</IconButton>
+                    </HintAction>
                   </>,
                 }))}
                 scale={scale} reference={takt} referenceLabel="Takt" referenceExceededLabel="Acima do takt"
@@ -504,37 +1112,79 @@ export class LineBalanceStudioElement extends HTMLElement {
                 onDragSegment={this.onDragStart} onDragEnd={this.clearDrag}
                 unassignLabel="Solte aqui para desatribuir"
                 footer={<>
-                  <span>Arraste um bloco para outro posto ou use a tabela.</span>
-                  {incomplete && <span>* Carga parcial por tempo desconhecido.</span>}
+                  <span>Arraste um bloco para outro posto ou atribua pela coluna «Posto» da tabela.</span>
+                  {takt === null && <span>Sem takt — configure turno e demanda em «Condições de produção».</span>}
+                  {unassigned > 0 && <span>{unassigned} operação(ões) ainda sem posto neste cenário.</span>}
+                  {incomplete && <span>* Carga parcial — operação sem tempo é UNKNOWN, nunca zero.</span>}
                 </>}
               />
-            ) : <StateBox>Adicione um posto para montar o gráfico.</StateBox>}
+            ) : (
+              <div className="empty-bench" role="note">
+                <strong>Nenhum posto configurado.</strong>
+                <p>{STATE_HELP.noStations.summary} As atribuições valem apenas para este cenário (SIMULATION) — o roteiro oficial não é alterado.</p>
+                <ActionButton variant="primary" onClick={() => this.onAction("add-station")}>+ Adicionar posto</ActionButton>
+              </div>
+            )}
           </SectionCard>
+          )}
           <SectionCard title="Operações" subtitle="Edite os tempos e atribua um posto a cada operação."
-            classNames={sectionClasses} labels={sectionLabels}
-            actions={<ActionButton id="add-operation" variant="primary"
-              onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>}>
-            {invalidOperations && <StateBox variant="warning" dismissible={false}>Revise os nomes e os tempos. Use um valor positivo ou deixe o tempo em branco.</StateBox>}
+            classNames={sectionClasses} labels={sectionLabels} hint={BALANCE_HELP.operation.summary}
+            actions={<>
+              {this.officialOps.length > 0 && (
+                <HintAction hint={ACTION_HELP.officialDetails.summary} ariaLabel="Ajuda: Detalhes oficiais">
+                  <ActionButton aria-expanded={this.showOfficialDetails} aria-controls={this.showOfficialDetails ? "official-details" : undefined}
+                    onClick={() => { this.showOfficialDetails = !this.showOfficialDetails; this.render(); }}>
+                    Detalhes oficiais
+                  </ActionButton>
+                </HintAction>
+              )}
+              <HintAction hint={ACTION_HELP.addOperation.summary} ariaLabel="Ajuda: Adicionar operação">
+                <ActionButton id="add-operation" variant="primary"
+                  onClick={() => this.onAction("add-operation")}>+ Adicionar operação</ActionButton>
+              </HintAction>
+            </>}>
+            {this.showOfficialDetails && this.officialOps.length > 0 && (
+              <div id="official-details" className="official-details">
+                <span className="official-details__cap">
+                  Metadados do roteiro oficial OBSERVED — consulta, não edição. O Centro de Trabalho é o recurso
+                  organizacional oficial e não equivale a um posto físico.
+                </span>
+                <DataTable rows={[...this.officialOps]} rowKey={row => row.key} classNames={tableClasses}
+                  labels={tableLabels} layout="scroll" compact
+                  columns={[
+                    { key: "op", header: "Operação", headerHint: BALANCE_HELP.operation.summary, render: row => row.code || "—" },
+                    { key: "desc", header: "Descrição", render: row => row.description ?? "—" },
+                    { key: "ct", header: "CT", headerHint: BALANCE_HELP.workCenter.summary, render: row => row.workCenter ?? "—" },
+                    { key: "resource", header: "Recurso", headerHint: BALANCE_HELP.resource.summary, render: row => row.resource ?? "—" },
+                    { key: "time", header: "Tempo padrão (min/peça)", headerHint: PRODUCTION_HELP.standardTime.summary, align: "right",
+                      render: row => row.timeMinutesPiece != null ? format(row.timeMinutesPiece) : "UNKNOWN" },
+                    { key: "setup", header: "Setup (h/lote)", headerHint: PRODUCTION_HELP.setup.summary, align: "right",
+                      render: row => row.setupHours != null ? format(row.setupHours) : "—" },
+                  ]}
+                />
+              </div>
+            )}
+            {invalidOperations && <StateBox variant="warning" dismissible={false}>Há operação sem nome ou com tempo inválido. Informe um nome e use um tempo positivo — ou deixe o tempo em branco (permanece UNKNOWN).</StateBox>}
             <DataTable rows={operationRows} rowKey={operation => operation.id} classNames={tableClasses}
               labels={tableLabels} layout="scroll" compact indexColumn={{ ariaLabel: "Índice da operação" }}
               columns={[
-                { key: "operation", header: "Operação", render: operation => (
+                { key: "operation", header: "Operação", headerHint: BALANCE_HELP.operation.summary, render: operation => (
                   <div className="op-cell">
                     <CommitInput id={`name:${operation.id}`} value={operation.name} required aria-label={`Nome da operação ${operation.index + 1}`}
                       onCommit={value => this.onField("operation-name", value, operation.id)} />
                     {operation.reference && <small className="op-ref">{operation.reference}</small>}
                   </div>
                 ) },
-                ...(observed ? [{ key: "origin", header: "Origem", render: (operation: typeof operationRows[number]) => (
+                ...(observed ? [{ key: "origin", header: "Origem", headerHint: `${SOURCE_HELP.observed.summary} «Ajuste local» é uma edição PROVIDed no rascunho; «Local» é operação incluída manualmente.` , render: (operation: typeof operationRows[number]) => (
                   <StatusBadge classNames={badgeClasses}
                     label={operation.origin === "OBSERVED" ? "Oficial" : operation.origin === "ADJUSTED" ? "Ajuste local" : "Local"}
                     variant={operation.origin === "OBSERVED" ? "success" : operation.origin === "ADJUSTED" ? "warning" : "info"} />
                 ) }] : []),
-                { key: "duration", header: "Tempo (s)", render: operation => (
+                { key: "duration", header: "Tempo (s)", headerHint: PRODUCTION_HELP.standardTime.summary + " Em branco, permanece UNKNOWN.", render: operation => (
                   <CommitInput type="number" min={0} step="any" placeholder="Desconhecido" value={operation.durationSeconds ?? ""}
                     aria-label={`Tempo da operação ${operation.index + 1} em segundos`} onCommit={value => this.onField("duration", value, operation.id)} />
                 ) },
-                { key: "station", header: "Posto", render: operation => (
+                { key: "station", header: "Posto", headerHint: ACTION_HELP.assignStation.summary, render: operation => (
                   <ModernSelectControl portalWithinShadowRoot allowEmpty emptyLabel="Sem posto"
                     ariaLabel={`Posto da operação ${operation.index + 1}`} value={assignment.get(operation.id) ?? ""} options={stationOptions}
                     onChange={value => this.onField("station", value, operation.id)} />
@@ -546,6 +1196,7 @@ export class LineBalanceStudioElement extends HTMLElement {
               ]}
             />
           </SectionCard>
+          </div>
         </div>
       </div>,
     );
