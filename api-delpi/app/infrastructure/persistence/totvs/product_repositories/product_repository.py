@@ -389,3 +389,15 @@ class ProductRepository(BaseRepository, ProductQueryRepositoryPort):
                 sql = lookup_by_customer_references_sql(len(chunk))
                 found.extend(repo.execute_query(sql, tuple(chunk)))
         return found
+
+    def get_product_snapshot(self, product_code: str) -> dict | None:
+        """Snapshot read-only de todos os campos elegíveis da SB1 (merge-write)."""
+        from app.infrastructure.persistence.totvs.product_repositories.product_sb1_snapshot_sql import (
+            product_snapshot_sql,
+        )
+
+        code = str(product_code or "").strip()
+        if not code:
+            return None
+        with self as repo:
+            return repo.execute_one(product_snapshot_sql(), (code,))

@@ -98,11 +98,16 @@ def build_update_protheus_rest_supplier_use_case() -> UpdateProtheusRestSupplier
 
 
 def build_update_protheus_product_use_case() -> UpdateProtheusProductUseCase:
+    from app.infrastructure.persistence.totvs.product_repositories.product_repository import (
+        ProductRepository,
+    )
+
     return UpdateProtheusProductUseCase(
         params_repository=build_protheus_params_repository(),
         token_service=build_protheus_token_service(),
         gateway=build_protheus_rest_gateway(),
         identity_gateway=build_core_protheus_identity_gateway(),
+        product_repository=ProductRepository(),
         tracker=build_integration_tracking_service(),
     )
 

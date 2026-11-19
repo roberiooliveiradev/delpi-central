@@ -1,12 +1,19 @@
-"""Payload tests — product PUT full-representation contract and URL derivation."""
+"""Payload tests — product PUT partial-update contract and URL derivation.
+
+Client contract v2: o cliente envia um subconjunto de campos elegíveis;
+o use case expande para a representação completa via read-merge-write.
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from app.application.services.integrations.protheus_product_payload import (
+from app.application.services.integrations.protheus_product_field_catalog import (
     PRODUCT_FIELD_SPECS,
+)
+from app.application.services.integrations.protheus_product_payload import (
     build_upstream_product_update_body,
+    merge_product_update_fields,
     normalize_product_update_fields,
     product_update_url,
     validate_product_code,
@@ -52,19 +59,47 @@ def test_validate_product_code_rejects_bad() -> None:
         validate_product_code("X" * 16)
 
 
-def test_normalize_accepts_full_representation() -> None:
+def test_normalize_accepts_valid_subset() -> None:
     out = normalize_product_update_fields(FULL_PRODUCT)
     assert out["B1_DESC"] == "PESO PARA TESTE 6KG"
     assert out["B1_REFEREN"] == ""
-    assert set(out) == set(PRODUCT_FIELD_SPECS)
+    assert set(out) == set(FULL_PRODUCT)
 
 
-def test_normalize_rejects_partial_body() -> None:
-    partial = {k: v for k, v in FULL_PRODUCT.items() if k != "B1_ESPECIE"}
+def test_normalize_accepts_single_field_partial() -> None:
+    out = normalize_product_update_fields({"B1_DESC": "NOVA DESCRICAO"})
+    assert out == {"B1_DESC": "NOVA DESCRICAO"}
+
+
+def test_normalize_rejects_empty_delta() -> None:
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_product_update_fields(partial)
-    assert exc.value.code == "PROTHEUS_PRODUCT_FULL_REPRESENTATION_REQUIRED"
-    assert "B1_ESPECIE" in exc.value.message
+        normalize_product_update_fields({})
+    assert exc.value.code == "PROTHEUS_PRODUCT_PAYLOAD_INVALID"
+
+
+def test_merge_expands_delta_to_full_catalog() -> None:
+    snapshot = {
+        field: ("9" * spec["max_length"] if spec["kind"] == "N" else "S")
+        for field, spec in PRODUCT_FIELD_SPECS.items()
+    }
+    snapshot["B1_DESC"] = "DESCRICAO ORIGINAL   "
+    merged = merge_product_update_fields(
+        snapshot=snapshot, changes={"B1_GRUPO": "2099"}
+    )
+    # merged cobre todo o catálogo menos B1_COD (identidade injetada
+    # pelo body builder a partir do path — nunca do snapshot/delta).
+    assert set(merged) == set(PRODUCT_FIELD_SPECS) - {"B1_COD"}
+    assert merged["B1_GRUPO"] == "2099"
+    assert merged["B1_DESC"] == "DESCRICAO ORIGINAL"
+
+
+def test_merge_preserves_omitted_fields_from_snapshot() -> None:
+    snapshot = {field: "" for field in PRODUCT_FIELD_SPECS}
+    snapshot["B1_ESPECIE"] = "5"
+    merged = merge_product_update_fields(
+        snapshot=snapshot, changes={"B1_DESC": "NOVA"}
+    )
+    assert merged["B1_ESPECIE"] == "5"
 
 
 def test_normalize_rejects_unknown_field() -> None:
@@ -89,8 +124,9 @@ def test_normalize_rejects_null_allows_empty() -> None:
 
 
 def test_normalize_rejects_oversized() -> None:
+    # B1_DESC tem 120 caracteres no SX3 — 121 excede o limite.
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_product_update_fields({**FULL_PRODUCT, "B1_DESC": "X" * 101})
+        normalize_product_update_fields({**FULL_PRODUCT, "B1_DESC": "X" * 121})
     assert exc.value.code == "PROTHEUS_PRODUCT_FIELD_TOO_LONG"
 
 

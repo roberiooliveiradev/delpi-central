@@ -1,16 +1,16 @@
 """Normalize PUT product fields and build the delpiproduto upstream body.
 
-Upstream contract (source: docs/13-fontes-totvs-protheus/04. Estoque/
-DLP04I01.PRW — WSMETHOD PUT incProd): the custom REST class reads a flat
-JSON object and unconditionally maps ALL 22 B1_* keys into an array for
-MATA010 in altera mode (MSExecAuto op 4). Missing keys crash upstream
-(VAL() on nil → "expected C->U") and empty values overwrite the record —
-so this surface is a FULL-REPRESENTATION PUT, never a partial update.
+Upstream contract v2 (DLP04I01.PRW — full-field catalog, 291 campos): a
+classe lê um JSON flat e mapeia cada chave B1_* validada para o array
+ExecAuto da MATA010 (op 4). PUT exige representação completa upstream —
+a atualização parcial do cliente é expandida aqui via snapshot do
+cadastro atual (read-merge-write), nunca reenviando apenas o delta.
 
-B1_COD identifies the record and comes from the URL path — the client sends
-the remaining 21 fields as a complete snapshot (read current state first).
-The class has no codusr field: user attribution lives in our integration
-tracking ledger.
+Campos aceitos do cliente: qualquer subconjunto do catálogo elegível
+(`PRODUCT_FIELD_SPECS`, gerado de contracts/sb1-field-matrix.json —
+SX3 TST01==PROD). Campos protegidos/sistema/imutáveis são rejeitados.
+B1_COD identifica o registro e vem do path — nunca do body. A classe
+não tem campo codusr: a atribuição vive no ledger de tracking.
 """
 
 from __future__ import annotations
@@ -18,6 +18,10 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
+from app.application.services.integrations.protheus_product_field_catalog import (
+    PRODUCT_FIELD_SPECS,
+    PRODUCT_PROTECTED_FIELDS,
+)
 from app.domain.integrations.protheus_rest import (
     ProtheusRestConfig,
     ProtheusRestError,
@@ -25,33 +29,6 @@ from app.domain.integrations.protheus_rest import (
 
 PRODUCT_CODE_PATTERN = r"^[A-Za-z0-9]{1,15}$"
 PRODUCT_UPDATE_PATH = "delpiproduto/v1/IncProduto/alterar"
-
-# Full field set consumed by the upstream handler (B1_COD excluded — it is
-# the record key injected from the URL path). `numeric` marks columns the
-# handler wraps in VAL(), which tolerate numeric strings.
-PRODUCT_FIELD_SPECS: dict[str, dict[str, Any]] = {
-    "B1_GRUPO": {"max_length": 4},
-    "B1_DESC": {"max_length": 100},
-    "B1_REFEREN": {"max_length": 60},
-    "B1_REFCANT": {"max_length": 60},
-    "B1_CODDES": {"max_length": 30},
-    "B1_TIPO": {"max_length": 2},
-    "B1_YHOHS": {"max_length": 1},
-    "B1_POSIPI": {"max_length": 10},
-    "B1_LOCPAD": {"max_length": 15},
-    "B1_UM": {"max_length": 2},
-    "B1_SEGUM": {"max_length": 2},
-    "B1_TE": {"max_length": 15},
-    "B1_TS": {"max_length": 15},
-    "B1_PICMRET": {"max_length": 15, "numeric": True},
-    "B1_CONV": {"max_length": 15, "numeric": True},
-    "B1_TIPCONV": {"max_length": 1},
-    "B1_TPMAT": {"max_length": 15},
-    "B1_ESPECIE": {"max_length": 10},
-    "B1_EX_NCM": {"max_length": 2},
-    "B1_EX_NBM": {"max_length": 2},
-    "B1_ORIGEM": {"max_length": 1},
-}
 
 # Reserved identity fields — never accepted from the client (lowercased).
 _FORBIDDEN_KEYS = frozenset(
@@ -99,107 +76,143 @@ def product_update_url(config: ProtheusRestConfig) -> str:
     return f"{base[:idx]}/{PRODUCT_UPDATE_PATH}"
 
 
+def _err(message: str, code: str) -> ProtheusRestError:
+    return ProtheusRestError(
+        message, code=code, status_code=422, recoverable=False
+    )
+
+
 def _normalize_value(field: str, value: Any) -> str:
+    """Normaliza um valor do cliente conforme a espécie SX3 (kind)."""
     if isinstance(value, bool):
-        raise ProtheusRestError(
-            f"Campo {field} deve ser texto ou número, não booleano.",
-            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-            status_code=422,
-            recoverable=False,
+        raise _err(
+            f"Campo {field} deve ser texto, número ou data, não booleano.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
         )
     if value is None:
-        raise ProtheusRestError(
-            f"Campo {field} não pode ser nulo — envie o valor atual "
-            "(string vazia é aceita quando o campo está vazio no cadastro).",
-            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-            status_code=422,
-            recoverable=False,
+        raise _err(
+            f"Campo {field} não pode ser nulo — omita o campo ou envie o "
+            "valor desejado (ausência preserva o valor atual no merge).",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
         )
+
+    kind = str(PRODUCT_FIELD_SPECS[field]["kind"])
+    max_length = int(PRODUCT_FIELD_SPECS[field]["max_length"])
+
     if isinstance(value, (int, float)):
+        if kind != "N":
+            raise _err(
+                f"Campo {field} é caractere/data — envie texto.",
+                "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+            )
         text = str(value)
     elif isinstance(value, str):
         text = value
     else:
-        raise ProtheusRestError(
+        raise _err(
             f"Campo {field} deve ser texto ou número.",
-            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-            status_code=422,
-            recoverable=False,
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
         )
+
     normalized = text.strip()
-    max_length = int(PRODUCT_FIELD_SPECS[field]["max_length"])
-    if len(normalized) > max_length:
-        raise ProtheusRestError(
-            f"Campo {field} excede {max_length} caracteres.",
-            code="PROTHEUS_PRODUCT_FIELD_TOO_LONG",
-            status_code=422,
-            recoverable=False,
-        )
-    if PRODUCT_FIELD_SPECS[field].get("numeric") and normalized:
+
+    if kind == "N" and normalized:
         try:
             float(normalized)
         except ValueError:
-            raise ProtheusRestError(
+            raise _err(
                 f"Campo {field} deve ser numérico.",
-                code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
+                "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
             ) from None
+    if kind == "D" and normalized:
+        if not re.fullmatch(r"\d{8}", normalized):
+            raise _err(
+                f"Campo {field} deve ser data AAAAMMDD (8 dígitos).",
+                "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+            )
+    if len(normalized) > max_length:
+        raise _err(
+            f"Campo {field} excede {max_length} caracteres.",
+            "PROTHEUS_PRODUCT_FIELD_TOO_LONG",
+        )
     return normalized
 
 
 def normalize_product_update_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
-    """Full-representation contract: all 21 client fields must be present.
+    """Partial-update contract: cliente envia um SUBCONJUNTO de campos.
 
-    Upstream maps every key unconditionally — a partial body would blank
-    unspecified columns on the product record. Empty string is a valid
-    value (it mirrors the current record); null is rejected as ambiguous.
+    Cada chave deve pertencer ao catálogo elegível; campo protegido ou
+    desconhecido é rejeitado; null é rejeitado como ambíguo. A presença
+    de ao menos um campo elegível é exigida — o merge com o snapshot
+    atual acontece em seguida (nunca enviamos delta direto ao ExecAuto).
     """
     if raw is None or isinstance(raw, list) or not isinstance(raw, Mapping):
-        raise ProtheusRestError(
-            "Campo product deve ser um objeto JSON com a representação "
-            "completa dos campos do produto.",
-            code="PROTHEUS_PRODUCT_PAYLOAD_INVALID",
-            status_code=422,
-            recoverable=False,
+        raise _err(
+            "Campo product deve ser um objeto JSON com os campos a alterar.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
+        )
+    if not raw:
+        raise _err(
+            "Informe ao menos um campo elegível para alterar.",
+            "PROTHEUS_PRODUCT_PAYLOAD_INVALID",
         )
 
     lowered_keys = {str(k).strip().lower() for k in raw}
     forbidden = _FORBIDDEN_KEYS & lowered_keys
     if forbidden:
-        raise ProtheusRestError(
+        raise _err(
             "Identidade do produto ou do usuário não pode ser enviada nesta rota.",
-            code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
-            status_code=422,
-            recoverable=False,
+            "PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+        )
+
+    protected = [str(k) for k in raw.keys() if str(k) in PRODUCT_PROTECTED_FIELDS]
+    if protected:
+        raise _err(
+            "Campos protegidos (imutáveis ou gerenciados pelo ERP) não "
+            "podem ser alterados: " + ", ".join(sorted(protected)[:10]) + ".",
+            "PROTHEUS_PRODUCT_FIELD_PROTECTED",
         )
 
     unknown = [str(k) for k in raw.keys() if str(k) not in PRODUCT_FIELD_SPECS]
     if unknown:
-        raise ProtheusRestError(
-            "Campos não reconhecidos no contrato de produto: "
+        raise _err(
+            "Campos não reconhecidos no catálogo elegível de produto: "
             + ", ".join(sorted(unknown)[:10])
-            + ".",
-            code="PROTHEUS_PRODUCT_FIELD_UNKNOWN",
-            status_code=422,
-            recoverable=False,
+            + ". Consulte o contrato product.metadata.",
+            "PROTHEUS_PRODUCT_FIELD_UNKNOWN",
         )
 
-    missing = [field for field in PRODUCT_FIELD_SPECS if field not in raw]
-    if missing:
-        raise ProtheusRestError(
-            "A alteração de produto exige a representação completa — "
-            "campos ausentes: "
-            + ", ".join(sorted(missing))
-            + ". Leia o cadastro atual e reenvie todos os campos.",
-            code="PROTHEUS_PRODUCT_FULL_REPRESENTATION_REQUIRED",
-            status_code=422,
-            recoverable=False,
-        )
+    return {str(k): _normalize_value(str(k), v) for k, v in raw.items()}
 
-    return {
-        field: _normalize_value(field, raw[field]) for field in PRODUCT_FIELD_SPECS
-    }
+
+def merge_product_update_fields(
+    *, snapshot: Mapping[str, Any], changes: Mapping[str, str]
+) -> dict[str, str]:
+    """Expande o delta do cliente na representação completa do catálogo.
+
+    snapshot: linha atual da SB1 (todas as colunas elegíveis — vinda de
+    ProductRepository.get_product_snapshot). Campos não alterados levam o
+    valor atual do cadastro (RTRIM); campos alterados levam o valor
+    normalizado do cliente. Ausência nunca vira vazio por omissão —
+    somente se o cadastro atual estiver vazio.
+    """
+    merged: dict[str, str] = {}
+    for field in PRODUCT_FIELD_SPECS:
+        if field == "B1_COD":
+            # Identidade vem do path/contrato governado — injetada por
+            # build_upstream_product_update_body, nunca do snapshot/delta.
+            continue
+        if field in changes:
+            merged[field] = changes[field]
+            continue
+        current = snapshot.get(field)
+        if current is None:
+            merged[field] = ""
+        elif isinstance(current, (int, float)):
+            merged[field] = str(current)
+        else:
+            merged[field] = str(current).rstrip()
+    return merged
 
 
 def build_upstream_product_update_body(

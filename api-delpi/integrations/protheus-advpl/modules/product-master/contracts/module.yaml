@@ -32,12 +32,15 @@ candidate_source:
     mirror_commit: "be614649b7"
     note: "SHA do candidato = commit do delpi-central que o contem; distinto do SHA upstream"
   changes:
-    - "validacao explicita de JSON (400 em payload invalido)"
-    - "contrato de representacao completa: 22 campos obrigatorios em POST e PUT"
-    - "numericos: N nativo ou C estrita lIsNumStr (sinal+ digitos+ . opcional); zero valido"
-    - "caractere: somente ValType C — sem conversao de tipo"
-    - "ErrorBlock restaurado em todos os caminhos (finalizacao unica)"
-    - "remocao de codigo morto e artefatos de ambiente"
+    - "catalogo completo SB1: 291 campos gerados de contracts/sb1-field-matrix.json (SX3 TST01, parity PROD)"
+    - "rejeicao explicita de campos desconhecidos/protegidos (28 SYSTEM_MANAGED/IMMUTABLE exceto B1_COD)"
+    - "PUT exige representacao completa do catalogo (fail-closed contra zeramento); parcial resolvido na api-delpi via read-merge-write"
+    - "POST exige apenas B1_COD; demais campos recebem defaults oficiais da MATA010"
+    - "tipos por SX3: C estrito, N nativo ou lIsNumStr, D AAAAMMDD, M string (5 condicionais VALIDAR NO TST01)"
+    - "ErrorBlock restaurado em todos os caminhos (finalizacao unica); GetAutoGrLog sanitizado; sem ErrorStack na resposta"
+    - "DELETE excluir publicado e BLOQUEADO (501 not_homologated) — semantica oficial pendente"
+    - "GET metadados publicado — autodescricao do catalogo (field+kind, 291 entradas)"
+    - "RETOBJ v2 com errorType (client_error/official_validation/server_error/not_homologated)"
   pending_validation:
     - "compilacao e homologacao TST01 pela equipe ERP"
     - "pontos de entrada ativos na MATA010 do ambiente"
@@ -46,20 +49,28 @@ operations:
   known:
     - op: CREATE
       status: PROVEN_SOURCE
-      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO POST PROVEN_RUNTIME"
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO POST PROVEN_RUNTIME (contrato v2: catalogo completo, B1_COD obrigatorio)"
     - op: UPDATE
       status: PROVEN_SOURCE
-      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (22 campos B1_*)"
+      evidence: "DLP04I01.PRW upstream + DELPIPRODUTO PUT PROVEN_RUNTIME (v2: representacao completa 291 campos; parcial via read-merge-write na api-delpi)"
+    - op: METADATA
+      status: SOURCE_CANDIDATE
+      evidence: "GET /v1/IncProduto/metadados no candidato — autodescricao estatica, sem leitura ERP"
   pending:
     - op: READ
-      note: "avaliar reaproveitamento da API DELPI existente"
+      note: "ficha completa permanece na superficie governada de leitura api-delpi (SELECT SB1) — nao implementar SQL no .PRW"
     - op: DELETE
-      note: "contrato e política pendentes; proibido sem semântica ERP aprovada"
+      note: "BLOCKED (501): semantica oficial MATA010 op 5 TO_INVENTORY — exige fonte + inventario de vinculos antes de implementar"
 dependencies: []
 rest_contracts:
   - id: DELPIPRODUTO
-    uris: ["POST /v1/IncProduto/incluir", "PUT /v1/IncProduto/alterar"]
-    status: PROVEN_RUNTIME
+    uris:
+      - "POST /v1/IncProduto/incluir"
+      - "PUT /v1/IncProduto/alterar"
+      - "DELETE /v1/IncProduto/excluir (501 blocked)"
+      - "GET /v1/IncProduto/metadados"
+    status: SOURCE_CANDIDATE
+    note: "POST/PUT PROVEN_RUNTIME no contrato de 22 campos; catalogo v2 aguarda recompilacao TST01"
 restrictions:
   erp_write: "proibida fora de gate+pin (default OFF) — ver protheus-write-integration-playbook.md"
   rpo_compile: "exclusivo da equipe ERP; nunca por efeito colateral de commit"
