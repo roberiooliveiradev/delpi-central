@@ -10,9 +10,6 @@ primeira chamada — configuração ausente falha fechado no adapter
 
 from __future__ import annotations
 
-import threading
-
-from delpi_auth.service_token_provider import ClientCredentialsTokenProvider
 
 from engineering_app.application.use_cases.get_lmp_detail import (
     GetLmpDetailUseCase,
@@ -37,26 +34,10 @@ from engineering_app.infrastructure.gateways.downstream_client import (
     DownstreamClient,
 )
 
-_provider_lock = threading.Lock()
-_shared_provider: ClientCredentialsTokenProvider | None = None
-
-
-def _s2s_service_token() -> str:
-    """Token client-credentials desta API — cache process-wide (mesmo
-    padrão controllership-finance-api/supplies-api)."""
-    global _shared_provider
-    if _shared_provider is None:
-        with _provider_lock:
-            if _shared_provider is None:
-                _shared_provider = ClientCredentialsTokenProvider.from_env()
-    return _shared_provider.get_token()
-
-
-def _reset_s2s_provider() -> None:
-    """Test hook — descarta o provider cacheado para recarregar env."""
-    global _shared_provider
-    with _provider_lock:
-        _shared_provider = None
+from engineering_app.infrastructure.gateways.s2s_token import (
+    get_s2s_service_token as _s2s_service_token,
+    reset_s2s_provider as _reset_s2s_provider,
+)
 
 
 def _build_facts_source() -> ApiDelpiFactsSource:

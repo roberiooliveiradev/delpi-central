@@ -24,7 +24,9 @@ from app.infrastructure.persistence.totvs.engineering_repositories.prc_catalogs_
 from app.interface.http.pagination_query import LIMIT_QUERY, PAGE_SIZE_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
-from delpi_auth.authorization import require_any_permission
+from app.interface.http.s2s_service_access import (
+    require_s2s_or_any_permission,
+)
 
 router = APIRouter(
     prefix="/engineering/product-registration",
@@ -33,7 +35,11 @@ router = APIRouter(
 
 
 @router.get("/catalogs/{catalog}", operation_id="prc_catalog_items")
-@require_any_permission(PRC_READ_ACCESS)
+@require_s2s_or_any_permission(
+    PRC_READ_ACCESS,
+    required_scopes=("products.read",),
+    allowed_clients=("engineering-api",),
+)
 def list_prc_catalog_items(
     catalog: str,
     query: str | None = Query(
@@ -70,7 +76,11 @@ def list_prc_catalog_items(
 
 
 @router.get("/suppliers", operation_id="prc_supplier_search")
-@require_any_permission(PRC_READ_ACCESS)
+@require_s2s_or_any_permission(
+    PRC_READ_ACCESS,
+    required_scopes=("products.read",),
+    allowed_clients=("engineering-api",),
+)
 def search_prc_suppliers(
     query: str = Query(..., min_length=2, max_length=80),
     page: int = Query(default=1, ge=1),

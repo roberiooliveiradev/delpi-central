@@ -10,6 +10,9 @@ from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
 from pydantic import BaseModel, Field
+from app.interface.http.s2s_service_access import (
+    require_s2s_or_any_permission,
+)
 from delpi_auth.authorization import require_any_permission, require_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -622,7 +625,11 @@ def get_product_directives(
     response_model=ProductDetailResponse,
     openapi_extra=openapi_example_response(PRODUCT_DETAIL_EXAMPLE),
 )
-@require_any_permission(PRC_READ_ACCESS)
+@require_s2s_or_any_permission(
+    PRC_READ_ACCESS,
+    required_scopes=("products.read",),
+    allowed_clients=("engineering-api",),
+)
 def get_product_detail(
     code: str,
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),
@@ -1345,7 +1352,11 @@ def parents(
         return error_response(str(e))
 
 @router.get("/{code}/suppliers", **PRODUCT_SUPPLIERS)
-@require_any_permission(PRC_READ_ACCESS)
+@require_s2s_or_any_permission(
+    PRC_READ_ACCESS,
+    required_scopes=("products.read",),
+    allowed_clients=("engineering-api",),
+)
 def suppliers(
     code: str,
     view: str = PRODUCT_DETAIL_VIEW_QUERY(),

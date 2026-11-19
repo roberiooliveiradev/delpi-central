@@ -13,6 +13,8 @@ contrato PRC.
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
 from typing import Any
 
 from engineering_app.application.ports.product_registration import (
@@ -48,11 +50,34 @@ def _map_error(exc: Exception) -> ProductPublisherError:
     )
 
 
-class ApiDelpiProductPublisher:
-    """Delegação de escrita: engineering-api → api-delpi → rotina oficial."""
+logger = logging.getLogger(__name__)
 
-    def __init__(self, client: DownstreamClient) -> None:
+
+class ApiDelpiProductPublisher:
+    """Delegação de escrita: engineering-api → api-delpi → rotina oficial.
+
+    A autorização é o contrato BFF/S2S (``X-Delpi-Service-Authorization``
+    com escopo products.* do cliente ``engineering-api``) — o Bearer
+    humano delegado permanece ator de negócio (``codusr``); nenhuma
+    permissão api-delpi é exigida do usuário.
+    """
+
+    def __init__(
+        self,
+        client: DownstreamClient,
+        service_token_getter: Callable[[], str],
+    ) -> None:
         self._client = client
+        self._service_token_getter = service_token_getter
+
+    def _service_token(self) -> str:
+        try:
+            return self._service_token_getter()
+        except Exception as exc:
+            logger.warning("prc_publisher_s2s_token_unavailable")
+            raise ProductPublisherError(
+                "unavailable", "s2s token unavailable"
+            ) from exc
 
     async def _send(
         self,
@@ -64,12 +89,14 @@ class ApiDelpiProductPublisher:
         request_id: str,
     ) -> dict[str, Any]:
         try:
+            service_token = self._service_token()
             if method == "POST":
                 data = await self._client.post(
                     path,
                     json_body=body,
                     access_token=access_token,
                     request_id=request_id,
+                    service_token=service_token,
                 )
             elif method == "PUT":
                 data = await self._client.put(
@@ -77,6 +104,7 @@ class ApiDelpiProductPublisher:
                     json_body=body,
                     access_token=access_token,
                     request_id=request_id,
+                    service_token=service_token,
                 )
             else:
                 data = await self._client.delete(
@@ -84,6 +112,7 @@ class ApiDelpiProductPublisher:
                     json_body=body,
                     access_token=access_token,
                     request_id=request_id,
+                    service_token=service_token,
                 )
         except Exception as exc:
             raise _map_error(exc) from exc
@@ -137,6 +166,7 @@ class ApiDelpiProductPublisher:
                 },
                 access_token=access_token,
                 request_id=request_id,
+                service_token=self._service_token(),
             )
         except Exception as exc:
             raise _map_error(exc) from exc

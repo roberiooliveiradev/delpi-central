@@ -110,12 +110,17 @@ def build_official_product_reader():
         ApiDelpiOfficialProductReader,
     )
 
+    from engineering_app.infrastructure.gateways.s2s_token import (
+        get_s2s_service_token,
+    )
+
     return ApiDelpiOfficialProductReader(
         ApiDelpiDelegatedAuxiliary(
             DownstreamClient(
                 settings.DELPI_API_URL,
                 timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
-            )
+            ),
+            service_token_getter=get_s2s_service_token,
         )
     )
 
@@ -168,11 +173,16 @@ def build_product_publisher():
         ApiDelpiProductPublisher,
     )
 
+    from engineering_app.infrastructure.gateways.s2s_token import (
+        get_s2s_service_token,
+    )
+
     return ApiDelpiProductPublisher(
         DownstreamClient(
             settings.DELPI_API_URL,
             timeout_seconds=settings.LMP_FACTS_TIMEOUT_SECONDS,
-        )
+        ),
+        service_token_getter=get_s2s_service_token,
     )
 
 

@@ -97,11 +97,29 @@ def _map_error(exc: Exception) -> dict[str, Any]:
 
 
 class ApiDelpiDelegatedAuxiliary:
-    """READs governados delegados aos owners oficiais (sem S2S: a
-    autorização é a permissão efetiva do próprio humano downstream)."""
+    """READs governados delegados aos owners oficiais.
 
-    def __init__(self, client: DownstreamClient) -> None:
+    ``service_token_getter`` opcional: quando presente, cada GET leva a
+    credencial S2S desta API — a autorização é o contrato BFF (escopo
+    do cliente engineering-api), não uma permissão api-delpi
+    replicada no usuário. Sem o getter, vale o caminho legado
+    (permissão do próprio humano downstream)."""
+
+    def __init__(
+        self,
+        client: DownstreamClient,
+        service_token_getter=None,
+    ) -> None:
         self._client = client
+        self._service_token_getter = service_token_getter
+
+    def _service_token(self):
+        if self._service_token_getter is None:
+            return None
+        try:
+            return self._service_token_getter()
+        except Exception:
+            return None
 
     async def fetch_goal_context(
         self,
@@ -150,6 +168,7 @@ class ApiDelpiDelegatedAuxiliary:
                 params=params,
                 access_token=ctx.access_token,
                 request_id=ctx.request_id,
+                service_token=self._service_token(),
             )
         except Exception as exc:
             return _map_error(exc)
