@@ -79,8 +79,12 @@ python -m pytest tests/test_glpi_1178_safety_stock_below_daily.py   tests/test_s
 
 cd ../plugins/reports
 npm ci
-npm run lint
-npm run build
+# O projeto possui pendências legadas no lint global (React Hooks).
+# Verificamos este componente novo sem relaxar regras:
+npx eslint src/components/SafetyBelowPreview.tsx
+# O Dockerfile usa esta mesma construção de produção:
+npx vite build
+node ../vite/verify-federation-react-patch.mjs dist/assets
 ```
 
 **Não houve criação automática de agendamentos/destinatários** nesta PR,

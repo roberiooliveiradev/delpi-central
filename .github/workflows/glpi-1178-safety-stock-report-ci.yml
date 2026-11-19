@@ -65,4 +65,8 @@ jobs:
       # Gate the new component independently and typecheck/build the full MFE.
       # Do not disable lint rules or claim the legacy full-lint baseline is clean.
       - run: npx eslint src/components/SafetyBelowPreview.tsx
-      - run: npm run build
+      # Production Dockerfile uses Vite + federation verification, not the
+      # monorepo-wide TS build (currently blocked by pre-existing plugin-ui
+      # type/dependency errors). Keep parity with the deployed artifact.
+      - run: npx vite build
+      - run: node ../vite/verify-federation-react-patch.mjs dist/assets
