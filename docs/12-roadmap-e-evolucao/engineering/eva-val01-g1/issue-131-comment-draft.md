@@ -71,3 +71,19 @@ Verificação independente: `INCONCLUSIVE` (cursor usage limit até
 02/12/2026). **Código NÃO publicado** — permanece em working tree
 governado até motor verificador disponível ou exceção da Coordination.
 Doc 119 §94.42.19 + pacote `eva-val01-g1/val04-dots-review-package.md`.
+
+---
+
+## VAL-04R — Consolidação: terminação por ramo + auditoria dos 148 dots
+
+- `branch_terminations[]` por raiz em ocorrências AMBIGUOUS: A5 =
+  `[DOT_OVERSHOOT, DOT_TERMINATED, DOT_TERMINATED, OPEN]` (overshoot
+  ~61 px do ramo do meio anotado por raiz, sem escolher destino).
+- Auditoria: 19/148 associados (LIKELY_TERMINATOR), 78 em caixas OCR
+  (glifos), 51 fora de texto (setas de cota/features). Nenhum filtro
+  seguro remove candidatos sem perder terminadores — nada removido.
+- Suíte no ambiente correto (container): **1721 pass / 0 fail**.
+- Irmãos e B1/tabela/B3 sem regressão; `automatic_approval=false`.
+- Verificador independente: `INCONCLUSIVE` r1 (cursor usage limit até
+  02/12/2026). **Código permanece não-publicado** — pacote auditável
+  (patch + fingerprint `cc1bd570…`) disponível à Coordination.
