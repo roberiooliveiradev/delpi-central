@@ -2,12 +2,14 @@
 
 > **Data:** 2026-11-19  
 > **TASK_ID:** ENG-PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-PLAN-01  
-> **Estado:** PLANNED / DOCUMENTATION_ONLY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN / NO_DEPLOY  
+> **Estado:** PLANNED / S1_FRONTEND_ONLY_PO_APPROVED / S1_IMPLEMENTATION_NOT_STARTED / S2_S3_PLANNED / TEST_NOT_RUN / NO_DEPLOY_BY_THIS_DOC  
 > **Origem funcional:** GLPI #1621 — “Sugestões para o App de Criação de Matéria-prima”, aberto por Julielle Jaques e atribuído a Robério Oliveira (18/11/2026).  
 > **Owner de produto:** Portal Engenharia DELPI. **Owner de workflow/dados/AuthZ do caso:** Engineering API. **Consumers:** Portal Engenharia e My Requests (Minhas Solicitações).  
 > **Escopo:** incremento PRC para CREATE, duplicação segura e cancelamento pré-atendimento; preservar o ciclo de UPDATE, correção, anexos, verificação, revisão e conclusão já existente.  
 > **Repositório:** roberiooliveiradev/delpi-central, branch main; base de inventário consultada em 19/11/2026 (HEAD inicial 2179986c5742d0a2cebc4461459000030a6e621b).  
-> **Regra:** este documento registra o plano; não autoriza alteração de código, migrations, publicação/deploy, alteração de RBAC, mudança do owner do PRC ou escrita no ERP.
+> **Regra:** o PO autorizou o recorte funcional **S1 frontend-only** (19/11/2026); este registro não comprova execução nem autoriza por si só deploy, migrations, RBAC, mudanças de owner ou escrita ERP. S2 e S3 permanecem planejados e exigem decisões/gates próprios.
+>
+> **Decisão superveniente do PO — S1 (19/11/2026):** preencher **apenas no `PrcRequestForm` de `@delpi/plugin-ui`**, sem Engineering API diff, os valores iniciais `defaultWarehouse="01"` e `accountingAccount="11401002"` para **nova solicitação CREATE de matéria-prima**. Os dois portais herdam o mesmo comportamento; preservar UPDATE, `editCase` e valores digitados. [Prompt de implementação S1](./PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md). Esta decisão **substitui somente o desenho anterior de contrato/defaults no S1**; S2/S3 não mudam.
 
 ## 1. Pedido e outcome esperado
 
@@ -33,7 +35,7 @@ A solicitação GLPI #1621 pede:
 | APIs | engineering-api/engineering_app/interface/http/routes/product_registration_routes.py | Intake idempotente, leitura autorizada por objeto, ações com controle de versão; não foi identificada ação cancel no PRC |
 | Paridade UX anterior | PRC-CONVERSATION-UX-PRODUCTION-CLOSURE-2026-11-18.md | Fechamento limitado da conversa/UX anterior; não cobre as três melhorias deste documento |
 
-A leitura da UI antiga **não** torna seus defaults automaticamente regras atuais para todas as filiais ou famílias de produtos. O escopo 01 / 11401002 precisa ser validado pelo owner funcional antes de materializar uma política na API. Documento e código não demonstram, por si, estado operacional atualizado em produção. **Não confundir** o cancelamento existente no workflow genérico/legado da requests-api com uma ação do PRC atual.
+O owner funcional **ratificou para S1** o uso dos defaults legados `01` e `11401002` como **valores iniciais editáveis da UI para novos CREATE de matéria-prima** (mesmo PRC nos dois portais). Isso **não** aprova um default universal da API, do ERP, de outros tipos de produto ou de UPDATE; nenhuma política backend por filial é adicionada nesta fatia. Documento e código não demonstram, por si, estado operacional atualizado em produção. **Não confundir** o cancelamento do workflow genérico/legado da requests-api com uma ação do PRC atual.
 
 **EXISTING_EQUIVALENT=YES** para formulário, leitura de casos, envio de intake, catálogos, autorização e CAS; **REUSE_DECISION=EXTEND**. **EXISTING_EQUIVALENT=NO** no modelo PRC atual para a nova transição cancel e para a jornada de duplicação; estender no owner existente, não criar um bounded context novo.
 
@@ -43,35 +45,49 @@ A leitura da UI antiga **não** torna seus defaults automaticamente regras atuai
 |---|---|---|
 | Identidade/SSO | Keycloak | Nenhuma |
 | Permissões de plataforma | Core | Reutilizar permissões existentes; nova permissão somente com decisão explícita do Core |
-| PRC: dados, regras, workflow, AuthZ por objeto, histórico, versão e auditoria | Engineering API | Defaults governados, eventual projection para duplicação, novo cancel |
-| Formulário e controles reutilizáveis | @delpi/plugin-ui | Aplicar defaults de modo não destrutivo; prefill da cópia; controles comuns quando apropriado |
-| Experiência de solicitante | plugins/my-requests | Botões/estados, navegação e consumo REST da Engineering API |
-| Experiência da Engenharia | plugins/engineering | Botões/estados, navegação e consumo REST da Engineering API |
+| PRC: dados, regras, workflow, AuthZ por objeto, histórico, versão e auditoria | Engineering API | **S1: nenhuma alteração**, mantém validações e contratos existentes; S2/S3: contratos futuros conforme seus gates |
+| Formulário e controles reutilizáveis | @delpi/plugin-ui | **S1: único owner do diff frontend** para dois valores iniciais editáveis de CREATE; S2: prefill da cópia quando autorizado |
+| Experiência de solicitante | plugins/my-requests | **S1: consumir e testar o mesmo formulário sem duplicar defaults**; S2/S3: botões/estados conforme contratos futuros |
+| Experiência da Engenharia | plugins/engineering | **S1: consumir e testar o mesmo formulário sem duplicar defaults**; S2/S3: botões/estados conforme contratos futuros |
 | Leitura oficial do produto/fornecedor | api-delpi / TOTVS | Contratos existentes, sem novos writes e sem acesso direto da UI |
 | EVA/MCP | EVA sob contrato governado | Avaliar paridade de capability após REST; nenhuma nova tool nem execução autônoma pressuposta |
 
 A API permanece responsável pela validação e rejeita a operação mesmo quando a UI manipular ou esconder botões. A identidade do autor de uma cópia é a identidade autenticada **atual**, nunca copiada do caso original.
 
-## 4. S1 — Valores padrão no CREATE (PRC-1621-RQ01/RQ02)
+## 4. S1 — Valores iniciais no CREATE: **frontend-only** (PRC-1621-RQ01/RQ02)
 
-### Comportamento alvo
+> **Decisão PO ratificada em 19/11/2026 — S1_APPROVED_FRONTEND_ONLY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN.** `S1` não exige nem permite implementar defaults na Engineering API. A autorização vale apenas para esta pequena modificação de UI; a API mantém validações, fonte oficial e autoridade sobre a solicitação.
 
-- Para **nova solicitação CREATE de matéria-prima**, iniciar Armazém padrão com **01** e Conta contábil com **11401002**, sujeitos à ratificação por filial/família de produto.
-- Ambos aparecem visíveis e **editáveis**; são propostas iniciais, não confirmação de dados oficiais nem imposição para todos os produtos.
-- Em **UPDATE**, carregar os valores reais do contexto oficial de edição, sem aplicar defaults de CREATE.
-- Ao **editar solicitação já existente** ou duplicar solicitação, não sobrescrever valores reais/copied nem alterações digitadas pelo usuário.
-- Se referência/configuração de defaults estiver indisponível, apresentar estado/erro de maneira honesta; não inventar valor pelo navegador nem usar fallback silencioso diferente do aprovado.
+### Comportamento aprovado
 
-### Desenho de contrato (TARGET; não implementado)
+- Ao criar **nova solicitação CREATE de matéria-prima** no `PrcRequestForm` compartilhado (`!editCase` e modo `create`), os campos **Armazém padrão** (`defaultWarehouse`) e **Conta contábil** (`accountingAccount`) aparecem inicialmente com `01` e `11401002`, respectivamente.
+- Ambos são **valores sugeridos e editáveis**. Alteração, limpeza, navegação entre etapas, carregamento tardio de catálogos e `reference-data` não podem sobrescrever o que o usuário digitou. Campo obrigatório vazio continua sujeito à validação vigente, sem restaurar default ocultamente.
+- O modo **UPDATE** continua usando somente o contexto oficial obtido em `fetchEditContext`; defaults de CREATE não podem aparecer como diffs nem sobrescrever valores oficiais (inclusive um campo oficialmente vazio).
+- A edição de caso existente (`editCase` CREATE/UPDATE), devolução/correção, e futuros drafts de duplicação preservam valores reais do draft. Nenhuma substituição em `saveDraft`/fluxo de edição.
+- **Escopo aprovado:** somente os dois campos pedidos; outros defaults antigos (`productKind=MP`, `thirdPartyProduct=1`) são referência histórica, **fora do diff S1**.
+- O mesmo comportamento é herdado automaticamente por **Portal Engenharia** e **My Requests** porque os dois wrappers atuais utilizam `plugins/plugin-ui/src/components/prc/PrcRequestForm.tsx`. Não criar segunda implementação nos MFEs.
 
-Preferir extensão **aditiva** do GET de reference-data já existente (por exemplo, metadata opcional de createDefaults para produto/família/filial aplicável), sob controle da Engineering API, evitando endpoint novo. O schema, a origem autorizada da política e o recorte por filial devem ser definidos e versionados pelo owner; clientes legados devem continuar aceitos. O formulário consome essa resposta e semeia os campos **somente quando ainda não tocados**. O backend continua validando required, tipos, escopo e valores permitidos; jamais presumir que o valor exibido concede autorização de cadastro oficial.
+### Contrato, ownership e escopo executável
 
-### Critérios de aceite
+- **Sem alteração REST/OpenAPI, novas rotas, DTOs, metadata `createDefaults`, banco, migrations, Core/RBAC, Engineering API, api-delpi, TOTVS ou requests-api**.
+- Valores iniciais ficam exclusivamente no estado de UI do `PrcRequestForm`; `buildCreateIntakeBody` e `POST /intake/requests` seguem o contrato atual, enviando os valores escolhidos pelo usuário.
+- **EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND.** Preferir diffs mínimos no formulário compartilhado e seus testes. Os wrappers de `plugins/engineering` e `plugins/my-requests` são apenas consumidores e alvos de regressão; alterá-los somente por defeito de integração demonstrado, sem duplicar a regra.
+- **Fonte histórica dos valores:** [inventário Controle MP, seção 9](./PRODUCT-REGISTRATION-COMPLETE-INVENTORY.md). Os valores não são source of truth do produto no Protheus, nem aprovação de regra para famílias de produto fora deste CREATE de matéria-prima.
+- **Prompt executável S1:** [PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md](./PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md).
 
-- **AC-1621-01:** My Requests e Portal Engenharia exibem 01 e 11401002 no novo CREATE após policy/config ratificada.
-- **AC-1621-02:** alterar/remover manualmente os valores não causa reidratação que os sobrescreva; obrigatoriedade segue catálogo oficial.
-- **AC-1621-03:** UPDATE, edit_draft, correção de campo devolvido e duplicação preservam seus valores específicos; sem default aplicado fora de CREATE inicial.
-- **AC-1621-04:** Engineering API valida e expõe contrato versionado/aditivo de default, com testes de filial/ramo não contemplado e compatibilidade.
+### Requisitos e critérios de aceite (S1)
+
+- **RQ-1621-S1-01:** inicializar apenas o novo CREATE MP com os dois valores aprovados.
+- **RQ-1621-S1-02:** preservar input editável e validação vigente após re-render/carregamento assíncrono.
+- **RQ-1621-S1-03:** não contaminar UPDATE, edição de caso, devolução/correção ou duplicação futura.
+- **RQ-1621-S1-04:** manter um formulário compartilhado, mesmo comportamento nos dois portais e zero diff backend.
+
+- **AC-1621-01:** My Requests e Portal Engenharia exibem `01` e `11401002` no novo CREATE; testes com as duas origens reais.
+- **AC-1621-02:** usuário pode alterar ou limpar os campos; navegação/refetch não sobrescrevem; campos obrigatórios ainda são validados no cliente e na API existente.
+- **AC-1621-03:** UPDATE, `editCase` CREATE/UPDATE e correção preservam valores oficiais ou já digitados, sem injeção de defaults.
+- **AC-1621-04:** backend e seus contratos permanecem intocados; testes RED/GREEN do formulário, payload CREATE, unificação, builds/regressão dos dois portais e verificador independente no SHA exato.
+
+Os ACs acima são requisitos macro do plano; o **prompt executável S1** detalha AC-1621-S1-01..09, sem alterar S2/S3. S1 só pode ser `PASS` após implementação real, testes, aceite apropriado e evidence SHA-bound.
 
 ## 5. S2 — Duplicar solicitação com novo ciclo (PRC-1621-RQ03/RQ04)
 
@@ -133,7 +149,7 @@ O pedido usa “antes de ser vista pela Engenharia”; o sistema demonstra um ma
 
 | Dimensão | My Requests | Portal Engenharia | Engineering API |
 |---|---|---|---|
-| CREATE com prefill | UI/E2E, edição e refresh | UI/E2E, edição e refresh | contract + catálogo + negativa |
+| CREATE com prefill | UI/E2E, edição e refresh | UI/E2E, edição e refresh | **Sem diff S1**: contrato e validação atuais preservados; regressão por payload |
 | Duplicação CREATE | origem própria, submit, retry | caso autorizado, submit, retry | object AuthZ + intake idempotente |
 | Duplicação UPDATE (fatia posterior) | baseline atual obrigatório | baseline atual obrigatório | official reader + 409 stale |
 | Cancelamento | confirmação/estado/timeline | fila/detalhe/counters | status machine + CAS + audit |
@@ -153,8 +169,8 @@ O pedido usa “antes de ser vista pela Engenharia”; o sistema demonstra um ma
 
 | Pacote | Prioridade | Owner/escopo | Saída verificável | Gate |
 |---|---|---|---|---|
-| G0 — baseline curto | 0 | Engineering API + docs PRC | HEAD/status, policies, default por filial, contrato real e teste RED | Inventário somente do necessário; sem refazer discovery já comprovado |
-| S1 — defaults | 1 | engineering-api + plugin-ui + 2 MFEs | CREATE com defaults governados nos dois portais | AC-01..04 |
+| G0 — baseline curto S1 | 0 | Plugin UI + wrappers PRC (read-only) | HEAD/status/leases, evidência da tela vazia, teste RED e dois valores já ratificados pelo PO | Sem projeto novo de default na API; inventário mínimo e direto |
+| S1 — defaults frontend-only | 1 | **plugin-ui** (código+testes); **2 MFEs** (regressão/build), **Engineering API intocada** | CREATE MP mostra 01 e 11401002, editáveis, sem afetar UPDATE/editCase nos dois portais | AC-01..04 e AC-1621-S1-01..09 do prompt |
 | S2 — duplicar CREATE | 2 | plugin-ui + Engineering API (reuso preferencial) + 2 MFEs | novo caso válido, sem herança proibida | AC-05..09; AC-10 registra residual UPDATE |
 | S3 — cancel submitted | 3 | Engineering API (domínio/application/infra/HTTP) + 2 MFEs | terminal cancelled auditável | AC-11..16; decisão “visualização vs início” |
 | S4 — QA/integração/release | 4 | QA/owners Engenharia + Coordination | HML, testes negativos, verifier e aceite por pacote | AC-17..18; autorização de publicação independente |
@@ -166,7 +182,7 @@ O pedido usa “antes de ser vista pela Engenharia”; o sistema demonstra um ma
 
 | ID | Decisão necessária | Proposta / estado |
 |---|---|---|
-| D-1621-01 | Regras de defaults por filial/tipo/família | Confirmar se 01 e 11401002 se aplicam a todos os CREATE de MP ou a escopo restrito; **PENDING_OWNER** |
+| D-1621-01 | Estratégia e valores S1 | **PO_RATIFIED 2026-11-19:** prefill **somente frontend** em novos CREATE MP dos dois portais com `01` e `11401002`, editáveis; sem contrato/default na API. Outras famílias/ERP fora do escopo. |
 | D-1621-02 | Limite para retirada | Usar submitted antes de start, não abertura de tela; **PROPOSED / PENDING_PO_RATIFICATION** |
 | D-1621-03 | UPDATE duplicável | Após busca oficial fresca e novo diff, pacote S2b; **PENDING_CONTRACT** |
 | D-1621-04 | Anexos em cópia | Não copiar automaticamente; **DEFAULT_SAFE / EXPANSION_REQUIRES_OWNER** |
@@ -189,4 +205,4 @@ O pedido usa “antes de ser vista pela Engenharia”; o sistema demonstra um ma
 - Portais consumidores: plugins/my-requests/src/features/product-registration e plugins/engineering/src/features/product-registration.
 - Demanda de negócio: GLPI Helpdesk DELPI #1621; não confundir com issue do GitHub.
 
-**Próximo passo bounded:** ratificar D-1621-01 (escopo de defaults) e D-1621-02 (marco de cancelamento), reancorar HEAD e executar **S1** como pacote end-to-end Engineering API + plugin-ui + Portal Engenharia + My Requests, com testes e revisão independente. Nenhuma pasta ou bounded context adicional é necessário.
+**Próximo passo bounded:** D-1621-01 já está ratificada para S1. Reancorar HEAD e executar **S1 frontend-only** por [prompt específico](./PRC-GLPI-1621-S1-FRONTEND-DEFAULTS-DEVIN-IMPLEMENTATION-PROMPT.md): diff no formulário compartilhado + testes nos dois portais + revisão independente, **sem alteração na Engineering API**. D-1621-02 continua decisão futura de S3. Nenhuma pasta ou bounded context adicional é necessário.
