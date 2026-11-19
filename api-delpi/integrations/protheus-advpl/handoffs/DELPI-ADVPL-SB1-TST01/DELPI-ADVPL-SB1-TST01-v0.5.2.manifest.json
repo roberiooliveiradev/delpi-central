@@ -7,15 +7,15 @@
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/module.yaml"
   }
  ],
- "created_at": "2026-11-19T11:55:00-03:00",
+ "created_at": "2026-11-19T12:15:00-03:00",
  "dependencies": [],
  "files": [
   {
    "artifact_type": "source",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/src/DLP04I01.PRW",
-   "sha256": "e69148e283679a151fc871a8aabca777a774a1a37e356c70ca8630fd721a0e2f",
-   "size_bytes": 27950,
+   "sha256": "eb0e3e16964f547d0affd0e404af0ea3f6efdf3def2246c53807c7910d92de88",
+   "size_bytes": 28099,
    "source_origin": "delpi-central"
   },
   {
@@ -46,8 +46,8 @@
    "artifact_type": "contract",
    "module_id": "product-master",
    "path": "api-delpi/integrations/protheus-advpl/modules/product-master/contracts/module.yaml",
-   "sha256": "e00cfd1914e0347ab3374b591af2acb7330b353abf1db71eca234d911a03dd35",
-   "size_bytes": 4078,
+   "sha256": "0fb2f39bd6e08a75155c1d21fdc32c515b84ffb3d93c79adc24f3350520a9e2a",
+   "size_bytes": 4129,
    "source_origin": "delpi-central"
   },
   {
@@ -85,7 +85,7 @@
  ],
  "package_id": "DELPI-ADVPL-SB1-TST01-v0.5.2",
  "package_version": "0.5.2",
- "source_commit": "d151616a19",
+ "source_commit": "8462aacbcb53b9a4e9654cf949699c2b2125bd96",
  "source_repository": "roberiooliveiradev/delpi-central",
  "status": "SOURCE_CANDIDATE",
  "target_environment": "TST01",
