@@ -24,6 +24,7 @@ import {
   upsertReportSchedule,
 } from "../api/reportsApi";
 import { ShortageItemNotesSection } from "../components/ShortageItemNotesSection";
+import { SafetyBelowPreview } from "../components/SafetyBelowPreview";
 import type {
   DirectoryUser,
   ReportDefinition,
@@ -45,6 +46,8 @@ type Props = {
 };
 
 const DIRECT_WEEKLY_KEY = "team_direct_app_opens_weekly";
+const SHORTAGE_KEY = "safety_stock_shortage_30d";
+const SAFETY_BELOW_KEY = "safety_stock_below_daily";
 
 const WEEKDAY_OPTIONS = [
   { value: 0, label: "Segunda" },
@@ -119,6 +122,10 @@ export function DefinitionDetailPage({ definitionId }: Props) {
           })),
         );
         setSchedule(schedulePayload);
+        if (!schedulePayload && definition.providerKey === SAFETY_BELOW_KEY) {
+          setScheduleKind("weekdays");
+          setScheduleEnabled(false);
+        }
         if (!schedulePayload && definition.providerKey === DIRECT_WEEKLY_KEY) {
           setScheduleKind("weekly");
           setWeekday(0);
@@ -178,7 +185,9 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                   customerLimit,
                   ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
                 }
-              : { branch, horizonDays },
+              : item?.providerKey === SAFETY_BELOW_KEY
+                ? { branch }
+                : { branch, horizonDays },
         active,
       });
       setItem(updated);
@@ -214,6 +223,14 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   }
 
   async function saveSchedule() {
+    if (item?.providerKey === SAFETY_BELOW_KEY && scheduleKind !== "weekdays") {
+      setError("O alerta de estoque deve ser agendado de segunda a sexta.");
+      return;
+    }
+    if (item?.providerKey === SAFETY_BELOW_KEY && scheduleEnabled && !recipients.length) {
+      setError("Salve ao menos um destinatário antes de habilitar a agenda.");
+      return;
+    }
     if (item?.providerKey === DIRECT_WEEKLY_KEY && (scheduleKind !== "weekly" || weekday !== 0)) {
       setError("A agenda desse relatório deve ser semanal, às segundas-feiras.");
       return;
@@ -494,18 +511,25 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                           <option value="02">Rio Bananal/ES</option>
                         </select>
                       </label>
-                      <label className="rp-field">
-                        <span>Horizonte (dias)</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={365}
-                          value={horizonDays}
-                          onChange={(e) =>
-                            setHorizonDays(Number(e.target.value) || 30)
-                          }
-                        />
-                      </label>
+                      {item.providerKey === SAFETY_BELOW_KEY ? (
+                        <p className="rp-inline-note rp-field--full">
+                          Relatório preventivo por filial: saldo 01 + 98 + 99,
+                          limite de segurança e pedidos em aberto.
+                        </p>
+                      ) : (
+                        <label className="rp-field">
+                          <span>Horizonte (dias)</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={365}
+                            value={horizonDays}
+                            onChange={(e) =>
+                              setHorizonDays(Number(e.target.value) || 30)
+                            }
+                          />
+                        </label>
+                      )}
                     </>
                   )}
                   <label className="rp-switch">
@@ -545,7 +569,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                     <span>Frequência</span>
                     <select
                       value={scheduleKind}
-                      disabled={item.providerKey === DIRECT_WEEKLY_KEY}
+                      disabled={item.providerKey === DIRECT_WEEKLY_KEY || item.providerKey === SAFETY_BELOW_KEY}
                       onChange={(e) =>
                         setScheduleKind(
                           e.target.value as
@@ -556,14 +580,18 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                         )
                       }
                     >
-                      {item.providerKey !== DIRECT_WEEKLY_KEY ? (
+                      {item.providerKey === SAFETY_BELOW_KEY ? (
+                        <option value="weekdays">Dias úteis (seg–sex)</option>
+                      ) : item.providerKey !== DIRECT_WEEKLY_KEY ? (
                         <>
                           <option value="daily">Diário (todos os dias)</option>
                           <option value="weekdays">Dias úteis (seg–sex)</option>
                           <option value="monthly">Mensal (dia do mês)</option>
                         </>
                       ) : null}
-                      <option value="weekly">Semanal</option>
+                      {item.providerKey !== SAFETY_BELOW_KEY ? (
+                        <option value="weekly">Semanal</option>
+                      ) : null}
                     </select>
                   </label>
                   {scheduleKind === "weekly" ? (
@@ -699,7 +727,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               ) : null}
             </section>
 
-            {item.providerKey !== DIRECT_WEEKLY_KEY ? (
+            {item.providerKey === SHORTAGE_KEY ? (
               <>
             <ShortageItemNotesSection
               definitionId={definitionId}
@@ -720,12 +748,14 @@ export function DefinitionDetailPage({ definitionId }: Props) {
               <a href={followUpPath(definitionId)}>{followUpPath(definitionId)}</a>
             </p>
               </>
-            ) : (
+            ) : item.providerKey === SAFETY_BELOW_KEY ? (
+              <SafetyBelowPreview branch={branch} />
+            ) : item.providerKey === DIRECT_WEEKLY_KEY ? (
               <p className="rp-inline-note">
                 Exclusivo para o gestor e seus subordinados diretos.
                 A liberação do envio será feita separadamente pela administração.
               </p>
-            )}
+            ) : null}
 
             <section className="rp-card">
               <div className="rp-card__header">

@@ -3,9 +3,15 @@ from __future__ import annotations
 from app.application.services.supplies.safety_stock_shortage_30d_aggregation_service import (
     SafetyStockShortage30dAggregationService,
 )
+from app.application.services.supplies.safety_stock_below_daily_aggregation_service import (
+    SafetyStockBelowDailyAggregationService,
+)
 from app.config import settings
 from app.domain.services.reports.providers.safety_stock_shortage_30d_provider import (
     SafetyStockShortage30dProvider,
+)
+from app.domain.services.reports.providers.safety_stock_below_daily_provider import (
+    SafetyStockBelowDailyProvider,
 )
 from app.domain.services.reports.report_provider_registry import ReportProviderRegistry
 from app.infrastructure.persistence.plugins.repositories.reports.postgres_reports_repository import (
@@ -70,6 +76,12 @@ def build_report_provider_registry() -> ReportProviderRegistry:
             logo_attachment=build_delpi_logo_report_attachment(),
         )
     )
+    registry.register(
+        SafetyStockBelowDailyProvider(
+            SafetyStockBelowDailyAggregationService(SafetyStockQueryRepository()),
+            logo_attachment=build_delpi_logo_report_attachment(),
+        )
+    )
     mom = CommercialRolMomComparisonService(
         FinancialRepository(),
         CommercialRolByCustomerRepository(),
@@ -121,6 +133,15 @@ def build_preview_safety_stock_shortage_30d_use_case():
         provider,
         repository=build_reports_repository(),
     )
+
+
+def build_preview_safety_stock_below_daily_use_case():
+    from app.application.use_cases.reports.preview_report_provider_use_case import (
+        PreviewReportProviderUseCase,
+    )
+
+    provider = build_report_provider_registry().require("safety_stock_below_daily")
+    return PreviewReportProviderUseCase(provider)
 
 
 def build_preview_management_revenue_monthly_use_case():

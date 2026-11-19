@@ -9,11 +9,13 @@ import type { ReportProviderInfo } from "../types/reports";
 import { definitionPath, REPORTS_LIST_PATH } from "../utils/route";
 
 const SHORTAGE_KEY = "safety_stock_shortage_30d";
+const SAFETY_BELOW_KEY = "safety_stock_below_daily";
 const MANAGEMENT_KEY = "management_revenue_monthly";
 const DIRECT_WEEKLY_KEY = "team_direct_app_opens_weekly";
 
 const PROVIDER_FALLBACK_LABELS: Record<string, string> = {
   [SHORTAGE_KEY]: "Rupturas próximos 30 dias",
+  [SAFETY_BELOW_KEY]: "Alerta diário — abaixo do estoque de segurança",
   [MANAGEMENT_KEY]: "Relatório Gerencial — Faturamento",
   [DIRECT_WEEKLY_KEY]: "Acessos semanais — subordinados diretos",
 };
@@ -90,7 +92,9 @@ export function CreateDefinitionPage() {
                 customerLimit,
                 ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
               }
-            : { branch, horizonDays };
+            : providerKey === SAFETY_BELOW_KEY
+              ? { branch }
+              : { branch, horizonDays };
       const created = await createReportDefinition({
         name: name.trim(),
         providerKey,
@@ -106,6 +110,7 @@ export function CreateDefinitionPage() {
     }
   }
 
+  const isSafetyBelow = providerKey === SAFETY_BELOW_KEY;
   const isManagement = providerKey === MANAGEMENT_KEY;
   const isDirectWeekly = providerKey === DIRECT_WEEKLY_KEY;
 
@@ -243,18 +248,27 @@ export function CreateDefinitionPage() {
                 </select>
               </label>
 
-              <label className="rp-field">
-                <span>Horizonte (dias)</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={horizonDays}
-                  onChange={(e) =>
-                    setHorizonDays(Number(e.target.value) || 30)
-                  }
-                />
-              </label>
+              {isSafetyBelow ? (
+                <p className="rp-inline-note rp-field--full">
+                  Uma definição por filial. Saldo dos armazéns 01 + 98 + 99,
+                  estoque de segurança e pedidos em aberto. A agenda será
+                  exclusivamente de segunda a sexta; o envio só começa
+                  depois de selecionar destinatários e habilitar a agenda.
+                </p>
+              ) : (
+                <label className="rp-field">
+                  <span>Horizonte (dias)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={horizonDays}
+                    onChange={(e) =>
+                      setHorizonDays(Number(e.target.value) || 30)
+                    }
+                  />
+                </label>
+              )}
             </>
           )}
 
