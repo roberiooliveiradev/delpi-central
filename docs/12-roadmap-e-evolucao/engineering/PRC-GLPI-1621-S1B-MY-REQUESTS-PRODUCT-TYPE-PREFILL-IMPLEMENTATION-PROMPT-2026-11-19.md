@@ -2,7 +2,7 @@
 
 > **TASK_ID:** `ENG-PRC-GLPI-1621-S1B-MY-REQUESTS-MP-PREFILL-01`  
 > **Data/decisão do PO:** 2026-11-19, após validação visual real do S1 em My Requests  
-> **Status:** `PLANNED / PROMPT_READY / NOT_DISPATCHED / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN`  
+> **Status:** `EXECUTED / IMPLEMENTED_TESTS_GREEN (19/11/2026) / INDEPENDENT_VERIFICATION_REGISTERED — ledger no plano GLPI #1621 §4A`  
 > **DELIVERABLE_TYPE:** `CODE+TEST`  
 > **Escopo:** refinamento de experiência CREATE, exclusivamente frontend. Engenharia API permanece autoridade do contrato/validação.  
 > **Evidência visual do PO:** no My Requests, Armazém padrão `01` e Conta contábil `11401002` aparecem preenchidos, mas Tipo ainda está em `Selecionar…`. O dropdown oferece `MP — Matéria-prima`, `PA — Produto acabado`, `PI — Produto intermediário`.

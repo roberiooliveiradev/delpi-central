@@ -93,7 +93,9 @@ Os ACs acima são requisitos macro do plano; o **prompt executável S1** detalha
 
 ## 4A. S1b — Tipo de produto MP pré-selecionado apenas em My Requests (19/11/2026)
 
-> **Novo refinamento funcional do PO após validação visual do S1.** **Status:** `S1B_PO_APPROVED / PLANNED / PROMPT_READY / IMPLEMENTATION_NOT_STARTED / TEST_NOT_RUN`. Trata-se de pacote adicional e limitado; **não reabre nem altera os dois defaults globais do S1**, nem autoriza backend.
+> **Novo refinamento funcional do PO após validação visual do S1.** **Status:** `S1B_PO_APPROVED / IMPLEMENTED_TESTS_GREEN (19/11/2026)`. Trata-se de pacote adicional e limitado; **não reabre nem altera os dois defaults globais do S1**, nem autoriza backend.
+>
+> **Ledger S1b — execução registrada (19/11/2026):** `PrcRequestForm` ganhou `createFieldDefaults(source)` — armazém `01`/conta `11401002` globais (S1) + `productKind="MP"` somente em `source="my-requests"`, sem `editCase`; alternância CREATE/UPDATE usa o mesmo mapa por origem. Spec `createDefaults` +7 cenários S1B-01..07 (RED 2 falhas no HEAD: MP ausente e submit bloqueado por obrigatório vazio; GREEN 14/14). Integração real `PrcCreatePage` montada em `PrcCreatePage.engineering.composition.test.tsx` (Tipo em «Selecionar…», MP/PA/PI ofertados, PA manual enviado com `source="portal-engineering"`) — `NO_ENGINEERING_DIFF_NEEDED`. Regressões: plugin-ui prc 117/117 + suite completa, engineering 264/264, my-requests 21/21; builds OK. Runtime depende do deploy canônico (`RUNTIME_CHANGED` pós-publicação).
 
 **Evidência funcional:** o PO apresentou a tela de produção `/apps/my-requests/new?type=raw-material-creation` com armazém `01` e conta contábil `11401002` já pré-selecionados. O campo Tipo aparecia em `Selecionar…` e seu dropdown oferecia `MP — Matéria-prima`, `PA — Produto acabado` e `PI — Produto intermediário`.
 

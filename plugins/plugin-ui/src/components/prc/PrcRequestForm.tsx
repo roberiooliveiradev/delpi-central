@@ -261,6 +261,23 @@ const CREATE_FIELD_DEFAULTS: Record<string, string> = {
   accountingAccount: "11401002",
 };
 
+/* GLPI #1621 / S1b — terceira sugestão aprovada pelo PO (19/11/2026)
+ * somente no canal de matéria-prima `source="my-requests"`: Tipo
+ * inicia em `MP`, segue editável e com as demais opções oficiais.
+ * Portal Engenharia mantém Tipo sem pré-seleção (MP/PA/PI e demais
+ * tipos suportados). `source` é sinal de composição da UI — nunca
+ * autoridade nem restrição de domínio. */
+const MY_REQUESTS_PRODUCT_KIND_DEFAULT = "MP";
+
+function createFieldDefaults(source: string): Record<string, string> {
+  return {
+    ...CREATE_FIELD_DEFAULTS,
+    ...(source === "my-requests"
+      ? { productKind: MY_REQUESTS_PRODUCT_KIND_DEFAULT }
+      : {}),
+  };
+}
+
 const LEGACY_NOTE_RE = /\b(B1_|A5_|legado|legado\s*['"]|cta_contabil)\b/i;
 
 /** Help funcional do path — nota técnica/legado nunca vaza na UI. */
@@ -340,7 +357,7 @@ export function PrcRequestForm({
   );
 
   const [values, setValues] = useState<Record<string, string>>(() => {
-    if (!editCase) return { ...CREATE_FIELD_DEFAULTS };
+    if (!editCase) return createFieldDefaults(source);
     const out: Record<string, string> = {};
     for (const [k, v] of Object.entries(editCase.draft || {})) {
       if (
@@ -1165,11 +1182,12 @@ export function PrcRequestForm({
               setEditCtx(null);
               setError("");
               setValues((s) => {
+                const defs = createFieldDefaults(source);
                 if (v === "create") {
                   /* Retorno ao CREATE: repõe sugestões só onde não há
                    * entrada atual — valor digitado/limpo pelo usuário
                    * nunca é sobreposto. */
-                  return { ...CREATE_FIELD_DEFAULTS, ...s };
+                  return { ...defs, ...s };
                 }
                 /* UPDATE trabalha só com baseline oficial
                  * (fetchEditContext): sugestões de CREATE intactas são
@@ -1177,7 +1195,7 @@ export function PrcRequestForm({
                  * proposta, mesmo com a consulta lenta ou falha. */
                 return Object.fromEntries(
                   Object.entries(s).filter(
-                    ([k, val]) => CREATE_FIELD_DEFAULTS[k] !== val,
+                    ([k, val]) => defs[k] !== val,
                   ),
                 );
               });
