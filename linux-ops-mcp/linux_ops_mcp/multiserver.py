@@ -6,13 +6,27 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .diagnosis import analyze_observation, classify_os_family
-from .reader import ItPortalReader, ReadError, Settings, require_uuid
+from .reader import MAX_UPSTREAM_BYTES, ItPortalReader, ReadError, Settings, require_uuid
 
-# IT Portal ServerOut.description may be up to 4000 chars. With JSON envelope
-# overhead, ~60 max-length rows already exceed MAX_UPSTREAM_BYTES (256 KiB).
-# Filtered inventory scans therefore use a smaller upstream page size so valid
-# inventories complete instead of failing with upstream_response_too_large.
-_FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE = 25
+# IT Portal counts description length in Unicode code points (max 4000), while
+# MAX_UPSTREAM_BYTES counts UTF-8 bytes. Worst case: 4 bytes/code point.
+_SERVER_DESCRIPTION_MAX_CHARS = 4000
+_UTF8_MAX_BYTES_PER_CHAR = 4
+_SERVER_ROW_OVERHEAD_BYTES = 4_096  # other ServerOut fields + JSON punctuation
+_LIST_ENVELOPE_OVERHEAD_BYTES = 1_024
+_SAFE_INVENTORY_UPSTREAM_PAGE_SIZE = max(
+    1,
+    min(
+        25,
+        (MAX_UPSTREAM_BYTES - _LIST_ENVELOPE_OVERHEAD_BYTES)
+        // (
+            _SERVER_DESCRIPTION_MAX_CHARS * _UTF8_MAX_BYTES_PER_CHAR
+            + _SERVER_ROW_OVERHEAD_BYTES
+        ),
+    ),
+)
+# Backwards-compatible alias used by older tests/docs.
+_FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE = _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
 
 
 def _normalize_hostname(value: str) -> str:
@@ -36,6 +50,129 @@ def _matches_admin_status(server: dict[str, Any], administrative_status: str | N
     return current == administrative_status.strip().lower()
 
 
+def _annotate_os_family(item: dict[str, Any]) -> dict[str, Any]:
+    item["os_family"] = classify_os_family(item.get("operating_system"))
+    return item
+
+
+async def _fetch_upstream_inventory_page(
+    reader: ItPortalReader,
+    authorization: str,
+    *,
+    q: str | None,
+    unit_code: str | None,
+    environment: str | None,
+    criticality: str | None,
+    archived: str,
+    page: int,
+) -> dict[str, Any]:
+    """Always request a UTF-8-safe upstream page size for /servers."""
+    return await reader.list_servers_page(
+        authorization,
+        q=q,
+        unit_code=unit_code,
+        environment=environment,
+        criticality=criticality,
+        archived=archived,
+        page=page,
+        page_size=_SAFE_INVENTORY_UPSTREAM_PAGE_SIZE,
+    )
+
+
+async def _collect_matching_servers(
+    reader: ItPortalReader,
+    authorization: str,
+    *,
+    q: str | None = None,
+    unit_code: str | None = None,
+    environment: str | None = None,
+    criticality: str | None = None,
+    os_family: str | None = None,
+    administrative_status: str | None = None,
+    include_archived: bool = False,
+) -> tuple[list[dict[str, Any]], int | None]:
+    """Walk the full upstream inventory once with safe pages; apply client filters."""
+    archived = "all" if include_archived else "active"
+    collected: list[dict[str, Any]] = []
+    upstream_page = 1
+    upstream_total: int | None = None
+    page_size = _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+    while True:
+        batch = await _fetch_upstream_inventory_page(
+            reader,
+            authorization,
+            q=q,
+            unit_code=unit_code,
+            environment=environment,
+            criticality=criticality,
+            archived=archived,
+            page=upstream_page,
+        )
+        upstream_total = batch["total"]
+        for item in batch["items"]:
+            if not _matches_os_family(item, os_family):
+                continue
+            if not _matches_admin_status(item, administrative_status):
+                continue
+            collected.append(_annotate_os_family(item))
+        fetched = upstream_page * page_size
+        if fetched >= (upstream_total or 0) or not batch["items"]:
+            break
+        upstream_page += 1
+        if upstream_page > 10_000:
+            break
+    return collected, upstream_total
+
+
+async def _assemble_unfiltered_page(
+    reader: ItPortalReader,
+    authorization: str,
+    *,
+    q: str | None,
+    unit_code: str | None,
+    environment: str | None,
+    criticality: str | None,
+    archived: str,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    """Build one client page from one or more UTF-8-safe upstream pages."""
+    safe = _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+    start = (page - 1) * page_size
+    end = start + page_size
+    first_upstream = start // safe + 1
+    last_upstream = max(first_upstream, (end - 1) // safe + 1)
+    items: list[dict[str, Any]] = []
+    total: int | None = None
+    for upstream_page in range(first_upstream, last_upstream + 1):
+        batch = await _fetch_upstream_inventory_page(
+            reader,
+            authorization,
+            q=q,
+            unit_code=unit_code,
+            environment=environment,
+            criticality=criticality,
+            archived=archived,
+            page=upstream_page,
+        )
+        total = batch["total"]
+        batch_start = (upstream_page - 1) * safe
+        for offset, item in enumerate(batch["items"]):
+            index = batch_start + offset
+            if start <= index < end:
+                items.append(_annotate_os_family(item))
+        if not batch["items"]:
+            break
+        if total is not None and batch_start + len(batch["items"]) >= total:
+            break
+    return {
+        "items": items,
+        "total": total if type(total) is int and total >= 0 else len(items),
+        "page": page,
+        "page_size": page_size,
+    }
+
+
 async def list_servers(
     reader: ItPortalReader,
     authorization: str,
@@ -56,7 +193,8 @@ async def list_servers(
     client_filters = bool(os_family or administrative_status)
 
     if not client_filters:
-        result = await reader.list_servers_page(
+        result = await _assemble_unfiltered_page(
+            reader,
             authorization,
             q=q,
             unit_code=unit_code,
@@ -66,46 +204,23 @@ async def list_servers(
             page=page,
             page_size=page_size,
         )
-        for item in result["items"]:
-            item["os_family"] = classify_os_family(item.get("operating_system"))
         result["include_archived"] = include_archived
         result["source"] = "it-portal-api"
         return result
 
-    # Client-side filters require walking the full upstream inventory so
-    # pagination totals stay correct. Do NOT apply infra_max_servers here —
-    # that bound belongs to get_infrastructure_health consolidation only.
-    collected: list[dict[str, Any]] = []
-    upstream_page = 1
-    upstream_total: int | None = None
-    upstream_page_size = _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE
-    while True:
-        batch = await reader.list_servers_page(
-            authorization,
-            q=q,
-            unit_code=unit_code,
-            environment=environment,
-            criticality=criticality,
-            archived=archived,
-            page=upstream_page,
-            page_size=upstream_page_size,
-        )
-        upstream_total = batch["total"]
-        for item in batch["items"]:
-            if not _matches_os_family(item, os_family):
-                continue
-            if not _matches_admin_status(item, administrative_status):
-                continue
-            item["os_family"] = classify_os_family(item.get("operating_system"))
-            collected.append(item)
-        fetched = upstream_page * upstream_page_size
-        if fetched >= (upstream_total or 0) or not batch["items"]:
-            break
-        upstream_page += 1
-        # Safety against a misreported upstream total (not an inventory cap).
-        if upstream_page > 10_000:
-            break
-
+    # Client-side filters: one full walk, then local pagination.
+    # Do NOT apply infra_max_servers here — that bound belongs to consolidation.
+    collected, upstream_total = await _collect_matching_servers(
+        reader,
+        authorization,
+        q=q,
+        unit_code=unit_code,
+        environment=environment,
+        criticality=criticality,
+        os_family=os_family,
+        administrative_status=administrative_status,
+        include_archived=include_archived,
+    )
     total = len(collected)
     start = (page - 1) * page_size
     end = start + page_size
@@ -293,23 +408,11 @@ async def get_infrastructure_health(
     now: datetime | None = None,
 ) -> dict[str, Any]:
     clock = now or datetime.now(timezone.utc)
-    inventory = await list_servers(
-        reader,
-        authorization,
-        unit_code=unit_code,
-        environment=environment,
-        criticality=criticality,
-        os_family=os_family,
-        include_archived=include_archived,
-        page=1,
-        page_size=min(100, reader.settings.infra_max_servers),
-    )
-    # Pull the full scoped inventory (bounded) for consolidation.
-    servers = list(inventory["items"])
-    total = inventory["total"]
-    page_cursor = 2
-    while len(servers) < min(total, reader.settings.infra_max_servers):
-        more = await list_servers(
+    max_servers = reader.settings.infra_max_servers
+    # Client-side OS filter requires a full inventory walk — do it once per call.
+    # Without it, walk safe upstream pages until the consolidation bound is filled.
+    if os_family:
+        matching, _upstream_total = await _collect_matching_servers(
             reader,
             authorization,
             unit_code=unit_code,
@@ -317,16 +420,37 @@ async def get_infrastructure_health(
             criticality=criticality,
             os_family=os_family,
             include_archived=include_archived,
-            page=page_cursor,
-            page_size=100,
         )
-        if not more["items"]:
-            break
-        servers.extend(more["items"])
-        page_cursor += 1
-        if page_cursor > 100:
-            break
-    servers = servers[: reader.settings.infra_max_servers]
+        total = len(matching)
+        servers = matching[:max_servers]
+    else:
+        archived = "all" if include_archived else "active"
+        servers = []
+        total = 0
+        upstream_page = 1
+        safe = _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+        while len(servers) < max_servers:
+            batch = await _fetch_upstream_inventory_page(
+                reader,
+                authorization,
+                q=None,
+                unit_code=unit_code,
+                environment=environment,
+                criticality=criticality,
+                archived=archived,
+                page=upstream_page,
+            )
+            total = batch["total"]
+            for item in batch["items"]:
+                servers.append(_annotate_os_family(item))
+                if len(servers) >= max_servers:
+                    break
+            if upstream_page * safe >= (total or 0) or not batch["items"]:
+                break
+            upstream_page += 1
+            if upstream_page > 10_000:
+                break
+        servers = servers[:max_servers]
 
     semaphore = asyncio.Semaphore(reader.settings.infra_concurrency)
     settings = reader.settings

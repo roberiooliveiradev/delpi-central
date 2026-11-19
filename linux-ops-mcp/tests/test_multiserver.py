@@ -12,6 +12,7 @@ import pytest
 from linux_ops_mcp.diagnosis import analyze_observation, classify_os_family
 from linux_ops_mcp.multiserver import (
     _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE,
+    _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE,
     get_infrastructure_health,
     get_server_health,
     get_server_services,
@@ -251,52 +252,59 @@ def test_list_servers_client_filter_paginates_beyond_infra_max_servers():
     asyncio.run(scenario())
 
 
+def _rich_server(i: int, *, operating_system: str, description: str) -> dict:
+    return {
+        **_server(
+            str(uuid4()),
+            f"win-{i:03d}.delpi.local",
+            operating_system=operating_system,
+        ),
+        "description": description,
+        "code": f"W{i:03d}",
+        "ip_address": f"10.0.0.{i % 250}",
+        "location": "datacenter",
+        "server_type": "vm",
+        "purpose": "erp",
+        "responsible": "ti",
+        "revision": 1,
+        "archived_at": None,
+        "archived_by_name": None,
+        "open_action_count": 0,
+        "created_at": "2026-11-19T00:00:00Z",
+        "created_by_name": "ops",
+        "updated_at": "2026-11-19T00:00:00Z",
+        "updated_by_name": "ops",
+    }
+
+
 def test_list_servers_filtered_scan_survives_max_length_descriptions():
-    """Filtered inventory scan must use small upstream pages under MAX_UPSTREAM_BYTES."""
-    long_description = "D" * 4000  # IT Portal DESCRIPTION_MAX
+    """Filtered inventory scan must use UTF-8-safe upstream pages under MAX_UPSTREAM_BYTES."""
+    # 4-byte code points: 4000 chars ⇒ 16000 UTF-8 bytes for description alone.
+    long_description = "\U0001f600" * 4000
+    assert len(long_description) == 4000
+    assert len(long_description.encode("utf-8")) == 16_000
     inventory = [
-        {
-            **_server(
-                str(uuid4()),
-                f"win-{i:03d}.delpi.local",
-                operating_system="Windows Server 2022",
-            ),
-            "description": long_description,
-            "code": f"W{i:03d}",
-            "ip_address": f"10.0.0.{i % 250}",
-            "location": "datacenter",
-            "server_type": "vm",
-            "purpose": "erp",
-            "responsible": "ti",
-            "revision": 1,
-            "archived_at": None,
-            "archived_by_name": None,
-            "open_action_count": 0,
-            "created_at": "2026-11-19T00:00:00Z",
-            "created_by_name": "ops",
-            "updated_at": "2026-11-19T00:00:00Z",
-            "updated_by_name": "ops",
-        }
-        for i in range(80)
+        _rich_server(i, operating_system="Windows Server 2022", description=long_description)
+        for i in range(120)
     ]
 
-    # Prove the old page_size=100 would exceed the ATLAS response budget.
     oversized = json.dumps(_envelope({
-        "items": inventory[:100],
+        "items": inventory[:25],
         "total": len(inventory),
         "page": 1,
-        "page_size": 100,
-    })).encode("utf-8")
+        "page_size": 25,
+    }), ensure_ascii=False).encode("utf-8")
     assert len(oversized) > MAX_UPSTREAM_BYTES
 
     safe = json.dumps(_envelope({
-        "items": inventory[:_FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE],
+        "items": inventory[:_SAFE_INVENTORY_UPSTREAM_PAGE_SIZE],
         "total": len(inventory),
         "page": 1,
-        "page_size": _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE,
-    })).encode("utf-8")
+        "page_size": _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE,
+    }), ensure_ascii=False).encode("utf-8")
     assert len(safe) <= MAX_UPSTREAM_BYTES
-    assert _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE < 100
+    assert _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE == _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE
+    assert _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE < 25
 
     requested_page_sizes: list[int] = []
 
@@ -313,11 +321,11 @@ def test_list_servers_filtered_scan_survives_max_length_descriptions():
             "page": page,
             "page_size": page_size,
         })
-        body = json.dumps(payload).encode("utf-8")
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return httpx.Response(
             200,
             content=body,
-            headers={"content-type": "application/json"},
+            headers={"content-type": "application/json; charset=utf-8"},
         )
 
     async def scenario():
@@ -325,22 +333,93 @@ def test_list_servers_filtered_scan_survives_max_length_descriptions():
         page1 = await list_servers(
             reader, "Bearer test-user-token", os_family="windows", page=1, page_size=25,
         )
-        assert page1["total"] == 80
+        assert page1["total"] == 120
         assert len(page1["items"]) == 25
-        assert page1["inventory_scanned"] == 80
+        assert page1["inventory_scanned"] == 120
         assert requested_page_sizes
-        assert all(
-            size == _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE for size in requested_page_sizes
+        assert all(size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE for size in requested_page_sizes)
+        assert len(requested_page_sizes) >= (120 + _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE - 1) // (
+            _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
         )
-        # Full scan used multiple small upstream pages (80 / 25 = 4).
-        assert len(requested_page_sizes) >= 4
 
-        page4 = await list_servers(
-            reader, "Bearer test-user-token", os_family="windows", page=4, page_size=25,
+        page5 = await list_servers(
+            reader, "Bearer test-user-token", os_family="windows", page=5, page_size=25,
         )
-        assert page4["total"] == 80
-        assert len(page4["items"]) == 5
-        assert page4["items"][-1]["hostname"] == "win-079.delpi.local"
+        assert page5["total"] == 120
+        assert len(page5["items"]) == 20
+        assert page5["items"][-1]["hostname"] == "win-119.delpi.local"
+
+        # Unfiltered client page_size=100 must assemble from safe upstream pages.
+        requested_page_sizes.clear()
+        unfiltered = await list_servers(
+            reader, "Bearer test-user-token", page=1, page_size=100,
+        )
+        assert unfiltered["total"] == 120
+        assert len(unfiltered["items"]) == 100
+        assert unfiltered["items"][0]["hostname"] == "win-000.delpi.local"
+        assert unfiltered["items"][-1]["hostname"] == "win-099.delpi.local"
+        assert all(size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE for size in requested_page_sizes)
+        assert len(requested_page_sizes) >= 100 // _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+
+    asyncio.run(scenario())
+
+
+def test_get_infrastructure_health_scans_filtered_inventory_once():
+    """os_family consolidation must not re-walk the full inventory per local page."""
+    max_servers = 50
+    inventory = [
+        _rich_server(
+            i,
+            operating_system="Windows Server 2022",
+            description="ok",
+        )
+        for i in range(150)
+    ]
+    inventory.extend([
+        _server(str(uuid4()), f"linux-{i:03d}.delpi.local", operating_system="Ubuntu 24.04")
+        for i in range(20)
+    ])
+    server_calls: list[tuple[int, int]] = []
+
+    def respond(request: httpx.Request):
+        path = request.url.path
+        if path == "/servers":
+            page = int(request.url.params.get("page", "1"))
+            page_size = int(request.url.params.get("page_size", "25"))
+            server_calls.append((page, page_size))
+            start = (page - 1) * page_size
+            end = start + page_size
+            return httpx.Response(200, json=_envelope({
+                "items": inventory[start:end],
+                "total": len(inventory),
+                "page": page,
+                "page_size": page_size,
+            }))
+        if path.endswith("/observations/latest"):
+            return httpx.Response(200, json=_envelope(None))
+        return httpx.Response(404)
+
+    async def scenario():
+        reader = ItPortalReader(
+            _settings(infra_max_servers=max_servers),
+            transport=httpx.MockTransport(respond),
+        )
+        infra = await get_infrastructure_health(
+            reader, "Bearer test-user-token", os_family="windows", page_size=100,
+        )
+        assert infra["scope"]["inventory_total"] == 150
+        assert infra["scope"]["servers_considered"] == max_servers
+        assert infra["scope"]["bounded_by_max_servers"] is True
+        assert infra["servers_total"] == max_servers
+        # One full walk: ceil(170 / safe), not repeated per consolidation page.
+        expected_pages = (
+            len(inventory) + _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE - 1
+        ) // _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE
+        assert len(server_calls) == expected_pages
+        assert all(size == _SAFE_INVENTORY_UPSTREAM_PAGE_SIZE for _, size in server_calls)
+        hostnames = [row["hostname"] for row in infra["servers"]]
+        assert len(hostnames) == len(set(hostnames))
+        assert hostnames[0] == "win-000.delpi.local"
 
     asyncio.run(scenario())
 
