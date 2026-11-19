@@ -129,11 +129,22 @@ pela propria rota (dogfooding do DELETE).
       submodelo de grade. A familia __Obj* esta FORA do AppMap
       deste build — o veneno estava no remedio desde o 0.8.0
       (begin sequence interna + errorblock envenenado).
-0.8.3 (pendente compile — VALIDAR NO TST01):
-  ErrorBlock limpo (e:Description+Break); aSA5FormFields via
-  oGrid:GetStruct():GetFields() (prova DLPDBG01 — id no item 3);
-  AScan com == (match exato — '=' casa prefixo A5_PE/A5_PESO);
-  baseline provado 0.7.x como fail-safe; xSA5JsonSafe D->DtoS.
+0.8.3 — PROVEN_RUNTIME (TST01 :8701, id=dlp04i02-0.8.3):
+  GET /consultar → 200 data{} com 119 campos (6 ident + 113 cat);
+    os 7 campos ausentes no MdGridSA5 vieram "" deterministica-
+    mente: A5_PLAM1, A5_NIVEL1, A5_NQA1, A5_PLAM2, A5_NIVEL2,
+    A5_NQA2, A5_CCUSTO (campos de plano de inspecao/qualidade e
+    centro de custo — modulos fora do form SA5)
+  PUT campo fora do form (A5_PLAM1) → 400 errorType=
+    official_validation "Campos rejeitados pelo modelo MATA061"
+    — nominal, sem 500, como especificado
+  PUT A5_LEAD_T → 200 MATA061 (commit reconhecido)
+  DELETE vinculo inexistente → 404 not_found
+  Residuo de teste: A5_LEAD_T restaurado p/ 0 via rota;
+    A5_CODPRCA='CAT-TST-081' permanece no vinculo
+    10080010x000098/01 (limpeza de campo C p/ "" nao passa
+    pela guarda de vazios — reversao manual via SmartClient
+    se necessario, ambiente TST)
 ```
 
 Licao registrada: **nunca chamar funcao inexistente-no-build dentro
