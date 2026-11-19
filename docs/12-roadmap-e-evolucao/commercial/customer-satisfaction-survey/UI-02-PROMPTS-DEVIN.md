@@ -423,6 +423,7 @@ Qualquer outro arquivo, inclusive no PluginUI e em Clientes, está fora do escop
 | R9 | **Mais um caso:** o commit `4be7b6948` (TOTVS G2-B2 r2) publicou a versão antiga deste arquivo e desfez a §5.7. Ela foi restaurada em `f803c27d3` | Mesmo problema do R6 e do R7. **Todo pacote, de qualquer frente, precisa conferir `git diff --cached --stat` antes do commit** |
 | R10 | 12 falhas `.mjs` anteriores ao pacote no Comercial (lista no relatório do P2) | Fora desta frente. Avisar os responsáveis |
 | R11 | O solicitante ainda não conferiu a lista em HML | Conferir junto com o P3b |
+| R12 | **Adendo do executor (19/11/2026), com capturas em 1280, 768 e 360 px nos dois temas:** a paridade com as telas 1 e 2 está confirmada. Em 360 px, o título longo é cortado e sobram cerca de 24 px de rolagem lateral, porque “Atualizado em” e as ações da barra da tabela não quebram linha. **O mesmo acontece em Clientes** (`stackSW=326` nas duas): o problema vem do `PageHero`/`DataListToolbar` do PluginUI e do cabeçalho do Portal, e não foi introduzido pelo P2 | A UI-02 §7 exige 360 px sem cortes. **Tratar num pacote do PluginUI na fase 6 (P6-K)**, que corrige todas as páginas de uma vez, com conferência de Clientes antes e depois. O cabeçalho do Portal (shell) fica fora desta frente |
 
 ---
 
