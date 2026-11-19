@@ -32,6 +32,16 @@ class ThirdPartyMaterialsQueryRepositoryPort(Protocol):
 
     def get_summary(self, request: ThirdPartyMaterialsQueryRequest) -> dict: ...
 
+    def get_pending_report_summary(self, request: ThirdPartyMaterialsQueryRequest) -> dict: ...
+
+    def list_pending_report_rows(
+        self, request: ThirdPartyMaterialsQueryRequest
+    ) -> list[dict]: ...
+
+    def list_pending_export_rows(
+        self, request: ThirdPartyMaterialsQueryRequest, *, limit: int
+    ) -> list[dict]: ...
+
     def list_export_rows(
         self,
         request: ThirdPartyMaterialsQueryRequest,

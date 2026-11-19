@@ -289,6 +289,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "export_supplies_third_party_materials_returns": RouteContract(
         "third_party_material_return_export", "document_export"
     ),
+    "get_supplies_third_party_materials_pending_suppliers": RouteContract(
+        "third_party_material_supplier_pending", "paged_list"
+    ),
+    "export_supplies_third_party_materials_pending_suppliers": RouteContract(
+        "third_party_material_supplier_pending_export", "document_export"
+    ),
     # Engenharia
     "list_lmps": RouteContract("lmp", "paged_list"),
     "list_lmps_dashboard": RouteContract("lmp_dashboard", "composite_analysis"),

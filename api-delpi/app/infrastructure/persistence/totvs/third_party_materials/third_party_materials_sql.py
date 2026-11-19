@@ -23,6 +23,18 @@ VIEW_FROM = f"""
            AND SB1.D_E_L_E_T_ = ' '
 """
 
+# Supplier names belong to SA2; the versioned view intentionally remains unchanged.
+# Only detail/export queries need this enrichment; pagination/summary stay light.
+DETAIL_VIEW_FROM = f"""
+    {VIEW_FROM}
+    LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+      ON V.TIPO_PARCEIRO = 'F'
+     AND LTRIM(RTRIM(SA2.A2_COD)) = LTRIM(RTRIM(V.COD_PARCEIRO))
+     AND LTRIM(RTRIM(SA2.A2_LOJA)) = LTRIM(RTRIM(V.LOJA_PARCEIRO))
+     AND LTRIM(RTRIM(SA2.A2_FILIAL)) = ''
+     AND SA2.D_E_L_E_T_ = ' '
+"""
+
 DETAIL_COLUMNS = """
     V.RECNO_REMESSA,
     V.FILIAL,
@@ -42,9 +54,16 @@ DETAIL_COLUMNS = """
     V.TIPO_PARCEIRO,
     V.COD_PARCEIRO,
     V.LOJA_PARCEIRO,
-    V.NOME_PARCEIRO,
-    V.NOME_REDUZIDO_PARCEIRO,
-    V.PARCEIRO_BLOQUEADO,
+    CASE WHEN V.TIPO_PARCEIRO = 'F'
+         THEN COALESCE(NULLIF(LTRIM(RTRIM(SA2.A2_NOME)), ''), V.NOME_PARCEIRO)
+         ELSE V.NOME_PARCEIRO END AS NOME_PARCEIRO,
+    CASE WHEN V.TIPO_PARCEIRO = 'F'
+         THEN COALESCE(NULLIF(LTRIM(RTRIM(SA2.A2_NREDUZ)), ''), V.NOME_REDUZIDO_PARCEIRO)
+         ELSE V.NOME_REDUZIDO_PARCEIRO END AS NOME_REDUZIDO_PARCEIRO,
+    CASE WHEN V.TIPO_PARCEIRO = 'F' AND SA2.A2_COD IS NOT NULL
+         THEN CASE WHEN LTRIM(RTRIM(ISNULL(SA2.A2_MSBLQL, ''))) = '1'
+                   THEN 'S' ELSE 'N' END
+         ELSE V.PARCEIRO_BLOQUEADO END AS PARCEIRO_BLOQUEADO,
     V.QTD_RECEBIDA,
     V.QTD_DEVOLVIDA_TOTAL,
     V.SALDO_A_ENTREGAR,
@@ -153,13 +172,13 @@ def build_shipment_page_sql(
 def build_details_by_recnos_sql(recnos: list[int]) -> tuple[str, tuple]:
     if not recnos:
         return (
-            f"SELECT {DETAIL_COLUMNS} FROM {VIEW_FROM} WHERE 1 = 0",
+            f"SELECT {DETAIL_COLUMNS} FROM {DETAIL_VIEW_FROM} WHERE 1 = 0",
             (),
         )
     placeholders = ", ".join("?" for _ in recnos)
     sql = f"""
         SELECT {DETAIL_COLUMNS}
-        FROM {VIEW_FROM}
+        FROM {DETAIL_VIEW_FROM}
         WHERE V.RECNO_REMESSA IN ({placeholders})
         ORDER BY V.EMISSAO_RECEBIMENTO DESC, V.RECNO_REMESSA DESC,
                  V.EMISSAO_RETORNO, V.DIGITACAO_RETORNO, V.RECNO_RETORNO
@@ -181,7 +200,7 @@ def build_details_by_recno_sql(
         params.extend(ignored_products)
     sql = f"""
         SELECT {DETAIL_COLUMNS}
-        FROM {VIEW_FROM}
+        FROM {DETAIL_VIEW_FROM}
         WHERE {" AND ".join(clauses)}
         ORDER BY V.EMISSAO_RETORNO, V.DIGITACAO_RETORNO, V.RECNO_RETORNO
     """
@@ -221,7 +240,7 @@ def build_export_sql(
     where_sql, params = build_filter_clause(request)
     sql = f"""
         SELECT TOP (?) {DETAIL_COLUMNS}
-        FROM {VIEW_FROM}
+        FROM {DETAIL_VIEW_FROM}
         WHERE {where_sql}
         ORDER BY V.EMISSAO_RECEBIMENTO DESC, V.RECNO_REMESSA DESC,
                  V.EMISSAO_RETORNO, V.DIGITACAO_RETORNO, V.RECNO_RETORNO

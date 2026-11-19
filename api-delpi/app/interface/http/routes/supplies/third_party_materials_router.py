@@ -17,6 +17,7 @@ from app.composition.third_party_materials_composer import (
     build_get_third_party_materials_shipment_use_case,
     build_get_third_party_materials_summary_use_case,
     build_list_third_party_materials_shipments_use_case,
+    build_pending_supplier_report_use_case,
 )
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response, not_found_response
@@ -77,6 +78,103 @@ def _handle_db_error(context: str, exc: Exception):
         )
     log_error(f"Erro ao {context}: {exc}")
     return error_response(f"Erro interno ao {context}.", status_code=500)
+
+
+_PENDING_FIELDS = {
+    "supplier_code": {"label": "Fornecedor", "type": "string"},
+    "product_code": {"label": "Produto", "type": "string"},
+    "shipment_count": {"label": "Remessas pendentes", "type": "integer"},
+    "pending_quantity": {"label": "Quantidade pendente", "type": "number"},
+}
+
+
+@router.get(
+    "/pending-by-supplier",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_supplies_third_party_materials_pending_suppliers",
+        path="/supplies/third-party-materials/pending-by-supplier",
+    ),
+)
+@require_any_permission(THIRD_PARTY_MATERIALS_READ_PERMISSIONS)
+def get_supplies_third_party_materials_pending_suppliers(
+    branch: str = BRANCH_QUERY(),
+    partner_code: str | None = PARTNER_CODE_QUERY(),
+    partner_store: str | None = PARTNER_STORE_QUERY(),
+    product: str | None = PRODUCT_QUERY(),
+    include_test_products: bool = INCLUDE_TEST_PRODUCTS_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
+):
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+    try:
+        request = build_query_request(
+            branch=branch,
+            partner_code=partner_code,
+            partner_store=partner_store,
+            product=product,
+            include_test_products=include_test_products,
+            only_with_balance=True,
+            page=page,
+            page_size=page_size,
+        )
+        result = build_pending_supplier_report_use_case().execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_third_party_materials_pending_suppliers",
+            message="Pendências por fornecedor consolidadas por produto e remessa.",
+            fields=_PENDING_FIELDS,
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        return _handle_db_error("consultar pendências por fornecedor", exc)
+
+
+@router.get(
+    "/pending-by-supplier/export",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "export_supplies_third_party_materials_pending_suppliers",
+        path="/supplies/third-party-materials/pending-by-supplier/export",
+    ),
+)
+@require_any_permission(THIRD_PARTY_MATERIALS_EXPORT_PERMISSIONS)
+def export_supplies_third_party_materials_pending_suppliers(
+    branch: str = BRANCH_QUERY(),
+    partner_code: str | None = PARTNER_CODE_QUERY(),
+    partner_store: str | None = PARTNER_STORE_QUERY(),
+    product: str | None = PRODUCT_QUERY(),
+    include_test_products: bool = INCLUDE_TEST_PRODUCTS_QUERY(),
+    export_format: str = EXPORT_FORMAT_QUERY(),
+):
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+    try:
+        request = build_query_request(
+            branch=branch,
+            partner_code=partner_code,
+            partner_store=partner_store,
+            product=product,
+            include_test_products=include_test_products,
+            only_with_balance=True,
+            export_format=export_format,
+        )
+        result = build_pending_supplier_report_use_case().export(request)
+        return StreamingResponse(
+            result["stream"],
+            media_type=result["content_type"],
+            headers={
+                "Content-Disposition": f'attachment; filename="{result["filename"]}"',
+                "X-Exported-Count": str(result["exported_count"]),
+                "X-Export-Notice": "Uma linha por fornecedor e produto; sem saldos repetidos.",
+            },
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        return _handle_db_error("exportar pendências por fornecedor", exc)
 
 
 @router.get(
