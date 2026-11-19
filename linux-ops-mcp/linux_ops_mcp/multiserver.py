@@ -8,6 +8,12 @@ from typing import Any
 from .diagnosis import analyze_observation, classify_os_family
 from .reader import ItPortalReader, ReadError, Settings, require_uuid
 
+# IT Portal ServerOut.description may be up to 4000 chars. With JSON envelope
+# overhead, ~60 max-length rows already exceed MAX_UPSTREAM_BYTES (256 KiB).
+# Filtered inventory scans therefore use a smaller upstream page size so valid
+# inventories complete instead of failing with upstream_response_too_large.
+_FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE = 25
+
 
 def _normalize_hostname(value: str) -> str:
     return value.strip().rstrip(".").lower()
@@ -72,6 +78,7 @@ async def list_servers(
     collected: list[dict[str, Any]] = []
     upstream_page = 1
     upstream_total: int | None = None
+    upstream_page_size = _FILTERED_INVENTORY_UPSTREAM_PAGE_SIZE
     while True:
         batch = await reader.list_servers_page(
             authorization,
@@ -81,7 +88,7 @@ async def list_servers(
             criticality=criticality,
             archived=archived,
             page=upstream_page,
-            page_size=100,
+            page_size=upstream_page_size,
         )
         upstream_total = batch["total"]
         for item in batch["items"]:
@@ -91,7 +98,7 @@ async def list_servers(
                 continue
             item["os_family"] = classify_os_family(item.get("operating_system"))
             collected.append(item)
-        fetched = upstream_page * 100
+        fetched = upstream_page * upstream_page_size
         if fetched >= (upstream_total or 0) or not batch["items"]:
             break
         upstream_page += 1
