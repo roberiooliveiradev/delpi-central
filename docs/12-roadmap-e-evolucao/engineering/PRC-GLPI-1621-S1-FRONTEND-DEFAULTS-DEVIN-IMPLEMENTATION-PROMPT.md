@@ -29,11 +29,11 @@ Antes de qualquer diff, no checkout existente do repositório `roberiooliveirade
 
 1. Confirmar `git rev-parse HEAD`, `git branch --show-current`, `git status --short`, `git worktree list` e HEAD remoto; inspecionar concorrência. Não criar, trocar ou excluir branch/worktree, não limpar/stash/reset work de terceiros e não usar force push. Se branch inesperada, registrar bloqueio e solicitar decisão.
 2. Ler `AGENTS.md`, `.cursor/rules/plan-execution.mdc`, `test-and-commit.mdc`, `platform-frontend-mfe-experience.mdc`, `plugins-reusable-components.mdc`, `feature-help-sync.mdc`, `agent-session-scope.mdc`, `evidence-driven-execution.mdc` e regras relevantes de verificação. O GitHub consultado no planejamento estava no SHA `4886d0decf6635dcf0e45cd586089c77ca5c838a`; **não assumir que continua atual**.
-3. Ler este plano, `README.md` e `ROADMAP.md` da pasta `docs/12-roadmap-e-evolucao/engineering/`; consultar o contrato PRC vigente e inventário legado somente para confirmar valores e boundaries.
+3. Ler o plano `PRC-GLPI-1621-UNIFIED-REQUEST-IMPROVEMENTS-IMPLEMENTATION-PLAN-2026-11-19.md`, `README.md` e `ROADMAP.md` da pasta `docs/12-roadmap-e-evolucao/engineering/`; consultar o contrato PRC vigente e inventário legado somente para confirmar valores e boundaries.
 4. Conferir no HEAD os arquivos e consumidores: 
    - `plugins/plugin-ui/src/components/prc/PrcRequestForm.tsx` (implementação canônica);
    - `plugins/plugin-ui/src/utils/prcProductRegistration.ts` (`buildCreateIntakeBody`, validar e reutilizar sem mudança de contrato);
-   - `plugins/engineering/src/features/product-registration/pages/PrcCreatePage.tsx`;
+   - `plugins/engineering/src/features/product-registration/pages/PrcCreatePage.tsx` e `../prcIntakePayload.ts` (fonte real `portal-engineering`);
    - `plugins/my-requests/src/features/product-registration/PrcRequestPage.tsx`;
    - `plugins/plugin-ui/src/components/prc/PrcRequestForm.descriptionRequired.test.tsx`;
    - `plugins/plugin-ui/src/components/prc/PrcRequestForm.editCase.test.tsx`;
@@ -47,11 +47,11 @@ Antes de qualquer diff, no checkout existente do repositório `roberiooliveirade
 - **RQ-1621-S1-01:** Nova solicitação CREATE (sem `editCase`) inicializa `defaultWarehouse="01"` e `accountingAccount="11401002"`, ambos visíveis na ficha técnica e presentes no payload `requestedData` após envio válido.
 - **RQ-1621-S1-02:** Ambos os campos seguem editáveis; alterações manuais, inclusive vazio/limpeza, não podem ser reescritas por efeitos assíncronos, refetch de `reference-data`, navegação entre etapas ou re-render.
 - **RQ-1621-S1-03:** Nenhum default é inserido indevidamente no caminho UPDATE, em `editCase` CREATE/UPDATE, na correção de ficha, em dados oficiais obtidos por `fetchEditContext` ou no futuro fluxo de duplicação com draft próprio.
-- **RQ-1621-S1-04:** O mesmo comportamento ocorre com `source="engineering"` (valor real confirmado no wrapper) e `source="my-requests"`, sem duplicar o wizard; nenhuma mudança em contrato HTTP, Engineering API, api-delpi, requests-api, banco, Core/RBAC ou TOTVS.
+- **RQ-1621-S1-04:** O mesmo comportamento ocorre com `source="portal-engineering"` (`PRC_PORTAL_SOURCE` do wrapper de Engenharia) e `source="my-requests"`, sem duplicar o wizard; nenhuma mudança em contrato HTTP, Engineering API, api-delpi, requests-api, banco, Core/RBAC ou TOTVS.
 
 ### 2. Critérios de aceite obrigatórios (incluir integralmente no pedido ao verificador)
 
-- **AC-1621-S1-01 (positivo):** Renderizar nova solicitação CREATE com fonte Engineering e My Requests; avançar à ficha e confirmar inputs visíveis `defaultWarehouse=01`, `accountingAccount=11401002`.
+- **AC-1621-S1-01 (positivo):** Renderizar nova solicitação CREATE com as fontes reais `source="portal-engineering"` e `source="my-requests"`; avançar à ficha e confirmar inputs visíveis `defaultWarehouse=01`, `accountingAccount=11401002`.
 - **AC-1621-S1-02 (payload):** Submissão CREATE válida por meio dos builders existentes preserva `requestedData.defaultWarehouse="01"` e `requestedData.accountingAccount="11401002"`; `source` mantém origem legítima; sem novos campos de API.
 - **AC-1621-S1-03 (edição):** Trocar os dois valores por escolhas válidas e voltar/avançar preserva os dados digitados; caso o usuário zere um obrigatório, a validação vigente bloqueia o envio e **não** repõe o default automaticamente.
 - **AC-1621-S1-04 (UPDATE):** Escolher UPDATE e consultar o produto oficial não apresenta/enviará defaults do CREATE como alterações, mesmo se a consulta for lenta; os valores oficiais obtidos são preservados, inclusive string vazia real quando aplicável.
@@ -74,7 +74,7 @@ Antes de qualquer diff, no checkout existente do repositório `roberiooliveirade
 ### 4. Testes, QA e escopo permitido
 
 **Arquivos de produção autorizados:** preferencialmente apenas `plugins/plugin-ui/src/components/prc/PrcRequestForm.tsx`; eventualmente helper puramente local do mesmo pacote **somente se a necessidade for demonstrada**.  
-**Testes autorizados:** em `plugins/plugin-ui/src/components/prc/*test*.` e testes de composição/regressão diretamente relevantes em `plugins/engineering` e `plugins/my-requests`, preservando as suítes existentes.  
+**Testes autorizados:** arquivos `*.test.tsx` e `*.test.ts` em `plugins/plugin-ui/src/components/prc/` e testes de composição/regressão diretamente relevantes em `plugins/engineering` e `plugins/my-requests`, preservando as suítes existentes.  
 **Documentação autorizada:** atualizar apenas plano GLPI #1621 e ledger relevante para registrar o outcome real, quando entregue; não marcar PASS antes dos testes.  
 **Não modificar:** API, domínio, armazenamento, schemas, migrations, permissions, gateways, infra, Protheus, recursos de outro fluxo.
 
