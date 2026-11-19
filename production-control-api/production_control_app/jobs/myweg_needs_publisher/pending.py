@@ -374,6 +374,15 @@ def _process_one(
     base["collected_at"] = artifacts.collected_at.isoformat()
     base["record_count"] = built["record_count"]
     base["idempotency_key"] = built["idempotency_key"]
+    if built.get("quality"):
+        base["quality"] = built["quality"]
+        logger.warning(
+            "myweg_pending_partial collection_id=%s accepted_count=%s excluded_count=%s excluded_un=%s",
+            candidate.collection_id,
+            built["record_count"],
+            built["quality"]["excludedCount"],
+            built["quality"]["excludedQuantityUn"],
+        )
 
     if dry_run:
         out = {**base, "status": "dry_run_ok", "ok": True, "http": {"sent": False}}
