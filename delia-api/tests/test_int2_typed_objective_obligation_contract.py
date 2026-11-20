@@ -1722,3 +1722,508 @@ def test_presentation_scope_gets_named_feedback_and_recovers():
         {"accepted": False},
         {"accepted": True},
     ]
+
+
+# -------------------------------------------------------------------
+# INT-2 specialist functional completion — acceptor coherence gates
+# -------------------------------------------------------------------
+
+
+def test_write_class_operation_rejects_plan():
+    """INT-2 completion (defect class 5): an obligation requiring a
+    ``prepare``/``act`` operation can never be demonstrated on the
+    READ-only governed surface — the catalog omits write classes and
+    the invoke gate rejects them, so the obligation is a priori
+    unprovable. Accepting it produces a plan that can never satisfy —
+    reject at the Application boundary for bounded correction."""
+    for operation in ("act", "prepare"):
+        plan = _gates()._accept_semantic_investigation_plan(
+            goal_class="read",
+            comparison_requested=False,
+            target_identities=[],
+            evidence_needed=[
+                {
+                    "description": "remover o processo",
+                    "evidence_source": "process",
+                    "operation": operation,
+                }
+            ],
+            expected_delivery="record_detail",
+            correlation=f"fn-write-{operation}",
+        )
+        assert plan is None, operation
+
+
+def test_consultation_operations_still_accepted():
+    """Sibling: consultation classes remain demonstrable and binding."""
+    for operation in ("read", "analysis", "discovery"):
+        plan = _gates()._accept_semantic_investigation_plan(
+            goal_class="read",
+            comparison_requested=False,
+            target_identities=[],
+            evidence_needed=[
+                {
+                    "description": "detalhe",
+                    "evidence_source": "process",
+                    "operation": operation,
+                }
+            ],
+            expected_delivery="record_detail",
+            correlation=f"fn-consult-{operation}",
+        )
+        assert plan is not None, operation
+        assert plan.evidence_needed[0].operation == operation
+
+
+def test_invocation_selector_keys_in_required_args_still_accepted():
+    """Contract lock (INT-2 completion triage): top-level
+    ``required_args`` keys that name governed invocation selectors
+    (``entity``/``action``/``capability``/``kind``/``subject``/...)
+    remain ACCEPTED declared scope — unlike presentation keys they
+    define which owner surface produced the evidence, and the
+    governed layer records and echoes them as invocation vocabulary
+    (``test_rejection_names_invalid_operation_class`` models the
+    trace correction path that relies on accepting
+    ``required_args={entity: process}``). A wrong-surface choice
+    stays honestly unproven, never falsely satisfied. Only
+    ``view``-family presentation keys and write-class operations are
+    rejected."""
+    for key in (
+        "entity",
+        "action",
+        "capability",
+        "kind",
+        "subject",
+        "entity_kind",
+        "action_id",
+        "operation",
+    ):
+        plan = _gates()._accept_semantic_investigation_plan(
+            goal_class="read",
+            comparison_requested=False,
+            target_identities=[],
+            evidence_needed=[
+                {
+                    "description": "processos",
+                    "evidence_source": "process",
+                    "required_args": {key: "process", "params": {}},
+                }
+            ],
+            expected_delivery="enumeration",
+            correlation=f"fn-selector-{key}",
+        )
+        assert plan is not None, key
+
+
+def test_business_leaf_keys_in_required_args_still_accepted():
+    """Negative: real business filter/identity keys remain valid
+    declared scope (filters, identities, units, periods)."""
+    for key in ("code", "status", "filial", "period", "quantity"):
+        plan = _gates()._accept_semantic_investigation_plan(
+            goal_class="read",
+            comparison_requested=False,
+            target_identities=[],
+            evidence_needed=[
+                {
+                    "description": "processos ativos",
+                    "evidence_source": "process",
+                    "required_args": {key: "ativo"},
+                }
+            ],
+            expected_delivery="enumeration",
+            correlation=f"fn-leaf-{key}",
+        )
+        assert plan is not None, key
+
+
+def test_comparison_delivery_sets_comparison_flag():
+    """INT-2 completion (defect class 1): ``expected_delivery=`` ``comparison``
+    without ``comparison_requested`` produced an incoherent accepted
+    tuple — the delivery demands comparison coverage while the goal
+    flag says otherwise. Mirror the existing ``goal_class=compare``
+    normalization so the flag follows the declared deliverable."""
+    plan = _gates()._accept_semantic_investigation_plan(
+        goal_class="read",
+        comparison_requested=False,
+        target_identities=["90260921", "90260922"],
+        evidence_needed=["comparar os dois produtos"],
+        expected_delivery="comparison",
+        correlation="fn-cmp-delivery",
+    )
+    assert plan is not None
+    assert plan.goal.comparison_requested is True
+    assert plan.goal.output_mode == "comparison"
+
+
+def test_two_chained_violations_get_named_feedback_for_each():
+    """INT-2 completion (defect class 6): a declaration carrying TWO
+    contract violations in different fields must name BOTH in one
+    bounded response — a correction that fixes only the first-named
+    divergence would otherwise burn the recovery budget (the
+    multi-violation recover residual)."""
+    import json
+
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from tests.support.native_mcp_fixtures import (
+        alpha_beta_servers,
+        native_toolset_stub,
+    )
+    from tests.test_pydantic_ai_real_owner_tool_loop_rework import (
+        _final_answer,
+    )
+    from tests.test_pydantic_ai_semantic_rework import (
+        _gates as _loop_gates,
+        _success_attempt,
+    )
+
+    gates = _loop_gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = catalog[0]["capability_id"]
+
+    gates._governed_semantic_tool_invoke = lambda **kw: _success_attempt(  # type: ignore[method-assign]
+        content="registro PROC-0001", root="PROC-0001"
+    )
+
+    seen_returns: list[str] = []
+    declared: dict = {}
+    original_accept = gates._accept_semantic_investigation_plan
+
+    def _accept_spy(**kwargs):
+        plan = original_accept(**kwargs)
+        declared.setdefault("attempts", []).append(
+            {"accepted": plan is not None}
+        )
+        return plan
+
+    gates._accept_semantic_investigation_plan = _accept_spy  # type: ignore[method-assign]
+
+    def _fn(messages, _info):
+        tool_returns = [
+            m
+            for m in messages
+            if isinstance(m, ModelRequest)
+            and any(isinstance(p, ToolReturnPart) for p in m.parts)
+        ]
+        for req in tool_returns:
+            for part in req.parts:
+                if (
+                    isinstance(part, ToolReturnPart)
+                    and part.tool_name == "declare_investigation_goal"
+                    and str(part.content) not in seen_returns
+                ):
+                    seen_returns.append(str(part.content))
+        n_returns = sum(
+            1
+            for req in tool_returns
+            for part in req.parts
+            if isinstance(part, ToolReturnPart)
+        )
+        if n_returns == 0:
+            # Two simultaneous violations: dotted surface anchor AND a
+            # write-class operation restriction.
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "evidence_needed": [
+                                {
+                                    "description": "detalhe",
+                                    "evidence_source": "teo.read",
+                                    "operation": "act",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if n_returns == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "evidence_needed": [
+                                {
+                                    "description": "detalhe",
+                                    "evidence_source": "process",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if n_returns == 2:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        return _final_answer(
+            "registro PROC-0001", status="complete", refs=[0]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("detalhe do processo")
+
+    assert seen_returns, "declare tool result must reach the model"
+    rejected = json.loads(seen_returns[0])
+    assert rejected["status"] == "INVALID_GOAL"
+    assert "teo.read" in rejected["rejected_anchors"]
+    assert "act" in rejected["undemonstrable_operations"]
+    assert declared["attempts"] == [
+        {"accepted": False},
+        {"accepted": True},
+    ]
+
+
+def test_user_named_identifier_omitted_gets_named_feedback():
+    """INT-2 completion (defect classes 3/4): the user named a record
+    identifier that the declared plan drops entirely — absent from
+    target_identities, required_args, obligation descriptions and
+    business_subject. The accepted plan would hand INT-1 an objective
+    that silently narrowed the request; reject naming the missing
+    identifier so the bounded redeclare carries it."""
+    import json
+
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from tests.support.native_mcp_fixtures import (
+        alpha_beta_servers,
+        native_toolset_stub,
+    )
+    from tests.test_pydantic_ai_real_owner_tool_loop_rework import (
+        _final_answer,
+    )
+    from tests.test_pydantic_ai_semantic_rework import (
+        _gates as _loop_gates,
+        _success_attempt,
+    )
+
+    gates = _loop_gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = catalog[0]["capability_id"]
+
+    gates._governed_semantic_tool_invoke = lambda **kw: _success_attempt(  # type: ignore[method-assign]
+        content="estrutura 90260921", root="90260921"
+    )
+
+    seen_returns: list[str] = []
+
+    def _fn(messages, _info):
+        tool_returns = [
+            m
+            for m in messages
+            if isinstance(m, ModelRequest)
+            and any(isinstance(p, ToolReturnPart) for p in m.parts)
+        ]
+        for req in tool_returns:
+            for part in req.parts:
+                if (
+                    isinstance(part, ToolReturnPart)
+                    and part.tool_name == "declare_investigation_goal"
+                    and str(part.content) not in seen_returns
+                ):
+                    seen_returns.append(str(part.content))
+        n_returns = sum(
+            1
+            for req in tool_returns
+            for part in req.parts
+            if isinstance(part, ToolReturnPart)
+        )
+        if n_returns == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "evidence_needed": [
+                                {
+                                    "description": "estrutura do produto",
+                                    "evidence_source": "product",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if n_returns == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "record_detail",
+                            "target_identities": ["90260921"],
+                            "evidence_needed": [
+                                {
+                                    "description": (
+                                        "estrutura do produto 90260921"
+                                    ),
+                                    "evidence_source": "product",
+                                }
+                            ],
+                        },
+                    )
+                ]
+            )
+        if n_returns == 2:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        return _final_answer(
+            "estrutura 90260921", status="complete", refs=[0]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("qual a estrutura do produto 90260921?")
+
+    assert seen_returns, "declare tool result must reach the model"
+    rejected = json.loads(seen_returns[0])
+    assert rejected["status"] == "INVALID_GOAL"
+    assert "90260921" in rejected["missing_user_identifiers"]
+
+
+def test_clarification_after_accepted_plan_rejected():
+    """INT-2 completion (defect class 7): once the Application accepted
+    a typed objective, a ``request_user_clarification`` with zero
+    collected evidence short-circuits finalize into
+    CLARIFICATION_REQUIRED — discarding the valid declared objective.
+    The tool must refuse: the accepted plan is the immutable contract
+    (variant B already clears the residual question at handoff)."""
+    import json
+
+    from pydantic_ai.messages import (
+        ModelRequest,
+        ModelResponse,
+        ToolCallPart,
+        ToolReturnPart,
+    )
+    from pydantic_ai.models.function import FunctionModel
+
+    from app.application.interaction.turn_budget import TurnDeadline
+    from app.infrastructure.orchestration.pydantic_ai_investigation import (
+        PydanticAiInvestigationOrchestrator,
+    )
+    from tests.support.native_mcp_fixtures import (
+        alpha_beta_servers,
+        native_toolset_stub,
+    )
+    from tests.test_pydantic_ai_real_owner_tool_loop_rework import (
+        _final_answer,
+    )
+    from tests.test_pydantic_ai_semantic_rework import (
+        _gates as _loop_gates,
+        _success_attempt,
+    )
+
+    gates = _loop_gates()
+    catalog = gates._project_semantic_tool_catalog(
+        correlation="c", deadline=TurnDeadline.start(30.0)
+    )
+    tool_name = catalog[0]["capability_id"]
+
+    gates._governed_semantic_tool_invoke = lambda **kw: _success_attempt(  # type: ignore[method-assign]
+        content="registro PROC-0001", root="PROC-0001"
+    )
+
+    clarify_returns: list[str] = []
+
+    def _fn(messages, _info):
+        tool_returns = [
+            m
+            for m in messages
+            if isinstance(m, ModelRequest)
+            and any(isinstance(p, ToolReturnPart) for p in m.parts)
+        ]
+        for req in tool_returns:
+            for part in req.parts:
+                if (
+                    isinstance(part, ToolReturnPart)
+                    and part.tool_name == "request_user_clarification"
+                ):
+                    clarify_returns.append(str(part.content))
+        n_returns = sum(
+            1
+            for req in tool_returns
+            for part in req.parts
+            if isinstance(part, ToolReturnPart)
+        )
+        if n_returns == 0:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "declare_investigation_goal",
+                        {
+                            "goal_class": "read",
+                            "expected_delivery": "enumeration",
+                            "evidence_needed": [
+                                {"description": "lista de processos"}
+                            ],
+                        },
+                    )
+                ]
+            )
+        if n_returns == 1:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "request_user_clarification",
+                        {"question": "quer confirmar o escopo?"},
+                    )
+                ]
+            )
+        if n_returns == 2:
+            return ModelResponse(
+                parts=[ToolCallPart(tool_name, {"arguments": {}})]
+            )
+        return _final_answer(
+            "registro PROC-0001", status="complete", refs=[0]
+        )
+
+    engine = PydanticAiInvestigationOrchestrator(
+        gates, model=FunctionModel(_fn), tool_calls_limit=6
+    )
+    with native_toolset_stub(alpha_beta_servers()):
+        engine.attempt("liste os processos")
+
+    assert clarify_returns, "clarification result must reach the model"
+    rejected = json.loads(clarify_returns[0])
+    assert rejected["status"] != "CLARIFICATION_RECORDED"
+    assert rejected["error_code"] == "clarification_rejected_plan_accepted"

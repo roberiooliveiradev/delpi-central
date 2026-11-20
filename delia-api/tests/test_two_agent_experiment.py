@@ -337,7 +337,7 @@ def test_variant_b_accepted_plan_clears_residual_clarification():
         if prior == 0:
             return ModelResponse(
                 parts=[
-                    _valid_goal_call(),
+                    _valid_goal_call(target_identities=["PROC-0034"]),
                     ToolCallPart(
                         "request_user_clarification",
                         {"question": "qual status residual?"},

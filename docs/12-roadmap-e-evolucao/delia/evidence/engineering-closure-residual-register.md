@@ -2218,3 +2218,27 @@ Review verdict persisted verbatim: `evidence/c3-t2-parallel-mcp-discovery-decisi
 **PREVENÇÃO (RQ-5):** `EXISTING_EQUIVALENT=YES` — política de escopo de commit já existe em `AGENTS.md` (commit só dos arquivos da task, sem misturar frentes), `delpi-verifier` verifica escopo por range quando solicitado, `architecture-gate` detecta regressões pós-push. Gap: nenhuma proteção **pré-commit** no índice compartilhado (sem hooks instalados; CI é pós-push). `REUSE_DECISION=EXTEND` — gate de staged-scope pré-commit como extensão mínima do fluxo existente (pathspec-scoped commit ou check `git diff --cached --name-only ⊆ escopo declarado`); plano+diff propostos à Coordenação, não implementado nesta task.
 
 **NEXT:** gate staged-scope proposto à Coordenação; decisão de owner sobre `stash@{0}`/`stash@{4}`; `F2_ENTRY_CANDIDATE` submetido — sem avanço autorizado.
+
+### 2026-11-20 — INT-2 specialist functional completion (acceptor coherence gates)
+
+**TASK:** `DELIA-C3-T2-INT2-SPECIALIST-FUNCTIONAL-COMPLETION-01`
+**BASE:** `5dcc2ebf51` · **EVAL:** `or-qwen14b-78cb27247cbd` (INT2_C2, two-agent ON, qwen/qwen3-14b)
+**EVIDENCE:** `evidence/c3-t2-int2-functional-completion/`
+
+| ID | Estado | Evidência |
+|---|---|---|
+| `INT2-WRITE-OP-OBLIGATION` | `REMEDIATED` | `operation` ∈ {prepare, act} em obrigação era aceito embora indemonstrável na superfície READ-only → rejeitado em `_normalize_obligation_tuple` via `_CONSULTATION_OPERATIONS` com feedback `undemonstrable_operations`. RED→GREEN `test_write_class_operation_rejects_plan` + sibling consultation ops aceitos |
+| `INT2-COMPARISON-DELIVERY-FLAG` | `REMEDIATED` | `expected_delivery=comparison` sem `comparison_requested` aceitava tupla incoerente → acceptor agora espelha a normalização `klass=="compare"` (`test_comparison_delivery_sets_comparison_flag`) |
+| `INT2-IDENTIFIER-OMISSION` | `REMEDIATED` | plano aceito sem o identificador nomeado pelo usuário em qualquer superfície declarada → novo gate `omitted_context_identifiers` (inverso de `invented_record_tokens`, mesmo contexto autorizado) rejeita com `missing_user_identifiers` nomeados (`test_user_named_identifier_omitted_gets_named_feedback`) |
+| `INT2-POST-PLAN-CLARIFICATION` | `REMEDIATED` | `request_user_clarification` após plano aceito com zero evidência gravava clarificação que short-circuitava finalize para CLARIFICATION_REQUIRED descartando o objetivo válido → rejeitado `clarification_rejected_plan_accepted` (`test_clarification_after_accepted_plan_rejected`) |
+| `INT2-CHAINED-VIOLATION-FEEDBACK` | `CLOSED_AS_CONTRACT` | duas violações simultâneas já nomeavam todas as classes na mesma resposta; `test_two_chained_violations_get_named_feedback_for_each` trava o contrato |
+| `INT2-SELECTOR-KEYS-SCOPE` | `CLOSED_AS_INTENTIONAL` | `entity`/`action`/`capability`/... top-level em `required_args` = escopo de vocabulário de invocação verificável (não presentation); caminho de correção documentado — lock test `test_invocation_selector_keys_in_required_args_still_accepted` |
+| `INT2-NONLITERAL-FILTER-OMISSION` | `OPEN_LOW (model-side)` | filtro não-identificador ("ativos") omitido de `required_args` não é detectável mecanicamente no acceptor; obrigação sem escopo → honestamente unproven, nunca falso-satisfeita; mitigação: docstring do tool + instruções versionadas |
+| `INT2-COMPREHENSION-TOOL-HALLUCINATION` | `OPEN_LOW (observed live)` | eval r1: Qwen chamou `davi.read`/`teo.read` (tools fora do toolset de comprehension) ×2 → ModelRetry nomeando tools disponíveis → `UsageLimitExceeded` → `artifact_kept` (plano aceito preservado — path correto); candidato a ajuste de instrução, não de contrato |
+| `OWNER-MCP-PROTOCOL-ERROR` | `OBSERVED (environment)` | eval r1: `davi.read`×2 + `teo.read`×1 → `mcp_protocol_error`/`PluginsRepositoryError` interno api-delpi → NON_GROUNDED honesto `delpi_source_unverified`; fora do escopo INT-2, honestamente propagado |
+| `T2-B-COMPREHENSION-AGENT-ERROR` | `OPEN_LOW` (mantido) | inalterado |
+| `INT3-OBLIGATION-DEMONSTRATION-DEPTH` | `OPEN_LOW` (mantido) | inalterado |
+| `R4-AUTHZ-DENY-IDENTITY` | `PENDING` | inalterado |
+| `R6-N6/N7` | `PENDING` | dependem de R4 |
+
+**NEXT:** verificação independente delpi-verifier da task. `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`.

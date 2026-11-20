@@ -2703,6 +2703,13 @@ class OperationalCapabilityOrchestrator:
             return None
         if klass == "compare":
             comparison_requested = True
+        if delivery == "comparison":
+            # The declared deliverable IS a comparison — mirror the
+            # compare-goal normalization so the accepted tuple stays
+            # coherent. Without it a plan could demand comparison
+            # coverage while the goal flag said otherwise (INT-2
+            # functional completion: incoherent pair accepted).
+            comparison_requested = True
         subject = (
             str(business_subject).strip()[:240] if business_subject else None
         ) or None

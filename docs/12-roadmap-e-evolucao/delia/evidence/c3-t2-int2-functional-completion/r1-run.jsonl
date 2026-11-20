@@ -1,0 +1,165 @@
+== starting INT2_C2_record_detail_product
+== INT2_C2_record_detail_product: {"elapsed_s": 96.7, "error": null, "grounding": "GroundingStatus.NON_GROUNDED", "mcp_invoke_targets": ["MCP:read", "MCP:get_context", "MCP:read", "MCP:read"], "declared_answer": null, "investigation_plan": {"goal_class": "read", "comparison_requested": false, "expected_delivery": "record_detail", "business_subject": "estrutura do produto", "declared": true, "target_identities": ["90260921"], "evidence_needed": [{"description": "Obter a estrutura do produto 90260921", "evidence_source": "get_product_structure", "operation": "read", "required_scope": ["params.code=90260921", "__container__=params"]}]}, "obligation_coverage": [], "goal_declarations": [{"goal_class": "read", "expected_delivery": "record_detail", "target_identities": ["90260921"], "evidence_needed": [{"description": "Obter a estrutura do produto 90260921", "evidence_source": "get_product_structure", "operation": "read", "required_args": {"params": {"code": "90260921"}}}], "business_subject": "estrutura do produto", "accepted": true}], "comprehension": {"usage": {"requests": 4, "tool_calls": 2, "input_tokens": 23585, "output_tokens": 2207}, "handoff_error": null}, "model_retry_feedback": ["Unknown tool name: 'davi.read'. Available tools: 'declare_investigation_goal', 'final_result', 'request_user_clarification'", "Unknown tool name: 'teo.read'. Available tools: 'declare_investigation_goal', 'final_result', 'request_user_clarification'", "Observation made no progress on open user identifiers. Preserve the original objective. Select a different live capability whose description and schema match the still-missing business evidence — do not repeat an equivalent call or treat guidance/documentation as operational records."], "limitations": ["delpi_source_unverified"], "content_head": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o", "llm_runs": {"count": 3, "input_tokens": 1049, "output_tokens": 216, "elapsed_ms": 93519, "interrupted": 2, "interruption_types": ["UsageLimitExceeded"]}, "provider_request_b3": {"boundary": "pydantic_ai_provider_request_pre_http", "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)", "pydantic_ai_provider_boundary": "PROVEN", "http_wire_bytes": "NOT_OBSERVED", "tool_count": 2, "tool_order": ["declare_investigation_goal", "request_user_clarification"], "tools": [{"name": "declare_investigation_goal", "description_length": 3510, "description_sha256": "004ad2c1d277e779995a6c6eda95f04bfc741222308d6bfe10cd6c09778c25ee", "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427", "schema_property_count": 6, "required_fields": ["goal_class"], "tool_order": 0, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": true}, {"name": "request_user_clarification", "description_length": 211, "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c", "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b", "schema_property_count": 2, "required_fields": ["question"], "tool_order": 1, "description_has_process_wbs": false, "description_has_bom_negative": false, "description_mentions_get_product_structure": false}], "tool_choice_policy": "UNFORCED", "model_request_parameters": {"allow_text_output": true, "allow_image_output": false, "output_mode": "auto", "function_tool_count": 2, "declared_function_tool_count": 2, "output_tool_names": ["final_result"], "has_tool_choice_field": false, "tool_choice": null}, "user_prompt": "Qual é a estrutura do produto 90260921?", "agent_instructions_sha256": "36fd8218b883470434ec66fe0874b85001e70b5183d6502d23f9f9f1d5adbe40", "agent_instructions_length": 15519, "request_fingerprint": "ee1385245189c66f"}, "prior": [], "context_source": null, "conversation_correlation": null}
+{
+ "evaluation_id": "or-qwen14b-78cb27247cbd",
+ "model": "qwen/qwen3-14b",
+ "runtime_profile": "openrouter_qwen",
+ "config_fingerprint": "e4a5b706a3b3156b",
+ "secure_eval_gate": "READY_FOR_ISOLATED_EVAL",
+ "live_multiturn_chain": false,
+ "scenarios": {
+  "INT2_C2_record_detail_product": {
+   "elapsed_s": 96.7,
+   "error": null,
+   "grounding": "GroundingStatus.NON_GROUNDED",
+   "mcp_invoke_targets": [
+    "MCP:read",
+    "MCP:get_context",
+    "MCP:read",
+    "MCP:read"
+   ],
+   "declared_answer": null,
+   "investigation_plan": {
+    "goal_class": "read",
+    "comparison_requested": false,
+    "expected_delivery": "record_detail",
+    "business_subject": "estrutura do produto",
+    "declared": true,
+    "target_identities": [
+     "90260921"
+    ],
+    "evidence_needed": [
+     {
+      "description": "Obter a estrutura do produto 90260921",
+      "evidence_source": "get_product_structure",
+      "operation": "read",
+      "required_scope": [
+       "params.code=90260921",
+       "__container__=params"
+      ]
+     }
+    ]
+   },
+   "obligation_coverage": [],
+   "goal_declarations": [
+    {
+     "goal_class": "read",
+     "expected_delivery": "record_detail",
+     "target_identities": [
+      "90260921"
+     ],
+     "evidence_needed": [
+      {
+       "description": "Obter a estrutura do produto 90260921",
+       "evidence_source": "get_product_structure",
+       "operation": "read",
+       "required_args": {
+        "params": {
+         "code": "90260921"
+        }
+       }
+      }
+     ],
+     "business_subject": "estrutura do produto",
+     "accepted": true
+    }
+   ],
+   "comprehension": {
+    "usage": {
+     "requests": 4,
+     "tool_calls": 2,
+     "input_tokens": 23585,
+     "output_tokens": 2207
+    },
+    "handoff_error": null
+   },
+   "model_retry_feedback": [
+    "Unknown tool name: 'davi.read'. Available tools: 'declare_investigation_goal', 'final_result', 'request_user_clarification'",
+    "Unknown tool name: 'teo.read'. Available tools: 'declare_investigation_goal', 'final_result', 'request_user_clarification'",
+    "Observation made no progress on open user identifiers. Preserve the original objective. Select a different live capability whose description and schema match the still-missing business evidence — do not repeat an equivalent call or treat guidance/documentation as operational records."
+   ],
+   "limitations": [
+    "delpi_source_unverified"
+   ],
+   "content_head": "Não consegui consultar a fonte autoritativa da DELPI para esta solicitação. Nenhum dado operacional foi verificado — tente novamente em instantes ou reformule o",
+   "llm_runs": {
+    "count": 3,
+    "input_tokens": 1049,
+    "output_tokens": 216,
+    "elapsed_ms": 93519,
+    "interrupted": 2,
+    "interruption_types": [
+     "UsageLimitExceeded"
+    ]
+   },
+   "provider_request_b3": {
+    "boundary": "pydantic_ai_provider_request_pre_http",
+    "capture_mechanism": "pydantic_ai ModelRequestParameters.declared_function_tools after prepare_request (FunctionModel AgentInfo.function_tools | WrapperModel.request MRP)",
+    "pydantic_ai_provider_boundary": "PROVEN",
+    "http_wire_bytes": "NOT_OBSERVED",
+    "tool_count": 2,
+    "tool_order": [
+     "declare_investigation_goal",
+     "request_user_clarification"
+    ],
+    "tools": [
+     {
+      "name": "declare_investigation_goal",
+      "description_length": 3510,
+      "description_sha256": "004ad2c1d277e779995a6c6eda95f04bfc741222308d6bfe10cd6c09778c25ee",
+      "schema_sha256": "7136db49108c99220c7ba8ca42f40da47c817f22d4b63f08bdb240f390d27427",
+      "schema_property_count": 6,
+      "required_fields": [
+       "goal_class"
+      ],
+      "tool_order": 0,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": true
+     },
+     {
+      "name": "request_user_clarification",
+      "description_length": 211,
+      "description_sha256": "08387934965101edb76cec9cbdaa5a2c48976b2b9b8d175de1e378d9f0d81d6c",
+      "schema_sha256": "62e237a5f3e3c8cbb9e5a6c7653f272d094d1dab7a9d068fb3d8b5041a7ec14b",
+      "schema_property_count": 2,
+      "required_fields": [
+       "question"
+      ],
+      "tool_order": 1,
+      "description_has_process_wbs": false,
+      "description_has_bom_negative": false,
+      "description_mentions_get_product_structure": false
+     }
+    ],
+    "tool_choice_policy": "UNFORCED",
+    "model_request_parameters": {
+     "allow_text_output": true,
+     "allow_image_output": false,
+     "output_mode": "auto",
+     "function_tool_count": 2,
+     "declared_function_tool_count": 2,
+     "output_tool_names": [
+      "final_result"
+     ],
+     "has_tool_choice_field": false,
+     "tool_choice": null
+    },
+    "user_prompt": "Qual é a estrutura do produto 90260921?",
+    "agent_instructions_sha256": "36fd8218b883470434ec66fe0874b85001e70b5183d6502d23f9f9f1d5adbe40",
+    "agent_instructions_length": 15519,
+    "request_fingerprint": "ee1385245189c66f"
+   },
+   "prior": [],
+   "context_source": null,
+   "conversation_correlation": null
+  }
+ },
+ "external_usage": {
+  "model_calls": 3,
+  "input_tokens": 1049,
+  "output_tokens": 216,
+  "latency_ms_total": 93519
+ },
+ "trace_dir": "/traces/or-qwen14b-78cb27247cbd"
+}

@@ -70,6 +70,7 @@ from app.application.capability_provision.semantic_capability_support import (
     INVESTIGATION_PROGRESS_RELATED,
     _IDENTIFIER_LITERAL_RE,
     _INVOCATION_VOCABULARY_KEYS,
+    _CONSULTATION_OPERATIONS,
     _PAGINATION_ARG_KEYS,
     _LAST_CATALOG_FAILURES,
     _OBLIGATION_OPERATIONS,
@@ -1316,6 +1317,37 @@ def invented_record_tokens(
     return invented
 
 
+def omitted_context_identifiers(
+    declared_tokens: object,
+    *,
+    input_text: str,
+    prior_turns: object = (),
+) -> list[str]:
+    """User-context record identifiers the declared plan drops.
+
+    The inverse direction of ``invented_record_tokens``: an
+    identifier literal the user named in this turn or a
+    user-authorized prior turn must appear somewhere in the declared
+    contract (targets, required scope leaves, obligation
+    descriptions, business subject) — a plan that omits it silently
+    narrows the objective before the typed handoff (INT-2 functional
+    completion). Same authorized-context basis as the invented
+    check: ungrounded model prose never counts as user-named.
+    """
+    blob = f"{input_text or ''} {_prior_turns_blob(prior_turns)}"
+    context = _IDENTIFIER_LITERAL_RE.findall(blob)
+    if not context:
+        return []
+    declared_blob = " ".join(
+        str(item or "") for item in declared_tokens or ()
+    ).casefold()
+    return sorted(
+        token
+        for token in dict.fromkeys(context)
+        if token.casefold() not in declared_blob
+    )
+
+
 def _obligation_scope_tokens(evidence_needed: object) -> list[str]:
     """Collect nested string leaves from obligation ``required_args``."""
     tokens: list[str] = []
@@ -2368,6 +2400,47 @@ class PydanticAiInvestigationOrchestrator:
                         ),
                     }
                 )
+            omitted = omitted_context_identifiers(
+                list(targets)
+                + _obligation_scope_tokens(needed)
+                + [
+                    str(item.get("description") or "")
+                    for item in needed
+                    if isinstance(item, dict)
+                ]
+                + [
+                    str(item)
+                    for item in needed
+                    if isinstance(item, str)
+                ]
+                + [str(business_subject or "")],
+                input_text=ctx.deps.input_text,
+                prior_turns=ctx.deps.prior_turns,
+            )
+            if omitted:
+                # A user-named identifier absent from every declared
+                # surface silently narrows the objective — the
+                # accepted plan would hand the investigation an
+                # objective missing material scope. Reject naming
+                # the dropped identifiers so the bounded redeclare
+                # carries them (INT-2 functional completion).
+                return _proj(
+                    {
+                        "status": "INVALID_GOAL",
+                        "error_code": (
+                            "investigation_goal_omits_user_identifier"
+                        ),
+                        "missing_user_identifiers": omitted[:8],
+                        "guidance": (
+                            "The user named identifiers the plan does "
+                            "not carry — include each in "
+                            "target_identities, required_args or the "
+                            "obligation description, or call "
+                            "request_user_clarification when they are "
+                            "out of scope for this objective."
+                        ),
+                    }
+                )
             plan = ctx.deps.gates._accept_semantic_investigation_plan(
                 goal_class=str(goal_class or ""),
                 comparison_requested=bool(comparison_requested),
@@ -2441,6 +2514,31 @@ class PydanticAiInvestigationOrchestrator:
                         "the invocation args, not this field; omit "
                         "operation unless the objective itself demands "
                         "that class."
+                    )
+                undemonstrable_ops = sorted(
+                    {
+                        str(item.get("operation")).strip().casefold()
+                        for item in needed
+                        if isinstance(item, dict)
+                        and isinstance(item.get("operation"), str)
+                        and item["operation"].strip()
+                        and item["operation"].strip().casefold()
+                        in _OBLIGATION_OPERATIONS
+                        and item["operation"].strip().casefold()
+                        not in _CONSULTATION_OPERATIONS
+                    }
+                )
+                if undemonstrable_ops:
+                    rejected["undemonstrable_operations"] = (
+                        undemonstrable_ops[:8]
+                    )
+                    rejected["undemonstrable_operation_guidance"] = (
+                        "a prepare/act obligation can never be "
+                        "demonstrated on this governed READ surface — "
+                        "write classes are not invocable here; omit "
+                        "operation or declare the consultation class "
+                        "the objective demands (read, analysis, "
+                        "discovery)."
                     )
                 non_material_ops = sorted(
                     {
@@ -2766,6 +2864,29 @@ class PydanticAiInvestigationOrchestrator:
             """
             ctx.deps.deadline.check("tool_request_clarification")
             ctx.deps.tool_calls += 1
+            if ctx.deps.investigation_plan is not None:
+                # A typed objective was already accepted this turn —
+                # recording a clarification now would short-circuit
+                # finalize into CLARIFICATION_REQUIRED and discard
+                # the valid declared plan (INT-2 completion, defect
+                # class 7). Legitimate mid-flight asks already fail
+                # on the evidence-present gate below, so the only
+                # reachable case is clarification-instead-of-
+                # investigating: refuse and keep the contract.
+                return _proj(
+                    {
+                        "status": "CONTINUE_REQUIRED",
+                        "error_code": (
+                            "clarification_rejected_plan_accepted"
+                        ),
+                        "note": (
+                            "A typed objective was already declared "
+                            "and accepted — investigate it through "
+                            "the governed owner tools. Ask the user "
+                            "only before declaring an objective."
+                        ),
+                    }
+                )
             text = (question or "").strip()
             if missing_aspects:
                 aspects = ", ".join(

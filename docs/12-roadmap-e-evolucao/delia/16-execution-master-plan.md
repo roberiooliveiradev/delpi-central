@@ -2446,3 +2446,19 @@ Task `DELIA-C3-T2-COMPREHENSION-INVESTIGATION-SPLIT-EXPERIMENT-AUTHORIZATION-AND
 **Protocolo por task:** reancorar HEAD/git status → autoridades/ledger/CP-RQ; declarar EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY e REUSE_DECISION=REUSE|EXTEND|NEW; diagnosticar a primeira fronteira divergente; RED apenas após defeito reproduzido → menor diff legítimo → GREEN/regressão → avaliação real A/B (modelo, identidade, catálogo, budget e SHA comparáveis) → safety/outcome → delpi-verifier independente com RQ/AC e até 3 rodadas → coordenação. Docs, HTTP 200, modelo ou suite verde isolados não provam resultado. Preservar PROVEN/TO_INVENTORY/PLANNED/TARGET e PASS/FAIL/PENDING/INCONCLUSIVE/TEST_NOT_RUN/STALE_EVIDENCE. Nenhum runtime/tabela/agent do Chat legado, provider-specific fallback, authority por MCP ou execução OT/ACT.
 
 **NEXT BOUNDED CANDIDATO (não sobrescreve NEXT histórico sem gate):** COORDINATION_C3_T2_COMPREHENSION_OPERATION_ANCHOR_AND_HANDOFF_RELIABILITY_GATE, para reprodução e diagnóstico de operação declarada indevidamente e T2-B flake; correção somente com evidência. F2–F5 entram na fila após review individual. PHASE=C3/T2; PHASE_ADVANCEMENT=NO; PRODUCTION_DEPLOY=NOT_AUTHORIZED; TWO_AGENT_PROMOTION=NOT_AUTHORIZED; INT3_INT4_AGENT_IMPLEMENTATION=NOT_AUTHORIZED. Checar conflito com regra geral de deploy do AGENTS.md antes de qualquer publicação; este adendo não autoriza deploy.
+
+### 2026-11-20 — C3/T2: INT-2 specialist functional completion — acceptor coherence gates
+
+**TASK:** `DELIA-C3-T2-INT2-SPECIALIST-FUNCTIONAL-COMPLETION-01` (CODE+TEST+EVAL+REVIEW) sobre `5dcc2ebf51` (= origin/main). `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` — variante INT-2 existente reutilizada; nenhum Agent/planner/engine/registry novo. **FIRST_DIVERGENT_BOUNDARY:** aceite Application + gates dos tools de declaração/clarificação.
+
+**Correções bounded (RED→GREEN, 4 defects mecânicos reproduzidos):**
+1. `operation` ∈ {prepare, act} aceito em obrigação — indemonstrável na superfície READ-only → rejeitado com `undemonstrable_operations` nomeados.
+2. `expected_delivery=comparison` sem `comparison_requested` — tupla incoerente → flag normalizada (espelha `klass=="compare"`).
+3. Identificador nomeado pelo usuário omitido de todas as superfícies do plano → gate `omitted_context_identifiers` rejeita com `missing_user_identifiers` (inverso de `invented_record_tokens`).
+4. `request_user_clarification` após plano aceito com zero evidência → rejeitado (`clarification_rejected_plan_accepted`) — preserva a invariante do clearing de handoff da variante B.
+
+**Triagem sem fix:** selector keys em `required_args` = permissividade intencional (vocabulário de invocação verificável — lock test); filtros não-literal omitidos = model-side OPEN_LOW; violações encadeadas já nomeavam todas as classes (teste travado).
+
+**ESTADO:** suite delia-api exit 0 (~2700) no container dev; eval único two-agent `or-qwen14b-78cb27247cbd` (INT2_C2, qwen/qwen3-14b): plano completo com identificador carregado → aceito → handoff limpo → INT-1 capability+identidade+escopo corretos → owner `mcp_protocol_error` interno → NON_GROUNDED honesto. `INT2_FUNCTIONAL_STATUS=CODE+TEST+EVAL_DELIVERED` — aceite/promoção ficam com coordenação; `INT2_PRODUCTION_PROMOTION_STATUS=NOT_AUTHORIZED`. Evidência `evidence/c3-t2-int2-functional-completion/`; residual register §2026-11-20.
+
+**NEXT_BOUNDED_STEP (INT-3, identificado, não iniciado):** `COORDINATION_C3_T2_INT3_BOUNDED_AUTHORIZATION_DECISION` — responsabilidade Suficiência com contratos Evidence/Outcome existentes (`_evaluate_material_obligations`, `_joint_collection_coverage` wired), prova de necessidade antes de qualquer Agent físico. `PHASE=C3/T2`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `INT3_INT4_AGENT_IMPLEMENTATION=NOT_AUTHORIZED`.

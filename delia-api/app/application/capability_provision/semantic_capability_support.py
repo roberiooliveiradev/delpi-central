@@ -2455,6 +2455,7 @@ def _normalize_obligation_tuple(
             # via evidence_source/description — never silently drop a
             # declared requirement.
             return None
+
         obligation = _obligation_item(item)
         if not obligation.description or len(obligation.description) > 200:
             continue
@@ -2462,6 +2463,17 @@ def _normalize_obligation_tuple(
             obligation.operation is not None
             and obligation.operation not in _OBLIGATION_OPERATIONS
         ):
+            return None
+        if (
+            obligation.operation is not None
+            and obligation.operation not in _CONSULTATION_OPERATIONS
+        ):
+            # A prepare/act restriction can never be demonstrated on
+            # the READ-only governed surface — write classes are
+            # omitted from the catalog and the invoke gate rejects
+            # them, so the obligation is a priori unprovable and
+            # would lock the plan into INCONCLUSIVE. Reject for
+            # bounded correction.
             return None
         if (
             delivery == "aggregation"
@@ -2988,6 +3000,7 @@ def _presentation_scope_arg_keys(required_args: object) -> tuple[str, ...]:
             }
         )
     )
+
 # Argument containers that owners treat as equivalent carriers for the
 # same leaf filter/identity keys (TEO ``params.code`` ↔ DAVI
 # ``arguments.code``). Never conflate with nested business keys.
