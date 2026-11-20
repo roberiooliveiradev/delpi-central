@@ -7490,6 +7490,15 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **Gates:** `PHASE=C3/T2`; `PHASE_ADVANCEMENT=NO`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED` for this delivery/F2; `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`; `INT3_INT4_AGENT_IMPLEMENTATION=NOT_AUTHORIZED`. No acceptance of C3/T2 as complete.
 
 
+## 2026-11-20 — Product Master: four-Agent target and canonical documentation policy
+
+- **Nature:** PO_ARCHITECTURE_DIRECTION / DOCUMENTATION_UPDATE_ONLY, not production change, phase advancement, acceptance of physical INT-3/INT-4, or deploy authorization. Master Plan Doc 16 updated in commit `7fc9a488816c8c580370c00b0126496bbca65d45` (section "2026-11-20 — Direção PO: quatro Agents cognitivos e persistência documental canônica").
+- **Product Master choice:** four sequential Pydantic AI Agents INT-2 Compreensão → INT-1 Investigação → INT-3 Suficiência → INT-4 Síntese; INT-5 is integration acceptance, not a fifth Agent. Prioritize completing INT-2 then bounded implementation of INT-3 and INT-4 through applicable contracts, CP/RQ, security and phase gates, while preserving INT-1; this is target direction, not a claim that code already exists.
+- **Factual implementation status (from reviewed code/evidence):** INT-1 baseline implemented; INT-2 experimental two-agent branch, split OFF in production; physical INT-3/INT-4 not yet implemented/authorized; deterministic sufficiency and finalizer mechanisms exist. F2 live Qwen14B pagination outcome 40+40+29=109 grounded with final-answer residual; F2 review ACCEPT_WITH_RESIDUAL, not universal/generalization PASS. F2 code paths P1/P2 were already fixed at `d9f9abec4b3458acf5f0fb132043bda2c7d47b2d`; `5dcc2ebf51f1376c3b604032d8bba9b34902bbdf` provides evidence only.
+- **Documentation policy:** update existing GitHub authorities, especially Doc 16, ledger and Doc 25 when affected, instead of generating standalone documents by default; create new only for contractual/authoritative/evidence necessity with justification and traceability. Docs are not runtime proof. Each task reports exact updated paths, final commit and verified origin/main.
+- **Decision gates remain:** `PHASE=C3/T2`, `PHASE_ADVANCEMENT=NO`, `PRODUCTION_DEPLOY=NOT_AUTHORIZED`, `TWO_AGENT_PROMOTION=NOT_AUTHORIZED`. Existing Doc 16 restriction on physical INT-3/INT-4 implementation is not silently waived; require further bounded contract/phase/CP-RQ reconciliation and Coordination review before code task. `NEXT_CANDIDATE=COORDINATION_INT2_COMPREHENSION_COMPLETENESS_AND_FOUR_AGENT_CONTRACT_RECONCILIATION` pending HEAD reanchor. No runtime code altered by this update.
+
+
 ## 2026-11-20 — F2 INT-1 continuity/pagination/convergence delivery (retroativo factual)
 
 - **TASK:** `DELIA-C3-T2-F2-INT1-CONTINUITY-PAGINATION-CONVERGENCE-EXECUTION-01`. BASE `bb46896834` (task pediu revalidação de `6f3a7444af`; HEAD real já adiante). FINAL `5dcc2ebf51` (= origin/main, pushed).
