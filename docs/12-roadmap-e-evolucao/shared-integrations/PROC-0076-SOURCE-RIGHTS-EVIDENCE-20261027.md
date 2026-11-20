@@ -202,3 +202,10 @@ autorização. Enquanto `store` permanecer ausente do
 
 Alternativa para destravar o objetivo: fonte adicional com direito
 de armazenamento comprovado, ou autorização escrita da MetalCharts.
+
+
+## 8. Decisão PO R13 — requisito persistente aprovado (2026-11-03)
+
+O Product Owner reiterou de forma inequívoca que **é para persistir as cotações em histórico PostgreSQL**, e não apenas mantê-las em cache de TTL. Uso estritamente interno DELPI, atualização diária pretendida, sem redistribuição. Este é um requisito funcional **APPROVED**, detalhado em [PROC-0076-R13 — decisão do PO](./PROC-0076-R13-PO-DECISION-PERSISTENT-METAL-HISTORY-20261103.md).
+
+Essa decisão encerra a dúvida sobre a intenção de produto, mas **não altera o veredito de direitos do fornecedor** registrado nesta matriz: `PROVIDER_PERMANENT_STORAGE_RIGHT=PENDING` para MetalCharts Free, sem `store` no escopo atualmente aprovado. A implementação R12 já comprova o caminho permanente em PostgreSQL de teste; seu uso em produção com dados MetalCharts depende de licença/autorização escrita aplicável ou fonte alternativa com arquivo permitido, além do egress pela TechMaster. **Não** declarar a licença APPROVED com base apenas na decisão interna do PO; **não** tratar o cache como cumprimento final do requisito.
