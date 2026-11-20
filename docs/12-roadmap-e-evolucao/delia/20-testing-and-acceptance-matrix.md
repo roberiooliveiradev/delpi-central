@@ -3162,3 +3162,27 @@ Pacote `evidence/c3-t2-grounding-multipage-multiturn-closure/` + `tests/test_c3_
 | R4 AuthZ deny | `PENDING` | identidade restrita não provisionada |
 
 **NEXT=`COORDINATION_C3_T2_FINAL_GATES_INDEPENDENT_REVIEW`.**
+
+
+### 2026-11-20 — INT-3 matriz de provas para incremento físico (pacote de autorização)
+
+**TASK:** `DELIA-C3-T2-INT3-BOUNDED-AUTHORIZATION-DECISION-01`; contrato no Doc 17 §2026-11-20. **PLAN_ONLY; INT-3 não implementado.** Mapeamento dos cenários exigidos para a matriz futura contra a cobertura determinística existente no HEAD `d0db89abcd`:
+
+| Cenário exigido | Cobertura existente (determinística, PASS em HEAD) | Falta para variante INT-3 |
+|---|---|---|
+| Obrigação única totalmente comprovada | `test_int2_delivery_completeness_contract` f01/tc04/f04 | proposta PROPOSE_COMPLETION aceita só quando avaliador prova |
+| Múltiplas obrigações parcialmente comprovadas | `s9_one_satisfied_does_not_mask_pending` (final_gates) | REPORT_PARTIAL nomeando refs ⊆ plano aceito |
+| Identificador correto com filtro divergente | `s8_wrong_product_identifier_rejected`, `r5_n4_divergent_filters_not_united` | semantic_mismatch wrong_filter detectado/nomeado |
+| Comparação com somente um dos registros | contrato `verified_comparison` (contracts.py ~L230, exige duas fontes owner-backed) | proposta CONTINUE com par de identidades elegível |
+| Coleção paginada incompleta | tc06–tc08, mp01–mp13, s6 | CONTINUE propondo próxima página dentro do plano |
+| Coleção paginada integralmente demonstrada | tc05, mp05, r5_positive | não propor continuação (no over-fetch) |
+| Erro interno de owner | SOURCE_UNAVAILABLE/insufficient honesto (final_gates s10; evals S09) | mismatch class não vira evidência; REPORT_INSUFFICIENT honesto |
+| Resultado semanticamente irrelevante | s2/s3 (owner/capability errada não satisfaz), RELATED_INSUFFICIENT | semantic_mismatch wrong_entity/irrelevant_source tipado |
+| Modelo inventa SourceRefs | acceptor vincula refs a attempts reais; `invented_record_tokens`; `r6_delia_result_invented_code_not_authorized` | INT-3 não pode citar refs — só índices de attempts; tentativa rejeitada |
+| Continuação após orçamento esgotado | `tool_calls_limit`/UsageLimits + no-progress fail-closed | CONTINUE sem budget ⇒ rejeitado pela Application |
+| Mudança explícita de assunto | r6 prior-turn authorization tests; clarification gates INT-2 | clarificação não substitui plano aceito (contrato §2026-11-20) |
+| Completo na estrutura, insuficiente para o objetivo | `s10_grounded_insufficient_stays_inconclusive_not_complete`; insufficiency_retry bounded | PROPOSE_COMPLETION onde avaliador não prova ⇒ sobreposto/rejeitado |
+
+**Novos testes RED→GREEN exigidos pelo incremento físico (`test_int3_sufficiency_assessment_contract.py` candidato):** (a) proposta que promove a COMPLETION sem prova determinística ⇒ rejeitada; (b) CONTINUE sem obrigação não-demonstrada ⇒ rejeitado; (c) CONTINUE com refs fora do plano aceito ou capability inelegível ⇒ rejeitado; (d) CONTINUE válido + budget ⇒ um ciclo bounded de reentrada INT-1, máximo 1/turno; (e) proposta com mismatch tipado correto ⇒ aceita e propaga a limitations/outcome; (f) zero owner tools no toolset da variante (boundary provada como em two_agent_experiment); (g) budget partilhado `UsageLimits`/`TurnDeadline`/`deps.tool_calls` medido; (h) flag OFF ⇒ comportamento idêntico ao baseline.
+
+**Avaliação live futura (gate Doc 293/335):** 1 pergunta READ única, `openrouter_qwen`/`qwen/qwen3-14b`, uma tentativa, outcome verificável; só depois, se autorizado, A/B baseline-2-Agents vs variante-3-Agents no corpus congelado medindo falsos SATISFIED/COMPLETE, gap-identification, custo/latência/tokens e task outcome. Sem bateria ampla nem troca de modelo sem decisão específica.
