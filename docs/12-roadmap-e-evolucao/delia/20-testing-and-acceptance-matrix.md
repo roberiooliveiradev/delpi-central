@@ -3173,7 +3173,7 @@ Pacote `evidence/c3-t2-grounding-multipage-multiturn-closure/` + `tests/test_c3_
 | Obrigação única totalmente comprovada | `test_int2_delivery_completeness_contract` f01/tc04/f04 | proposta PROPOSE_COMPLETION aceita só quando avaliador prova |
 | Múltiplas obrigações parcialmente comprovadas | `s9_one_satisfied_does_not_mask_pending` (final_gates) | REPORT_PARTIAL nomeando refs ⊆ plano aceito |
 | Identificador correto com filtro divergente | `s8_wrong_product_identifier_rejected`, `r5_n4_divergent_filters_not_united` | semantic_mismatch wrong_filter detectado/nomeado |
-| Comparação com somente um dos registros | contrato `verified_comparison` (contracts.py ~L230, exige duas fontes owner-backed) | proposta CONTINUE com par de identidades elegível |
+| Comparação com somente um dos registros | contrato `VerifiedCompositeEvidence` (`interaction/contracts.py`:209-242, exige duas fontes owner-backed) | proposta CONTINUE com par de identidades elegível |
 | Coleção paginada incompleta | tc06–tc08, mp01–mp13, s6 | CONTINUE propondo próxima página dentro do plano |
 | Coleção paginada integralmente demonstrada | tc05, mp05, r5_positive | não propor continuação (no over-fetch) |
 | Erro interno de owner | SOURCE_UNAVAILABLE/insufficient honesto (final_gates s10; evals S09) | mismatch class não vira evidência; REPORT_INSUFFICIENT honesto |
