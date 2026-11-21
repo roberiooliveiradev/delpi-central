@@ -358,6 +358,8 @@ def project_windows_host_service(raw: object) -> dict[str, Any] | None:
         ),
         "state": state.lower() if isinstance(state, str) else "unknown",
         "start_mode": _limit_string(raw.get("start_mode"), max_len=40),
+        "can_stop": raw.get("can_stop") is True,
+        "control_allowed": raw.get("control_allowed") is True,
         "is_favorite": raw.get("is_favorite") is True,
         "criticality": criticality,
         "is_present": raw.get("is_present") is not False,

@@ -1,10 +1,10 @@
-# Delpi Linux Operations MCP — P1 READ-ONLY multisservidor; P2 PREPARE em desenvolvimento
+# Delpi Linux Operations MCP — READ multisservidor + controle Windows governado
 
-**Status atualizado em 2026-11-18:** o ATLAS opera com **oito tools READ** (quatro legadas de host unico + quatro multisservidor). Continua sem PREPARE/ACT. A evolucao P2.x de deploy/HML permanece em modulos Python **nao importados no `server.py`**, isolada desta capacidade de monitoramento. O repositorio publico nao deve conter secrets, tokens ou logs brutos.
+**Status atualizado em 2026-11-19:** o ATLAS opera com **oito tools READ** (quatro legadas + quatro multisservidor) e **cinco tools de controle Windows** (`prepare`/`confirm` + atalhos start/stop/restart). O controle reutiliza a fila #1585 do Portal de TI e exige confirmação humana one-shot (`confirmation_id`); o MCP **nunca** envia `confirmed=true`. A evolucao P2.x de **deploy** PREPARE/ACT permanece em modulos Python **nao importados no `server.py`**. Flags `IT_PORTAL_WINDOWS_CONTROL_*` continuam OFF por padrao.
 
 ## Scope and reuse
 
-Eight typed READ tools; no ACT/PREPARE; no SSH, subprocess, shell, Docker socket, SQL or arbitrary filesystem access.
+Eight typed READ tools + five Windows CONTROL tools; no deploy PREPARE/ACT; no SSH, subprocess, shell, Docker socket, SQL or arbitrary filesystem access.
 
 ### Legacy single-host tools (compatibilidade)
 
@@ -18,11 +18,16 @@ Eight typed READ tools; no ACT/PREPARE; no SSH, subprocess, shell, Docker socket
 - `list_servers`: lista servidores do inventario oficial com filtros e paginacao (nao para no primeiro page_size=25).
 - `get_server_health`: saude de um servidor por UUID ou hostname (Linux e Windows); hostnames ambiguos devolvem candidatos.
 - `get_infrastructure_health`: consolidado de saude com concorrencia limitada e isolamento de falhas por servidor.
-- `get_server_services`: servicos Windows via `host-services` / dashboard; Linux via systemd allowlist da observacao.
+- `get_server_services`: servicos Windows via `host-services` / dashboard (projeta `control_allowed`/`can_stop`); Linux via systemd allowlist da observacao.
+
+### Windows CONTROL tools (Portal #1585)
+
+- `prepare_windows_service_action` / `start_windows_service` / `stop_windows_service` / `restart_windows_service`: **apenas preparam** challenge one-shot; nao enfileiram.
+- `confirm_windows_service_action`: exige `confirmation_id` + `user_confirmed=true`; consome challenge no Portal, enfileira acao e reporta estado comprovado (nunca sucesso so por HTTP 202).
 
 Arquitetura detalhada: [docs/06-multiserver-health.md](./docs/06-multiserver-health.md).
 
-Data owner: `it-portal-api` (`/servers`, `/observations/latest`, `/host-services`, `/dashboard/windows-services-health`), permissions `it-portal.access` + `it-portal.servers.view`; HTTP GET only. Coletores Linux/Windows existentes permanecem donos da ingestao. Sem segundo inventario, migrations ou schemas paralelos.
+Data owner: `it-portal-api` (`/servers`, `/observations/latest`, `/host-services`, `/action-confirmations`, `/actions`). READ: `it-portal.access` + `it-portal.servers.view`. CONTROL: + `it-portal.host-services.control` (fresh). Coletores/agente Windows existentes permanecem donos da execucao no host.
 
 MCP AuthN reuses `delpi_mcp.auth.mcp_transport_auth`, `delpi_auth` JWT validation and RBAC context, `delpi_mcp.resource_contract` metadata/challenge and `delpi_mcp.transport`. The IT Portal backend **independently rechecks** its permissions against the same human bearer. Any unavailable Core RBAC, bad issuer/aud/scope, missing permissions, stale token or service identity fails closed. Stale **observation** is allowed but explicitly labeled stale.
 

@@ -240,7 +240,7 @@ def test_readiness_matrix_blocked_and_mcp_read_count():
     assert not matrix.prod_validation_authorized
     assert "PREPARE_DISABLED" in matrix.blocks
     try:
-        from linux_ops_mcp.server import READ_TOOLS
+        from linux_ops_mcp.server import APPROVED_TOOLS, CONTROL_TOOLS, READ_TOOLS
         legacy = {
             "get_deployment_revision", "get_host_health",
             "get_service_health", "list_managed_services",
@@ -252,10 +252,14 @@ def test_readiness_matrix_blocked_and_mcp_read_count():
         assert legacy <= READ_TOOLS
         assert multiserver <= READ_TOOLS
         assert len(READ_TOOLS) == 8
+        assert len(CONTROL_TOOLS) == 5
+        assert APPROVED_TOOLS == READ_TOOLS | CONTROL_TOOLS
+        # Deploy PREPARE/ACT remains unwired; Windows prepare_* lives only in CONTROL_TOOLS.
         assert not any(name.startswith(("prepare_", "act_")) for name in READ_TOOLS)
+        assert "preview_deployment" not in APPROVED_TOOLS
     except Exception:
         # fallback: count @mcp.tool in server.py
         text = Path(__file__).resolve().parents[1].joinpath(
             "linux_ops_mcp", "server.py"
         ).read_text(encoding="utf-8")
-        assert text.count("@mcp.tool(") == 8
+        assert text.count("@mcp.tool(") == 13

@@ -161,6 +161,7 @@ HistoryEntityType = Literal[
     "host_service_preference",
     "host_service_action",
     "workstation",
+    "host_service_confirmation",
 ]
 
 
@@ -717,7 +718,23 @@ class HostServicePage(BaseModel):
 class HostServiceActionInput(_Input):
     action: Literal["start", "stop", "restart"]
     request_id: UUID
-    confirmed: bool
+    confirmed: bool = False
+    confirmation_id: UUID | None = None
+
+
+class HostServiceActionPrepareInput(_Input):
+    action: Literal["start", "stop", "restart"]
+
+
+class HostServiceActionConfirmationOut(BaseModel):
+    confirmation_id: str
+    server_id: str
+    service_key: str
+    service_name: str
+    action: Literal["start", "stop", "restart"]
+    state_before: str
+    expires_at: datetime
+    request_id: str
 
 
 class HostServiceActionOut(BaseModel):

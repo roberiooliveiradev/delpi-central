@@ -1,5 +1,5 @@
 """#1585: negacao por padrao, RBAC fresh e segregacao de identidade S2S."""
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -9,7 +9,7 @@ from delpi_auth.service_errors import ServiceScopeDeniedError
 from it_portal_app.application.host_service_control import (
     HostServiceControl, _service_key, agent_bindings, control_targets, enabled,
 )
-from it_portal_app.domain.errors import ValidationError
+from it_portal_app.domain.errors import ConflictError, ValidationError
 from it_portal_app.interface.http import s2s_auth
 from it_portal_app.interface.http.dependencies import get_host_service_control
 from it_portal_app.main import app
@@ -19,7 +19,51 @@ from tests.conftest import server_payload
 class FakeActions:
     def __init__(self):
         self.entries = {}
+        self.confirmations = {}
         self.last_action = None
+
+    def prepare_confirmation(self, server_id, service_key, action, actor):
+        cid = str(uuid4())
+        request_id = str(uuid4())
+        row = {
+            "id": cid,
+            "requester_subject": actor.id,
+            "server_id": server_id,
+            "service_key": service_key,
+            "service_name": "TEST_DELPI",
+            "action": action,
+            "state_before": "running" if action != "start" else "stopped",
+            "request_id": request_id,
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=3),
+            "consumed_at": None,
+            "created_at": datetime.now(timezone.utc),
+        }
+        self.confirmations[cid] = row
+        return row
+
+    def consume_confirmation(self, *, confirmation_id, server_id, service_key, action, actor):
+        row = self.confirmations.get(confirmation_id)
+        if row is None:
+            raise ConflictError("control_confirmation_not_found", "missing")
+        if row["requester_subject"] != actor.id:
+            raise ConflictError("control_confirmation_subject_mismatch", "subject")
+        if (
+            row["server_id"] != server_id
+            or row["service_key"] != service_key
+            or row["action"] != action
+        ):
+            raise ConflictError("control_confirmation_target_mismatch", "target")
+        if row["consumed_at"] is not None:
+            raise ConflictError("control_confirmation_reused", "reused")
+        if row["expires_at"] <= datetime.now(timezone.utc):
+            raise ConflictError("control_confirmation_expired", "expired")
+        row["consumed_at"] = datetime.now(timezone.utc)
+        return {
+            "request_id": row["request_id"],
+            "state_before": row["state_before"],
+            "service_name": row["service_name"],
+            "confirmation_id": confirmation_id,
+        }
 
     def enqueue(self, server_id, service_key, action, request_id, actor):
         self.last_action = (server_id, service_key, action, request_id, actor.id)
@@ -130,5 +174,79 @@ def test_control_http_permission_and_agent_binding(client, repository, principal
         }).status_code == 200
         monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_AGENT_BINDINGS", "other-agent=" + sid)
         assert client.post(claim_url, json={"hostname": server["hostname"]}, headers=agent_headers).status_code == 409
+    finally:
+        app.dependency_overrides.pop(get_host_service_control, None)
+
+
+def test_control_prepare_and_confirm_one_shot(client, repository, principal, monkeypatch):
+    server = client.post("/servers", json=server_payload()).json()["data"]
+    sid = server["id"]
+    actions = FakeActions()
+    app.dependency_overrides[get_host_service_control] = lambda: HostServiceControl(actions, repository)
+    prepare_url = f"/servers/{sid}/host-services/test_delpi/action-confirmations"
+    action_url = f"/servers/{sid}/host-services/test_delpi/actions"
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_ENABLED", "true")
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_TARGETS", sid + "=TEST_DELPI")
+    principal.permissions = [
+        "it-portal.access", "it-portal.servers.view", "it-portal.host-services.control",
+    ]
+    principal.fresh_permissions = None
+    try:
+        prepared = client.post(prepare_url, json={"action": "restart"})
+        assert prepared.status_code == 201, prepared.text
+        confirmation_id = prepared.json()["data"]["confirmation_id"]
+        assert confirmation_id in actions.confirmations
+
+        # Sem confirmed e sem confirmation_id → rejeita.
+        assert client.post(action_url, json={
+            "action": "restart", "request_id": str(uuid4()), "confirmed": False,
+        }).status_code == 422
+
+        accepted = client.post(action_url, json={
+            "action": "restart",
+            "request_id": str(uuid4()),
+            "confirmed": False,
+            "confirmation_id": confirmation_id,
+        })
+        assert accepted.status_code == 202, accepted.text
+        assert actions.last_action[1:3] == ("test_delpi", "restart")
+        assert actions.last_action[3] == actions.confirmations[confirmation_id]["request_id"]
+
+        # Replay da mesma confirmação → bloqueado.
+        replay = client.post(action_url, json={
+            "action": "restart",
+            "request_id": str(uuid4()),
+            "confirmation_id": confirmation_id,
+        })
+        assert replay.status_code == 409
+
+        # Prepare + mismatch de ação na confirmação.
+        other = client.post(prepare_url, json={"action": "stop"}).json()["data"]
+        mismatch = client.post(action_url, json={
+            "action": "restart",
+            "request_id": str(uuid4()),
+            "confirmation_id": other["confirmation_id"],
+        })
+        assert mismatch.status_code == 409
+    finally:
+        app.dependency_overrides.pop(get_host_service_control, None)
+
+
+def test_control_prepare_blocked_when_flag_off(client, repository, principal, monkeypatch):
+    server = client.post("/servers", json=server_payload()).json()["data"]
+    sid = server["id"]
+    actions = FakeActions()
+    app.dependency_overrides[get_host_service_control] = lambda: HostServiceControl(actions, repository)
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_ENABLED", "false")
+    monkeypatch.setenv("IT_PORTAL_WINDOWS_CONTROL_TARGETS", sid + "=TEST_DELPI")
+    principal.permissions = [
+        "it-portal.access", "it-portal.servers.view", "it-portal.host-services.control",
+    ]
+    try:
+        response = client.post(
+            f"/servers/{sid}/host-services/test_delpi/action-confirmations",
+            json={"action": "restart"},
+        )
+        assert response.status_code == 409
     finally:
         app.dependency_overrides.pop(get_host_service_control, None)

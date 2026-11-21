@@ -35,7 +35,8 @@ Este indice e a **fonte de continuidade** do ATLAS. Cada detalhamento deve resid
 |---|---|---|---|
 | A0 | Inventario de `srv-api`, limites e riscos | DOCUMENTADO | Evidencia sem secrets, arquitetura de acesso aprovada |
 | A1 | MCP privado/publicado HTTPS + Keycloak OAuth + READ | **OPERADOR_CONFIRMOU_PASS** | Consulta real `get_host_health` pelo ChatGPT com snapshot/timestamp |
-| A1-M | Monitoramento multisservidor READ (Linux+Windows) via inventario IT Portal | **CODIGO_EM_PR / feat/atlas-multiserver-health-20261118** | 8 tools READ; list/health/infra/services; sem PREPARE/ACT; CI + testes locais; runtime ChatGPT pendente |
+| A1-M | Monitoramento multisservidor READ (Linux+Windows) via inventario IT Portal | **CODIGO_EM_PR / feat/atlas-multiserver-health-20261118** | 8 tools READ; list/health/infra/services; sem deploy PREPARE/ACT; CI + testes locais; runtime ChatGPT pendente |
+| A1-W | Controle Windows governado (prepare/confirm) via fila #1585 | **CODIGO_EM_PR / feat/atlas-windows-service-control-20261119** | 5 tools CONTROL; challenge one-shot no Portal; MCP nunca envia confirmed=true; flags OFF; deploy PREPARE/ACT continua inerte |
 | A1-R | Lacunas CPU %, contagem Docker, `partial` | ADIADO_POR_DECISAO_DO_OWNER | So reabrir conforme nova prioridade, sem condicionar o deploy |
 | A2.0 | Contrato de deploy, boundaries, aprovacao e testes negativos | DOCUMENTADO_EM_PR | Documento P2-P4 revisado, sem runtime |
 | **A2.1** | **Modulo puro de politica de preview: allowlist, SHA, CI/attestation, TTL, hash, tests** | **MERGED_PR_191 / CI_PASS** | Sem I/O, deny by default, testes negativos locais e CI; nenhuma tool ACT |

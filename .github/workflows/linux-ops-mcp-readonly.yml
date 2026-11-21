@@ -34,7 +34,7 @@ jobs:
       - name: Install adapter + shared packages
         run: |
           python -m pip install --disable-pip-version-check -r linux-ops-mcp/requirements.txt
-          python -m pip install --disable-pip-version-check ./shared pytest
+          python -m pip install --disable-pip-version-check ./shared pytest pytest-asyncio
       - name: Compile app (no import side effects)
         run: python -m compileall -q linux-ops-mcp/linux_ops_mcp
       - name: Unit tests and auth negatives
@@ -57,17 +57,14 @@ jobs:
       - name: Check MCP SDK import and explicit tool inventory
         run: |
           PYTHONPATH=linux-ops-mcp python - <<'PY'
-          from linux_ops_mcp.server import create_mcp_server
+          from linux_ops_mcp.server import APPROVED_TOOLS, CONTROL_TOOLS, READ_TOOLS, create_mcp_server
           tools = create_mcp_server()._tool_manager.list_tools()
           names = sorted(tool.name for tool in tools)
-          expected = sorted([
-              "get_host_health", "list_managed_services",
-              "get_service_health", "get_deployment_revision",
-              "list_servers", "get_server_health",
-              "get_infrastructure_health", "get_server_services",
-          ])
-          assert names == expected, (names, expected)
-          print("tool inventory: 8 read-only tools")
+          assert set(names) == APPROVED_TOOLS, (names, sorted(APPROVED_TOOLS))
+          assert len(READ_TOOLS) == 8
+          assert len(CONTROL_TOOLS) == 5
+          assert "preview_deployment" not in names
+          print("tool inventory: 8 READ + 5 Windows CONTROL; deploy ACT absent")
           PY
       - name: Build constrained image, without starting containers
         run: docker build --pull -f linux-ops-mcp/Dockerfile -t delpi/linux-ops-mcp:ci .

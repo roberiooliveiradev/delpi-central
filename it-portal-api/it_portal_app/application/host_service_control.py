@@ -3,6 +3,9 @@
 Politica operacional fora do inventario: NENHUM servico e controlavel ate
 que feature flag, allowlist de nomes exatos e binding por cliente estejam
 explicitamente configurados no BFF. Favoritos/criticidade NAO dao acesso.
+
+Confirmacao MCP: challenge one-shot persistido (confirmation_id). A UI do
+Portal continua usando confirmed=true apos dialog humano no browser.
 """
 from __future__ import annotations
 
@@ -100,18 +103,73 @@ class HostServiceControl:
             item["service_key"] in targets and bool(item["is_present"])
         )} for item in items]
 
-    def submit(self, server_id: str, service_name: str, action: str,
-               request_id: str, *, confirmed: bool, actor: Actor) -> dict:
+    def prepare(
+        self,
+        server_id: str,
+        service_name: str,
+        action: str,
+        *,
+        actor: Actor,
+    ) -> dict:
         self._server(server_id)
         key = _service_key(service_name)
         if action not in _ACTIONS:
             raise ValidationError("invalid_control_action", "Ação não permitida.")
-        if not confirmed:
-            raise ValidationError("control_confirmation_required", "Confirme a ação no Portal de TI.")
         if not self.allowed(server_id, key):
-            raise ConflictError("control_target_blocked", "Este serviço não está liberado para controle remoto.")
+            raise ConflictError(
+                "control_target_blocked",
+                "Este serviço não está liberado para controle remoto.",
+            )
+        row = self.repository.prepare_confirmation(server_id, key, action, actor)
+        return {
+            "confirmation_id": row["id"],
+            "server_id": row["server_id"],
+            "service_key": row["service_key"],
+            "service_name": row["service_name"],
+            "action": row["action"],
+            "state_before": row["state_before"],
+            "expires_at": row["expires_at"],
+            "request_id": row["request_id"],
+        }
+
+    def submit(
+        self,
+        server_id: str,
+        service_name: str,
+        action: str,
+        request_id: str,
+        *,
+        confirmed: bool,
+        actor: Actor,
+        confirmation_id: str | None = None,
+    ) -> dict:
+        self._server(server_id)
+        key = _service_key(service_name)
+        if action not in _ACTIONS:
+            raise ValidationError("invalid_control_action", "Ação não permitida.")
+        if confirmation_id:
+            consumed = self.repository.consume_confirmation(
+                confirmation_id=confirmation_id,
+                server_id=server_id,
+                service_key=key,
+                action=action,
+                actor=actor,
+            )
+            effective_request_id = consumed["request_id"]
+        elif confirmed:
+            effective_request_id = str(uuid.UUID(request_id))
+        else:
+            raise ValidationError(
+                "control_confirmation_required",
+                "Confirme a ação no Portal de TI ou forneça confirmation_id válido.",
+            )
+        if not self.allowed(server_id, key):
+            raise ConflictError(
+                "control_target_blocked",
+                "Este serviço não está liberado para controle remoto.",
+            )
         return self.repository.enqueue(
-            server_id, key, action, str(uuid.UUID(request_id)), actor,
+            server_id, key, action, effective_request_id, actor,
         )
 
     def status(self, server_id: str, action_id: str) -> dict:
