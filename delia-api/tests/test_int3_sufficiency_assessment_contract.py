@@ -483,10 +483,13 @@ def test_sufficiency_stage_has_zero_owner_tools():
 
 def test_valid_continue_triggers_exactly_one_bounded_reentry():
     """INT3-04b: an accepted CONTINUE_INVESTIGATION triggers ONE
-    bounded INT-1 re-entry; the quota is then consumed."""
+    bounded INT-1 re-entry — and the re-entry actually emits model
+    requests under the remaining shared budget (the FunctionModel is
+    invoked on the investigation surface a second time)."""
     import pydantic_ai.agent as _agent_mod
 
     runs: list = []
+    inv_model_calls = [0]
     original = _agent_mod.Agent.run_sync
 
     def _spy(self, *args, **kwargs):
@@ -503,6 +506,7 @@ def test_valid_continue_triggers_exactly_one_bounded_reentry():
             if prior == 0:
                 return ModelResponse(parts=[_valid_goal_call()])
             return _comp_outcome()
+        inv_model_calls[0] += 1
         prior = sum(
             1 for m in messages if isinstance(m, ModelResponse)
         )
@@ -527,8 +531,11 @@ def test_valid_continue_triggers_exactly_one_bounded_reentry():
             )
     finally:
         _agent_mod.Agent.run_sync = original
-    # comp + inv + suff + one re-entry = 4 native runs
+    # comp + inv + suff + one re-entry = 4 native run_sync invocations
     assert len(runs) == 4
+    # the re-entry really emitted requests on the inv surface —
+    # not a dead run_sync killed by a miscomputed absolute limit
+    assert inv_model_calls[0] >= 3
     assert "sufficiency" not in str(attempt.error_code or "")
 
 

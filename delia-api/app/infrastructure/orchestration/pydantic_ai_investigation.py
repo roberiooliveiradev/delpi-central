@@ -3763,11 +3763,18 @@ class PydanticAiInvestigationOrchestrator:
                                     ),
                                     usage=turn_usage,
                                     usage_limits=UsageLimits(
+                                        # CUMULATIVE caps over the
+                                        # shared turn counter —
+                                        # remaining balance is
+                                        # enforced by the cap itself,
+                                        # never by an absolute limit
+                                        # that would double-count
+                                        # consumption.
                                         request_limit=(
-                                            remaining_requests
+                                            self._request_limit
                                         ),
                                         tool_calls_limit=(
-                                            remaining_tools
+                                            self._tool_calls_limit
                                         ),
                                     ),
                                 )
