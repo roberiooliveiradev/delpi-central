@@ -256,6 +256,26 @@ class Settings:
                 "DELIA_TWO_AGENT_EXPERIMENT is an isolated-eval flag — "
                 "it must never be enabled in production"
             )
+        # INT-3 experimental sufficiency specialist (Doc 17
+        # §2026-11-20): layered on top of the two-Agent composition —
+        # without the two-Agent variant there is no accepted-plan
+        # handoff to assess, so the combination fails closed at boot.
+        self.three_agent_experiment = _env_flag(
+            "DELIA_THREE_AGENT_EXPERIMENT", default=False
+        )
+        if self.three_agent_experiment:
+            if self.environment == "production":
+                raise ValueError(
+                    "DELIA_THREE_AGENT_EXPERIMENT is an isolated-eval "
+                    "flag — it must never be enabled in production"
+                )
+            if not self.two_agent_experiment:
+                raise ValueError(
+                    "DELIA_THREE_AGENT_EXPERIMENT requires "
+                    "DELIA_TWO_AGENT_EXPERIMENT — the sufficiency "
+                    "stage assesses the Application-accepted plan "
+                    "produced by the two-Agent composition"
+                )
         # DELIA-C3-T2-PARALLEL-MCP-DISCOVERY-GUARDED-EXPERIMENT-01:
         # experimental bounded per-specialist discovery fan-out inside
         # McpCapabilityProvider — OFF by default (sequential canonical);

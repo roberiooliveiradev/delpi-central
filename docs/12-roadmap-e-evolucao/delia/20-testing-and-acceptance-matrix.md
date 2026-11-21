@@ -3186,3 +3186,22 @@ Pacote `evidence/c3-t2-grounding-multipage-multiturn-closure/` + `tests/test_c3_
 **Novos testes RED→GREEN exigidos pelo incremento físico (`test_int3_sufficiency_assessment_contract.py` candidato):** (a) proposta que promove a COMPLETION sem prova determinística ⇒ rejeitada; (b) CONTINUE sem obrigação não-demonstrada ⇒ rejeitado; (c) CONTINUE com refs fora do plano aceito ou capability inelegível ⇒ rejeitado; (d) CONTINUE válido + budget ⇒ um ciclo bounded de reentrada INT-1, máximo 1/turno; (e) proposta com mismatch tipado correto ⇒ aceita e propaga a limitations/outcome; (f) zero owner tools no toolset da variante (boundary provada como em two_agent_experiment); (g) budget partilhado `UsageLimits`/`TurnDeadline`/`deps.tool_calls` medido; (h) flag OFF ⇒ comportamento idêntico ao baseline.
 
 **Avaliação live futura (gate Doc 293/335):** 1 pergunta READ única, `openrouter_qwen`/`qwen/qwen3-14b`, uma tentativa, outcome verificável; só depois, se autorizado, A/B baseline-2-Agents vs variante-3-Agents no corpus congelado medindo falsos SATISFIED/COMPLETE, gap-identification, custo/latência/tokens e task outcome. Sem bateria ampla nem troca de modelo sem decisão específica.
+
+### 2026-11-20 — INT-3 implementação: resultados de teste/eval
+
+**TASK:** `DELIA-C3-T2-INT3-SUFFICIENCY-SPECIALIST-BOUNDED-IMPLEMENTATION-01`. Suite: `tests/test_int3_sufficiency_assessment_contract.py` — **11/11 PASS** no container `delpi-delia-api`:
+
+| Caso canônico (a–h do pacote) | Resultado | Evidência |
+|---|---|---|
+| (a) PROPOSE_COMPLETION sem prova determinística | PASS | `test_propose_completion_without_deterministic_proof_rejected` + `test_propose_completion_with_full_proof_accepted` (bug `unproven`-fallback encontrado no RED e corrigido) |
+| (b) CONTINUE sem obrigação não-demonstrada | PASS | `test_continue_without_unmet_obligation_rejected` |
+| (c) CONTINUE refs/capability fora do plano | PASS | `test_continue_foreign_capability_and_unnamed_gap_rejected` (precedência `references_outside_accepted_plan` sobre `no_demonstrable_gap_named` — fix de overwrite de erro) |
+| (d) CONTINUE válido ⇒ ≤1 reentrada bounded | PASS | `test_continue_budget_and_quota_gates` + `test_valid_continue_triggers_exactly_one_bounded_reentry` (4 runs spy: comp+inv+suff+reentry) |
+| (e) mismatch tipado ⇒ limitations | PASS | `test_typed_semantic_mismatch_accepted_as_limitations` + `test_unknown_mismatch_kind_rejected` |
+| (f) zero owner tools na superfície INT-3 | PASS | `test_sufficiency_stage_has_zero_owner_tools` (spy em `info.function_tools` = ∅) |
+| (g) budget partilhado sem reset | PASS | `test_shared_budget_no_reset_and_flag_off_parity` — `UsageLimits` cumulativo = consumido+parcela≤resto, `tool_calls_limit=0`; budget bug RED→GREEN (limite era absoluto, corrigido para cumulativo) |
+| (h) flag OFF ⇒ paridade baseline | PASS | mesmo teste — flag OFF = exatamente 2 agent runs |
+
+**Regressão:** `tests/` completo = **2065 PASS / 0 FAIL**. Dois testes estruturais atualizados por mudança legítima de contrato interno (não para ocultar regressão): `test_resolver_signature_has_no_request_path` (adiciona `three_agent_experiment` ao allowlist de kwargs de composição — flag Settings, nunca request-path) e `test_agent_run_sync_is_single_invocation_per_attempt` (2→4 call sites: +sufficiency pass +bounded re-entry; cada um single-invocation por attempt).
+
+**Eval live (RQ-10):** `ENV_BLOCKED` — credencial OpenRouter do ambiente expirada (`401` em `GET /auth/key`, `502` em `chat.completions`; única chave disponível). Harness `scripts/int3_sufficiency_live_eval.py` + instrução `sufficiency_instructions.delpi.json` prontos; `EXPECTED_MODEL=qwen/qwen3-14b` confirmado via `openrouter_qwen` profile. Oráculo do cenário: `ENV_BLOCKED` (não `TEST_NOT_RUN` — a tentativa ocorreu e a causa foi isolada e evidenciada).

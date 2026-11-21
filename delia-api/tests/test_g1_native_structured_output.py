@@ -671,9 +671,12 @@ def test_agent_run_sync_is_single_invocation_per_attempt():
     )
 
     src = inspect.getsource(inv)
-    # exactly two single-invocation call sites: investigation run +
-    # the flag-gated experimental comprehension pass
-    assert src.count(".run_sync(") == 2
+    # four single-invocation call sites: investigation run + the
+    # flag-gated experimental comprehension pass + the flag-gated
+    # experimental sufficiency pass + the single bounded INT-1
+    # re-entry a validated CONTINUE_INVESTIGATION may trigger (at most
+    # once per turn — deps.sufficiency_continuation_used quota).
+    assert src.count(".run_sync(") == 4
     # no governed-retries loop wraps the Agent path
     assert "call_retry_eligible" not in src
 

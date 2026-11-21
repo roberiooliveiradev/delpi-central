@@ -7547,3 +7547,20 @@ VERDICT=EXECUTED_WITH_RESIDUAL — remoção integral executada e suíte verde; 
 - **VERIFIER:** registrado abaixo após execução.
 - **ESTADO:** `INT-3=CONTRACT_DEFINED/READY_FOR_COORDINATION_AUTHORIZATION`; `INT3_IMPLEMENTATION_AUTHORIZED=NO`; `INT3_PRODUCTION_PROMOTION=NOT_AUTHORIZED`; INT-4 não abordado; PHASE_ADVANCEMENT=NO.
 - **NEXT_BOUNDED_STEP:** `DELIA-C3-T2-INT3-SUFFICIENCY-SPECIALIST-BOUNDED-IMPLEMENTATION` — aguarda autorização expressa de coordenação; 8 casos RED→GREEN + flag OFF + 1 eval econômico + verifier.
+
+
+## 2026-11-20 — Coordenação autoriza implementação bounded INT-3
+
+- **DECISÃO:** `ACCEPT_WITH_RESIDUAL / INT3_EXPERIMENTAL_DEV_IMPLEMENTATION=AUTHORIZED_BOUNDED` sobre o pacote `247612d5e1` (Doc 17 §2026-11-20). Task executor `DELIA-C3-T2-INT3-SUFFICIENCY-SPECIALIST-BOUNDED-IMPLEMENTATION-01`, BASE `247612d5e1`.
+- **Escopo autorizado:** contrato tipado + Agent Pydantic AI + acceptor Application + composição experimental flag-gated + instruções versionadas + testes + 1 eval econômico. `PRODUCTION_PROMOTION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; INT-4 não autorizado.
+
+## 2026-11-20 — INT-3 bounded implementation DELIVERED (DELIA-C3-T2-INT3-SUFFICIENCY-SPECIALIST-BOUNDED-IMPLEMENTATION-01)
+
+- **BASE:** `247612d5e1` (= origin/main). Autorização `ACCEPT_WITH_RESIDUAL / INT3_EXPERIMENTAL_DEV_IMPLEMENTATION=AUTHORIZED_BOUNDED` (Doc 16 §2026-11-20).
+- **IMPLEMENTADO (DEV experimental, flag OFF):** `SufficiencyAssessmentProposal`/`SufficiencyVerdict`/`SemanticMismatch(Kind)`/`SufficiencyContinuation` (`contracts.py`), `_accept_sufficiency_assessment`+`SufficiencyAcceptance` (`semantic_capability_support.py:4074+`), `_run_sufficiency_pass`+hook+≤1 reentrada bounded (`pydantic_ai_investigation.py:3681+,4079+`), `sufficiency_instructions.delpi.json`+loader trio (`cri_instruction_resource.py`), flag `DELIA_THREE_AGENT_EXPERIMENT` fail-closed (`settings.py`, `root_composer.py`). Zero owner tools; proposta só rebaixa; avaliadores determinísticos intactos.
+- **TESTES:** novo contrato 11/11 PASS (8 canônicos + 3 extras); regressão completa 2065 PASS/0 FAIL; 2 testes estruturais atualizados (allowlist de composição; contagem de call sites 2→4).
+- **BUGS ENCONTRADOS E CORRIGIDOS (RED→GREEN):** (1) fallback `or ["__no_obligations__"]` tornava PROPOSE_COMPLETION sempre rejeitada; (2) `no_demonstrable_gap_named` sobrescrevia `references_outside_accepted_plan`; (3) `UsageLimits.request_limit` absoluto — corrigido para cumulativo `consumed+min(remaining,limit//4)` (o limite é checado contra `turn_usage` compartilhado).
+- **EVAL LIVE:** `ENV_BLOCKED` — chave OpenRouter única do ambiente expirada (401 `/auth/key`, 502 completions, prova em `.battery/int3-sufficiency-eval/proxy.log`); harness `scripts/int3_sufficiency_live_eval.py` entregue; `USER_OUTCOME_PROVEN=NO` no caminho live; `COGNITIVE_SPECIALIST_BENEFIT=NOT_PROVEN`.
+- **WIP:** concorrente preservado (AGENTS.md, engineering-api, untracked) — fora de escopo, intacto.
+- **ESTADO:** `INT-3=IMPLEMENTED_EXPERIMENTAL_DEV / FLAG_OFF / NOT_PROMOTED`; `PRODUCTION_DEPLOY=NOT_AUTHORIZED`; `INT3_PROMOTION=NOT_AUTHORIZED`; `INT4_IMPLEMENTATION=NOT_AUTHORIZED`; `PHASE_ADVANCEMENT=NO`; `LEGACY_REMOVED=NO` (extensão).
+- **NEXT_BOUNDED_STEP:** reexecutar eval live com credencial válida → A/B corpus congelado → decisão promoção/remoção da variante.

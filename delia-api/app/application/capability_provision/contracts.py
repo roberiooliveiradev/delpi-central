@@ -174,3 +174,86 @@ class InvestigationAnswer:
     unmet_obligations: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     clarification_question: str | None = None
+
+
+class SufficiencyVerdict(str, Enum):
+    """Bounded proposal vocabulary the INT-3 sufficiency specialist may
+    declare (Doc 17 §2026-11-20, DELIA-C3-T2-INT3).
+
+    A proposal is never authority: the Application acceptor revalidates
+    every claim against the deterministic obligation evaluators and the
+    accepted plan. The specialist may recommend a MORE conservative
+    outcome than the deterministic verdict; it may never promote an
+    unproven obligation to satisfied/complete.
+    """
+
+    PROPOSE_COMPLETION = "propose_completion"
+    REPORT_PARTIAL = "report_partial"
+    CONTINUE_INVESTIGATION = "continue_investigation"
+    REQUEST_CLARIFICATION = "request_clarification"
+    REPORT_INSUFFICIENT = "report_insufficient"
+
+
+class SemanticMismatchKind(str, Enum):
+    """Typed semantic-incompatibility classes an INT-3 proposal may
+    name between objective/scope and collected material. Bounded and
+    verifiable — the acceptor only accepts kinds from this vocabulary."""
+
+    WRONG_ENTITY = "wrong_entity"
+    WRONG_FILTER = "wrong_filter"
+    IRRELEVANT_SOURCE = "irrelevant_source"
+    INSUFFICIENT_DEPTH = "insufficient_depth"
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticMismatch:
+    """One typed semantic gap between objective/scope and material."""
+
+    kind: SemanticMismatchKind
+    detail: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class SufficiencyContinuation:
+    """Bounded continuation candidate the INT-3 specialist may propose.
+
+    ``capability`` names a governed capability already eligible under
+    the accepted plan; ``arguments`` is the proposed invocation scope.
+    Both are proposals — the Application acceptor validates them
+    against the accepted plan scope, the unmet obligations and the live
+    eligible catalog before any re-entry is permitted.
+    """
+
+    capability: str
+    arguments: Mapping[str, Any] = field(default_factory=dict)
+    rationale: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class SufficiencyAssessmentProposal:
+    """Native typed output of the INT-3 sufficiency specialist
+    (three-Agent experimental variant, DELIA_THREE_AGENT_EXPERIMENT).
+
+    The specialist interprets the Application-accepted plan, the
+    collected capability attempts and the deterministic coverage
+    verdict — it never touches owner tools, never sees raw business
+    payloads beyond the bounded typed projection, and never grants
+    authorization. ``unmet_obligations`` echoes descriptions from the
+    accepted plan's obligations only; evidence references stay
+    positional indexes into the collected-attempt tuple and the
+    specialist may never mint SourceRefs. The deterministic evaluator
+    remains the exclusive authority on obligation satisfaction —
+    this proposal can only inform, downgrade or recommend, never
+    elevate an unproven obligation.
+    """
+
+    schema_version: Literal["1"] = "1"
+    verdict_proposal: SufficiencyVerdict = (
+        SufficiencyVerdict.REPORT_INSUFFICIENT
+    )
+    unmet_obligations: tuple[str, ...] = ()
+    gap_analysis: str = ""
+    semantic_mismatches: tuple[SemanticMismatch, ...] = ()
+    limitations: tuple[str, ...] = ()
+    recommended_continuation: SufficiencyContinuation | None = None
+    clarification_question: str | None = None

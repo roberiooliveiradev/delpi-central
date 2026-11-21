@@ -712,3 +712,60 @@ def default_comprehension_instructions_path() -> Path:
         / "config"
         / "comprehension_instructions.delpi.json"
     )
+
+
+# INT-3 experimental sufficiency Agent instructions (three-Agent
+# variant, DELIA_THREE_AGENT_EXPERIMENT, depends on the two-Agent
+# composition): same governed resource pattern — the sufficiency
+# specialist proposes a typed verdict over the accepted plan +
+# collected evidence only; it owns no investigation text.
+_SUFFICIENCY_RESOURCE_ID = "delia.sufficiency.instructions"
+_SUFFICIENCY_KIND = "sufficiency_instructions"
+_SUFFICIENCY_RESOURCE_VERSIONS = frozenset({"1"})
+_SUFFICIENCY_KEYS = _INVESTIGATION_KEYS
+_SUFFICIENCY_VERSION_ENV = "DELIA_SUFFICIENCY_INSTRUCTION_VERSION"
+
+
+def load_sufficiency_instructions(
+    path: str | Path,
+) -> InvestigationInstructions:
+    """Load and validate the governed INT-3 sufficiency instruction set.
+
+    Fail-closed, identical contract to the comprehension bundle —
+    wrong identity/kind/version, missing default, empty or oversized
+    entries raise ``CriInstructionResourceError``.
+    """
+    return _load_instruction_bundle(
+        path,
+        resource_id=_SUFFICIENCY_RESOURCE_ID,
+        kind=_SUFFICIENCY_KIND,
+        versions=_SUFFICIENCY_RESOURCE_VERSIONS,
+        expected_keys=_SUFFICIENCY_KEYS,
+        max_entries=_MAX_INVESTIGATION_INSTRUCTION_ENTRIES,
+        max_bytes=_MAX_INVESTIGATION_INSTRUCTION_BYTES,
+    )
+
+
+def resolve_sufficiency_instruction_version(
+    explicit: str | None = None,
+) -> str | None:
+    """Resolve active INT-3 sufficiency instruction version.
+
+    Precedence: explicit argument → ``DELIA_SUFFICIENCY_INSTRUCTION_VERSION``
+    → resource default (``None`` signals default).
+    """
+    if explicit is not None and str(explicit).strip():
+        return str(explicit).strip()
+    import os
+
+    env = (os.environ.get(_SUFFICIENCY_VERSION_ENV) or "").strip()
+    return env or None
+
+
+def default_sufficiency_instructions_path() -> Path:
+    """Repo-fixed path next to other governed config resources."""
+    return (
+        Path(__file__).resolve().parents[3]
+        / "config"
+        / "sufficiency_instructions.delpi.json"
+    )

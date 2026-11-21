@@ -92,6 +92,7 @@ def _investigation_runtime_kwargs(settings: Settings) -> dict:
         "context_window_tokens": settings.llm_context_tokens,
         "max_output_tokens": settings.llm_max_output_tokens,
         "two_agent_experiment": settings.two_agent_experiment,
+        "three_agent_experiment": settings.three_agent_experiment,
     }
 
 
@@ -111,6 +112,7 @@ def _resolve_orchestration_attempt(
     context_window_tokens: int | None = None,
     max_output_tokens: int | None = None,
     two_agent_experiment: bool = False,
+    three_agent_experiment: bool = False,
 ):
     """Select ONE governed-attempt implementation for the composed
     application. Unknown identifiers fail closed — a misspelled
@@ -159,6 +161,7 @@ def _resolve_orchestration_attempt(
         context_window_tokens=context_window_tokens,
         max_output_tokens=max_output_tokens,
         two_agent_experiment=two_agent_experiment,
+        three_agent_experiment=three_agent_experiment,
     )
 # Governed declarative resource — fixed repo artifact, never a
 # request/env-supplied path.

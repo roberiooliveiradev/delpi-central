@@ -49,6 +49,8 @@ from typing import (
 from app.application.capability_provision.contracts import (
     InvestigationAnswer,
     InvestigationAnswerStatus,
+    SufficiencyAssessmentProposal,
+    SufficiencyVerdict,
 )
 from app.application.capability_provision.conversational_response import (
     MAX_RENDER_CONTENT_CHARS,
@@ -78,6 +80,7 @@ from app.application.capability_provision.semantic_capability_support import (
     OBLIGATION_SATISFIED,
     _attempt_identifier_roots,
     _emit_activity,
+    _accept_sufficiency_assessment,
     _evaluate_material_obligations,
     _is_business_evidence_attempt,
     _listing_failure_is_transient,
@@ -107,10 +110,13 @@ from app.infrastructure.config.cri_instruction_resource import (
     SelectedInvestigationInstructions,
     default_comprehension_instructions_path,
     default_investigation_instructions_path,
+    default_sufficiency_instructions_path,
     load_comprehension_instructions,
     load_investigation_instructions,
+    load_sufficiency_instructions,
     resolve_comprehension_instruction_version,
     resolve_investigation_instruction_version,
+    resolve_sufficiency_instruction_version,
 )
 from app.application.specialist_interop.errors import (
     MCP_AUTHORIZATION_DENIED,
@@ -231,6 +237,33 @@ def load_selected_comprehension_instructions(
             str(exc),
         ) from exc
     selected = resolve_comprehension_instruction_version(
+        instruction_version
+    )
+    return bundle.select(selected)
+
+
+def load_selected_sufficiency_instructions(
+    *,
+    instruction_version: str | None = None,
+    path: Path | str | None = None,
+) -> SelectedInvestigationInstructions:
+    """Load INT-3 sufficiency instructions; fail closed when invalid.
+
+    Governed resource ``config/sufficiency_instructions.delpi.json`` —
+    the sufficiency specialist's own versioned text, never a copy of
+    the comprehension or investigation instructions.
+    """
+    resource_path = path or default_sufficiency_instructions_path()
+    try:
+        bundle = load_sufficiency_instructions(resource_path)
+    except CriInstructionResourceError:
+        raise
+    except Exception as exc:  # noqa: BLE001 — fail closed at boundary
+        raise CriInstructionResourceError(
+            "sufficiency_instruction_resource_unreadable",
+            str(exc),
+        ) from exc
+    selected = resolve_sufficiency_instruction_version(
         instruction_version
     )
     return bundle.select(selected)
@@ -422,6 +455,22 @@ class InvestigationDeps:
     # B) — populated by the counting model wrapper so consumption is
     # accounted even when a run ends on an exception.
     turn_usage: RunUsage | None = None
+    # INT-3 (three-Agent experimental variant): one-shot bounded
+    # correction for an invalid sufficiency proposal — same contract
+    # as insufficiency_retry_used, never an unbounded retry loop.
+    sufficiency_retry_used: bool = False
+    # Bounded continuation re-entry quota for the whole turn: a
+    # validated CONTINUE_INVESTIGATION may trigger at most one
+    # additional INT-1 pass — the Application decides, never the
+    # specialist.
+    sufficiency_continuation_used: bool = False
+    # Application-accepted SufficiencyAssessmentProposal — observability
+    # only; the deterministic verdict stays with the acceptor.
+    sufficiency_assessment: object | None = None
+    # Positional capability ids parallel to ``collected`` — bounded
+    # provenance for the INT-3 input projection (the attempt record
+    # itself does not store the invoked capability id).
+    collected_capabilities: list[str] = field(default_factory=list)
 
 
 
@@ -1685,6 +1734,7 @@ class PydanticAiInvestigationOrchestrator:
         context_window_tokens: int | None = None,
         max_output_tokens: int | None = None,
         two_agent_experiment: bool = False,
+        three_agent_experiment: bool = False,
     ) -> None:
         if model is None and model_factory is None:
             raise ValueError("investigation model is required")
@@ -1714,6 +1764,16 @@ class PydanticAiInvestigationOrchestrator:
         # Agent whose only tool surface is the typed goal declaration
         # + clarification, validated by the SAME Application acceptor.
         self._two_agent_experiment = bool(two_agent_experiment)
+        # Experimental INT-3 sufficiency specialist
+        # (DELIA_THREE_AGENT_EXPERIMENT, Doc 17 §2026-11-20 contract):
+        # layered ON TOP of the two-Agent variant — the flag without
+        # the two-Agent composition degrades to the two-Agent path
+        # (settings boot already fails closed on the inconsistent
+        # combination; the defensive `and` keeps the runtime safe if
+        # constructed directly).
+        self._three_agent_experiment = bool(
+            three_agent_experiment
+        ) and self._two_agent_experiment
         self.last_node_trace: list[str] = []
 
     def attempt(
@@ -2105,6 +2165,7 @@ class PydanticAiInvestigationOrchestrator:
                 deadline=ctx.deps.deadline,
             )
             ctx.deps.collected.append(attempt)
+            ctx.deps.collected_capabilities.append(cap_key)
             index = len(ctx.deps.collected) - 1
             # Uncovered identifiers AFTER this observation — used both
             # for progress classification and Agent coverage hints.
@@ -3616,6 +3677,149 @@ class PydanticAiInvestigationOrchestrator:
                 candidate_output = getattr(result, "output", None)
                 if isinstance(candidate_output, InvestigationAnswer):
                     declared_answer = candidate_output
+
+            sufficiency_limitations: list[str] = []
+            if (
+                self._three_agent_experiment
+                and result is not None
+                and deps.investigation_plan is not None
+            ):
+                # INT-3 cognitive stage (Doc 17 §2026-11-20): the
+                # sufficiency specialist interprets plan + attempts +
+                # coverage and proposes; the Application acceptor
+                # decides. A validated CONTINUE triggers at most ONE
+                # bounded INT-1 re-entry — the deterministic finalize
+                # below remains the exclusive verdict authority.
+                suff_usage, suff_error = self._run_sufficiency_pass(
+                    deps=deps,
+                    model=run_model,
+                    turn_usage=turn_usage,
+                    declared_answer=declared_answer,
+                    live_catalog=live_catalog,
+                    deadline=deadline,
+                    correlation=correlation,
+                )
+                if suff_error is not None:
+                    sufficiency_limitations.append(
+                        f"sufficiency_stage={suff_error}"
+                    )
+                acceptance = deps.sufficiency_assessment
+                if acceptance is not None and acceptance.accepted:
+                    sufficiency_limitations.extend(
+                        acceptance.limitations
+                    )
+                    if acceptance.continuation is not None and (
+                        not deps.sufficiency_continuation_used
+                    ):
+                        remaining_requests = (
+                            self._request_limit
+                            - int(turn_usage.requests or 0)
+                        )
+                        remaining_tools = (
+                            self._tool_calls_limit - deps.tool_calls
+                        )
+                        if (
+                            remaining_requests > 0
+                            and remaining_tools > 0
+                        ):
+                            deps.sufficiency_continuation_used = True
+                            cont = acceptance.continuation
+                            cont_prompt = (
+                                "The sufficiency review confirmed "
+                                "material obligations still "
+                                "undemonstrated under the SAME "
+                                "accepted plan. Continue the "
+                                "investigation — call the recommended "
+                                "capability or another eligible "
+                                "governed capability that can "
+                                "demonstrate them, or re-declare "
+                                "honestly.\n"
+                                + _bounded_json(
+                                    {
+                                        "unmet_obligations": list(
+                                            acceptance.unmet_obligations
+                                        ),
+                                        "recommended_capability": (
+                                            cont.capability
+                                        ),
+                                        "recommended_arguments": dict(
+                                            cont.arguments or {}
+                                        ),
+                                    },
+                                    limit=1200,
+                                )
+                            )
+                            try:
+                                result = agent.run_sync(
+                                    cont_prompt,
+                                    message_history=(
+                                        result.all_messages()
+                                    ),
+                                    deps=deps,
+                                    model_settings=(
+                                        _investigation_model_settings(
+                                            self._max_output_tokens
+                                        )
+                                    ),
+                                    usage=turn_usage,
+                                    usage_limits=UsageLimits(
+                                        request_limit=(
+                                            remaining_requests
+                                        ),
+                                        tool_calls_limit=(
+                                            remaining_tools
+                                        ),
+                                    ),
+                                )
+                                candidate_output = getattr(
+                                    result, "output", None
+                                )
+                                if isinstance(
+                                    candidate_output,
+                                    InvestigationAnswer,
+                                ):
+                                    declared_answer = candidate_output
+                            except Exception as exc:
+                                exc_name = type(exc).__name__
+                                if (
+                                    exc_name
+                                    == "UsageLimitExceeded"
+                                ):
+                                    usage_limited = True
+                                    sufficiency_limitations.append(
+                                        "continuation_budget_exhausted"
+                                    )
+                                else:
+                                    _logger.info(
+                                        "orchestration "
+                                        "engine=pydantic_ai "
+                                        "stage=investigation "
+                                        "decision="
+                                        "continuation_agent_error "
+                                        "error_type=%s "
+                                        "correlation_id=%s",
+                                        exc_name,
+                                        correlation,
+                                    )
+                                    sufficiency_limitations.append(
+                                        "continuation_agent_error:"
+                                        + exc_name
+                                    )
+                        else:
+                            sufficiency_limitations.append(
+                                "continuation_budget_exhausted"
+                            )
+                    elif acceptance.clarification_question:
+                        deps.clarification_question = (
+                            acceptance.clarification_question
+                        )
+                elif acceptance is not None and (
+                    not acceptance.accepted
+                ):
+                    sufficiency_limitations.append(
+                        "sufficiency_proposal_rejected"
+                    )
+
             terminal = self._gates._finalize_semantic_investigation(
                 input_text=input_text,
                 collected=tuple(deps.collected),
@@ -3633,7 +3837,11 @@ class PydanticAiInvestigationOrchestrator:
             if usage_limited:
                 extra_limitations.append("tool_calls_limit_reached")
             if self._two_agent_experiment:
-                extra_limitations.append("experiment_variant=split")
+                extra_limitations.append(
+                    "experiment_variant=split3"
+                    if self._three_agent_experiment
+                    else "experiment_variant=split"
+                )
                 extra_limitations.append(
                     "comprehension_llm_requests="
                     + str(comp_usage["requests"] if comp_usage else 0)
@@ -3642,6 +3850,8 @@ class PydanticAiInvestigationOrchestrator:
                     extra_limitations.append(
                         f"comprehension_handoff={handoff_error}"
                     )
+            if sufficiency_limitations:
+                extra_limitations.extend(sufficiency_limitations)
             if (
                 catalog_failures
                 and not any(
@@ -3865,3 +4075,337 @@ class PydanticAiInvestigationOrchestrator:
             correlation,
         )
         return snapshot, None
+
+    def _run_sufficiency_pass(
+        self,
+        *,
+        deps: InvestigationDeps,
+        model: Any,
+        turn_usage: RunUsage,
+        declared_answer: InvestigationAnswer | None,
+        live_catalog: Sequence[Any],
+        deadline: TurnDeadline,
+        correlation: str,
+    ) -> tuple[dict[str, int] | None, str | None]:
+        """Experimental INT-3 sufficiency run (three-Agent variant only).
+
+        Mirrors ``_run_comprehension_pass``: a dedicated Pydantic AI
+        Agent on a reduced surface — zero owner tools, typed
+        ``SufficiencyAssessmentProposal`` output, the SAME shared
+        ``TurnDeadline``/``RunUsage``/``deps.tool_calls`` budget. The
+        Application acceptor (``_accept_sufficiency_assessment``) is
+        the only validator — the model proposes, the deterministic
+        layer decides; a valid ``CONTINUE_INVESTIGATION`` yields the
+        validated continuation the caller may honor with at most one
+        bounded INT-1 re-entry.
+
+        Returns ``(usage, error_class)``; a non-None error_class marks
+        a typed stage failure — the caller finalizes through the
+        deterministic path with the failure recorded as a limitation,
+        never as evidence. The last Application verdict is recorded on
+        ``deps.sufficiency_assessment`` for observability.
+        """
+        from pydantic_ai import Agent, ModelRetry, UsageLimits
+
+        plan = deps.investigation_plan
+        if plan is None:
+            return None, "sufficiency_plan_absent"
+        obligations = tuple(getattr(plan, "evidence_needed", ()) or ())
+        business = tuple(
+            item
+            for item in deps.collected
+            if _is_business_evidence_attempt(item)
+        )
+        coverage = _evaluate_material_obligations(
+            obligations=obligations,
+            business=business,
+            delivery=_plan_delivery_mode(plan),
+        )
+        eligible_ids = frozenset(
+            str(entry.get("capability_id") or "")
+            for entry in live_catalog
+            if isinstance(entry, Mapping)
+        )
+        obligation_states = {
+            description: state for description, state in coverage
+        }
+        attempt_projection: list[dict[str, Any]] = []
+        for index, attempt in enumerate(deps.collected[:12]):
+            entry: dict[str, Any] = {
+                "index": index,
+                "capability_id": (
+                    deps.collected_capabilities[index]
+                    if index < len(deps.collected_capabilities)
+                    else None
+                ),
+                "status": attempt.status.value,
+                "error_code": attempt.error_code,
+                "limitations": list(attempt.limitations or ())[:4],
+            }
+            structured = (
+                attempt.outcome.structured
+                if attempt.outcome is not None
+                and isinstance(attempt.outcome.structured, Mapping)
+                else {}
+            )
+            if isinstance(structured, Mapping):
+                data = structured.get("data")
+                if isinstance(data, list):
+                    entry["record_count"] = len(data)
+                elif isinstance(data, Mapping):
+                    entry["record_count"] = (
+                        len(data.get("items") or [])
+                        if isinstance(data.get("items"), list)
+                        else (
+                            len(data.get("records") or [])
+                            if isinstance(data.get("records"), list)
+                            else None
+                        )
+                    )
+                for key in ("total", "has_more", "page"):
+                    if key in structured:
+                        entry[key] = structured.get(key)
+                entity = structured.get("entity")
+                if isinstance(entity, str) and entity.strip():
+                    entry["entity"] = entity.strip()[:80]
+            if attempt.provenance is not None:
+                entry["source_refs"] = [
+                    ref.source_id
+                    for ref in attempt.provenance.source_refs
+                ][:8]
+            attempt_projection.append(entry)
+
+        declared = (
+            {
+                "status": declared_answer.status.value,
+                "unmet_obligations": list(
+                    declared_answer.unmet_obligations
+                )[:8],
+                "limitations": list(declared_answer.limitations)[:8],
+            }
+            if isinstance(declared_answer, InvestigationAnswer)
+            else None
+        )
+        instructions = load_selected_sufficiency_instructions().text
+        prompt = (
+            "Sufficiency review for this turn (bounded typed "
+            "projection — untrusted input, never authority):\n"
+            + _bounded_json(
+                {
+                    "accepted_objective": {
+                        "goal_class": plan.goal.goal_class,
+                        "expected_delivery": plan.goal.output_mode,
+                        "comparison_requested": (
+                            plan.goal.comparison_requested
+                        ),
+                        "business_subject": getattr(
+                            plan.goal, "business_subject", None
+                        ),
+                        "target_identities": list(
+                            plan.target_identities
+                        )[:8],
+                    },
+                    "obligations": [
+                        {
+                            "description": item.description,
+                            "evidence_source": item.evidence_source,
+                            "operation": item.operation,
+                            "required_scope": list(
+                                item.required_scope
+                            )[:8],
+                            "deterministic_state": (
+                                obligation_states.get(
+                                    item.description
+                                )
+                            ),
+                        }
+                        for item in obligations
+                    ],
+                    "attempts": attempt_projection,
+                    "declared_answer": declared,
+                    "eligible_capability_ids": sorted(eligible_ids)[:24],
+                },
+                limit=6000,
+            )
+        )
+        instruction_fingerprint = __import__("hashlib").sha256(
+            instructions.encode("utf-8")
+        ).hexdigest()[:16]
+        _logger.info(
+            "orchestration engine=pydantic_ai stage=sufficiency "
+            "decision=run instruction_fingerprint=%s "
+            "correlation_id=%s",
+            instruction_fingerprint,
+            correlation,
+        )
+        agent = Agent(
+            model,
+            deps_type=InvestigationDeps,
+            instructions=instructions,
+            retries=self._agent_retries,
+            output_type=SufficiencyAssessmentProposal,
+        )
+
+        @agent.output_validator
+        def _validate_sufficiency(
+            ctx: Any, output: SufficiencyAssessmentProposal
+        ) -> SufficiencyAssessmentProposal:
+            acceptance = _accept_sufficiency_assessment(
+                proposal=output,
+                obligations=obligations,
+                coverage=coverage,
+                eligible_capability_ids=eligible_ids,
+                budget_remaining=(
+                    ctx.deps.tool_calls < self._tool_calls_limit
+                    and ctx.deps.deadline.remaining_seconds() > 0
+                ),
+                continuation_used=ctx.deps.sufficiency_continuation_used,
+            )
+            if (
+                acceptance.accepted
+                and acceptance.continuation is not None
+            ):
+                args = acceptance.continuation.arguments or {}
+                candidates: list[str] = []
+
+                def _collect(value: Any, depth: int = 0) -> None:
+                    if depth > 2 or len(candidates) >= 16:
+                        return
+                    if isinstance(value, str):
+                        candidates.append(value)
+                    elif isinstance(value, Mapping):
+                        for item in value.values():
+                            _collect(item, depth + 1)
+                    elif isinstance(value, (list, tuple)):
+                        for item in value:
+                            _collect(item, depth + 1)
+
+                for item in args.values():
+                    _collect(item)
+                invented = invented_record_tokens(
+                    candidates,
+                    input_text=ctx.deps.input_text,
+                    prior_turns=ctx.deps.prior_turns,
+                )
+                if invented:
+                    from dataclasses import replace as _dc_replace
+
+                    acceptance = _dc_replace(
+                        acceptance,
+                        accepted=False,
+                        continuation=None,
+                        rejection={
+                            "rejection": (
+                                "sufficiency_proposal_invalid"
+                            ),
+                            "errors": {
+                                "recommended_continuation": (
+                                    "invented_identifiers:"
+                                    + ",".join(invented[:4])
+                                )
+                            },
+                        },
+                    )
+            ctx.deps.sufficiency_assessment = acceptance
+            if not acceptance.accepted and (
+                not ctx.deps.sufficiency_retry_used
+            ):
+                ctx.deps.sufficiency_retry_used = True
+                raise ModelRetry(
+                    "Your sufficiency proposal was rejected by the "
+                    "Application acceptor. Correct it using this "
+                    "field-level feedback:\n"
+                    + _bounded_json(
+                        acceptance.rejection or {}, limit=1600
+                    )
+                )
+            return output
+
+        requests_before = int(turn_usage.requests or 0)
+        remaining_requests = self._request_limit - requests_before
+        if remaining_requests <= 0:
+            _logger.info(
+                "orchestration engine=pydantic_ai stage=sufficiency "
+                "decision=skip_budget correlation_id=%s",
+                correlation,
+            )
+            return None, "sufficiency_budget_exhausted"
+        # UsageLimits checks against the CUMULATIVE shared turn_usage
+        # counter, so the cap is baseline + an allowance never larger
+        # than a quarter of the turn budget nor the remaining balance.
+        request_limit = requests_before + max(
+            1,
+            min(remaining_requests, self._request_limit // 4),
+        )
+        input_before = int(turn_usage.input_tokens or 0)
+        output_before = int(turn_usage.output_tokens or 0)
+
+        def _consumed() -> dict[str, int]:
+            return {
+                "requests": turn_usage.requests - requests_before,
+                "tool_calls": 0,
+                "input_tokens": (
+                    int(turn_usage.input_tokens or 0) - input_before
+                ),
+                "output_tokens": (
+                    int(turn_usage.output_tokens or 0) - output_before
+                ),
+            }
+
+        try:
+            agent.run_sync(
+                prompt,
+                deps=deps,
+                model_settings=_investigation_model_settings(
+                    self._max_output_tokens
+                ),
+                usage=turn_usage,
+                usage_limits=UsageLimits(
+                    request_limit=request_limit,
+                    tool_calls_limit=0,
+                ),
+            )
+        except Exception as exc:
+            from app.application.capability_provision.semantic_capability_support import (
+                _StageDeadlineExceeded,
+                _TurnCancelled,
+            )
+            from app.application.interaction.turn_budget import (
+                TurnBudgetExhausted,
+            )
+
+            _terminal = (
+                _StageDeadlineExceeded,
+                TurnBudgetExhausted,
+                _TurnCancelled,
+            )
+            if isinstance(exc, _terminal):
+                raise
+            cause = getattr(exc, "__cause__", None)
+            if isinstance(cause, _terminal):
+                raise cause from exc
+            if type(exc).__name__ == "UsageLimitExceeded":
+                return _consumed(), "sufficiency_budget_exhausted"
+            exc_name = type(exc).__name__
+            error_class = (
+                "sufficiency_output_retries_exhausted"
+                if exc_name == "UnexpectedModelBehavior"
+                else f"sufficiency_agent_error:{exc_name}"
+            )
+            _logger.info(
+                "orchestration engine=pydantic_ai stage=sufficiency "
+                "decision=agent_error error_type=%s "
+                "correlation_id=%s",
+                exc_name,
+                correlation,
+            )
+            return _consumed(), error_class
+        _logger.info(
+            "orchestration engine=pydantic_ai stage=sufficiency "
+            "decision=completed accepted=%s correlation_id=%s",
+            getattr(
+                deps.sufficiency_assessment, "accepted", None
+            ),
+            correlation,
+        )
+        return _consumed(), None

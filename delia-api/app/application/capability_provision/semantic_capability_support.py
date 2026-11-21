@@ -127,6 +127,10 @@ from app.application.capability_provision.contracts import (
     InvestigationAnswer,
     InvestigationAnswerStatus,
     ProviderCapability,
+    SemanticMismatchKind,
+    SufficiencyAssessmentProposal,
+    SufficiencyContinuation,
+    SufficiencyVerdict,
 )
 from app.application.capability_provision.conversational_response import (
     EMPTY_RESULT_TEXT,
@@ -4064,6 +4068,213 @@ def _evaluate_material_obligations(
         )
         results.append((obligation.description, state))
     return tuple(results)
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class SufficiencyAcceptance:
+    """Application verdict on an INT-3 ``SufficiencyAssessmentProposal``.
+
+    ``accepted`` marks a structurally valid proposal the orchestration
+    may act on; the deterministic obligation verdict remains computed
+    exclusively by ``_evaluate_material_obligations`` — the proposal
+    informs, downgrades or recommends, it never elevates.
+    ``continuation`` is the validated bounded re-entry candidate
+    (present only when a ``CONTINUE_INVESTIGATION`` verdict passed
+    every gate); ``clarification_question`` is the validated ask-back
+    (only for ``REQUEST_CLARIFICATION``); ``limitations`` carries the
+    typed observability trail; ``rejection`` is the field-level
+    feedback projection for a bounded ``ModelRetry``.
+    """
+
+    accepted: bool
+    continuation: SufficiencyContinuation | None = None
+    clarification_question: str | None = None
+    unmet_obligations: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+    rejection: Mapping[str, Any] | None = None
+
+
+_SUFFICIENCY_MAX_ITEMS = 8
+_SUFFICIENCY_MAX_TEXT = 600
+
+
+def _accept_sufficiency_assessment(
+    *,
+    proposal: SufficiencyAssessmentProposal,
+    obligations: tuple[MaterialObligation, ...],
+    coverage: tuple[tuple[str, str], ...],
+    eligible_capability_ids: frozenset[str] | tuple[str, ...],
+    budget_remaining: bool,
+    continuation_used: bool,
+) -> SufficiencyAcceptance:
+    """Application-side acceptor for the INT-3 cognitive proposal
+    (Doc 17 §2026-11-20 contract).
+
+    Field-level validation mirrors ``_accept_semantic_investigation_plan``:
+    every name in the proposal is checked against the accepted plan,
+    the deterministic coverage states, the eligible capability ids and
+    the shared budget gates — never trusted. Direction is one-way: a
+    proposal may recommend a more conservative outcome than the
+    deterministic verdict, it may never promote an unproven
+    obligation, widen scope, name foreign capabilities or mint
+    identifiers. A rejected proposal returns the named rejection
+    payload (bounded ModelRetry feedback), never an exception and
+    never a silent mutation of the turn state.
+    """
+
+    errors: dict[str, Any] = {}
+    obligation_descriptions = frozenset(
+        item.description for item in obligations
+    )
+    unmet_descriptions = frozenset(
+        description
+        for description, state in coverage
+        if state != OBLIGATION_SATISFIED
+    )
+    if (
+        not isinstance(proposal.verdict_proposal, SufficiencyVerdict)
+        or proposal.verdict_proposal
+        not in set(SufficiencyVerdict)
+    ):
+        errors["verdict_proposal"] = "unknown_verdict"
+    if (
+        len(proposal.unmet_obligations) > _SUFFICIENCY_MAX_ITEMS
+        or any(
+            not isinstance(item, str) or not item.strip()
+            for item in proposal.unmet_obligations
+        )
+    ):
+        errors["unmet_obligations"] = "malformed"
+    else:
+        foreign = [
+            item
+            for item in proposal.unmet_obligations
+            if item not in obligation_descriptions
+        ]
+        if foreign:
+            errors["unmet_obligations"] = (
+                "references_outside_accepted_plan:" + ",".join(foreign[:4])
+            )
+    if (
+        len(proposal.semantic_mismatches) > _SUFFICIENCY_MAX_ITEMS
+        or any(
+            getattr(item, "kind", None)
+            not in set(SemanticMismatchKind)
+            for item in proposal.semantic_mismatches
+        )
+    ):
+        errors["semantic_mismatches"] = "unknown_mismatch_kind"
+    if (
+        len(proposal.limitations) > _SUFFICIENCY_MAX_ITEMS
+        or any(
+            not isinstance(item, str) or len(item) > _SUFFICIENCY_MAX_TEXT
+            for item in proposal.limitations
+        )
+        or len(proposal.gap_analysis or "") > 1600
+        or len(proposal.clarification_question or "") > (
+            _SUFFICIENCY_MAX_TEXT
+        )
+    ):
+        errors["bounded_fields"] = "oversized"
+
+    verdict = proposal.verdict_proposal
+    if verdict is SufficiencyVerdict.PROPOSE_COMPLETION:
+        unproven = [
+            description
+            for description, state in coverage
+            if state != OBLIGATION_SATISFIED
+        ]
+        if unproven or not coverage:
+            errors["verdict_proposal"] = (
+                "completion_unproven:"
+                + ",".join((unproven or ["no_obligations"])[:4])
+            )
+    elif verdict is SufficiencyVerdict.CONTINUE_INVESTIGATION:
+        if not unmet_descriptions:
+            errors["verdict_proposal"] = (
+                "continuation_without_unmet_obligation"
+            )
+        named = set(proposal.unmet_obligations) & unmet_descriptions
+        if not named and "unmet_obligations" not in errors:
+            errors["unmet_obligations"] = (
+                "no_demonstrable_gap_named"
+            )
+        cont = proposal.recommended_continuation
+        if cont is None or not str(
+            getattr(cont, "capability", "") or ""
+        ).strip():
+            errors["recommended_continuation"] = "missing"
+        elif cont.capability.strip() not in eligible_capability_ids:
+            errors["recommended_continuation"] = (
+                "capability_not_eligible:" + str(cont.capability)[:80]
+            )
+        elif not isinstance(cont.arguments, Mapping) or len(
+            cont.arguments
+        ) > _SUFFICIENCY_MAX_ITEMS:
+            errors["recommended_continuation"] = "arguments_malformed"
+        elif any(
+            not isinstance(key, str)
+            for key in cont.arguments.keys()
+        ):
+            errors["recommended_continuation"] = "arguments_malformed"
+        if not budget_remaining:
+            errors["budget"] = "continuation_budget_exhausted"
+        if continuation_used:
+            errors["budget"] = "continuation_limit_reached"
+    elif verdict is SufficiencyVerdict.REQUEST_CLARIFICATION:
+        if not (proposal.clarification_question or "").strip():
+            errors["clarification_question"] = (
+                "missing_clarification_question"
+            )
+    # REPORT_PARTIAL and REPORT_INSUFFICIENT are pure downgrades —
+    # always admissible once the field-level checks above pass.
+
+    if errors:
+        return SufficiencyAcceptance(
+            accepted=False,
+            rejection={
+                "rejection": "sufficiency_proposal_invalid",
+                "errors": errors,
+                "guidance": (
+                    "The proposal may only reference obligations of "
+                    "the accepted plan, name capabilities already "
+                    "eligible, and recommend a verdict the "
+                    "deterministic coverage does not contradict."
+                ),
+            },
+        )
+
+    mismatch_kinds = tuple(
+        f"int3_mismatch:{item.kind.value}"
+        for item in proposal.semantic_mismatches
+    )
+    return SufficiencyAcceptance(
+        accepted=True,
+        continuation=(
+            proposal.recommended_continuation
+            if verdict is SufficiencyVerdict.CONTINUE_INVESTIGATION
+            else None
+        ),
+        clarification_question=(
+            proposal.clarification_question.strip()
+            if verdict is SufficiencyVerdict.REQUEST_CLARIFICATION
+            and proposal.clarification_question
+            else None
+        ),
+        unmet_obligations=tuple(
+            item
+            for item in proposal.unmet_obligations
+            if item in unmet_descriptions
+        )[:_SUFFICIENCY_MAX_ITEMS],
+        limitations=(
+            (f"int3_verdict:{verdict.value}",)
+            + mismatch_kinds
+            + tuple(
+                f"int3_limitation:{item[:200]}"
+                for item in proposal.limitations[:4]
+            )
+        ),
+    )
 
 
 # Concrete-value tokens in synthesized prose — numeric literals that
