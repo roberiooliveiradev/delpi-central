@@ -533,9 +533,11 @@ def test_valid_continue_triggers_exactly_one_bounded_reentry():
         _agent_mod.Agent.run_sync = original
     # comp + inv + suff + one re-entry = 4 native run_sync invocations
     assert len(runs) == 4
-    # the re-entry really emitted requests on the inv surface —
-    # not a dead run_sync killed by a miscomputed absolute limit
-    assert inv_model_calls[0] >= 3
+    # the re-entry really emitted requests: the baseline inv run alone
+    # produces 3 model calls (tool call + answer + one-shot retry), so
+    # >= 4 proves a live re-entry — with an absolute UsageLimits cap
+    # the re-entry would die at 0 requests and the count stays 3.
+    assert inv_model_calls[0] >= 4
     assert "sufficiency" not in str(attempt.error_code or "")
 
 
